@@ -137,3 +137,41 @@ def test_public_backends_contrato_exacto_en_backend_policy():
 def test_public_backends_inmutable_tipo_tuple():
     assert isinstance(PUBLIC_BACKENDS, tuple)
     assert PUBLIC_BACKENDS == tuple(PUBLIC_BACKENDS)
+
+
+def test_rechaza_usar_ruta_backend_no_canonica_con_error_consistente():
+    interp = InterpretadorCobra()
+
+    class _NodoUsar:
+        modulo = "pcobra.corelibs.numero"
+
+    with pytest.raises(PermissionError, match=r"^usar_error\[backend_import_directo\]"):
+        interp.ejecutar_usar(_NodoUsar())
+
+
+def test_usar_rechaza_modulo_fuera_allowlist_aun_si_alias_map_lo_declara():
+    interp = InterpretadorCobra()
+    interp.configurar_restriccion_usar_repl({"numero": "numero", "numpy": "numpy"})
+
+    class _NodoUsar:
+        modulo = "numpy"
+
+    with pytest.raises(PermissionError, match=r"^usar_error\[modulo_no_canonico\]"):
+        interp.ejecutar_usar(_NodoUsar())
+
+
+def test_usar_rechaza_modulo_no_cobra_facing_si_flag_false(monkeypatch):
+    mod_numero = _modulo_numero_stub()
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _nombre: mod_numero)
+    from pcobra.cobra import usar_policy
+
+    monkeypatch.setitem(usar_policy.USAR_COBRA_FACING_MODULE_FLAGS, "numero", False)
+
+    interp = InterpretadorCobra()
+    interp.configurar_restriccion_usar_repl(REPL_COBRA_MODULE_MAP)
+
+    class _NodoUsar:
+        modulo = "numero"
+
+    with pytest.raises(PermissionError, match=r"^usar_error\[modulo_no_cobra_facing\]"):
+        interp.ejecutar_usar(_NodoUsar())
