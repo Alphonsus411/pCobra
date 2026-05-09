@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Detecta drift de policy canónica en rutas públicas (set oficial de 8 targets)."""
+"""Detecta drift de policy canónica en rutas públicas (set oficial de 3 backends públicos)."""
 
 from __future__ import annotations
 
@@ -12,7 +12,7 @@ SRC_ROOT = ROOT / "src"
 if str(SRC_ROOT) not in sys.path:
     sys.path.insert(0, str(SRC_ROOT))
 
-from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
+from pcobra.cobra.architecture.backend_policy import PUBLIC_BACKENDS, assert_public_targets_contract
 
 SCAN_ROOTS = (
     ROOT / "README.md",
@@ -32,7 +32,8 @@ SKIP_FILES = {
     "scripts/audit_retired_targets.py",
     "scripts/targets_policy_common.py",
 }
-OFFICIAL = set(OFFICIAL_TARGETS)
+assert_public_targets_contract(tuple(PUBLIC_BACKENDS), source="scripts/lint_policy_drift.py")
+OFFICIAL = set(PUBLIC_BACKENDS)
 CONTEXT = re.compile(
     r"(?i)(targets?|backends?|destinos?|--tipo|--destino|--origen)"
 )

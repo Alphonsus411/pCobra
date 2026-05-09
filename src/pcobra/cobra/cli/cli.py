@@ -20,7 +20,7 @@ from pcobra.cli import (
 )
 
 from pcobra.cobra.cli.commands.base import BaseCommand
-from pcobra.cobra.cli.target_policies import OFFICIAL_TRANSPILATION_TARGETS
+from pcobra.cobra.architecture.backend_policy import PUBLIC_BACKENDS, assert_public_targets_contract
 from pcobra.cobra.core.interpreter import InterpretadorCobra
 from pcobra.cobra.cli.i18n import _, format_traceback, setup_gettext
 
@@ -76,7 +76,8 @@ CLI_VERSION = environ.get("COBRA_CLI_VERSION", "dev")
 CLI_COMMIT = environ.get("COBRA_CLI_COMMIT", "unknown")
 COBRA_INTERNAL_ENABLE_CLI_V1_ENV = "COBRA_INTERNAL_ENABLE_CLI_V1"
 COBRA_ENABLE_LEGACY_CLI_ENV = "COBRA_INTERNAL_ENABLE_LEGACY_CLI"
-LANG_CHOICES = tuple(OFFICIAL_TRANSPILATION_TARGETS)
+assert_public_targets_contract(tuple(PUBLIC_BACKENDS), source="cobra cli bootstrap")
+LANG_CHOICES = tuple(PUBLIC_BACKENDS)
 LEGACY_COMMAND_MIGRATION_MAP: dict[str, dict[str, str]] = {
     "interactive": {
         "target": "repl",
