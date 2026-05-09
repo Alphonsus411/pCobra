@@ -8,11 +8,11 @@ import sys
 import pytest
 
 LEGACY_TRANSPILER_MODULES = (
-    "pcobra.cobra.transpilers.transpiler.to_go",
-    "pcobra.cobra.transpilers.transpiler.to_java",
-    "pcobra.cobra.transpilers.transpiler.to_cpp",
-    "pcobra.cobra.transpilers.transpiler.to_asm",
-    "pcobra.cobra.transpilers.transpiler.to_wasm",
+    "pcobra.cobra.transpilers.transpiler.legacy.to_go",
+    "pcobra.cobra.transpilers.transpiler.legacy.to_java",
+    "pcobra.cobra.transpilers.transpiler.legacy.to_cpp",
+    "pcobra.cobra.transpilers.transpiler.legacy.to_asm",
+    "pcobra.cobra.transpilers.transpiler.legacy.to_wasm",
 )
 
 EXPECTED_PUBLIC_TARGETS = ("python", "javascript", "rust")
@@ -52,6 +52,45 @@ def test_normal_boot_paths_do_not_import_legacy_transpilers(module_name: str) ->
     assert module_name not in loaded_during_boot, (
         f"{module_name} fue cargado durante boot normal, violando política pública"
     )
+
+
+@pytest.mark.parity_contract
+def test_import_pcobra_exposes_lazy_public_api_without_legacy_transpiler_modules() -> None:
+    before = set(sys.modules)
+
+    package = importlib.import_module("pcobra")
+    after = set(sys.modules)
+
+    assert "cobra" in package.__all__
+    assert "core" in package.__all__
+    assert "cli" in package.__all__
+    assert "ia" in package.__all__
+    assert "jupyter_kernel" in package.__all__
+    assert "gui" in package.__all__
+    assert "lsp" in package.__all__
+    assert "compiler" in package.__all__
+
+    loaded_during_import = after - before
+    for module_name in LEGACY_TRANSPILER_MODULES:
+        assert module_name not in after
+        assert module_name not in loaded_during_import
+
+
+@pytest.mark.parity_contract
+@pytest.mark.parametrize(
+    "base_module",
+    ("pcobra.__main__", "pcobra.cli", "pcobra.cobra.cli.bootstrap"),
+)
+def test_base_command_import_paths_do_not_load_legacy_transpilers(base_module: str) -> None:
+    before = set(sys.modules)
+
+    importlib.import_module(base_module)
+
+    after = set(sys.modules)
+    loaded_during_import = after - before
+    for module_name in LEGACY_TRANSPILER_MODULES:
+        assert module_name not in after
+        assert module_name not in loaded_during_import
 
 
 @pytest.mark.parity_contract
