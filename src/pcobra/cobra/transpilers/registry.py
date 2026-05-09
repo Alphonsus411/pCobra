@@ -25,7 +25,7 @@ from pcobra.cobra.config.transpile_targets import OFFICIAL_TARGETS
 
 TRANSPILER_CLASS_PATHS: Final[dict[str, tuple[str, str]]] = {
     "python": ("pcobra.cobra.transpilers.transpiler.to_python", "TranspiladorPython"),
-    "javascript": ("pcobra.cobra.transpilers.transpiler.to_js", "TranspiladorJavaScript"),
+    "javascript": ("pcobra.cobra.transpilers.transpiler.to_javascript", "TranspiladorJavaScript"),
     "rust": ("pcobra.cobra.transpilers.transpiler.to_rust", "TranspiladorRust"),
 }
 

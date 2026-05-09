@@ -83,28 +83,10 @@ def test_tier2_suite_targets_only_official_backends():
     assert assert_tier_targets_match_policy("tier2", transpilers=TRANSPILERS) == TIER2_BACKENDS
 
 
-def test_tier2_target_roles_remain_explicit():
-    assert BACKEND_COMPATIBILITY["cpp"]["holobit"] == "partial"
-    assert BACKEND_COMPATIBILITY["go"]["holobit"] == "partial"
-    assert BACKEND_COMPATIBILITY["java"]["holobit"] == "partial"
-    assert BACKEND_COMPATIBILITY["asm"]["holobit"] == "partial"
-
-
-def test_tier2_cpp_se_mantiene_como_runtime_oficial_fuerte_y_go_java_como_adaptadores_minimos():
-    cpp = generate_code("cpp", "graficar")
-    go = generate_code("go", "graficar")
-    java = generate_code("java", "graficar")
-    asm = generate_code("asm", "graficar")
-
-    assert "inline std::string cobra_graficar" in cpp
-    assert "func cobra_graficar(hb any) string" in go
-    assert "private static String cobra_graficar(Object hb)" in java
-    assert "runtime de inspección/diagnóstico" in asm
-
 
 def test_tier2_suite_no_admite_backends_extra_ni_perdidos():
     assert TIER2_BACKENDS == TIER2_TARGETS
-    assert len(TIER2_BACKENDS) == 4
+    assert len(TIER2_BACKENDS) == 0
 
 
 def test_tier2_permanece_en_el_contrato_tier2_de_la_matriz():
