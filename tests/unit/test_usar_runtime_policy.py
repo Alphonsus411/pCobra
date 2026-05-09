@@ -53,8 +53,12 @@ def test_usar_runtime_datos_expone_filtrar_mapear_reducir(monkeypatch):
 
 @pytest.mark.parametrize("nombre", ["numpy", "pandas", "torch", "node-fetch", "serde"])
 def test_usar_runtime_rechaza_numpy_y_similares(nombre):
-    with pytest.raises(PermissionError, match=r"Importación no permitida en 'usar'"):
+    with pytest.raises(PermissionError) as exc:
         usar_loader.validar_nombre_modulo_usar(nombre)
+    mensaje = str(exc.value)
+    assert "Importación no permitida en 'usar'" in mensaje
+    assert nombre in mensaje
+    assert "backend_" not in mensaje
 
 
 def test_usar_runtime_holobit_expone_solo_api_cobra_facing(monkeypatch):
@@ -159,3 +163,21 @@ def test_validar_nombre_modulo_usar_exige_allowlist_estricta():
     assert usar_loader.validar_nombre_modulo_usar("numero") == "numero"
     with pytest.raises(PermissionError):
         usar_loader.validar_nombre_modulo_usar("mi_modulo_privado")
+
+
+@pytest.mark.parametrize(
+    "nombre_interno",
+    (
+        "holobit_sdk",
+        "holobit_sdk.core",
+        "holobit_sdk.visualization",
+        "pcobra.corelibs.holobit",
+    ),
+)
+def test_usar_runtime_rechaza_import_directo_de_internals_holobit(nombre_interno):
+    with pytest.raises(PermissionError) as exc:
+        usar_loader.validar_nombre_modulo_usar(nombre_interno)
+    mensaje = str(exc.value)
+    assert "Importación no permitida en 'usar'" in mensaje
+    assert nombre_interno in mensaje
+    assert "backend_" not in mensaje
