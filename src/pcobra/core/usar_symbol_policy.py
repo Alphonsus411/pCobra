@@ -1,6 +1,6 @@
 """Política de saneamiento de símbolos para la instrucción ``usar``."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from types import ModuleType
 from typing import Any
 
@@ -14,31 +14,54 @@ EQUIVALENCIAS_PROHIBIDAS_A_CANONICAS = {
     "keys": "claves",
     "values": "valores",
     "len": "longitud",
+    "lower": "minusculas",
+    "upper": "mayusculas",
+    "items": "elementos",
+    "get": "obtener",
+    "setdefault": "definir_por_defecto",
+    "update": "actualizar",
+    "pop": "extraer",
+    "clear": "limpiar",
+    "copy": "copiar",
+    "split": "separar",
+    "join": "unir",
+    "strip": "recortar",
+    "replace": "reemplazar",
+    "startswith": "inicia_con",
+    "endswith": "termina_con",
 }
 
 NOMBRES_PROHIBIDOS_EXPLICITOS = frozenset(EQUIVALENCIAS_PROHIBIDAS_A_CANONICAS)
 DUNDERS_BLOQUEADOS = frozenset(
     {"__builtins__", "__loader__", "__package__", "__spec__", "__name__"}
 )
-NOMBRES_CONSTANTES_PUBLICAS_CANONICAS = frozenset(
-    {
-        "PI",
-        "E",
-        "TAU",
-        "INF",
-        "NAN",
-    }
-)
+NOMBRES_CONSTANTES_PUBLICAS_CANONICAS = frozenset({"PI", "E", "TAU", "INF", "NAN"})
 NOMBRES_BACKEND_INTERNOS = frozenset(
     {"sys", "os", "importlib", "pcobra", "cobra", "core"}
 )
-PREFIJOS_MODULOS_BACKEND_INTERNOS = (
-    "sys",
-    "os",
-    "importlib",
-    "pcobra",
-    "cobra",
-)
+PREFIJOS_MODULOS_BACKEND_INTERNOS = ("sys", "os", "importlib", "pcobra", "cobra")
+
+
+@dataclass(frozen=True)
+class PoliticaSaneamientoUsar:
+    validar_nombre_canonico_espanol_en_cobra_facing: bool = False
+
+
+@dataclass(frozen=True)
+class ResultadoSaneamientoSimboloUsar:
+    nombre: str
+    simbolo: object
+    rechazado: bool
+    codigo: str | None = None
+    mensaje: str | None = None
+    warning: bool = False
+    metadata: dict[str, object] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class ClasificacionSaneamientoUsar:
+    rechazos_duros: list[ResultadoSaneamientoSimboloUsar]
+    warnings_transicion: list[ResultadoSaneamientoSimboloUsar]
 
 
 def _es_objeto_backend_no_exportable(simbolo: Any) -> bool:
@@ -63,18 +86,8 @@ def _es_objeto_backend_no_exportable(simbolo: Any) -> bool:
     return False
 
 
-@dataclass(frozen=True)
-class ResultadoSaneamientoSimboloUsar:
-    nombre: str
-    simbolo: object
-    rechazado: bool
-    codigo: str | None = None
-    mensaje: str | None = None
-    warning: bool = False
-
-
-def _rechazar(nombre: str, simbolo: object, codigo: str, mensaje: str) -> ResultadoSaneamientoSimboloUsar:
-    return ResultadoSaneamientoSimboloUsar(nombre, simbolo, True, codigo, mensaje)
+def _rechazar(nombre: str, simbolo: object, codigo: str, mensaje: str, metadata: dict[str, object]) -> ResultadoSaneamientoSimboloUsar:
+    return ResultadoSaneamientoSimboloUsar(nombre, simbolo, True, codigo, mensaje, metadata=metadata)
 
 
 def _mensaje_nombre_prohibido(nombre: str) -> str:
@@ -87,62 +100,52 @@ def _mensaje_nombre_prohibido(nombre: str) -> str:
     return "nombre prohibido por política explícita de usar"
 
 
-def sanear_simbolo_para_usar(nombre: str, simbolo: object) -> ResultadoSaneamientoSimboloUsar:
+def _parece_nombre_canonico_espanol(nombre: str) -> bool:
+    return nombre.isidentifier() and nombre.lower() == nombre and "_" in nombre
+
+
+def sanear_simbolo_para_usar(
+    nombre: str,
+    simbolo: object,
+    *,
+    politica: PoliticaSaneamientoUsar | None = None,
+    modulo_origen: str | None = None,
+    modulo_cobra_facing: bool = False,
+) -> ResultadoSaneamientoSimboloUsar:
     """Aplica la política de exportación de símbolos para ``usar``."""
+    politica_efectiva = politica or PoliticaSaneamientoUsar()
+    metadata = {"modulo_origen": modulo_origen, "modulo_cobra_facing": modulo_cobra_facing}
+
     if nombre in DUNDERS_BLOQUEADOS:
-        return _rechazar(
-            nombre,
-            simbolo,
-            "dunder_name",
-            "dunders Python conocidos no se permiten en usar",
-        )
+        return _rechazar(nombre, simbolo, "dunder_name", "dunders Python conocidos no se permiten en usar", metadata)
 
     if nombre.startswith("_"):
-        return _rechazar(
-            nombre,
-            simbolo,
-            "private_prefix",
-            "símbolos que inicien con '_' no son exportables",
-        )
+        return _rechazar(nombre, simbolo, "private_prefix", "símbolos que inicien con '_' no son exportables", metadata)
 
     if "__" in nombre:
-        return _rechazar(
-            nombre,
-            simbolo,
-            "dunder_pattern",
-            "nombres con '__' no se permiten en usar",
-        )
+        return _rechazar(nombre, simbolo, "dunder_pattern", "nombres con '__' no se permiten en usar", metadata)
 
     if _es_objeto_backend_no_exportable(simbolo):
-        return _rechazar(
-            nombre,
-            simbolo,
-            "backend_module_object",
-            "objetos módulo/backend (incluye wrappers SDK e indirectos) no son exportables",
-        )
+        return _rechazar(nombre, simbolo, "backend_module_object", "objetos módulo/backend (incluye wrappers SDK e indirectos) no son exportables", metadata)
 
     if nombre in NOMBRES_BACKEND_INTERNOS:
-        return _rechazar(
-            nombre,
-            simbolo,
-            "backend_internal_name",
-            "nombre interno del backend bloqueado",
-        )
+        return _rechazar(nombre, simbolo, "backend_internal_name", "nombre interno del backend bloqueado", metadata)
 
     if nombre in NOMBRES_PROHIBIDOS_EXPLICITOS:
-        return _rechazar(
-            nombre,
-            simbolo,
-            "explicit_forbidden_name",
-            _mensaje_nombre_prohibido(nombre),
-        )
+        return _rechazar(nombre, simbolo, "explicit_forbidden_name", _mensaje_nombre_prohibido(nombre), metadata)
 
     if not callable(simbolo) and nombre not in NOMBRES_CONSTANTES_PUBLICAS_CANONICAS:
-        return _rechazar(
+        return _rechazar(nombre, simbolo, "non_callable_not_canonical_public_constant", "solo se permiten no-callables para constantes públicas explícitas y canónicas", metadata)
+
+    if politica_efectiva.validar_nombre_canonico_espanol_en_cobra_facing and modulo_cobra_facing and not _parece_nombre_canonico_espanol(nombre):
+        return ResultadoSaneamientoSimboloUsar(
             nombre,
             simbolo,
-            "non_callable_not_canonical_public_constant",
-            "solo se permiten no-callables para constantes públicas explícitas y canónicas",
+            False,
+            "non_canonical_spanish_name",
+            "símbolo permitido por compatibilidad, pero no cumple nombre canónico español para módulo Cobra-facing",
+            warning=True,
+            metadata=metadata,
         )
 
     if not callable(simbolo):
@@ -153,25 +156,38 @@ def sanear_simbolo_para_usar(nombre: str, simbolo: object) -> ResultadoSaneamien
             "public_constant",
             "constante pública explícita permitida",
             warning=True,
+            metadata=metadata,
         )
 
-    return ResultadoSaneamientoSimboloUsar(nombre, simbolo, False, "ok", "símbolo exportable")
+    return ResultadoSaneamientoSimboloUsar(nombre, simbolo, False, "ok", "símbolo exportable", metadata=metadata)
 
 
 def sanear_exportables_para_usar(
     simbolos: list[tuple[str, object]],
-) -> tuple[list[tuple[str, object]], list[ResultadoSaneamientoSimboloUsar], list[ResultadoSaneamientoSimboloUsar]]:
+    *,
+    politica: PoliticaSaneamientoUsar | None = None,
+    modulo_origen: str | None = None,
+    modulo_cobra_facing: bool = False,
+) -> tuple[list[tuple[str, object]], ClasificacionSaneamientoUsar, list[ResultadoSaneamientoSimboloUsar]]:
     """Sanea una lista de símbolos candidatos para ``usar`` de forma uniforme."""
 
     permitidos: list[tuple[str, object]] = []
-    rechazos: list[ResultadoSaneamientoSimboloUsar] = []
-    warnings: list[ResultadoSaneamientoSimboloUsar] = []
+    rechazos_duros: list[ResultadoSaneamientoSimboloUsar] = []
+    warnings_transicion: list[ResultadoSaneamientoSimboloUsar] = []
     for nombre, simbolo in simbolos:
-        resultado = sanear_simbolo_para_usar(nombre, simbolo)
+        resultado = sanear_simbolo_para_usar(
+            nombre,
+            simbolo,
+            politica=politica,
+            modulo_origen=modulo_origen,
+            modulo_cobra_facing=modulo_cobra_facing,
+        )
         if resultado.rechazado:
-            rechazos.append(resultado)
+            rechazos_duros.append(resultado)
             continue
         if resultado.warning:
-            warnings.append(resultado)
+            warnings_transicion.append(resultado)
         permitidos.append((nombre, simbolo))
-    return permitidos, rechazos, warnings
+
+    clasificacion = ClasificacionSaneamientoUsar(rechazos_duros=rechazos_duros, warnings_transicion=warnings_transicion)
+    return permitidos, clasificacion, warnings_transicion

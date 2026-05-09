@@ -222,16 +222,20 @@ def sanitizar_exports_publicos(modulo: object, alias_modulo: str) -> tuple[dict[
         vistos.add(nombre)
         simbolos_brutos.append((nombre, getattr(modulo, nombre)))
 
-    simbolos_saneados, rechazos, warnings = sanear_exportables_para_usar(simbolos_brutos)
+    simbolos_saneados, clasificacion, warnings = sanear_exportables_para_usar(
+        simbolos_brutos,
+        modulo_origen=alias_modulo,
+    )
     mapa_limpio = {nombre: simbolo for nombre, simbolo in simbolos_saneados}
 
-    for resultado in [*rechazos, *warnings]:
+    for resultado in [*clasificacion.rechazos_duros, *warnings]:
         conflictos.append(
             {
                 "module": alias_modulo,
                 "symbol": resultado.nombre,
                 "code": resultado.codigo or ("warning" if resultado.warning else "rejected"),
                 "message": resultado.mensaje or ("warning de saneamiento" if resultado.warning else "símbolo rechazado"),
+                "source_module": resultado.metadata.get("modulo_origen"),
             }
         )
 
