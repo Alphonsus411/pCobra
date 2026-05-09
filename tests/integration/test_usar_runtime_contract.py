@@ -112,7 +112,7 @@ def test_texto_simbolo_existente_fuera_de_override_falla_como_no_declarado(monke
         interp.contextos[-1].get("normalizar_unicode")
 
 
-def test_texto_mantiene_filtro_outside_public_api_en_mapeo_interno():
+def test_regresion_texto_detecta_mapeo_interno_incompleto_y_filtra_fuera_de_api_publica():
     mod = ModuleType("texto")
     mod.__all__ = [*USAR_RUNTIME_EXPORT_OVERRIDES["texto"], "normalizar_unicode"]
     for name in USAR_RUNTIME_EXPORT_OVERRIDES["texto"]:
