@@ -109,7 +109,7 @@ def test_repl_contract_sintaxis_usar_compat_parser_semantica_plana_numpy_restrin
     estado_pre_numpy = dict(interp.contextos[-1].values)
     simbolos_pre = set(interp.contextos[-1].values.keys())
 
-    with pytest.raises(PermissionError, match=r"módulo externo no permitido en REPL estricto"):
+    with pytest.raises(PermissionError, match=r"(módulo externo no permitido en REPL estricto|modulo_fuera_catalogo_publico)"):
         executor(cmd, 'usar "numpy"')
 
     # Contrato de Cobra: `usar` es plano (sin `.`), no se expone namespace tipo `numero.*`.
@@ -203,7 +203,7 @@ def test_repl_contract_sintaxis_usar_compat_parser_semantica_plana_colision_no_s
     interp = get_interp(cmd)
     interp.contextos[-1].define("es_finito", lambda _valor: "ocupado")
 
-    with pytest.raises(NameError, match=r"No se puede usar el módulo 'numero': colisión estructurada="):
+    with pytest.raises(NameError, match=r"No se puede usar el módulo 'numero': (usar_error\[conflicto_simbolo\] )?colisión estructurada="):
         executor(cmd, 'usar "numero"')
 
     assert interp.obtener_variable("es_finito")("x") == "ocupado"
@@ -231,7 +231,7 @@ def test_repl_rechazo_externo_no_inyecta_simbolos(factory, executor, get_interp,
     interp = get_interp(cmd)
     estado_pre = dict(interp.contextos[-1].values)
 
-    with pytest.raises(PermissionError, match=r"módulo externo no permitido en REPL estricto"):
+    with pytest.raises(PermissionError, match=r"(módulo externo no permitido en REPL estricto|modulo_fuera_catalogo_publico)"):
         executor(cmd, 'usar "requests"')
 
     assert estado_pre == interp.contextos[-1].values
@@ -304,7 +304,7 @@ def test_repl_contract_seguridad_usar_holobit_restringe_internals_y_saneamiento(
     cmd = InteractiveCommand(InterpretadorCobra())
     cmd.interpretador.configurar_restriccion_usar_repl(alias_map)
     estado_pre = dict(cmd.interpretador.contextos[-1].values)
-    with pytest.raises(PermissionError, match=r"módulo externo no permitido en REPL estricto"):
+    with pytest.raises(PermissionError, match=r"(módulo externo no permitido en REPL estricto|modulo_fuera_catalogo_publico)"):
         cmd.ejecutar_codigo('usar "holobit_sdk"')
 
     assert estado_pre == cmd.interpretador.contextos[-1].values
@@ -438,3 +438,27 @@ def test_repl_contract_colision_warn_alias_required_estructurada(monkeypatch):
     with pytest.raises(NameError, match=r"colisión estructurada=.*policy"):
         interp.ejecutar_usar(_NodoUsar())
 
+
+
+@pytest.mark.parametrize(
+    "nombre",
+    ["", "   ", "../numero", "..\\numero", "corelibs/numero", "standard_library/texto", "pcobra", "holobit_sdk"],
+)
+def test_repl_rechaza_nombres_invalidos_o_maliciosos(nombre):
+    cmd = InteractiveCommand(InterpretadorCobra())
+    estado_pre = dict(cmd.interpretador.contextos[-1].values)
+
+    with pytest.raises((ValueError, PermissionError), match=r"(inválido|no permitido|externo|modulo_fuera_catalogo_publico)"):
+        cmd.ejecutar_codigo(f'usar "{nombre}"')
+
+    assert estado_pre == cmd.interpretador.contextos[-1].values
+
+
+def test_repl_rechaza_alias_legacy_fuera_contrato():
+    cmd = InteractiveCommand(InterpretadorCobra())
+    estado_pre = dict(cmd.interpretador.contextos[-1].values)
+
+    with pytest.raises(PermissionError, match=r"solo alias oficiales Cobra|nombres canónicos exactos|no permitido|modulo_fuera_catalogo_publico"):
+        cmd.ejecutar_codigo('usar "node-fetch"')
+
+    assert estado_pre == cmd.interpretador.contextos[-1].values

@@ -38,17 +38,9 @@ USAR_COBRA_FACING_MODULE_FLAGS: dict[str, bool] = {
 
 # Fuente única de verdad: alias canónico `usar` -> ruta interna oficial.
 REPL_COBRA_MODULE_INTERNAL_PATH_MAP: dict[str, str] = {
-    "numero": "src/pcobra/corelibs/numero.py",
-    "texto": "src/pcobra/corelibs/texto.py",
-    "datos": "src/pcobra/corelibs/datos.py",
-    "logica": "src/pcobra/corelibs/logica.py",
-    "asincrono": "src/pcobra/corelibs/asincrono.py",
-    "sistema": "src/pcobra/corelibs/sistema.py",
-    "archivo": "src/pcobra/corelibs/archivo.py",
-    "tiempo": "src/pcobra/corelibs/tiempo.py",
-    "red": "src/pcobra/corelibs/red.py",
-    "holobit": "src/pcobra/corelibs/holobit.py",
+    modulo: f"src/pcobra/corelibs/{modulo}.py" for modulo in USAR_COBRA_PUBLIC_MODULES
 }
+
 
 
 def validar_contrato_modulos_canonicos_usar() -> None:
