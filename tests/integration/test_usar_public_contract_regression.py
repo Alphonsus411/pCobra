@@ -274,6 +274,55 @@ def test_holobit_corelib_deserializacion_invalida_regresion():
         holobit.deserializar_holobit('{"tipo":"holobit","valores":[1],"extra":true}')
 
 
+def test_holobit_corelib_superficie_publica_canonica_blackbox():
+    import importlib.util
+    from pathlib import Path
+
+    ruta = Path("src/pcobra/corelibs/holobit.py").resolve()
+    spec = importlib.util.spec_from_file_location("_holobit_corelib_blackbox_api", ruta)
+    holobit = importlib.util.module_from_spec(spec)
+    assert spec and spec.loader
+    spec.loader.exec_module(holobit)
+
+    assert tuple(holobit.__all__) == (
+        "crear_holobit",
+        "validar_holobit",
+        "serializar_holobit",
+        "deserializar_holobit",
+        "proyectar",
+        "transformar",
+        "graficar",
+        "combinar",
+        "medir",
+    )
+
+
+def test_holobit_corelib_error_runtime_solo_terminos_cobra(monkeypatch):
+    import importlib.util
+    from pathlib import Path
+
+    ruta = Path("src/pcobra/corelibs/holobit.py").resolve()
+    spec = importlib.util.spec_from_file_location("_holobit_corelib_blackbox_runtime", ruta)
+    holobit = importlib.util.module_from_spec(spec)
+    assert spec and spec.loader
+    spec.loader.exec_module(holobit)
+
+    monkeypatch.setattr(
+        holobit._AdaptadorInternoHolobit,
+        "graficar",
+        lambda _hb: (_ for _ in ()).throw(ModuleNotFoundError("holobit_sdk.core.holobit")),
+    )
+
+    hb = holobit.crear_holobit([1, 2, 3])
+    with pytest.raises(holobit.ErrorHolobit) as excinfo:
+        holobit.graficar(hb)
+
+    mensaje = str(excinfo.value)
+    assert "Cobra" in mensaje
+    assert "holobit_sdk" not in mensaje
+    assert "SDKHolobit" not in mensaje
+
+
 def test_binding_usar_sin_dependencia_lexer_parser_para_datos(monkeypatch):
     mod_datos = _modulo_datos_publico_stub()
     monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: mod_datos)
