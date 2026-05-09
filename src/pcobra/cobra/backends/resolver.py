@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from typing import Any, Mapping
 
+from pcobra.cobra.architecture.backend_policy import PUBLIC_BACKENDS
 from pcobra.cobra.build import backend_pipeline
 from pcobra.cobra.backends.base import BackendAdapter
 
@@ -39,7 +40,7 @@ class PipelineBackendAdapter(BackendAdapter):
 def resolve_backend(artifact_kind: str) -> BackendAdapter:
     """Retorna un adapter shim que delega en ``backend_pipeline.transpile``."""
     normalized = _BACKEND_ALIASES.get((artifact_kind or "").strip().lower())
-    if normalized in {"python", "javascript", "rust"}:
+    if normalized in PUBLIC_BACKENDS:
         return PipelineBackendAdapter(normalized)
     raise ValueError(f"artifact_kind no soportado: {artifact_kind!r}")
 

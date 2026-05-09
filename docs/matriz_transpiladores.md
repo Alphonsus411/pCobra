@@ -17,7 +17,7 @@ Fuente de generación: `scripts/generar_matriz_transpiladores.py`.
 - **Targets con adaptador Holobit mantenido por el proyecto (partial fuera de python)**: `python`, `javascript`, `rust`.
 - **Compatibilidad SDK completa (solo python)**: `python`.
 - **Targets solo de transpilación**: .
-- **Targets legacy/internal (no públicos)**: go, cpp, java, wasm, asm.
+- **Targets legacy/internal (no públicos)**: no aplican en la matriz pública por defecto; ruta interna de compatibilidad.
 <!-- END GENERATED MATRIZ POLICY SUMMARY -->
 
 ## Estado público por backend

@@ -4,15 +4,15 @@ from __future__ import annotations
 
 from typing import Final
 
+from pcobra.cobra.architecture.backend_policy import PUBLIC_BACKENDS
 from pcobra.cobra.config.transpile_targets import (
-    ALLOWED_TARGETS,
     OFFICIAL_TARGETS,
     TARGETS_BY_TIER,
     TIER1_TARGETS,
     TIER2_TARGETS,
 )
 
-EXPECTED_CANONICAL_TARGETS: Final[tuple[str, ...]] = ALLOWED_TARGETS
+EXPECTED_CANONICAL_TARGETS: Final[tuple[str, ...]] = PUBLIC_BACKENDS
 
 
 def _canonical_diff_report(

@@ -1,8 +1,8 @@
 # Matriz de compatibilidad de librerías por target oficial
 
-Fecha de actualización: **2026-03-28**.
+Fecha de actualización: **2026-05-09**.
 
-Este documento publica el inventario técnico y el estado de compatibilidad de librerías clave de pCobra por cada uno de los **8 targets permitidos** (`python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java`, `asm`).
+Este documento publica el inventario técnico y el estado de compatibilidad de librerías clave de pCobra por cada uno de los **3 targets públicos oficiales** (`python`, `javascript`, `rust`).
 
 > Contrato canónico: las etiquetas **SDK full**, **runtime oficial**, **best-effort** y **solo transpilación** se toman de `src/pcobra/cobra/transpilers/compatibility_matrix.py` (no de flags booleanos aislados).
 
@@ -21,7 +21,7 @@ Suite: `tests/integration/transpilers/test_library_compatibility_matrix.py`
 
 Cobertura:
 
-1. Valida que la matriz cubra exactamente los 8 targets oficiales.
+1. Valida que la matriz pública cubra exactamente los 3 targets oficiales.
 2. Valida contrato por área (`runtime`, `parser`, `serializacion`, `red`) en cada target.
 3. Cruza compatibilidad de runtime con el piso contractual oficial (`BACKEND_COMPATIBILITY`).
 4. Verifica severidad máxima por target para evitar drift del inventario.
@@ -33,27 +33,17 @@ Cobertura:
 | `python` | full | full | full | full | baja |
 | `javascript` | partial | partial | partial | partial | media |
 | `rust` | partial | partial | partial | partial | alta |
-| `wasm` | partial | none | partial | none | alta |
-| `go` | partial | none | partial | none | alta |
-| `cpp` | partial | none | partial | none | alta |
-| `java` | partial | none | partial | none | alta |
-| `asm` | partial | none | none | none | critica |
 
 ### Incompatibilidades clave registradas
 
-- **WASM**: depende de runtime host-managed para semántica real de runtime/serialización/red.
-  - Workaround: implementar imports host `pcobra:*` y ABI de buffers estable.
-- **ASM**: backend de inspección/diagnóstico sin red ni serialización oficial.
-  - Workaround: usar ASM solo para auditoría de transpilación, no para ejecución con IO real.
-- **Go/Java/C++/Rust/JS**: runtime parcial sin paridad total de SDK Python.
+- **JavaScript/Rust**: runtime parcial sin paridad total de SDK Python.
   - Workaround: limitarse al subset contractual y mover funcionalidades avanzadas al host.
 
 ## 3.1) Lectura correcta del contrato (single source of truth)
 
 - **SDK full**: `python`.
-- **Runtime oficial verificable**: `python`, `rust`, `javascript`, `cpp`.
-- **Runtime best-effort no público**: `go`, `java`.
-- **Solo transpilación**: `wasm`, `asm`.
+- **Runtime oficial verificable público**: `python`, `javascript`, `rust`.
+- **Backends legacy**: fuera de la matriz pública; disponibles solo en compatibilidad interna.
 
 Estas categorías son ortogonales al detalle por feature (`runtime`, `parser`, `serialización`, `red`): un backend puede tener runtime oficial y seguir en contrato `partial` para Holobit/SDK.
 

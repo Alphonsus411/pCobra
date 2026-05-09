@@ -1,7 +1,7 @@
 Estado de los lenguajes soportados
 =================================
 
-La narrativa pública de pCobra es única: el proyecto transpila a **8 backends oficiales** y los organiza en **Tier 1** y **Tier 2**. La lista canónica y el reparto por tiers se derivan de ``src/pcobra/cobra/config/transpile_targets.py``; la política de runtime, Holobit y SDK se deriva de ``src/pcobra/cobra/cli/target_policies.py``.
+La narrativa pública de pCobra es única: el proyecto transpila a **3 backends públicos oficiales** (`python`, `javascript`, `rust`). La lista canónica se deriva de ``src/pcobra/cobra/architecture/backend_policy.py`` (``PUBLIC_BACKENDS``).
 
 .. include:: _generated/official_targets_table.rst
 
@@ -12,11 +12,11 @@ Estado público de runtime, Holobit y SDK
 
 Lectura correcta de la política pública:
 
-- Los backends oficiales de salida son únicamente ``python``, ``rust``, ``javascript``, ``wasm``, ``go``, ``cpp``, ``java`` y ``asm``.
-- El runtime oficial verificable solo cubre ``python``, ``rust``, ``javascript`` y ``cpp``.
-- ``go`` y ``java`` conservan runtime best-effort no público; ``wasm`` y ``asm`` son targets oficiales de solo transpilación.
+- Los backends públicos de salida son únicamente ``python``, ``javascript`` y ``rust``.
+- El runtime oficial verificable para la superficie pública cubre esos tres targets.
+- Los backends legacy (`go`, `cpp`, `java`, `wasm`, `asm`) quedan en ruta de compatibilidad interna y no forman parte de la operación pública normal.
 - La compatibilidad SDK completa solo puede prometerse para ``python``.
-- El soporte Holobit debe leerse siempre junto con la matriz contractual: ``python`` es ``full``; el resto de backends oficiales permanecen en ``partial``.
+- El soporte Holobit debe leerse siempre junto con la matriz contractual pública: ``python`` es ``full``; ``javascript`` y ``rust`` permanecen en ``partial``.
 
 Orígenes reverse de entrada (no targets de salida)
 --------------------------------------------------
