@@ -6,6 +6,7 @@ import pytest
 
 from pcobra.cobra.core.runtime import InterpretadorCobra
 from pcobra.cobra.usar_policy import USAR_RUNTIME_EXPORT_OVERRIDES
+from pcobra.core import usar_symbol_policy
 
 
 def _nodo(modulo: str):
@@ -38,6 +39,44 @@ def test_holobit_export_only_runtime_override(monkeypatch):
     assert all("__" not in name for name in simbolos)
 
 
+def test_holobit_runtime_override_exporta_exclusivamente_api_publica():
+    assert tuple(USAR_RUNTIME_EXPORT_OVERRIDES["holobit"]) == (
+        "crear_holobit",
+        "validar_holobit",
+        "serializar_holobit",
+        "deserializar_holobit",
+        "proyectar",
+        "transformar",
+        "graficar",
+        "combinar",
+        "medir",
+    )
+
+
+def test_sanear_exportables_clasifica_y_rechaza_wrappers_backend():
+    modulo_sdk = ModuleType("holobit_sdk")
+
+    class WrapperConWrapped:
+        __wrapped__ = modulo_sdk
+
+    class WrapperConSdk:
+        _sdk = modulo_sdk
+
+    simbolos = [
+        ("crear_holobit", lambda valores: valores),
+        ("holobit_sdk", modulo_sdk),
+        ("wrapper", WrapperConWrapped()),
+        ("wrapper_sdk", WrapperConSdk()),
+    ]
+    permitidos, clasificacion, _warnings = usar_symbol_policy.sanear_exportables_para_usar(simbolos)
+
+    assert [nombre for nombre, _ in permitidos] == ["crear_holobit"]
+    codigos = {rechazo.nombre: rechazo.codigo for rechazo in clasificacion.rechazos_duros}
+    assert codigos["holobit_sdk"] == "cobra_public_equivalent"
+    assert codigos["wrapper"] == "backend_module_object"
+    assert codigos["wrapper_sdk"] == "backend_module_object"
+
+
 def test_rechaza_numpy_en_repl_estricto_sin_inyeccion(monkeypatch):
     monkeypatch.setattr(
         "pcobra.core.usar_loader.obtener_modulo_cobra_oficial",
@@ -48,7 +87,7 @@ def test_rechaza_numpy_en_repl_estricto_sin_inyeccion(monkeypatch):
     interp.configurar_restriccion_usar_repl({"numero": "numero"})
     estado_pre = dict(interp.contextos[-1].values)
 
-    with pytest.raises(PermissionError, match="módulo externo no permitido en REPL estricto"):
+    with pytest.raises(PermissionError, match="modulo_fuera_catalogo_publico|módulo externo no permitido en REPL estricto"):
         interp.ejecutar_usar(_nodo("numpy"))
 
     assert estado_pre == interp.contextos[-1].values
