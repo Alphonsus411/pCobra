@@ -33,9 +33,10 @@ Todos los targets oficiales mantienen hooks canónicos `cobra_*` para Holobit. E
 
 ### Categorías runtime oficiales (sin inflar compatibilidad)
 
-- **Runtime oficial verificable**: `python`, `rust`, `javascript`, `cpp`.
+- **Runtime oficial verificable (incluye Docker oficial)**: `python`, `rust`, `javascript`.
 - **Runtime best-effort no público**: `go`, `java`.
 - **Solo transpilación**: `wasm`, `asm`.
+- **Legacy/internal sin runtime oficial público**: `cpp`.
 - **SDK full**: solo `python` (el resto permanece en `partial` o capacidades puntuales `none` según feature).
 
 ---

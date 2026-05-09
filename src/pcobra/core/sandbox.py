@@ -51,10 +51,58 @@ MAX_CONTAINER_OUTPUT_BYTES = 8 * 1024
 CONTAINER_IMAGE_BY_BACKEND = {
     "python": "cobra-python-sandbox",
     "javascript": "cobra-js-sandbox",
-    "cpp": "cobra-cpp-sandbox",
     "rust": "cobra-rust-sandbox",
 }
 OFFICIAL_CONTAINER_BACKENDS = tuple(CONTAINER_IMAGE_BY_BACKEND)
+UNOFFICIAL_BEST_EFFORT_BACKENDS = ("go", "java")
+UNOFFICIAL_TRANSPILATION_ONLY_BACKENDS = ("wasm", "asm")
+
+
+def _validate_container_runtime_policy_contract() -> None:
+    """Valida consistencia entre la política Docker y las constantes de CLI/runtime."""
+
+    from pcobra.cobra.cli.target_policies import OFFICIAL_RUNTIME_TARGETS
+    from pcobra.cobra.transpilers.compatibility_matrix import (
+        BEST_EFFORT_RUNTIME_BACKENDS,
+        OFFICIAL_RUNTIME_BACKENDS,
+        TRANSPILATION_ONLY_BACKENDS,
+    )
+
+    expected_official = tuple(OFFICIAL_RUNTIME_TARGETS)
+    if tuple(OFFICIAL_RUNTIME_BACKENDS) != expected_official:
+        raise RuntimeError(
+            "Desalineación de política runtime: "
+            f"OFFICIAL_RUNTIME_BACKENDS={tuple(OFFICIAL_RUNTIME_BACKENDS)} "
+            f"!= OFFICIAL_RUNTIME_TARGETS={expected_official}"
+        )
+
+    if OFFICIAL_CONTAINER_BACKENDS != expected_official:
+        raise RuntimeError(
+            "Desalineación de política Docker: "
+            f"CONTAINER_IMAGE_BY_BACKEND={OFFICIAL_CONTAINER_BACKENDS} "
+            f"!= OFFICIAL_RUNTIME_TARGETS={expected_official}"
+        )
+
+    matrix_best_effort = tuple(BEST_EFFORT_RUNTIME_BACKENDS)
+    if matrix_best_effort and matrix_best_effort != UNOFFICIAL_BEST_EFFORT_BACKENDS:
+        raise RuntimeError(
+            "Desalineación de best-effort runtime: "
+            f"matrix={matrix_best_effort} != sandbox={UNOFFICIAL_BEST_EFFORT_BACKENDS}"
+        )
+
+    matrix_transpilation_only = tuple(TRANSPILATION_ONLY_BACKENDS)
+    if (
+        matrix_transpilation_only
+        and matrix_transpilation_only != UNOFFICIAL_TRANSPILATION_ONLY_BACKENDS
+    ):
+        raise RuntimeError(
+            "Desalineación de targets solo transpilación: "
+            f"matrix={matrix_transpilation_only} "
+            f"!= sandbox={UNOFFICIAL_TRANSPILATION_ONLY_BACKENDS}"
+        )
+
+
+_validate_container_runtime_policy_contract()
 
 _ORIGINAL_IMPORT = builtins.__import__
 _SANDBOX_IMPORT_ALLOWLIST = {
@@ -800,12 +848,11 @@ def ejecutar_en_contenedor(
 ) -> str:
     """Ejecuta ``codigo`` dentro de un contenedor Docker según ``backend``.
 
-    Los backends soportados son ``python``, ``javascript``, ``cpp`` y ``rust``.
-    Son los mismos backends que hoy forman la matriz pública de runtime oficial
-    verificable. ``go`` y ``java`` siguen siendo targets oficiales de salida
-    con runtime best-effort, pero quedan fuera del runtime Docker oficial.
-    ``wasm`` y ``asm`` son targets oficiales solo de transpilación y tampoco
-    tienen runtime Docker oficial. Cada backend utiliza una imagen específica
+    Los runtimes Docker oficiales soportados son ``python``, ``javascript`` y ``rust``.
+    ``go`` y ``java`` se mantienen como targets no oficiales de runtime
+    best-effort (sin soporte Docker oficial). ``wasm`` y ``asm`` se mantienen
+    como targets no oficiales solo de transpilación (sin soporte Docker oficial).
+    Cada backend oficial utiliza una imagen específica
     que debe estar construida previamente. ``timeout`` define el límite de
     tiempo en segundos para la ejecución del contenedor o ``None`` para
     desactivar el límite.
@@ -818,14 +865,14 @@ def ejecutar_en_contenedor(
     """
 
     if backend not in CONTAINER_IMAGE_BY_BACKEND:
-        if backend in {"go", "java"}:
+        if backend in set(UNOFFICIAL_BEST_EFFORT_BACKENDS):
             raise ValueError(
                 "Backend con runtime best-effort pero sin runtime Docker oficial: "
                 f"{backend}. pCobra puede generar código para ese target y conservarlo "
                 "como backend best-effort, pero no lo expone como ejecución real oficial "
                 f"en contenedor. Runtimes Docker oficiales: {', '.join(OFFICIAL_CONTAINER_BACKENDS)}."
             )
-        if backend in {"wasm", "asm"}:
+        if backend in set(UNOFFICIAL_TRANSPILATION_ONLY_BACKENDS):
             raise ValueError(
                 "Backend oficial solo de transpilación, sin runtime Docker oficial: "
                 f"{backend}. pCobra puede generar código para ese target, "
