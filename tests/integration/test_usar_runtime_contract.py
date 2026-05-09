@@ -91,3 +91,40 @@ def test_rechaza_numpy_en_repl_estricto_sin_inyeccion(monkeypatch):
         interp.ejecutar_usar(_nodo("numpy"))
 
     assert estado_pre == interp.contextos[-1].values
+
+
+def test_texto_simbolo_existente_fuera_de_override_falla_como_no_declarado(monkeypatch):
+    mod = ModuleType("texto")
+    mod.__all__ = [*USAR_RUNTIME_EXPORT_OVERRIDES["texto"], "normalizar_unicode"]
+    for name in USAR_RUNTIME_EXPORT_OVERRIDES["texto"]:
+        setattr(mod, name, lambda *args, **kwargs: (args, kwargs))
+    mod.normalizar_unicode = lambda texto, forma="NFC": texto
+    mod.__file__ = "/workspace/pCobra/src/pcobra/standard_library/texto.py"
+
+    monkeypatch.setattr("pcobra.core.usar_loader.obtener_modulo_cobra_oficial", lambda _nombre: mod)
+
+    interp = InterpretadorCobra()
+    interp.configurar_restriccion_usar_repl({"texto": "texto"})
+    interp.ejecutar_usar(_nodo("texto"))
+
+    assert "normalizar_unicode" not in interp.contextos[-1].values
+    with pytest.raises(NameError, match=r"^Variable no declarada: normalizar_unicode$"):
+        interp.contextos[-1].get("normalizar_unicode")
+
+
+def test_texto_mantiene_filtro_outside_public_api_en_mapeo_interno():
+    mod = ModuleType("texto")
+    mod.__all__ = [*USAR_RUNTIME_EXPORT_OVERRIDES["texto"], "normalizar_unicode"]
+    for name in USAR_RUNTIME_EXPORT_OVERRIDES["texto"]:
+        setattr(mod, name, lambda *args, **kwargs: (args, kwargs))
+    mod.normalizar_unicode = lambda texto, forma="NFC": texto
+
+    from pcobra.core.usar_loader import sanitizar_exports_publicos
+
+    mapa_limpio, conflictos = sanitizar_exports_publicos(mod, "texto")
+
+    assert "normalizar_unicode" not in mapa_limpio
+    assert any(
+        conflicto.get("symbol") == "normalizar_unicode" and conflicto.get("code") == "outside_public_api"
+        for conflicto in conflictos
+    )
