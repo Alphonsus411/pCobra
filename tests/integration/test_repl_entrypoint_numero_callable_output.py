@@ -10,11 +10,11 @@ from pcobra.cobra.cli.commands_v2.repl_cmd import ReplCommandV2
 
 def _modulo_numero_stub() -> ModuleType:
     mod = ModuleType("numero")
-    mod.__all__ = ["es_finito", "es_nan", "signo", "entero_a_base", "_interno"]
+    mod.__all__ = ["es_finito", "es_nan", "signo", "desviacion_estandar", "_interno"]
     mod.es_finito = lambda valor: valor == valor and valor not in (float("inf"), float("-inf"))
     mod.es_nan = lambda valor: valor != valor
     mod.signo = lambda valor: -1 if valor < 0 else (1 if valor > 0 else 0)
-    mod.entero_a_base = lambda valor, _base=2: format(int(valor), "b")
+    mod.desviacion_estandar = lambda _valores: 0.0
     mod._interno = lambda _valor: "oculto"
     mod.__file__ = "/workspace/pCobra/src/pcobra/corelibs/numero.py"
     return mod
@@ -97,8 +97,8 @@ def test_entrypoint_repl_real_rechaza_simbolo_no_exportado_por_superficie_public
     cmd = ReplCommandV2()
     cmd._ejecutar_en_modo_normal('usar "numero"')
 
-    with pytest.raises(NameError, match=r"Variable no declarada: entero_a_base"):
-        cmd._ejecutar_en_modo_normal("entero_a_base(10)")
+    with pytest.raises(NameError, match=r"Variable no declarada: desviacion_estandar"):
+        cmd._ejecutar_en_modo_normal("desviacion_estandar([1, 2, 3])")
 
 
 def test_entrypoint_repl_real_rechaza_numpy_externo(monkeypatch):
@@ -135,3 +135,23 @@ def test_entrypoint_repl_real_funcion_usuario_sigue_operativa_tras_usar(monkeypa
 
     salida = capsys.readouterr().out
     assert "10" in salida
+
+
+def test_entrypoint_repl_real_imprimir_booleanos_canonicos_no_regresion(monkeypatch, capsys):
+    mod_numero = _modulo_numero_stub()
+
+    monkeypatch.setattr(
+        core_usar_loader,
+        "obtener_modulo_cobra_oficial",
+        lambda nombre: mod_numero if nombre == "numero" else (_ for _ in ()).throw(ModuleNotFoundError(nombre)),
+    )
+
+    cmd = ReplCommandV2()
+    cmd._ejecutar_en_modo_normal('usar "numero"')
+    cmd._ejecutar_en_modo_normal("imprimir(es_finito(10))")
+    cmd._ejecutar_en_modo_normal("imprimir(es_nan(10))")
+
+    salida = capsys.readouterr().out
+    lineas = [linea.strip() for linea in salida.splitlines() if linea.strip()]
+    assert lineas.count("verdadero") >= 1
+    assert lineas.count("falso") >= 1
