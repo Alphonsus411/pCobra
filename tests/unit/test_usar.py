@@ -251,15 +251,26 @@ def test_repl_usar_numero_ejecuta_callable_runtime_es_finito(monkeypatch):
     assert interp.ejecutar_llamada_funcion(llamada) is True
 
 
-def test_repl_usar_numero_ejecuta_callable_runtime_es_nan(monkeypatch):
+def test_repl_usar_numero_ejecuta_callable_runtime_es_nan_con_math_nan(monkeypatch):
     import math
+    import pcobra.corelibs.numero as modulo_numero
+
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre, **_kwargs: modulo_numero)
+    # Caso explícito: validar es_nan(math.nan) en runtime.
+    interp = _ejecutar_codigo('usar \"numero\"\nes_nan(math.nan)')
+
+    llamada = NodoLlamadaFuncion("es_nan", [NodoValor(math.nan)])
+    assert interp.ejecutar_llamada_funcion(llamada) is True
+
+
+def test_repl_usar_numero_ejecuta_callable_runtime_es_nan_con_entero(monkeypatch):
     import pcobra.corelibs.numero as modulo_numero
 
     monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre, **_kwargs: modulo_numero)
     interp = _ejecutar_codigo('usar \"numero\"\nes_nan(10)')
 
-    llamada = NodoLlamadaFuncion("es_nan", [NodoValor(math.nan)])
-    assert interp.ejecutar_llamada_funcion(llamada) is True
+    llamada = NodoLlamadaFuncion("es_nan", [NodoValor(10)])
+    assert interp.ejecutar_llamada_funcion(llamada) is False
 
 def test_repl_usar_detecta_colision_de_simbolo_existente(monkeypatch):
     import pcobra.corelibs.texto as modulo_texto
