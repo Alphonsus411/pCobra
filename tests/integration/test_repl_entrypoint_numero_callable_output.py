@@ -10,9 +10,10 @@ from pcobra.cobra.cli.commands_v2.repl_cmd import ReplCommandV2
 
 def _modulo_numero_stub() -> ModuleType:
     mod = ModuleType("numero")
-    mod.__all__ = ["es_finito", "es_nan", "entero_a_base", "_interno"]
+    mod.__all__ = ["es_finito", "es_nan", "signo", "entero_a_base", "_interno"]
     mod.es_finito = lambda valor: valor == valor and valor not in (float("inf"), float("-inf"))
     mod.es_nan = lambda valor: valor != valor
+    mod.signo = lambda valor: -1 if valor < 0 else (1 if valor > 0 else 0)
     mod.entero_a_base = lambda valor, _base=2: format(int(valor), "b")
     mod._interno = lambda _valor: "oculto"
     mod.__file__ = "/workspace/pCobra/src/pcobra/corelibs/numero.py"
@@ -40,6 +41,31 @@ def test_entrypoint_repl_real_numero_callable_y_stdout_canonico_sin_error_no_imp
     assert "Función 'es_nan' no implementada" not in salida
 
 
+
+
+def test_entrypoint_repl_numero_callable_output_regresion_binding_runtime(monkeypatch, capsys):
+    # Contexto: regresión del bug de binding runtime (callable Python en contexto de `usar`).
+    mod_numero = _modulo_numero_stub()
+
+    monkeypatch.setattr(
+        core_usar_loader,
+        "obtener_modulo_cobra_oficial",
+        lambda nombre: mod_numero if nombre == "numero" else (_ for _ in ()).throw(ModuleNotFoundError(nombre)),
+    )
+
+    cmd = ReplCommandV2()
+    cmd._ejecutar_en_modo_normal('usar "numero"')
+    cmd._ejecutar_en_modo_normal("imprimir(es_finito(10))")
+    cmd._ejecutar_en_modo_normal("imprimir(es_nan(10))")
+    cmd._ejecutar_en_modo_normal("imprimir(signo(0-5))")
+
+    salida = capsys.readouterr().out
+    assert "verdadero" in salida
+    assert "falso" in salida
+    assert "-1" in salida
+    assert "Función 'es_finito' no implementada" not in salida
+    assert "Función 'es_nan' no implementada" not in salida
+    assert "Función 'signo' no implementada" not in salida
 def test_entrypoint_repl_real_numero_callable_directo_sin_no_implementada(monkeypatch, capsys):
     mod_numero = _modulo_numero_stub()
 
