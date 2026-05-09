@@ -19,7 +19,7 @@ def _modulo_numero_stub() -> ModuleType:
     return mod
 
 
-def test_entrypoint_repl_real_numero_stdout_canonico_y_sin_error_no_implementada(monkeypatch, capsys):
+def test_entrypoint_repl_real_numero_callable_y_stdout_canonico_sin_error_no_implementada(monkeypatch, capsys):
     mod_numero = _modulo_numero_stub()
 
     monkeypatch.setattr(
@@ -37,6 +37,26 @@ def test_entrypoint_repl_real_numero_stdout_canonico_y_sin_error_no_implementada
     assert "verdadero" in salida
     assert "falso" in salida
     assert "Función 'es_finito' no implementada" not in salida
+    assert "Función 'es_nan' no implementada" not in salida
+
+
+def test_entrypoint_repl_real_numero_callable_directo_sin_no_implementada(monkeypatch, capsys):
+    mod_numero = _modulo_numero_stub()
+
+    monkeypatch.setattr(
+        core_usar_loader,
+        "obtener_modulo_cobra_oficial",
+        lambda nombre: mod_numero if nombre == "numero" else (_ for _ in ()).throw(ModuleNotFoundError(nombre)),
+    )
+
+    cmd = ReplCommandV2()
+    cmd._ejecutar_en_modo_normal('usar "numero"')
+    cmd._ejecutar_en_modo_normal("es_finito(10)")
+    cmd._ejecutar_en_modo_normal("es_nan(10)")
+
+    salida = capsys.readouterr().out
+    assert "Función 'es_finito' no implementada" not in salida
+    assert "Función 'es_nan' no implementada" not in salida
 
 
 def test_entrypoint_repl_real_rechaza_simbolo_no_exportado_por_superficie_publica(monkeypatch):
