@@ -55,6 +55,11 @@ def _internal_compat_bindings():
 ACCEPTED_TARGET_ALIASES: tuple[tuple[str, str], ...] = ()
 
 
+OFFICIAL_PUBLIC_BACKENDS = require_exact_official_targets(
+    PUBLIC_BACKENDS,
+    context="pcobra.cobra.cli.target_policies.OFFICIAL_PUBLIC_BACKENDS",
+)
+
 def accepted_target_aliases_examples_text() -> str:
     """No existen aliases aceptados en la superficie pública actual."""
     return "sin aliases públicos"
@@ -69,6 +74,10 @@ OFFICIAL_TRANSPILATION_TARGETS = require_exact_official_targets(
 # Targets oficiales con tooling oficial de ejecución en contenedor/sandbox Docker.
 OFFICIAL_RUNTIME_TARGETS = target_cli_choices(
     tuple(target for target in OFFICIAL_RUNTIME_BACKENDS if target in OFFICIAL_TRANSPILATION_TARGETS)
+)
+require_exact_official_targets(
+    OFFICIAL_RUNTIME_BACKENDS,
+    context="pcobra.cobra.cli.target_policies.OFFICIAL_RUNTIME_BACKENDS",
 )
 
 # Targets best-effort conservados fuera del contrato oficial de runtime.
@@ -196,10 +205,10 @@ _validate_runtime_categories_contract()
 
 def _validate_public_routes_contract() -> None:
     """Bloquea inicialización si las rutas públicas se salen de PUBLIC_BACKENDS."""
-    if OFFICIAL_TRANSPILATION_TARGETS != PUBLIC_BACKENDS:
+    if OFFICIAL_TRANSPILATION_TARGETS != OFFICIAL_PUBLIC_BACKENDS:
         raise RuntimeError(
             "OFFICIAL_TRANSPILATION_TARGETS debe ser exactamente PUBLIC_BACKENDS "
-            f"en rutas públicas. official={OFFICIAL_TRANSPILATION_TARGETS}; public={PUBLIC_BACKENDS}"
+            f"en rutas públicas. official={OFFICIAL_TRANSPILATION_TARGETS}; public={OFFICIAL_PUBLIC_BACKENDS}"
         )
 
     for route_name, route_targets in (
@@ -209,7 +218,7 @@ def _validate_public_routes_contract() -> None:
         ("SDK_COMPATIBLE_TARGETS", SDK_COMPATIBLE_TARGETS),
     ):
         out_of_contract = tuple(
-            target for target in route_targets if target not in PUBLIC_BACKENDS
+            target for target in route_targets if target not in OFFICIAL_PUBLIC_BACKENDS
         )
         if out_of_contract:
             raise RuntimeError(
