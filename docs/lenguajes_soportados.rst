@@ -32,9 +32,10 @@ Capacidades públicas por backend
 Interpretación oficial:
 
 - ``python`` es el único backend con compatibilidad SDK completa y estado Holobit ``full``.
-- ``rust``, ``javascript`` y ``cpp`` tienen runtime oficial verificable y adaptador Holobit mantenido por el proyecto, pero siguen en estado contractual ``partial``.
-- ``go`` y ``java`` conservan runtime best-effort no público.
-- ``wasm`` y ``asm`` son backends oficiales de salida orientados a transpilación, no a runtime oficial público.
+- ``rust`` y ``javascript`` tienen runtime oficial verificable y adaptador Holobit mantenido por el proyecto, pero siguen en estado contractual ``partial``.
+- ``go`` y ``java`` conservan runtime best-effort no público (sin runtime Docker oficial).
+- ``wasm`` y ``asm`` son backends oficiales de salida orientados a transpilación, no a runtime oficial público ni Docker oficial.
+- ``cpp`` permanece como backend legacy/internal sin runtime Docker oficial público.
 
 Transpilación inversa (feature independiente)
 ---------------------------------------------
