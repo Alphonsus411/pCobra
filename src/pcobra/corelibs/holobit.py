@@ -10,7 +10,7 @@ from collections.abc import Iterable, Sequence
 from typing import Any
 
 from pcobra.core.holobits.graficar import graficar as _runtime_graficar
-from pcobra.core.holobits.holobit import Holobit as _RuntimeHolobit
+from pcobra.core.holobits.holobit import Holobit as _runtime_holobit_tipo
 
 EQUIVALENCIAS_SEMANTICAS_HOLOBIT: dict[str, str] = {
     "new Holobit": "crear_holobit",
@@ -22,8 +22,7 @@ EQUIVALENCIAS_SEMANTICAS_HOLOBIT: dict[str, str] = {
     "render": "graficar",
 }
 
-# Alias interno para compatibilidad de pruebas de dominio (no exportado).
-_SDKHolobit = _RuntimeHolobit
+_SIMBOLOS_SDK_BLOQUEADOS = frozenset({"_SDKHolobit", "Holobit", "holobit_sdk"})
 
 
 class ErrorHolobit(ValueError):
@@ -49,7 +48,7 @@ class _AdaptadorInternoHolobit:
 
     @staticmethod
     def crear_desde_valores(valores: list[float]) -> Any:
-        return _SDKHolobit(valores)
+        return _runtime_holobit_tipo(valores)
 
     @staticmethod
     def obtener_valores(hb: Any) -> list[float]:
@@ -79,7 +78,23 @@ def _a_estructura_cobra(hb: Any) -> dict[str, Any]:
     return {"tipo": "holobit", "valores": _AdaptadorInternoHolobit.obtener_valores(hb)}
 
 
+def _rechazar_simbolos_sdk_en_estructura(valor: Any) -> None:
+    if isinstance(valor, str):
+        if valor in _SIMBOLOS_SDK_BLOQUEADOS:
+            raise TypeError("Estructura de holobit contiene símbolos internos no permitidos")
+        return
+    if isinstance(valor, dict):
+        for clave, contenido in valor.items():
+            _rechazar_simbolos_sdk_en_estructura(clave)
+            _rechazar_simbolos_sdk_en_estructura(contenido)
+        return
+    if isinstance(valor, Sequence) and not isinstance(valor, (str, bytes)):
+        for item in valor:
+            _rechazar_simbolos_sdk_en_estructura(item)
+
+
 def _validar_estructura_holobit(hb: Any) -> dict[str, Any]:
+    _rechazar_simbolos_sdk_en_estructura(hb)
     if not isinstance(hb, dict):
         raise TypeError("El holobit debe ser un objeto tipo dict")
     claves = set(hb.keys())
@@ -123,7 +138,9 @@ def validar_holobit(hb: Any) -> bool:
 
 def serializar_holobit(hb: dict[str, Any]) -> str:
     try:
-        return json.dumps(_a_estructura_cobra(_desde_estructura_cobra(hb)), ensure_ascii=False)
+        estructura_cobra = _a_estructura_cobra(_desde_estructura_cobra(hb))
+        _rechazar_simbolos_sdk_en_estructura(estructura_cobra)
+        return json.dumps(estructura_cobra, ensure_ascii=False)
     except (TypeError, ValueError):
         raise
     except Exception as exc:  # pragma: no cover - defensivo frente al runtime interno

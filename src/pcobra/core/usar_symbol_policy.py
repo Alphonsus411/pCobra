@@ -29,6 +29,8 @@ EQUIVALENCIAS_PROHIBIDAS_A_CANONICAS = {
     "replace": "reemplazar",
     "startswith": "inicia_con",
     "endswith": "termina_con",
+    "Holobit": "crear_holobit",
+    "holobit_sdk": "crear_holobit",
 }
 
 NOMBRES_PROHIBIDOS_EXPLICITOS = frozenset(EQUIVALENCIAS_PROHIBIDAS_A_CANONICAS)
@@ -145,7 +147,8 @@ def sanear_simbolo_para_usar(
         return _rechazar(nombre, simbolo, "backend_internal_name", "nombre interno del backend bloqueado", metadata)
 
     if nombre in NOMBRES_PROHIBIDOS_EXPLICITOS:
-        return _rechazar(nombre, simbolo, "explicit_forbidden_name", _mensaje_nombre_prohibido(nombre), metadata)
+        codigo = "cobra_public_equivalent" if nombre in EQUIVALENCIAS_PROHIBIDAS_A_CANONICAS else "explicit_forbidden_name"
+        return _rechazar(nombre, simbolo, codigo, _mensaje_nombre_prohibido(nombre), metadata)
 
     if not callable(simbolo) and nombre not in NOMBRES_CONSTANTES_PUBLICAS_CANONICAS:
         return _rechazar(nombre, simbolo, "non_callable_not_canonical_public_constant", "solo se permiten no-callables para constantes públicas explícitas y canónicas", metadata)

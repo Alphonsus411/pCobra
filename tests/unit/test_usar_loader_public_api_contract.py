@@ -128,6 +128,20 @@ def test_politica_de_simbolos_prohibidos_devuelve_codigo_y_mensaje(simbolo: str)
     assert resultado.mensaje.strip()
 
 
+@pytest.mark.parametrize("simbolo", ["_SDKHolobit", "Holobit", "holobit_sdk"])
+def test_politica_bloquea_simbolos_sdk_holobit_en_superficie_usar(simbolo: str) -> None:
+    resultado = sanear_simbolo_para_usar(simbolo, lambda: None)
+    assert resultado.rechazado is True
+    assert resultado.codigo in {"private_prefix", "cobra_public_equivalent"}
+
+
+@pytest.mark.parametrize("payload", ['{"tipo":"holobit","valores":[1,"Holobit"]}', '{"tipo":"holobit_sdk","valores":[1,2]}'])
+def test_holobit_deserializar_bloquea_referencias_sdk(payload: str) -> None:
+    modulo = usar_loader.obtener_modulo("holobit")
+    with pytest.raises(TypeError):
+        modulo.deserializar_holobit(payload)
+
+
 def test_backends_legacy_no_se_cargan_en_startup_normal() -> None:
     import sys
     from pcobra.cobra.bindings.runtime_manager import RuntimeManager
