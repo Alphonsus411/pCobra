@@ -355,3 +355,45 @@ def test_binding_usar_holobit_no_expone_internals_directos(monkeypatch):
     assert "holobit_sdk" not in simbolos
     assert "_to_sdk_holobit" not in simbolos
     assert all("__" not in nombre for nombre in simbolos)
+
+
+def test_sanitizar_exports_publicos_rechaza_objeto_sdk_accidental_en_holobit():
+    mod_holobit = _modulo_holobit_publico_stub()
+
+    class _SDKObjetoAccidental:
+        __module__ = "holobit_sdk.core.holobit"
+
+    mod_holobit.__all__ = [*mod_holobit.__all__, "SDKHolobitAccidental"]
+    mod_holobit.SDKHolobitAccidental = _SDKObjetoAccidental
+
+    mapa, conflictos = core_usar_loader.sanitizar_exports_publicos(mod_holobit, "holobit")
+
+    assert "SDKHolobitAccidental" not in mapa
+    assert any(c["symbol"] == "SDKHolobitAccidental" for c in conflictos)
+    assert any(c["code"] == "backend_module_object" for c in conflictos if c["symbol"] == "SDKHolobitAccidental")
+
+
+def test_usar_holobit_no_filtra_nombres_sdk_accidentales_en_contexto(monkeypatch):
+    mod_holobit = _modulo_holobit_publico_stub()
+    alias_map = {**REPL_COBRA_MODULE_MAP, "holobit": "holobit"}
+
+    class _SDKObjetoAccidental:
+        __module__ = "holobit_sdk.core.holobit"
+
+    mod_holobit.__all__ = [*mod_holobit.__all__, "SDKHolobitAccidental"]
+    mod_holobit.SDKHolobitAccidental = _SDKObjetoAccidental
+
+    monkeypatch.setattr(
+        core_usar_loader,
+        "obtener_modulo_cobra_oficial",
+        lambda nombre: mod_holobit if nombre == "holobit" else (_ for _ in ()).throw(ModuleNotFoundError(nombre)),
+    )
+
+    interp = InterpretadorCobra()
+    interp.configurar_restriccion_usar_repl(alias_map)
+
+    class _NodoUsar:
+        modulo = "holobit"
+
+    interp.ejecutar_usar(_NodoUsar())
+    assert "SDKHolobitAccidental" not in interp.contextos[-1].values
