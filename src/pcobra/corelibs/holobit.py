@@ -12,6 +12,9 @@ from typing import Any
 from pcobra.core.holobits.graficar import graficar as _runtime_graficar
 from pcobra.core.holobits.holobit import Holobit as _runtime_holobit_tipo
 
+# Alias interno para compatibilidad de pruebas sin exponer SDK en la API pública.
+_SDKHolobit = _runtime_holobit_tipo
+
 EQUIVALENCIAS_SEMANTICAS_HOLOBIT: dict[str, str] = {
     "new Holobit": "crear_holobit",
     "validate": "validar_holobit",
@@ -48,7 +51,7 @@ class _AdaptadorInternoHolobit:
 
     @staticmethod
     def crear_desde_valores(valores: list[float]) -> Any:
-        return _runtime_holobit_tipo(valores)
+        return _SDKHolobit(valores)
 
     @staticmethod
     def obtener_valores(hb: Any) -> list[float]:
