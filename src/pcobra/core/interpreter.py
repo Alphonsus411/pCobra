@@ -1659,6 +1659,18 @@ class InterpretadorCobra:
                     print(valor)
         else:
             funcion = self.obtener_variable(nodo.nombre)
+
+            if callable(funcion):
+                argumentos_resueltos = []
+                for arg in nodo.argumentos:
+                    valor = self.evaluar_expresion(arg)
+                    self._verificar_valor_contexto(valor)
+                    argumentos_resueltos.append(valor)
+
+                resultado = funcion(*argumentos_resueltos)
+                self._verificar_valor_contexto(resultado)
+                return resultado
+
             if not isinstance(funcion, dict) or funcion.get("tipo") != "funcion":
                 if emitir_salida_llamada:
                     print(f"Funci\u00f3n '{nodo.nombre}' no implementada")
