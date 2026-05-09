@@ -41,6 +41,14 @@ _BACKEND_PREFIXES = (
     "runtime",
 )
 
+_BACKEND_EQUIVALENTS = {
+    "nodefetch",
+    "node_fetch",
+    "serde",
+    "holobitsdk",
+    "holobit_sdk",
+}
+
 
 def normalizar_nombre_usar(nombre: str) -> str:
     """Normaliza nombre de módulo para validaciones canónicas de `usar`."""
@@ -53,8 +61,9 @@ def _rechazar_modulo_no_canonico(nombre: str) -> None:
 
     nombre_normalizado = normalizar_nombre_usar(nombre)
     blocklist_normalizada = {normalizar_nombre_usar(item) for item in USAR_BACKEND_BLOCKLIST}
+    equivalentes_normalizados = {normalizar_nombre_usar(item) for item in _BACKEND_EQUIVALENTS}
 
-    if nombre_normalizado in blocklist_normalizada:
+    if nombre_normalizado in blocklist_normalizada or nombre_normalizado in equivalentes_normalizados:
         raise PermissionError(
             f"Importación no permitida en 'usar': '{nombre}'. "
             "Es un módulo backend/no canónico y no forma parte de la API pública. "

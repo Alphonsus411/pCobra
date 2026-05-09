@@ -1,6 +1,7 @@
 """Implementación del intérprete del lenguaje Cobra."""
 
 import logging
+import warnings
 import os
 import hashlib
 from typing import Mapping, Optional
@@ -1973,6 +1974,13 @@ class InterpretadorCobra:
                     "phase": "preflight",
                 }
                 if self._usar_collision_policy == USAR_COLLISION_WARN_ALIAS_REQUIRED:
+                    warnings.warn(
+                        "Conflicto de nombres en `usar`: "
+                        f"módulo={nodo.modulo} símbolos={conflictos}. "
+                        "No se inyectó ningún símbolo; use alias explícito.",
+                        RuntimeWarning,
+                        stacklevel=2,
+                    )
                     raise NameError(
                         "No se puede usar el módulo "
                         f"'{nodo.modulo}': {USAR_SYMBOL_CONFLICT_ERROR} colisión estructurada={detalle}. "
