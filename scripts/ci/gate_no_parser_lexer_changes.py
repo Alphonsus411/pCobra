@@ -9,6 +9,8 @@ import sys
 from pathlib import Path
 
 CANONICAL_SYNTAX_PATHS = (
+    Path("src/pcobra/core/lexer.py"),
+    Path("src/pcobra/core/parser.py"),
     Path("src/pcobra/cobra/core/lexer.py"),
     Path("src/pcobra/cobra/core/parser.py"),
 )
