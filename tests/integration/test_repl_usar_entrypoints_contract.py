@@ -462,3 +462,72 @@ def test_repl_rechaza_alias_legacy_fuera_contrato():
         cmd.ejecutar_codigo('usar "node-fetch"')
 
     assert estado_pre == cmd.interpretador.contextos[-1].values
+
+
+@pytest.mark.parametrize(
+    ("factory", "executor"),
+    [
+        (ReplCommandV2, lambda cmd, code: cmd._ejecutar_en_modo_normal(code)),
+    ],
+)
+def test_repl_usar_datos_longitud_salida_exacta(factory, executor, monkeypatch, capsys):
+    mod_datos = _modulo_datos_stub()
+
+    def _resolver_modulo(nombre: str, **_kwargs):
+        if nombre == "datos":
+            return mod_datos
+        raise ModuleNotFoundError(nombre)
+
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: _resolver_modulo(nombre))
+
+    cmd = factory()
+    executor(cmd, 'usar "datos"')
+    executor(cmd, "imprimir(longitud([1,2,3]))")
+
+    lineas = [linea.strip() for linea in capsys.readouterr().out.splitlines() if linea.strip()]
+    assert lineas == ["3"]
+
+
+def test_repl_usar_texto_expone_funciones_objetivo_y_mantiene_comunes(monkeypatch):
+    mod_texto = ModuleType("texto")
+    mod_texto.__all__ = ["recortar", "repetir", "quitar_acentos", "prefijo_comun", "sufijo_comun"]
+    mod_texto.recortar = lambda texto: str(texto).strip()
+    mod_texto.repetir = lambda texto, veces: str(texto) * int(veces)
+    mod_texto.quitar_acentos = lambda texto: str(texto).translate(str.maketrans("áéíóú", "aeiou"))
+    mod_texto.prefijo_comun = lambda a, b: next((str(a)[:i] for i in range(min(len(str(a)), len(str(b))), -1, -1) if str(a)[:i] == str(b)[:i]), "")
+    mod_texto.sufijo_comun = lambda a, b: next((str(a)[len(str(a))-i:] for i in range(min(len(str(a)), len(str(b))), -1, -1) if str(a)[len(str(a))-i:] == str(b)[len(str(b))-i:]), "")
+    mod_texto.__file__ = "/workspace/pCobra/src/pcobra/corelibs/texto.py"
+
+    monkeypatch.setattr(
+        core_usar_loader,
+        "obtener_modulo_cobra_oficial",
+        lambda nombre: mod_texto if nombre == "texto" else (_ for _ in ()).throw(ModuleNotFoundError(nombre)),
+    )
+
+    cmd = ReplCommandV2()
+    cmd._ejecutar_en_modo_normal('usar "texto"')
+
+    for simbolo in ("recortar", "repetir", "quitar_acentos", "prefijo_comun", "sufijo_comun"):
+        assert callable(cmd._delegate.interpretador.obtener_variable(simbolo))
+
+
+def test_repl_usar_numero_es_finito_y_signo_siguen_operativos(monkeypatch, capsys):
+    mod_numero = ModuleType("numero")
+    mod_numero.__all__ = ["es_finito", "signo"]
+    mod_numero.es_finito = lambda valor: valor == valor and valor not in (float("inf"), float("-inf"))
+    mod_numero.signo = lambda valor: -1 if valor < 0 else (1 if valor > 0 else 0)
+    mod_numero.__file__ = "/workspace/pCobra/src/pcobra/corelibs/numero.py"
+
+    monkeypatch.setattr(
+        core_usar_loader,
+        "obtener_modulo_cobra_oficial",
+        lambda nombre: mod_numero if nombre == "numero" else (_ for _ in ()).throw(ModuleNotFoundError(nombre)),
+    )
+
+    cmd = ReplCommandV2()
+    cmd._ejecutar_en_modo_normal('usar "numero"')
+    cmd._ejecutar_en_modo_normal("imprimir(es_finito(10))")
+    cmd._ejecutar_en_modo_normal("imprimir(signo(0 - 5))")
+
+    lineas = [linea.strip() for linea in capsys.readouterr().out.splitlines() if linea.strip() and not linea.startswith("WARNING:")]
+    assert lineas == ["verdadero", "-1"]
