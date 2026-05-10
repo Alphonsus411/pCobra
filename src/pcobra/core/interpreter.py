@@ -485,6 +485,9 @@ class InterpretadorCobra:
         # Restricción opcional para `usar` en REPL/evaluador incremental.
         self._repl_usar_alias_map: dict[str, str] | None = None
         self._usar_collision_policy = USAR_COLLISION_STRICT_ERROR
+        # Metadatos de símbolos inyectados por `usar` para soportar reimport idempotente.
+        # nombre_simbolo -> {"module": str, "exported_name": str, "callable_id": int}
+        self._usar_symbol_metadata: dict[str, dict[str, object]] = {}
 
     def configurar_restriccion_usar_repl(self, alias_map: dict[str, str] | None) -> None:
         """Configura whitelist explícita de módulos `usar` para flujo REPL.
@@ -2084,9 +2087,23 @@ class InterpretadorCobra:
     def _detectar_conflictos_usar_en_contexto(
         self, simbolos_saneados: list[tuple[str, object]], modulo: str
     ) -> list[str]:
-        """Devuelve los símbolos que ya existen en el contexto activo."""
+        """Devuelve símbolos en conflicto real (ignora reimport idempotente por metadatos)."""
         contexto_actual = self.contextos[-1]
-        conflictos = [nombre for nombre, _ in simbolos_saneados if contexto_actual.contains(nombre)]
+        conflictos: list[str] = []
+        for nombre, simbolo in simbolos_saneados:
+            if not contexto_actual.contains(nombre):
+                continue
+            previo = self._usar_symbol_metadata.get(nombre)
+            identidad_actual = id(simbolo)
+            if (
+                previo
+                and previo.get("module") == modulo
+                and previo.get("exported_name") == nombre
+                and previo.get("callable_id") == identidad_actual
+            ):
+                # Reimport idempotente: mismo símbolo, mismo módulo origen y misma identidad.
+                continue
+            conflictos.append(nombre)
         if conflictos:
             self._trace_debug(
                 "[USAR_COLLISION][PREFLIGHT] "
@@ -2105,6 +2122,16 @@ class InterpretadorCobra:
         contexto_actual = self.contextos[-1]
         for nombre, simbolo in simbolos_saneados:
             if contexto_actual.contains(nombre) and not permitir_sobrescritura:
+                previo = self._usar_symbol_metadata.get(nombre)
+                identidad_actual = id(simbolo)
+                if (
+                    previo
+                    and previo.get("module") == modulo
+                    and previo.get("exported_name") == nombre
+                    and previo.get("callable_id") == identidad_actual
+                ):
+                    # No-op idempotente: evita warning/ruido al reimportar lo mismo.
+                    continue
                 detalle = {
                     "module": modulo,
                     "symbol": nombre,
@@ -2122,6 +2149,11 @@ class InterpretadorCobra:
                     f"'{modulo}': {USAR_SYMBOL_CONFLICT_ERROR} colisión estructurada={detalle}"
                 )
             contexto_actual.define(nombre, simbolo)
+            self._usar_symbol_metadata[nombre] = {
+                "module": modulo,
+                "exported_name": nombre,
+                "callable_id": id(simbolo),
+            }
             if self.safe_mode and self._validador is not None and hasattr(self._validador, "registrar_simbolo_publico_usar"):
                 self._validador.registrar_simbolo_publico_usar(nombre)
 

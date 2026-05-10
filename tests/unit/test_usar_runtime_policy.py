@@ -145,6 +145,41 @@ def test_usar_runtime_colision_warn_diagnostico_y_sin_overwrite(monkeypatch, cap
     assert "usar_collision" in caplog.text
 
 
+def test_usar_runtime_reimport_idempotente_logica_no_falla(monkeypatch):
+    import pcobra.corelibs.logica as modulo_logica
+
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _n, **_k: modulo_logica)
+    interp = _interp_con_alias({"logica": "logica"})
+
+    interp.ejecutar_nodo(NodoUsar("logica"))
+    interp.ejecutar_nodo(NodoUsar("logica"))
+
+    assert "y_logico" in interp.variables
+
+
+def test_usar_runtime_reimport_idempotente_numero_no_falla(monkeypatch):
+    import pcobra.corelibs.numero as modulo_numero
+
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _n, **_k: modulo_numero)
+    interp = _interp_con_alias({"numero": "numero"})
+
+    interp.ejecutar_nodo(NodoUsar("numero"))
+    interp.ejecutar_nodo(NodoUsar("numero"))
+
+    assert "es_finito" in interp.variables
+
+
+def test_usar_runtime_colision_variable_usuario_sigue_fallando(monkeypatch):
+    import pcobra.corelibs.numero as modulo_numero
+
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _n, **_k: modulo_numero)
+    interp = _interp_con_alias({"numero": "numero"})
+    interp.contextos[-1].define("es_finito", "soy_usuario")
+
+    with pytest.raises(NameError, match="conflicto de símbolos"):
+        interp.ejecutar_nodo(NodoUsar("numero"))
+
+
 def test_usar_runtime_holobit_no_expone_objetos_sdk_internos(monkeypatch):
     import pcobra.corelibs.holobit as modulo_holobit
 
