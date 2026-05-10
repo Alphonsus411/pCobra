@@ -13,6 +13,16 @@ Describe el alcance de los cambios y su impacto en el proyecto o en la cobertura
 código.
 
 
+## Alcance de este PR (obligatorio)
+
+- [ ] Este PR está acotado exclusivamente a política/resolución de `usar` + tests.
+- [ ] Confirmo explícitamente que **NO** se modifican estos archivos:
+  - `src/pcobra/core/lexer.py`
+  - `src/pcobra/core/parser.py`
+  - `src/pcobra/cobra/core/lexer.py`
+  - `src/pcobra/cobra/core/parser.py`
+
+
 ## Checklist corto (parseo de strings)
 
 - [ ] No hay `ParserError` para literales string en expresiones.
