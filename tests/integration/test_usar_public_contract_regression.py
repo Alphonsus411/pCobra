@@ -9,7 +9,7 @@ from pcobra.cobra.architecture.backend_policy import PUBLIC_BACKENDS
 from pcobra.cobra.cli.commands.interactive_cmd import InteractiveCommand
 from pcobra.cobra.cli.commands_v2.repl_cmd import ReplCommandV2
 from pcobra.cobra.core.runtime import InterpretadorCobra
-from pcobra.cobra.usar_policy import REPL_COBRA_MODULE_MAP, USAR_COBRA_FACING_MODULE_FLAGS
+from pcobra.cobra.usar_policy import REPL_COBRA_MODULE_MAP, USAR_COBRA_FACING_MODULE_FLAGS, USAR_RUNTIME_EXPORT_OVERRIDES
 from pcobra.core import usar_loader as core_usar_loader
 
 from tests.integration.test_repl_usar_entrypoints_contract import (
@@ -69,6 +69,43 @@ def test_usar_texto_solo_simbolos_espanoles(factory, executor, get_interp, monke
     assert "a_snake" in simbolos
     assert "snake_case" not in simbolos
     assert interp.contextos[-1].get("a_snake")("Hola Mundo") == "hola_mundo"
+
+
+@pytest.mark.parametrize(
+    ("factory", "executor", "get_interp"),
+    [
+        (lambda: InteractiveCommand(InterpretadorCobra()), lambda cmd, code: cmd.ejecutar_codigo(code), lambda cmd: cmd.interpretador),
+        (ReplCommandV2, lambda cmd, code: cmd._ejecutar_en_modo_normal(code), lambda cmd: cmd._delegate.interpretador),
+    ],
+)
+def test_usar_texto_contrato_runtime_overrides_y_poc_funcional(factory, executor, get_interp, monkeypatch):
+    mod_texto = ModuleType("texto")
+    mod_texto.__all__ = [*USAR_RUNTIME_EXPORT_OVERRIDES["texto"], "snake_case"]
+    mod_texto.recortar = lambda texto: str(texto).strip()
+    mod_texto.repetir = lambda texto, veces=2: str(texto) * int(veces)
+    mod_texto.quitar_acentos = lambda texto: str(texto).translate(str.maketrans("áéíóú", "aeiou"))
+    mod_texto.prefijo_comun = lambda a, b: next((str(a)[:i] for i in range(min(len(str(a)), len(str(b))), -1, -1) if str(a)[:i] == str(b)[:i]), "")
+    mod_texto.sufijo_comun = lambda a, b: next((str(a)[len(str(a))-i:] for i in range(min(len(str(a)), len(str(b))), -1, -1) if str(a)[len(str(a))-i:] == str(b)[len(str(b))-i:]), "")
+    mod_texto.a_snake = lambda texto: str(texto).lower().replace(" ", "_")
+    mod_texto.snake_case = mod_texto.a_snake
+    mod_texto.__file__ = "/workspace/pCobra/src/pcobra/corelibs/texto.py"
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: mod_texto)
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: mod_texto)
+
+    cmd = factory()
+    interp = get_interp(cmd)
+    executor(cmd, 'usar "texto"')
+
+    simbolos = set(interp.contextos[-1].values.keys())
+    requeridos = {"recortar", "repetir", "quitar_acentos", "prefijo_comun", "sufijo_comun"}
+    assert requeridos.issubset(set(USAR_RUNTIME_EXPORT_OVERRIDES["texto"]))
+    assert requeridos.issubset(simbolos)
+
+    assert interp.contextos[-1].get("recortar")("  cobra  ") == "cobra"
+    assert interp.contextos[-1].get("repetir")("ja", 3) == "jajaja"
+    assert interp.contextos[-1].get("quitar_acentos")("canción") == "cancion"
+    assert interp.contextos[-1].get("prefijo_comun")("cobra", "cobre") == "cobr"
+    assert interp.contextos[-1].get("sufijo_comun")("programacion", "nacion") == "acion"
 
 
 def _modulo_datos_publico_stub() -> ModuleType:
