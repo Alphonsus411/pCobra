@@ -118,11 +118,17 @@ def formatear_error_usar_usuario(codigo: str, modulo: str, contexto_minimo: str 
         "modulo_fuera_catalogo": f"No se puede usar '{modulo}': módulo fuera del catálogo público.",
         "conflicto_simbolo": f"No se puede usar '{modulo}': hay conflicto de símbolos en el contexto actual.",
         "export_invalido": f"No se puede usar '{modulo}': no hay símbolos exportables válidos.",
+        "carga_modulo_error": f"No se puede usar '{modulo}': error al cargar el módulo.",
     }
     base = mensajes.get(codigo, f"No se puede usar '{modulo}'.")
     if contexto_minimo:
         return f"{base} {contexto_minimo}"
     return base
+
+
+def _usar_error_esperado(exc: Exception) -> bool:
+    """Identifica errores esperados del contrato de `usar`."""
+    return isinstance(exc, (PermissionError, NameError, ImportError, ValueError))
 
 
 def _usar_detalle_habilitado() -> bool:
@@ -2075,13 +2081,20 @@ class InterpretadorCobra:
         except Exception as exc:
             if _usar_detalle_habilitado():
                 logging.exception("Error al usar el módulo '%s': %s", nodo.modulo, exc)
-            else:
+            elif _usar_error_esperado(exc):
                 logging.error("Error al usar el módulo '%s': %s", nodo.modulo, exc)
+            else:
+                logging.exception("Error al usar el módulo '%s': %s", nodo.modulo, exc)
             if isinstance(exc, PermissionError):
                 mensaje = formatear_error_usar_usuario("modulo_fuera_catalogo", nodo.modulo)
                 if _usar_detalle_habilitado():
                     mensaje = f"{mensaje} ({exc})"
                 raise PermissionError(mensaje) from exc
+            if isinstance(exc, ModuleNotFoundError):
+                mensaje = formatear_error_usar_usuario("carga_modulo_error", nodo.modulo)
+                if _usar_detalle_habilitado():
+                    mensaje = f"{mensaje} ({exc})"
+                raise ImportError(mensaje) from exc
             raise
 
     def _detectar_conflictos_usar_en_contexto(

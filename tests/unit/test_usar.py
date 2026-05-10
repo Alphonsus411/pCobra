@@ -961,3 +961,24 @@ def test_usar_muestra_detalle_extendido_en_debug(monkeypatch, caplog):
     texto_error = str(excinfo.value)
     assert "detalle=" in texto_error
     assert "Traceback" in caplog.text
+
+
+def test_usar_error_carga_modulo_mensaje_corto_en_modo_normal(monkeypatch, caplog):
+    monkeypatch.setattr(
+        core_usar_loader,
+        "obtener_modulo_cobra_oficial",
+        lambda _nombre: (_ for _ in ()).throw(ModuleNotFoundError("boom")),
+    )
+    monkeypatch.delenv("PCOBRA_DEBUG_RUNTIME", raising=False)
+    monkeypatch.delenv("PCOBRA_DEBUG_TRACES", raising=False)
+
+    interp = InterpretadorCobra()
+    interp.configurar_restriccion_usar_repl({"texto": "texto"})
+
+    with pytest.raises(ImportError) as excinfo:
+        interp.ejecutar_nodo(NodoUsar("texto"))
+
+    texto_error = str(excinfo.value)
+    assert "error al cargar el módulo" in texto_error
+    assert "boom" not in texto_error
+    assert "Traceback" not in caplog.text
