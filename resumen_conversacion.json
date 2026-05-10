@@ -1,166 +1,279 @@
 {
   "contexto_general": {
-    "objetivo": "Consolidar Cobra como lenguaje autónomo, coherente y sin contaminación semántica externa",
-    "restricciones": [
+    "proyecto": "pCobra / Cobra",
+    "objetivo_de_la_sesion": "Validar mediante pruebas de concepto desde CLI/REPL los avances sobre `usar`, módulos Cobra-facing, binding runtime y limpieza de salida de errores.",
+    "principio_operativo": "Probar primero desde la CLI antes de seguir refactorizando arquitectura.",
+    "restricciones_mantenidas": [
       "No modificar Lexer",
       "No modificar Parser",
       "No cambiar sintaxis pública",
-      "Respetar arquitectura existente",
-      "Mantener CLI y contratos actuales"
+      "Mantener CLI y contratos actuales",
+      "No relajar sanitización de `usar`",
+      "No permitir imports externos directos",
+      "No exponer objetos backend, SDKs ni símbolos privados"
     ]
   },
-  "problemas_detectados": {
-    "lenguaje": {
-      "mezcla_idiomas": [
-        "try/catch/throw vs intentar/capturar/lanzar",
-        "lambda, yield, global, import en inglés"
-      ],
-      "duplicidad_keywords": [
-        "retorno vs retornar",
-        "func vs funcion",
-        "sino_si vs sino si vs elseif"
-      ],
-      "sintaxis_fantasma": [
-        "f-strings",
-        "self",
-        "__init__",
-        "lambda híbrido"
+  "estado_inicial_recordado": {
+    "problema_raiz": "Frontera semántica de Cobra no completamente cerrada",
+    "hallazgos_previos": [
+      "`usar` resolvía y sanitizaba módulos, pero no enlazaba funciones ejecutables al runtime",
+      "Los módulos core debían actuar como API Cobra-facing, no como exposición directa de Python/backend",
+      "Los errores del REPL imprimían diccionarios enormes y tracebacks",
+      "Algunos módulos tenían desalineación entre `corelibs`, `standard_library` y `usar_policy`"
+    ]
+  },
+  "implementacion_previa_validada": {
+    "binding_runtime_usar": {
+      "estado": "corregido",
+      "descripcion": "El intérprete ahora puede ejecutar callables importados por `usar` que ya pasaron sanitización y fueron inyectados en el contexto.",
+      "evidencia": [
+        "`usar \"numero\"` seguido de `imprimir(es_finito(10))` devuelve `verdadero`",
+        "`imprimir(es_nan(10))` devuelve `falso`",
+        "`imprimir(es_infinito(10))` devuelve `falso`",
+        "`imprimir(signo(0-5))` devuelve `-1`"
       ]
     },
-    "semantica": {
-      "fugas_python": [
-        "__dunder__",
-        "self",
-        "append, lower, keys"
+    "funciones_cobra_usuario": {
+      "estado": "sin regresión",
+      "evidencia": [
+        "`func doble(n): retorno n * 2 fin` funciona",
+        "`imprimir(doble(21))` devuelve `42`",
+        "`imprimir(es_finito(doble(21)))` devuelve `verdadero` tras importar `numero`"
+      ]
+    }
+  },
+  "pruebas_de_concepto_realizadas": {
+    "numero": {
+      "estado": "verde",
+      "comandos_repl": [
+        "usar \"numero\"",
+        "imprimir(es_finito(10))",
+        "imprimir(signo(0-5))",
+        "imprimir(limitar(15, 0, 10))",
+        "imprimir(raiz_entera(16))",
+        "imprimir(es_par(8))",
+        "imprimir(es_primo(7))"
       ],
-      "fugas_javascript": [
-        "map/filter chaining",
-        "estilo Array API"
+      "resultados": [
+        "es_finito(10) -> verdadero",
+        "signo(0-5) -> -1",
+        "limitar(15, 0, 10) -> 10",
+        "raiz_entera(16) -> 4",
+        "es_par(8) -> verdadero",
+        "es_primo(7) -> verdadero"
       ],
-      "fugas_rust": [
-        "Some/None",
-        "unwrap/expect"
+      "observaciones": [
+        "La sanitización sigue activa",
+        "Los símbolos fuera de API pública siguen descartados",
+        "La salida de conflictos se compactó a `module=numero count=10`"
       ]
     },
-    "modulos": {
-      "usar_incompleto": true,
-      "sin_binding": true,
-      "ambiguedad_namespace": [
-        "uso plano vs uso con punto"
+    "texto": {
+      "estado": "verde tras cambios",
+      "problemas_previos": [
+        "Al cargar desde `corelibs/texto.py`, faltaban `recortar`, `repetir` y `quitar_acentos`",
+        "Al apuntar a `standard_library/texto.py`, apareció un import circular con `grupo_tareas`"
       ],
-      "sistema_dual": [
+      "comandos_repl_validados": [
         "usar \"texto\"",
-        "usar cobra.core"
+        "imprimir(mayusculas(\"cobra\"))",
+        "imprimir(minusculas(\"COBRA\"))",
+        "imprimir(prefijo_comun(\"cobra\", \"cobre\"))",
+        "imprimir(sufijo_comun(\"programacion\", \"nacion\"))",
+        "imprimir(recortar(\" cobra \"))",
+        "imprimir(repetir(\"ja\", 3))",
+        "imprimir(quitar_acentos(\"canción\"))"
+      ],
+      "resultados": [
+        "COBRA",
+        "cobra",
+        "cobr",
+        "acion",
+        "cobra",
+        "jajaja",
+        "cancion"
+      ],
+      "observaciones": [
+        "El import circular quedó resuelto",
+        "La API pública textual declarada ya está disponible",
+        "La salida de sanitización se compactó a `module=texto count=58`"
       ]
     },
-    "objetos": {
-      "modelo_no_definido": true,
-      "dependencia_python": [
-        "self",
-        "__init__"
+    "logica": {
+      "estado": "verde",
+      "comandos_repl": [
+        "usar \"logica\"",
+        "imprimir(conjuncion(verdadero, falso))",
+        "imprimir(negacion(falso))"
       ],
-      "operador_punto_no_especificado": true
-    },
-    "stdlib": {
-      "inconsistencia_nombres": true,
-      "mezcla_paradigmas": true,
-      "namespaces_inconsistentes": true
-    },
-    "backends": {
-      "exceso_targets": [
-        "go",
-        "cpp",
-        "wasm",
-        "asm",
-        "java"
+      "resultados": [
+        "conjuncion(verdadero, falso) -> falso",
+        "negacion(falso) -> verdadero"
       ],
-      "peso_core": true,
-      "carga_innecesaria": true
+      "observaciones": [
+        "El binding runtime funciona con módulo `logica`",
+        "Se detectó previamente que reimportar el mismo módulo generaba colisiones masivas; se pidió tratarlo como idempotente"
+      ]
+    },
+    "tiempo": {
+      "estado": "verde",
+      "comandos_repl": [
+        "usar \"tiempo\"",
+        "imprimir(epoch())"
+      ],
+      "resultado": "epoch() devuelve un timestamp numérico",
+      "observaciones": [
+        "El módulo carga y ejecuta correctamente"
+      ]
+    },
+    "datos": {
+      "estado": "parcialmente verde",
+      "problema_previo": "`usar \"datos\"` rechazaba todos los símbolos como `backend_module_object`",
+      "estado_actual": "`usar \"datos\"` ya carga y `longitud(\"cobra\")` funciona",
+      "comandos_repl_validados": [
+        "usar \"datos\"",
+        "imprimir(longitud(\"cobra\"))"
+      ],
+      "resultado": "5",
+      "pendiente_detectado": {
+        "problema": "El intérprete no evalúa literales de lista (`NodoLista`)",
+        "comandos_que_fallan": [
+          "var xs = [1, 2, 3]",
+          "imprimir(longitud([1, 2, 3]))"
+        ],
+        "error": "Error: Expresión no soportada: tipo=NodoLista",
+        "diagnostico": "El problema ya no está en `usar` ni en `datos`, sino en el evaluador de expresiones del intérprete."
+      }
+    },
+    "archivo": {
+      "estado": "pendiente",
+      "comandos_repl": [
+        "usar \"archivo\"",
+        "imprimir(existe(\"README.md\"))"
+      ],
+      "resultado_actual": "Error: Uso de primitiva peligrosa: 'existe'",
+      "diagnostico": "El módulo carga y sanitiza, pero el sandbox/validador bloquea `existe` aunque forma parte de la API pública Cobra-facing.",
+      "decision_pendiente": "Permitir `archivo.existe` como wrapper seguro para rutas permitidas/relativas, sin desactivar el sandbox global."
+    },
+    "modulos_externos": {
+      "estado": "correcto",
+      "comando": "usar \"numpy\"",
+      "resultado_esperado": "Rechazo por estar fuera del catálogo público de Cobra",
+      "observacion": "Debe mantenerse rechazado con error corto y sin traceback en modo normal."
     }
   },
-  "insight_clave": {
-    "problema_raiz": "Frontera semántica no cerrada",
-    "consecuencia": "Contaminación desde Python, JavaScript y Rust",
-    "objetivo": "Cobra como interfaz única, backends como implementación invisible"
-  },
-  "decisiones_arquitectonicas": {
-    "modelo_modulos": {
-      "usar": "solo módulos Cobra",
-      "externos": "prohibidos directamente",
-      "estrategia": "wrappers Cobra sobre backends"
+  "mejoras_de_ux_detectadas": {
+    "salida_abusiva": {
+      "estado": "mejorada parcialmente",
+      "antes": [
+        "Se imprimían diccionarios completos de conflictos",
+        "Se imprimían tracebacks largos en errores esperados",
+        "Reimportar módulos podía imprimir un warning por símbolo"
+      ],
+      "ahora": [
+        "Los eventos de sanitización se compactan, por ejemplo `WARNING: USAR sanitize conflicts event module=numero count=10`",
+        "La salida es mucho más legible en PoC"
+      ],
+      "pendiente": [
+        "Decidir si esos warnings compactos deben permanecer visibles en modo normal o pasar a debug",
+        "Garantizar que no haya tracebacks en REPL normal para errores esperados"
+      ]
     },
-    "modelo_api": {
-      "estilo": "funcional puro",
-      "sin_operador_punto_para_modulos": true
-    },
-    "modelo_lenguaje": {
-      "idioma": "100% español",
-      "sin_dunder": true,
-      "sin_keywords_ingles": true
-    },
-    "modelo_backends": {
-      "oficiales": ["python", "javascript", "rust"],
-      "legacy": "eliminados o aislados",
-      "carga": "lazy loading"
+    "sugerencias_de_typo": {
+      "estado": "funciona parcialmente",
+      "evidencia": [
+        "`imrprimir(epoch())` sugiere `imprimir`"
+      ],
+      "observacion": [
+        "`e_finito` no sugirió `es_finito`, pero no se consideró bloqueante"
+      ]
     }
   },
-  "modulos_core": {
-    "existentes": [
+  "bugs_pendientes_acotados": {
+    "nodo_lista": {
+      "prioridad": "alta",
+      "descripcion": "El intérprete no soporta `NodoLista` como expresión.",
+      "impacto": [
+        "No permite `var xs = [1, 2, 3]`",
+        "No permite pasar listas literales a funciones importadas como `longitud([1, 2, 3])`"
+      ],
+      "ruta_probable": [
+        "src/pcobra/core/interpreter.py",
+        "método `evaluar_expresion` o equivalente"
+      ],
+      "solucion_propuesta": "Convertir `NodoLista` en lista Python evaluando recursivamente sus elementos y aplicando verificaciones de contexto/seguridad existentes."
+    },
+    "archivo_existe_sandbox": {
+      "prioridad": "alta",
+      "descripcion": "`archivo.existe` queda bloqueado como primitiva peligrosa pese a ser API pública de `usar \"archivo\"`.",
+      "impacto": [
+        "`imprimir(existe(\"README.md\"))` falla"
+      ],
+      "rutas_probables": [
+        "src/pcobra/core/interpreter.py",
+        "src/pcobra/core/semantic_validators/primitiva_peligrosa.py",
+        "src/pcobra/core/sandbox.py",
+        "módulo `archivo` en corelibs/standard_library"
+      ],
+      "solucion_propuesta": "Permitir wrappers Cobra-facing seguros importados por `usar \"archivo\"` para rutas relativas permitidas, sin relajar el sandbox global ni permitir rutas inseguras."
+    },
+    "idempotencia_usar": {
+      "prioridad": "media",
+      "descripcion": "Reimportar el mismo módulo, como `usar \"logica\"` dos veces, generaba colisiones masivas.",
+      "solucion_propuesta": "Registrar metadata de origen de símbolos importados por `usar` y considerar idempotente reimportar el mismo módulo con los mismos símbolos/callables."
+    },
+    "errores_repl_debug": {
+      "prioridad": "media",
+      "descripcion": "Separar definitivamente mensajes de usuario y trazas técnicas.",
+      "solucion_propuesta": "Mostrar mensajes cortos en modo normal y dejar eventos completos/tracebacks solo para debug/verbose."
+    }
+  },
+  "prompts_generados_para_codex": {
+    "binding_runtime_usar": "Prompt para permitir que `ejecutar_llamada_funcion` ejecute callables seguros importados por `usar`.",
+    "texto_datos_superficie_publica": "Prompt para alinear `texto` y `datos` con sus superficies Cobra-facing reales y evitar imports circulares.",
+    "salida_abusiva": "Prompt para compactar warnings/eventos y ocultar tracebacks en REPL normal.",
+    "nodo_lista_y_archivo": "Prompt reunido para implementar soporte de `NodoLista` y permitir `archivo.existe` bajo sandbox seguro."
+  },
+  "ultimo_prompt_entregado": {
+    "tema": "Modificar `NodoLista` y `archivo.existe`",
+    "objetivos": [
+      "Añadir soporte runtime para listas literales en el intérprete",
+      "Alinear `archivo.existe` con la API pública Cobra-facing y sandbox"
+    ],
+    "criterios_de_aceptacion": [
+      "`var xs = [1, 2, 3]` debe funcionar",
+      "`imprimir(longitud(xs))` debe devolver `3`",
+      "`imprimir(longitud([1, 2, 3]))` debe devolver `3`",
+      "`usar \"archivo\"` + `imprimir(existe(\"README.md\"))` debe devolver `verdadero` o `falso`, no primitiva peligrosa",
+      "`usar \"numpy\"` debe seguir rechazado",
+      "No modificar Lexer ni Parser"
+    ]
+  },
+  "estado_global_actual": {
+    "verde": [
       "numero",
       "texto",
-      "datos",
-      "asincrono",
-      "sistema"
-    ],
-    "a_completar": [
       "logica",
-      "archivo",
       "tiempo",
-      "red",
-      "holobit"
-    ]
-  },
-  "holobit": {
-    "rol": "motor interno de bajo nivel",
-    "exposicion": "solo vía módulo Cobra",
-    "api_publica": [
-      "crear_holobit",
-      "transformar",
-      "proyectar",
-      "graficar"
+      "datos con string",
+      "binding runtime de `usar`",
+      "funciones Cobra de usuario",
+      "llamadas anidadas",
+      "salida de sanitización compactada parcialmente"
     ],
-    "restriccion": "no exponer SDK directamente"
+    "pendiente": [
+      "NodoLista en evaluador",
+      "archivo.existe bajo sandbox seguro",
+      "idempotencia completa de `usar`",
+      "terminar separación modo normal/debug para errores del REPL"
+    ],
+    "conclusion": "La frontera `usar` ya está mucho más sólida. Los problemas restantes son específicos del runtime/evaluador y de la política de sandbox, no del Lexer/Parser ni de la sintaxis pública."
   },
-  "usar": {
-    "flujo_correcto": [
-      "resolver módulo Cobra",
-      "validar",
-      "extraer símbolos públicos",
-      "sanitizar",
-      "inyectar en entorno",
-      "gestionar conflictos"
-    ]
-  },
-  "sanitizacion": {
-    "rechazar": [
-      "nombres con __",
-      "símbolos privados",
-      "objetos backend",
-      "nombres en inglés no canónicos"
-    ]
-  },
-  "limpieza_backends": {
-    "acciones": [
-      "restringir registry a 3 backends",
-      "lazy loading",
-      "aislar legacy",
-      "reducir peso runtime"
-    ]
-  },
-  "objetivo_final": {
-    "lenguaje": "coherente, autónomo, en español",
-    "arquitectura": "limpia, modular, desacoplada",
-    "usuario": "interfaz simple, potente, sin fugas internas",
-    "estado": "cerrar Cobra v1 como lenguaje sólido"
-  }
+  "siguientes_pasos_recomendados": [
+    "Aplicar prompt reunido de `NodoLista` + `archivo.existe` con Codex",
+    "Ejecutar PoC mínima: `var xs = [1, 2, 3]`, `longitud([1,2,3])`, `existe(\"README.md\")`",
+    "Revalidar regresiones: `numero`, `texto`, `logica`, `tiempo`, `datos(\"cobra\")`",
+    "Probar `usar \"numpy\"` para confirmar rechazo limpio",
+    "Opcional: implementar idempotencia de `usar` si no quedó resuelta"
+  ]
 }
