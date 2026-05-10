@@ -293,6 +293,25 @@ class CommandRegistry:
 
         return self.commands
 
+def _is_expected_user_contract_error(exc: Exception) -> bool:
+    """Clasifica errores de contrato esperados que deben tratarse como error de usuario."""
+    mensaje = str(exc).strip().lower()
+    if not mensaje:
+        return False
+    marcadores = (
+        "usar_error[",
+        "conflicto",
+        "sanitize",
+        "sanitiz",
+        "modulo_fuera_catalogo",
+        "módulo fuera de catálogo",
+        "modulo_no_permitido",
+        "modulo_no_canonico",
+        "backend_import_directo",
+    )
+    return any(m in mensaje for m in marcadores)
+
+
 class CliApplication:
     """Aplicación principal de CLI con inicialización idempotente por instancia.
 
@@ -810,6 +829,7 @@ class CliApplication:
             getattr(exc, "error_ya_mostrado", False)
         )
         mensaje = str(exc).strip() or _("Ha ocurrido un error inesperado.")
+        error_usuario_esperado = _is_expected_user_contract_error(exc)
 
         if not error_ya_mostrado:
             messages.mostrar_error(mensaje, registrar_log=False)
@@ -817,6 +837,13 @@ class CliApplication:
         if debug_activo:
             logging.exception("Error in execution")
             logging.getLogger(__name__).debug(format_traceback(exc, language))
+        elif error_usuario_esperado:
+            logging.getLogger(__name__).debug(
+                "Error de contrato de usuario (sin traceback en modo normal): %s",
+                format_traceback(exc, language),
+            )
+        else:
+            logging.exception("Error interno inesperado en ejecución de comando")
         return 1
 
     @staticmethod
@@ -1105,13 +1132,18 @@ class CliApplication:
 
                 return self.execute_command(args, debug_activo=debug_activo)
             except Exception as e:
+                mensaje_error = str(e).strip() or _("Ha ocurrido un error inesperado.")
+                error_usuario_esperado = _is_expected_user_contract_error(e)
                 if debug_activo:
                     logging.exception("Fatal error in application")
-                mensaje_error = str(e).strip() or _("Ha ocurrido un error inesperado.")
-                messages.mostrar_error(
-                    _("Fatal error: {}").format(mensaje_error),
-                    registrar_log=False,
-                )
+                elif error_usuario_esperado:
+                    logging.getLogger(__name__).debug(
+                        "Fatal error clasificado como usuario (sin traceback visible): %s",
+                        format_traceback(e, AppConfig.DEFAULT_LANGUAGE),
+                    )
+                else:
+                    logging.exception("Fatal error interno inesperado en aplicación")
+                messages.mostrar_error(mensaje_error, registrar_log=False)
                 return 1
 
 

@@ -19,7 +19,7 @@ def test_handle_execution_error_normal_hides_traceback_and_keeps_logging_excepti
     assert result == 1
     assert mock_error.call_count == 1
     assert mock_error.call_args[0][0] == "boom"
-    mock_logging_error.assert_called_once_with("Error in execution: %s", "boom")
+    mock_logging_error.assert_called_once_with("Error interno inesperado en ejecución de comando", exc_info=True)
     mock_print.assert_not_called()
     mock_format_traceback.assert_not_called()
 
@@ -36,7 +36,7 @@ def test_handle_execution_error_no_duplica_salida_si_ya_fue_mostrada():
 
     assert result == 1
     mock_error.assert_not_called()
-    mock_logging_error.assert_called_once_with("Error in execution: %s", "boom")
+    mock_logging_error.assert_called_once_with("Error interno inesperado en ejecución de comando", exc_info=True)
     mock_print.assert_not_called()
 
 
@@ -83,7 +83,7 @@ def test_handle_execution_error_con_root_logger_configurado_no_duplica_salida():
 
     assert result == 1
     mock_error.assert_called_once_with("boom", registrar_log=False)
-    mock_logging_error.assert_called_once_with("Error in execution: %s", "boom")
+    mock_logging_error.assert_called_once_with("Error interno inesperado en ejecución de comando", exc_info=True)
     mock_print.assert_not_called()
 
 
@@ -226,3 +226,40 @@ def test_enforce_runtime_safety_policy_audita_rama_critica_sin_fallback():
         reason="non_interactive_override_without_fallback",
         audit_id="SEC-RUNTIME-001",
     )
+
+
+def test_handle_execution_error_usuario_esperado_no_muestra_traceback_en_modo_normal():
+    app = CliApplication()
+    exc = RuntimeError("usar_error[conflicto_simbolo]: detalle técnico")
+
+    with patch("cobra.cli.cli.messages.mostrar_error") as mock_error, patch(
+        "cobra.cli.cli.logging.getLogger"
+    ) as mock_get_logger, patch(
+        "cobra.cli.cli.format_traceback", return_value="Traceback técnico"
+    ) as mock_tb:
+        result = app._handle_execution_error(exc, "es", debug_activo=False)
+
+    assert result == 1
+    mock_error.assert_called_once_with("usar_error[conflicto_simbolo]: detalle técnico", registrar_log=False)
+    mock_tb.assert_called_once_with(exc, "es")
+    assert not any("Traceback" in str(c.args[0]) for c in mock_error.call_args_list)
+    assert any("sin traceback en modo normal" in str(c.args[0]) for c in mock_get_logger.return_value.debug.call_args_list)
+
+
+def test_handle_execution_error_debug_si_muestra_traceback_en_logs():
+    app = CliApplication()
+    exc = RuntimeError("usar_error[modulo_fuera_catalogo_publico]: numpy")
+
+    with patch("cobra.cli.cli.messages.mostrar_error") as mock_error, patch(
+        "cobra.cli.cli.logging.exception"
+    ) as mock_exception, patch(
+        "cobra.cli.cli.logging.getLogger"
+    ) as mock_get_logger, patch(
+        "cobra.cli.cli.format_traceback", return_value="Traceback detallado"
+    ):
+        result = app._handle_execution_error(exc, "es", debug_activo=True)
+
+    assert result == 1
+    mock_error.assert_called_once()
+    mock_exception.assert_called_once()
+    mock_get_logger.return_value.debug.assert_called_once_with("Traceback detallado")
