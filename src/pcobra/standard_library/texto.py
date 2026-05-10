@@ -16,8 +16,20 @@ from typing import Any, TypeVar, overload
 
 import unicodedata
 
-from pcobra.corelibs import texto as _texto
 from pcobra.corelibs.texto import (
+    capitalizar as _capitalizar_texto,
+    titulo as _titulo_texto,
+    invertir as _invertir_texto,
+    concatenar as _concatenar_texto,
+    quitar_espacios as _quitar_espacios_texto,
+    dividir as _dividir_texto,
+    unir as _unir_texto,
+    empieza_con as _empieza_con_texto,
+    termina_con as _termina_con_texto,
+    rellenar_izquierda as _rellenar_izquierda_texto,
+    rellenar_derecha as _rellenar_derecha_texto,
+    normalizar_unicode as _normalizar_unicode_texto,
+    lineas_no_vacias as _lineas_no_vacias_texto,
     encontrar as _encontrar_texto,
     encontrar_derecha as _encontrar_derecha_texto,
     indice as _indice_texto,
@@ -26,41 +38,31 @@ from pcobra.corelibs.texto import (
     formatear_mapa as _formatear_mapa_texto,
     tabla_traduccion as _tabla_traduccion_texto,
     traducir as _traducir_texto,
-)
-from pcobra.corelibs import (
-    centrar_texto as _centrar_texto,
-    contar_subcadena as _contar_subcadena,
-    dividir,
     dividir_derecha as _dividir_derecha,
     dividir_lineas as _dividir_lineas,
     indentar_texto as _indentar_texto,
     desindentar_texto as _desindentar_texto,
     envolver_texto as _envolver_texto,
     acortar_texto as _acortar_texto,
-    invertir,
     intercambiar_mayusculas as _intercambiar_mayusculas,
     minusculas as _minusculas,
     mayusculas as _mayusculas,
     minusculas_casefold as _minusculas_casefold,
-    normalizar_unicode,
-    expandir_tabulaciones as _expandir_tabulaciones,
-    codificar_texto as _codificar_texto,
-    decodificar_texto as _decodificar_texto,
+    codificar as _codificar_texto,
+    decodificar as _decodificar_texto,
     prefijo_comun as _prefijo_comun,
-    quitar_espacios,
     quitar_prefijo as _quitar_prefijo,
     quitar_sufijo as _quitar_sufijo,
     a_snake as _a_snake,
     a_camel as _a_camel,
     quitar_envoltura as _quitar_envoltura,
     particionar_derecha as _particionar_derecha,
-    particionar_texto as _particionar,
+    particionar as _particionar,
     rellenar_ceros as _rellenar_ceros,
     subcadena_antes as _subcadena_antes,
     subcadena_despues as _subcadena_despues,
     subcadena_antes_ultima as _subcadena_antes_ultima,
     subcadena_despues_ultima as _subcadena_despues_ultima,
-    unir,
     sufijo_comun as _sufijo_comun,
     es_alfabetico as _es_alfabetico,
     es_alfa_numerico as _es_alfa_numerico,
@@ -76,6 +78,9 @@ from pcobra.corelibs import (
     es_espacio as _es_espacio,
     incluye as _incluye,
     reemplazar as _reemplazar,
+    centrar_texto as _centrar_texto,
+    contar_subcadena as _contar_subcadena,
+    expandir_tabulaciones as _expandir_tabulaciones,
 )
 
 _T = TypeVar("_T")
@@ -832,91 +837,91 @@ def traducir(texto: str, tabla: Mapping[int, str | None]) -> str:
 def capitalizar(*args, **kwargs):
     """Delega en ``pcobra.corelibs.texto.capitalizar``."""
 
-    return _texto.capitalizar(*args, **kwargs)
+    return _capitalizar_texto(*args, **kwargs)
 
 
 def titulo(*args, **kwargs):
     """Delega en ``pcobra.corelibs.texto.titulo``."""
 
-    return _texto.titulo(*args, **kwargs)
+    return _titulo_texto(*args, **kwargs)
 
 
 def invertir(*args, **kwargs):
     """Delega en ``pcobra.corelibs.texto.invertir``."""
 
-    return _texto.invertir(*args, **kwargs)
+    return _invertir_texto(*args, **kwargs)
 
 
 def concatenar(*args, **kwargs):
     """Delega en ``pcobra.corelibs.texto.concatenar``."""
 
-    return _texto.concatenar(*args, **kwargs)
+    return _concatenar_texto(*args, **kwargs)
 
 
 def quitar_espacios(*args, **kwargs):
     """Delega en ``pcobra.corelibs.texto.quitar_espacios``."""
 
-    return _texto.quitar_espacios(*args, **kwargs)
+    return _quitar_espacios_texto(*args, **kwargs)
 
 
 def dividir(*args, **kwargs):
     """Delega en ``pcobra.corelibs.texto.dividir``."""
 
-    return _texto.dividir(*args, **kwargs)
+    return _dividir_texto(*args, **kwargs)
 
 
 def unir(*args, **kwargs):
     """Delega en ``pcobra.corelibs.texto.unir``."""
 
-    return _texto.unir(*args, **kwargs)
+    return _unir_texto(*args, **kwargs)
 
 
 def reemplazar(*args, **kwargs):
     """Delega en ``pcobra.corelibs.texto.reemplazar``."""
 
-    return _texto.reemplazar(*args, **kwargs)
+    return _reemplazar(*args, **kwargs)
 
 
 def empieza_con(*args, **kwargs):
     """Delega en ``pcobra.corelibs.texto.empieza_con``."""
 
-    return _texto.empieza_con(*args, **kwargs)
+    return _empieza_con_texto(*args, **kwargs)
 
 
 def termina_con(*args, **kwargs):
     """Delega en ``pcobra.corelibs.texto.termina_con``."""
 
-    return _texto.termina_con(*args, **kwargs)
+    return _termina_con_texto(*args, **kwargs)
 
 
 def incluye(*args, **kwargs):
     """Delega en ``pcobra.corelibs.texto.incluye``."""
 
-    return _texto.incluye(*args, **kwargs)
+    return _incluye(*args, **kwargs)
 
 
 def rellenar_izquierda(*args, **kwargs):
     """Delega en ``pcobra.corelibs.texto.rellenar_izquierda``."""
 
-    return _texto.rellenar_izquierda(*args, **kwargs)
+    return _rellenar_izquierda_texto(*args, **kwargs)
 
 
 def rellenar_derecha(*args, **kwargs):
     """Delega en ``pcobra.corelibs.texto.rellenar_derecha``."""
 
-    return _texto.rellenar_derecha(*args, **kwargs)
+    return _rellenar_derecha_texto(*args, **kwargs)
 
 
 def normalizar_unicode(*args, **kwargs):
     """Delega en ``pcobra.corelibs.texto.normalizar_unicode``."""
 
-    return _texto.normalizar_unicode(*args, **kwargs)
+    return _normalizar_unicode_texto(*args, **kwargs)
 
 
 def lineas_no_vacias(*args, **kwargs):
     """Delega en ``pcobra.corelibs.texto.lineas_no_vacias``."""
 
-    return _texto.lineas_no_vacias(*args, **kwargs)
+    return _lineas_no_vacias_texto(*args, **kwargs)
 
 
 def recortar(texto: str) -> str:

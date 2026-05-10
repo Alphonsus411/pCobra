@@ -93,6 +93,26 @@ def test_repl_contract_sintaxis_usar_compat_parser_semantica_plana_texto_sin_pre
         (ReplCommandV2, lambda cmd, code: cmd._ejecutar_en_modo_normal(code), lambda cmd: cmd._delegate.interpretador),
     ],
 )
+def test_repl_usar_texto_end_to_end_superficie_publica_callables(factory, executor, get_interp):
+    cmd = factory()
+    interp = get_interp(cmd)
+
+    executor(cmd, 'usar "texto"')
+
+    assert interp.obtener_variable("recortar")("  Cobra  ") == "Cobra"
+    assert interp.obtener_variable("repetir")("ja", 3) == "jajaja"
+    assert interp.obtener_variable("quitar_acentos")("canción") == "cancion"
+    assert interp.obtener_variable("prefijo_comun")("cobra", "cobre") == "cobr"
+    assert interp.obtener_variable("sufijo_comun")("programacion", "nacion") == "acion"
+
+
+@pytest.mark.parametrize(
+    ("factory", "executor", "get_interp"),
+    [
+        (lambda: InteractiveCommand(InterpretadorCobra()), lambda cmd, code: cmd.ejecutar_codigo(code), lambda cmd: cmd.interpretador),
+        (ReplCommandV2, lambda cmd, code: cmd._ejecutar_en_modo_normal(code), lambda cmd: cmd._delegate.interpretador),
+    ],
+)
 def test_repl_contract_sintaxis_usar_compat_parser_semantica_plana_numpy_restringido_atomico(factory, executor, get_interp, monkeypatch):
     mod_numero = _modulo_numero_stub()
 
