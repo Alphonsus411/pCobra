@@ -561,7 +561,7 @@ def test_repl_usar_numero_es_finito_y_signo_siguen_operativos(monkeypatch, capsy
 
 
 
-def test_repl_usar_numero_logica_tiempo_y_funcion_usuario_anidada(capsys):
+def test_repl_usar_modulos_numero_logica_tiempo_y_datos_con_epoch_rango(capsys):
     cmd = ReplCommandV2()
     cmd._ejecutar_en_modo_normal('usar "numero"')
     cmd._ejecutar_en_modo_normal('usar "logica"')
@@ -569,25 +569,33 @@ def test_repl_usar_numero_logica_tiempo_y_funcion_usuario_anidada(capsys):
     cmd._ejecutar_en_modo_normal("func doble(n):\n    retorno n * 2\nfin")
 
     cmd._ejecutar_en_modo_normal('imprimir(es_finito(5))')
-    cmd._ejecutar_en_modo_normal('imprimir(signo(0-7))')
+    cmd._ejecutar_en_modo_normal('imprimir(signo(0-5))')
     cmd._ejecutar_en_modo_normal('imprimir(conjuncion(verdadero, negacion(falso)))')
     cmd._ejecutar_en_modo_normal('imprimir(epoch())')
+    cmd._ejecutar_en_modo_normal('usar "datos"')
+    cmd._ejecutar_en_modo_normal('imprimir(longitud("cobra"))')
     cmd._ejecutar_en_modo_normal('imprimir(doble(signo(0-3)))')
 
     lineas = [linea.strip() for linea in capsys.readouterr().out.splitlines() if linea.strip()]
     assert 'verdadero' in lineas
     assert '-1' in lineas
     assert any(l in ('true', 'verdadero') for l in lineas)
-    epoch_line = next(l for l in lineas if l.lstrip('-').isdigit())
-    assert epoch_line.lstrip('-').isdigit()
+    epoch_value = next(
+        float(l)
+        for l in lineas
+        if l.replace('.', '', 1).lstrip('-').isdigit() and abs(float(l)) > 10**8
+    )
+    assert 946684800 <= epoch_value <= 4102444800
+    assert '5' in lineas
     assert '-2' in lineas
 
 
-def test_repl_texto_7_casos_aceptacion(capsys):
+def test_repl_texto_aceptacion_mayusculas_recortar_repetir_quitar_acentos(capsys):
     cmd = ReplCommandV2()
     cmd._ejecutar_en_modo_normal('usar "texto"')
     interp = cmd._delegate.interpretador
 
+    assert interp.obtener_variable('mayusculas')('cobra') == 'COBRA'
     assert interp.obtener_variable('recortar')('  Cobra  ') == 'Cobra'
     assert interp.obtener_variable('repetir')('ja', 3) == 'jajaja'
     assert interp.obtener_variable('quitar_acentos')('canción') == 'cancion'
@@ -647,6 +655,26 @@ def test_repl_ux_error_salida_corta_vs_debug(capsys, caplog):
     _ = capsys.readouterr().out
     assert all('Traceback' not in r.message for r in caplog.records if r.levelname != 'DEBUG')
 
+
+
+def test_no_regresion_seguridad_usar_numpy_error_corto_sin_traceback(capsys):
+    cmd = ReplCommandV2()
+    with pytest.raises(PermissionError, match=r'(modulo_fuera_catalogo_publico|módulo fuera del catálogo público|módulo externo no permitido en REPL estricto)'):
+        cmd._ejecutar_en_modo_normal('usar "numpy"')
+
+    salida = capsys.readouterr().out
+    assert 'Traceback' not in salida
+
+
+def test_repl_no_expone_simbolos_no_publicos_modulos_estandar():
+    cmd = ReplCommandV2()
+    cmd._ejecutar_en_modo_normal('usar "texto"')
+    cmd._ejecutar_en_modo_normal('usar "numero"')
+
+    simbolos = set(cmd._delegate.interpretador.contextos[-1].values)
+    assert '_backend' not in simbolos
+    assert '_impl' not in simbolos
+    assert '__all__' not in simbolos
 
 def test_no_regresion_seguridad_usar_numpy_fuera_catalogo_publico():
     cmd = ReplCommandV2()
