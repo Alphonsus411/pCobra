@@ -76,3 +76,19 @@ def test_cli_default_mantiene_modo_seguro_y_fallback_inseguro_deshabilitado():
     args = app._parse_arguments([])
     assert args.seguro is True
     assert args.allow_insecure_fallback is False
+
+
+@pytest.mark.parametrize(
+    "codigo",
+    [
+        'usar "archivo"\nimprimir(existe("./../secreto.txt"))',
+        'usar "archivo"\nimprimir(existe("carpeta/../../secreto.txt"))',
+    ],
+)
+def test_existe_publico_desde_usar_bloquea_traversal_normalizado(codigo):
+    interp = InterpretadorCobra()
+    ast = generar_ast(codigo)
+
+    with pytest.raises(PrimitivaPeligrosaError):
+        interp.ejecutar_ast(ast)
+
