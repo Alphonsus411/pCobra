@@ -142,6 +142,11 @@ def _runtime_debug_enabled() -> bool:
     return os.getenv("PCOBRA_DEBUG_RUNTIME", "").strip() == "1"
 
 
+def _resumen_conflictos_usar(conflictos: list[object]) -> str:
+    """Devuelve un resumen compacto de conflictos para logs no verbosos."""
+    return f"count={len(conflictos)}"
+
+
 def _ruta_import_permitida(ruta: str) -> bool:
     """Indica si una ruta está autorizada para importarse."""
 
@@ -2000,7 +2005,11 @@ class InterpretadorCobra:
                     "module": nodo.modulo,
                     "conflicts": conflictos_saneamiento,
                 }
-                logging.warning("USAR sanitize conflicts event module=%s count=%s", nodo.modulo, len(conflictos_saneamiento))
+                logging.warning(
+                    "USAR sanitize conflicts event module=%s %s",
+                    nodo.modulo,
+                    _resumen_conflictos_usar(conflictos_saneamiento),
+                )
                 if _usar_detalle_habilitado():
                     self._trace_debug(f"[USAR_SANITIZE][CONFLICTS] {evento_conflictos}")
 
@@ -2033,10 +2042,11 @@ class InterpretadorCobra:
                         "detail": detalle_por_simbolo,
                     }
                     logging.warning(
-                        "USAR collision symbol event module=%s symbol=%s policy=%s",
+                        "USAR collision symbol event module=%s symbol=%s policy=%s count=%s",
                         nodo.modulo,
                         simbolo_conflictivo,
                         self._usar_collision_policy,
+                        len(conflictos),
                     )
                     if _usar_detalle_habilitado():
                         self._trace_debug(f"[USAR_COLLISION][SYMBOL] {evento_colision}")
