@@ -707,13 +707,16 @@ def test_usar_numero_conserva_es_finito_y_signo_operativos(monkeypatch):
 
 def test_usar_datos_no_exporta_objetos_backend_sdk_wrappers(monkeypatch):
     modulo = ModuleType("datos")
-    modulo.__all__ = ["longitud", "backend", "sdk", "wrapper", "modulo_externo", "module_object"]
+    modulo.__all__ = ["longitud", "backend", "sdk", "wrapper", "modulo_externo", "module_object", "backend_module_object", "USAR_RUNTIME_EXPORT_OVERRIDES", "REPL_COBRA_MODULE_INTERNAL_PATH_MAP"]
     modulo.longitud = lambda xs: len(xs)
     modulo.backend = ModuleType("backend")
     modulo.sdk = ModuleType("sdk")
     modulo.wrapper = ModuleType("wrapper")
     modulo.modulo_externo = ModuleType("modulo_externo")
     modulo.module_object = object()
+    modulo.backend_module_object = object()
+    modulo.USAR_RUNTIME_EXPORT_OVERRIDES = object()
+    modulo.REPL_COBRA_MODULE_INTERNAL_PATH_MAP = object()
     modulo.__file__ = "/workspace/pCobra/src/pcobra/standard_library/datos.py"
 
     monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: modulo)
@@ -725,7 +728,16 @@ def test_usar_datos_no_exporta_objetos_backend_sdk_wrappers(monkeypatch):
         interp.ejecutar_nodo(NodoUsar("datos"))
 
     assert "longitud" not in interp.variables
-    for simbolo in ("backend", "sdk", "wrapper", "modulo_externo", "module_object"):
+    for simbolo in (
+        "backend",
+        "sdk",
+        "wrapper",
+        "modulo_externo",
+        "module_object",
+        "backend_module_object",
+        "USAR_RUNTIME_EXPORT_OVERRIDES",
+        "REPL_COBRA_MODULE_INTERNAL_PATH_MAP",
+    ):
         assert simbolo not in interp.variables
 def test_usar_datos_incluye_filtrar_mapear_reducir(monkeypatch):
     import pcobra.standard_library.datos as modulo_datos
