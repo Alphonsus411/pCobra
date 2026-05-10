@@ -117,6 +117,23 @@ def format_user_error(exc: Exception) -> str:
     return msg or _("Error desconocido")
 
 
+def _es_error_usuario_repl(exc: Exception) -> bool:
+    """Clasifica errores esperados de contrato `usar` como errores de usuario."""
+    msg = str(exc)
+    if isinstance(exc, (PermissionError, ValueError, ImportError)):
+        if "usar_error[" in msg:
+            return True
+        if "catálogo público" in msg or "catalogo publico" in msg.lower():
+            return True
+        if "conflicto de símbolos" in msg or "conflicto de simbolos" in msg.lower():
+            return True
+        if "referencia circular" in msg.lower() or "import circular" in msg.lower():
+            return True
+        if "export_invalido" in msg or "sanitize" in msg.lower():
+            return True
+    return False
+
+
 class _SessionHistoryFallback:
     """Historial mínimo para dobles de sesión usados en pruebas."""
 
@@ -987,6 +1004,8 @@ class InteractiveCommand(BaseCommand):
         """Clasifica errores del REPL para un reporte único en el loop principal."""
         if isinstance(error, (LexerError, ParserError)):
             return _("Error de sintaxis")
+        if _es_error_usuario_repl(error):
+            return _("Error de usuario")
         if isinstance(error, RuntimeError):
             return _("Error crítico")
         return _("Error general")
