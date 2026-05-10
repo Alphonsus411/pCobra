@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import hashlib
+from pathlib import Path
 from types import ModuleType
 
 import pytest
@@ -7,6 +9,7 @@ import pytest
 from pcobra.cobra.core.runtime import InterpretadorCobra
 from pcobra.cobra.usar_policy import USAR_RUNTIME_EXPORT_OVERRIDES
 from pcobra.core import usar_symbol_policy
+from pcobra.cobra import usar_loader as cobra_usar_loader
 
 
 def _nodo(modulo: str):
@@ -26,7 +29,8 @@ def test_holobit_export_only_runtime_override(monkeypatch):
     mod._to_sdk_holobit = lambda *_: None
     mod.__file__ = "/workspace/pCobra/src/pcobra/corelibs/holobit.py"
 
-    monkeypatch.setattr("pcobra.core.usar_loader.obtener_modulo_cobra_oficial", lambda _nombre: mod)
+    monkeypatch.setattr(cobra_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: mod)
+    monkeypatch.setattr(cobra_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: mod)
 
     interp = InterpretadorCobra()
     interp.configurar_restriccion_usar_repl({"holobit": "holobit"})
@@ -102,7 +106,8 @@ def test_texto_simbolo_existente_fuera_de_override_falla_como_no_declarado(monke
     mod.normalizar_unicode = lambda texto, forma="NFC": texto
     mod.__file__ = "/workspace/pCobra/src/pcobra/standard_library/texto.py"
 
-    monkeypatch.setattr("pcobra.core.usar_loader.obtener_modulo_cobra_oficial", lambda _nombre: mod)
+    monkeypatch.setattr(cobra_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: mod)
+    monkeypatch.setattr(cobra_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: mod)
 
     interp = InterpretadorCobra()
     interp.configurar_restriccion_usar_repl({"texto": "texto"})
@@ -129,3 +134,70 @@ def test_regresion_texto_detecta_mapeo_interno_incompleto_y_filtra_fuera_de_api_
         conflicto.get("symbol") == "normalizar_unicode" and conflicto.get("code") == "outside_public_api"
         for conflicto in conflictos
     )
+
+
+def test_usar_datos_expone_longitud(monkeypatch):
+    mod = ModuleType("datos")
+    mod.__all__ = ["longitud"]
+    mod.longitud = lambda valores: len(valores)
+    mod.__file__ = "/workspace/pCobra/src/pcobra/corelibs/datos.py"
+
+    monkeypatch.setattr(cobra_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: mod)
+    monkeypatch.setattr(cobra_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: mod)
+
+    interp = InterpretadorCobra()
+    interp.configurar_restriccion_usar_repl({"datos": "datos"})
+    interp.ejecutar_usar(_nodo("datos"))
+
+    assert "longitud" in interp.contextos[-1].values
+    assert interp.contextos[-1].get("longitud")([1, 2, 3]) == 3
+
+
+def test_usar_texto_expone_recortar_repetir_quitar_acentos(monkeypatch):
+    mod = ModuleType("texto")
+    mod.__all__ = ["recortar", "repetir", "quitar_acentos"]
+    mod.recortar = lambda texto: str(texto).strip()
+    mod.repetir = lambda texto, veces=2: str(texto) * int(veces)
+    mod.quitar_acentos = lambda texto: str(texto).translate(str.maketrans("áéíóú", "aeiou"))
+    mod.__file__ = "/workspace/pCobra/src/pcobra/corelibs/texto.py"
+
+    monkeypatch.setattr(cobra_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: mod)
+    monkeypatch.setattr(cobra_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: mod)
+
+    interp = InterpretadorCobra()
+    interp.configurar_restriccion_usar_repl({"texto": "texto"})
+    interp.ejecutar_usar(_nodo("texto"))
+
+    simbolos = set(interp.contextos[-1].values)
+    assert {"recortar", "repetir", "quitar_acentos"}.issubset(simbolos)
+
+
+def test_usar_numero_mantiene_es_finito_y_signo(monkeypatch):
+    mod = ModuleType("numero")
+    mod.__all__ = ["es_finito", "signo"]
+    mod.es_finito = lambda valor: valor not in (float("inf"), float("-inf"))
+    mod.signo = lambda valor: -1 if valor < 0 else (1 if valor > 0 else 0)
+    mod.__file__ = "/workspace/pCobra/src/pcobra/corelibs/numero.py"
+
+    monkeypatch.setattr(cobra_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: mod)
+    monkeypatch.setattr(cobra_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: mod)
+
+    interp = InterpretadorCobra()
+    interp.configurar_restriccion_usar_repl({"numero": "numero"})
+    interp.ejecutar_usar(_nodo("numero"))
+
+    simbolos = set(interp.contextos[-1].values)
+    assert "es_finito" in simbolos
+    assert "signo" in simbolos
+
+
+def test_integridad_estatica_lexer_y_parser_sin_diff_inesperado():
+    hashes_esperados = {
+        "src/pcobra/core/lexer.py": "fbd130d88ec6255c1e966752730a7cb2e2311c50125d85df487fc67d55aaf61e",
+        "src/pcobra/core/parser.py": "656d9c911ab0760435efc48502625b6016955f00d0429228a0ffced87e982a2b",
+        "src/pcobra/cobra/core/lexer.py": "fa65759ee1f0345e7ac3c48f1aa9d7d8f907916246c2d7f5f9151198c5a11887",
+        "src/pcobra/cobra/core/parser.py": "578cea52a6cab8bccb0e41a895ed7664e4950a15cdaf49f059000200f352d41d",
+    }
+    for ruta, hash_esperado in hashes_esperados.items():
+        contenido = Path(ruta).read_bytes()
+        assert hashlib.sha256(contenido).hexdigest() == hash_esperado, f"Hash inesperado en {ruta}"
