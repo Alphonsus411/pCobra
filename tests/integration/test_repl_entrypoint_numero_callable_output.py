@@ -155,3 +155,16 @@ def test_entrypoint_repl_real_imprimir_booleanos_canonicos_no_regresion(monkeypa
     lineas = [linea.strip() for linea in salida.splitlines() if linea.strip()]
     assert lineas.count("verdadero") >= 1
     assert lineas.count("falso") >= 1
+
+
+def test_entrypoint_repl_texto_flujo_integral_callable_output(capsys):
+    cmd = ReplCommandV2()
+    cmd._ejecutar_en_modo_normal('usar "texto"')
+    cmd._ejecutar_en_modo_normal('imprimir(recortar("  Cobra  "))')
+    cmd._ejecutar_en_modo_normal('imprimir(repetir("ja", 3))')
+    cmd._ejecutar_en_modo_normal('imprimir(quitar_acentos("canción"))')
+
+    salida = [linea.strip() for linea in capsys.readouterr().out.splitlines() if linea.strip()]
+    assert "Cobra" in salida
+    assert "jajaja" in salida
+    assert "cancion" in salida
