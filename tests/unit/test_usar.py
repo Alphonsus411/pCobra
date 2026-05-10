@@ -915,5 +915,49 @@ def test_usar_error_export_invalido_es_diferenciado(monkeypatch):
     interp = InterpretadorCobra()
     interp.configurar_restriccion_usar_repl({"texto": "texto"})
 
-    with pytest.raises(ImportError, match=r"usar_error\[export_invalido\]"):
+    with pytest.raises(ImportError, match=r"no hay símbolos exportables válidos"):
         interp.ejecutar_nodo(NodoUsar("texto"))
+
+
+def test_usar_no_muestra_traceback_ni_detalle_en_modo_normal(monkeypatch, caplog):
+    modulo = ModuleType("texto")
+    modulo.__all__ = ["a_snake"]
+    modulo.a_snake = lambda texto: texto
+    modulo.__file__ = "/workspace/pCobra/src/pcobra/corelibs/texto.py"
+
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: modulo)
+    monkeypatch.delenv("PCOBRA_DEBUG_RUNTIME", raising=False)
+    monkeypatch.delenv("PCOBRA_DEBUG_TRACES", raising=False)
+
+    interp = InterpretadorCobra()
+    interp.configurar_restriccion_usar_repl({"texto": "texto"})
+    interp.contextos[-1].define("a_snake", lambda _texto: "ocupado")
+
+    with pytest.raises(NameError) as excinfo:
+        interp.ejecutar_nodo(NodoUsar("texto"))
+
+    texto_error = str(excinfo.value)
+    assert "conflicto de símbolos" in texto_error
+    assert "detalle=" not in texto_error
+    assert "Traceback" not in caplog.text
+
+
+def test_usar_muestra_detalle_extendido_en_debug(monkeypatch, caplog):
+    modulo = ModuleType("texto")
+    modulo.__all__ = ["a_snake"]
+    modulo.a_snake = lambda texto: texto
+    modulo.__file__ = "/workspace/pCobra/src/pcobra/corelibs/texto.py"
+
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: modulo)
+    monkeypatch.setenv("PCOBRA_DEBUG_RUNTIME", "1")
+
+    interp = InterpretadorCobra()
+    interp.configurar_restriccion_usar_repl({"texto": "texto"})
+    interp.contextos[-1].define("a_snake", lambda _texto: "ocupado")
+
+    with pytest.raises(NameError) as excinfo:
+        interp.ejecutar_nodo(NodoUsar("texto"))
+
+    texto_error = str(excinfo.value)
+    assert "detalle=" in texto_error
+    assert "Traceback" in caplog.text
