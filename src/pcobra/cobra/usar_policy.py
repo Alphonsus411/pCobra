@@ -36,23 +36,26 @@ USAR_COBRA_FACING_MODULE_FLAGS: dict[str, bool] = {
     modulo: True for modulo in USAR_COBRA_PUBLIC_MODULES
 }
 
+_USAR_CANONICAL_INTERNAL_PATHS: dict[str, str] = {
+    # Mantener `numero` en corelibs para no introducir regresión de resolución.
+    "numero": "src/pcobra/corelibs/numero.py",
+    # `texto` y `datos` exponen su API pública real desde standard_library.
+    "texto": "src/pcobra/standard_library/texto.py",
+    "datos": "src/pcobra/standard_library/datos.py",
+    "logica": "src/pcobra/corelibs/logica.py",
+    "asincrono": "src/pcobra/corelibs/asincrono.py",
+    "sistema": "src/pcobra/corelibs/sistema.py",
+    "archivo": "src/pcobra/corelibs/archivo.py",
+    "tiempo": "src/pcobra/corelibs/tiempo.py",
+    "red": "src/pcobra/corelibs/red.py",
+    "holobit": "src/pcobra/corelibs/holobit.py",
+}
+
+
 def _build_repl_cobra_module_internal_path_map() -> dict[str, str]:
     """Construye el mapeo oficial `alias usar` -> ruta interna por módulo."""
 
-    return {
-        # Mantener `numero` en corelibs para no introducir regresión de resolución.
-        "numero": "src/pcobra/corelibs/numero.py",
-        # `texto` y `datos` exponen su API pública real desde standard_library.
-        "texto": "src/pcobra/standard_library/texto.py",
-        "datos": "src/pcobra/standard_library/datos.py",
-        "logica": "src/pcobra/corelibs/logica.py",
-        "asincrono": "src/pcobra/corelibs/asincrono.py",
-        "sistema": "src/pcobra/corelibs/sistema.py",
-        "archivo": "src/pcobra/corelibs/archivo.py",
-        "tiempo": "src/pcobra/corelibs/tiempo.py",
-        "red": "src/pcobra/corelibs/red.py",
-        "holobit": "src/pcobra/corelibs/holobit.py",
-    }
+    return dict(_USAR_CANONICAL_INTERNAL_PATHS)
 
 
 # Fuente única de verdad: alias canónico `usar` -> ruta interna oficial.
