@@ -2107,13 +2107,12 @@ class InterpretadorCobra:
             if not contexto_actual.contains(nombre):
                 continue
             previo = self._usar_symbol_metadata.get(nombre)
-            identidad_actual = id(simbolo)
-            if (
-                previo
-                and previo.get("module") == modulo
-                and previo.get("exported_name") == nombre
-                and previo.get("callable_id") == identidad_actual
-            ):
+            metadata_actual = self._construir_metadata_simbolo_usar(
+                modulo=modulo,
+                nombre_exportado=nombre,
+                simbolo=simbolo,
+            )
+            if previo and previo == metadata_actual:
                 # Reimport idempotente: mismo símbolo, mismo módulo origen y misma identidad.
                 continue
             conflictos.append(nombre)
@@ -2136,13 +2135,12 @@ class InterpretadorCobra:
         for nombre, simbolo in simbolos_saneados:
             if contexto_actual.contains(nombre) and not permitir_sobrescritura:
                 previo = self._usar_symbol_metadata.get(nombre)
-                identidad_actual = id(simbolo)
-                if (
-                    previo
-                    and previo.get("module") == modulo
-                    and previo.get("exported_name") == nombre
-                    and previo.get("callable_id") == identidad_actual
-                ):
+                metadata_actual = self._construir_metadata_simbolo_usar(
+                    modulo=modulo,
+                    nombre_exportado=nombre,
+                    simbolo=simbolo,
+                )
+                if previo and previo == metadata_actual:
                     # No-op idempotente: evita warning/ruido al reimportar lo mismo.
                     continue
                 detalle = {
@@ -2162,13 +2160,36 @@ class InterpretadorCobra:
                     f"'{modulo}': {USAR_SYMBOL_CONFLICT_ERROR} colisión estructurada={detalle}"
                 )
             contexto_actual.define(nombre, simbolo)
-            self._usar_symbol_metadata[nombre] = {
-                "module": modulo,
-                "exported_name": nombre,
-                "callable_id": id(simbolo),
-            }
+            self._usar_symbol_metadata[nombre] = self._construir_metadata_simbolo_usar(
+                modulo=modulo,
+                nombre_exportado=nombre,
+                simbolo=simbolo,
+            )
             if self.safe_mode and self._validador is not None and hasattr(self._validador, "registrar_simbolo_publico_usar"):
                 self._validador.registrar_simbolo_publico_usar(nombre, modulo)
+
+    def _construir_metadata_simbolo_usar(
+        self,
+        *,
+        modulo: str,
+        nombre_exportado: str,
+        simbolo: object,
+    ) -> dict[str, object]:
+        """Construye metadatos de origen para detectar reimportaciones idempotentes."""
+        firma_estable = None
+        modulo_objeto = getattr(simbolo, "__module__", None)
+        qualname = getattr(simbolo, "__qualname__", None)
+        code = getattr(simbolo, "__code__", None)
+        if modulo_objeto and qualname:
+            firma_estable = f"{modulo_objeto}:{qualname}"
+            if code is not None:
+                firma_estable = f"{firma_estable}:{getattr(code, 'co_argcount', 'na')}:{getattr(code, 'co_kwonlyargcount', 'na')}"
+        return {
+            "module": modulo,
+            "exported_name": nombre_exportado,
+            "callable_id": id(simbolo),
+            "stable_signature": firma_estable,
+        }
 
     def ejecutar_holobit(self, nodo):
         """Simula la ejecución de un holobit y devuelve sus valores."""
