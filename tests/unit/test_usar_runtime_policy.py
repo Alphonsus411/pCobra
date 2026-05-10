@@ -209,3 +209,43 @@ def test_usar_runtime_rechaza_import_directo_de_internals_holobit(nombre_interno
     assert "Importación no permitida en 'usar'" in mensaje
     assert nombre_interno in mensaje
     assert "backend_" not in mensaje
+
+
+def test_usar_runtime_error_usuario_sin_detalle_en_modo_normal(monkeypatch):
+    modulo = ModuleType("texto")
+    modulo.__all__ = ["a_snake"]
+    modulo.a_snake = lambda txt: txt
+    modulo.__file__ = "/workspace/pCobra/src/pcobra/corelibs/texto.py"
+
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _n: modulo)
+
+    interp = _interp_con_alias({"texto": "texto"})
+    interp.contextos[-1].define("a_snake", lambda txt: f"previo:{txt}")
+
+    with pytest.raises(NameError) as exc:
+        interp.ejecutar_nodo(NodoUsar("texto"))
+
+    mensaje = str(exc.value)
+    assert "conflicto de símbolos" in mensaje
+    assert "detalle=" not in mensaje
+    assert "[" not in mensaje
+
+
+def test_usar_runtime_error_usuario_con_detalle_en_debug(monkeypatch):
+    modulo = ModuleType("texto")
+    modulo.__all__ = ["a_snake"]
+    modulo.a_snake = lambda txt: txt
+    modulo.__file__ = "/workspace/pCobra/src/pcobra/corelibs/texto.py"
+
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _n: modulo)
+    monkeypatch.setenv("PCOBRA_DEBUG_TRACES", "1")
+
+    interp = _interp_con_alias({"texto": "texto"})
+    interp.contextos[-1].define("a_snake", lambda txt: f"previo:{txt}")
+
+    with pytest.raises(NameError) as exc:
+        interp.ejecutar_nodo(NodoUsar("texto"))
+
+    mensaje = str(exc.value)
+    assert "conflicto de símbolos" in mensaje
+    assert "detalle=" in mensaje

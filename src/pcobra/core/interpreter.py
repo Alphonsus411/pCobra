@@ -112,6 +112,18 @@ USAR_COLLISION_STRICT_ERROR = "strict_error"
 USAR_COLLISION_WARN_ALIAS_REQUIRED = "warn_alias_required"
 _USAR_COLLISION_POLICIES = frozenset({USAR_COLLISION_STRICT_ERROR, USAR_COLLISION_WARN_ALIAS_REQUIRED})
 
+def formatear_error_usar_usuario(codigo: str, modulo: str, contexto_minimo: str | None = None) -> str:
+    """Devuelve errores cortos y legibles para la salida de usuario en `usar`."""
+    mensajes = {
+        "modulo_fuera_catalogo": f"No se puede usar '{modulo}': módulo fuera del catálogo público.",
+        "conflicto_simbolo": f"No se puede usar '{modulo}': hay conflicto de símbolos en el contexto actual.",
+        "export_invalido": f"No se puede usar '{modulo}': no hay símbolos exportables válidos.",
+    }
+    base = mensajes.get(codigo, f"No se puede usar '{modulo}'.")
+    if contexto_minimo:
+        return f"{base} {contexto_minimo}"
+    return base
+
 
 def _runtime_debug_enabled() -> bool:
     """Habilita diagnóstico puntual de runtime vía entorno."""
@@ -1960,14 +1972,14 @@ class InterpretadorCobra:
                     "conflicts": conflictos_saneamiento,
                 }
                 logging.warning("USAR sanitize conflicts event: %s", evento_conflictos)
-                self._trace_debug(f"[USAR_SANITIZE][CONFLICTS] {evento_conflictos}")
+                if self._debug_trazas_habilitadas() or _runtime_debug_enabled():
+                    self._trace_debug(f"[USAR_SANITIZE][CONFLICTS] {evento_conflictos}")
 
             if not simbolos_saneados:
-                raise ImportError(
-                    f"{USAR_INVALID_EXPORT_ERROR}: rechazos de saneamiento en usar "
-                    f"'{nodo.modulo}': no quedaron símbolos exportables tras saneamiento. "
-                    f"conflictos={conflictos_saneamiento}"
-                )
+                mensaje_usuario = formatear_error_usar_usuario("export_invalido", nodo.modulo)
+                if self._debug_trazas_habilitadas() or _runtime_debug_enabled():
+                    mensaje_usuario = f"{mensaje_usuario} ({USAR_INVALID_EXPORT_ERROR}; conflictos={conflictos_saneamiento})"
+                raise ImportError(mensaje_usuario)
 
             # Fase A: detectar colisiones de forma completa antes de definir.
             conflictos = self._detectar_conflictos_usar_en_contexto(
@@ -1992,7 +2004,8 @@ class InterpretadorCobra:
                         "detail": detalle_por_simbolo,
                     }
                     logging.warning("USAR collision symbol event: %s", evento_colision)
-                    self._trace_debug(f"[USAR_COLLISION][SYMBOL] {evento_colision}")
+                    if self._debug_trazas_habilitadas() or _runtime_debug_enabled():
+                        self._trace_debug(f"[USAR_COLLISION][SYMBOL] {evento_colision}")
 
                 conflicto = conflictos[0]
                 detalle = {
@@ -2006,17 +2019,22 @@ class InterpretadorCobra:
                 }
                 if self._usar_collision_policy == USAR_COLLISION_WARN_ALIAS_REQUIRED:
                     warnings.warn(
-                        "Conflicto de nombres en `usar`: "
-                        f"módulo={nodo.modulo} símbolos={conflictos}. "
-                        "No se inyectó ningún símbolo; use alias explícito.",
+                        formatear_error_usar_usuario(
+                            "conflicto_simbolo",
+                            nodo.modulo,
+                            "Use alias explícito para resolver la colisión.",
+                        ),
                         RuntimeWarning,
                         stacklevel=2,
                     )
-                    raise NameError(
-                        "No se puede usar el módulo "
-                        f"'{nodo.modulo}': {USAR_SYMBOL_CONFLICT_ERROR} colisión estructurada={detalle}. "
-                        "Requiere alias explícito según la convención del runtime (usar importar ... como ...)."
+                    mensaje_usuario = formatear_error_usar_usuario(
+                        "conflicto_simbolo",
+                        nodo.modulo,
+                        "Requiere alias explícito.",
                     )
+                    if self._debug_trazas_habilitadas() or _runtime_debug_enabled():
+                        mensaje_usuario = f"{mensaje_usuario} detalle={detalle}"
+                    raise NameError(mensaje_usuario)
                 evento_colision = {
                     "evento": "usar_collision",
                     "severity": "error",
@@ -2026,10 +2044,10 @@ class InterpretadorCobra:
                     "detail": detalle,
                 }
                 logging.error("USAR collision event: %s", evento_colision)
-                raise NameError(
-                    "No se puede usar el módulo "
-                    f"'{nodo.modulo}': {USAR_SYMBOL_CONFLICT_ERROR} colisión estructurada={detalle}"
-                )
+                mensaje_usuario = formatear_error_usar_usuario("conflicto_simbolo", nodo.modulo)
+                if self._debug_trazas_habilitadas() or _runtime_debug_enabled():
+                    mensaje_usuario = f"{mensaje_usuario} detalle={detalle}"
+                raise NameError(mensaje_usuario)
 
             # Fase B: inyectar de forma atómica y sin sobreescritura silenciosa.
             self._inyectar_simbolos_usar_en_contexto(
@@ -2037,7 +2055,12 @@ class InterpretadorCobra:
                 modulo=nodo.modulo,
             )
         except Exception as exc:
-            logging.exception(f"Error al usar el módulo '{nodo.modulo}': {exc}")
+            logging.exception("Error al usar el módulo '%s': %s", nodo.modulo, exc)
+            if isinstance(exc, PermissionError):
+                mensaje = formatear_error_usar_usuario("modulo_fuera_catalogo", nodo.modulo)
+                if self._debug_trazas_habilitadas() or _runtime_debug_enabled():
+                    mensaje = f"{mensaje} ({exc})"
+                raise PermissionError(mensaje) from exc
             raise
 
     def _detectar_conflictos_usar_en_contexto(
