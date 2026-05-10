@@ -1400,18 +1400,21 @@ class InterpretadorCobra:
             elif isinstance(expresion, NodoHolobit):
                 return self.ejecutar_holobit(expresion)
             elif isinstance(expresion, NodoLista):
-                elementos = [
-                    self._asegurar_resultado_no_ast(
-                        self._materializar_valor(
-                            self.evaluar_expresion(elemento, visitados),
-                            visitados,
-                            origen="lista",
-                        ),
+                elementos = []
+                for elemento in expresion.elementos:
+                    valor_elemento = self.evaluar_expresion(elemento, visitados)
+                    valor_elemento = self._materializar_valor(
+                        valor_elemento,
+                        visitados,
+                        origen="lista",
+                    )
+                    valor_elemento = self._asegurar_resultado_no_ast(
+                        valor_elemento,
                         nodo_origen=elemento,
                         operador="lista:elemento",
                     )
-                    for elemento in expresion.elementos
-                ]
+                    self._verificar_valor_contexto(valor_elemento)
+                    elementos.append(valor_elemento)
                 return _retorno_critico(elementos, operador="lista")
             elif isinstance(expresion, NodoOperacionBinaria):
                 tipo = expresion.operador.tipo

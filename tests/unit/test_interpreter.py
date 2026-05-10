@@ -691,3 +691,14 @@ def test_lista_literal_evalua_elementos_recursivos():
     )
 
     assert inter.obtener_variable("xs") == [10, 11]
+
+def test_lista_literal_propaga_error_semantico_en_elemento_invalido():
+    inter = InterpretadorCobra()
+
+    with pytest.raises(NameError, match="Variable no declarada: no_existe"):
+        inter.evaluar_expresion(
+            NodoLista([
+                NodoValor(1),
+                NodoIdentificador("no_existe"),
+            ])
+        )
