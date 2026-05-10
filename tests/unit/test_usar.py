@@ -686,6 +686,12 @@ def test_usar_texto_expone_superficie_publica_clave(monkeypatch):
     for simbolo in ("recortar", "repetir", "quitar_acentos", "prefijo_comun", "sufijo_comun"):
         assert simbolo in interp.variables
 
+    assert interp.obtener_variable("recortar")("  cobra  ") == "cobra"
+    assert interp.obtener_variable("repetir")("ja", 3) == "jajaja"
+    assert interp.obtener_variable("quitar_acentos")("canción") == "cancion"
+    assert interp.obtener_variable("prefijo_comun")("cobra", "cobre") == "cobr"
+    assert interp.obtener_variable("sufijo_comun")("programacion", "nacion") == "acion"
+
 
 def test_usar_numero_conserva_es_finito_y_signo_operativos(monkeypatch):
     import pcobra.corelibs.numero as modulo_numero
@@ -696,17 +702,18 @@ def test_usar_numero_conserva_es_finito_y_signo_operativos(monkeypatch):
     interp.ejecutar_nodo(NodoUsar("numero"))
 
     assert interp.obtener_variable("es_finito")(10) is True
-    assert interp.obtener_variable("signo")(-8) == -1
+    assert interp.obtener_variable("signo")(0 - 5) == -1
 
 
 def test_usar_datos_no_exporta_objetos_backend_sdk_wrappers(monkeypatch):
     modulo = ModuleType("datos")
-    modulo.__all__ = ["longitud", "backend", "sdk", "wrapper", "modulo_externo"]
+    modulo.__all__ = ["longitud", "backend", "sdk", "wrapper", "modulo_externo", "module_object"]
     modulo.longitud = lambda xs: len(xs)
     modulo.backend = ModuleType("backend")
     modulo.sdk = ModuleType("sdk")
     modulo.wrapper = ModuleType("wrapper")
     modulo.modulo_externo = ModuleType("modulo_externo")
+    modulo.module_object = object()
     modulo.__file__ = "/workspace/pCobra/src/pcobra/standard_library/datos.py"
 
     monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: modulo)
@@ -718,7 +725,7 @@ def test_usar_datos_no_exporta_objetos_backend_sdk_wrappers(monkeypatch):
         interp.ejecutar_nodo(NodoUsar("datos"))
 
     assert "longitud" not in interp.variables
-    for simbolo in ("backend", "sdk", "wrapper", "modulo_externo"):
+    for simbolo in ("backend", "sdk", "wrapper", "modulo_externo", "module_object"):
         assert simbolo not in interp.variables
 def test_usar_datos_incluye_filtrar_mapear_reducir(monkeypatch):
     import pcobra.standard_library.datos as modulo_datos

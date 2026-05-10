@@ -137,6 +137,8 @@ def _modulo_datos_stub() -> ModuleType:
     mod = ModuleType("datos")
     mod.__all__ = ["longitud"]
     mod.longitud = lambda valores: len(valores)
+    mod._backend = object()
+    mod.module_object = object()
     mod.__file__ = "/workspace/pCobra/src/pcobra/corelibs/datos.py"
     return mod
 
@@ -486,6 +488,11 @@ def test_repl_usar_datos_longitud_salida_exacta(factory, executor, monkeypatch, 
 
     lineas = [linea.strip() for linea in capsys.readouterr().out.splitlines() if linea.strip()]
     assert lineas == ["3"]
+
+    simbolos = set((cmd.interpretador if isinstance(cmd, InteractiveCommand) else cmd._delegate.interpretador).contextos[-1].values.keys())
+    assert "longitud" in simbolos
+    assert "_backend" not in simbolos
+    assert "module_object" not in simbolos
 
 
 def test_repl_usar_texto_expone_funciones_objetivo_y_mantiene_comunes(monkeypatch):
