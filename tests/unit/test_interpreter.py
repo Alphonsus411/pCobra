@@ -13,6 +13,7 @@ from core.ast_nodes import (
     NodoImprimir,
     NodoImport,
     NodoLlamadaFuncion,
+    NodoLista,
     NodoOperacionBinaria,
     NodoRetorno,
     NodoValor,
@@ -642,3 +643,51 @@ def test_mode_se_restaura_en_import_si_falla_ejecucion(monkeypatch):
 
     assert inter.mode == modo_inicial
     assert inter._validador.emitir_side_effects is True
+
+
+def test_lista_literal_en_asignacion_var():
+    inter = InterpretadorCobra()
+
+    inter.ejecutar_nodo(
+        NodoAsignacion(
+            "xs",
+            NodoLista([NodoValor(1), NodoValor(2), NodoValor(3)]),
+            declaracion=True,
+        )
+    )
+
+    assert inter.obtener_variable("xs") == [1, 2, 3]
+
+
+def test_longitud_recibe_lista_literal_como_argumento():
+    inter = InterpretadorCobra()
+
+    resultado = inter.ejecutar_llamada_funcion(
+        NodoLlamadaFuncion("longitud", [NodoLista([NodoValor(1), NodoValor(2), NodoValor(3)])])
+    )
+
+    assert resultado == 3
+
+
+def test_lista_literal_evalua_elementos_recursivos():
+    inter = InterpretadorCobra()
+    inter.ejecutar_nodo(NodoAsignacion("a", NodoValor(10), declaracion=True))
+
+    inter.ejecutar_nodo(
+        NodoAsignacion(
+            "xs",
+            NodoLista(
+                [
+                    NodoIdentificador("a"),
+                    NodoOperacionBinaria(
+                        NodoIdentificador("a"),
+                        Token(TipoToken.SUMA, "+"),
+                        NodoValor(1),
+                    ),
+                ]
+            ),
+            declaracion=True,
+        )
+    )
+
+    assert inter.obtener_variable("xs") == [10, 11]

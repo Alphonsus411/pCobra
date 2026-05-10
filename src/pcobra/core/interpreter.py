@@ -39,6 +39,7 @@ from .ast_nodes import (
     NodoIdentificador,
     NodoValor,
     NodoImprimir,
+    NodoLista,
     NodoRetorno,
     NodoYield,
     NodoEsperar,
@@ -1393,6 +1394,20 @@ class InterpretadorCobra:
                 return _retorno_critico(valor_resuelto, operador="atributo")
             elif isinstance(expresion, NodoHolobit):
                 return self.ejecutar_holobit(expresion)
+            elif isinstance(expresion, NodoLista):
+                elementos = [
+                    self._asegurar_resultado_no_ast(
+                        self._materializar_valor(
+                            self.evaluar_expresion(elemento, visitados),
+                            visitados,
+                            origen="lista",
+                        ),
+                        nodo_origen=elemento,
+                        operador="lista:elemento",
+                    )
+                    for elemento in expresion.elementos
+                ]
+                return _retorno_critico(elementos, operador="lista")
             elif isinstance(expresion, NodoOperacionBinaria):
                 tipo = expresion.operador.tipo
                 self._trace_debug(
