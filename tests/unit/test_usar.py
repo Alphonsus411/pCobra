@@ -661,6 +661,69 @@ def test_usar_texto_exporta_solo_nombres_espanoles(monkeypatch):
     assert "to_snake_case" not in interp.variables
 
 
+def test_usar_logica_dos_veces_es_idempotente(monkeypatch):
+    import pcobra.corelibs.logica as modulo_logica
+
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: modulo_logica)
+    interp = InterpretadorCobra()
+    interp.configurar_restriccion_usar_repl({"logica": "logica"})
+
+    _ejecutar_codigo('usar "logica"\nusar "logica"', interp)
+
+    assert "es_verdadero" in interp.variables
+
+
+def test_usar_numero_dos_veces_es_idempotente(monkeypatch):
+    import pcobra.corelibs.numero as modulo_numero
+
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: modulo_numero)
+    interp = InterpretadorCobra()
+    interp.configurar_restriccion_usar_repl({"numero": "numero"})
+
+    _ejecutar_codigo('usar "numero"\nusar "numero"', interp)
+
+    assert "es_finito" in interp.variables
+
+
+def test_usar_numero_conflicto_real_por_redefinicion_usuario(monkeypatch):
+    import pcobra.corelibs.numero as modulo_numero
+
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: modulo_numero)
+    interp = InterpretadorCobra()
+    interp.configurar_restriccion_usar_repl({"numero": "numero"})
+    interp.contextos[-1].define("es_finito", 123)
+
+    with pytest.raises(NameError, match=r"conflicto"):
+        _ejecutar_codigo('usar "numero"', interp)
+
+
+def test_usar_conflicto_entre_modulos_distintos_mismo_nombre(monkeypatch):
+    modulo_numero = ModuleType("numero")
+    modulo_numero.__all__ = ["compartido"]
+    modulo_numero.compartido = lambda valor: valor
+    modulo_numero.__file__ = "/workspace/pCobra/src/pcobra/corelibs/numero.py"
+
+    modulo_logica = ModuleType("logica")
+    modulo_logica.__all__ = ["compartido"]
+    modulo_logica.compartido = lambda valor: not valor
+    modulo_logica.__file__ = "/workspace/pCobra/src/pcobra/corelibs/logica.py"
+
+    def _resolver(nombre, **_kwargs):
+        if nombre == "numero":
+            return modulo_numero
+        if nombre == "logica":
+            return modulo_logica
+        raise ModuleNotFoundError(nombre)
+
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", _resolver)
+    interp = InterpretadorCobra()
+    interp.configurar_restriccion_usar_repl({"numero": "numero", "logica": "logica"})
+    _ejecutar_codigo('usar "numero"', interp)
+
+    with pytest.raises(NameError, match=r"conflicto"):
+        _ejecutar_codigo('usar "logica"', interp)
+
+
 
 
 def test_repl_usar_datos_imprimir_longitud_lista_produce_3(monkeypatch, capsys):
