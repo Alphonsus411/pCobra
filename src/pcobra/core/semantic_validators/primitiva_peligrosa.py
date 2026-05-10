@@ -31,10 +31,10 @@ class ValidadorPrimitivaPeligrosa(ValidadorBase):
 
     def __init__(self):
         super().__init__()
-        self._simbolos_publicos_usar: set[str] = set()
+        self._simbolos_publicos_usar: set[tuple[str, str]] = set()
 
-    def registrar_simbolo_publico_usar(self, nombre: str) -> None:
-        self._simbolos_publicos_usar.add(nombre)
+    def registrar_simbolo_publico_usar(self, nombre: str, modulo: str) -> None:
+        self._simbolos_publicos_usar.add((modulo, nombre))
 
     @staticmethod
     def _ruta_permitida_en_wrapper(argumentos) -> bool:
@@ -56,7 +56,7 @@ class ValidadorPrimitivaPeligrosa(ValidadorBase):
     def _es_wrapper_publico_permitido(self, nodo: NodoLlamadaFuncion) -> bool:
         if nodo.nombre != "existe":
             return False
-        if nodo.nombre not in self._simbolos_publicos_usar:
+        if ("archivo", nodo.nombre) not in self._simbolos_publicos_usar:
             return False
         return self._ruta_permitida_en_wrapper(nodo.argumentos)
 

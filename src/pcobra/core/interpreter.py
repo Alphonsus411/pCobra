@@ -2168,7 +2168,7 @@ class InterpretadorCobra:
                 "callable_id": id(simbolo),
             }
             if self.safe_mode and self._validador is not None and hasattr(self._validador, "registrar_simbolo_publico_usar"):
-                self._validador.registrar_simbolo_publico_usar(nombre)
+                self._validador.registrar_simbolo_publico_usar(nombre, modulo)
 
     def ejecutar_holobit(self, nodo):
         """Simula la ejecución de un holobit y devuelve sus valores."""
