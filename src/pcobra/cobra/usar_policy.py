@@ -37,8 +37,8 @@ USAR_COBRA_FACING_MODULE_FLAGS: dict[str, bool] = {
 }
 
 _USAR_CANONICAL_INTERNAL_PATHS: dict[str, str] = {
-    # Mantener `numero` en corelibs para no introducir regresión de resolución.
-    "numero": "src/pcobra/corelibs/numero.py",
+    # `numero` expone el contrato runtime de `usar` desde standard_library.
+    "numero": "src/pcobra/standard_library/numero.py",
     # `texto` y `datos` exponen su API pública real desde standard_library.
     "texto": "src/pcobra/standard_library/texto.py",
     "datos": "src/pcobra/standard_library/datos.py",
