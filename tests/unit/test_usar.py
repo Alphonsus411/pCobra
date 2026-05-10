@@ -661,6 +661,65 @@ def test_usar_texto_exporta_solo_nombres_espanoles(monkeypatch):
     assert "to_snake_case" not in interp.variables
 
 
+
+
+def test_repl_usar_datos_imprimir_longitud_lista_produce_3(monkeypatch, capsys):
+    import pcobra.standard_library.datos as modulo_datos
+
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: modulo_datos)
+    interp = InterpretadorCobra()
+    interp.configurar_restriccion_usar_repl({"datos": "datos"})
+
+    _ejecutar_codigo('usar "datos"\nimprimir(longitud([1, 2, 3]))', interp)
+
+    assert capsys.readouterr().out.strip().splitlines()[-1] == "3"
+
+
+def test_usar_texto_expone_superficie_publica_clave(monkeypatch):
+    import pcobra.corelibs.texto as modulo_texto
+
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: modulo_texto)
+    interp = InterpretadorCobra()
+    interp.configurar_restriccion_usar_repl({"texto": "texto"})
+    interp.ejecutar_nodo(NodoUsar("texto"))
+
+    for simbolo in ("recortar", "repetir", "quitar_acentos", "prefijo_comun", "sufijo_comun"):
+        assert simbolo in interp.variables
+
+
+def test_usar_numero_conserva_es_finito_y_signo_operativos(monkeypatch):
+    import pcobra.corelibs.numero as modulo_numero
+
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: modulo_numero)
+    interp = InterpretadorCobra()
+    interp.configurar_restriccion_usar_repl({"numero": "numero"})
+    interp.ejecutar_nodo(NodoUsar("numero"))
+
+    assert interp.obtener_variable("es_finito")(10) is True
+    assert interp.obtener_variable("signo")(-8) == -1
+
+
+def test_usar_datos_no_exporta_objetos_backend_sdk_wrappers(monkeypatch):
+    modulo = ModuleType("datos")
+    modulo.__all__ = ["longitud", "backend", "sdk", "wrapper", "modulo_externo"]
+    modulo.longitud = lambda xs: len(xs)
+    modulo.backend = ModuleType("backend")
+    modulo.sdk = ModuleType("sdk")
+    modulo.wrapper = ModuleType("wrapper")
+    modulo.modulo_externo = ModuleType("modulo_externo")
+    modulo.__file__ = "/workspace/pCobra/src/pcobra/standard_library/datos.py"
+
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: modulo)
+
+    interp = InterpretadorCobra()
+    interp.configurar_restriccion_usar_repl({"datos": "datos"})
+
+    with pytest.raises(ImportError, match=r"rechazos de saneamiento en usar"):
+        interp.ejecutar_nodo(NodoUsar("datos"))
+
+    assert "longitud" not in interp.variables
+    for simbolo in ("backend", "sdk", "wrapper", "modulo_externo"):
+        assert simbolo not in interp.variables
 def test_usar_datos_incluye_filtrar_mapear_reducir(monkeypatch):
     import pcobra.standard_library.datos as modulo_datos
 
