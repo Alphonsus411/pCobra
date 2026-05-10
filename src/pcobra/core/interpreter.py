@@ -125,6 +125,11 @@ def formatear_error_usar_usuario(codigo: str, modulo: str, contexto_minimo: str 
     return base
 
 
+def _usar_detalle_habilitado() -> bool:
+    """Determina si `usar` puede exponer detalles extendidos en salida de error."""
+    return _runtime_debug_enabled() or InterpretadorCobra._debug_trazas_habilitadas()
+
+
 def _runtime_debug_enabled() -> bool:
     """Habilita diagnóstico puntual de runtime vía entorno."""
     return os.getenv("PCOBRA_DEBUG_RUNTIME", "").strip() == "1"
@@ -1971,13 +1976,13 @@ class InterpretadorCobra:
                     "module": nodo.modulo,
                     "conflicts": conflictos_saneamiento,
                 }
-                logging.warning("USAR sanitize conflicts event: %s", evento_conflictos)
-                if self._debug_trazas_habilitadas() or _runtime_debug_enabled():
+                logging.warning("USAR sanitize conflicts event module=%s count=%s", nodo.modulo, len(conflictos_saneamiento))
+                if _usar_detalle_habilitado():
                     self._trace_debug(f"[USAR_SANITIZE][CONFLICTS] {evento_conflictos}")
 
             if not simbolos_saneados:
                 mensaje_usuario = formatear_error_usar_usuario("export_invalido", nodo.modulo)
-                if self._debug_trazas_habilitadas() or _runtime_debug_enabled():
+                if _usar_detalle_habilitado():
                     mensaje_usuario = f"{mensaje_usuario} ({USAR_INVALID_EXPORT_ERROR}; conflictos={conflictos_saneamiento})"
                 raise ImportError(mensaje_usuario)
 
@@ -2003,8 +2008,13 @@ class InterpretadorCobra:
                         "policy": self._usar_collision_policy,
                         "detail": detalle_por_simbolo,
                     }
-                    logging.warning("USAR collision symbol event: %s", evento_colision)
-                    if self._debug_trazas_habilitadas() or _runtime_debug_enabled():
+                    logging.warning(
+                        "USAR collision symbol event module=%s symbol=%s policy=%s",
+                        nodo.modulo,
+                        simbolo_conflictivo,
+                        self._usar_collision_policy,
+                    )
+                    if _usar_detalle_habilitado():
                         self._trace_debug(f"[USAR_COLLISION][SYMBOL] {evento_colision}")
 
                 conflicto = conflictos[0]
@@ -2032,7 +2042,7 @@ class InterpretadorCobra:
                         nodo.modulo,
                         "Requiere alias explícito.",
                     )
-                    if self._debug_trazas_habilitadas() or _runtime_debug_enabled():
+                    if _usar_detalle_habilitado():
                         mensaje_usuario = f"{mensaje_usuario} detalle={detalle}"
                     raise NameError(mensaje_usuario)
                 evento_colision = {
@@ -2043,9 +2053,14 @@ class InterpretadorCobra:
                     "policy": self._usar_collision_policy,
                     "detail": detalle,
                 }
-                logging.error("USAR collision event: %s", evento_colision)
+                logging.error(
+                    "USAR collision event module=%s policy=%s total_conflicts=%s",
+                    nodo.modulo,
+                    self._usar_collision_policy,
+                    len(conflictos),
+                )
                 mensaje_usuario = formatear_error_usar_usuario("conflicto_simbolo", nodo.modulo)
-                if self._debug_trazas_habilitadas() or _runtime_debug_enabled():
+                if _usar_detalle_habilitado():
                     mensaje_usuario = f"{mensaje_usuario} detalle={detalle}"
                 raise NameError(mensaje_usuario)
 
@@ -2055,10 +2070,13 @@ class InterpretadorCobra:
                 modulo=nodo.modulo,
             )
         except Exception as exc:
-            logging.exception("Error al usar el módulo '%s': %s", nodo.modulo, exc)
+            if _usar_detalle_habilitado():
+                logging.exception("Error al usar el módulo '%s': %s", nodo.modulo, exc)
+            else:
+                logging.error("Error al usar el módulo '%s': %s", nodo.modulo, exc)
             if isinstance(exc, PermissionError):
                 mensaje = formatear_error_usar_usuario("modulo_fuera_catalogo", nodo.modulo)
-                if self._debug_trazas_habilitadas() or _runtime_debug_enabled():
+                if _usar_detalle_habilitado():
                     mensaje = f"{mensaje} ({exc})"
                 raise PermissionError(mensaje) from exc
             raise
