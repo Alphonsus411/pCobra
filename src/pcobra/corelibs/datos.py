@@ -48,12 +48,29 @@ combinar_tablas = _datos.combinar_tablas
 rellenar_nulos = _datos.rellenar_nulos
 desplegar_tabla = _datos.desplegar_tabla
 pivotar_tabla = _datos.pivotar_tabla
-agregar = _datos.agregar
-mapear = _datos.mapear
+def agregar(tabla, fila):
+    """Wrapper público seguro hacia :mod:`pcobra.standard_library.datos`."""
+    return _datos.agregar(tabla, fila)
+
+
+def mapear(tabla, transformacion):
+    """Wrapper público seguro hacia :mod:`pcobra.standard_library.datos`."""
+    return _datos.mapear(tabla, transformacion)
+
+
+def longitud(valor):
+    """Wrapper público seguro hacia :mod:`pcobra.standard_library.datos`."""
+    return _datos.longitud(valor)
+
+
+def filtrar(tabla, condicion):
+    """Wrapper público seguro hacia :mod:`pcobra.standard_library.datos`."""
+    return _datos.filtrar(tabla, condicion)
+
+
 reducir = _datos.reducir
 claves = _datos.claves
 valores = _datos.valores
-longitud = _datos.longitud
 
 PUBLIC_API_DATOS: tuple[str, ...] = (
     "leer_csv",
