@@ -1063,3 +1063,31 @@ def test_usar_error_carga_modulo_mensaje_corto_en_modo_normal(monkeypatch, caplo
     assert "error al cargar el módulo" in texto_error
     assert "boom" not in texto_error
     assert "Traceback" not in caplog.text
+
+
+def test_usar_warning_conflictos_saneamiento_formato_compacto(monkeypatch, caplog):
+    modulo = ModuleType("texto")
+    modulo.__all__ = ["A_snake", "a_snake"]
+    modulo.A_snake = lambda texto: texto
+    modulo.a_snake = lambda texto: texto
+    modulo.__file__ = "/workspace/pCobra/src/pcobra/corelibs/texto.py"
+
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: modulo)
+    monkeypatch.delenv("PCOBRA_DEBUG_RUNTIME", raising=False)
+    monkeypatch.delenv("PCOBRA_DEBUG_TRACES", raising=False)
+
+    interp = InterpretadorCobra()
+    interp.configurar_restriccion_usar_repl({"texto": "texto"})
+
+    with pytest.raises(ImportError):
+        interp.ejecutar_nodo(NodoUsar("texto"))
+
+    warnings_saneamiento = [
+        rec.message for rec in caplog.records if "USAR sanitize conflicts event module=texto" in rec.message
+    ]
+    assert warnings_saneamiento
+    warning = warnings_saneamiento[-1]
+    assert "module=texto" in warning
+    assert "count=2" in warning
+    assert "conflicts=[" not in warning
+    assert "{'symbol'" not in warning
