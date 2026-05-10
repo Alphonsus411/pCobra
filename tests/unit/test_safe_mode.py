@@ -24,7 +24,6 @@ def generar_ast(codigo: str):
         "obtener_url('ejemplo')",
         "leer('x.txt')",
         "escribir('x.txt', 'hola')",
-        "existe('x.txt')",
         "enviar_post('u', 'd')",
         "ejecutar(['ls'])",
         "listar_dir('.')",
@@ -43,6 +42,32 @@ def test_codigo_seguro_se_ejecuta_en_modo_seguro():
     with patch("sys.stdout", new_callable=StringIO) as out:
         interp.ejecutar_llamada_funcion(nodo)
     assert out.getvalue().strip() == "hola"
+
+
+def test_existe_publico_desde_usar_acepta_ruta_relativa():
+    interp = InterpretadorCobra()
+    ast = generar_ast('usar "archivo"\nimprimir(existe("README.md"))')
+
+    with patch("sys.stdout", new_callable=StringIO) as out:
+        interp.ejecutar_ast(ast)
+
+    salida = out.getvalue()
+    assert "verdadero" in salida or "falso" in salida
+
+
+@pytest.mark.parametrize(
+    "codigo",
+    [
+        'usar "archivo"\nimprimir(existe("/etc/passwd"))',
+        'usar "archivo"\nimprimir(existe("../secreto.txt"))',
+    ],
+)
+def test_existe_publico_desde_usar_bloquea_rutas_fuera_de_politica(codigo):
+    interp = InterpretadorCobra()
+    ast = generar_ast(codigo)
+
+    with pytest.raises(PrimitivaPeligrosaError):
+        interp.ejecutar_ast(ast)
 
 
 def test_cli_default_mantiene_modo_seguro_y_fallback_inseguro_deshabilitado():
