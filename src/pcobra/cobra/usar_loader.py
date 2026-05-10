@@ -8,6 +8,7 @@ from typing import Any
 
 from pcobra.cobra.usar_policy import (
     CANONICAL_MODULE_SURFACE_CONTRACTS,
+    REPL_COBRA_MODULE_INTERNAL_PATH_MAP,
     USAR_BACKEND_BLOCKLIST,
     USAR_COBRA_PUBLIC_MODULES,
     USAR_RUNTIME_EXPORT_OVERRIDES,
@@ -145,31 +146,37 @@ def _cargar_modulo_local_desde_directorio(nombre: str, directorio: Path):
     return modulo
 
 
+def _cargar_modulo_local_desde_ruta(nombre: str, ruta: Path):
+    """Carga un módulo Python desde una ruta absoluta explícita."""
+
+    mod_spec = importlib.util.spec_from_file_location(nombre, ruta)
+    if mod_spec is None or mod_spec.loader is None:
+        raise ImportError(f"No se pudo crear spec para el módulo '{nombre}'")
+    modulo = importlib.util.module_from_spec(mod_spec)
+    sys.modules[nombre] = modulo
+    mod_spec.loader.exec_module(modulo)
+    return modulo
+
+
 def obtener_modulo_cobra_oficial(nombre: str):
-    """Carga módulos oficiales de Cobra solo desde ``corelibs`` o ``standard_library``."""
+    """Carga módulos oficiales de Cobra desde la ruta interna canónica declarada."""
 
     nombre = validar_nombre_modulo_usar(nombre, require_allowlist=True)
-    base = Path(__file__).resolve()
+    rel_path = REPL_COBRA_MODULE_INTERNAL_PATH_MAP.get(nombre)
+    if not rel_path:
+        raise ModuleNotFoundError(
+            f"Módulo oficial Cobra '{nombre}' permitido pero sin ruta interna canónica declarada."
+        )
 
-    for parent in base.parents:
-        corelibs = parent / "corelibs"
-        if corelibs.exists():
-            modulo = _cargar_modulo_local_desde_directorio(nombre, corelibs)
-            if modulo is not None:
-                return modulo
-            break
+    repo_root = Path(__file__).resolve().parents[3]
+    ruta_modulo = (repo_root / rel_path).resolve()
+    if not ruta_modulo.exists():
+        raise ModuleNotFoundError(
+            "Módulo oficial Cobra permitido no resoluble en runtime: "
+            f"alias='{nombre}' ruta='{rel_path}'."
+        )
 
-    for parent in base.parents:
-        stdlib = parent / "standard_library"
-        if stdlib.exists():
-            modulo = _cargar_modulo_local_desde_directorio(nombre, stdlib)
-            if modulo is not None:
-                return modulo
-            break
-
-    raise ModuleNotFoundError(
-        f"Módulo oficial Cobra '{nombre}' no encontrado en corelibs/standard_library"
-    )
+    return _cargar_modulo_local_desde_ruta(nombre, ruta_modulo)
 
 
 def obtener_modulo(nombre: str, *, permitir_instalacion: bool = True):
