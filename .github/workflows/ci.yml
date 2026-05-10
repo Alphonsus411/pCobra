@@ -34,6 +34,27 @@ jobs:
       - name: Validate public targets policy (blocking)
         shell: bash
         run: python scripts/validate_targets_policy.py
+
+      - name: Guard protected lexer/parser files unchanged in `usar` fix scope (blocking)
+        shell: bash
+        run: |
+          git diff --name-only origin/${{ github.base_ref }}...HEAD | tee /tmp/changed_files.txt
+          protected_files=(
+            "src/pcobra/core/lexer.py"
+            "src/pcobra/core/parser.py"
+            "src/pcobra/cobra/core/lexer.py"
+            "src/pcobra/cobra/core/parser.py"
+          )
+
+          for f in "${protected_files[@]}"; do
+            if rg -n "^${f}$" /tmp/changed_files.txt > /dev/null; then
+              echo "❌ Archivo protegido modificado fuera de alcance de fix de 'usar': ${f}" >&2
+              exit 1
+            fi
+          done
+
+          echo "✅ Verificación de alcance superada: no hay cambios en lexer/parser protegidos."
+
       - name: Validate `usar` public contract (blocking)
         shell: bash
         run: pytest tests/integration/test_usar_public_contract_regression.py tests/integration/test_usar_core_contract_full.py
