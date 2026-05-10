@@ -1057,6 +1057,30 @@ def lineas_no_vacias(texto: str) -> list[str]:
 
     return [linea.strip() for linea in texto.splitlines() if linea.strip()]
 
+
+def recortar(texto: str) -> str:
+    """Recorta espacios al inicio y final usando la semántica de ``str.strip``."""
+
+    return quitar_espacios(texto)
+
+
+def repetir(texto: str, veces: int) -> str:
+    """Repite ``texto`` ``veces`` veces validando que ``veces`` no sea negativo."""
+
+    if veces < 0:
+        raise ValueError("veces debe ser >= 0")
+    return texto * veces
+
+
+def quitar_acentos(texto: str) -> str:
+    """Elimina diacríticos conservando caracteres base Unicode."""
+
+    descompuesto = unicodedata.normalize("NFD", texto)
+    sin_marcas = "".join(
+        caracter for caracter in descompuesto if unicodedata.category(caracter) != "Mn"
+    )
+    return unicodedata.normalize("NFC", sin_marcas)
+
 __all__ = [
     "mayusculas",
     "minusculas",
@@ -1122,6 +1146,9 @@ __all__ = [
     "es_titulo",
     "es_digito",
     "lineas_no_vacias",
+    "recortar",
+    "repetir",
+    "quitar_acentos",
 ]
 
 
