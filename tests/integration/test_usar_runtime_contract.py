@@ -172,6 +172,16 @@ def test_usar_texto_expone_recortar_repetir_quitar_acentos(monkeypatch):
     assert {"recortar", "repetir", "quitar_acentos"}.issubset(simbolos)
 
 
+def test_regresion_usar_texto_superficie_ligera_y_sin_importerror():
+    modulo = cobra_usar_loader.obtener_modulo_cobra_oficial("texto")
+    mapa_limpio, conflictos = cobra_usar_loader.sanitizar_exports_publicos(modulo, "texto")
+
+    assert not any(conflicto.get("code") == "missing_export_attr" for conflicto in conflictos)
+    assert set(USAR_RUNTIME_EXPORT_OVERRIDES["texto"]).issubset(set(mapa_limpio))
+    for simbolo in ("mayusculas", "minusculas", "prefijo_comun", "sufijo_comun", "recortar", "repetir", "quitar_acentos"):
+        assert callable(mapa_limpio[simbolo])
+
+
 def test_usar_numero_mantiene_es_finito_y_signo(monkeypatch):
     mod = ModuleType("numero")
     mod.__all__ = ["es_finito", "signo"]
