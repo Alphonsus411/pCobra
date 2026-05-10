@@ -32,9 +32,17 @@ class ValidadorPrimitivaPeligrosa(ValidadorBase):
     def __init__(self):
         super().__init__()
         self._simbolos_publicos_usar: set[tuple[str, str]] = set()
+        self._metadata_simbolos_usar: dict[str, dict[str, object]] = {}
 
-    def registrar_simbolo_publico_usar(self, nombre: str, modulo: str) -> None:
+    def registrar_simbolo_publico_usar(
+        self,
+        nombre: str,
+        modulo: str,
+        metadata: dict[str, object] | None = None,
+    ) -> None:
         self._simbolos_publicos_usar.add((modulo, nombre))
+        if metadata:
+            self._metadata_simbolos_usar[nombre] = dict(metadata)
 
     @staticmethod
     def _ruta_permitida_en_wrapper(argumentos) -> bool:
@@ -57,6 +65,14 @@ class ValidadorPrimitivaPeligrosa(ValidadorBase):
         if nodo.nombre != "existe":
             return False
         if ("archivo", nodo.nombre) not in self._simbolos_publicos_usar:
+            return False
+        metadata = self._metadata_simbolos_usar.get(nodo.nombre, {})
+        origen_modulo = metadata.get("module")
+        origen_canonico = metadata.get("canonical_module")
+        origen_backend = metadata.get("python_module")
+        if origen_modulo != "archivo" or origen_canonico != "archivo":
+            return False
+        if origen_backend != "pcobra.standard_library.archivo":
             return False
         return self._ruta_permitida_en_wrapper(nodo.argumentos)
 

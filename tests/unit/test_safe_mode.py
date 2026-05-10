@@ -44,6 +44,14 @@ def test_codigo_seguro_se_ejecuta_en_modo_seguro():
     assert out.getvalue().strip() == "hola"
 
 
+def test_existe_no_se_habilita_solo_por_nombre_sin_usar_archivo():
+    interp = InterpretadorCobra()
+    ast = generar_ast('func existe(ruta) { retorno verdadero }\nimprimir(existe("README.md"))')
+
+    with pytest.raises(PrimitivaPeligrosaError):
+        interp.ejecutar_ast(ast)
+
+
 def test_existe_publico_desde_usar_acepta_ruta_relativa():
     interp = InterpretadorCobra()
     ast = generar_ast('usar "archivo"\nimprimir(existe("README.md"))')

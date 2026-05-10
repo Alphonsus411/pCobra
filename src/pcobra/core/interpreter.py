@@ -2181,7 +2181,11 @@ class InterpretadorCobra:
                 simbolo=simbolo,
             )
             if self.safe_mode and self._validador is not None and hasattr(self._validador, "registrar_simbolo_publico_usar"):
-                self._validador.registrar_simbolo_publico_usar(nombre, modulo)
+                self._validador.registrar_simbolo_publico_usar(
+                    nombre,
+                    modulo,
+                    metadata=self._usar_symbol_metadata[nombre],
+                )
 
     def _construir_metadata_simbolo_usar(
         self,
@@ -2201,6 +2205,8 @@ class InterpretadorCobra:
                 firma_estable = f"{firma_estable}:{getattr(code, 'co_argcount', 'na')}:{getattr(code, 'co_kwonlyargcount', 'na')}"
         return {
             "module": modulo,
+            "canonical_module": modulo,
+            "python_module": modulo_objeto,
             "exported_name": nombre_exportado,
             "callable_id": id(simbolo),
             "stable_signature": firma_estable,
