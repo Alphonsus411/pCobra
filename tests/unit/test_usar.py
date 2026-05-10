@@ -751,6 +751,24 @@ def test_usar_datos_incluye_filtrar_mapear_reducir(monkeypatch):
         assert simbolo in interp.variables
 
 
+
+def test_usar_datos_operaciones_basicas_agregar_mapear_filtrar(monkeypatch):
+    import pcobra.standard_library.datos as modulo_datos
+
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre, **_kwargs: modulo_datos)
+    interp = InterpretadorCobra()
+    interp.configurar_restriccion_usar_repl({"datos": "datos"})
+    interp.ejecutar_nodo(NodoUsar("datos"))
+
+    tabla = [{"valor": 1}, {"valor": 2}]
+
+    assert interp.obtener_variable("agregar")(tabla, {"valor": 3})[-1]["valor"] == 3
+    assert interp.obtener_variable("mapear")(tabla, lambda fila: {**fila, "valor": fila["valor"] * 2}) == [
+        {"valor": 2},
+        {"valor": 4},
+    ]
+    assert interp.obtener_variable("filtrar")(tabla, lambda fila: fila["valor"] % 2 == 0) == [{"valor": 2}]
+
 def test_usar_numpy_rechazado_en_superficie_publica():
     interp = InterpretadorCobra()
     interp.configurar_restriccion_usar_repl({"numero": "numero", "texto": "texto", "datos": "datos"})
