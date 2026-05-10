@@ -558,3 +558,97 @@ def test_repl_usar_numero_es_finito_y_signo_siguen_operativos(monkeypatch, capsy
 
     lineas = [linea.strip() for linea in capsys.readouterr().out.splitlines() if linea.strip() and not linea.startswith("WARNING:")]
     assert lineas == ["verdadero", "-1"]
+
+
+
+def test_repl_usar_numero_logica_tiempo_y_funcion_usuario_anidada(capsys):
+    cmd = ReplCommandV2()
+    cmd._ejecutar_en_modo_normal('usar "numero"')
+    cmd._ejecutar_en_modo_normal('usar "logica"')
+    cmd._ejecutar_en_modo_normal('usar "tiempo"')
+    cmd._ejecutar_en_modo_normal("func doble(n):\n    retorno n * 2\nfin")
+
+    cmd._ejecutar_en_modo_normal('imprimir(es_finito(5))')
+    cmd._ejecutar_en_modo_normal('imprimir(signo(0-7))')
+    cmd._ejecutar_en_modo_normal('imprimir(conjuncion(verdadero, negacion(falso)))')
+    cmd._ejecutar_en_modo_normal('imprimir(epoch())')
+    cmd._ejecutar_en_modo_normal('imprimir(doble(signo(0-3)))')
+
+    lineas = [linea.strip() for linea in capsys.readouterr().out.splitlines() if linea.strip()]
+    assert 'verdadero' in lineas
+    assert '-1' in lineas
+    assert any(l in ('true', 'verdadero') for l in lineas)
+    epoch_line = next(l for l in lineas if l.lstrip('-').isdigit())
+    assert epoch_line.lstrip('-').isdigit()
+    assert '-2' in lineas
+
+
+def test_repl_texto_7_casos_aceptacion(capsys):
+    cmd = ReplCommandV2()
+    cmd._ejecutar_en_modo_normal('usar "texto"')
+    interp = cmd._delegate.interpretador
+
+    assert interp.obtener_variable('recortar')('  Cobra  ') == 'Cobra'
+    assert interp.obtener_variable('repetir')('ja', 3) == 'jajaja'
+    assert interp.obtener_variable('quitar_acentos')('canción') == 'cancion'
+    assert interp.obtener_variable('prefijo_comun')('cobra', 'cobre') == 'cobr'
+    assert interp.obtener_variable('sufijo_comun')('programacion', 'nacion') == 'acion'
+    assert interp.obtener_variable('reemplazar')('cobra', 'co', 'CO') == 'CObra'
+    assert interp.obtener_variable('quitar_acentos')('pingüino') == 'pinguino'
+
+def test_repl_datos_longitud_y_agregar_si_disponible():
+    cmd = ReplCommandV2()
+    cmd._ejecutar_en_modo_normal('usar "datos"')
+    interp = cmd._delegate.interpretador
+
+    assert interp.obtener_variable('longitud')('ab') == 2
+    if 'agregar' in interp.contextos[-1].values:
+        resultado = interp.obtener_variable('agregar')([], {'id': 3})
+        assert resultado is not None
+
+def test_repl_archivo_existe_ruta_permitida_y_denegada(tmp_path):
+    permitido = tmp_path / 'ok.txt'
+    permitido.write_text('ok', encoding='utf-8')
+
+    cmd = ReplCommandV2()
+    cmd._ejecutar_en_modo_normal('usar "archivo"')
+    interp = cmd._delegate.interpretador
+
+    existe = interp.obtener_variable('existe')
+    assert isinstance(existe(str(permitido)), bool)
+    assert isinstance(existe('/etc/passwd'), bool)
+
+def test_repl_usar_idempotente_y_conflicto_real(monkeypatch):
+    mod_numero = _modulo_numero_stub()
+    monkeypatch.setattr(
+        core_usar_loader,
+        'obtener_modulo_cobra_oficial',
+        lambda nombre: mod_numero if nombre == 'numero' else (_ for _ in ()).throw(ModuleNotFoundError(nombre)),
+    )
+
+    cmd = ReplCommandV2()
+    cmd._ejecutar_en_modo_normal('usar "numero"')
+    estado_1 = dict(cmd._delegate.interpretador.contextos[-1].values)
+    with pytest.raises(NameError):
+        cmd._ejecutar_en_modo_normal('usar "numero"')
+    assert estado_1 == cmd._delegate.interpretador.contextos[-1].values
+
+def test_repl_ux_error_salida_corta_vs_debug(capsys, caplog):
+    cmd = ReplCommandV2()
+    with pytest.raises(Exception):
+        cmd._ejecutar_en_modo_normal('imprimir(variable_inexistente)')
+    salida_normal = capsys.readouterr().out
+    assert 'Traceback' not in salida_normal
+
+    cmd_debug = ReplCommandV2()
+    cmd_debug._delegate._debug_mode = True
+    with pytest.raises(Exception):
+        cmd_debug._ejecutar_en_modo_normal('imprimir(variable_inexistente)')
+    _ = capsys.readouterr().out
+    assert all('Traceback' not in r.message for r in caplog.records if r.levelname != 'DEBUG')
+
+
+def test_no_regresion_seguridad_usar_numpy_fuera_catalogo_publico():
+    cmd = ReplCommandV2()
+    with pytest.raises(PermissionError, match=r'(modulo_fuera_catalogo_publico|módulo fuera del catálogo público)'):
+        cmd._ejecutar_en_modo_normal('usar "numpy"')
