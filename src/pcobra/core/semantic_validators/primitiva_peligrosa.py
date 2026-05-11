@@ -1,4 +1,5 @@
 from pathlib import PurePosixPath
+import re
 
 from .base import ValidadorBase
 from ..ast_nodes import NodoLlamadaFuncion, NodoHilo, NodoLlamadaMetodo, NodoValor
@@ -12,6 +13,11 @@ class PrimitivaPeligrosaError(Exception):
 
 class ValidadorPrimitivaPeligrosa(ValidadorBase):
     """Validador que detecta llamadas a primitivas peligrosas."""
+
+    WRAPPERS_PYTHON_MODULES_PERMITIDOS = frozenset({
+        "pcobra.standard_library.archivo",
+        "cobra.standard_library.archivo",
+    })
 
     PRIMITIVAS_PELIGROSAS = {
         "leer_archivo",
@@ -54,6 +60,10 @@ class ValidadorPrimitivaPeligrosa(ValidadorBase):
         ruta = primer_arg.valor.strip()
         if not ruta:
             return False
+        if re.match(r"^[a-zA-Z]:[\\/]", ruta):
+            return False
+        if ruta.startswith("\\"):
+            return False
         path = PurePosixPath(ruta)
         if path.is_absolute():
             return False
@@ -74,7 +84,7 @@ class ValidadorPrimitivaPeligrosa(ValidadorBase):
         es_wrapper_sanitizado = metadata.get("is_sanitized_wrapper") is True
         if origen_modulo != "archivo" or origen_canonico != "archivo":
             return False
-        if origen_backend != "pcobra.standard_library.archivo":
+        if origen_backend not in self.WRAPPERS_PYTHON_MODULES_PERMITIDOS:
             return False
         if not es_publico or not es_wrapper_sanitizado:
             return False
