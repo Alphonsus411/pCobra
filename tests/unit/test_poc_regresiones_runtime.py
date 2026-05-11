@@ -81,6 +81,25 @@ def test_poc_seguridad_bloquea_modulos_backend_sdk_externos(modulo: str) -> None
         inter.ejecutar_nodo(NodoUsar(modulo))
 
 
+
+def test_poc_minimo_alias_oficiales_y_no_publicos() -> None:
+    inter = _interp({"numero": "numero", "texto": "texto", "logica": "logica", "tiempo": "tiempo", "datos": "datos"})
+    for modulo in ("numero", "texto", "logica", "tiempo", "datos"):
+        inter.ejecutar_nodo(NodoUsar(modulo))
+
+    assert inter.variables["es_finito"](10) is True
+    assert inter.variables["signo"](0 - 5) == -1
+    assert inter.variables["recortar"](" cobra ") == "cobra"
+    assert inter.variables["mayusculas"]("cobra") == "COBRA"
+    assert inter.variables["conjuncion"](True, False) is False
+    assert isinstance(inter.variables["epoch"](), (int, float))
+    assert inter.variables["longitud"]("cobra") == 5
+
+    simbolos = set(inter.contextos[-1].values.keys())
+    assert "_backend" not in simbolos
+    assert "_impl" not in simbolos
+    assert "__all__" not in simbolos
+
 def test_poc_verifica_rutas_lexer_parser_no_modificables() -> None:
     contenido = Path("scripts/ci/gate_no_parser_lexer_changes.py").read_text(encoding="utf-8")
     for ruta in (
