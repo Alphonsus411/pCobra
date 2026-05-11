@@ -2115,7 +2115,7 @@ class InterpretadorCobra:
             elif _usar_error_esperado(exc):
                 logging.error("Error al usar el módulo '%s': %s", nodo.modulo, exc)
             else:
-                logging.exception("Error al usar el módulo '%s': %s", nodo.modulo, exc)
+                logging.error("Error al usar el módulo '%s': %s", nodo.modulo, exc)
             if isinstance(exc, PermissionError):
                 mensaje = formatear_error_usar_usuario("modulo_fuera_catalogo", nodo.modulo)
                 if _usar_detalle_habilitado():

@@ -1146,6 +1146,32 @@ def test_usar_warning_conflictos_saneamiento_formato_compacto(monkeypatch, caplo
     assert "{'symbol'" not in warning
 
 
+
+
+def test_usar_warning_conflictos_saneamiento_formato_texto_estable(monkeypatch, caplog):
+    modulo = ModuleType("numero")
+    modulo.__all__ = ["A_snake", "a_snake"]
+    modulo.A_snake = lambda n: n
+    modulo.a_snake = lambda n: n
+    modulo.__file__ = "/workspace/pCobra/src/pcobra/corelibs/numero.py"
+
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: modulo)
+    monkeypatch.delenv("PCOBRA_DEBUG_RUNTIME", raising=False)
+    monkeypatch.delenv("PCOBRA_DEBUG_TRACES", raising=False)
+
+    interp = InterpretadorCobra()
+    interp.configurar_restriccion_usar_repl({"numero": "numero"})
+
+    with pytest.raises(ImportError):
+        interp.ejecutar_nodo(NodoUsar("numero"))
+
+    warnings_saneamiento = [
+        rec.message for rec in caplog.records if "USAR sanitize conflicts event module=numero" in rec.message
+    ]
+    assert warnings_saneamiento
+    assert warnings_saneamiento[-1] == "USAR sanitize conflicts event module=numero count=2 sample=[A_snake->a_snake,a_snake]"
+
+
 def test_usar_warning_conflictos_saneamiento_detalle_solo_debug(monkeypatch, caplog):
     modulo = ModuleType("texto")
     modulo.__all__ = ["A_snake", "a_snake"]
