@@ -72,7 +72,9 @@ def test_metadata_usar_archivo_existe_cadena_completa():
 
     metadata = interp._usar_symbol_metadata["existe"]
     assert metadata["module"] == "archivo"
+    assert metadata["origen_modulo"] == "archivo"
     assert metadata["canonical_module"] == "archivo"
+    assert metadata["origen_tipo"] == "public_wrapper"
     assert metadata["is_public_export"] is True
     assert metadata["is_sanitized_wrapper"] is True
     assert metadata["python_module"] in {
@@ -82,7 +84,23 @@ def test_metadata_usar_archivo_existe_cadena_completa():
 
     metadata_validador = interp._validador._metadata_simbolos_usar["existe"]
     assert metadata_validador["module"] == "archivo"
+    assert metadata_validador["origen_modulo"] == "archivo"
     assert metadata_validador["canonical_module"] == "archivo"
+    assert metadata_validador["origen_tipo"] == "public_wrapper"
+
+
+def test_existe_rechaza_metadata_incompleta_aunque_simbolo_este_registrado():
+    interp = InterpretadorCobra()
+    ast = generar_ast('usar "archivo"\nimprimir(existe("README.md"))')
+
+    with patch("sys.stdout", new_callable=StringIO):
+        interp.ejecutar_ast(ast)
+
+    # Simula bypass: símbolo registrado pero metadata incompleta/no canónica.
+    interp._validador._metadata_simbolos_usar["existe"].pop("origen_modulo", None)
+    ast_llamada = generar_ast('imprimir(existe("README.md"))')
+    with pytest.raises(PrimitivaPeligrosaError):
+        interp.ejecutar_ast(ast_llamada)
 
 
 @pytest.mark.parametrize(
