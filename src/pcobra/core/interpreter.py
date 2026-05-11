@@ -144,7 +144,12 @@ def _runtime_debug_enabled() -> bool:
 
 def _resumen_conflictos_usar(conflictos: list[object]) -> str:
     """Devuelve un resumen compacto de conflictos para logs no verbosos."""
-    return f"count={len(conflictos)}"
+    if not conflictos:
+        return "count=0"
+    muestra = ",".join(str(conflicto) for conflicto in conflictos[:3])
+    resto = len(conflictos) - 3
+    sufijo = f",+{resto}" if resto > 0 else ""
+    return f"count={len(conflictos)} sample=[{muestra}{sufijo}]"
 
 
 def _ruta_import_permitida(ruta: str) -> bool:
@@ -2007,7 +2012,6 @@ class InterpretadorCobra:
                     "evento": "usar_sanitize_conflicts",
                     "severity": "warning",
                     "module": nodo.modulo,
-                    "conflicts": conflictos_saneamiento,
                 }
                 logging.warning(
                     "USAR sanitize conflicts event module=%s %s",
@@ -2032,8 +2036,7 @@ class InterpretadorCobra:
                     detalle_por_simbolo = {
                         "module": nodo.modulo,
                         "symbol": simbolo_conflictivo,
-                        "conflicts": conflictos,
-                        "code": "symbol_collision",
+                            "code": "symbol_collision",
                         "message": "símbolo ya existe en contexto actual",
                         "policy": self._usar_collision_policy,
                         "phase": "preflight",
@@ -2059,7 +2062,6 @@ class InterpretadorCobra:
                 detalle = {
                     "module": nodo.modulo,
                     "symbol": conflicto,
-                    "conflicts": conflictos,
                     "code": "symbol_collision",
                     "message": "símbolo ya existe en contexto actual",
                     "policy": self._usar_collision_policy,
@@ -2081,13 +2083,12 @@ class InterpretadorCobra:
                         "Requiere alias explícito.",
                     )
                     if _usar_detalle_habilitado():
-                        mensaje_usuario = f"{mensaje_usuario} detalle={detalle}"
+                        mensaje_usuario = f"{mensaje_usuario} ({USAR_SYMBOL_CONFLICT_ERROR}; detalle={detalle})"
                     raise NameError(mensaje_usuario)
                 evento_colision = {
                     "evento": "usar_collision",
                     "severity": "error",
                     "module": nodo.modulo,
-                    "conflicts": conflictos,
                     "policy": self._usar_collision_policy,
                     "detail": detalle,
                 }
@@ -2099,7 +2100,7 @@ class InterpretadorCobra:
                 )
                 mensaje_usuario = formatear_error_usar_usuario("conflicto_simbolo", nodo.modulo)
                 if _usar_detalle_habilitado():
-                    mensaje_usuario = f"{mensaje_usuario} detalle={detalle}"
+                    mensaje_usuario = f"{mensaje_usuario} ({USAR_SYMBOL_CONFLICT_ERROR}; detalle={detalle})"
                 raise NameError(mensaje_usuario)
 
             # Fase B: inyectar de forma atómica y sin sobreescritura silenciosa.
