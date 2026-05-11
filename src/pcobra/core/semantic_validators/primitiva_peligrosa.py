@@ -1,8 +1,5 @@
-from pathlib import PurePosixPath
-import re
-
 from .base import ValidadorBase
-from ..ast_nodes import NodoLlamadaFuncion, NodoHilo, NodoLlamadaMetodo, NodoValor
+from ..ast_nodes import NodoLlamadaFuncion, NodoHilo, NodoLlamadaMetodo
 
 
 class PrimitivaPeligrosaError(Exception):
@@ -50,27 +47,6 @@ class ValidadorPrimitivaPeligrosa(ValidadorBase):
         if metadata:
             self._metadata_simbolos_usar[nombre] = dict(metadata)
 
-    @staticmethod
-    def _ruta_permitida_en_wrapper(argumentos) -> bool:
-        if not argumentos:
-            return False
-        primer_arg = argumentos[0]
-        if not isinstance(primer_arg, NodoValor) or not isinstance(primer_arg.valor, str):
-            return False
-        ruta = primer_arg.valor.strip()
-        if not ruta:
-            return False
-        if re.match(r"^[a-zA-Z]:[\\/]", ruta):
-            return False
-        if ruta.startswith("\\"):
-            return False
-        path = PurePosixPath(ruta)
-        if path.is_absolute():
-            return False
-        if ".." in path.parts:
-            return False
-        return True
-
     def _es_wrapper_publico_permitido(self, nodo: NodoLlamadaFuncion) -> bool:
         if nodo.nombre != "existe":
             return False
@@ -91,7 +67,7 @@ class ValidadorPrimitivaPeligrosa(ValidadorBase):
             return False
         if not es_publico or not es_wrapper_sanitizado:
             return False
-        return self._ruta_permitida_en_wrapper(nodo.argumentos)
+        return metadata.get("exported_name") == "existe"
 
     def visit_llamada_funcion(self, nodo: NodoLlamadaFuncion):
         if nodo.nombre in self.PRIMITIVAS_PELIGROSAS and not self._es_wrapper_publico_permitido(nodo):
