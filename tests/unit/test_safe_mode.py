@@ -78,6 +78,14 @@ def test_existe_publico_desde_usar_bloquea_rutas_fuera_de_politica(codigo):
         interp.ejecutar_ast(ast)
 
 
+
+def test_existe_publico_no_habilita_simbolos_backend_crudos_no_publicos():
+    interp = InterpretadorCobra()
+    ast = generar_ast('usar "archivo"\nimprimir(leer_archivo("README.md"))')
+
+    with pytest.raises(PrimitivaPeligrosaError):
+        interp.ejecutar_ast(ast)
+
 def test_cli_default_mantiene_modo_seguro_y_fallback_inseguro_deshabilitado():
     app = CliApplication()
     app.initialize()
