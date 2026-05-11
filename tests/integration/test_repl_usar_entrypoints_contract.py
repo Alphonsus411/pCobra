@@ -8,6 +8,7 @@ from pcobra.cobra.cli.commands.interactive_cmd import InteractiveCommand
 from pcobra.cobra.cli.commands_v2.repl_cmd import ReplCommandV2
 from pcobra.core import usar_loader as core_usar_loader
 from pcobra.cobra.core.runtime import InterpretadorCobra
+from pcobra.core.ast_nodes import NodoUsar
 from pcobra.cobra.usar_policy import REPL_COBRA_MODULE_MAP
 
 
@@ -129,7 +130,7 @@ def test_repl_contract_sintaxis_usar_compat_parser_semantica_plana_numpy_restrin
     estado_pre_numpy = dict(interp.contextos[-1].values)
     simbolos_pre = set(interp.contextos[-1].values.keys())
 
-    with pytest.raises(PermissionError, match=r"(módulo externo no permitido en REPL estricto|modulo_fuera_catalogo_publico)"):
+    with pytest.raises(PermissionError, match=r"(módulo fuera del catálogo público|modulo_fuera_catalogo_publico)"):
         executor(cmd, 'usar "numpy"')
 
     # Contrato de Cobra: `usar` es plano (sin `.`), no se expone namespace tipo `numero.*`.
@@ -258,6 +259,68 @@ def test_repl_rechazo_externo_no_inyecta_simbolos(factory, executor, get_interp,
 
     assert estado_pre == interp.contextos[-1].values
     assert "requests" not in interp.contextos[-1].values
+
+
+def test_interprete_corelibs_superficie_minima_requerida():
+    interp = InterpretadorCobra()
+    interp.ejecutar_nodo(NodoUsar("numero"))
+    assert interp.obtener_variable("es_finito")(10) is True
+    assert interp.obtener_variable("signo")(-7) == -1
+
+    interp.ejecutar_nodo(NodoUsar("texto"))
+    assert interp.obtener_variable("mayusculas")("cobra") == "COBRA"
+    assert interp.obtener_variable("recortar")("  cobra  ") == "cobra"
+    assert interp.obtener_variable("repetir")("co", 2) == "coco"
+    assert interp.obtener_variable("quitar_acentos")("canción") == "cancion"
+
+    interp.ejecutar_nodo(NodoUsar("logica"))
+    assert interp.obtener_variable("conjuncion")(True, False) is False
+    assert interp.obtener_variable("negacion")(False) is True
+
+    interp.ejecutar_nodo(NodoUsar("tiempo"))
+    epoch_valor = interp.obtener_variable("epoch")()
+    assert isinstance(epoch_valor, (int, float))
+
+    interp.ejecutar_nodo(NodoUsar("datos"))
+    assert interp.obtener_variable("longitud")("cobra") == 5
+
+
+def test_seguridad_usar_numpy_error_corto_sin_traceback_modo_normal(caplog, monkeypatch):
+    monkeypatch.delenv("PCOBRA_DEBUG_RUNTIME", raising=False)
+    monkeypatch.delenv("PCOBRA_DEBUG_TRACES", raising=False)
+    interp = InterpretadorCobra()
+    interp.configurar_restriccion_usar_repl(REPL_COBRA_MODULE_MAP)
+
+    with pytest.raises(PermissionError) as excinfo:
+        interp.ejecutar_nodo(NodoUsar("numpy"))
+
+    mensaje = str(excinfo.value)
+    assert "Traceback" not in mensaje
+    assert "módulo fuera del catálogo público" in mensaje
+    assert "Traceback" not in caplog.text
+
+
+def test_logs_usar_conflictos_formato_resumido_sin_diccionario_gigante(caplog, monkeypatch):
+    modulo = ModuleType("texto")
+    modulo.__all__ = ["A_snake", "a_snake"]
+    modulo.A_snake = lambda texto: texto
+    modulo.a_snake = lambda texto: texto
+    modulo.__file__ = "/workspace/pCobra/src/pcobra/corelibs/texto.py"
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: modulo)
+    monkeypatch.delenv("PCOBRA_DEBUG_RUNTIME", raising=False)
+    monkeypatch.delenv("PCOBRA_DEBUG_TRACES", raising=False)
+
+    interp = InterpretadorCobra()
+    interp.configurar_restriccion_usar_repl({"texto": "texto"})
+
+    interp.ejecutar_nodo(NodoUsar("texto"))
+
+    eventos = [rec.message for rec in caplog.records if "USAR sanitize conflicts event module=texto" in rec.message]
+    assert eventos
+    ultimo = eventos[-1]
+    assert "count=" in ultimo
+    assert "conflicts=[" not in ultimo
+    assert "{'symbol'" not in ultimo
 
 
 @pytest.mark.parametrize(
@@ -694,4 +757,3 @@ def test_repl_usar_numpy_error_explicito_corto_sin_traceback_en_modo_normal(caps
 
     salida = capsys.readouterr().out
     assert "Traceback" not in salida
-
