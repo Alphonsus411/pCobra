@@ -70,9 +70,13 @@ class ValidadorPrimitivaPeligrosa(ValidadorBase):
         origen_modulo = metadata.get("module")
         origen_canonico = metadata.get("canonical_module")
         origen_backend = metadata.get("python_module")
+        es_publico = metadata.get("is_public_export") is True
+        es_wrapper_sanitizado = metadata.get("is_sanitized_wrapper") is True
         if origen_modulo != "archivo" or origen_canonico != "archivo":
             return False
         if origen_backend != "pcobra.standard_library.archivo":
+            return False
+        if not es_publico or not es_wrapper_sanitizado:
             return False
         return self._ruta_permitida_en_wrapper(nodo.argumentos)
 

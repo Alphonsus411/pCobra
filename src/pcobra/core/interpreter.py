@@ -2221,6 +2221,8 @@ class InterpretadorCobra:
             "canonical_module": modulo,
             "python_module": modulo_objeto,
             "exported_name": nombre_exportado,
+            "is_public_export": True,
+            "is_sanitized_wrapper": True,
             "callable_id": id(simbolo),
             "stable_signature": firma_estable,
         }
