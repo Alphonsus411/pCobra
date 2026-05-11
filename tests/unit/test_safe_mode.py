@@ -63,6 +63,14 @@ def test_existe_publico_desde_usar_acepta_ruta_relativa():
     assert "verdadero" in salida or "falso" in salida
 
 
+def test_existe_backend_crudo_sigue_bloqueado_aun_con_usar_archivo():
+    interp = InterpretadorCobra()
+    ast = generar_ast('usar "archivo"\nexiste = leer_archivo\nimprimir(existe("README.md"))')
+
+    with pytest.raises(PrimitivaPeligrosaError):
+        interp.ejecutar_ast(ast)
+
+
 def test_metadata_usar_archivo_existe_cadena_completa():
     interp = InterpretadorCobra()
     ast = generar_ast('usar "archivo"\nimprimir(existe("README.md"))')
@@ -148,4 +156,12 @@ def test_existe_publico_desde_usar_bloquea_traversal_normalizado(codigo):
     ast = generar_ast(codigo)
 
     with pytest.raises(PrimitivaPeligrosaError):
+        interp.ejecutar_ast(ast)
+
+
+def test_usar_numpy_rechaza_con_error_corto():
+    interp = InterpretadorCobra()
+    ast = generar_ast('usar "numpy"')
+
+    with pytest.raises(PermissionError, match="No se puede usar 'numpy': módulo fuera del catálogo público"):
         interp.ejecutar_ast(ast)
