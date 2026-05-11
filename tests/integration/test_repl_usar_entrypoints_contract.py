@@ -677,17 +677,62 @@ def test_repl_datos_longitud_y_agregar_si_disponible():
         resultado = interp.obtener_variable('agregar')([], {'id': 3})
         assert resultado is not None
 
-def test_repl_archivo_existe_ruta_permitida_y_denegada(tmp_path):
-    permitido = tmp_path / 'ok.txt'
-    permitido.write_text('ok', encoding='utf-8')
 
+
+def test_repl_archivo_existe_emitir_booleano_sin_primitiva_peligrosa():
+    cmd = ReplCommandV2()
+
+    cmd._ejecutar_en_modo_normal('usar "archivo"')
+    existe = cmd._delegate.interpretador.obtener_variable('existe')
+
+    assert isinstance(existe('README.md'), bool)
+
+
+def test_repl_archivo_existe_bloquea_traversal_relativo_con_error_controlado():
+    cmd = ReplCommandV2()
+
+    cmd._ejecutar_en_modo_normal('usar "archivo"')
+    existe = cmd._delegate.interpretador.obtener_variable('existe')
+
+    assert existe('../archivo_fuera_del_proyecto') is False
+
+
+def test_repl_archivo_existe_bloquea_ruta_absoluta_con_error_controlado():
+    cmd = ReplCommandV2()
+
+    cmd._ejecutar_en_modo_normal('usar "archivo"')
+    existe = cmd._delegate.interpretador.obtener_variable('existe')
+
+    assert existe('/ruta/absoluta/sensible') is False
+
+
+def test_repl_archivo_existe_bloquea_ruta_absoluta_windows_con_error_controlado():
+    cmd = ReplCommandV2()
+
+    cmd._ejecutar_en_modo_normal('usar "archivo"')
+    existe = cmd._delegate.interpretador.obtener_variable('existe')
+
+    assert existe(r'C:\\ruta\\absoluta\\sensible') is False
+
+
+
+def test_repl_archivo_invocacion_directa_permanece_bloqueada_sin_traceback(capsys):
     cmd = ReplCommandV2()
     cmd._ejecutar_en_modo_normal('usar "archivo"')
-    interp = cmd._delegate.interpretador
 
-    existe = interp.obtener_variable('existe')
-    assert isinstance(existe(str(permitido)), bool)
-    assert isinstance(existe('/etc/passwd'), bool)
+    with pytest.raises(Exception, match='Uso de primitiva peligrosa'):
+        cmd._ejecutar_en_modo_normal('imprimir(existe("README.md"))')
+
+    salida = capsys.readouterr().out
+    assert 'traceback' not in salida.lower()
+
+
+def test_repl_archivo_hardening_no_expone_backend_crudo():
+    cmd = ReplCommandV2()
+    cmd._ejecutar_en_modo_normal('usar "archivo"')
+
+    with pytest.raises(NameError):
+        cmd._delegate.interpretador.obtener_variable('_backend')
 
 def test_repl_usar_idempotente_y_conflicto_real(monkeypatch):
     mod_numero = _modulo_numero_stub()
