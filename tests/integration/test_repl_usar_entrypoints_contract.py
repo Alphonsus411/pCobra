@@ -680,3 +680,18 @@ def test_no_regresion_seguridad_usar_numpy_fuera_catalogo_publico():
     cmd = ReplCommandV2()
     with pytest.raises(PermissionError, match=r'(modulo_fuera_catalogo_publico|módulo fuera del catálogo público)'):
         cmd._ejecutar_en_modo_normal('usar "numpy"')
+
+
+def test_repl_usar_numpy_error_explicito_corto_sin_traceback_en_modo_normal(capsys):
+    cmd = ReplCommandV2()
+    with pytest.raises(PermissionError) as excinfo:
+        cmd._ejecutar_en_modo_normal('usar "numpy"')
+
+    mensaje = str(excinfo.value)
+    assert "Traceback" not in mensaje
+    assert "detalle=" not in mensaje
+    assert len(mensaje) < 220
+
+    salida = capsys.readouterr().out
+    assert "Traceback" not in salida
+
