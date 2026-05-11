@@ -809,6 +809,14 @@ def test_repl_archivo_existe_bloquea_ruta_absoluta_windows_con_error_controlado(
 
 
 
+
+
+def test_repl_archivo_invocacion_cruda_sin_usar_permanece_bloqueada():
+    cmd = ReplCommandV2()
+
+    with pytest.raises(Exception, match='Uso de primitiva peligrosa'):
+        cmd._ejecutar_en_modo_normal('imprimir(existe("README.md"))')
+
 def test_repl_archivo_invocacion_directa_permanece_bloqueada_sin_traceback(capsys):
     cmd = ReplCommandV2()
     cmd._ejecutar_en_modo_normal('usar "archivo"')
@@ -816,8 +824,9 @@ def test_repl_archivo_invocacion_directa_permanece_bloqueada_sin_traceback(capsy
     with pytest.raises(Exception, match='Uso de primitiva peligrosa'):
         cmd._ejecutar_en_modo_normal('imprimir(existe("README.md"))')
 
-    salida = capsys.readouterr().out
+    salida = capsys.readouterr().out.strip()
     assert 'traceback' not in salida.lower()
+    assert len(salida.splitlines()) <= 2
 
 
 def test_repl_archivo_hardening_no_expone_backend_crudo():
