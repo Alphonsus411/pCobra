@@ -300,6 +300,88 @@ def test_seguridad_usar_numpy_error_corto_sin_traceback_modo_normal(caplog, monk
     assert "Traceback" not in caplog.text
 
 
+
+
+@pytest.mark.parametrize(
+    ("factory", "executor", "get_interp"),
+    [
+        (lambda: InteractiveCommand(InterpretadorCobra()), lambda cmd, code: cmd.ejecutar_codigo(code), lambda cmd: cmd.interpretador),
+        (ReplCommandV2, lambda cmd, code: cmd._ejecutar_en_modo_normal(code), lambda cmd: cmd._delegate.interpretador),
+    ],
+)
+def test_repl_integracion_usar_modulos_publicos_end_to_end(factory, executor, get_interp):
+    cmd = factory()
+    interp = get_interp(cmd)
+
+    executor(cmd, 'usar "numero"')
+    executor(cmd, "es_finito(10)")
+    assert interp.obtener_variable("es_finito")(10) is True
+    assert interp.obtener_variable("signo")(0 - 5) == -1
+
+    executor(cmd, 'usar "texto"')
+    executor(cmd, 'mayusculas("cobra")')
+    executor(cmd, 'recortar(" cobra ")')
+    executor(cmd, 'repetir("co", 2)')
+    executor(cmd, 'quitar_acentos("canción")')
+    assert interp.obtener_variable("mayusculas")("cobra") == "COBRA"
+    assert interp.obtener_variable("recortar")(" cobra ") == "cobra"
+    assert interp.obtener_variable("repetir")("co", 2) == "coco"
+    assert interp.obtener_variable("quitar_acentos")("canción") == "cancion"
+
+    executor(cmd, 'usar "logica"')
+    executor(cmd, "conjuncion(verdadero, falso)")
+    executor(cmd, "negacion(falso)")
+    assert interp.obtener_variable("conjuncion")(True, False) is False
+    assert interp.obtener_variable("negacion")(False) is True
+
+    executor(cmd, 'usar "tiempo"')
+    executor(cmd, "epoch()")
+    epoch_valor = interp.obtener_variable("epoch")()
+    assert isinstance(epoch_valor, (int, float))
+    assert 946684800 <= epoch_valor <= 4102444800
+
+    executor(cmd, 'usar "datos"')
+    executor(cmd, 'longitud("cobra")')
+    assert interp.obtener_variable("longitud")("cobra") == 5
+
+
+@pytest.mark.parametrize(
+    ("factory", "executor"),
+    [
+        (lambda: InteractiveCommand(InterpretadorCobra()), lambda cmd, code: cmd.ejecutar_codigo(code)),
+        (ReplCommandV2, lambda cmd, code: cmd._ejecutar_en_modo_normal(code)),
+    ],
+)
+def test_repl_seguridad_numpy_rechazado_mensaje_corto_sin_traceback(factory, executor, monkeypatch):
+    monkeypatch.delenv("PCOBRA_DEBUG_RUNTIME", raising=False)
+    monkeypatch.delenv("PCOBRA_DEBUG_TRACES", raising=False)
+
+    cmd = factory()
+    with pytest.raises(PermissionError) as excinfo:
+        executor(cmd, 'usar "numpy"')
+
+    mensaje = str(excinfo.value)
+    assert "modulo_fuera_catalogo_publico" in mensaje or "módulo fuera del catálogo público" in mensaje
+    assert "Traceback" not in mensaje
+
+
+@pytest.mark.parametrize(
+    ("factory", "executor", "get_interp"),
+    [
+        (lambda: InteractiveCommand(InterpretadorCobra()), lambda cmd, code: cmd.ejecutar_codigo(code), lambda cmd: cmd.interpretador),
+        (ReplCommandV2, lambda cmd, code: cmd._ejecutar_en_modo_normal(code), lambda cmd: cmd._delegate.interpretador),
+    ],
+)
+def test_repl_usar_no_expone_simbolos_no_publicos(factory, executor, get_interp):
+    cmd = factory()
+    interp = get_interp(cmd)
+
+    executor(cmd, 'usar "texto"')
+
+    assert "normalizar_unicode" not in interp.contextos[-1].values
+    with pytest.raises(NameError, match=r"^Variable no declarada: normalizar_unicode$"):
+        interp.contextos[-1].get("normalizar_unicode")
+
 def test_logs_usar_conflictos_formato_resumido_sin_diccionario_gigante(caplog, monkeypatch):
     modulo = ModuleType("texto")
     modulo.__all__ = ["A_snake", "a_snake"]
