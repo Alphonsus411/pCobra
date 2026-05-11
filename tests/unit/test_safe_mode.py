@@ -63,11 +63,35 @@ def test_existe_publico_desde_usar_acepta_ruta_relativa():
     assert "verdadero" in salida or "falso" in salida
 
 
+def test_metadata_usar_archivo_existe_cadena_completa():
+    interp = InterpretadorCobra()
+    ast = generar_ast('usar "archivo"\nimprimir(existe("README.md"))')
+
+    with patch("sys.stdout", new_callable=StringIO):
+        interp.ejecutar_ast(ast)
+
+    metadata = interp._usar_symbol_metadata["existe"]
+    assert metadata["module"] == "archivo"
+    assert metadata["canonical_module"] == "archivo"
+    assert metadata["is_public_export"] is True
+    assert metadata["is_sanitized_wrapper"] is True
+    assert metadata["python_module"] in {
+        "pcobra.standard_library.archivo",
+        "cobra.standard_library.archivo",
+    }
+
+    metadata_validador = interp._validador._metadata_simbolos_usar["existe"]
+    assert metadata_validador["module"] == "archivo"
+    assert metadata_validador["canonical_module"] == "archivo"
+
+
 @pytest.mark.parametrize(
     "codigo",
     [
         'usar "archivo"\nimprimir(existe("/etc/passwd"))',
         'usar "archivo"\nimprimir(existe("../secreto.txt"))',
+        'usar "archivo"\nimprimir(existe("C:/Windows/System32/drivers/etc/hosts"))',
+        'usar "archivo"\nimprimir(existe("\\\\servidor\\compartido\\secreto.txt"))',
     ],
 )
 def test_existe_publico_desde_usar_bloquea_rutas_fuera_de_politica(codigo):
@@ -107,4 +131,3 @@ def test_existe_publico_desde_usar_bloquea_traversal_normalizado(codigo):
 
     with pytest.raises(PrimitivaPeligrosaError):
         interp.ejecutar_ast(ast)
-
