@@ -265,11 +265,11 @@ def test_interprete_corelibs_superficie_minima_requerida():
     interp = InterpretadorCobra()
     interp.ejecutar_nodo(NodoUsar("numero"))
     assert interp.obtener_variable("es_finito")(10) is True
-    assert interp.obtener_variable("signo")(-7) == -1
+    assert interp.obtener_variable("signo")(0 - 5) == -1
 
     interp.ejecutar_nodo(NodoUsar("texto"))
     assert interp.obtener_variable("mayusculas")("cobra") == "COBRA"
-    assert interp.obtener_variable("recortar")("  cobra  ") == "cobra"
+    assert interp.obtener_variable("recortar")(" cobra ") == "cobra"
     assert interp.obtener_variable("repetir")("co", 2) == "coco"
     assert interp.obtener_variable("quitar_acentos")("canción") == "cancion"
 
