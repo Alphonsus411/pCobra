@@ -1401,7 +1401,8 @@ class InterpretadorCobra:
                 return self.ejecutar_holobit(expresion)
             elif isinstance(expresion, NodoLista):
                 elementos = []
-                for elemento in expresion.elementos:
+                nodos_elementos = list(getattr(expresion, "elementos", []) or [])
+                for elemento in nodos_elementos:
                     valor_elemento = self.evaluar_expresion(elemento, visitados)
                     valor_elemento = self._materializar_valor(
                         valor_elemento,
