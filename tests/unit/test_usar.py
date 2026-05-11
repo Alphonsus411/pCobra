@@ -1144,3 +1144,35 @@ def test_usar_warning_conflictos_saneamiento_formato_compacto(monkeypatch, caplo
     assert "count=2" in warning
     assert "conflicts=[" not in warning
     assert "{'symbol'" not in warning
+
+
+def test_usar_warning_conflictos_saneamiento_detalle_solo_debug(monkeypatch, caplog):
+    modulo = ModuleType("texto")
+    modulo.__all__ = ["A_snake", "a_snake"]
+    modulo.A_snake = lambda texto: texto
+    modulo.a_snake = lambda texto: texto
+    modulo.__file__ = "/workspace/pCobra/src/pcobra/corelibs/texto.py"
+
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: modulo)
+    monkeypatch.setenv("PCOBRA_DEBUG_RUNTIME", "1")
+
+    interp = InterpretadorCobra()
+    interp.configurar_restriccion_usar_repl({"texto": "texto"})
+
+    with pytest.raises(ImportError):
+        interp.ejecutar_nodo(NodoUsar("texto"))
+
+    warnings_saneamiento = [
+        rec.message for rec in caplog.records if "USAR sanitize conflicts event module=texto" in rec.message
+    ]
+    assert warnings_saneamiento
+    warning = warnings_saneamiento[-1]
+    assert "count=2" in warning
+    assert "conflicts=[" not in warning
+
+    trazas_debug = [
+        rec.message for rec in caplog.records if "[USAR_SANITIZE][CONFLICTS]" in rec.message
+    ]
+    assert trazas_debug
+    assert "'conflicts':" in trazas_debug[-1]
+
