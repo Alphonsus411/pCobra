@@ -168,3 +168,33 @@ def test_entrypoint_repl_texto_flujo_integral_callable_output(capsys):
     assert "Cobra" in salida
     assert "jajaja" in salida
     assert "cancion" in salida
+
+
+def test_entrypoint_repl_asignacion_lista_no_reporta_nodolista(capsys):
+    cmd = ReplCommandV2()
+    cmd._ejecutar_en_modo_normal("var xs = [1, 2, 3]")
+    cmd._ejecutar_en_modo_normal("imprimir(xs)")
+
+    salida = capsys.readouterr().out
+    assert "[1, 2, 3]" in salida
+    assert "Expresión no soportada: tipo=NodoLista" not in salida
+
+
+def test_entrypoint_repl_usar_datos_longitud_argumento_inline(capsys):
+    cmd = ReplCommandV2()
+    cmd._ejecutar_en_modo_normal('usar "datos"')
+    cmd._ejecutar_en_modo_normal("imprimir(longitud([1, 2, 3]))")
+
+    salida = [linea.strip() for linea in capsys.readouterr().out.splitlines() if linea.strip()]
+    assert "3" in salida
+
+
+def test_entrypoint_repl_lista_con_expresiones_y_longitud(capsys):
+    cmd = ReplCommandV2()
+    cmd._ejecutar_en_modo_normal('usar "datos"')
+    cmd._ejecutar_en_modo_normal("var a = 10")
+    cmd._ejecutar_en_modo_normal("var xs = [a, a + 1]")
+    cmd._ejecutar_en_modo_normal("imprimir(longitud(xs))")
+
+    salida = [linea.strip() for linea in capsys.readouterr().out.splitlines() if linea.strip()]
+    assert "2" in salida
