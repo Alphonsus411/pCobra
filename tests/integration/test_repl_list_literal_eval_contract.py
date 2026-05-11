@@ -21,7 +21,9 @@ def test_repl_interpreter_evalua_lista_literal_en_asignacion_var():
         lambda cmd: cmd.interpretador,
         "var xs = [1, 2, 3]",
     )
-    assert interp.obtener_variable("xs") == [1, 2, 3]
+    xs = interp.obtener_variable("xs")
+    assert isinstance(xs, list)
+    assert xs == [1, 2, 3]
 
 
 def test_repl_interpreter_evalua_lista_con_expresiones_internas():
@@ -29,9 +31,11 @@ def test_repl_interpreter_evalua_lista_con_expresiones_internas():
         lambda: InteractiveCommand(InterpretadorCobra()),
         lambda cmd, code: cmd.ejecutar_codigo(code),
         lambda cmd: cmd.interpretador,
-        "var a = 10\nvar xs = [a, a + 1]",
+        "var a = 10\nvar xs = [a, a + 1, 3]",
     )
-    assert interp.obtener_variable("xs") == [10, 11]
+    xs = interp.obtener_variable("xs")
+    assert isinstance(xs, list)
+    assert xs == [10, 11, 3]
 
 
 def test_repl_v2_delega_mismo_tratamiento_de_lista_literal():
@@ -66,12 +70,12 @@ def test_repl_interpreter_longitud_lista_con_expresiones_y_repr_razonable():
     with redirect_stdout(out):
         repl.ejecutar_codigo('usar "datos"')
         repl.ejecutar_codigo('var a = 10')
-        repl.ejecutar_codigo('var xs = [a, a + 1]')
+        repl.ejecutar_codigo('var xs = [a, a + 1, 3]')
         repl.ejecutar_codigo('imprimir(longitud(xs))')
         repl.ejecutar_codigo('imprimir(xs)')
 
     lineas = [linea.strip() for linea in out.getvalue().splitlines() if linea.strip()]
-    assert lineas[-2] == "2"
+    assert lineas[-2] == "3"
     repr_lista = lineas[-1]
-    assert "10" in repr_lista and "11" in repr_lista
+    assert "10" in repr_lista and "11" in repr_lista and "3" in repr_lista
     assert repr_lista.startswith("[") and repr_lista.endswith("]")
