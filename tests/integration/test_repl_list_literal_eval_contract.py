@@ -26,6 +26,22 @@ def test_repl_interpreter_evalua_lista_literal_en_asignacion_var():
     assert xs == [1, 2, 3]
 
 
+def test_repl_interpreter_lista_literal_repr_y_uso_posterior():
+    repl = InteractiveCommand(InterpretadorCobra())
+    out = StringIO()
+
+    with redirect_stdout(out):
+        repl.ejecutar_codigo("var xs = [1, 2, 3]")
+        repl.ejecutar_codigo("imprimir(xs)")
+        repl.ejecutar_codigo('usar "datos"')
+        repl.ejecutar_codigo("imprimir(longitud(xs))")
+
+    lineas = [linea.strip() for linea in out.getvalue().splitlines() if linea.strip()]
+    assert "[1, 2, 3]" in lineas
+    valores = [linea for linea in lineas if linea.isdigit()]
+    assert valores[-1] == "3"
+
+
 def test_repl_interpreter_evalua_lista_con_expresiones_internas():
     interp = _estado(
         lambda: InteractiveCommand(InterpretadorCobra()),
@@ -61,6 +77,34 @@ def test_repl_interpreter_longitud_lista_literal_y_variable_desde_datos():
     lineas = [linea.strip() for linea in out.getvalue().splitlines() if linea.strip()]
     valores = [linea for linea in lineas if linea.isdigit()]
     assert valores[-2:] == ["3", "3"]
+
+
+def test_repl_interpreter_datos_longitud_lista_literal_directa():
+    repl = InteractiveCommand(InterpretadorCobra())
+    out = StringIO()
+
+    with redirect_stdout(out):
+        repl.ejecutar_codigo('usar "datos"')
+        repl.ejecutar_codigo('imprimir(longitud([1, 2, 3]))')
+
+    lineas = [linea.strip() for linea in out.getvalue().splitlines() if linea.strip()]
+    valores = [linea for linea in lineas if linea.isdigit()]
+    assert valores[-1] == "3"
+
+
+def test_repl_interpreter_lista_literal_con_variables_longitud_dos():
+    repl = InteractiveCommand(InterpretadorCobra())
+    out = StringIO()
+
+    with redirect_stdout(out):
+        repl.ejecutar_codigo('usar "datos"')
+        repl.ejecutar_codigo('var a = 10')
+        repl.ejecutar_codigo('var xs = [a, a + 1]')
+        repl.ejecutar_codigo('imprimir(longitud(xs))')
+
+    lineas = [linea.strip() for linea in out.getvalue().splitlines() if linea.strip()]
+    valores = [linea for linea in lineas if linea.isdigit()]
+    assert valores[-1] == "2"
 
 
 def test_repl_interpreter_longitud_lista_con_expresiones_y_repr_razonable():
