@@ -342,6 +342,59 @@ def test_repl_usar_colision_en_ancestro_no_inyecta_exportables(monkeypatch):
 
 
 
+
+
+def test_repl_usar_numero_regresion_es_finito_y_signo(monkeypatch):
+    import pcobra.corelibs.numero as modulo_numero
+
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: modulo_numero)
+    interp = _ejecutar_codigo('usar "numero"\nes_finito(10)\nsigno(0-5)')
+
+    assert interp.obtener_variable("es_finito")(10) is True
+    assert interp.obtener_variable("signo")(-5) == -1
+
+
+def test_repl_usar_texto_regresion_mayusculas_recortar_repetir_quitar_acentos(monkeypatch):
+    import pcobra.corelibs.texto as modulo_texto
+
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: modulo_texto)
+    interp = _ejecutar_codigo('usar "texto"\nmayusculas("cobra")\nrecortar("  cobra  ")\nrepetir("co", 2)\nquitar_acentos("canción")')
+
+    assert interp.obtener_variable("mayusculas")("cobra") == "COBRA"
+    assert interp.obtener_variable("recortar")("  cobra  ") == "cobra"
+    assert interp.obtener_variable("repetir")("co", 2) == "coco"
+    assert interp.obtener_variable("quitar_acentos")("canción") == "cancion"
+
+
+def test_repl_usar_logica_regresion_conjuncion_y_negacion(monkeypatch):
+    import pcobra.corelibs.logica as modulo_logica
+
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: modulo_logica)
+    interp = _ejecutar_codigo('usar "logica"\nconjuncion(verdadero, falso)\nnegacion(falso)')
+
+    assert interp.obtener_variable("conjuncion")(True, False) is False
+    assert interp.obtener_variable("negacion")(False) is True
+
+
+def test_repl_usar_tiempo_regresion_epoch_valida_tipo_y_rango(monkeypatch):
+    import pcobra.corelibs.tiempo as modulo_tiempo
+
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: modulo_tiempo)
+    interp = _ejecutar_codigo('usar "tiempo"\nepoch()')
+
+    valor_epoch = interp.obtener_variable("epoch")()
+    assert isinstance(valor_epoch, (int, float))
+    assert 0 <= valor_epoch < 4102444800
+
+
+def test_repl_usar_datos_regresion_longitud_cobra(monkeypatch):
+    import pcobra.corelibs.datos as modulo_datos
+
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: modulo_datos)
+    interp = _ejecutar_codigo('usar "datos"\nlongitud("cobra")')
+
+    assert interp.obtener_variable("longitud")("cobra") == 5
+
 def test_repl_usar_texto_colision_en_ancestro_es_atomico(monkeypatch):
     import pcobra.corelibs.texto as modulo_texto
 
