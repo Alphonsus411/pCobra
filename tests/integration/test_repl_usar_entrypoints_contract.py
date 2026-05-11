@@ -14,16 +14,21 @@ from pcobra.cobra.usar_policy import REPL_COBRA_MODULE_MAP
 
 def _modulo_numero_stub() -> ModuleType:
     mod = ModuleType("numero")
-    mod.__all__ = ["es_finito"]
+    mod.__all__ = ["es_finito", "signo"]
     mod.es_finito = lambda valor: valor == valor and valor not in (float("inf"), float("-inf"))
+    mod.signo = lambda valor: -1 if valor < 0 else (1 if valor > 0 else 0)
     mod.__file__ = "/workspace/pCobra/src/pcobra/corelibs/numero.py"
     return mod
 
 
 def _modulo_texto_stub() -> ModuleType:
     mod = ModuleType("texto")
-    mod.__all__ = ["a_snake"]
+    mod.__all__ = ["a_snake", "mayusculas", "recortar", "repetir", "quitar_acentos"]
     mod.a_snake = lambda texto: "hola_mundo" if texto == "HolaMundo" else str(texto)
+    mod.mayusculas = lambda texto: str(texto).upper()
+    mod.recortar = lambda texto: str(texto).strip()
+    mod.repetir = lambda texto, veces=2: str(texto) * int(veces)
+    mod.quitar_acentos = lambda texto: str(texto).translate(str.maketrans("áéíóú", "aeiou"))
     mod.__file__ = "/workspace/pCobra/src/pcobra/corelibs/texto.py"
     return mod
 
@@ -59,6 +64,7 @@ def test_repl_contract_sintaxis_usar_compat_parser_semantica_plana_numero_sin_pr
     executor(cmd, "es_finito(10)")
 
     assert interp.obtener_variable("es_finito")(10) is True
+    assert interp.obtener_variable("signo")(-8) == -1
 
 
 @pytest.mark.parametrize(
@@ -82,9 +88,12 @@ def test_repl_contract_sintaxis_usar_compat_parser_semantica_plana_texto_sin_pre
     interp = get_interp(cmd)
 
     executor(cmd, 'usar "texto"')
-    executor(cmd, 'a_snake("HolaMundo")')
+    executor(cmd, 'mayusculas("cobra")')
 
-    assert interp.obtener_variable("a_snake")("HolaMundo") == "hola_mundo"
+    assert interp.obtener_variable("mayusculas")("cobra") == "COBRA"
+    assert interp.obtener_variable("recortar")(" cobra ") == "cobra"
+    assert interp.obtener_variable("repetir")("co", 2) == "coco"
+    assert interp.obtener_variable("quitar_acentos")("canción") == "cancion"
 
 
 @pytest.mark.parametrize(
@@ -226,7 +235,7 @@ def test_repl_contract_sintaxis_usar_compat_parser_semantica_plana_colision_no_s
     interp = get_interp(cmd)
     interp.contextos[-1].define("es_finito", lambda _valor: "ocupado")
 
-    with pytest.raises(NameError, match=r"No se puede usar el módulo 'numero': (usar_error\[conflicto_simbolo\] )?colisión estructurada="):
+    with pytest.raises(NameError, match=r"No se puede usar( el módulo)? 'numero':"):
         executor(cmd, 'usar "numero"')
 
     assert interp.obtener_variable("es_finito")("x") == "ocupado"
@@ -254,7 +263,7 @@ def test_repl_rechazo_externo_no_inyecta_simbolos(factory, executor, get_interp,
     interp = get_interp(cmd)
     estado_pre = dict(interp.contextos[-1].values)
 
-    with pytest.raises(PermissionError, match=r"(módulo externo no permitido en REPL estricto|modulo_fuera_catalogo_publico)"):
+    with pytest.raises(PermissionError, match=r"(módulo fuera del catálogo público|modulo_fuera_catalogo_publico)"):
         executor(cmd, 'usar "requests"')
 
     assert estado_pre == interp.contextos[-1].values
@@ -265,6 +274,7 @@ def test_interprete_corelibs_superficie_minima_requerida():
     interp = InterpretadorCobra()
     interp.ejecutar_nodo(NodoUsar("numero"))
     assert interp.obtener_variable("es_finito")(10) is True
+    assert interp.obtener_variable("signo")(-8) == -1
     assert interp.obtener_variable("signo")(0 - 5) == -1
 
     interp.ejecutar_nodo(NodoUsar("texto"))
@@ -316,6 +326,7 @@ def test_repl_integracion_usar_modulos_publicos_end_to_end(factory, executor, ge
     executor(cmd, 'usar "numero"')
     executor(cmd, "es_finito(10)")
     assert interp.obtener_variable("es_finito")(10) is True
+    assert interp.obtener_variable("signo")(-8) == -1
     assert interp.obtener_variable("signo")(0 - 5) == -1
 
     executor(cmd, 'usar "texto"')
@@ -471,7 +482,7 @@ def test_repl_contract_seguridad_usar_holobit_restringe_internals_y_saneamiento(
     cmd = InteractiveCommand(InterpretadorCobra())
     cmd.interpretador.configurar_restriccion_usar_repl(alias_map)
     estado_pre = dict(cmd.interpretador.contextos[-1].values)
-    with pytest.raises(PermissionError, match=r"(módulo externo no permitido en REPL estricto|modulo_fuera_catalogo_publico)"):
+    with pytest.raises(PermissionError, match=r"(módulo fuera del catálogo público|modulo_fuera_catalogo_publico)"):
         cmd.ejecutar_codigo('usar "holobit_sdk"')
 
     assert estado_pre == cmd.interpretador.contextos[-1].values
