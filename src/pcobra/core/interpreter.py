@@ -1421,6 +1421,7 @@ class InterpretadorCobra:
                     )
                     self._verificar_valor_contexto(valor_elemento)
                     elementos.append(valor_elemento)
+                self._verificar_valor_contexto(elementos)
                 return _retorno_critico(elementos, operador="lista")
             elif isinstance(expresion, NodoOperacionBinaria):
                 tipo = expresion.operador.tipo

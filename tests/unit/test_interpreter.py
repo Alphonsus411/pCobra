@@ -684,16 +684,17 @@ def test_lista_literal_evalua_elementos_recursivos():
                         Token(TipoToken.SUMA, "+"),
                         NodoValor(1),
                     ),
+                    NodoValor(3),
                 ]
             ),
             declaracion=True,
         )
     )
 
-    assert inter.obtener_variable("xs") == [10, 11]
+    assert inter.obtener_variable("xs") == [10, 11, 3]
     assert inter.ejecutar_llamada_funcion(
         NodoLlamadaFuncion("longitud", [NodoIdentificador("xs")])
-    ) == 2
+    ) == 3
 
 def test_lista_literal_propaga_error_semantico_en_elemento_invalido():
     inter = InterpretadorCobra()
