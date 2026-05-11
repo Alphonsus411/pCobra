@@ -77,12 +77,15 @@ class ValidadorPrimitivaPeligrosa(ValidadorBase):
         if ("archivo", nodo.nombre) not in self._simbolos_publicos_usar:
             return False
         metadata = self._metadata_simbolos_usar.get(nodo.nombre, {})
-        origen_modulo = metadata.get("module")
+        origen_modulo = metadata.get("origen_modulo", metadata.get("module"))
         origen_canonico = metadata.get("canonical_module")
         origen_backend = metadata.get("python_module")
+        origen_tipo = metadata.get("origen_tipo")
         es_publico = metadata.get("is_public_export") is True
         es_wrapper_sanitizado = metadata.get("is_sanitized_wrapper") is True
         if origen_modulo != "archivo" or origen_canonico != "archivo":
+            return False
+        if origen_tipo is not None and origen_tipo != "public_wrapper":
             return False
         if origen_backend not in self.WRAPPERS_PYTHON_MODULES_PERMITIDOS:
             return False

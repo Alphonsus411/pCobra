@@ -2221,6 +2221,8 @@ class InterpretadorCobra:
             "module": modulo,
             "canonical_module": modulo,
             "python_module": modulo_objeto,
+            "origen_modulo": modulo,
+            "origen_tipo": "public_wrapper",
             "exported_name": nombre_exportado,
             "is_public_export": True,
             "is_sanitized_wrapper": True,
