@@ -691,6 +691,9 @@ def test_lista_literal_evalua_elementos_recursivos():
     )
 
     assert inter.obtener_variable("xs") == [10, 11]
+    assert inter.ejecutar_llamada_funcion(
+        NodoLlamadaFuncion("longitud", [NodoIdentificador("xs")])
+    ) == 2
 
 def test_lista_literal_propaga_error_semantico_en_elemento_invalido():
     inter = InterpretadorCobra()
