@@ -746,6 +746,53 @@ def test_repl_usar_modulos_numero_logica_tiempo_y_datos_con_epoch_rango(capsys):
     assert '-2' in lineas
 
 
+def test_repl_contrato_cli_superficie_publica_y_error_corto_numpy(capsys):
+    cmd = ReplCommandV2()
+
+    cmd._ejecutar_en_modo_normal('usar "numero"')
+    cmd._ejecutar_en_modo_normal("imprimir(es_finito(10))")
+    cmd._ejecutar_en_modo_normal("imprimir(signo(0-5))")
+
+    cmd._ejecutar_en_modo_normal('usar "texto"')
+    cmd._ejecutar_en_modo_normal('imprimir(mayusculas("cobra"))')
+    cmd._ejecutar_en_modo_normal('imprimir(recortar(" cobra "))')
+    cmd._ejecutar_en_modo_normal('imprimir(repetir("co", 2))')
+    cmd._ejecutar_en_modo_normal('imprimir(quitar_acentos("canción"))')
+
+    cmd._ejecutar_en_modo_normal('usar "logica"')
+    cmd._ejecutar_en_modo_normal("imprimir(conjuncion(verdadero, falso))")
+    cmd._ejecutar_en_modo_normal("imprimir(negacion(falso))")
+
+    cmd._ejecutar_en_modo_normal('usar "tiempo"')
+    cmd._ejecutar_en_modo_normal("imprimir(epoch())")
+
+    cmd._ejecutar_en_modo_normal('usar "datos"')
+    cmd._ejecutar_en_modo_normal('imprimir(longitud("cobra"))')
+
+    lineas = [linea.strip() for linea in capsys.readouterr().out.splitlines() if linea.strip()]
+    assert "verdadero" in lineas
+    assert "-1" in lineas
+    assert "COBRA" in lineas
+    assert "cobra" in lineas
+    assert "coco" in lineas
+    assert "cancion" in lineas
+    assert "falso" in lineas
+    assert lineas[-1] == "5"
+
+    epoch_value = next(float(v) for v in lineas if v.replace(".", "", 1).isdigit() and float(v) >= 946684800)
+    assert 946684800 <= epoch_value <= 4102444800
+
+    simbolos = set(cmd._delegate.interpretador.contextos[-1].values)
+    assert "normalizar_unicode" not in simbolos
+    assert "_backend" not in simbolos
+    assert "__all__" not in simbolos
+
+    with pytest.raises(PermissionError, match=r"(modulo_fuera_catalogo_publico|módulo fuera del catálogo público)"):
+        cmd._ejecutar_en_modo_normal('usar "numpy"')
+    salida_error = capsys.readouterr().out
+    assert "Traceback" not in salida_error
+
+
 def test_repl_texto_aceptacion_mayusculas_recortar_repetir_quitar_acentos(capsys):
     cmd = ReplCommandV2()
     cmd._ejecutar_en_modo_normal('usar "texto"')
