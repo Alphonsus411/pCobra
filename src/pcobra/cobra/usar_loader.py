@@ -140,15 +140,31 @@ def sanitizar_exports_publicos(modulo: object, alias_modulo: str) -> tuple[dict[
     silenciosas.
     """
 
+    override_exports = USAR_RUNTIME_EXPORT_OVERRIDES.get(alias_modulo)
     exportables = getattr(modulo, "__all__", None)
-    if exportables is None:
-        candidatos = list(USAR_RUNTIME_EXPORT_OVERRIDES.get(alias_modulo, ()))
+
+    if override_exports is not None:
+        # Para módulos canónicos, la whitelist de runtime es la fuente de verdad.
+        # No se debe confiar en __all__ para evitar ampliaciones accidentales de API.
+        candidatos = list(override_exports)
+        conflictos = []
+        if exportables is None:
+            conflictos.append(
+                {
+                    "module": alias_modulo,
+                    "symbol": "__all__",
+                    "code": "missing___all__",
+                    "message": "módulo sin __all__; se aplica whitelist explícita por política",
+                }
+            )
+    elif exportables is None:
+        candidatos = []
         conflictos = [
             {
                 "module": alias_modulo,
                 "symbol": "__all__",
                 "code": "missing___all__",
-                "message": "módulo sin __all__; se aplica whitelist explícita por política",
+                "message": "módulo sin __all__ y sin whitelist canónica configurada",
             }
         ]
     else:
