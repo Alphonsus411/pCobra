@@ -21,6 +21,7 @@ from typing import Final
 from pcobra.cobra.transpilers.target_utils import normalize_target_name
 from pcobra.cobra.architecture.backend_policy import PUBLIC_BACKENDS
 from pcobra.cobra.transpilers.runtime_api_matrix import build_runtime_api_matrix
+from pcobra.cobra.config.transpile_targets import LEGACY_INTERNAL_TARGETS
 from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS, TIER1_TARGETS
 
 CONTRACT_FEATURES: Final[tuple[str, ...]] = (
