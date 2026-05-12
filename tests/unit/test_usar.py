@@ -1202,3 +1202,34 @@ def test_usar_warning_conflictos_saneamiento_detalle_solo_debug(monkeypatch, cap
     assert trazas_debug
     assert "'conflicts':" in trazas_debug[-1]
 
+
+
+def test_usar_warning_colision_alias_formato_compacto(monkeypatch, caplog):
+    modulo = ModuleType("numero")
+    modulo.__all__ = ["sumar"]
+    modulo.sumar = lambda a, b: a + b
+    modulo.__file__ = "/workspace/pCobra/src/pcobra/corelibs/numero.py"
+
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: modulo)
+    monkeypatch.delenv("PCOBRA_DEBUG_RUNTIME", raising=False)
+    monkeypatch.delenv("PCOBRA_DEBUG_TRACES", raising=False)
+
+    interp = InterpretadorCobra()
+    interp.configurar_restriccion_usar_repl({"numero": "numero"})
+    interp.configurar_politica_colision_usar("warn_alias_required")
+    interp.contextos[-1].define("sumar", lambda a, b: a - b)
+
+    with pytest.raises(NameError):
+        interp.ejecutar_nodo(NodoUsar("numero"))
+
+    warnings_colision = [
+        rec.message for rec in caplog.records if rec.message.startswith("WARNING: No se puede usar 'numero'")
+    ]
+    assert warnings_colision
+    warning = warnings_colision[-1]
+    assert warning == (
+        "WARNING: No se puede usar 'numero': hay conflicto de símbolos en el contexto actual. "
+        "Use alias explícito para resolver la colisión. module=numero count=1"
+    )
+    assert "{" not in warning
+    assert "detalle=" not in warning
