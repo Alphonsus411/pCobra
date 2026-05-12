@@ -2221,12 +2221,17 @@ class InterpretadorCobra:
         return {
             "module": modulo,
             "canonical_module": modulo,
+            "origin_module": modulo,
             "python_module": modulo_objeto,
             "origen_modulo": modulo,
             "origen_tipo": "public_wrapper",
             "exported_name": nombre_exportado,
             "is_public_export": True,
+            "public_api": True,
             "is_sanitized_wrapper": True,
+            "safe_wrapper": True,
+            "introduced_by": "usar",
+            "introduced_by_usar": True,
             "callable_id": id(simbolo),
             "stable_signature": firma_estable,
         }
