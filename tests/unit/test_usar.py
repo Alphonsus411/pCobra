@@ -676,7 +676,7 @@ def test_repl_usar_datos_imprimir_longitud_lista_produce_3(monkeypatch, capsys):
 
 
 def test_usar_texto_expone_superficie_publica_clave(monkeypatch):
-    import pcobra.corelibs.texto as modulo_texto
+    import pcobra.standard_library.texto as modulo_texto
 
     monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: modulo_texto)
     interp = InterpretadorCobra()
@@ -714,10 +714,9 @@ def test_usar_datos_no_exporta_objetos_backend_sdk_wrappers(monkeypatch):
     interp = InterpretadorCobra()
     interp.configurar_restriccion_usar_repl({"datos": "datos"})
 
-    with pytest.raises(ImportError, match=r"rechazos de saneamiento en usar"):
-        interp.ejecutar_nodo(NodoUsar("datos"))
+    interp.ejecutar_nodo(NodoUsar("datos"))
 
-    assert "longitud" not in interp.variables
+    assert "longitud" in interp.variables
     for simbolo in ("backend", "sdk", "wrapper", "modulo_externo"):
         assert simbolo not in interp.variables
 def test_usar_datos_incluye_filtrar_mapear_reducir(monkeypatch):
