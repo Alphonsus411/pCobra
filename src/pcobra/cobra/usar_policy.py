@@ -165,13 +165,19 @@ def validar_paridad_superficie_publica_modulos_canonicos() -> None:
         if stdlib_path.exists():
             std_mod = importlib.import_module(f"pcobra.standard_library.{module_name}")
             std_exports = tuple(getattr(std_mod, "__all__", ()))
-            if std_exports:
-                combined_exports = set(exports) | set(std_exports)
-                missing_required_combined = [
-                    name for name in contract.required_functions if name not in combined_exports
+            if not std_exports:
+                raise RuntimeError(
+                    f"[STARTUP CONTRACT] pcobra.standard_library.{module_name} debe declarar __all__"
+                )
+
+            parity_required = bool(getattr(std_mod, "__canonical_parity_required__", False))
+            if parity_required:
+                missing_required_stdlib = [
+                    name for name in contract.required_functions if name not in std_exports
                 ]
-                if missing_required_combined:
+                if missing_required_stdlib:
                     raise RuntimeError(
                         f"[STARTUP CONTRACT] Paridad incompleta en {module_name}: "
-                        f"faltan funciones requeridas {missing_required_combined}"
+                        "faltan funciones requeridas en standard_library "
+                        f"{missing_required_stdlib}"
                     )
