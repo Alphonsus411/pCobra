@@ -25,8 +25,8 @@ from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS  # noqa: E402
 
 EXPECTED_CANONICAL_TARGETS: tuple[str, ...] = (
     "python",
-    "rust",
     "javascript",
+    "rust",
 )
 
 FORBIDDEN_TERMS: tuple[tuple[re.Pattern[str], str], ...] = (
