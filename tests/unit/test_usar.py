@@ -659,8 +659,7 @@ def test_politica_publica_backend_es_python_javascript_rust():
 
 def test_repl_usar_emite_evento_telemetria_saneamiento_rechazado(monkeypatch, caplog):
     modulo = ModuleType("mod_ext")
-    modulo.__all__ = ["ok", "backend"]
-    modulo.ok = lambda valor: valor
+    modulo.__all__ = ["backend"]
     modulo.backend = ModuleType("backend_obj")
     modulo.__file__ = "/workspace/pCobra/src/pcobra/corelibs/mod_ext.py"
 
