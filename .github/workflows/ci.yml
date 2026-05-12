@@ -651,6 +651,7 @@ jobs:
   contractual-compatibility-gate:
     name: Contractual compatibility gate
     needs: [critical-policy-contract-gates]
+    if: always() && (github.event_name == 'schedule' || needs.critical-policy-contract-gates.result == 'success')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955  # Fijado a commit para seguridad de la cadena de suministro.
