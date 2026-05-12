@@ -76,25 +76,23 @@ def truncar(valor):
 
 
 def minimo(*valores):
-    """Retorna el menor valor recibido.
-
-    Se exige al menos un argumento para alinear mensajes con el runtime Cobra.
-    """
+    """Retorna el menor valor recibido preservando semántica de :func:`min`."""
 
     if not valores:
         raise TypeError("minimo requiere al menos un argumento")
-    return min(valores)
+    if len(valores) == 1:
+        return min(valores[0])
+    return min(*valores)
 
 
 def maximo(*valores):
-    """Retorna el mayor valor recibido.
-
-    Se exige al menos un argumento para alinear mensajes con el runtime Cobra.
-    """
+    """Retorna el mayor valor recibido preservando semántica de :func:`max`."""
 
     if not valores:
         raise TypeError("maximo requiere al menos un argumento")
-    return max(valores)
+    if len(valores) == 1:
+        return max(valores[0])
+    return max(*valores)
 
 
 def mcd(*valores: int) -> int:
