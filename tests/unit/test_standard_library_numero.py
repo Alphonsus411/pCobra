@@ -69,6 +69,20 @@ def test_signo_y_limitar():
         numero.limitar(0, 2, 1)
 
 
+
+
+def test_minimo_maximo_preservan_semantica_builtin():
+    datos = [3, 1, 2]
+    assert numero.minimo(datos) == 1
+    assert numero.maximo(datos) == 3
+    assert numero.minimo(3, 1, 2) == 1
+    assert numero.maximo(3, 1, 2) == 3
+
+    with pytest.raises(TypeError):
+        numero.minimo()
+    with pytest.raises(TypeError):
+        numero.maximo()
+
 def test_hipotenusa_y_distancia_euclidiana():
     assert numero.hipotenusa(3, 4) == pytest.approx(5.0)
     assert numero.hipotenusa([2, 3, 6]) == pytest.approx(math.sqrt(49.0))
