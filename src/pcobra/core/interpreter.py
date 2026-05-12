@@ -1928,12 +1928,12 @@ class InterpretadorCobra:
             )
 
             contexto_actual = self.contextos[-1]
-            modulo_proxy = type("_UsarExportsProxy", (), {})()
-            for nombre, simbolo in simbolos_a_inyectar:
-                setattr(modulo_proxy, nombre, simbolo)
-            setattr(modulo_proxy, "__all__", [nombre for nombre, _ in simbolos_a_inyectar])
-
-            mapa_limpio, conflictos_saneamiento = sanitizar_exports_publicos(modulo_proxy, nodo.modulo)
+            mapa_limpio, conflictos_saneamiento = sanitizar_exports_publicos(
+                modulo,
+                nodo.modulo,
+                simbolos_pre_resueltos=simbolos_a_inyectar,
+                candidatos_override=[nombre for nombre, _ in simbolos_a_inyectar],
+            )
             simbolos_saneados = list(mapa_limpio.items())
             if conflictos_saneamiento:
                 evento_conflictos = {
