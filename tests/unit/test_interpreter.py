@@ -706,3 +706,46 @@ def test_lista_literal_propaga_error_semantico_en_elemento_invalido():
                 NodoIdentificador("no_existe"),
             ])
         )
+
+
+def test_lista_literal_cubre_escenarios_solicitados():
+    """Regresión: listas literales en asignación, inline y expresiones internas."""
+    inter = InterpretadorCobra()
+
+    # var a = 10; var xs = [a, a + 1, 3]
+    inter.ejecutar_nodo(NodoAsignacion("a", NodoValor(10), declaracion=True))
+    inter.ejecutar_nodo(
+        NodoAsignacion(
+            "xs",
+            NodoLista(
+                [
+                    NodoIdentificador("a"),
+                    NodoOperacionBinaria(
+                        NodoIdentificador("a"),
+                        Token(TipoToken.SUMA, "+"),
+                        NodoValor(1),
+                    ),
+                    NodoValor(3),
+                ]
+            ),
+            declaracion=True,
+        )
+    )
+
+    # var xs = [1, 2, 3] (resultado materializado como list de Python)
+    inter.ejecutar_nodo(
+        NodoAsignacion(
+            "base",
+            NodoLista([NodoValor(1), NodoValor(2), NodoValor(3)]),
+            declaracion=True,
+        )
+    )
+
+    # longitud([1, 2, 3]) como argumento inline
+    inline = inter.ejecutar_llamada_funcion(
+        NodoLlamadaFuncion("longitud", [NodoLista([NodoValor(1), NodoValor(2), NodoValor(3)])])
+    )
+
+    assert inter.obtener_variable("base") == [1, 2, 3]
+    assert inter.obtener_variable("xs") == [10, 11, 3]
+    assert inline == 3
