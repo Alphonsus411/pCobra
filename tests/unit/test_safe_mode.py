@@ -82,9 +82,14 @@ def test_metadata_usar_archivo_existe_cadena_completa():
     assert metadata["module"] == "archivo"
     assert metadata["origen_modulo"] == "archivo"
     assert metadata["canonical_module"] == "archivo"
+    assert metadata["origin_module"] == "archivo"
     assert metadata["origen_tipo"] == "public_wrapper"
     assert metadata["is_public_export"] is True
+    assert metadata["public_api"] is True
     assert metadata["is_sanitized_wrapper"] is True
+    assert metadata["safe_wrapper"] is True
+    assert metadata["introduced_by"] == "usar"
+    assert metadata["introduced_by_usar"] is True
     assert metadata["python_module"] in {
         "pcobra.standard_library.archivo",
         "cobra.standard_library.archivo",
@@ -95,6 +100,7 @@ def test_metadata_usar_archivo_existe_cadena_completa():
     assert metadata_validador["origen_modulo"] == "archivo"
     assert metadata_validador["canonical_module"] == "archivo"
     assert metadata_validador["origen_tipo"] == "public_wrapper"
+    assert metadata_validador["introduced_by_usar"] is True
 
 
 def test_existe_rechaza_metadata_incompleta_aunque_simbolo_este_registrado():

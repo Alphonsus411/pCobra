@@ -14,6 +14,16 @@ EQUIVALENCIAS_SEMANTICAS_ARCHIVO: dict[str, str] = {
     "readlines": "leer_lineas",
 }
 
+def _es_ruta_absoluta_o_sensible_windows(ruta: PathLike) -> bool:
+    texto = str(ruta).strip()
+    if not texto:
+        return False
+    if texto.startswith("\\\\"):
+        return True
+    if len(texto) >= 2 and texto[1] == ":" and texto[0].isalpha():
+        return True
+    return False
+
 
 def _resolver_ruta(ruta: PathLike) -> Path:
     """Normaliza ``ruta`` dentro de un directorio permitido.
@@ -26,7 +36,7 @@ def _resolver_ruta(ruta: PathLike) -> Path:
 
     base = Path(os.environ.get("COBRA_IO_BASE_DIR") or Path.cwd()).resolve()
     objetivo = Path(ruta)
-    if objetivo.is_absolute():
+    if objetivo.is_absolute() or _es_ruta_absoluta_o_sensible_windows(ruta):
         raise ValueError("Las rutas absolutas no están permitidas")
     if ".." in objetivo.parts:
         raise ValueError("La ruta no puede contener '..'")
@@ -69,7 +79,7 @@ def existe(ruta: PathLike) -> bool:
 
     try:
         objetivo = Path(ruta)
-        if objetivo.is_absolute():
+        if objetivo.is_absolute() or _es_ruta_absoluta_o_sensible_windows(ruta):
             base = Path(os.environ.get("COBRA_IO_BASE_DIR") or Path.cwd()).resolve()
             destino = objetivo.resolve()
             destino.relative_to(base)
