@@ -36,6 +36,7 @@ from typing import Any, TypeVar, overload
 
 import unicodedata
 
+from pcobra.corelibs import texto as _texto
 from pcobra.corelibs.texto import (
     encontrar as _encontrar_texto,
     encontrar_derecha as _encontrar_derecha_texto,

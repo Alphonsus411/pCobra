@@ -1,5 +1,6 @@
 """Fachada pública Holobit para `usar \"holobit\"`."""
 
+import pcobra.corelibs.holobit as _holobit
 from pcobra.corelibs.holobit import (
     crear_holobit,
     validar_holobit,

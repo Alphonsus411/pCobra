@@ -1,5 +1,6 @@
 """Fachada de red segura con API canónica en español."""
 
+import pcobra.corelibs.red as _red
 from pcobra.corelibs.red import (
     obtener_url,
     enviar_post,
