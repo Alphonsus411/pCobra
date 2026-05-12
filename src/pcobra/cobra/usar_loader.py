@@ -135,7 +135,13 @@ def obtener_modulo(nombre: str, *, permitir_instalacion: bool = True):
         ) from exc
 
 
-def sanitizar_exports_publicos(modulo: object, alias_modulo: str) -> tuple[dict[str, Any], list[dict[str, str]]]:
+def sanitizar_exports_publicos(
+    modulo: object,
+    alias_modulo: str,
+    *,
+    simbolos_pre_resueltos: list[tuple[str, object]] | None = None,
+    candidatos_override: list[object] | None = None,
+) -> tuple[dict[str, Any], list[dict[str, str]]]:
     """Filtra exports públicos válidos para ``usar`` y reporta conflictos/rechazos.
 
     Devuelve un mapa limpio ``nombre -> símbolo`` y una lista estructurada de
@@ -143,7 +149,7 @@ def sanitizar_exports_publicos(modulo: object, alias_modulo: str) -> tuple[dict[
     silenciosas.
     """
 
-    exportables = getattr(modulo, "__all__", None)
+    exportables = candidatos_override if candidatos_override is not None else getattr(modulo, "__all__", None)
     if exportables is None:
         candidatos = [
             nombre for nombre in dir(modulo) if isinstance(nombre, str) and not nombre.startswith("_")
@@ -154,39 +160,64 @@ def sanitizar_exports_publicos(modulo: object, alias_modulo: str) -> tuple[dict[
     simbolos_brutos: list[tuple[str, object]] = []
     conflictos: list[dict[str, str]] = []
     vistos: set[str] = set()
-    for nombre in candidatos:
-        if not isinstance(nombre, str):
-            conflictos.append(
-                {
-                    "module": alias_modulo,
-                    "symbol": repr(nombre),
-                    "code": "invalid_export_name_type",
-                    "message": "nombre de export no es string",
-                }
-            )
-            continue
-        if nombre in vistos:
-            conflictos.append(
-                {
-                    "module": alias_modulo,
-                    "symbol": nombre,
-                    "code": "duplicate_export_name",
-                    "message": "nombre exportado repetido en __all__/candidatos",
-                }
-            )
-            continue
-        if not hasattr(modulo, nombre):
-            conflictos.append(
-                {
-                    "module": alias_modulo,
-                    "symbol": nombre,
-                    "code": "missing_export_attr",
-                    "message": "el nombre exportado no existe en el módulo",
-                }
-            )
-            continue
-        vistos.add(nombre)
-        simbolos_brutos.append((nombre, getattr(modulo, nombre)))
+    if simbolos_pre_resueltos is not None:
+        for nombre, simbolo in simbolos_pre_resueltos:
+            if not isinstance(nombre, str):
+                conflictos.append(
+                    {
+                        "module": alias_modulo,
+                        "symbol": repr(nombre),
+                        "code": "invalid_export_name_type",
+                        "message": "nombre de export no es string",
+                    }
+                )
+                continue
+            if nombre in vistos:
+                conflictos.append(
+                    {
+                        "module": alias_modulo,
+                        "symbol": nombre,
+                        "code": "duplicate_export_name",
+                        "message": "nombre exportado repetido en __all__/candidatos",
+                    }
+                )
+                continue
+            vistos.add(nombre)
+            simbolos_brutos.append((nombre, simbolo))
+    else:
+        for nombre in candidatos:
+            if not isinstance(nombre, str):
+                conflictos.append(
+                    {
+                        "module": alias_modulo,
+                        "symbol": repr(nombre),
+                        "code": "invalid_export_name_type",
+                        "message": "nombre de export no es string",
+                    }
+                )
+                continue
+            if nombre in vistos:
+                conflictos.append(
+                    {
+                        "module": alias_modulo,
+                        "symbol": nombre,
+                        "code": "duplicate_export_name",
+                        "message": "nombre exportado repetido en __all__/candidatos",
+                    }
+                )
+                continue
+            if not hasattr(modulo, nombre):
+                conflictos.append(
+                    {
+                        "module": alias_modulo,
+                        "symbol": nombre,
+                        "code": "missing_export_attr",
+                        "message": "el nombre exportado no existe en el módulo",
+                    }
+                )
+                continue
+            vistos.add(nombre)
+            simbolos_brutos.append((nombre, getattr(modulo, nombre)))
 
     simbolos_saneados, rechazos, warnings = sanear_exportables_para_usar(simbolos_brutos)
     mapa_limpio = {nombre: simbolo for nombre, simbolo in simbolos_saneados}
