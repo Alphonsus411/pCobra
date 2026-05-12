@@ -1405,19 +1405,18 @@ class InterpretadorCobra:
             elif isinstance(expresion, NodoHolobit):
                 return self.ejecutar_holobit(expresion)
             elif isinstance(expresion, NodoLista):
-                elementos = []
-                nodos_elementos = list(expresion.elementos)
-                for elemento in nodos_elementos:
+                elementos: list[object] = []
+                for indice, elemento in enumerate(expresion.elementos):
                     valor_elemento = self.evaluar_expresion(elemento, visitados)
                     valor_elemento = self._materializar_valor(
                         valor_elemento,
                         visitados,
-                        origen="lista",
+                        origen=f"lista[{indice}]",
                     )
                     valor_elemento = self._asegurar_resultado_no_ast(
                         valor_elemento,
                         nodo_origen=elemento,
-                        operador="lista:elemento",
+                        operador=f"lista:elemento[{indice}]",
                     )
                     self._verificar_valor_contexto(valor_elemento)
                     elementos.append(valor_elemento)
