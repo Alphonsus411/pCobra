@@ -1,7 +1,6 @@
 """Implementación del intérprete del lenguaje Cobra."""
 
 import logging
-import warnings
 import os
 import hashlib
 from typing import Mapping, Optional
@@ -2068,14 +2067,15 @@ class InterpretadorCobra:
                     "phase": "preflight",
                 }
                 if self._usar_collision_policy == USAR_COLLISION_WARN_ALIAS_REQUIRED:
-                    warnings.warn(
+                    logging.warning(
+                        "WARNING: %s module=%s count=%s",
                         formatear_error_usar_usuario(
                             "conflicto_simbolo",
                             nodo.modulo,
                             "Use alias explícito para resolver la colisión.",
                         ),
-                        RuntimeWarning,
-                        stacklevel=2,
+                        nodo.modulo,
+                        len(conflictos),
                     )
                     mensaje_usuario = formatear_error_usar_usuario(
                         "conflicto_simbolo",
