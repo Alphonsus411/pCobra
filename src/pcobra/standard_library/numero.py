@@ -415,10 +415,7 @@ def sumatoria(valores):
     return suma_precisa(valores)
 
 
-def producto(valores):
-    """Multiplica los elementos numéricos de ``valores`` al estilo ``math.prod``."""
+def producto(*args, **kwargs):
+    """Delega en ``pcobra.corelibs.numero.producto``."""
 
-    acumulado = 1
-    for valor in valores:
-        acumulado *= float(valor)
-    return acumulado
+    return _numero.producto(*args, **kwargs)

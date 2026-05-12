@@ -222,6 +222,7 @@ USAR_RUNTIME_EXPORT_OVERRIDES: dict[str, tuple[str, ...]] = {
         "prefijo_comun",
         "sufijo_comun",
         "dividir_lineas",
+        "dividir",
         "dividir_derecha",
         "encontrar",
         "encontrar_derecha",
@@ -249,6 +250,7 @@ USAR_RUNTIME_EXPORT_OVERRIDES: dict[str, tuple[str, ...]] = {
         "formatear_mapa",
         "tabla_traduccion",
         "traducir",
+        "reemplazar",
         "recortar",
         "repetir",
     ),
@@ -334,6 +336,7 @@ USAR_RUNTIME_EXPORT_OVERRIDES: dict[str, tuple[str, ...]] = {
         "ejecutar_stream",
         "obtener_env",
         "listar_dir",
+        "ejecutar_comando_async",
         "directorio_actual",
     ),
     "archivo": (
@@ -341,6 +344,9 @@ USAR_RUNTIME_EXPORT_OVERRIDES: dict[str, tuple[str, ...]] = {
         "escribir",
         "adjuntar",
         "existe",
+        "eliminar",
+        "anexar",
+        "leer_lineas",
     ),
     "tiempo": (
         "ahora",
