@@ -14,12 +14,36 @@ CANONICAL_SYNTAX_PATHS = (
 )
 
 
+def _parse_name_status(output: str) -> list[Path]:
+    changed: list[Path] = []
+    for raw_line in output.splitlines():
+        line = raw_line.strip()
+        if not line:
+            continue
+
+        parts = line.split("\t")
+        if len(parts) < 2:
+            continue
+
+        status = parts[0]
+        paths = parts[1:]
+
+        if status.startswith(("R", "C")) and len(paths) >= 2:
+            changed.append(Path(paths[0]))
+            changed.append(Path(paths[1]))
+            continue
+
+        changed.append(Path(paths[0]))
+
+    return changed
+
+
 def _git_changed_files(base: str, head: str) -> list[Path]:
-    cmd = ["git", "diff", "--name-only", f"{base}...{head}"]
+    cmd = ["git", "diff", "--name-status", f"{base}...{head}"]
     result = subprocess.run(cmd, capture_output=True, text=True, check=False)
     if result.returncode != 0:
         raise RuntimeError(result.stderr.strip() or "git diff falló")
-    return [Path(line.strip()) for line in result.stdout.splitlines() if line.strip()]
+    return _parse_name_status(result.stdout)
 
 
 def _find_blocked_paths(changed: list[Path]) -> list[Path]:
