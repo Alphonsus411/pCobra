@@ -539,8 +539,8 @@ def test_repl_usar_numero_callables_policy_funcion_usuario_e_imprimir(monkeypatc
 
     funcion_usuario = {
         "tipo": "funcion",
-        "params": ["x"],
-        "body": ["retornar x + 1"],
+        "parametros": ["x"],
+        "cuerpo": ["retornar x + 1"],
     }
     interp.contextos[-1].define("incrementar", funcion_usuario)
     llamada_usuario = NodoLlamadaFuncion("incrementar", [NodoValor(41)])
