@@ -117,6 +117,22 @@ def test_modo_estricto_cobra_facing_permite_nombres_canonicos():
     assert resultado.codigo == "ok"
 
 
+def test_modo_estricto_cobra_facing_permite_constantes_publicas_canonicas():
+    politica = PoliticaSaneamientoUsar(validar_nombre_canonico_espanol_en_cobra_facing=True)
+
+    for nombre in ("PI", "E", "TAU", "INF", "NAN"):
+        resultado = sanear_simbolo_para_usar(
+            nombre,
+            1.0,
+            politica=politica,
+            modulo_cobra_facing=True,
+        )
+
+        assert resultado.rechazado is False
+        assert resultado.codigo == "public_constant"
+        assert resultado.warning is True
+
+
 def test_constantes_publicas_canonicas_explicitas_se_permiten():
     for nombre in ("PI", "E", "TAU", "INF", "NAN"):
         resultado = sanear_simbolo_para_usar(nombre, 1.0)
