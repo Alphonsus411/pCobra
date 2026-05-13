@@ -150,7 +150,12 @@ def sanear_simbolo_para_usar(
     if not callable(simbolo) and nombre not in NOMBRES_CONSTANTES_PUBLICAS_CANONICAS:
         return _rechazar(nombre, simbolo, "non_callable_not_canonical_public_constant", "solo se permiten no-callables para constantes públicas explícitas y canónicas", metadata)
 
-    if politica_efectiva.validar_nombre_canonico_espanol_en_cobra_facing and modulo_cobra_facing and not _parece_nombre_canonico_espanol(nombre):
+    if (
+        politica_efectiva.validar_nombre_canonico_espanol_en_cobra_facing
+        and modulo_cobra_facing
+        and nombre not in NOMBRES_CONSTANTES_PUBLICAS_CANONICAS
+        and not _parece_nombre_canonico_espanol(nombre)
+    ):
         return _rechazar(
             nombre,
             simbolo,
