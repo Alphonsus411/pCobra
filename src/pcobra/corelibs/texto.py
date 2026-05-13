@@ -1058,6 +1058,46 @@ def lineas_no_vacias(texto: str) -> list[str]:
     return [linea.strip() for linea in texto.splitlines() if linea.strip()]
 
 
+
+
+def normalizar_espacios(texto: str) -> str:
+    """Colapsa espacios en blanco consecutivos y recorta extremos."""
+
+    partes = dividir(texto)
+    return unir(" ", partes) if partes else ""
+
+
+def es_palindromo(
+    texto: str,
+    *,
+    ignorar_espacios: bool = True,
+    ignorar_tildes: bool = True,
+    ignorar_mayusculas: bool = True,
+) -> bool:
+    """Indica si ``texto`` es un palíndromo bajo reglas de normalización básicas."""
+
+    procesado = texto
+    if ignorar_espacios:
+        procesado = "".join(dividir(procesado))
+    else:
+        procesado = quitar_espacios(procesado)
+    if ignorar_tildes:
+        procesado = quitar_acentos(procesado)
+    if ignorar_mayusculas:
+        procesado = minusculas(procesado)
+    return procesado == invertir(procesado)
+
+
+def es_anagrama(texto: str, otro: str, *, ignorar_espacios: bool = True) -> bool:
+    """Comprueba si dos cadenas son anagramas ignorando acentos y opcionalmente espacios."""
+
+    def preparar(valor: str) -> str:
+        resultado = quitar_acentos(valor)
+        if ignorar_espacios:
+            resultado = "".join(dividir(resultado))
+        return "".join(sorted(minusculas(resultado)))
+
+    return preparar(texto) == preparar(otro)
 def recortar(texto: str) -> str:
     """Recorta espacios al inicio y final usando la semántica de ``str.strip``."""
 
@@ -1149,6 +1189,9 @@ __all__ = [
     "recortar",
     "repetir",
     "quitar_acentos",
+    "normalizar_espacios",
+    "es_palindromo",
+    "es_anagrama",
 ]
 
 
