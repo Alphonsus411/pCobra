@@ -2122,8 +2122,17 @@ class InterpretadorCobra:
                     f"'{modulo}': {USAR_SYMBOL_CONFLICT_ERROR} colisión estructurada={detalle}"
                 )
             contexto_actual.define(nombre, simbolo)
-            if self.safe_mode and self._validador is not None and hasattr(self._validador, "registrar_simbolo_publico_usar"):
-                self._validador.registrar_simbolo_publico_usar(nombre)
+            if self.safe_mode and self._validador is not None:
+                self._registrar_simbolo_publico_usar_en_cadena(nombre)
+
+    def _registrar_simbolo_publico_usar_en_cadena(self, nombre: str) -> None:
+        """Registra un símbolo público de ``usar`` en toda la cadena de validación."""
+        actual = self._validador
+        while actual is not None:
+            registrar = getattr(actual, "registrar_simbolo_publico_usar", None)
+            if callable(registrar):
+                registrar(nombre)
+            actual = getattr(actual, "siguiente", None)
 
     def ejecutar_holobit(self, nodo):
         """Simula la ejecución de un holobit y devuelve sus valores."""

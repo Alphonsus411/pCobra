@@ -70,6 +70,40 @@ def test_existe_publico_desde_usar_bloquea_rutas_fuera_de_politica(codigo):
         interp.ejecutar_ast(ast)
 
 
+
+
+def test_registro_simbolo_usar_recorrer_cadena_validadores():
+    class ValidadorRaizSinRegistro:
+        def __init__(self, siguiente=None):
+            self.siguiente = siguiente
+
+    class ValidadorConRegistro:
+        def __init__(self):
+            self.siguiente = None
+            self.registrados = []
+
+        def registrar_simbolo_publico_usar(self, nombre):
+            self.registrados.append(nombre)
+
+    class ContextoFalso:
+        def contains(self, _nombre):
+            return False
+
+        def define(self, _nombre, _simbolo):
+            return None
+
+    validador_objetivo = ValidadorConRegistro()
+    raiz = ValidadorRaizSinRegistro(siguiente=validador_objetivo)
+
+    interp = InterpretadorCobra()
+    interp._validador = raiz
+    interp.contextos = [ContextoFalso()]
+
+    interp._inyectar_simbolos_usar_en_contexto([("existe", object())], modulo="archivo")
+
+    assert validador_objetivo.registrados == ["existe"]
+
+
 def test_cli_default_mantiene_modo_seguro_y_fallback_inseguro_deshabilitado():
     app = CliApplication()
     app.initialize()
