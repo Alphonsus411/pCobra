@@ -1976,9 +1976,12 @@ class InterpretadorCobra:
                     self._trace_debug(f"[USAR_SANITIZE][CONFLICTS] {evento_conflictos}")
 
             if not simbolos_saneados:
-                mensaje_usuario = formatear_error_usar_usuario("export_invalido", nodo.modulo)
+                mensaje_usuario = (
+                    f"{formatear_error_usar_usuario('export_invalido', nodo.modulo)} "
+                    f"({USAR_INVALID_EXPORT_ERROR})"
+                )
                 if self._debug_trazas_habilitadas() or _runtime_debug_enabled():
-                    mensaje_usuario = f"{mensaje_usuario} ({USAR_INVALID_EXPORT_ERROR}; conflictos={conflictos_saneamiento})"
+                    mensaje_usuario = f"{mensaje_usuario} conflictos={conflictos_saneamiento}"
                 raise ImportError(mensaje_usuario)
 
             # Fase A: detectar colisiones de forma completa antes de definir.
@@ -2057,9 +2060,7 @@ class InterpretadorCobra:
         except Exception as exc:
             logging.exception("Error al usar el módulo '%s': %s", nodo.modulo, exc)
             if isinstance(exc, PermissionError):
-                mensaje = formatear_error_usar_usuario("modulo_fuera_catalogo", nodo.modulo)
-                if self._debug_trazas_habilitadas() or _runtime_debug_enabled():
-                    mensaje = f"{mensaje} ({exc})"
+                mensaje = f"{formatear_error_usar_usuario('modulo_fuera_catalogo', nodo.modulo)} ({exc})"
                 raise PermissionError(mensaje) from exc
             raise
 
