@@ -9,7 +9,6 @@ import pytest
 from pcobra.cobra.core.runtime import InterpretadorCobra
 from pcobra.cobra.usar_policy import USAR_RUNTIME_EXPORT_OVERRIDES
 from pcobra.core import usar_symbol_policy
-from pcobra.cobra import usar_loader as cobra_usar_loader
 
 
 def _nodo(modulo: str):
@@ -29,8 +28,8 @@ def test_holobit_export_only_runtime_override(monkeypatch):
     mod._to_sdk_holobit = lambda *_: None
     mod.__file__ = "/workspace/pCobra/src/pcobra/corelibs/holobit.py"
 
-    monkeypatch.setattr(cobra_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: mod)
-    monkeypatch.setattr(cobra_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: mod)
+    monkeypatch.setattr("pcobra.core.usar_loader.obtener_modulo_cobra_oficial", lambda _nombre: mod)
+    monkeypatch.setattr("pcobra.core.usar_loader.obtener_modulo", lambda _nombre, **_kwargs: mod)
 
     interp = InterpretadorCobra()
     interp.configurar_restriccion_usar_repl({"holobit": "holobit"})
@@ -106,8 +105,8 @@ def test_texto_simbolo_existente_fuera_de_override_falla_como_no_declarado(monke
     mod.normalizar_unicode = lambda texto, forma="NFC": texto
     mod.__file__ = "/workspace/pCobra/src/pcobra/standard_library/texto.py"
 
-    monkeypatch.setattr(cobra_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: mod)
-    monkeypatch.setattr(cobra_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: mod)
+    monkeypatch.setattr("pcobra.core.usar_loader.obtener_modulo_cobra_oficial", lambda _nombre: mod)
+    monkeypatch.setattr("pcobra.core.usar_loader.obtener_modulo", lambda _nombre, **_kwargs: mod)
 
     interp = InterpretadorCobra()
     interp.configurar_restriccion_usar_repl({"texto": "texto"})
@@ -142,8 +141,8 @@ def test_usar_datos_expone_longitud(monkeypatch):
     mod.longitud = lambda valores: len(valores)
     mod.__file__ = "/workspace/pCobra/src/pcobra/corelibs/datos.py"
 
-    monkeypatch.setattr(cobra_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: mod)
-    monkeypatch.setattr(cobra_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: mod)
+    monkeypatch.setattr("pcobra.core.usar_loader.obtener_modulo_cobra_oficial", lambda _nombre: mod)
+    monkeypatch.setattr("pcobra.core.usar_loader.obtener_modulo", lambda _nombre, **_kwargs: mod)
 
     interp = InterpretadorCobra()
     interp.configurar_restriccion_usar_repl({"datos": "datos"})
@@ -161,8 +160,8 @@ def test_usar_texto_expone_recortar_repetir_quitar_acentos(monkeypatch):
     mod.quitar_acentos = lambda texto: str(texto).translate(str.maketrans("áéíóú", "aeiou"))
     mod.__file__ = "/workspace/pCobra/src/pcobra/corelibs/texto.py"
 
-    monkeypatch.setattr(cobra_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: mod)
-    monkeypatch.setattr(cobra_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: mod)
+    monkeypatch.setattr("pcobra.core.usar_loader.obtener_modulo_cobra_oficial", lambda _nombre: mod)
+    monkeypatch.setattr("pcobra.core.usar_loader.obtener_modulo", lambda _nombre, **_kwargs: mod)
 
     interp = InterpretadorCobra()
     interp.configurar_restriccion_usar_repl({"texto": "texto"})
@@ -179,8 +178,8 @@ def test_usar_numero_mantiene_es_finito_y_signo(monkeypatch):
     mod.signo = lambda valor: -1 if valor < 0 else (1 if valor > 0 else 0)
     mod.__file__ = "/workspace/pCobra/src/pcobra/corelibs/numero.py"
 
-    monkeypatch.setattr(cobra_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: mod)
-    monkeypatch.setattr(cobra_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: mod)
+    monkeypatch.setattr("pcobra.core.usar_loader.obtener_modulo_cobra_oficial", lambda _nombre: mod)
+    monkeypatch.setattr("pcobra.core.usar_loader.obtener_modulo", lambda _nombre, **_kwargs: mod)
 
     interp = InterpretadorCobra()
     interp.configurar_restriccion_usar_repl({"numero": "numero"})
