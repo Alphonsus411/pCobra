@@ -278,7 +278,7 @@ def test_repl_usar_texto_ejecuta_callables_runtime_basicos(monkeypatch):
     import pcobra.corelibs.texto as modulo_texto
 
     monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: modulo_texto)
-    interp = _ejecutar_codigo('usar "texto"\nrecortar("  cobra  ")')
+    interp = _ejecutar_codigo('usar "texto"\nprefijo_comun("cobra", "cobre")')
 
     assert interp.obtener_variable("recortar")("  cobra  ") == "cobra"
     assert interp.obtener_variable("repetir")("ja", 3) == "jajaja"
