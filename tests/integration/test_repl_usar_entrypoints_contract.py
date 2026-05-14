@@ -421,6 +421,10 @@ def test_repl_contract_pipeline_completo_por_modulo_canonico(monkeypatch, modulo
         for nombre in mod.__all__:
             setattr(mod, nombre, lambda *args, _mod=modulo, **kwargs: {"modulo": _mod, "args": args, "kwargs": kwargs})
         expected_symbol = "crear_holobit"
+    elif modulo == "texto":
+        mod.__all__ = ["a_snake"]
+        mod.a_snake = lambda *args, **kwargs: {"modulo": modulo, "args": args, "kwargs": kwargs}
+        expected_symbol = "a_snake"
     else:
         mod.__all__ = ["api_publica"]
         mod.api_publica = lambda *args, **kwargs: {"modulo": modulo, "args": args, "kwargs": kwargs}
@@ -441,7 +445,12 @@ def test_repl_contract_pipeline_completo_por_modulo_canonico(monkeypatch, modulo
 
     interp.ejecutar_usar(nodo_usar)
     assert expected_symbol in interp.contextos[-1].values
-    assert interp.contextos[-1].values[expected_symbol]()["modulo"] == modulo
+    simbolo = interp.contextos[-1].values[expected_symbol]
+    if modulo == "texto":
+        assert callable(simbolo)
+        assert simbolo("HolaMundo") == "hola_mundo"
+    else:
+        assert simbolo()["modulo"] == modulo
 
 
 def test_repl_contract_colision_warn_alias_required_estructurada(monkeypatch):
@@ -470,7 +479,7 @@ def test_repl_rechaza_nombres_invalidos_o_maliciosos(nombre):
     cmd = InteractiveCommand(InterpretadorCobra())
     estado_pre = dict(cmd.interpretador.contextos[-1].values)
 
-    with pytest.raises((ValueError, PermissionError), match=r"(inválido|no permitido|externo|modulo_fuera_catalogo_publico)"):
+    with pytest.raises((ValueError, PermissionError), match=r"(inválido|no permitido|externo|modulo_fuera_catalogo_publico|fuera del catálogo público)"):
         cmd.ejecutar_codigo(f'usar "{nombre}"')
 
     assert estado_pre == cmd.interpretador.contextos[-1].values
