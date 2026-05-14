@@ -7,6 +7,7 @@ import pytest
 from pcobra.cobra.cli.commands.interactive_cmd import InteractiveCommand
 from pcobra.cobra.cli.commands_v2.repl_cmd import ReplCommandV2
 from pcobra.core import usar_loader as core_usar_loader
+from core import usar_loader as legacy_core_usar_loader
 from pcobra.cobra.core.runtime import InterpretadorCobra
 from pcobra.cobra.usar_policy import REPL_COBRA_MODULE_MAP
 
@@ -49,7 +50,19 @@ def test_repl_contract_sintaxis_usar_compat_parser_semantica_plana_numero_sin_pr
             return mod_numero
         raise ModuleNotFoundError(nombre)
 
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre: _resolver_modulo(nombre))
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre: _resolver_modulo(nombre))
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre: _resolver_modulo(nombre))
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre: _resolver_modulo(nombre))
     monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: _resolver_modulo(nombre))
+    monkeypatch.setattr(legacy_core_usar_loader, "obtener_modulo", lambda nombre: _resolver_modulo(nombre))
+    monkeypatch.setattr(legacy_core_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: _resolver_modulo(nombre))
+    monkeypatch.setattr(legacy_core_usar_loader, "obtener_modulo", lambda nombre: _resolver_modulo(nombre))
+    monkeypatch.setattr(legacy_core_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: _resolver_modulo(nombre))
+    monkeypatch.setattr(legacy_core_usar_loader, "obtener_modulo", lambda nombre: _resolver_modulo(nombre))
+    monkeypatch.setattr(legacy_core_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: _resolver_modulo(nombre))
+    monkeypatch.setattr(legacy_core_usar_loader, "obtener_modulo", lambda nombre: _resolver_modulo(nombre))
+    monkeypatch.setattr(legacy_core_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: _resolver_modulo(nombre))
 
     cmd = factory()
     interp = get_interp(cmd)
@@ -500,6 +513,21 @@ def test_repl_usar_texto_expone_funciones_objetivo_y_mantiene_comunes(monkeypatc
 
     monkeypatch.setattr(
         core_usar_loader,
+        "obtener_modulo",
+        lambda nombre: mod_texto if nombre == "texto" else (_ for _ in ()).throw(ModuleNotFoundError(nombre)),
+    )
+    monkeypatch.setattr(
+        core_usar_loader,
+        "obtener_modulo_cobra_oficial",
+        lambda nombre: mod_texto if nombre == "texto" else (_ for _ in ()).throw(ModuleNotFoundError(nombre)),
+    )
+    monkeypatch.setattr(
+        legacy_core_usar_loader,
+        "obtener_modulo",
+        lambda nombre: mod_texto if nombre == "texto" else (_ for _ in ()).throw(ModuleNotFoundError(nombre)),
+    )
+    monkeypatch.setattr(
+        legacy_core_usar_loader,
         "obtener_modulo_cobra_oficial",
         lambda nombre: mod_texto if nombre == "texto" else (_ for _ in ()).throw(ModuleNotFoundError(nombre)),
     )
@@ -520,6 +548,21 @@ def test_repl_usar_numero_es_finito_y_signo_siguen_operativos(monkeypatch, capsy
 
     monkeypatch.setattr(
         core_usar_loader,
+        "obtener_modulo",
+        lambda nombre: mod_numero if nombre == "numero" else (_ for _ in ()).throw(ModuleNotFoundError(nombre)),
+    )
+    monkeypatch.setattr(
+        core_usar_loader,
+        "obtener_modulo_cobra_oficial",
+        lambda nombre: mod_numero if nombre == "numero" else (_ for _ in ()).throw(ModuleNotFoundError(nombre)),
+    )
+    monkeypatch.setattr(
+        legacy_core_usar_loader,
+        "obtener_modulo",
+        lambda nombre: mod_numero if nombre == "numero" else (_ for _ in ()).throw(ModuleNotFoundError(nombre)),
+    )
+    monkeypatch.setattr(
+        legacy_core_usar_loader,
         "obtener_modulo_cobra_oficial",
         lambda nombre: mod_numero if nombre == "numero" else (_ for _ in ()).throw(ModuleNotFoundError(nombre)),
     )
