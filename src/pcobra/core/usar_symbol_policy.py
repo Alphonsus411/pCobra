@@ -34,6 +34,7 @@ EQUIVALENCIAS_PROHIBIDAS_A_CANONICAS = {
 }
 
 NOMBRES_PROHIBIDOS_EXPLICITOS = frozenset(EQUIVALENCIAS_PROHIBIDAS_A_CANONICAS)
+NOMBRES_CON_EQUIVALENTE_PUBLICO = frozenset({"Holobit", "holobit_sdk"})
 DUNDERS_BLOQUEADOS = frozenset(
     {"__builtins__", "__loader__", "__package__", "__spec__", "__name__"}
 )
@@ -147,7 +148,7 @@ def sanear_simbolo_para_usar(
         return _rechazar(nombre, simbolo, "backend_internal_name", "nombre interno del backend bloqueado", metadata)
 
     if nombre in NOMBRES_PROHIBIDOS_EXPLICITOS:
-        codigo = "cobra_public_equivalent" if nombre in EQUIVALENCIAS_PROHIBIDAS_A_CANONICAS else "explicit_forbidden_name"
+        codigo = "cobra_public_equivalent" if nombre in NOMBRES_CON_EQUIVALENTE_PUBLICO else "explicit_forbidden_name"
         return _rechazar(nombre, simbolo, codigo, _mensaje_nombre_prohibido(nombre), metadata)
 
     if not callable(simbolo) and nombre not in NOMBRES_CONSTANTES_PUBLICAS_CANONICAS:
