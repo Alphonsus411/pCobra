@@ -169,6 +169,21 @@ def test_usar_runtime_reimport_idempotente_numero_no_falla(monkeypatch):
     assert "es_finito" in interp.variables
 
 
+
+
+def test_usar_runtime_reimport_detecta_reasignacion_usuario_como_colision(monkeypatch):
+    import pcobra.corelibs.numero as modulo_numero
+
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _n, **_k: modulo_numero)
+    interp = _interp_con_alias({"numero": "numero"})
+
+    interp.ejecutar_nodo(NodoUsar("numero"))
+    interp.contextos[-1].define("es_finito", "valor_usuario")
+
+    with pytest.raises(NameError, match="conflicto de símbolos"):
+        interp.ejecutar_nodo(NodoUsar("numero"))
+
+
 def test_usar_runtime_colision_variable_usuario_sigue_fallando(monkeypatch):
     import pcobra.corelibs.numero as modulo_numero
 
