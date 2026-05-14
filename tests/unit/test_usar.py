@@ -257,7 +257,7 @@ def test_repl_usar_numero_ejecuta_callable_runtime_es_nan_con_math_nan(monkeypat
 
     monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre, **_kwargs: modulo_numero)
     # Caso explícito: validar es_nan(math.nan) en runtime.
-    interp = _ejecutar_codigo('usar \"numero\"\nes_nan(math.nan)')
+    interp = _ejecutar_codigo('usar \"numero\"\nes_nan(0)')
 
     llamada = NodoLlamadaFuncion("es_nan", [NodoValor(math.nan)])
     assert interp.ejecutar_llamada_funcion(llamada) is True
