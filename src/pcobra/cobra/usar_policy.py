@@ -181,6 +181,8 @@ USAR_RUNTIME_EXPORT_OVERRIDES: dict[str, tuple[str, ...]] = {
         "redondear",
         "piso",
         "techo",
+        "aleatorio",
+        "aleatorio_entero",
         "mcd",
         "mcm",
         "es_cercano",
