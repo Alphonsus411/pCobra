@@ -2084,6 +2084,34 @@ class InterpretadorCobra:
                 raise PermissionError(mensaje) from exc
             raise
 
+    def _es_reimport_idempotente_usar(
+        self,
+        *,
+        contexto_actual: Environment,
+        modulo: str,
+        nombre: str,
+        simbolo: object,
+    ) -> bool:
+        """Valida si un símbolo ya enlazado corresponde al mismo import previo de ``usar``."""
+        previo = self._usar_symbol_metadata.get(nombre)
+        if not previo:
+            return False
+
+        if (
+            previo.get("module") != modulo
+            or previo.get("exported_name") != nombre
+            or previo.get("callable_id") != id(simbolo)
+        ):
+            return False
+
+        try:
+            valor_actual = contexto_actual.get(nombre)
+        except NameError:
+            return False
+
+        # Evita falsos no-op cuando el usuario reasignó el símbolo en runtime.
+        return valor_actual is simbolo
+
     def _detectar_conflictos_usar_en_contexto(
         self, simbolos_saneados: list[tuple[str, object]], modulo: str
     ) -> list[str]:
@@ -2093,15 +2121,13 @@ class InterpretadorCobra:
         for nombre, simbolo in simbolos_saneados:
             if not contexto_actual.contains(nombre):
                 continue
-            previo = self._usar_symbol_metadata.get(nombre)
-            identidad_actual = id(simbolo)
-            if (
-                previo
-                and previo.get("module") == modulo
-                and previo.get("exported_name") == nombre
-                and previo.get("callable_id") == identidad_actual
+            if self._es_reimport_idempotente_usar(
+                contexto_actual=contexto_actual,
+                modulo=modulo,
+                nombre=nombre,
+                simbolo=simbolo,
             ):
-                # Reimport idempotente: mismo símbolo, mismo módulo origen y misma identidad.
+                # Reimport idempotente: mismo símbolo, mismo módulo origen y mismo binding activo.
                 continue
             conflictos.append(nombre)
         if conflictos:
@@ -2122,13 +2148,11 @@ class InterpretadorCobra:
         contexto_actual = self.contextos[-1]
         for nombre, simbolo in simbolos_saneados:
             if contexto_actual.contains(nombre) and not permitir_sobrescritura:
-                previo = self._usar_symbol_metadata.get(nombre)
-                identidad_actual = id(simbolo)
-                if (
-                    previo
-                    and previo.get("module") == modulo
-                    and previo.get("exported_name") == nombre
-                    and previo.get("callable_id") == identidad_actual
+                if self._es_reimport_idempotente_usar(
+                    contexto_actual=contexto_actual,
+                    modulo=modulo,
+                    nombre=nombre,
+                    simbolo=simbolo,
                 ):
                     # No-op idempotente: evita warning/ruido al reimportar lo mismo.
                     continue
