@@ -1,5 +1,6 @@
 from .base import ValidadorBase
 from ..ast_nodes import NodoLlamadaFuncion, NodoHilo, NodoLlamadaMetodo
+from ..usar_symbol_policy import make_usar_symbol_metadata, validate_usar_symbol_metadata
 
 
 class PrimitivaPeligrosaError(Exception):
@@ -44,19 +45,14 @@ class ValidadorPrimitivaPeligrosa(ValidadorBase):
         metadata: dict[str, object] | None = None,
     ) -> None:
         self._simbolos_publicos_usar.add((modulo, nombre))
-        metadata_base = {
-            "module": "archivo",
-            "exported_name": nombre,
-            "is_sanitized_wrapper": True,
-            "public_api": True,
-            "introduced_by_usar": True,
-            # Alias históricos requeridos por compatibilidad.
-            "origen_modulo": "archivo",
-            "canonical_module": "archivo",
-            "origin_module": "archivo",
-        }
-        if metadata:
-            metadata_base.update(dict(metadata))
+        metadata_base = make_usar_symbol_metadata(
+            module_name=modulo,
+            symbol_name=nombre,
+            callable_obj=object(),
+        )
+        if metadata is not None:
+            metadata_base = dict(metadata)
+        validate_usar_symbol_metadata(nombre, metadata_base)
         self._metadata_simbolos_usar[nombre] = metadata_base
 
     def _es_wrapper_publico_permitido(self, nodo: NodoLlamadaFuncion) -> bool:
