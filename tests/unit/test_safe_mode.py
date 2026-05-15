@@ -71,6 +71,30 @@ def test_existe_backend_crudo_sigue_bloqueado_aun_con_usar_archivo():
         interp.ejecutar_ast(ast)
 
 
+def test_regresion_existe_redefinido_local_sigue_bloqueado_en_modo_seguro():
+    interp = InterpretadorCobra()
+    ast = generar_ast('func existe(ruta) { retorno verdadero }\nimprimir(existe("README.md"))')
+
+    with pytest.raises(PrimitivaPeligrosaError):
+        interp.ejecutar_ast(ast)
+
+
+def test_regresion_alias_malicioso_existe_leer_archivo_tras_usar_archivo_se_bloquea():
+    interp = InterpretadorCobra()
+    ast = generar_ast('usar "archivo"\nexiste = leer_archivo\nimprimir(existe("README.md"))')
+
+    with pytest.raises(PrimitivaPeligrosaError):
+        interp.ejecutar_ast(ast)
+
+
+def test_regresion_import_no_publico_se_mantiene_bloqueado_en_modo_seguro():
+    interp = InterpretadorCobra()
+    ast = generar_ast('usar "archivo"\nimprimir(leer_archivo("README.md"))')
+
+    with pytest.raises(PrimitivaPeligrosaError):
+        interp.ejecutar_ast(ast)
+
+
 def test_metadata_usar_archivo_existe_cadena_completa():
     interp = InterpretadorCobra()
     ast = generar_ast('usar "archivo"\nimprimir(existe("README.md"))')
