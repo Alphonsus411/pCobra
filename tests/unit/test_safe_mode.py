@@ -146,28 +146,43 @@ def test_usar_detecta_divergencia_metadata_interprete_y_validador():
         interp.ejecutar_ast(ast_llamada)
 
 
-def test_existe_rechaza_metadata_incompleta_aunque_simbolo_este_registrado():
+def test_existe_rechaza_metadata_ausente_sin_fallback_permisivo():
     interp = InterpretadorCobra()
     ast = generar_ast('usar "archivo"\nimprimir(existe("README.md"))')
 
     with patch("sys.stdout", new_callable=StringIO):
         interp.ejecutar_ast(ast)
 
-    # Simula bypass: símbolo registrado pero metadata incompleta/no canónica.
-    interp._validador._metadata_simbolos_usar["existe"].pop("origen_modulo", None)
+    # Simula bypass: símbolo registrado pero metadata ausente.
+    interp._validador._metadata_simbolos_usar.pop("existe", None)
     ast_llamada = generar_ast('imprimir(existe("README.md"))')
     with pytest.raises(PrimitivaPeligrosaError):
         interp.ejecutar_ast(ast_llamada)
 
 
-def test_existe_rechaza_metadata_con_modulo_distinto():
+
+
+def test_existe_rechaza_metadata_no_dict_sin_fallback_permisivo():
     interp = InterpretadorCobra()
     ast = generar_ast('usar "archivo"\nimprimir(existe("README.md"))')
 
     with patch("sys.stdout", new_callable=StringIO):
         interp.ejecutar_ast(ast)
 
-    interp._validador._metadata_simbolos_usar["existe"]["module"] = "io"
+    interp._validador._metadata_simbolos_usar["existe"] = []
+    ast_llamada = generar_ast('imprimir(existe("README.md"))')
+    with pytest.raises(PrimitivaPeligrosaError):
+        interp.ejecutar_ast(ast_llamada)
+
+@pytest.mark.parametrize("modulo", ["io", "numpy"])
+def test_existe_rechaza_metadata_con_modulo_distinto(modulo):
+    interp = InterpretadorCobra()
+    ast = generar_ast('usar "archivo"\nimprimir(existe("README.md"))')
+
+    with patch("sys.stdout", new_callable=StringIO):
+        interp.ejecutar_ast(ast)
+
+    interp._validador._metadata_simbolos_usar["existe"]["module"] = modulo
     ast_llamada = generar_ast('imprimir(existe("README.md"))')
     with pytest.raises(PrimitivaPeligrosaError):
         interp.ejecutar_ast(ast_llamada)
@@ -264,3 +279,16 @@ def test_usar_numpy_rechaza_con_error_corto():
 
     with pytest.raises(PermissionError, match="No se puede usar 'numpy': módulo fuera del catálogo público"):
         interp.ejecutar_ast(ast)
+
+
+def test_existe_rechaza_metadata_con_is_sanitized_wrapper_false():
+    interp = InterpretadorCobra()
+    ast = generar_ast('usar "archivo"\nimprimir(existe("README.md"))')
+
+    with patch("sys.stdout", new_callable=StringIO):
+        interp.ejecutar_ast(ast)
+
+    interp._validador._metadata_simbolos_usar["existe"]["is_sanitized_wrapper"] = False
+    ast_llamada = generar_ast('imprimir(existe("README.md"))')
+    with pytest.raises(PrimitivaPeligrosaError):
+        interp.ejecutar_ast(ast_llamada)
