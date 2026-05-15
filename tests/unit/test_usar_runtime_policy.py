@@ -228,6 +228,55 @@ def test_validar_nombre_modulo_usar_exige_allowlist_estricta():
         usar_loader.validar_nombre_modulo_usar("mi_modulo_privado")
 
 
+def test_validar_nombre_modulo_usar_numpy_devuelve_error_corto_fuera_catalogo_publico():
+    with pytest.raises(PermissionError) as exc:
+        usar_loader.validar_nombre_modulo_usar("numpy")
+    assert "modulo_fuera_catalogo_publico" in str(exc.value)
+
+
+def test_obtener_modulo_mantiene_allowlist_obligatoria_en_runtime_normal(monkeypatch):
+    parametros: dict[str, object] = {}
+
+    def _validador(nombre, *, require_allowlist=True):
+        parametros["nombre"] = nombre
+        parametros["require_allowlist"] = require_allowlist
+        return "numero"
+
+    monkeypatch.setattr(usar_loader, "validar_nombre_modulo_usar", _validador)
+    monkeypatch.setattr(usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: ModuleType("numero"))
+
+    usar_loader.obtener_modulo("numero")
+
+    assert parametros["nombre"] == "numero"
+    assert parametros["require_allowlist"] is True
+
+
+def test_sanitizar_exports_publicos_descarta_simbolos_fuera_del_contrato_canonico_y_backend():
+    modulo = ModuleType("numero")
+    modulo.__all__ = [
+        "es_par",
+        "sumar",
+        "pathlib",
+        "os",
+        "_interno_sdk",
+        "sdk_client",
+    ]
+    modulo.es_par = lambda n: n % 2 == 0
+    modulo.sumar = lambda a, b: a + b
+    modulo.pathlib = object()
+    modulo.os = object()
+    modulo._interno_sdk = object()
+    modulo.sdk_client = object()
+
+    mapa_limpio, conflictos = usar_loader.sanitizar_exports_publicos(modulo, "numero")
+
+    assert set(mapa_limpio) == {"es_par", "sumar"}
+    rechazados = {(c.get("symbol"), c.get("code")) for c in conflictos}
+    assert ("pathlib", "outside_public_api") in rechazados
+    assert ("os", "outside_public_api") in rechazados
+    assert ("_interno_sdk", "outside_public_api") in rechazados
+    assert ("sdk_client", "outside_public_api") in rechazados
+
 @pytest.mark.parametrize(
     "nombre_interno",
     (
