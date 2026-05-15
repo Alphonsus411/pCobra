@@ -80,6 +80,8 @@ def existe(ruta: PathLike) -> bool:
     try:
         objetivo = Path(ruta)
         if objetivo.is_absolute() or _es_ruta_absoluta_o_sensible_windows(ruta):
+            if ".." in objetivo.parts:
+                raise ValueError("La ruta no puede contener '..'")
             base = Path(os.environ.get("COBRA_IO_BASE_DIR") or Path.cwd()).resolve()
             destino = objetivo.resolve()
             destino.relative_to(base)
