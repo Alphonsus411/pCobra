@@ -864,16 +864,17 @@ def test_repl_archivo_invocacion_cruda_sin_usar_permanece_bloqueada():
     with pytest.raises(Exception, match='Uso de primitiva peligrosa'):
         cmd._ejecutar_en_modo_normal('imprimir(existe("README.md"))')
 
-def test_repl_archivo_invocacion_directa_permanece_bloqueada_sin_traceback(capsys):
+def test_repl_archivo_invocacion_directa_permitida_tras_usar_sin_traceback(capsys):
     cmd = ReplCommandV2()
     cmd._ejecutar_en_modo_normal('usar "archivo"')
 
-    with pytest.raises(Exception, match='Uso de primitiva peligrosa'):
-        cmd._ejecutar_en_modo_normal('imprimir(existe("README.md"))')
+    cmd._ejecutar_en_modo_normal('imprimir(existe("README.md"))')
 
     salida = capsys.readouterr().out.strip()
-    assert 'traceback' not in salida.lower()
-    assert len(salida.splitlines()) <= 2
+    lineas = [linea.strip() for linea in salida.splitlines() if linea.strip()]
+    assert 'Traceback' not in salida
+    assert lineas[-1] in {'verdadero', 'falso'}
+    assert len(lineas) <= 2
 
 
 def test_repl_archivo_hardening_no_expone_backend_crudo():

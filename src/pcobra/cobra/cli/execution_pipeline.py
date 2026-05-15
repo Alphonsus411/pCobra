@@ -143,6 +143,7 @@ def validar_ast_seguro(
     ast: Any,
     *,
     validadores_extra: Any,
+    interpretador: Any | None = None,
     construir_cadena_fn: Callable[[Any], Any] = construir_cadena,
 ) -> None:
     """Aplica la cadena de validadores de seguridad sobre el AST."""
@@ -155,6 +156,22 @@ def validar_ast_seguro(
                 _("Los validadores extra deben ser una lista de instancias de validadores")
             )
     validador = construir_cadena_fn(validadores_extra)
+    if interpretador is not None:
+        metadata_usar = getattr(interpretador, "_usar_symbol_metadata", {}) or {}
+        validadores_registrables = []
+        cursor = validador
+        while cursor is not None:
+            if hasattr(cursor, "registrar_simbolo_publico_usar"):
+                validadores_registrables.append(cursor)
+            cursor = getattr(cursor, "siguiente", None)
+        for nombre, metadata in metadata_usar.items():
+            if not isinstance(metadata, dict):
+                continue
+            modulo = metadata.get("module") or metadata.get("canonical_module") or metadata.get("origin_module")
+            if not isinstance(modulo, str):
+                continue
+            for validador_registrable in validadores_registrables:
+                validador_registrable.registrar_simbolo_publico_usar(nombre, modulo, metadata=dict(metadata))
     for nodo in ast:
         nodo.aceptar(validador)
 

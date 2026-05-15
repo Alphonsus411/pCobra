@@ -906,6 +906,19 @@ class InterpretadorCobra:
         """Ejecuta la auditoría funcional únicamente durante la fase de ejecución."""
         if not self.in_execution() or not self.safe_mode or self._validador is None:
             return
+        validadores_registrables = []
+        cursor = self._validador
+        while cursor is not None:
+            if hasattr(cursor, "registrar_simbolo_publico_usar"):
+                validadores_registrables.append(cursor)
+            cursor = getattr(cursor, "siguiente", None)
+        for nombre, metadata in (self._usar_symbol_metadata or {}).items():
+            if not isinstance(metadata, dict):
+                continue
+            modulo = metadata.get("module") or metadata.get("canonical_module") or metadata.get("origin_module")
+            if isinstance(modulo, str):
+                for validador_registrable in validadores_registrables:
+                    validador_registrable.registrar_simbolo_publico_usar(nombre, modulo, metadata=dict(metadata))
         # En ejecución permitimos side effects de auditoría visibles al usuario.
         nodo.aceptar(self._validador)
 
