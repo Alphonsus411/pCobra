@@ -933,24 +933,44 @@ class InterpretadorCobra:
         if not self.safe_mode or self._validador is None:
             return
         metadata_validador = getattr(self._validador, "_metadata_simbolos_usar", None)
+        detalle_etapa = f" etapa='{etapa}'" if etapa else ""
         if not isinstance(metadata_validador, dict):
             tipo_recibido = type(metadata_validador).__name__
-            detalle_etapa = f" etapa='{etapa}'" if etapa else ""
             raise PrimitivaPeligrosaError(
                 "Metadata de validador inválida para símbolos usar: "
-                f"se recibió tipo '{tipo_recibido}' en _metadata_simbolos_usar.{detalle_etapa}"
+                f"tipo inválido en _metadata_simbolos_usar (tipo='{tipo_recibido}').{detalle_etapa}"
             )
-        if set(metadata_validador.keys()) != set(self._usar_symbol_metadata.keys()):
+        claves_interp = set(self._usar_symbol_metadata.keys())
+        claves_validador = set(metadata_validador.keys())
+        if claves_validador != claves_interp:
+            faltantes_en_validador = sorted(claves_interp - claves_validador)
+            extras_en_validador = sorted(claves_validador - claves_interp)
             raise PrimitivaPeligrosaError(
                 "Divergencia de metadata usar entre intérprete y validador"
+                f": claves divergentes (faltantes_en_validador={faltantes_en_validador}, "
+                f"extras_en_validador={extras_en_validador}).{detalle_etapa}"
             )
         for nombre, metadata_interp in self._usar_symbol_metadata.items():
-            self._validar_metadata_usar_o_fallar(nombre, metadata_interp)
+            try:
+                self._validar_metadata_usar_o_fallar(nombre, metadata_interp)
+            except PrimitivaPeligrosaError as exc:
+                raise PrimitivaPeligrosaError(
+                    "Metadata de validador inválida para símbolos usar: "
+                    f"metadata de intérprete inválida para símbolo '{nombre}' ({exc}).{detalle_etapa}"
+                ) from exc
             metadata_val = metadata_validador.get(nombre)
-            self._validar_metadata_usar_o_fallar(nombre, metadata_val)
+            try:
+                self._validar_metadata_usar_o_fallar(nombre, metadata_val)
+            except PrimitivaPeligrosaError as exc:
+                tipo_recibido = type(metadata_val).__name__
+                raise PrimitivaPeligrosaError(
+                    "Metadata de validador inválida para símbolos usar: "
+                    f"metadata por símbolo inválida para '{nombre}' (tipo='{tipo_recibido}', detalle={exc}).{detalle_etapa}"
+                ) from exc
             if metadata_interp != metadata_val:
                 raise PrimitivaPeligrosaError(
-                    f"Divergencia de metadata usar para símbolo '{nombre}'"
+                    "Divergencia de metadata usar entre intérprete y validador"
+                    f": metadata por símbolo no coincide (símbolo='{nombre}').{detalle_etapa}"
                 )
 
     def _contiene_yield(self, nodo, visitados_ids: set[int] | None = None):
