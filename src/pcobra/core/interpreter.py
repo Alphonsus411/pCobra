@@ -2194,13 +2194,21 @@ class InterpretadorCobra:
                 nombre_exportado=nombre,
                 simbolo=simbolo,
             )
+            metadata_simbolo.setdefault("module", modulo)
+            metadata_simbolo.setdefault("exported_name", nombre)
+            metadata_simbolo.setdefault("is_sanitized_wrapper", True)
+            metadata_simbolo.setdefault("public_api", True)
+            metadata_simbolo.setdefault("introduced_by_usar", True)
+            metadata_simbolo.setdefault("origen_modulo", modulo)
+            metadata_simbolo.setdefault("canonical_module", modulo)
+            metadata_simbolo.setdefault("origin_module", modulo)
             contexto_actual.define(nombre, simbolo)
-            self._usar_symbol_metadata[nombre] = metadata_simbolo
+            self._usar_symbol_metadata[nombre] = dict(metadata_simbolo)
             if self.safe_mode and self._validador is not None and hasattr(self._validador, "registrar_simbolo_publico_usar"):
                 self._validador.registrar_simbolo_publico_usar(
                     nombre,
                     modulo,
-                    metadata=metadata_simbolo,
+                    metadata=dict(metadata_simbolo),
                 )
 
     def _construir_metadata_simbolo_usar(
