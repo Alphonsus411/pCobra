@@ -98,7 +98,7 @@ def test_rechaza_numpy_en_repl_estricto_sin_inyeccion(monkeypatch):
     assert estado_pre == interp.contextos[-1].values
 
 
-def test_texto_simbolo_existente_fuera_de_override_falla_como_no_declarado(monkeypatch):
+def test_texto_simbolo_canonico_normalizar_unicode_se_exporta(monkeypatch):
     mod = ModuleType("texto")
     mod.__all__ = [*USAR_RUNTIME_EXPORT_OVERRIDES["texto"], "normalizar_unicode"]
     for name in USAR_RUNTIME_EXPORT_OVERRIDES["texto"]:
@@ -113,12 +113,11 @@ def test_texto_simbolo_existente_fuera_de_override_falla_como_no_declarado(monke
     interp.configurar_restriccion_usar_repl({"texto": "texto"})
     interp.ejecutar_usar(_nodo("texto"))
 
-    assert "normalizar_unicode" not in interp.contextos[-1].values
-    with pytest.raises(NameError, match=r"^Variable no declarada: normalizar_unicode$"):
-        interp.contextos[-1].get("normalizar_unicode")
+    assert "normalizar_unicode" in interp.contextos[-1].values
+    assert interp.contextos[-1].get("normalizar_unicode")("Árbol", "NFC") == "Árbol"
 
 
-def test_regresion_texto_detecta_mapeo_interno_incompleto_y_filtra_fuera_de_api_publica():
+def test_regresion_texto_no_reporta_fuera_de_api_publica_para_normalizar_unicode():
     mod = ModuleType("texto")
     mod.__all__ = [*USAR_RUNTIME_EXPORT_OVERRIDES["texto"], "normalizar_unicode"]
     for name in USAR_RUNTIME_EXPORT_OVERRIDES["texto"]:
@@ -129,8 +128,8 @@ def test_regresion_texto_detecta_mapeo_interno_incompleto_y_filtra_fuera_de_api_
 
     mapa_limpio, conflictos = sanitizar_exports_publicos(mod, "texto")
 
-    assert "normalizar_unicode" not in mapa_limpio
-    assert any(
+    assert "normalizar_unicode" in mapa_limpio
+    assert not any(
         conflicto.get("symbol") == "normalizar_unicode" and conflicto.get("code") == "outside_public_api"
         for conflicto in conflictos
     )

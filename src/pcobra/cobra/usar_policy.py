@@ -295,6 +295,7 @@ USAR_RUNTIME_EXPORT_OVERRIDES: dict[str, tuple[str, ...]] = {
         "recortar",
         "repetir",
         "quitar_acentos",
+        "normalizar_unicode",
     ),
     "datos": (
         "leer_csv",
