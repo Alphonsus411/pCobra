@@ -69,6 +69,7 @@ class ValidadorPrimitivaPeligrosa(ValidadorBase):
         return True
 
     def visit_llamada_funcion(self, nodo: NodoLlamadaFuncion):
+        # Contrato: permitido solo si metadata canónica de usar+sanitización API pública.
         if nodo.nombre in self.PRIMITIVAS_PELIGROSAS and not self._es_wrapper_publico_permitido(nodo):
             raise PrimitivaPeligrosaError(
                 f"Uso de primitiva peligrosa: '{nodo.nombre}'"
@@ -76,14 +77,17 @@ class ValidadorPrimitivaPeligrosa(ValidadorBase):
         self.generic_visit(nodo)
 
     def visit_hilo(self, nodo: NodoHilo):
-        if nodo.llamada.nombre in self.PRIMITIVAS_PELIGROSAS:
+        if (
+            nodo.llamada.nombre in self.PRIMITIVAS_PELIGROSAS
+            and not self._es_wrapper_publico_permitido(nodo.llamada)
+        ):
             raise PrimitivaPeligrosaError(
                 f"Uso de primitiva peligrosa: '{nodo.llamada.nombre}'"
             )
         nodo.llamada.aceptar(self)
 
     def visit_llamada_metodo(self, nodo: NodoLlamadaMetodo):
-        if nodo.nombre_metodo in self.PRIMITIVAS_PELIGROSAS:
+        if nodo.nombre_metodo in self.PRIMITIVAS_PELIGROSAS and nodo.nombre_metodo != "existe":
             raise PrimitivaPeligrosaError(
                 f"Uso de primitiva peligrosa: '{nodo.nombre_metodo}'"
             )
