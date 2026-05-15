@@ -685,6 +685,14 @@ def test_archivo_existe_rechaza_fuera_del_sandbox(monkeypatch, tmp_path):
     assert not core.existe("../fuera.txt")
 
 
+
+
+def test_archivo_existe_rechaza_drive_windows_con_traversal(monkeypatch, tmp_path):
+    monkeypatch.setenv("COBRA_IO_BASE_DIR", str(tmp_path))
+    (tmp_path / "secret").write_text("x", encoding="utf-8")
+
+    assert not core.existe("C:/../secret")
+
 def test_archivo_eliminar_inexistente_no_falla(monkeypatch, tmp_path):
     monkeypatch.setenv("COBRA_IO_BASE_DIR", str(tmp_path))
     core.eliminar("no-existe.txt")
