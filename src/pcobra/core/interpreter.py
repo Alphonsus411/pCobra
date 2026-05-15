@@ -912,7 +912,7 @@ class InterpretadorCobra:
             if hasattr(cursor, "registrar_simbolo_publico_usar"):
                 validadores_registrables.append(cursor)
             cursor = getattr(cursor, "siguiente", None)
-        self._asegurar_metadata_usar_sincronizada()
+        self._asegurar_metadata_usar_sincronizada(etapa="pre-auditoría")
         for nombre, metadata in (self._usar_symbol_metadata or {}).items():
             if not isinstance(metadata, dict):
                 continue
@@ -929,13 +929,16 @@ class InterpretadorCobra:
         except ValueError as exc:
             raise PrimitivaPeligrosaError(str(exc)) from exc
 
-    def _asegurar_metadata_usar_sincronizada(self) -> None:
+    def _asegurar_metadata_usar_sincronizada(self, *, etapa: str | None = None) -> None:
         if not self.safe_mode or self._validador is None:
             return
         metadata_validador = getattr(self._validador, "_metadata_simbolos_usar", None)
         if not isinstance(metadata_validador, dict):
+            tipo_recibido = type(metadata_validador).__name__
+            detalle_etapa = f" etapa='{etapa}'" if etapa else ""
             raise PrimitivaPeligrosaError(
-                "Metadata de validador inválida para símbolos usar"
+                "Metadata de validador inválida para símbolos usar: "
+                f"se recibió tipo '{tipo_recibido}' en _metadata_simbolos_usar.{detalle_etapa}"
             )
         if set(metadata_validador.keys()) != set(self._usar_symbol_metadata.keys()):
             raise PrimitivaPeligrosaError(
@@ -2244,7 +2247,7 @@ class InterpretadorCobra:
                     modulo,
                     metadata=dict(metadata_simbolo),
                 )
-                self._asegurar_metadata_usar_sincronizada()
+                self._asegurar_metadata_usar_sincronizada(etapa="post-registro")
 
     def ejecutar_holobit(self, nodo):
         """Simula la ejecución de un holobit y devuelve sus valores."""
