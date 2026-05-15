@@ -693,13 +693,30 @@ def test_archivo_existe_relativa_valida(monkeypatch, tmp_path, ruta):
     assert core.existe(ruta) is True
 
 
-@pytest.mark.parametrize("ruta", ["/etc/passwd", "C:\\Windows\\System32\\drivers\\etc\\hosts", "\\\\server\\share\\file.txt"])
+@pytest.mark.parametrize(
+    "ruta",
+    [
+        "/etc/passwd",
+        "C:\\Windows\\System32\\drivers\\etc\\hosts",
+        "\\\\server\\share\\file.txt",
+        "//server/share/file.txt",
+        "D:/datos/secret.txt",
+    ],
+)
 def test_archivo_existe_bloquea_absolutas_y_windows_unc(monkeypatch, tmp_path, ruta):
     monkeypatch.setenv("COBRA_IO_BASE_DIR", str(tmp_path))
     assert core.existe(ruta) is False
 
 
-@pytest.mark.parametrize("ruta", ["./../secreto.txt", "a/../../secreto.txt"])
+@pytest.mark.parametrize(
+    "ruta",
+    [
+        "./../secreto.txt",
+        "a/../../secreto.txt",
+        "carpeta/../..//secreto.txt",
+        "subdir/./.././../secreto.txt",
+    ],
+)
 def test_archivo_existe_bloquea_traversal(monkeypatch, tmp_path, ruta):
     monkeypatch.setenv("COBRA_IO_BASE_DIR", str(tmp_path))
     assert core.existe(ruta) is False

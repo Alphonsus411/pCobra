@@ -79,9 +79,10 @@ def existe(ruta: PathLike) -> bool:
         if not isinstance(ruta, str):
             return False
         ruta_segura = _resolver_ruta(ruta)
-    except ValueError:
+        return ruta_segura.is_file()
+    except Exception:
+        # Mantiene el error encapsulado para no exponer tracebacks en REPL.
         return False
-    return ruta_segura.is_file()
 
 
 PUBLIC_API_ARCHIVO: tuple[str, ...] = (
