@@ -74,6 +74,40 @@ def test_usar_archivo_existe_imprime_booleano_sin_primitiva_peligrosa():
     assert salida in {"verdadero", "falso"}
 
 
+
+
+def test_usar_numero_es_finito_true_y_texto_carga_ok_en_modo_seguro():
+    interp = InterpretadorCobra()
+    ast = generar_ast('usar "numero"\nimprimir(es_finito(10))\nusar "texto"\nimprimir(mayusculas("ok"))')
+
+    with patch("sys.stdout", new_callable=StringIO) as out:
+        interp.ejecutar_ast(ast)
+
+    lineas = [linea.strip() for linea in out.getvalue().splitlines() if linea.strip()]
+    assert "verdadero" in lineas
+    assert "OK" in lineas
+
+
+def test_usar_archivo_existe_readme_no_falla_por_metadata():
+    interp = InterpretadorCobra()
+    ast = generar_ast('usar "archivo"\nimprimir(existe("README.md"))')
+
+    with patch("sys.stdout", new_callable=StringIO) as out:
+        interp.ejecutar_ast(ast)
+
+    salida = out.getvalue().strip().splitlines()
+    assert salida
+    assert salida[-1].strip() in {"verdadero", "falso"}
+    assert "existe" in interp._usar_symbol_metadata
+    assert "existe" in interp._validador._metadata_simbolos_usar
+
+
+def test_sintaxis_usar_sin_cadena_rechaza_con_error_claro():
+    interp = InterpretadorCobra()
+    ast = generar_ast('usar archivo')
+
+    with pytest.raises(Exception, match=r"(cadena|string|literal)"):
+        interp.ejecutar_ast(ast)
 def test_usar_datos_longitud_builtin_permanece_en_3():
     interp = InterpretadorCobra()
     ast = generar_ast('usar "datos"\nvar xs = [1, 2, 3]\nimprimir(longitud(xs))\nimprimir(longitud([1,2,3]))')
@@ -167,6 +201,8 @@ def test_usar_metadata_minima_y_consistente_entre_interprete_y_validador():
     for nombre, metadata in interp._usar_symbol_metadata.items():
         faltantes = requeridos - set(metadata.keys())
         assert not faltantes, f"metadata incompleta para {nombre}: {sorted(faltantes)}"
+        assert isinstance(metadata, dict)
+        assert isinstance(interp._validador._metadata_simbolos_usar[nombre], dict)
         assert metadata["module"] == "archivo"
         assert metadata["origen_modulo"] == "archivo"
         assert metadata["exported_name"] == nombre
@@ -175,6 +211,9 @@ def test_usar_metadata_minima_y_consistente_entre_interprete_y_validador():
         assert metadata["introduced_by_usar"] is True
 
         metadata_validador = interp._validador._metadata_simbolos_usar[nombre]
+        for clave in ("canonical_module", "origin_module", "safe_wrapper", "introduced_by"):
+            assert clave in metadata
+            assert clave in metadata_validador
         assert metadata_validador == metadata
 
 
