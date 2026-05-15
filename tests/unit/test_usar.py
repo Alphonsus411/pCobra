@@ -1084,6 +1084,7 @@ def test_usar_muestra_detalle_extendido_en_debug(monkeypatch, caplog):
 
     monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: modulo)
     monkeypatch.setenv("PCOBRA_DEBUG_RUNTIME", "1")
+    monkeypatch.setenv("PCOBRA_DEBUG_TRACES", "1")
 
     interp = InterpretadorCobra()
     interp.configurar_restriccion_usar_repl({"texto": "texto"})
@@ -1146,7 +1147,7 @@ def test_usar_warning_conflictos_saneamiento_formato_compacto(monkeypatch, caplo
     assert "{'symbol'" not in warning
 
 
-def test_usar_warning_conflictos_saneamiento_detalle_solo_debug(monkeypatch, caplog):
+def test_usar_warning_conflictos_saneamiento_detalle_solo_debug(monkeypatch, caplog, capsys):
     modulo = ModuleType("texto")
     modulo.__all__ = ["A_snake", "a_snake"]
     modulo.A_snake = lambda texto: texto
@@ -1155,6 +1156,7 @@ def test_usar_warning_conflictos_saneamiento_detalle_solo_debug(monkeypatch, cap
 
     monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: modulo)
     monkeypatch.setenv("PCOBRA_DEBUG_RUNTIME", "1")
+    monkeypatch.setenv("PCOBRA_DEBUG_TRACES", "1")
 
     interp = InterpretadorCobra()
     interp.configurar_restriccion_usar_repl({"texto": "texto"})
@@ -1170,9 +1172,7 @@ def test_usar_warning_conflictos_saneamiento_detalle_solo_debug(monkeypatch, cap
     assert "count=2" in warning
     assert "conflicts=[" not in warning
 
-    trazas_debug = [
-        rec.message for rec in caplog.records if "[USAR_SANITIZE][CONFLICTS]" in rec.message
-    ]
-    assert trazas_debug
-    assert "'conflicts':" in trazas_debug[-1]
+    salida_debug = capsys.readouterr().out
+    assert "[USAR_SANITIZE][CONFLICTS]" in salida_debug
+    assert "'conflicts':" in salida_debug
 
