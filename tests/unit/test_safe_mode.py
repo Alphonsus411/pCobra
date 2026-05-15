@@ -371,3 +371,27 @@ def test_hilo_con_primitiva_peligrosa_fuera_de_ruta_canonica_se_bloquea():
 
     with pytest.raises(PrimitivaPeligrosaError):
         interp.ejecutar_ast(ast)
+
+
+def test_regresion_redefinicion_local_existe_permanece_bloqueada_en_modo_seguro():
+    interp = InterpretadorCobra()
+    ast = generar_ast('func existe(ruta) { retorno verdadero }\nimprimir(existe("README.md"))')
+
+    with pytest.raises(PrimitivaPeligrosaError):
+        interp.ejecutar_ast(ast)
+
+
+def test_regresion_alias_malicioso_post_usar_archivo_permanece_bloqueado():
+    interp = InterpretadorCobra()
+    ast = generar_ast('usar "archivo"\nexiste = leer_archivo\nimprimir(existe("README.md"))')
+
+    with pytest.raises(PrimitivaPeligrosaError):
+        interp.ejecutar_ast(ast)
+
+
+def test_regresion_imports_no_publicos_permanece_bloqueado_en_modo_seguro():
+    interp = InterpretadorCobra()
+    ast = generar_ast('usar "archivo"\nimprimir(leer_archivo("README.md"))')
+
+    with pytest.raises(PrimitivaPeligrosaError):
+        interp.ejecutar_ast(ast)

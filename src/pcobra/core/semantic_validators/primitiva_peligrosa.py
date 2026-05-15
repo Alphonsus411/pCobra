@@ -73,9 +73,11 @@ class ValidadorPrimitivaPeligrosa(ValidadorBase):
             return False
 
         # Validación explícita de contrato canónico para `existe`.
-        if metadata.get("module") != "archivo":
+        module = metadata.get("module")
+        exported_name = metadata.get("exported_name")
+        if module != "archivo":
             return False
-        if metadata.get("exported_name") != "existe":
+        if exported_name != "existe":
             return False
         if metadata.get("is_sanitized_wrapper") is not True:
             return False
