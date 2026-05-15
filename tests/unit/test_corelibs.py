@@ -7,6 +7,7 @@ import statistics as stats
 import sys
 from collections import OrderedDict
 from datetime import datetime
+from pathlib import Path
 from types import ModuleType
 from unittest.mock import MagicMock, patch
 
@@ -652,11 +653,10 @@ def test_archivo_funcs(tmp_path, monkeypatch):
     monkeypatch.setenv("COBRA_IO_BASE_DIR", str(tmp_path))
     nombre = "f.txt"
     core.escribir(nombre, "data")
-    ruta = tmp_path / nombre
-    assert core.existe(ruta)
+    assert core.existe(nombre)
     assert core.leer(nombre) == "data"
-    core.eliminar(ruta)
-    assert not core.existe(ruta)
+    core.eliminar(nombre)
+    assert not core.existe(nombre)
 
 
 @pytest.mark.parametrize(
@@ -683,6 +683,32 @@ def test_archivo_existe_rechaza_fuera_del_sandbox(monkeypatch, tmp_path):
 
     assert not core.existe(str(archivo_forzado))
     assert not core.existe("../fuera.txt")
+
+
+@pytest.mark.parametrize("ruta", ["README.md", "./README.md"])
+def test_archivo_existe_relativa_valida(monkeypatch, tmp_path, ruta):
+    monkeypatch.setenv("COBRA_IO_BASE_DIR", str(tmp_path))
+    (tmp_path / "README.md").write_text("ok", encoding="utf-8")
+
+    assert core.existe(ruta) is True
+
+
+@pytest.mark.parametrize("ruta", ["/etc/passwd", "C:\\Windows\\System32\\drivers\\etc\\hosts", "\\\\server\\share\\file.txt"])
+def test_archivo_existe_bloquea_absolutas_y_windows_unc(monkeypatch, tmp_path, ruta):
+    monkeypatch.setenv("COBRA_IO_BASE_DIR", str(tmp_path))
+    assert core.existe(ruta) is False
+
+
+@pytest.mark.parametrize("ruta", ["./../secreto.txt", "a/../../secreto.txt"])
+def test_archivo_existe_bloquea_traversal(monkeypatch, tmp_path, ruta):
+    monkeypatch.setenv("COBRA_IO_BASE_DIR", str(tmp_path))
+    assert core.existe(ruta) is False
+
+
+def test_archivo_existe_solo_acepta_str(monkeypatch, tmp_path):
+    monkeypatch.setenv("COBRA_IO_BASE_DIR", str(tmp_path))
+    (tmp_path / "README.md").write_text("ok", encoding="utf-8")
+    assert core.existe(Path("README.md")) is False
 
 
 def test_archivo_eliminar_inexistente_no_falla(monkeypatch, tmp_path):
