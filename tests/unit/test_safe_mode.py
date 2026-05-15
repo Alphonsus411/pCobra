@@ -292,3 +292,19 @@ def test_existe_rechaza_metadata_con_is_sanitized_wrapper_false():
     ast_llamada = generar_ast('imprimir(existe("README.md"))')
     with pytest.raises(PrimitivaPeligrosaError):
         interp.ejecutar_ast(ast_llamada)
+
+
+def test_existe_como_metodo_sigue_bloqueado_en_modo_seguro():
+    interp = InterpretadorCobra()
+    ast = generar_ast('obj = { existe: func(ruta) { retorno verdadero } }\nimprimir(obj.existe("README.md"))')
+
+    with pytest.raises(PrimitivaPeligrosaError):
+        interp.ejecutar_ast(ast)
+
+
+def test_hilo_con_primitiva_peligrosa_fuera_de_ruta_canonica_se_bloquea():
+    interp = InterpretadorCobra()
+    ast = generar_ast('hilo(leer_archivo, "README.md")')
+
+    with pytest.raises(PrimitivaPeligrosaError):
+        interp.ejecutar_ast(ast)
