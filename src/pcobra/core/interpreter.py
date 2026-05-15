@@ -3,6 +3,7 @@
 import logging
 import os
 import hashlib
+import warnings
 from typing import Mapping, Optional
 
 from .lexer import (
@@ -2067,15 +2068,19 @@ class InterpretadorCobra:
                     "phase": "preflight",
                 }
                 if self._usar_collision_policy == USAR_COLLISION_WARN_ALIAS_REQUIRED:
-                    logging.warning(
-                        "WARNING: %s module=%s count=%s",
-                        formatear_error_usar_usuario(
-                            "conflicto_simbolo",
+                    warnings.warn(
+                        "WARNING: %s module=%s count=%s"
+                        % (
+                            formatear_error_usar_usuario(
+                                "conflicto_simbolo",
+                                nodo.modulo,
+                                "Use alias explícito para resolver la colisión.",
+                            ),
                             nodo.modulo,
-                            "Use alias explícito para resolver la colisión.",
+                            len(conflictos),
                         ),
-                        nodo.modulo,
-                        len(conflictos),
+                        RuntimeWarning,
+                        stacklevel=2,
                     )
                     mensaje_usuario = formatear_error_usar_usuario(
                         "conflicto_simbolo",
