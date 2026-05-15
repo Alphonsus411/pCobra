@@ -44,8 +44,20 @@ class ValidadorPrimitivaPeligrosa(ValidadorBase):
         metadata: dict[str, object] | None = None,
     ) -> None:
         self._simbolos_publicos_usar.add((modulo, nombre))
+        metadata_base = {
+            "module": "archivo",
+            "exported_name": nombre,
+            "is_sanitized_wrapper": True,
+            "public_api": True,
+            "introduced_by_usar": True,
+            # Alias históricos requeridos por compatibilidad.
+            "origen_modulo": "archivo",
+            "canonical_module": "archivo",
+            "origin_module": "archivo",
+        }
         if metadata:
-            self._metadata_simbolos_usar[nombre] = dict(metadata)
+            metadata_base.update(dict(metadata))
+        self._metadata_simbolos_usar[nombre] = metadata_base
 
     def _es_wrapper_publico_permitido(self, nodo: NodoLlamadaFuncion) -> bool:
         # Único escape permitido para primitivas peligrosas:
