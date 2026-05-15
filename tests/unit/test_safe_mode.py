@@ -103,6 +103,49 @@ def test_metadata_usar_archivo_existe_cadena_completa():
     assert metadata_validador["introduced_by_usar"] is True
 
 
+def test_usar_metadata_minima_y_consistente_entre_interprete_y_validador():
+    interp = InterpretadorCobra()
+    ast = generar_ast('usar "archivo"')
+
+    interp.ejecutar_ast(ast)
+
+    requeridos = {
+        "module",
+        "origen_modulo",
+        "exported_name",
+        "is_sanitized_wrapper",
+        "public_api",
+        "introduced_by_usar",
+    }
+
+    for nombre, metadata in interp._usar_symbol_metadata.items():
+        faltantes = requeridos - set(metadata.keys())
+        assert not faltantes, f"metadata incompleta para {nombre}: {sorted(faltantes)}"
+        assert metadata["module"] == "archivo"
+        assert metadata["origen_modulo"] == "archivo"
+        assert metadata["exported_name"] == nombre
+        assert metadata["is_sanitized_wrapper"] is True
+        assert metadata["public_api"] is True
+        assert metadata["introduced_by_usar"] is True
+
+        metadata_validador = interp._validador._metadata_simbolos_usar[nombre]
+        assert metadata_validador == metadata
+
+
+def test_usar_detecta_divergencia_metadata_interprete_y_validador():
+    interp = InterpretadorCobra()
+    ast = generar_ast('usar "archivo"\nimprimir(existe("README.md"))')
+
+    with patch("sys.stdout", new_callable=StringIO):
+        interp.ejecutar_ast(ast)
+
+    interp._validador._metadata_simbolos_usar["existe"]["public_api"] = False
+    ast_llamada = generar_ast('imprimir(existe("README.md"))')
+
+    with pytest.raises(PrimitivaPeligrosaError):
+        interp.ejecutar_ast(ast_llamada)
+
+
 def test_existe_rechaza_metadata_incompleta_aunque_simbolo_este_registrado():
     interp = InterpretadorCobra()
     ast = generar_ast('usar "archivo"\nimprimir(existe("README.md"))')
