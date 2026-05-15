@@ -160,8 +160,9 @@ def test_backends_legacy_no_se_cargan_en_startup_normal() -> None:
 
 
 def test_superficie_usar_no_expone_aliases_ni_internals_prohibidos() -> None:
-    modulos = ("numero", "texto", "datos")
+    modulos = ("numero", "texto", "datos", "archivo")
     prohibidos_exactos = {"self", "append", "map", "filter", "unwrap", "expect"}
+    prohibidos_internals = {"_backend", "__all__", "os", "pathlib"}
 
     for nombre_modulo in modulos:
         modulo = usar_loader.obtener_modulo(nombre_modulo)
@@ -172,6 +173,23 @@ def test_superficie_usar_no_expone_aliases_ni_internals_prohibidos() -> None:
             assert simbolo not in prohibidos_exactos, (
                 f"{nombre_modulo} exporta símbolo no permitido: {simbolo}"
             )
+            assert simbolo not in prohibidos_internals, (
+                f"{nombre_modulo} exporta internals no permitidos: {simbolo}"
+            )
+
+
+def test_apertura_allowlist_archivo_existe_no_afecta_resolucion_publica() -> None:
+    modulo_archivo = usar_loader.obtener_modulo("archivo")
+    modulo_datos = usar_loader.obtener_modulo("datos")
+
+    simbolos_archivo = _simbolos_publicos(modulo_archivo)
+    simbolos_datos = _simbolos_publicos(modulo_datos)
+
+    assert "existe" in simbolos_archivo
+    assert "longitud" in simbolos_datos
+    assert "_backend" not in simbolos_datos
+    assert "__all__" not in simbolos_datos
+    assert "pathlib" not in simbolos_datos
 
 
 def test_arranque_normal_import_pcobra_no_precarga_legacy() -> None:
