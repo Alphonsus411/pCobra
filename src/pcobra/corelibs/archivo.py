@@ -78,16 +78,12 @@ def existe(ruta: PathLike) -> bool:
     """Indica si el archivo existe dentro del directorio permitido."""
 
     try:
-        objetivo = Path(ruta)
-        if objetivo.is_absolute() or _es_ruta_absoluta_o_sensible_windows(ruta):
-            base = Path(os.environ.get("COBRA_IO_BASE_DIR") or Path.cwd()).resolve()
-            destino = objetivo.resolve()
-            destino.relative_to(base)
-        else:
-            destino = _resolver_ruta(objetivo)
+        if not isinstance(ruta, str):
+            return False
+        destino = _resolver_ruta(ruta)
     except ValueError:
         return False
-    return destino.exists()
+    return destino.is_file()
 
 
 def eliminar(ruta: PathLike) -> None:
