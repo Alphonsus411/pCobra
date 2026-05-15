@@ -260,14 +260,14 @@ def test_existe_rechaza_metadata_con_modulo_distinto(modulo):
         interp.ejecutar_ast(ast_llamada)
 
 
-def test_existe_rechaza_metadata_con_exported_name_distinto():
+def test_existe_rechaza_metadata_con_symbol_distinto():
     interp = InterpretadorCobra()
     ast = generar_ast('usar "archivo"\nimprimir(existe("README.md"))')
 
     with patch("sys.stdout", new_callable=StringIO):
         interp.ejecutar_ast(ast)
 
-    interp._validador._metadata_simbolos_usar["existe"]["exported_name"] = "leer_archivo"
+    interp._validador._metadata_simbolos_usar["existe"]["symbol"] = "leer_archivo"
     ast_llamada = generar_ast('imprimir(existe("README.md"))')
     with pytest.raises(PrimitivaPeligrosaError):
         interp.ejecutar_ast(ast_llamada)
@@ -282,7 +282,7 @@ def test_existe_rechaza_metadata_con_public_api_tipo_incorrecto():
 
     interp._validador._metadata_simbolos_usar["existe"]["public_api"] = "true"
     ast_llamada = generar_ast('imprimir(existe("README.md"))')
-    with pytest.raises(PrimitivaPeligrosaError):
+    with pytest.raises(PrimitivaPeligrosaError, match="metadata usar inválida: metadata.public_api debe ser True"):
         interp.ejecutar_ast(ast_llamada)
 
 
@@ -378,14 +378,14 @@ def test_usar_numpy_fallo_no_inyecta_estado_parcial_en_contexto():
     assert "numpy" not in interp.variables
 
 
-def test_existe_rechaza_metadata_con_is_sanitized_wrapper_false():
+def test_existe_rechaza_metadata_con_sanitized_false():
     interp = InterpretadorCobra()
     ast = generar_ast('usar "archivo"\nimprimir(existe("README.md"))')
 
     with patch("sys.stdout", new_callable=StringIO):
         interp.ejecutar_ast(ast)
 
-    interp._validador._metadata_simbolos_usar["existe"]["is_sanitized_wrapper"] = False
+    interp._validador._metadata_simbolos_usar["existe"]["sanitized"] = False
     ast_llamada = generar_ast('imprimir(existe("README.md"))')
     with pytest.raises(PrimitivaPeligrosaError):
         interp.ejecutar_ast(ast_llamada)
