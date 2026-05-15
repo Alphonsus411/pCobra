@@ -512,6 +512,7 @@ class InteractiveCommand(BaseCommand):
             validar_ast_seguro(
                 ast,
                 validadores_extra=self._extra_validators_repl,
+                interpretador=self.interpretador,
             )
         resultado = None
         # Evitamos validar dos veces en ejecución para no duplicar side effects
