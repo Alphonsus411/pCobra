@@ -52,38 +52,21 @@ class ValidadorPrimitivaPeligrosa(ValidadorBase):
         # usar archivo.existe con metadata de sanitización de API pública.
         if nodo.nombre != "existe":
             return False
-        if ("archivo", nodo.nombre) not in self._simbolos_publicos_usar:
+        if ("archivo", "existe") not in self._simbolos_publicos_usar:
             return False
         metadata = self._metadata_simbolos_usar.get(nodo.nombre)
-        if not isinstance(metadata, dict) or not metadata:
+        if not isinstance(metadata, dict):
             return False
-        origen_modulo = metadata.get("origen_modulo") or metadata.get("origin_module")
-        origen_canonico = metadata.get("canonical_module")
-        origen_backend = metadata.get("python_module")
-        origen_tipo = metadata.get("origen_tipo")
-        fue_introducido_por_usar = (
-            metadata.get("introduced_by_usar") is True
-            or metadata.get("introduced_by") == "usar"
-        )
-        es_publico = (
-            metadata.get("is_public_export") is True
-            or metadata.get("public_api") is True
-        )
-        es_wrapper_sanitizado = (
-            metadata.get("is_sanitized_wrapper") is True
-            or metadata.get("safe_wrapper") is True
-        )
-        if origen_modulo != "archivo" or origen_canonico != "archivo":
+
+        if metadata.get("module") != "archivo":
             return False
-        if not fue_introducido_por_usar:
+        if metadata.get("exported_name") != "existe":
             return False
-        if origen_tipo != "public_wrapper":
+        if metadata.get("is_sanitized_wrapper") is not True:
             return False
-        if origen_backend not in self.WRAPPERS_PYTHON_MODULES_PERMITIDOS:
+        if metadata.get("public_api") is not True:
             return False
-        if not es_publico or not es_wrapper_sanitizado:
-            return False
-        return metadata.get("exported_name") == "existe"
+        return True
 
     def visit_llamada_funcion(self, nodo: NodoLlamadaFuncion):
         if nodo.nombre in self.PRIMITIVAS_PELIGROSAS and not self._es_wrapper_publico_permitido(nodo):

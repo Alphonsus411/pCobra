@@ -160,6 +160,32 @@ def test_existe_rechaza_metadata_incompleta_aunque_simbolo_este_registrado():
         interp.ejecutar_ast(ast_llamada)
 
 
+def test_existe_rechaza_metadata_con_modulo_distinto():
+    interp = InterpretadorCobra()
+    ast = generar_ast('usar "archivo"\nimprimir(existe("README.md"))')
+
+    with patch("sys.stdout", new_callable=StringIO):
+        interp.ejecutar_ast(ast)
+
+    interp._validador._metadata_simbolos_usar["existe"]["module"] = "io"
+    ast_llamada = generar_ast('imprimir(existe("README.md"))')
+    with pytest.raises(PrimitivaPeligrosaError):
+        interp.ejecutar_ast(ast_llamada)
+
+
+def test_existe_rechaza_metadata_con_exported_name_distinto():
+    interp = InterpretadorCobra()
+    ast = generar_ast('usar "archivo"\nimprimir(existe("README.md"))')
+
+    with patch("sys.stdout", new_callable=StringIO):
+        interp.ejecutar_ast(ast)
+
+    interp._validador._metadata_simbolos_usar["existe"]["exported_name"] = "leer_archivo"
+    ast_llamada = generar_ast('imprimir(existe("README.md"))')
+    with pytest.raises(PrimitivaPeligrosaError):
+        interp.ejecutar_ast(ast_llamada)
+
+
 @pytest.mark.parametrize(
     "codigo",
     [
@@ -181,6 +207,30 @@ def test_existe_publico_desde_usar_bloquea_rutas_fuera_de_politica(codigo):
 def test_existe_publico_no_habilita_simbolos_backend_crudos_no_publicos():
     interp = InterpretadorCobra()
     ast = generar_ast('usar "archivo"\nimprimir(leer_archivo("README.md"))')
+
+    with pytest.raises(PrimitivaPeligrosaError):
+        interp.ejecutar_ast(ast)
+
+
+def test_existe_local_con_nombre_existe_sigue_bloqueado():
+    interp = InterpretadorCobra()
+    ast = generar_ast('func existe(ruta) { retorno verdadero }\nimprimir(existe("README.md"))')
+
+    with pytest.raises(PrimitivaPeligrosaError):
+        interp.ejecutar_ast(ast)
+
+
+@pytest.mark.parametrize(
+    "codigo",
+    [
+        'imprimir(eliminar("README.md"))',
+        'func obtener_url(x) { retorno x }\nimprimir(obtener_url("https://ejemplo"))',
+        'usar "archivo"\nimprimir(leer_archivo("README.md"))',
+    ],
+)
+def test_otros_simbolos_peligrosos_siguen_bloqueados(codigo):
+    interp = InterpretadorCobra()
+    ast = generar_ast(codigo)
 
     with pytest.raises(PrimitivaPeligrosaError):
         interp.ejecutar_ast(ast)
