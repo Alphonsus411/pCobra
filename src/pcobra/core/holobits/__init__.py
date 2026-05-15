@@ -101,6 +101,21 @@ def proyectar(hb: dict[str, Any], modo: str) -> dict[str, Any]:
 def transformar(hb: dict[str, Any], operacion: str, *parametros: Any) -> dict[str, Any]:
     interno = _desde_estructura_cobra(hb)
     _transformar_sdk(interno, operacion, *parametros)
+
+    op = str(operacion).strip().lower()
+    if op == "rotar" and len(parametros) >= 2:
+        eje = str(parametros[0]).strip().lower()
+        angulo = float(parametros[1])
+        valores = list(interno.valores)
+        if eje == "z" and len(valores) >= 2:
+            import math
+
+            rad = math.radians(angulo)
+            x, y = valores[0], valores[1]
+            valores[0] = x * math.cos(rad) - y * math.sin(rad)
+            valores[1] = x * math.sin(rad) + y * math.cos(rad)
+            interno = _Holobit(valores)
+
     return _a_estructura_cobra(interno)
 
 
