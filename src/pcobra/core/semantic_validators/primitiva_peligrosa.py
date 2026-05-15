@@ -66,10 +66,13 @@ class ValidadorPrimitivaPeligrosa(ValidadorBase):
             return False
         if ("archivo", "existe") not in self._simbolos_publicos_usar:
             return False
+
         metadata = self._metadata_simbolos_usar.get(nodo.nombre)
+        # Rechazo por defecto si metadata falta o no es dict.
         if not isinstance(metadata, dict):
             return False
 
+        # Validación explícita de contrato canónico para `existe`.
         if metadata.get("module") != "archivo":
             return False
         if metadata.get("exported_name") != "existe":
