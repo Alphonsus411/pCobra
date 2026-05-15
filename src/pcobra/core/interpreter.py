@@ -111,6 +111,9 @@ USAR_SYMBOL_CONFLICT_ERROR = "usar_error[conflicto_simbolo]"
 USAR_COLLISION_STRICT_ERROR = "strict_error"
 USAR_COLLISION_WARN_ALIAS_REQUIRED = "warn_alias_required"
 _USAR_COLLISION_POLICIES = frozenset({USAR_COLLISION_STRICT_ERROR, USAR_COLLISION_WARN_ALIAS_REQUIRED})
+_USAR_METADATA_REQUIRED_KEYS = frozenset(
+    {"module", "exported_name", "is_sanitized_wrapper", "public_api", "introduced_by_usar"}
+)
 
 def formatear_error_usar_usuario(codigo: str, modulo: str, contexto_minimo: str | None = None) -> str:
     """Devuelve errores cortos y legibles para la salida de usuario en `usar`."""
@@ -912,6 +915,7 @@ class InterpretadorCobra:
             if hasattr(cursor, "registrar_simbolo_publico_usar"):
                 validadores_registrables.append(cursor)
             cursor = getattr(cursor, "siguiente", None)
+        self._asegurar_metadata_usar_sincronizada()
         for nombre, metadata in (self._usar_symbol_metadata or {}).items():
             if not isinstance(metadata, dict):
                 continue
@@ -921,6 +925,58 @@ class InterpretadorCobra:
                     validador_registrable.registrar_simbolo_publico_usar(nombre, modulo, metadata=dict(metadata))
         # En ejecución permitimos side effects de auditoría visibles al usuario.
         nodo.aceptar(self._validador)
+
+    def _validar_metadata_simbolo_usar(self, nombre: str, metadata: object) -> None:
+        if not isinstance(metadata, dict):
+            raise PrimitivaPeligrosaError(
+                f"Metadata inválida para símbolo usar '{nombre}': tipo no permitido"
+            )
+        faltantes = _USAR_METADATA_REQUIRED_KEYS - set(metadata.keys())
+        if faltantes:
+            raise PrimitivaPeligrosaError(
+                f"Metadata inválida para símbolo usar '{nombre}': faltan claves {sorted(faltantes)}"
+            )
+        if metadata.get("module") != "archivo":
+            raise PrimitivaPeligrosaError(
+                f"Metadata inválida para símbolo usar '{nombre}': module no canónico"
+            )
+        if metadata.get("exported_name") != nombre:
+            raise PrimitivaPeligrosaError(
+                f"Metadata inválida para símbolo usar '{nombre}': exported_name alterado"
+            )
+        if metadata.get("is_sanitized_wrapper") is not True:
+            raise PrimitivaPeligrosaError(
+                f"Metadata inválida para símbolo usar '{nombre}': wrapper no sanitizado"
+            )
+        if metadata.get("public_api") is not True:
+            raise PrimitivaPeligrosaError(
+                f"Metadata inválida para símbolo usar '{nombre}': public_api inválida"
+            )
+        if metadata.get("introduced_by_usar") is not True:
+            raise PrimitivaPeligrosaError(
+                f"Metadata inválida para símbolo usar '{nombre}': origen no confiable"
+            )
+
+    def _asegurar_metadata_usar_sincronizada(self) -> None:
+        if not self.safe_mode or self._validador is None:
+            return
+        metadata_validador = getattr(self._validador, "_metadata_simbolos_usar", None)
+        if not isinstance(metadata_validador, dict):
+            raise PrimitivaPeligrosaError(
+                "Metadata de validador inválida para símbolos usar"
+            )
+        if set(metadata_validador.keys()) != set(self._usar_symbol_metadata.keys()):
+            raise PrimitivaPeligrosaError(
+                "Divergencia de metadata usar entre intérprete y validador"
+            )
+        for nombre, metadata_interp in self._usar_symbol_metadata.items():
+            self._validar_metadata_simbolo_usar(nombre, metadata_interp)
+            metadata_val = metadata_validador.get(nombre)
+            self._validar_metadata_simbolo_usar(nombre, metadata_val)
+            if metadata_interp != metadata_val:
+                raise PrimitivaPeligrosaError(
+                    f"Divergencia de metadata usar para símbolo '{nombre}'"
+                )
 
     def _contiene_yield(self, nodo, visitados_ids: set[int] | None = None):
         if visitados_ids is None:
@@ -2207,14 +2263,15 @@ class InterpretadorCobra:
                 nombre_exportado=nombre,
                 simbolo=simbolo,
             )
-            metadata_simbolo.setdefault("module", modulo)
-            metadata_simbolo.setdefault("exported_name", nombre)
-            metadata_simbolo.setdefault("is_sanitized_wrapper", True)
-            metadata_simbolo.setdefault("public_api", True)
-            metadata_simbolo.setdefault("introduced_by_usar", True)
+            metadata_simbolo["module"] = "archivo"
+            metadata_simbolo["exported_name"] = nombre
+            metadata_simbolo["is_sanitized_wrapper"] = True
+            metadata_simbolo["public_api"] = True
+            metadata_simbolo["introduced_by_usar"] = True
             metadata_simbolo.setdefault("origen_modulo", modulo)
             metadata_simbolo.setdefault("canonical_module", modulo)
             metadata_simbolo.setdefault("origin_module", modulo)
+            self._validar_metadata_simbolo_usar(nombre, metadata_simbolo)
             contexto_actual.define(nombre, simbolo)
             self._usar_symbol_metadata[nombre] = dict(metadata_simbolo)
             if self.safe_mode and self._validador is not None and hasattr(self._validador, "registrar_simbolo_publico_usar"):
@@ -2223,6 +2280,7 @@ class InterpretadorCobra:
                     modulo,
                     metadata=dict(metadata_simbolo),
                 )
+                self._asegurar_metadata_usar_sincronizada()
 
     def _construir_metadata_simbolo_usar(
         self,
