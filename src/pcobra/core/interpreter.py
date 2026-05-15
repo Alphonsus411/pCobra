@@ -88,6 +88,7 @@ from .import_utils import (
 )
 from .utils import validar_ast_estructural, ErrorEstructuraAST
 from .errors import CondicionNoBooleanaError
+from .usar_symbol_policy import make_usar_symbol_metadata, validate_usar_symbol_metadata
 from .environment import Environment
 
 MODULES_PATH = _DEFAULT_MODULES_PATH
@@ -111,18 +112,6 @@ USAR_SYMBOL_CONFLICT_ERROR = "usar_error[conflicto_simbolo]"
 USAR_COLLISION_STRICT_ERROR = "strict_error"
 USAR_COLLISION_WARN_ALIAS_REQUIRED = "warn_alias_required"
 _USAR_COLLISION_POLICIES = frozenset({USAR_COLLISION_STRICT_ERROR, USAR_COLLISION_WARN_ALIAS_REQUIRED})
-_USAR_METADATA_REQUIRED_KEYS = frozenset(
-    {
-        "origin_kind",
-        "module",
-        "symbol",
-        "sanitized",
-        "public_api",
-        "backend_exposed",
-        "callable",
-    }
-)
-
 def formatear_error_usar_usuario(codigo: str, modulo: str, contexto_minimo: str | None = None) -> str:
     """Devuelve errores cortos y legibles para la salida de usuario en `usar`."""
     mensajes = {
@@ -934,45 +923,11 @@ class InterpretadorCobra:
         # En ejecución permitimos side effects de auditoría visibles al usuario.
         nodo.aceptar(self._validador)
 
-    def _validar_metadata_simbolo_usar(self, nombre: str, metadata: object) -> None:
-        if not isinstance(metadata, dict):
-            raise PrimitivaPeligrosaError(
-                f"Metadata inválida para símbolo usar '{nombre}': tipo no permitido"
-            )
-        faltantes = _USAR_METADATA_REQUIRED_KEYS - set(metadata.keys())
-        if faltantes:
-            raise PrimitivaPeligrosaError(
-                f"Metadata inválida para símbolo usar '{nombre}': faltan claves {sorted(faltantes)}"
-            )
-        if metadata.get("origin_kind") != "usar":
-            raise PrimitivaPeligrosaError(
-                f"Metadata inválida para símbolo usar '{nombre}': origin_kind inválido"
-            )
-        module = metadata.get("module")
-        if not isinstance(module, str) or not module.strip():
-            raise PrimitivaPeligrosaError(
-                f"Metadata inválida para símbolo usar '{nombre}': module no canónico"
-            )
-        if metadata.get("symbol") != nombre:
-            raise PrimitivaPeligrosaError(
-                f"Metadata inválida para símbolo usar '{nombre}': symbol alterado"
-            )
-        if metadata.get("sanitized") is not True:
-            raise PrimitivaPeligrosaError(
-                f"Metadata inválida para símbolo usar '{nombre}': wrapper no sanitizado"
-            )
-        if metadata.get("public_api") is not True:
-            raise PrimitivaPeligrosaError(
-                f"Metadata inválida para símbolo usar '{nombre}': public_api inválida"
-            )
-        if metadata.get("backend_exposed") is not False:
-            raise PrimitivaPeligrosaError(
-                f"Metadata inválida para símbolo usar '{nombre}': backend_exposed inválido"
-            )
-        if not isinstance(metadata.get("callable"), bool):
-            raise PrimitivaPeligrosaError(
-                f"Metadata inválida para símbolo usar '{nombre}': callable debe ser booleano"
-            )
+    def _validar_metadata_usar_o_fallar(self, nombre: str, metadata: object) -> None:
+        try:
+            validate_usar_symbol_metadata(nombre, metadata)
+        except ValueError as exc:
+            raise PrimitivaPeligrosaError(str(exc)) from exc
 
     def _asegurar_metadata_usar_sincronizada(self) -> None:
         if not self.safe_mode or self._validador is None:
@@ -987,9 +942,9 @@ class InterpretadorCobra:
                 "Divergencia de metadata usar entre intérprete y validador"
             )
         for nombre, metadata_interp in self._usar_symbol_metadata.items():
-            self._validar_metadata_simbolo_usar(nombre, metadata_interp)
+            self._validar_metadata_usar_o_fallar(nombre, metadata_interp)
             metadata_val = metadata_validador.get(nombre)
-            self._validar_metadata_simbolo_usar(nombre, metadata_val)
+            self._validar_metadata_usar_o_fallar(nombre, metadata_val)
             if metadata_interp != metadata_val:
                 raise PrimitivaPeligrosaError(
                     f"Divergencia de metadata usar para símbolo '{nombre}'"
@@ -2223,10 +2178,10 @@ class InterpretadorCobra:
             if not contexto_actual.contains(nombre):
                 continue
             previo = self._usar_symbol_metadata.get(nombre)
-            metadata_actual = self._construir_metadata_simbolo_usar(
-                modulo=modulo,
-                nombre_exportado=nombre,
-                simbolo=simbolo,
+            metadata_actual = make_usar_symbol_metadata(
+                module_name=modulo,
+                symbol_name=nombre,
+                callable_obj=simbolo,
             )
             if previo and previo == metadata_actual:
                 # Reimport idempotente: mismo símbolo, mismo módulo origen y misma identidad.
@@ -2251,10 +2206,10 @@ class InterpretadorCobra:
         for nombre, simbolo in simbolos_saneados:
             if contexto_actual.contains(nombre) and not permitir_sobrescritura:
                 previo = self._usar_symbol_metadata.get(nombre)
-                metadata_actual = self._construir_metadata_simbolo_usar(
-                    modulo=modulo,
-                    nombre_exportado=nombre,
-                    simbolo=simbolo,
+                metadata_actual = make_usar_symbol_metadata(
+                    module_name=modulo,
+                    symbol_name=nombre,
+                    callable_obj=simbolo,
                 )
                 if previo and previo == metadata_actual:
                     # No-op idempotente: evita warning/ruido al reimportar lo mismo.
@@ -2275,15 +2230,12 @@ class InterpretadorCobra:
                     "No se puede usar el módulo "
                     f"'{modulo}': {USAR_SYMBOL_CONFLICT_ERROR} colisión estructurada={detalle}"
                 )
-            metadata_simbolo = self._construir_metadata_simbolo_usar(
-                modulo=modulo,
-                nombre_exportado=nombre,
-                simbolo=simbolo,
+            metadata_simbolo = make_usar_symbol_metadata(
+                module_name=modulo,
+                symbol_name=nombre,
+                callable_obj=simbolo,
             )
-            metadata_simbolo.setdefault("origen_modulo", modulo)
-            metadata_simbolo.setdefault("canonical_module", modulo)
-            metadata_simbolo.setdefault("origin_module", modulo)
-            self._validar_metadata_simbolo_usar(nombre, metadata_simbolo)
+            self._validar_metadata_usar_o_fallar(nombre, metadata_simbolo)
             contexto_actual.define(nombre, simbolo)
             self._usar_symbol_metadata[nombre] = dict(metadata_simbolo)
             if self.safe_mode and self._validador is not None and hasattr(self._validador, "registrar_simbolo_publico_usar"):
@@ -2293,46 +2245,6 @@ class InterpretadorCobra:
                     metadata=dict(metadata_simbolo),
                 )
                 self._asegurar_metadata_usar_sincronizada()
-
-    def _construir_metadata_simbolo_usar(
-        self,
-        *,
-        modulo: str,
-        nombre_exportado: str,
-        simbolo: object,
-    ) -> dict[str, object]:
-        """Construye metadatos de origen para detectar reimportaciones idempotentes."""
-        firma_estable = None
-        modulo_objeto = getattr(simbolo, "__module__", None)
-        qualname = getattr(simbolo, "__qualname__", None)
-        code = getattr(simbolo, "__code__", None)
-        if modulo_objeto and qualname:
-            firma_estable = f"{modulo_objeto}:{qualname}"
-            if code is not None:
-                firma_estable = f"{firma_estable}:{getattr(code, 'co_argcount', 'na')}:{getattr(code, 'co_kwonlyargcount', 'na')}"
-        es_callable = callable(simbolo)
-        return {
-            "origin_kind": "usar",
-            "module": modulo,
-            "symbol": nombre_exportado,
-            "sanitized": True,
-            "public_api": True,
-            "backend_exposed": False,
-            "callable": es_callable,
-            "canonical_module": modulo,
-            "origin_module": modulo,
-            "python_module": modulo_objeto,
-            "origen_modulo": modulo,
-            "origen_tipo": "public_wrapper",
-            "exported_name": nombre_exportado,
-            "is_public_export": True,
-            "is_sanitized_wrapper": True,
-            "safe_wrapper": True,
-            "introduced_by": "usar",
-            "introduced_by_usar": True,
-            "callable_id": id(simbolo),
-            "stable_signature": firma_estable,
-        }
 
     def ejecutar_holobit(self, nodo):
         """Simula la ejecución de un holobit y devuelve sus valores."""

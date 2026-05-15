@@ -231,3 +231,99 @@ def sanear_exportables_para_usar(
 
     clasificacion = ClasificacionSaneamientoUsar(rechazos_duros=rechazos_duros, warnings_transicion=warnings_transicion)
     return permitidos, clasificacion, warnings_transicion
+
+
+USAR_SYMBOL_METADATA_REQUIRED_KEYS = frozenset(
+    {
+        "origin_kind",
+        "module",
+        "symbol",
+        "sanitized",
+        "public_api",
+        "backend_exposed",
+        "callable",
+    }
+)
+
+# Claves legacy mantenidas solo por compatibilidad histórica.
+USAR_SYMBOL_METADATA_LEGACY_KEYS = frozenset(
+    {
+        "origen_modulo",
+        "canonical_module",
+        "origin_module",
+        "exported_name",
+        "is_sanitized_wrapper",
+    }
+)
+
+
+def make_usar_symbol_metadata(
+    module_name: str,
+    symbol_name: str,
+    callable_obj: object,
+) -> dict[str, object]:
+    """Construye metadata canónica del contrato `usar`.
+
+    Incluye aliases legacy estrictamente para compatibilidad.
+    """
+    firma_estable = None
+    modulo_objeto = getattr(callable_obj, "__module__", None)
+    qualname = getattr(callable_obj, "__qualname__", None)
+    code = getattr(callable_obj, "__code__", None)
+    if modulo_objeto and qualname:
+        firma_estable = f"{modulo_objeto}:{qualname}"
+        if code is not None:
+            firma_estable = (
+                f"{firma_estable}:"
+                f"{getattr(code, 'co_argcount', 'na')}:"
+                f"{getattr(code, 'co_kwonlyargcount', 'na')}"
+            )
+    es_callable = callable(callable_obj)
+    return {
+        "origin_kind": "usar",
+        "module": module_name,
+        "symbol": symbol_name,
+        "sanitized": True,
+        "public_api": True,
+        "backend_exposed": False,
+        "callable": es_callable,
+        "python_module": modulo_objeto,
+        "origen_tipo": "public_wrapper",
+        "is_public_export": True,
+        "safe_wrapper": True,
+        "introduced_by": "usar",
+        "introduced_by_usar": True,
+        "callable_id": id(callable_obj),
+        "stable_signature": firma_estable,
+        # Legacy:
+        "origen_modulo": module_name,
+        "canonical_module": module_name,
+        "origin_module": module_name,
+        "exported_name": symbol_name,
+        "is_sanitized_wrapper": True,
+    }
+
+
+def validate_usar_symbol_metadata(nombre: str, metadata: object) -> dict[str, object]:
+    """Valida esquema mínimo canónico para metadata `usar`."""
+    if not isinstance(metadata, dict):
+        raise ValueError(f"Metadata inválida para símbolo usar '{nombre}': tipo no permitido")
+    faltantes = USAR_SYMBOL_METADATA_REQUIRED_KEYS - set(metadata.keys())
+    if faltantes:
+        raise ValueError(f"Metadata inválida para símbolo usar '{nombre}': faltan claves {sorted(faltantes)}")
+    if metadata.get("origin_kind") != "usar":
+        raise ValueError(f"Metadata inválida para símbolo usar '{nombre}': origin_kind inválido")
+    module = metadata.get("module")
+    if not isinstance(module, str) or not module.strip():
+        raise ValueError(f"Metadata inválida para símbolo usar '{nombre}': module no canónico")
+    if metadata.get("symbol") != nombre:
+        raise ValueError(f"Metadata inválida para símbolo usar '{nombre}': symbol alterado")
+    if metadata.get("sanitized") is not True:
+        raise ValueError(f"Metadata inválida para símbolo usar '{nombre}': wrapper no sanitizado")
+    if metadata.get("public_api") is not True:
+        raise ValueError(f"Metadata inválida para símbolo usar '{nombre}': public_api inválida")
+    if metadata.get("backend_exposed") is not False:
+        raise ValueError(f"Metadata inválida para símbolo usar '{nombre}': backend_exposed inválido")
+    if not isinstance(metadata.get("callable"), bool):
+        raise ValueError(f"Metadata inválida para símbolo usar '{nombre}': callable debe ser booleano")
+    return metadata
