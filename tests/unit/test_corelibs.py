@@ -692,6 +692,8 @@ def test_archivo_existe_relativa_valida(monkeypatch, tmp_path, ruta):
 
     assert core.existe(ruta) is True
 
+    assert core.existe("NO_EXISTE.md") is False
+
 
 @pytest.mark.parametrize(
     "ruta",
@@ -711,6 +713,7 @@ def test_archivo_existe_bloquea_absolutas_y_windows_unc(monkeypatch, tmp_path, r
 @pytest.mark.parametrize(
     "ruta",
     [
+        "../secreto.txt",
         "./../secreto.txt",
         "a/../../secreto.txt",
         "carpeta/../..//secreto.txt",
