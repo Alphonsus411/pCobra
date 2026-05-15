@@ -121,8 +121,7 @@ def validar_nombre_modulo_usar(nombre: str, *, require_allowlist: bool = True) -
 
     if require_allowlist and nombre not in USAR_COBRA_PUBLIC_MODULES:
         raise PermissionError(
-            f"Importación no permitida en 'usar': '{nombre}'. "
-            f"Solo se aceptan nombres canónicos exactos: {', '.join(USAR_COBRA_PUBLIC_MODULES)}."
+            f"usar_error[modulo_fuera_catalogo_publico]: '{nombre}' está fuera del catálogo público."
         )
 
     return nombre
