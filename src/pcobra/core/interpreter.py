@@ -112,7 +112,15 @@ USAR_COLLISION_STRICT_ERROR = "strict_error"
 USAR_COLLISION_WARN_ALIAS_REQUIRED = "warn_alias_required"
 _USAR_COLLISION_POLICIES = frozenset({USAR_COLLISION_STRICT_ERROR, USAR_COLLISION_WARN_ALIAS_REQUIRED})
 _USAR_METADATA_REQUIRED_KEYS = frozenset(
-    {"module", "exported_name", "is_sanitized_wrapper", "public_api", "introduced_by_usar"}
+    {
+        "origin_kind",
+        "module",
+        "symbol",
+        "sanitized",
+        "public_api",
+        "backend_exposed",
+        "callable",
+    }
 )
 
 def formatear_error_usar_usuario(codigo: str, modulo: str, contexto_minimo: str | None = None) -> str:
@@ -936,15 +944,20 @@ class InterpretadorCobra:
             raise PrimitivaPeligrosaError(
                 f"Metadata inválida para símbolo usar '{nombre}': faltan claves {sorted(faltantes)}"
             )
-        if metadata.get("module") != "archivo":
+        if metadata.get("origin_kind") != "usar":
+            raise PrimitivaPeligrosaError(
+                f"Metadata inválida para símbolo usar '{nombre}': origin_kind inválido"
+            )
+        module = metadata.get("module")
+        if not isinstance(module, str) or not module.strip():
             raise PrimitivaPeligrosaError(
                 f"Metadata inválida para símbolo usar '{nombre}': module no canónico"
             )
-        if metadata.get("exported_name") != nombre:
+        if metadata.get("symbol") != nombre:
             raise PrimitivaPeligrosaError(
-                f"Metadata inválida para símbolo usar '{nombre}': exported_name alterado"
+                f"Metadata inválida para símbolo usar '{nombre}': symbol alterado"
             )
-        if metadata.get("is_sanitized_wrapper") is not True:
+        if metadata.get("sanitized") is not True:
             raise PrimitivaPeligrosaError(
                 f"Metadata inválida para símbolo usar '{nombre}': wrapper no sanitizado"
             )
@@ -952,9 +965,13 @@ class InterpretadorCobra:
             raise PrimitivaPeligrosaError(
                 f"Metadata inválida para símbolo usar '{nombre}': public_api inválida"
             )
-        if metadata.get("introduced_by_usar") is not True:
+        if metadata.get("backend_exposed") is not False:
             raise PrimitivaPeligrosaError(
-                f"Metadata inválida para símbolo usar '{nombre}': origen no confiable"
+                f"Metadata inválida para símbolo usar '{nombre}': backend_exposed inválido"
+            )
+        if not isinstance(metadata.get("callable"), bool):
+            raise PrimitivaPeligrosaError(
+                f"Metadata inválida para símbolo usar '{nombre}': callable debe ser booleano"
             )
 
     def _asegurar_metadata_usar_sincronizada(self) -> None:
@@ -2263,11 +2280,6 @@ class InterpretadorCobra:
                 nombre_exportado=nombre,
                 simbolo=simbolo,
             )
-            metadata_simbolo["module"] = "archivo"
-            metadata_simbolo["exported_name"] = nombre
-            metadata_simbolo["is_sanitized_wrapper"] = True
-            metadata_simbolo["public_api"] = True
-            metadata_simbolo["introduced_by_usar"] = True
             metadata_simbolo.setdefault("origen_modulo", modulo)
             metadata_simbolo.setdefault("canonical_module", modulo)
             metadata_simbolo.setdefault("origin_module", modulo)
@@ -2298,8 +2310,15 @@ class InterpretadorCobra:
             firma_estable = f"{modulo_objeto}:{qualname}"
             if code is not None:
                 firma_estable = f"{firma_estable}:{getattr(code, 'co_argcount', 'na')}:{getattr(code, 'co_kwonlyargcount', 'na')}"
+        es_callable = callable(simbolo)
         return {
+            "origin_kind": "usar",
             "module": modulo,
+            "symbol": nombre_exportado,
+            "sanitized": True,
+            "public_api": True,
+            "backend_exposed": False,
+            "callable": es_callable,
             "canonical_module": modulo,
             "origin_module": modulo,
             "python_module": modulo_objeto,
@@ -2307,7 +2326,6 @@ class InterpretadorCobra:
             "origen_tipo": "public_wrapper",
             "exported_name": nombre_exportado,
             "is_public_export": True,
-            "public_api": True,
             "is_sanitized_wrapper": True,
             "safe_wrapper": True,
             "introduced_by": "usar",
