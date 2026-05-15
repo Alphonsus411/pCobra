@@ -419,6 +419,46 @@ def test_repl_usar_datos_longitud_imprimir_lista_y_variable(factory, executor, g
         (ReplCommandV2, lambda cmd, code: cmd._ejecutar_en_modo_normal(code), lambda cmd: cmd._delegate.interpretador),
     ],
 )
+def test_repl_aceptacion_positiva_usar_archivo_existe_readme(factory, executor, get_interp, capsys):
+    cmd = factory()
+    _ = get_interp(cmd)
+
+    executor(cmd, 'usar "archivo"')
+    executor(cmd, 'imprimir(existe("README.md"))')
+
+    salida = capsys.readouterr().out.strip().splitlines()
+    assert salida
+    assert salida[-1].strip() in {"verdadero", "falso"}
+    assert all("Uso de primitiva peligrosa" not in linea for linea in salida)
+
+
+@pytest.mark.parametrize(
+    ("factory", "executor", "get_interp"),
+    [
+        (lambda: InteractiveCommand(InterpretadorCobra()), lambda cmd, code: cmd.ejecutar_codigo(code), lambda cmd: cmd.interpretador),
+        (ReplCommandV2, lambda cmd, code: cmd._ejecutar_en_modo_normal(code), lambda cmd: cmd._delegate.interpretador),
+    ],
+)
+def test_repl_numpy_rechazo_no_deja_estado_parcial(factory, executor, get_interp):
+    cmd = factory()
+    interp = get_interp(cmd)
+    estado_pre = dict(interp.contextos[-1].values)
+
+    with pytest.raises(PermissionError, match=r"(módulo fuera del catálogo público|modulo_fuera_catalogo_publico)"):
+        executor(cmd, 'usar "numpy"')
+
+    assert dict(interp.contextos[-1].values) == estado_pre
+    assert "numpy" not in interp.contextos[-1].values
+    assert "numpy" not in interp.variables
+
+
+@pytest.mark.parametrize(
+    ("factory", "executor", "get_interp"),
+    [
+        (lambda: InteractiveCommand(InterpretadorCobra()), lambda cmd, code: cmd.ejecutar_codigo(code), lambda cmd: cmd.interpretador),
+        (ReplCommandV2, lambda cmd, code: cmd._ejecutar_en_modo_normal(code), lambda cmd: cmd._delegate.interpretador),
+    ],
+)
 def test_repl_usar_no_expone_simbolos_no_publicos(factory, executor, get_interp):
     cmd = factory()
     interp = get_interp(cmd)

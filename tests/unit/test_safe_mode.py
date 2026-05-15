@@ -63,6 +63,28 @@ def test_existe_publico_desde_usar_acepta_ruta_relativa():
     assert "verdadero" in salida or "falso" in salida
 
 
+def test_usar_archivo_existe_imprime_booleano_sin_primitiva_peligrosa():
+    interp = InterpretadorCobra()
+    ast = generar_ast('usar "archivo"\nimprimir(existe("README.md"))')
+
+    with patch("sys.stdout", new_callable=StringIO) as out:
+        interp.ejecutar_ast(ast)
+
+    salida = out.getvalue().strip()
+    assert salida in {"verdadero", "falso"}
+
+
+def test_usar_datos_longitud_builtin_permanece_en_3():
+    interp = InterpretadorCobra()
+    ast = generar_ast('usar "datos"\nvar xs = [1, 2, 3]\nimprimir(longitud(xs))\nimprimir(longitud([1,2,3]))')
+
+    with patch("sys.stdout", new_callable=StringIO) as out:
+        interp.ejecutar_ast(ast)
+
+    lineas = [linea.strip() for linea in out.getvalue().splitlines() if linea.strip()]
+    assert lineas[-2:] == ["3", "3"]
+
+
 def test_existe_backend_crudo_sigue_bloqueado_aun_con_usar_archivo():
     interp = InterpretadorCobra()
     ast = generar_ast('usar "archivo"\nexiste = leer_archivo\nimprimir(existe("README.md"))')
@@ -342,6 +364,18 @@ def test_usar_numpy_rechaza_con_error_corto():
 
     with pytest.raises(PermissionError, match="No se puede usar 'numpy': módulo fuera del catálogo público"):
         interp.ejecutar_ast(ast)
+
+
+def test_usar_numpy_fallo_no_inyecta_estado_parcial_en_contexto():
+    interp = InterpretadorCobra()
+    estado_pre = dict(interp.contextos[-1].values)
+
+    with pytest.raises(PermissionError, match="No se puede usar 'numpy': módulo fuera del catálogo público"):
+        interp.ejecutar_ast(generar_ast('usar "numpy"'))
+
+    assert dict(interp.contextos[-1].values) == estado_pre
+    assert "numpy" not in interp.contextos[-1].values
+    assert "numpy" not in interp.variables
 
 
 def test_existe_rechaza_metadata_con_is_sanitized_wrapper_false():
