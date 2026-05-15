@@ -60,8 +60,8 @@ class ValidadorPrimitivaPeligrosa(ValidadorBase):
         self._metadata_simbolos_usar[nombre] = metadata_base
 
     def _es_wrapper_publico_permitido(self, nodo: NodoLlamadaFuncion) -> bool:
-        # Único escape permitido para primitivas peligrosas:
-        # usar archivo.existe con metadata de sanitización de API pública.
+        # Contrato de seguridad: No basta el nombre del símbolo.
+        # Contrato de seguridad: Solo metadata canónica de `usar` + API pública sanitizada.
         if nodo.nombre != "existe":
             return False
         if ("archivo", "existe") not in self._simbolos_publicos_usar:
@@ -81,7 +81,8 @@ class ValidadorPrimitivaPeligrosa(ValidadorBase):
         return True
 
     def visit_llamada_funcion(self, nodo: NodoLlamadaFuncion):
-        # Contrato: permitido solo si metadata canónica de usar+sanitización API pública.
+        # Contrato de seguridad: No basta el nombre del símbolo.
+        # Contrato de seguridad: Solo metadata canónica de `usar` + API pública sanitizada.
         if nodo.nombre in self.PRIMITIVAS_PELIGROSAS and not self._es_wrapper_publico_permitido(nodo):
             raise PrimitivaPeligrosaError(
                 f"Uso de primitiva peligrosa: '{nodo.nombre}'"
@@ -89,6 +90,8 @@ class ValidadorPrimitivaPeligrosa(ValidadorBase):
         self.generic_visit(nodo)
 
     def visit_hilo(self, nodo: NodoHilo):
+        # Contrato de seguridad: No basta el nombre del símbolo.
+        # Contrato de seguridad: Solo metadata canónica de `usar` + API pública sanitizada.
         if (
             nodo.llamada.nombre in self.PRIMITIVAS_PELIGROSAS
             and not self._es_wrapper_publico_permitido(nodo.llamada)
@@ -99,7 +102,8 @@ class ValidadorPrimitivaPeligrosa(ValidadorBase):
         nodo.llamada.aceptar(self)
 
     def visit_llamada_metodo(self, nodo: NodoLlamadaMetodo):
-        if nodo.nombre_metodo in self.PRIMITIVAS_PELIGROSAS and nodo.nombre_metodo != "existe":
+        # No abrir bypass alternativo por método: también requiere ruta canónica autorizada.
+        if nodo.nombre_metodo in self.PRIMITIVAS_PELIGROSAS:
             raise PrimitivaPeligrosaError(
                 f"Uso de primitiva peligrosa: '{nodo.nombre_metodo}'"
             )
