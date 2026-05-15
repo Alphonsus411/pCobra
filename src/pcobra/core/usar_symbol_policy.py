@@ -256,6 +256,27 @@ USAR_SYMBOL_METADATA_LEGACY_KEYS = frozenset(
     }
 )
 
+USAR_SYMBOL_METADATA_OPTIONAL_KEYS = frozenset(
+    {
+        "python_module",
+        "origen_tipo",
+        "is_public_export",
+        "safe_wrapper",
+        "introduced_by",
+        "introduced_by_usar",
+        "callable_id",
+        "stable_signature",
+    }
+)
+
+# Claves inesperadas consideradas críticas: no forman parte del contrato
+# canónico ni de compatibilidad y deben bloquearse por fail-closed.
+USAR_SYMBOL_METADATA_ALLOWED_KEYS = (
+    USAR_SYMBOL_METADATA_REQUIRED_KEYS
+    | USAR_SYMBOL_METADATA_LEGACY_KEYS
+    | USAR_SYMBOL_METADATA_OPTIONAL_KEYS
+)
+
 
 def make_usar_symbol_metadata(
     module_name: str,
@@ -306,11 +327,22 @@ def make_usar_symbol_metadata(
 
 def validate_usar_symbol_metadata(nombre: str, metadata: object) -> dict[str, object]:
     """Valida esquema mínimo canónico para metadata `usar`."""
+    return _validar_metadata_simbolo_usar(nombre, metadata)
+
+
+def _validar_metadata_simbolo_usar(nombre: str, metadata: object) -> dict[str, object]:
+    """Valida esquema canónico de metadata `usar` con política fail-closed."""
     if not isinstance(metadata, dict):
         raise ValueError(f"Metadata inválida para símbolo usar '{nombre}': tipo no permitido")
     faltantes = USAR_SYMBOL_METADATA_REQUIRED_KEYS - set(metadata.keys())
     if faltantes:
         raise ValueError(f"Metadata inválida para símbolo usar '{nombre}': faltan claves {sorted(faltantes)}")
+    inesperadas_criticas = set(metadata.keys()) - USAR_SYMBOL_METADATA_ALLOWED_KEYS
+    if inesperadas_criticas:
+        raise ValueError(
+            "Metadata inválida para símbolo usar "
+            f"'{nombre}': claves inesperadas críticas {sorted(inesperadas_criticas)}"
+        )
     if metadata.get("origin_kind") != "usar":
         raise ValueError(f"Metadata inválida para símbolo usar '{nombre}': origin_kind inválido")
     module = metadata.get("module")
