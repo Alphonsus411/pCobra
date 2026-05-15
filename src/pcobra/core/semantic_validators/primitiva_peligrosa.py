@@ -48,11 +48,15 @@ class ValidadorPrimitivaPeligrosa(ValidadorBase):
             self._metadata_simbolos_usar[nombre] = dict(metadata)
 
     def _es_wrapper_publico_permitido(self, nodo: NodoLlamadaFuncion) -> bool:
+        # Único escape permitido para primitivas peligrosas:
+        # usar archivo.existe con metadata de sanitización de API pública.
         if nodo.nombre != "existe":
             return False
         if ("archivo", nodo.nombre) not in self._simbolos_publicos_usar:
             return False
-        metadata = self._metadata_simbolos_usar.get(nodo.nombre, {})
+        metadata = self._metadata_simbolos_usar.get(nodo.nombre)
+        if not isinstance(metadata, dict) or not metadata:
+            return False
         origen_modulo = metadata.get("origen_modulo") or metadata.get("origin_module")
         origen_canonico = metadata.get("canonical_module")
         origen_backend = metadata.get("python_module")
