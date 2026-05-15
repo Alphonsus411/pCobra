@@ -2189,17 +2189,18 @@ class InterpretadorCobra:
                     "No se puede usar el módulo "
                     f"'{modulo}': {USAR_SYMBOL_CONFLICT_ERROR} colisión estructurada={detalle}"
                 )
-            contexto_actual.define(nombre, simbolo)
-            self._usar_symbol_metadata[nombre] = self._construir_metadata_simbolo_usar(
+            metadata_simbolo = self._construir_metadata_simbolo_usar(
                 modulo=modulo,
                 nombre_exportado=nombre,
                 simbolo=simbolo,
             )
+            contexto_actual.define(nombre, simbolo)
+            self._usar_symbol_metadata[nombre] = metadata_simbolo
             if self.safe_mode and self._validador is not None and hasattr(self._validador, "registrar_simbolo_publico_usar"):
                 self._validador.registrar_simbolo_publico_usar(
                     nombre,
                     modulo,
-                    metadata=self._usar_symbol_metadata[nombre],
+                    metadata=metadata_simbolo,
                 )
 
     def _construir_metadata_simbolo_usar(
