@@ -63,11 +63,11 @@ def test_existe_publico_desde_usar_acepta_ruta_relativa():
     assert "verdadero" in salida or "falso" in salida
 
 
-def test_existe_backend_crudo_sigue_bloqueado_aun_con_usar_archivo():
+def test_existe_rebinding_a_simbolo_no_exportado_falla_con_name_error():
     interp = InterpretadorCobra()
     ast = generar_ast('usar "archivo"\nexiste = leer_archivo\nimprimir(existe("README.md"))')
 
-    with pytest.raises(PrimitivaPeligrosaError):
+    with pytest.raises(NameError, match="leer_archivo"):
         interp.ejecutar_ast(ast)
 
 
