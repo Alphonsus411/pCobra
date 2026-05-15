@@ -325,37 +325,78 @@ def make_usar_symbol_metadata(
     }
 
 
-def validate_usar_symbol_metadata(nombre: str, metadata: object) -> dict[str, object]:
-    """Valida esquema mínimo canónico para metadata `usar`."""
-    return _validar_metadata_simbolo_usar(nombre, metadata)
+def _normalizar_metadata_simbolo_usar(nombre: str, metadata: object) -> dict[str, object]:
+    """Normaliza e inspecciona metadata `usar` sin relajar seguridad.
 
+    Contrato canónico obligatorio (fail-closed):
+    - ``origin_kind`` (str): marcador de procedencia; debe ser ``"usar"``.
+    - ``module`` (str): módulo Cobra-facing que exporta el símbolo.
+    - ``symbol`` (str): nombre público exacto del símbolo (debe coincidir con ``nombre``).
+    - ``sanitized`` (bool): confirma paso por saneamiento/envoltura segura.
+    - ``public_api`` (bool): confirma que el símbolo pertenece a la API pública permitida.
+    - ``backend_exposed`` (bool): debe ser ``False`` para impedir exposición de backend.
+    - ``callable`` (bool): indica explícitamente si el símbolo invocable es callable.
 
-def _validar_metadata_simbolo_usar(nombre: str, metadata: object) -> dict[str, object]:
-    """Valida esquema canónico de metadata `usar` con política fail-closed."""
+    Claves legacy se aceptan solo por compatibilidad histórica y no pueden
+    reemplazar ni contradecir el contrato canónico.
+    """
     if not isinstance(metadata, dict):
         raise ValueError(f"Metadata inválida para símbolo usar '{nombre}': tipo no permitido")
-    faltantes = USAR_SYMBOL_METADATA_REQUIRED_KEYS - set(metadata.keys())
+
+    metadata_dict = dict(metadata)
+    faltantes = USAR_SYMBOL_METADATA_REQUIRED_KEYS - set(metadata_dict.keys())
     if faltantes:
         raise ValueError(f"Metadata inválida para símbolo usar '{nombre}': faltan claves {sorted(faltantes)}")
-    inesperadas_criticas = set(metadata.keys()) - USAR_SYMBOL_METADATA_ALLOWED_KEYS
+
+    inesperadas_criticas = set(metadata_dict.keys()) - USAR_SYMBOL_METADATA_ALLOWED_KEYS
     if inesperadas_criticas:
         raise ValueError(
             "Metadata inválida para símbolo usar "
             f"'{nombre}': claves inesperadas críticas {sorted(inesperadas_criticas)}"
         )
-    if metadata.get("origin_kind") != "usar":
+
+    return metadata_dict
+
+
+def validate_usar_symbol_metadata(nombre: str, metadata: object) -> dict[str, object]:
+    """Valida el contrato canónico de metadata `usar` (única puerta de validación).
+
+    # SEGURIDAD
+    # Este validador es fail-closed y centraliza todo control de integridad
+    # antes de sincronizar metadata con intérprete/validadores semánticos.
+    """
+    metadata_dict = _normalizar_metadata_simbolo_usar(nombre, metadata)
+
+    if metadata_dict.get("origin_kind") != "usar":
         raise ValueError(f"Metadata inválida para símbolo usar '{nombre}': origin_kind inválido")
-    module = metadata.get("module")
+
+    module = metadata_dict.get("module")
     if not isinstance(module, str) or not module.strip():
         raise ValueError(f"Metadata inválida para símbolo usar '{nombre}': module no canónico")
-    if metadata.get("symbol") != nombre:
+
+    symbol = metadata_dict.get("symbol")
+    if not isinstance(symbol, str) or symbol != nombre:
         raise ValueError(f"Metadata inválida para símbolo usar '{nombre}': symbol alterado")
-    if metadata.get("sanitized") is not True:
+
+    if metadata_dict.get("sanitized") is not True:
         raise ValueError(f"Metadata inválida para símbolo usar '{nombre}': wrapper no sanitizado")
-    if metadata.get("public_api") is not True:
+    if metadata_dict.get("public_api") is not True:
         raise ValueError(f"Metadata inválida para símbolo usar '{nombre}': public_api inválida")
-    if metadata.get("backend_exposed") is not False:
+    if metadata_dict.get("backend_exposed") is not False:
         raise ValueError(f"Metadata inválida para símbolo usar '{nombre}': backend_exposed inválido")
-    if not isinstance(metadata.get("callable"), bool):
+    if not isinstance(metadata_dict.get("callable"), bool):
         raise ValueError(f"Metadata inválida para símbolo usar '{nombre}': callable debe ser booleano")
-    return metadata
+
+    # Compatibilidad legacy estricta: nunca reemplaza/contradice canónico.
+    if "origen_modulo" in metadata_dict and metadata_dict["origen_modulo"] != module:
+        raise ValueError(f"Metadata inválida para símbolo usar '{nombre}': origen_modulo contradice module")
+    if "canonical_module" in metadata_dict and metadata_dict["canonical_module"] != module:
+        raise ValueError(f"Metadata inválida para símbolo usar '{nombre}': canonical_module contradice module")
+    if "origin_module" in metadata_dict and metadata_dict["origin_module"] != module:
+        raise ValueError(f"Metadata inválida para símbolo usar '{nombre}': origin_module contradice module")
+    if "exported_name" in metadata_dict and metadata_dict["exported_name"] != symbol:
+        raise ValueError(f"Metadata inválida para símbolo usar '{nombre}': exported_name contradice symbol")
+    if "is_sanitized_wrapper" in metadata_dict and metadata_dict["is_sanitized_wrapper"] is not True:
+        raise ValueError(f"Metadata inválida para símbolo usar '{nombre}': is_sanitized_wrapper contradice sanitized")
+
+    return metadata_dict
