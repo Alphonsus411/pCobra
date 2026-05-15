@@ -45,18 +45,15 @@ class ValidadorPrimitivaPeligrosa(ValidadorBase):
         metadata: dict[str, object] | None = None,
     ) -> None:
         self._simbolos_publicos_usar.add((modulo, nombre))
-        metadata_base = make_usar_symbol_metadata(
-            module_name=modulo,
-            symbol_name=nombre,
-            callable_obj=object(),
-        )
-        if metadata is not None:
-            metadata_base = dict(metadata)
-        validate_usar_symbol_metadata(nombre, metadata_base)
-        clave_metadata = nombre
-        if metadata_base.get("module") == modulo and metadata_base.get("symbol") == nombre:
-            clave_metadata = str(metadata_base.get("symbol"))
-        self._metadata_simbolos_usar[clave_metadata] = metadata_base
+        metadata_base = metadata
+        if metadata_base is None:
+            metadata_base = make_usar_symbol_metadata(
+                module_name=modulo,
+                symbol_name=nombre,
+                callable_obj=object(),
+            )
+        metadata_validada = dict(validate_usar_symbol_metadata(nombre, metadata_base))
+        self._metadata_simbolos_usar[nombre] = metadata_validada
 
     def _es_wrapper_publico_permitido(self, nodo: NodoLlamadaFuncion) -> tuple[bool, str | None]:
         # Contrato de seguridad: No basta el nombre del símbolo.
