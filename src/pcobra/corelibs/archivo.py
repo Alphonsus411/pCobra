@@ -81,9 +81,10 @@ def existe(ruta: PathLike) -> bool:
         if not isinstance(ruta, str):
             return False
         destino = _resolver_ruta(ruta)
-    except ValueError:
+        return destino.is_file()
+    except Exception:
+        # Mantiene el error encapsulado para no exponer tracebacks en REPL.
         return False
-    return destino.is_file()
 
 
 def eliminar(ruta: PathLike) -> None:
