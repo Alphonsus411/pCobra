@@ -377,6 +377,42 @@ def test_repl_seguridad_numpy_rechazado_mensaje_corto_sin_traceback(factory, exe
 
 
 @pytest.mark.parametrize(
+    ("factory", "executor"),
+    [
+        (lambda: InteractiveCommand(InterpretadorCobra()), lambda cmd, code: cmd.ejecutar_codigo(code)),
+        (ReplCommandV2, lambda cmd, code: cmd._ejecutar_en_modo_normal(code)),
+    ],
+)
+def test_repl_rechazo_numpy_es_persistente(factory, executor):
+    cmd = factory()
+    for _ in range(2):
+        with pytest.raises(PermissionError) as excinfo:
+            executor(cmd, 'usar "numpy"')
+        mensaje = str(excinfo.value)
+        assert "modulo_fuera_catalogo_publico" in mensaje or "módulo fuera del catálogo público" in mensaje
+
+
+@pytest.mark.parametrize(
+    ("factory", "executor", "get_interp"),
+    [
+        (lambda: InteractiveCommand(InterpretadorCobra()), lambda cmd, code: cmd.ejecutar_codigo(code), lambda cmd: cmd.interpretador),
+        (ReplCommandV2, lambda cmd, code: cmd._ejecutar_en_modo_normal(code), lambda cmd: cmd._delegate.interpretador),
+    ],
+)
+def test_repl_usar_datos_longitud_imprimir_lista_y_variable(factory, executor, get_interp, capsys):
+    cmd = factory()
+    interp = get_interp(cmd)
+
+    executor(cmd, 'usar "datos"')
+    interp.contextos[-1].define("xs", [1, 2, 3])
+    executor(cmd, "imprimir(longitud(xs))")
+    executor(cmd, "imprimir(longitud([1,2,3]))")
+
+    salida = capsys.readouterr().out
+    assert salida.count("3") >= 2
+
+
+@pytest.mark.parametrize(
     ("factory", "executor", "get_interp"),
     [
         (lambda: InteractiveCommand(InterpretadorCobra()), lambda cmd, code: cmd.ejecutar_codigo(code), lambda cmd: cmd.interpretador),
