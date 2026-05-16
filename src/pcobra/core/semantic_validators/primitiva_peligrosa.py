@@ -44,6 +44,12 @@ class ValidadorPrimitivaPeligrosa(ValidadorBase):
         modulo: str,
         metadata: dict[str, object] | None = None,
     ) -> None:
+        """Registra un símbolo público de ``usar`` con metadata canónica validada.
+
+        Este método **solo** acepta metadata canónica ya validada por el contrato
+        de ``usar`` (normalmente construida con
+        :func:`pcobra.core.usar_symbol_policy.make_usar_symbol_metadata`).
+        """
         if metadata is None:
             raise ValueError(
                 "Metadata inválida para símbolo usar: se requiere metadata canónica preconstruida"
