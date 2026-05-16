@@ -939,7 +939,10 @@ class InterpretadorCobra:
         try:
             validate_usar_symbol_metadata(nombre, metadata)
         except ValueError as exc:
-            raise PrimitivaPeligrosaError(str(exc)) from exc
+            # Preserva el motivo original para diagnóstico en REPL sin exponer internals sensibles.
+            raise PrimitivaPeligrosaError(
+                f"validation_reason='{exc}'"
+            ) from exc
 
     @staticmethod
     def _detalle_debug_metadata_usar(
@@ -975,7 +978,7 @@ class InterpretadorCobra:
             tipo_recibido = type(metadata_validador).__name__
             raise PrimitivaPeligrosaError(
                 "Metadata de validador inválida para símbolos usar: "
-                f"tipo inválido en _metadata_simbolos_usar (tipo='{tipo_recibido}', codigo_interno='invalid_container')."
+                f"tipo inválido en _metadata_simbolos_usar (tipo='{tipo_recibido}', codigo_interno='invalid_container', troubleshooting='container_metadata_debe_ser_dict')."
                 f"{self._detalle_debug_metadata_usar(received_keys=set())}{detalle_etapa}"
             )
         claves_interp = set(self._usar_symbol_metadata.keys())
@@ -986,7 +989,7 @@ class InterpretadorCobra:
             raise PrimitivaPeligrosaError(
                 "Divergencia de metadata usar entre intérprete y validador"
                 f": claves divergentes (faltantes_en_validador={faltantes_en_validador}, "
-                f"extras_en_validador={extras_en_validador}, codigo_interno='missing_keys')."
+                f"extras_en_validador={extras_en_validador}, codigo_interno='missing_keys', troubleshooting='claves_de_metadata_desincronizadas')."
                 f"{self._detalle_debug_metadata_usar(expected_keys=claves_interp, received_keys=claves_validador)}{detalle_etapa}"
             )
         for nombre, metadata_interp in self._usar_symbol_metadata.items():
@@ -996,7 +999,7 @@ class InterpretadorCobra:
                 raise PrimitivaPeligrosaError(
                     "Metadata de validador inválida para símbolos usar: "
                     f"metadata de intérprete inválida para símbolo '{nombre}' "
-                    f"(codigo_interno='invalid_symbol_metadata', detalle={exc})."
+                    f"(clave_esperada='module|kind|public_api|sanitized', tipo='{type(metadata_interp).__name__}', codigo_interno='invalid_symbol_metadata', troubleshooting='metadata_interprete_no_cumple_contrato', detalle={exc})."
                     f"{self._detalle_debug_metadata_usar(symbol=nombre)}{detalle_etapa}"
                 ) from exc
             metadata_val = metadata_validador.get(nombre)
@@ -1007,13 +1010,13 @@ class InterpretadorCobra:
                 raise PrimitivaPeligrosaError(
                     "Metadata de validador inválida para símbolos usar: "
                     f"metadata por símbolo inválida para '{nombre}' "
-                    f"(tipo='{tipo_recibido}', codigo_interno='invalid_symbol_metadata', detalle={exc})."
+                    f"(clave_esperada='module|kind|public_api|sanitized', tipo='{tipo_recibido}', codigo_interno='invalid_symbol_metadata', troubleshooting='metadata_validador_no_cumple_contrato', detalle={exc})."
                     f"{self._detalle_debug_metadata_usar(symbol=nombre)}{detalle_etapa}"
                 ) from exc
             if metadata_interp != metadata_val:
                 raise PrimitivaPeligrosaError(
                     "Divergencia de metadata usar entre intérprete y validador"
-                    f": metadata por símbolo no coincide (símbolo='{nombre}', codigo_interno='mismatch_payload')."
+                    f": metadata por símbolo no coincide (símbolo='{nombre}', clave_esperada='module|kind|public_api|sanitized', tipo='{type(metadata_val).__name__}', codigo_interno='mismatch_payload', troubleshooting='payload_de_metadata_difiere')."
                     f"{self._detalle_debug_metadata_usar(symbol=nombre, expected_keys=set(metadata_interp.keys()), received_keys=set(metadata_val.keys()))}{detalle_etapa}"
                 )
 
