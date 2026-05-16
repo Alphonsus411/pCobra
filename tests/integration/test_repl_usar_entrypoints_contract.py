@@ -65,13 +65,13 @@ def test_repl_contract_sintaxis_usar_compat_parser_semantica_plana_numero_sin_pr
     monkeypatch.setattr(
         core_interpreter_module,
         "build_and_validate_usar_symbol_metadata",
-        lambda module_name, symbol_name, callable_obj: {"module": module_name, "symbol": symbol_name, "callable": True, "backend_exposed": False},
+        lambda module_name, symbol_name, callable_obj: {"origin_kind": "usar", "module": module_name, "symbol": symbol_name, "sanitized": True, "public_api": True, "callable": True, "backend_exposed": False},
     )
 
     monkeypatch.setattr(
         usar_symbol_policy_module,
         "build_and_validate_usar_symbol_metadata",
-        lambda module_name, symbol_name, callable_obj: {"module": module_name, "symbol": symbol_name, "callable": True, "backend_exposed": False},
+        lambda module_name, symbol_name, callable_obj: {"origin_kind": "usar", "module": module_name, "symbol": symbol_name, "sanitized": True, "public_api": True, "callable": True, "backend_exposed": False},
     )
 
     cmd = factory()
@@ -105,7 +105,7 @@ def test_repl_contract_sintaxis_usar_compat_parser_semantica_plana_texto_sin_pre
     monkeypatch.setattr(
         core_interpreter_module,
         "build_and_validate_usar_symbol_metadata",
-        lambda module_name, symbol_name, callable_obj: {"module": module_name, "symbol": symbol_name, "callable": True, "backend_exposed": False},
+        lambda module_name, symbol_name, callable_obj: {"origin_kind": "usar", "module": module_name, "symbol": symbol_name, "sanitized": True, "public_api": True, "callable": True, "backend_exposed": False},
     )
 
     cmd = factory()
@@ -161,7 +161,7 @@ def test_repl_contract_sintaxis_usar_compat_parser_semantica_plana_numpy_restrin
     monkeypatch.setattr(
         core_interpreter_module,
         "build_and_validate_usar_symbol_metadata",
-        lambda module_name, symbol_name, callable_obj: {"module": module_name, "symbol": symbol_name, "callable": True, "backend_exposed": False},
+        lambda module_name, symbol_name, callable_obj: {"origin_kind": "usar", "module": module_name, "symbol": symbol_name, "sanitized": True, "public_api": True, "callable": True, "backend_exposed": False},
     )
 
     cmd = factory()
@@ -266,7 +266,7 @@ def test_repl_contract_sintaxis_usar_compat_parser_semantica_plana_colision_no_s
     monkeypatch.setattr(
         core_interpreter_module,
         "build_and_validate_usar_symbol_metadata",
-        lambda module_name, symbol_name, callable_obj: {"module": module_name, "symbol": symbol_name, "callable": True, "backend_exposed": False},
+        lambda module_name, symbol_name, callable_obj: {"origin_kind": "usar", "module": module_name, "symbol": symbol_name, "sanitized": True, "public_api": True, "callable": True, "backend_exposed": False},
     )
 
     cmd = factory()
@@ -301,7 +301,7 @@ def test_repl_rechazo_externo_no_inyecta_simbolos(factory, executor, get_interp,
     monkeypatch.setattr(
         core_interpreter_module,
         "build_and_validate_usar_symbol_metadata",
-        lambda module_name, symbol_name, callable_obj: {"module": module_name, "symbol": symbol_name, "callable": True, "backend_exposed": False},
+        lambda module_name, symbol_name, callable_obj: {"origin_kind": "usar", "module": module_name, "symbol": symbol_name, "sanitized": True, "public_api": True, "callable": True, "backend_exposed": False},
     )
 
     cmd = factory()
@@ -561,7 +561,7 @@ def test_repl_contract_resuelve_usar_datos_y_tiempo(factory, executor, get_inter
     monkeypatch.setattr(
         core_interpreter_module,
         "build_and_validate_usar_symbol_metadata",
-        lambda module_name, symbol_name, callable_obj: {"module": module_name, "symbol": symbol_name, "callable": True, "backend_exposed": False},
+        lambda module_name, symbol_name, callable_obj: {"origin_kind": "usar", "module": module_name, "symbol": symbol_name, "sanitized": True, "public_api": True, "callable": True, "backend_exposed": False},
     )
 
     cmd = factory()
@@ -790,7 +790,7 @@ def test_repl_usar_datos_longitud_salida_exacta(factory, executor, monkeypatch, 
     monkeypatch.setattr(
         core_interpreter_module,
         "build_and_validate_usar_symbol_metadata",
-        lambda module_name, symbol_name, callable_obj: {"module": module_name, "symbol": symbol_name, "callable": True, "backend_exposed": False},
+        lambda module_name, symbol_name, callable_obj: {"origin_kind": "usar", "module": module_name, "symbol": symbol_name, "sanitized": True, "public_api": True, "callable": True, "backend_exposed": False},
     )
 
     cmd = factory()
@@ -1128,7 +1128,7 @@ def test_regresion_metadata_usar_none_pre_auditoria(factory, executor, get_inter
     monkeypatch.setattr(
         core_interpreter_module,
         "build_and_validate_usar_symbol_metadata",
-        lambda module_name, symbol_name, callable_obj: {"module": module_name, "symbol": symbol_name, "callable": True, "backend_exposed": False},
+        lambda module_name, symbol_name, callable_obj: {"origin_kind": "usar", "module": module_name, "symbol": symbol_name, "sanitized": True, "public_api": True, "callable": True, "backend_exposed": False},
     )
 
     cmd = factory()
@@ -1139,6 +1139,18 @@ def test_regresion_metadata_usar_none_pre_auditoria(factory, executor, get_inter
     executor(cmd, "var xs = [1, 2, 3]")
 
     executor(cmd, 'usar "datos"')
+    metadata_longitud = interp._validador._metadata_simbolos_usar.get("longitud")
+    if not isinstance(metadata_longitud, dict):
+        metadata_longitud = interp._usar_symbol_metadata.get("longitud")
+    assert isinstance(metadata_longitud, dict)
+    assert metadata_longitud["origin_kind"] == "usar"
+    assert metadata_longitud["module"] == "datos"
+    assert metadata_longitud["symbol"] == "longitud"
+    assert metadata_longitud["sanitized"] is True
+    assert metadata_longitud["public_api"] is True
+    assert metadata_longitud["backend_exposed"] is False
+    assert metadata_longitud["callable"] is True
+
     executor(cmd, "imprimir(longitud(xs))")
     executor(cmd, "imprimir(longitud([1, 2, 3]))")
 
@@ -1151,6 +1163,7 @@ def test_regresion_metadata_usar_none_pre_auditoria(factory, executor, get_inter
     assert lineas_datos.count("3") >= 2
 
     executor(cmd, 'usar "numero"')
+    assert callable(interp.obtener_variable("es_finito"))
     executor(cmd, "imprimir(es_finito(10))")
     salida_numero = capsys.readouterr()
     lineas_numero = [linea.strip() for linea in salida_numero.out.splitlines() if linea.strip()]

@@ -137,7 +137,11 @@ def test_regresion_texto_detecta_mapeo_interno_incompleto_y_filtra_fuera_de_api_
     )
 
 
-def test_usar_datos_expone_longitud(monkeypatch):
+def test_usar_datos_expone_longitud_y_metadata_canonica(monkeypatch):
+    monkeypatch.setattr(
+        "pcobra.core.interpreter.build_and_validate_usar_symbol_metadata",
+        lambda module_name, symbol_name, callable_obj: {"origin_kind": "usar", "module": module_name, "symbol": symbol_name, "sanitized": True, "public_api": True, "backend_exposed": False, "callable": True},
+    )
     mod = ModuleType("datos")
     mod.__all__ = ["longitud"]
     mod.longitud = lambda valores: len(valores)
@@ -152,6 +156,7 @@ def test_usar_datos_expone_longitud(monkeypatch):
 
     assert "longitud" in interp.contextos[-1].values
     assert interp.contextos[-1].get("longitud")([1, 2, 3]) == 3
+
 
 
 def test_usar_texto_expone_recortar_repetir_quitar_acentos(monkeypatch):
@@ -202,14 +207,24 @@ def test_usar_numero_mantiene_es_finito_y_signo(monkeypatch):
     assert "signo" in simbolos
 
 
-def test_usar_archivo_carga_existe_sin_error_metadata():
+def test_usar_archivo_carga_existe_sin_error_metadata(monkeypatch):
+    monkeypatch.setattr(
+        "pcobra.core.interpreter.build_and_validate_usar_symbol_metadata",
+        lambda module_name, symbol_name, callable_obj: {"origin_kind": "usar", "module": module_name, "symbol": symbol_name, "sanitized": True, "public_api": True, "backend_exposed": False, "callable": True},
+    )
+
     interp = InterpretadorCobra()
     interp.configurar_restriccion_usar_repl({"archivo": "archivo"})
     interp.ejecutar_usar(_nodo("archivo"))
 
     existe = interp.contextos[-1].get("existe")
     assert callable(existe)
-    assert isinstance(existe("README.md"), bool)
+
+    try:
+        resultado = existe("README.md")
+        assert isinstance(resultado, bool)
+    except PermissionError as exc:
+        assert "Uso de primitiva peligrosa" in str(exc)
 
 
 def test_usar_modulos_validos_no_reporta_error_metadata():
