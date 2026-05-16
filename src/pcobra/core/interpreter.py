@@ -2188,14 +2188,23 @@ class InterpretadorCobra:
                 raise ImportError(mensaje_usuario)
 
             # Fase A: detectar colisiones de forma completa antes de definir.
-            metadata_por_simbolo = {
-                nombre: build_and_validate_usar_symbol_metadata(
+            metadata_por_simbolo = {}
+            for nombre, simbolo in simbolos_saneados:
+                metadata_simbolo = build_and_validate_usar_symbol_metadata(
                     module_name=nodo.modulo,
                     symbol_name=nombre,
                     callable_obj=simbolo,
                 )
-                for nombre, simbolo in simbolos_saneados
-            }
+                # Refuerza explícitamente el contrato canónico durante la fase
+                # de preflight para evitar mutaciones parciales aguas abajo.
+                metadata_simbolo["module"] = nodo.modulo
+                metadata_simbolo["origin_kind"] = "usar"
+                metadata_simbolo["sanitized"] = True
+                metadata_simbolo["public_api"] = True
+                metadata_por_simbolo[nombre] = validate_usar_symbol_metadata(
+                    nombre,
+                    metadata_simbolo,
+                )
             conflictos = self._detectar_conflictos_usar_en_contexto(
                 simbolos_saneados,
                 metadata_por_simbolo=metadata_por_simbolo,
