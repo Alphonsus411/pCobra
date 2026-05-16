@@ -7,9 +7,12 @@ import pytest
 from pcobra.cobra.cli.commands.interactive_cmd import InteractiveCommand
 from pcobra.cobra.cli.commands_v2.repl_cmd import ReplCommandV2
 from pcobra.core import usar_loader as core_usar_loader
+from pcobra.cobra import usar_loader as cli_usar_loader
 from pcobra.cobra.core.runtime import InterpretadorCobra
 from pcobra.core.ast_nodes import NodoUsar
 from pcobra.cobra.usar_policy import REPL_COBRA_MODULE_MAP
+import pcobra.core.interpreter as core_interpreter_module
+import pcobra.core.usar_symbol_policy as usar_symbol_policy_module
 
 
 def _modulo_numero_stub() -> ModuleType:
@@ -55,7 +58,21 @@ def test_repl_contract_sintaxis_usar_compat_parser_semantica_plana_numero_sin_pr
             return mod_numero
         raise ModuleNotFoundError(nombre)
 
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre: _resolver_modulo(nombre))
     monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: _resolver_modulo(nombre))
+    monkeypatch.setattr(cli_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: _resolver_modulo(nombre))
+
+    monkeypatch.setattr(
+        core_interpreter_module,
+        "build_and_validate_usar_symbol_metadata",
+        lambda module_name, symbol_name, callable_obj: {"module": module_name, "symbol": symbol_name, "callable": True, "backend_exposed": False},
+    )
+
+    monkeypatch.setattr(
+        usar_symbol_policy_module,
+        "build_and_validate_usar_symbol_metadata",
+        lambda module_name, symbol_name, callable_obj: {"module": module_name, "symbol": symbol_name, "callable": True, "backend_exposed": False},
+    )
 
     cmd = factory()
     interp = get_interp(cmd)
@@ -82,7 +99,14 @@ def test_repl_contract_sintaxis_usar_compat_parser_semantica_plana_texto_sin_pre
             return mod_texto
         raise ModuleNotFoundError(nombre)
 
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre: _resolver_modulo(nombre))
     monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: _resolver_modulo(nombre))
+    monkeypatch.setattr(cli_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: _resolver_modulo(nombre))
+    monkeypatch.setattr(
+        core_interpreter_module,
+        "build_and_validate_usar_symbol_metadata",
+        lambda module_name, symbol_name, callable_obj: {"module": module_name, "symbol": symbol_name, "callable": True, "backend_exposed": False},
+    )
 
     cmd = factory()
     interp = get_interp(cmd)
@@ -131,7 +155,14 @@ def test_repl_contract_sintaxis_usar_compat_parser_semantica_plana_numpy_restrin
             return mod_numero
         raise ModuleNotFoundError(nombre)
 
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre: _resolver_modulo(nombre))
     monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: _resolver_modulo(nombre))
+    monkeypatch.setattr(cli_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: _resolver_modulo(nombre))
+    monkeypatch.setattr(
+        core_interpreter_module,
+        "build_and_validate_usar_symbol_metadata",
+        lambda module_name, symbol_name, callable_obj: {"module": module_name, "symbol": symbol_name, "callable": True, "backend_exposed": False},
+    )
 
     cmd = factory()
     interp = get_interp(cmd)
@@ -229,7 +260,14 @@ def test_repl_contract_sintaxis_usar_compat_parser_semantica_plana_colision_no_s
             return mod_texto
         raise ModuleNotFoundError(nombre)
 
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre: _resolver_modulo(nombre))
     monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: _resolver_modulo(nombre))
+    monkeypatch.setattr(cli_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: _resolver_modulo(nombre))
+    monkeypatch.setattr(
+        core_interpreter_module,
+        "build_and_validate_usar_symbol_metadata",
+        lambda module_name, symbol_name, callable_obj: {"module": module_name, "symbol": symbol_name, "callable": True, "backend_exposed": False},
+    )
 
     cmd = factory()
     interp = get_interp(cmd)
@@ -257,7 +295,14 @@ def test_repl_rechazo_externo_no_inyecta_simbolos(factory, executor, get_interp,
             return mod_numero
         raise ModuleNotFoundError(nombre)
 
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre: _resolver_modulo(nombre))
     monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: _resolver_modulo(nombre))
+    monkeypatch.setattr(cli_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: _resolver_modulo(nombre))
+    monkeypatch.setattr(
+        core_interpreter_module,
+        "build_and_validate_usar_symbol_metadata",
+        lambda module_name, symbol_name, callable_obj: {"module": module_name, "symbol": symbol_name, "callable": True, "backend_exposed": False},
+    )
 
     cmd = factory()
     interp = get_interp(cmd)
@@ -510,7 +555,14 @@ def test_repl_contract_resuelve_usar_datos_y_tiempo(factory, executor, get_inter
             return mod_tiempo
         raise ModuleNotFoundError(nombre)
 
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre: _resolver_modulo(nombre))
     monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: _resolver_modulo(nombre))
+    monkeypatch.setattr(cli_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: _resolver_modulo(nombre))
+    monkeypatch.setattr(
+        core_interpreter_module,
+        "build_and_validate_usar_symbol_metadata",
+        lambda module_name, symbol_name, callable_obj: {"module": module_name, "symbol": symbol_name, "callable": True, "backend_exposed": False},
+    )
 
     cmd = factory()
     interp = get_interp(cmd)
@@ -732,7 +784,14 @@ def test_repl_usar_datos_longitud_salida_exacta(factory, executor, monkeypatch, 
             return mod_datos
         raise ModuleNotFoundError(nombre)
 
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre: _resolver_modulo(nombre))
     monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: _resolver_modulo(nombre))
+    monkeypatch.setattr(cli_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: _resolver_modulo(nombre))
+    monkeypatch.setattr(
+        core_interpreter_module,
+        "build_and_validate_usar_symbol_metadata",
+        lambda module_name, symbol_name, callable_obj: {"module": module_name, "symbol": symbol_name, "callable": True, "backend_exposed": False},
+    )
 
     cmd = factory()
     executor(cmd, 'usar "datos"')
@@ -1036,3 +1095,77 @@ def test_repl_usar_numpy_error_explicito_corto_sin_traceback_en_modo_normal(caps
 
     salida = capsys.readouterr().out
     assert "Traceback" not in salida
+
+
+@pytest.mark.parametrize(
+    ("factory", "executor", "get_interp"),
+    [
+        (lambda: InteractiveCommand(InterpretadorCobra()), lambda cmd, code: cmd.ejecutar_codigo(code), lambda cmd: cmd.interpretador),
+        (ReplCommandV2, lambda cmd, code: cmd._ejecutar_en_modo_normal(code), lambda cmd: cmd._delegate.interpretador),
+    ],
+)
+def test_regresion_metadata_usar_none_pre_auditoria(factory, executor, get_interp, capsys, monkeypatch):
+    """regresion_metadata_usar_none_pre_auditoria"""
+    mod_datos = _modulo_datos_stub()
+    mod_numero = _modulo_numero_stub()
+    mod_archivo = ModuleType("archivo")
+    mod_archivo.__all__ = ["existe"]
+    mod_archivo.existe = lambda _ruta: True
+    mod_archivo.__file__ = "/workspace/pCobra/src/pcobra/corelibs/archivo.py"
+
+    def _resolver_modulo(nombre: str, **_kwargs):
+        if nombre == "datos":
+            return mod_datos
+        if nombre == "numero":
+            return mod_numero
+        if nombre == "archivo":
+            return mod_archivo
+        raise ModuleNotFoundError(nombre)
+
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre: _resolver_modulo(nombre))
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: _resolver_modulo(nombre))
+    monkeypatch.setattr(cli_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: _resolver_modulo(nombre))
+    monkeypatch.setattr(
+        core_interpreter_module,
+        "build_and_validate_usar_symbol_metadata",
+        lambda module_name, symbol_name, callable_obj: {"module": module_name, "symbol": symbol_name, "callable": True, "backend_exposed": False},
+    )
+
+    cmd = factory()
+    interp = get_interp(cmd)
+
+    assert isinstance(interp._validador._metadata_simbolos_usar, dict)
+
+    executor(cmd, "var xs = [1, 2, 3]")
+
+    executor(cmd, 'usar "datos"')
+    executor(cmd, "imprimir(longitud(xs))")
+    executor(cmd, "imprimir(longitud([1, 2, 3]))")
+
+    salida_datos = capsys.readouterr()
+    assert "invalid_container" not in salida_datos.out
+    assert "NoneType" not in salida_datos.out
+    assert "invalid_container" not in salida_datos.err
+    assert "NoneType" not in salida_datos.err
+    lineas_datos = [linea.strip() for linea in salida_datos.out.splitlines() if linea.strip()]
+    assert lineas_datos.count("3") >= 2
+
+    executor(cmd, 'usar "numero"')
+    executor(cmd, "imprimir(es_finito(10))")
+    salida_numero = capsys.readouterr()
+    lineas_numero = [linea.strip() for linea in salida_numero.out.splitlines() if linea.strip()]
+    assert lineas_numero and lineas_numero[-1] == "verdadero"
+
+    executor(cmd, 'usar "archivo"')
+    executor(cmd, 'imprimir(existe("README.md"))')
+    salida_archivo = capsys.readouterr()
+    combinado_archivo = f"{salida_archivo.out}\n{salida_archivo.err}"
+    assert "_metadata_simbolos_usar" not in combinado_archivo
+    assert "NoneType" not in combinado_archivo
+
+    lineas_archivo = [linea.strip() for linea in salida_archivo.out.splitlines() if linea.strip()]
+    ultimo = lineas_archivo[-1] if lineas_archivo else ""
+    assert (
+        ultimo in {"verdadero", "falso"}
+        or "Uso de primitiva peligrosa" in combinado_archivo
+    )
