@@ -259,11 +259,6 @@ USAR_SYMBOL_METADATA_LEGACY_KEYS = frozenset(
 USAR_SYMBOL_METADATA_OPTIONAL_KEYS = frozenset(
     {
         "python_module",
-        "origen_tipo",
-        "is_public_export",
-        "safe_wrapper",
-        "introduced_by",
-        "introduced_by_usar",
         "callable_id",
         "stable_signature",
     }
@@ -361,7 +356,10 @@ def _normalizar_metadata_simbolo_usar(nombre: str, metadata: object) -> dict[str
     - ``callable`` (bool): indica explícitamente si el símbolo invocable es callable.
 
     Claves legacy se aceptan solo por compatibilidad histórica y no pueden
-    reemplazar ni contradecir el contrato canónico.
+    reemplazar ni contradecir el contrato canónico. Tanto esas claves como las
+    opcionales aceptadas forman parte de un snapshot estable e inmutable durante
+    todo el ciclo (`usar` -> registro -> auditoría): el validador fail-closed
+    exige igualdad estructural estricta y rechaza mutaciones inesperadas.
     """
     if not isinstance(metadata, dict):
         raise ValueError(f"Metadata inválida para símbolo usar '{nombre}': tipo no permitido")
