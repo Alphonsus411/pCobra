@@ -1,3 +1,4 @@
+from copy import deepcopy
 from io import StringIO
 from unittest.mock import patch
 
@@ -161,13 +162,8 @@ def test_metadata_usar_archivo_existe_cadena_completa():
     assert metadata["origen_modulo"] == "archivo"
     assert metadata["canonical_module"] == "archivo"
     assert metadata["origin_module"] == "archivo"
-    assert metadata["origen_tipo"] == "public_wrapper"
-    assert metadata["is_public_export"] is True
     assert metadata["public_api"] is True
     assert metadata["is_sanitized_wrapper"] is True
-    assert metadata["safe_wrapper"] is True
-    assert metadata["introduced_by"] == "usar"
-    assert metadata["introduced_by_usar"] is True
     assert metadata["python_module"] in {
         "pcobra.standard_library.archivo",
         "cobra.standard_library.archivo",
@@ -177,8 +173,7 @@ def test_metadata_usar_archivo_existe_cadena_completa():
     assert metadata_validador["module"] == "archivo"
     assert metadata_validador["origen_modulo"] == "archivo"
     assert metadata_validador["canonical_module"] == "archivo"
-    assert metadata_validador["origen_tipo"] == "public_wrapper"
-    assert metadata_validador["introduced_by_usar"] is True
+    assert metadata_validador["stable_signature"] == metadata["stable_signature"]
 
 
 def test_usar_metadata_minima_y_consistente_entre_interprete_y_validador():
@@ -188,12 +183,16 @@ def test_usar_metadata_minima_y_consistente_entre_interprete_y_validador():
     interp.ejecutar_ast(ast)
 
     requeridos = {
+        "origin_kind",
         "module",
+        "symbol",
+        "sanitized",
+        "callable",
         "origen_modulo",
         "exported_name",
         "is_sanitized_wrapper",
         "public_api",
-        "introduced_by_usar",
+        "backend_exposed",
     }
 
     for nombre, metadata in interp._usar_symbol_metadata.items():
@@ -202,17 +201,37 @@ def test_usar_metadata_minima_y_consistente_entre_interprete_y_validador():
         assert isinstance(metadata, dict)
         assert isinstance(interp._validador._metadata_simbolos_usar[nombre], dict)
         assert metadata["module"] == "archivo"
+        assert metadata["origin_kind"] == "usar"
         assert metadata["origen_modulo"] == "archivo"
+        assert metadata["symbol"] == nombre
         assert metadata["exported_name"] == nombre
+        assert metadata["sanitized"] is True
+        assert isinstance(metadata["callable"], bool)
         assert metadata["is_sanitized_wrapper"] is True
         assert metadata["public_api"] is True
-        assert metadata["introduced_by_usar"] is True
+        assert metadata["backend_exposed"] is False
 
         metadata_validador = interp._validador._metadata_simbolos_usar[nombre]
-        for clave in ("canonical_module", "origin_module", "safe_wrapper", "introduced_by"):
+        for clave in ("canonical_module", "origin_module", "callable_id", "stable_signature"):
             assert clave in metadata
             assert clave in metadata_validador
         assert metadata_validador == metadata
+
+
+def test_roundtrip_metadata_usar_registro_y_sincronizacion_sin_mutaciones():
+    interp = InterpretadorCobra()
+    ast = generar_ast('usar "archivo"')
+    interp.ejecutar_ast(ast)
+
+    metadata_original = deepcopy(interp._usar_symbol_metadata)
+    metadata_validador_original = deepcopy(interp._validador._metadata_simbolos_usar)
+
+    # Ejecutar una segunda fase para forzar validación/sincronización en runtime.
+    interp.ejecutar_ast(generar_ast('imprimir(existe("README.md"))'))
+
+    assert interp._usar_symbol_metadata == metadata_original
+    assert interp._validador._metadata_simbolos_usar == metadata_validador_original
+    assert interp._usar_symbol_metadata == interp._validador._metadata_simbolos_usar
 
 
 def test_usar_detecta_divergencia_metadata_interprete_y_validador():
