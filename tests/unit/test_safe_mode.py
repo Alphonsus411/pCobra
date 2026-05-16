@@ -234,6 +234,34 @@ def test_roundtrip_metadata_usar_registro_y_sincronizacion_sin_mutaciones():
     assert interp._usar_symbol_metadata == interp._validador._metadata_simbolos_usar
 
 
+def test_sync_no_destructiva_no_muta_metadata_en_sentencia_sin_usar():
+    interp = InterpretadorCobra()
+    interp.ejecutar_ast(generar_ast("imprimir(1)"))
+    assert interp._usar_symbol_metadata == {}
+    assert interp._validador._metadata_simbolos_usar == {}
+
+
+def test_repl_incremental_usar_conserva_metadata_entre_sentencias():
+    interp = InterpretadorCobra()
+
+    # sentencia 1: sin usar, no muta metadata
+    interp.ejecutar_ast(generar_ast("imprimir(1)"))
+    assert interp._usar_symbol_metadata == {}
+    assert interp._validador._metadata_simbolos_usar == {}
+
+    # sentencia 2: usar agrega metadata
+    interp.ejecutar_ast(generar_ast('usar "archivo"'))
+    metadata_s2 = deepcopy(interp._usar_symbol_metadata)
+    metadata_val_s2 = deepcopy(interp._validador._metadata_simbolos_usar)
+    assert "existe" in metadata_s2
+    assert metadata_s2 == metadata_val_s2
+
+    # sentencia 3: reutiliza sin pérdida
+    interp.ejecutar_ast(generar_ast('imprimir(existe("README.md"))'))
+    assert interp._usar_symbol_metadata == metadata_s2
+    assert interp._validador._metadata_simbolos_usar == metadata_val_s2
+
+
 def test_usar_detecta_divergencia_metadata_interprete_y_validador():
     interp = InterpretadorCobra()
     ast = generar_ast('usar "archivo"\nimprimir(existe("README.md"))')

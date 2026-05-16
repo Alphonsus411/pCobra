@@ -930,6 +930,7 @@ class InterpretadorCobra:
         """Ejecuta la auditoría funcional únicamente durante la fase de ejecución."""
         if not self.in_execution() or not self.safe_mode or self._validador is None:
             return
+        self._sincronizar_metadata_usar_no_destructiva()
         validadores_registrables = []
         cursor = self._validador
         while cursor is not None:
@@ -988,6 +989,35 @@ class InterpretadorCobra:
             return f"tipo-invalido:{type(metadata).__name__}"
         serializado = json.dumps(metadata, sort_keys=True, ensure_ascii=False, default=repr)
         return hashlib.sha256(serializado.encode("utf-8")).hexdigest()
+
+    def _sincronizar_metadata_usar_no_destructiva(self) -> None:
+        """Sincroniza metadata de `usar` sin borrar contenedores existentes.
+
+        Estrategia:
+        - Crear contenedores únicamente durante inicialización.
+        - En ejecución, solo merge no destructivo de símbolos faltantes
+          o actualización del mismo símbolo (mismo módulo) cuando cambió.
+        """
+        if not self.safe_mode or self._validador is None:
+            return
+        metadata_validador = getattr(self._validador, "_metadata_simbolos_usar", None)
+        if not isinstance(metadata_validador, dict):
+            return
+        if not isinstance(self._usar_symbol_metadata, dict):
+            return
+        for nombre, metadata_interp in self._usar_symbol_metadata.items():
+            if not isinstance(metadata_interp, dict):
+                continue
+            metadata_val_actual = metadata_validador.get(nombre)
+            if metadata_val_actual is None:
+                metadata_validador[nombre] = dict(metadata_interp)
+                continue
+            if not isinstance(metadata_val_actual, dict):
+                continue
+            if metadata_val_actual == metadata_interp:
+                continue
+            if metadata_val_actual.get("module") == metadata_interp.get("module"):
+                metadata_validador[nombre] = dict(metadata_interp)
 
     def _asegurar_metadata_usar_sincronizada(self, *, etapa: str | None = None) -> None:
         if not self.safe_mode or self._validador is None:
@@ -2349,6 +2379,7 @@ class InterpretadorCobra:
                     str(metadata_simbolo["module"]),
                     metadata=dict(metadata_simbolo),
                 )
+                self._sincronizar_metadata_usar_no_destructiva()
                 self._trace_debug(f"[USAR_METADATA][POST_REGISTRO] {resumen}")
                 if str(metadata_simbolo.get("module")) == "archivo" and nombre == "existe":
                     self._trace_debug(
