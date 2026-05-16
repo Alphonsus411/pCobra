@@ -64,23 +64,18 @@ class ValidadorPrimitivaPeligrosa(ValidadorBase):
             return False, "existe no fue registrado por usar archivo"
 
         metadata = self._metadata_simbolos_usar.get(nodo.nombre)
-        # Rechazo por defecto si metadata falta o no es dict.
-        if not isinstance(metadata, dict):
-            return False, "metadata de usar inexistente o inválida"
+        if metadata is None:
+            return False, "metadata de usar inexistente"
 
-        # Validación explícita de contrato unificado para `existe`.
-        if metadata.get("origin_kind") != "usar":
-            return False, "metadata.origin_kind debe ser 'usar'"
-        if metadata.get("module") != "archivo":
+        # Única puerta de validación del contrato canónico.
+        try:
+            metadata_validada = validate_usar_symbol_metadata(nodo.nombre, metadata)
+        except ValueError as exc:
+            return False, str(exc)
+
+        # Restricción semántica adicional del validador (no reemplaza la validación canónica).
+        if metadata_validada.get("module") != "archivo":
             return False, "metadata.module debe ser 'archivo'"
-        if metadata.get("symbol") != "existe":
-            return False, "metadata.symbol debe ser 'existe'"
-        if metadata.get("sanitized") is not True:
-            return False, "metadata.sanitized debe ser True"
-        if metadata.get("public_api") is not True:
-            return False, "metadata.public_api debe ser True"
-        if metadata.get("backend_exposed") is not False:
-            return False, "metadata.backend_exposed debe ser False"
         return True, None
 
     def visit_llamada_funcion(self, nodo: NodoLlamadaFuncion):
