@@ -19,6 +19,7 @@ from pcobra.cobra.core.interpreter import InterpretadorCobra
 from pcobra.cobra.core.sandbox import validar_dependencias
 from pcobra.cobra.core.semantic_validators import PrimitivaPeligrosaError, construir_cadena
 from pcobra.cobra.cli.commands.base import BaseCommand
+from pcobra.cobra.cli.execution_pipeline import construir_interprete_seguro_canonico
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.services.format_service import format_code_with_black
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
@@ -153,8 +154,10 @@ class ProfileCommand(BaseCommand):
 
         try:
             profiler.enable()
-            InterpretadorCobra(
-                safe_mode=seguro, extra_validators=extra_validators
+            construir_interprete_seguro_canonico(
+                interpretador_cls=InterpretadorCobra,
+                safe_mode=seguro,
+                extra_validators=extra_validators,
             ).ejecutar_ast(ast)
             profiler.disable()
             

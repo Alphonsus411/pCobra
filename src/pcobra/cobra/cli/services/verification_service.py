@@ -7,6 +7,7 @@ from unittest.mock import patch
 
 from pcobra.cobra.build import backend_pipeline
 from pcobra.cobra.cli.i18n import _
+from pcobra.cobra.cli.execution_pipeline import construir_interprete_seguro_canonico
 from pcobra.cobra.cli.target_policies import VERIFICATION_EXECUTABLE_TARGETS
 from pcobra.cobra.core import Lexer, Parser
 from pcobra.cobra.core.interpreter import InterpretadorCobra
@@ -84,7 +85,11 @@ def execute_runtime_verification(archivo: str, lenguajes: list[str]) -> int:
     ast = Parser(tokens).parsear()
 
     with patch("sys.stdout", new_callable=StringIO) as out:
-        InterpretadorCobra().ejecutar_ast(ast)
+        construir_interprete_seguro_canonico(
+            interpretador_cls=InterpretadorCobra,
+            safe_mode=True,
+            extra_validators=None,
+        ).ejecutar_ast(ast)
     expected = out.getvalue().replace("\r\n", "\n")
 
     for language in lenguajes:

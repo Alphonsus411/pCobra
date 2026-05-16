@@ -66,16 +66,17 @@ def construir_script_sandbox_canonico(
     """Genera un script sandbox con imports canónicos del runtime Cobra."""
 
     extra_repr = repr(extra_validators if extra_validators is not None else None)
-    safe_mode_fragment = (
+    kwargs_fragment = (
         ""
         if safe_mode is None
         else f", safe_mode={safe_mode!r}, extra_validators={extra_repr}"
     )
     script = (
         "from pcobra.cobra.cli.execution_pipeline import prevalidar_y_parsear_codigo\n"
+        "from pcobra.cobra.cli.execution_pipeline import construir_interprete_seguro_canonico\n"
         "from pcobra.cobra.core.runtime import InterpretadorCobra\n"
         f"_ast = prevalidar_y_parsear_codigo({codigo!r})\n"
-        f"_interp = InterpretadorCobra({safe_mode_fragment.lstrip(', ')})\n"
+        f"_interp = construir_interprete_seguro_canonico(interpretador_cls=InterpretadorCobra{kwargs_fragment})\n"
         "_resultado = _interp.ejecutar_ast(_ast)\n"
     )
     if imprimir_resultado:
@@ -205,6 +206,47 @@ def construir_interprete(
     )
 
 
+def construir_interprete_seguro_canonico(
+    *,
+    interpretador_cls: Any,
+    safe_mode: bool,
+    extra_validators: Any,
+) -> Any:
+    """Factory canónico de runtime para intérprete CLI.
+
+    CONTRATO_RUNTIME_METADATA_USAR_INICIAL:
+    Toda creación/rehidratación de intérprete debe pasar por este factory para
+    garantizar inicialización mínima del runtime y consistencia de metadata
+    ``usar`` entre intérprete y validador.
+    """
+
+    interpretador = construir_interprete(
+        interpretador_cls=interpretador_cls,
+        safe_mode=safe_mode,
+        extra_validators=extra_validators,
+    )
+    asegurar_estado_runtime = getattr(interpretador, "asegurar_estado_runtime_inicial", None)
+    if callable(asegurar_estado_runtime):
+        asegurar_estado_runtime()
+
+    if not isinstance(getattr(interpretador, "_usar_symbol_metadata", None), dict):
+        raise TypeError(
+            "Invariante runtime violada: interpreter._usar_symbol_metadata debe ser dict."
+        )
+    if safe_mode and not hasattr(interpretador, "_validador"):
+        raise TypeError(
+            "Invariante runtime violada: en safe_mode=True debe existir interpreter._validador."
+        )
+    validador = getattr(interpretador, "_validador", None)
+    if validador is not None and not isinstance(
+        getattr(validador, "_metadata_simbolos_usar", None), dict
+    ):
+        raise TypeError(
+            "Invariante runtime violada: interpreter._validador._metadata_simbolos_usar debe ser dict."
+        )
+    return interpretador
+
+
 def resolver_interpretador_cls(
     *,
     module_name: str,
@@ -230,14 +272,11 @@ def preparar_interpretador(
         extra_validators=extra_validators,
         interpretador_cls=interpretador_cls,
     )
-    interpretador = construir_interprete(
+    interpretador = construir_interprete_seguro_canonico(
         interpretador_cls=interpretador_cls,
         safe_mode=opciones.safe_mode,
         extra_validators=opciones.validadores_extra,
     )
-    asegurar_estado_runtime = getattr(interpretador, "asegurar_estado_runtime_inicial", None)
-    if callable(asegurar_estado_runtime):
-        asegurar_estado_runtime()
     return InterpreterSetup(
         interpretador_cls=interpretador_cls,
         safe_mode=opciones.safe_mode,
