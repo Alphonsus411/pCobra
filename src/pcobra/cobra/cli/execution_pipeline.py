@@ -154,6 +154,11 @@ def validar_ast_seguro(
 ) -> None:
     """Aplica la cadena de validadores de seguridad sobre el AST."""
 
+    if interpretador is not None:
+        asegurar_estado_runtime = getattr(interpretador, "asegurar_estado_runtime_inicial", None)
+        if callable(asegurar_estado_runtime):
+            asegurar_estado_runtime()
+
     if validadores_extra is not None:
         if not isinstance(validadores_extra, list) or not all(
             isinstance(validador, ValidadorBase) for validador in validadores_extra
