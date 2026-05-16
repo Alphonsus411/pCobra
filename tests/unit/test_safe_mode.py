@@ -103,11 +103,9 @@ def test_usar_archivo_existe_readme_no_falla_por_metadata():
 
 
 def test_sintaxis_usar_sin_cadena_rechaza_con_error_claro():
-    interp = InterpretadorCobra()
-    ast = generar_ast('usar archivo')
+    with pytest.raises(Exception, match=r"Se esperaba una ruta de módulo entre comillas"):
+        generar_ast('usar archivo')
 
-    with pytest.raises(Exception, match=r"(cadena|string|literal)"):
-        interp.ejecutar_ast(ast)
 def test_usar_datos_longitud_builtin_permanece_en_3():
     interp = InterpretadorCobra()
     ast = generar_ast('usar "datos"\nvar xs = [1, 2, 3]\nimprimir(longitud(xs))\nimprimir(longitud([1,2,3]))')
