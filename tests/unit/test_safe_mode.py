@@ -567,6 +567,40 @@ def test_metadata_usar_error_debug_agrega_detalle_estructurado():
     assert "existe" in mensaje
 
 
+def test_preauditoria_sentencia_simple_con_lista_sin_usar_no_reporta_invalid_container_nonetype():
+    interp = InterpretadorCobra()
+
+    with patch("sys.stdout", new_callable=StringIO):
+        interp.ejecutar_ast(generar_ast('var xs = [1, 2, 3]'))
+
+    assert isinstance(interp._validador._metadata_simbolos_usar, dict)
+
+def test_aceptacion_repl_runtime_datos_numero_archivo_y_politica_numpy_en_modo_seguro():
+    interp = InterpretadorCobra()
+
+    with patch("sys.stdout", new_callable=StringIO) as salida:
+        interp.ejecutar_ast(
+            generar_ast(
+                'var xs = [1, 2, 3]\n'
+                'usar "datos"\n'
+                'imprimir(longitud(xs))\n'
+                'imprimir(longitud([1,2,3]))\n'
+                'usar "numero"\n'
+                'imprimir(es_finito(10))\n'
+                'usar "archivo"\n'
+                'imprimir(existe("README.md"))'
+            )
+        )
+
+    lineas = [linea.strip() for linea in salida.getvalue().splitlines() if linea.strip()]
+    assert lineas.count("3") >= 2
+    assert "verdadero" in lineas
+    assert lineas[-1] in {"verdadero", "falso"}
+
+    with pytest.raises(PermissionError, match=r"(modulo_fuera_catalogo_publico|módulo fuera del catálogo público)"):
+        interp.ejecutar_ast(generar_ast('usar "numpy"'))
+
+
 def test_metadata_usar_error_invalid_container_incluye_tipo_y_troubleshooting():
     interp = InterpretadorCobra()
     with patch("sys.stdout", new_callable=StringIO):
