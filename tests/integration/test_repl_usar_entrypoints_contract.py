@@ -960,6 +960,14 @@ def test_repl_archivo_hardening_no_expone_backend_crudo():
     with pytest.raises(NameError):
         cmd._delegate.interpretador.obtener_variable('_backend')
 
+
+def test_repl_usar_archivo_requiere_cadena_entre_comillas():
+    cmd = ReplCommandV2()
+    with pytest.raises(Exception, match=r"comillas|cadena"):
+        cmd._ejecutar_en_modo_normal("usar archivo")
+
+
+
 def test_repl_usar_idempotente_y_conflicto_real(monkeypatch):
     mod_numero = _modulo_numero_stub()
     monkeypatch.setattr(

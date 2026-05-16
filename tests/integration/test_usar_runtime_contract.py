@@ -201,6 +201,43 @@ def test_usar_numero_mantiene_es_finito_y_signo(monkeypatch):
     assert "signo" in simbolos
 
 
+def test_usar_archivo_carga_existe_sin_error_metadata():
+    interp = InterpretadorCobra()
+    interp.configurar_restriccion_usar_repl({"archivo": "archivo"})
+    interp.ejecutar_usar(_nodo("archivo"))
+
+    existe = interp.contextos[-1].get("existe")
+    assert callable(existe)
+    assert isinstance(existe("README.md"), bool)
+
+
+def test_usar_carga_modulos_publicos_datos_numero_texto():
+    interp = InterpretadorCobra()
+    interp.configurar_restriccion_usar_repl({"datos": "datos", "numero": "numero", "texto": "texto"})
+    interp.ejecutar_usar(_nodo("datos"))
+    interp.ejecutar_usar(_nodo("numero"))
+    interp.ejecutar_usar(_nodo("texto"))
+
+    simbolos = set(interp.contextos[-1].values.keys())
+    assert "longitud" in simbolos
+    assert "es_finito" in simbolos
+    assert "recortar" in simbolos
+
+
+def test_repl_funcional_minimo_datos_numero_archivo_via_runtime():
+    interp = InterpretadorCobra()
+    interp.configurar_restriccion_usar_repl({"datos": "datos", "numero": "numero", "archivo": "archivo"})
+
+    interp.ejecutar_usar(_nodo("datos"))
+    assert interp.contextos[-1].get("longitud")([1, 2, 3]) == 3
+
+    interp.ejecutar_usar(_nodo("numero"))
+    assert interp.contextos[-1].get("es_finito")(10) is True
+
+    interp.ejecutar_usar(_nodo("archivo"))
+    assert isinstance(interp.contextos[-1].get("existe")("README.md"), bool)
+
+
 def test_integridad_estatica_lexer_y_parser_sin_diff_inesperado():
     hashes_esperados = {
         "src/pcobra/core/lexer.py": "fbd130d88ec6255c1e966752730a7cb2e2311c50125d85df487fc67d55aaf61e",
