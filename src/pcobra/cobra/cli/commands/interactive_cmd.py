@@ -257,6 +257,9 @@ class InteractiveCommand(BaseCommand):
         """
         super().__init__()
         self.interpretador = interpretador
+        asegurar_estado_runtime = getattr(self.interpretador, "asegurar_estado_runtime_inicial", None)
+        if callable(asegurar_estado_runtime):
+            asegurar_estado_runtime()
         self._allow_insecure_fallback = False
         # Contrato de logging: no agregar handlers por comando; la emisión se
         # centraliza en root configurado desde ``pcobra.cli.configure_logging``.
@@ -996,10 +999,13 @@ class InteractiveCommand(BaseCommand):
         if self._interpretador_sesion is None:
             self._interpretador_sesion = self.interpretador
             self._configurar_restriccion_usar_repl()
-            return
-        if self.interpretador is not self._interpretador_sesion:
+        elif self.interpretador is not self._interpretador_sesion:
             self.interpretador = self._interpretador_sesion
             self._configurar_restriccion_usar_repl()
+
+        asegurar_estado_runtime = getattr(self.interpretador, "asegurar_estado_runtime_inicial", None)
+        if callable(asegurar_estado_runtime):
+            asegurar_estado_runtime()
 
     def _clasificar_error_repl(self, error: Exception) -> str:
         """Clasifica errores del REPL para un reporte único en el loop principal."""
