@@ -89,7 +89,10 @@ from .import_utils import (
 )
 from .utils import validar_ast_estructural, ErrorEstructuraAST
 from .errors import CondicionNoBooleanaError
-from .usar_symbol_policy import make_usar_symbol_metadata, validate_usar_symbol_metadata
+from .usar_symbol_policy import (
+    build_and_validate_usar_symbol_metadata,
+    validate_usar_symbol_metadata,
+)
 from .environment import Environment
 
 MODULES_PATH = _DEFAULT_MODULES_PATH
@@ -2133,7 +2136,7 @@ class InterpretadorCobra:
 
             # Fase A: detectar colisiones de forma completa antes de definir.
             metadata_por_simbolo = {
-                nombre: make_usar_symbol_metadata(
+                nombre: build_and_validate_usar_symbol_metadata(
                     module_name=nodo.modulo,
                     symbol_name=nombre,
                     callable_obj=simbolo,
@@ -2306,7 +2309,7 @@ class InterpretadorCobra:
             metadata_simbolo = metadata_por_simbolo.get(nombre)
             if metadata_simbolo is None:
                 continue
-            self._validar_metadata_usar_o_fallar(nombre, metadata_simbolo)
+            metadata_simbolo = validate_usar_symbol_metadata(nombre, metadata_simbolo)
             contexto_actual.define(nombre, simbolo)
             self._usar_symbol_metadata[nombre] = dict(metadata_simbolo)
             if self.safe_mode and self._validador is not None and hasattr(self._validador, "registrar_simbolo_publico_usar"):

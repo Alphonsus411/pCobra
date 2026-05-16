@@ -49,6 +49,8 @@ class ValidadorPrimitivaPeligrosa(ValidadorBase):
         Este método **solo** acepta metadata canónica ya validada por el contrato
         de ``usar`` (normalmente construida con
         :func:`pcobra.core.usar_symbol_policy.make_usar_symbol_metadata`).
+        Política fail-closed: si la metadata no respeta el contrato canónico, se
+        rechaza. Este método no reescribe ni corrige claves/valores.
         """
         if metadata is None:
             raise ValueError(

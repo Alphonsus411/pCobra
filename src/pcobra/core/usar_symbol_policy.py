@@ -325,6 +325,29 @@ def make_usar_symbol_metadata(
     }
 
 
+def build_and_validate_usar_symbol_metadata(
+    *,
+    module_name: str,
+    symbol_name: str,
+    callable_obj: object,
+) -> dict[str, object]:
+    """Fábrica canónica + validación final para metadata de ``usar``.
+
+    Este helper es la única ruta recomendada para construir metadata desde un
+    símbolo en memoria: crea la estructura con
+    :func:`make_usar_symbol_metadata`, valida con
+    :func:`validate_usar_symbol_metadata` y devuelve una copia normalizada para
+    almacenamiento/reinyección segura.
+    """
+    metadata = make_usar_symbol_metadata(
+        module_name=module_name,
+        symbol_name=symbol_name,
+        callable_obj=callable_obj,
+    )
+    metadata_validada = validate_usar_symbol_metadata(symbol_name, metadata)
+    return dict(metadata_validada)
+
+
 def _normalizar_metadata_simbolo_usar(nombre: str, metadata: object) -> dict[str, object]:
     """Normaliza e inspecciona metadata `usar` sin relajar seguridad.
 
