@@ -9,6 +9,7 @@ from pcobra.cobra.core.interpreter import InterpretadorCobra
 from pcobra.cobra.core.sandbox import ejecutar_en_contenedor, ejecutar_en_sandbox, ejecutar_en_sandbox_js
 from pcobra.cobra.build import backend_pipeline
 from pcobra.cobra.cli.i18n import _
+from pcobra.cobra.cli.execution_pipeline import construir_interprete_seguro_canonico
 from pcobra.cobra.cli.mode_policy import validar_politica_modo
 from pcobra.cobra.cli.services.contracts import TestRequest, normalize_test_request
 from pcobra.cobra.cli.target_policies import (
@@ -32,7 +33,11 @@ class TestService:
     SUPPORTED_LANGUAGES = target_cli_choices(VERIFICATION_EXECUTABLE_TARGETS)
 
     def __init__(self) -> None:
-        self._interprete = InterpretadorCobra()
+        self._interprete = construir_interprete_seguro_canonico(
+            interpretador_cls=InterpretadorCobra,
+            safe_mode=True,
+            extra_validators=None,
+        )
         self._logger = logging.getLogger(__name__)
 
     def run(self, request: TestRequest) -> int:

@@ -7,6 +7,7 @@ from pcobra.cobra.cli.commands.interactive_cmd import (
     SANDBOX_DOCKER_CHOICES,
 )
 from pcobra.cobra.cli.execution_pipeline import (
+    construir_interprete_seguro_canonico,
     prevalidar_y_parsear_codigo,
 )
 from pcobra.cobra.cli.i18n import _
@@ -32,7 +33,13 @@ class ReplCommandV2(BaseCommand):
     capability = "execute"
     def __init__(self) -> None:
         super().__init__()
-        self._delegate = InteractiveCommand(InterpretadorCobra())
+        self._delegate = InteractiveCommand(
+            construir_interprete_seguro_canonico(
+                interpretador_cls=InterpretadorCobra,
+                safe_mode=True,
+                extra_validators=None,
+            )
+        )
         self._delegate.name = self.name
         # Mantener una única instancia viva para todo el ciclo de la sesión.
         self._interpretador_persistente: Any | None = self._delegate.interpretador
