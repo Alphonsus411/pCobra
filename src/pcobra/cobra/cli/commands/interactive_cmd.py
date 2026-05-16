@@ -3,6 +3,8 @@ import os
 import re
 import sys
 import warnings
+import json
+import hashlib
 from typing import Optional, Any
 from types import TracebackType
 
@@ -556,6 +558,7 @@ class InteractiveCommand(BaseCommand):
         # Este camino ejecuta snippets interactivos normales sobre el intérprete
         # persistente para preservar la semántica incremental del lenguaje.
         modo_previo = self.mode
+        snapshot_inicio = self._debug_snapshot_sentencia_repl()
         try:
             ast = ast_preparseado if ast_preparseado is not None else prevalidar_y_parsear_codigo(codigo)
             # Si no viene AST preparseado, esta fase sigue siendo de análisis
@@ -589,6 +592,12 @@ class InteractiveCommand(BaseCommand):
             # Restaurar modo previo evita contaminar evaluaciones siguientes del REPL
             # y mantiene aislada la transición análisis -> ejecución de este snippet.
             self._fijar_modo_repl(modo_previo)
+        snapshot_fin = self._debug_snapshot_sentencia_repl()
+        self._debug_assert_invariantes_sentencia_repl(
+            inicio=snapshot_inicio,
+            fin=snapshot_fin,
+            codigo=codigo,
+        )
         self.logger.debug("[EXEC] Ejecutando AST en intérprete")
         self.logger.debug("[EVAL] Resultado de evaluación: %r", resultado)
         self._imprimir_resultado_repl(ast, resultado)
@@ -740,6 +749,48 @@ class InteractiveCommand(BaseCommand):
 
         nombre_nodo_ast = ast[0].__class__.__name__
         return match_nodo.group(1) == nombre_nodo_ast
+
+
+    @staticmethod
+    def _snapshot_usar_metadata(interp: Any) -> dict[str, Any]:
+        metadata = getattr(interp, "_usar_symbol_metadata", {})
+        if not isinstance(metadata, dict):
+            return {}
+        return {str(k): dict(v) if isinstance(v, dict) else v for k, v in metadata.items()}
+
+    @staticmethod
+    def _hash_estructural_metadata(metadata: dict[str, Any]) -> str:
+        serializado = json.dumps(metadata, sort_keys=True, ensure_ascii=False, default=str)
+        return hashlib.sha256(serializado.encode("utf-8")).hexdigest()
+
+    def _debug_assert_invariantes_sentencia_repl(
+        self,
+        *,
+        inicio: dict[str, Any],
+        fin: dict[str, Any],
+        codigo: str,
+    ) -> None:
+        if not __debug__ or not self._runtime_debug_enabled():
+            return
+
+        codigo_normalizado = codigo.strip()
+        contiene_usar = bool(codigo_normalizado) and "usar" in codigo_normalizado.lower()
+        if not contiene_usar:
+            assert inicio["hash"] == fin["hash"], (
+                "Invariante REPL violada: metadata `usar` cambió sin sentencia `usar`."
+            )
+
+        assert fin["keys"] >= inicio["keys"], (
+            "Invariante REPL violada: el número de claves de metadata `usar` no debe decrecer "
+            "sin reset explícito de sesión."
+        )
+
+    def _debug_snapshot_sentencia_repl(self) -> dict[str, Any]:
+        metadata = self._snapshot_usar_metadata(self.interpretador)
+        return {
+            "hash": self._hash_estructural_metadata(metadata),
+            "keys": len(metadata),
+        }
 
     def _imprimir_resultado_repl(self, ast: list[Any], resultado: Any) -> None:
         """Imprime el resultado del REPL cuando aplica contrato de echo."""
@@ -1201,7 +1252,10 @@ class InteractiveCommand(BaseCommand):
         # Contrato sandbox/setup: llamada encapsulada para evitar reutilización
         # accidental en flujo normal del REPL incremental.
         setup = self._ejecutar_pipeline_explicito_solo_setup_sandbox(interpretador_cls)
-        self.interpretador = setup.interpretador
+        # Invariante de sesión REPL: nunca sustituir el intérprete activo por
+        # una instancia nueva durante setup de sandbox. Solo normalizamos flags
+        # idempotentes y preservamos metadata acumulada de `usar`.
+        self._sincronizar_interpretador_sesion()
         self._configurar_restriccion_usar_repl()
         self._seguro_repl = setup.safe_mode
         self._extra_validators_repl = setup.validadores_extra
