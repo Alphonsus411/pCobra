@@ -23,6 +23,7 @@ else:
 from pcobra.cobra.core import Lexer
 from pcobra.cobra.core import Parser
 from pcobra.cobra.core.interpreter import InterpretadorCobra
+from pcobra.cobra.cli.execution_pipeline import construir_interprete_seguro_canonico
 
 try:  # pragma: no cover - dependencia opcional
     from jupyter_kernel import CobraKernel
@@ -155,7 +156,13 @@ class BenchThreadsCommand(BaseCommand):
 
     def _run_sequential(self) -> None:
         """Ejecuta código de forma secuencial."""
-        interp = InterpretadorCobra()
+        # CONTRATO: este factory canónico es obligatorio para preservar
+        # `_metadata_simbolos_usar` como `dict` y validar invariantes runtime.
+        interp = construir_interprete_seguro_canonico(
+            interpretador_cls=InterpretadorCobra,
+            safe_mode=True,
+            extra_validators=None,
+        )
         tokens = Lexer(SEQUENTIAL_CODE.read_text()).tokenizar()
         ast = Parser(tokens).parsear()
         interp.ejecutar_ast(ast)

@@ -22,6 +22,7 @@ from pcobra.cli import (
 from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.architecture.backend_policy import PUBLIC_BACKENDS, assert_public_targets_contract
 from pcobra.cobra.core.interpreter import InterpretadorCobra
+from pcobra.cobra.cli.execution_pipeline import construir_interprete_seguro_canonico
 from pcobra.cobra.cli.i18n import _, format_traceback, setup_gettext
 
 
@@ -347,7 +348,13 @@ class CliApplication:
         if self.parser and self.command_registry and self.interpreter:
             return
         setup_gettext()
-        self.interpreter = InterpretadorCobra()
+        # CONTRATO: este factory canónico es obligatorio para preservar
+        # `_metadata_simbolos_usar` como `dict` y validar invariantes runtime.
+        self.interpreter = construir_interprete_seguro_canonico(
+            interpretador_cls=InterpretadorCobra,
+            safe_mode=True,
+            extra_validators=None,
+        )
         self.command_registry = CommandRegistry(self.interpreter)
         self.parser = self._build_argument_parser()
 
