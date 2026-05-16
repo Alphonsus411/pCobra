@@ -167,7 +167,7 @@ def validar_ast_seguro(
         for nombre, metadata in metadata_usar.items():
             if not isinstance(metadata, dict):
                 continue
-            modulo = metadata.get("module") or metadata.get("canonical_module") or metadata.get("origin_module")
+            modulo = metadata.get("module")
             if not isinstance(modulo, str):
                 continue
             for validador_registrable in validadores_registrables:
