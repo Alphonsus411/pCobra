@@ -610,6 +610,22 @@ def test_metadata_usar_error_invalid_container_incluye_tipo_y_troubleshooting():
     assert "troubleshooting='container_metadata_debe_ser_dict'" in mensaje
 
 
+def test_regresion_metadata_none_se_normaliza_y_tipo_invalido_se_mantiene_en_invalid_container():
+    interp = InterpretadorCobra()
+    interp._validador._metadata_simbolos_usar = None
+
+    interp.asegurar_estado_runtime_inicial()
+
+    assert interp._validador._metadata_simbolos_usar == {}
+
+    interp._validador._metadata_simbolos_usar = []
+    with pytest.raises(PrimitivaPeligrosaError) as err:
+        interp.ejecutar_ast(generar_ast('imprimir("ok")'))
+    mensaje = str(err.value)
+    assert "codigo_interno='invalid_container'" in mensaje
+    assert "tipo='list'" in mensaje
+
+
 def test_metadata_usar_error_invalid_symbol_metadata_preserva_motivo_original():
     interp = InterpretadorCobra()
     with patch("sys.stdout", new_callable=StringIO):
