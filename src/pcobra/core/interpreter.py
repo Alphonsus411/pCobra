@@ -929,6 +929,23 @@ class InterpretadorCobra:
         except ValueError as exc:
             raise PrimitivaPeligrosaError(str(exc)) from exc
 
+    @staticmethod
+    def _detalle_debug_metadata_usar(
+        *,
+        symbol: str | None = None,
+        expected_keys: set[str] | None = None,
+        received_keys: set[str] | None = None,
+    ) -> str:
+        if not _usar_detalle_habilitado():
+            return ""
+        payload = {
+            "symbol": symbol,
+            "expected_keys": sorted(expected_keys) if expected_keys is not None else None,
+            "received_keys": sorted(received_keys) if received_keys is not None else None,
+            "validator_type": "validate_usar_symbol_metadata",
+        }
+        return f" detalle_debug={payload}"
+
     def _asegurar_metadata_usar_sincronizada(self, *, etapa: str | None = None) -> None:
         if not self.safe_mode or self._validador is None:
             return
@@ -938,7 +955,8 @@ class InterpretadorCobra:
             tipo_recibido = type(metadata_validador).__name__
             raise PrimitivaPeligrosaError(
                 "Metadata de validador inválida para símbolos usar: "
-                f"tipo inválido en _metadata_simbolos_usar (tipo='{tipo_recibido}').{detalle_etapa}"
+                f"tipo inválido en _metadata_simbolos_usar (tipo='{tipo_recibido}', codigo_interno='invalid_container')."
+                f"{self._detalle_debug_metadata_usar(received_keys=set())}{detalle_etapa}"
             )
         claves_interp = set(self._usar_symbol_metadata.keys())
         claves_validador = set(metadata_validador.keys())
@@ -948,7 +966,8 @@ class InterpretadorCobra:
             raise PrimitivaPeligrosaError(
                 "Divergencia de metadata usar entre intérprete y validador"
                 f": claves divergentes (faltantes_en_validador={faltantes_en_validador}, "
-                f"extras_en_validador={extras_en_validador}).{detalle_etapa}"
+                f"extras_en_validador={extras_en_validador}, codigo_interno='missing_keys')."
+                f"{self._detalle_debug_metadata_usar(expected_keys=claves_interp, received_keys=claves_validador)}{detalle_etapa}"
             )
         for nombre, metadata_interp in self._usar_symbol_metadata.items():
             try:
@@ -956,7 +975,9 @@ class InterpretadorCobra:
             except PrimitivaPeligrosaError as exc:
                 raise PrimitivaPeligrosaError(
                     "Metadata de validador inválida para símbolos usar: "
-                    f"metadata de intérprete inválida para símbolo '{nombre}' ({exc}).{detalle_etapa}"
+                    f"metadata de intérprete inválida para símbolo '{nombre}' "
+                    f"(codigo_interno='invalid_symbol_metadata', detalle={exc})."
+                    f"{self._detalle_debug_metadata_usar(symbol=nombre)}{detalle_etapa}"
                 ) from exc
             metadata_val = metadata_validador.get(nombre)
             try:
@@ -965,12 +986,15 @@ class InterpretadorCobra:
                 tipo_recibido = type(metadata_val).__name__
                 raise PrimitivaPeligrosaError(
                     "Metadata de validador inválida para símbolos usar: "
-                    f"metadata por símbolo inválida para '{nombre}' (tipo='{tipo_recibido}', detalle={exc}).{detalle_etapa}"
+                    f"metadata por símbolo inválida para '{nombre}' "
+                    f"(tipo='{tipo_recibido}', codigo_interno='invalid_symbol_metadata', detalle={exc})."
+                    f"{self._detalle_debug_metadata_usar(symbol=nombre)}{detalle_etapa}"
                 ) from exc
             if metadata_interp != metadata_val:
                 raise PrimitivaPeligrosaError(
                     "Divergencia de metadata usar entre intérprete y validador"
-                    f": metadata por símbolo no coincide (símbolo='{nombre}').{detalle_etapa}"
+                    f": metadata por símbolo no coincide (símbolo='{nombre}', codigo_interno='mismatch_payload')."
+                    f"{self._detalle_debug_metadata_usar(symbol=nombre, expected_keys=set(metadata_interp.keys()), received_keys=set(metadata_val.keys()))}{detalle_etapa}"
                 )
 
     def _contiene_yield(self, nodo, visitados_ids: set[int] | None = None):
