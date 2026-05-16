@@ -3,6 +3,7 @@
 import logging
 import os
 import hashlib
+import json
 from typing import Mapping, Optional
 
 from .lexer import (
@@ -913,6 +914,14 @@ class InterpretadorCobra:
                 validadores_registrables.append(cursor)
             cursor = getattr(cursor, "siguiente", None)
         self._asegurar_metadata_usar_sincronizada(etapa="pre-auditoría")
+        hash_interp = self._hash_estructural_metadata(self._usar_symbol_metadata)
+        hash_validador = self._hash_estructural_metadata(getattr(self._validador, "_metadata_simbolos_usar", {}))
+        if hash_interp != hash_validador:
+            raise PrimitivaPeligrosaError(
+                "Desincronización de metadata usar detectada antes de auditoría: "
+                f"hash intérprete='{hash_interp}' hash validador='{hash_validador}' "
+                "(codigo_interno='metadata_hash_mismatch', política='strict')."
+            )
         for nombre, metadata in (self._usar_symbol_metadata or {}).items():
             if not isinstance(metadata, dict):
                 continue
@@ -945,6 +954,14 @@ class InterpretadorCobra:
             "validator_type": "validate_usar_symbol_metadata",
         }
         return f" detalle_debug={payload}"
+
+    @staticmethod
+    def _hash_estructural_metadata(metadata: object) -> str:
+        """Calcula hash estable para detectar cambios estructurales de metadata."""
+        if not isinstance(metadata, dict):
+            return f"tipo-invalido:{type(metadata).__name__}"
+        serializado = json.dumps(metadata, sort_keys=True, ensure_ascii=False, default=repr)
+        return hashlib.sha256(serializado.encode("utf-8")).hexdigest()
 
     def _asegurar_metadata_usar_sincronizada(self, *, etapa: str | None = None) -> None:
         if not self.safe_mode or self._validador is None:
@@ -2293,11 +2310,25 @@ class InterpretadorCobra:
             contexto_actual.define(nombre, simbolo)
             self._usar_symbol_metadata[nombre] = dict(metadata_simbolo)
             if self.safe_mode and self._validador is not None and hasattr(self._validador, "registrar_simbolo_publico_usar"):
+                resumen = {
+                    "module": metadata_simbolo.get("module"),
+                    "symbol": metadata_simbolo.get("symbol"),
+                    "callable": metadata_simbolo.get("callable"),
+                    "public_api": metadata_simbolo.get("public_api"),
+                    "sanitized": metadata_simbolo.get("sanitized"),
+                }
+                self._trace_debug(f"[USAR_METADATA][PRE_REGISTRO] {resumen}")
                 self._validador.registrar_simbolo_publico_usar(
                     nombre,
                     str(metadata_simbolo["module"]),
                     metadata=dict(metadata_simbolo),
                 )
+                self._trace_debug(f"[USAR_METADATA][POST_REGISTRO] {resumen}")
+                if str(metadata_simbolo.get("module")) == "archivo" and nombre == "existe":
+                    self._trace_debug(
+                        "[USAR_TRACE][archivo.existe] confirmado wrapper sanitizado "
+                        f"(public_api={metadata_simbolo.get('public_api')}, sanitized={metadata_simbolo.get('sanitized')})"
+                    )
                 self._asegurar_metadata_usar_sincronizada(etapa="post-registro")
 
     def ejecutar_holobit(self, nodo):
