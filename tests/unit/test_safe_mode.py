@@ -496,3 +496,58 @@ def test_metadata_usar_error_debug_agrega_detalle_estructurado():
     assert "validate_usar_symbol_metadata" in mensaje
     assert "symbol" in mensaje
     assert "existe" in mensaje
+
+
+def test_metadata_usar_error_invalid_container_incluye_tipo_y_troubleshooting():
+    interp = InterpretadorCobra()
+    with patch("sys.stdout", new_callable=StringIO):
+        interp.ejecutar_ast(generar_ast('usar "archivo"\nimprimir(existe("README.md"))'))
+    interp._validador._metadata_simbolos_usar = []
+    with pytest.raises(PrimitivaPeligrosaError) as err:
+        interp.ejecutar_ast(generar_ast('imprimir(existe("README.md"))'))
+    mensaje = str(err.value)
+    assert "codigo_interno='invalid_container'" in mensaje
+    assert "tipo='list'" in mensaje
+    assert "troubleshooting='container_metadata_debe_ser_dict'" in mensaje
+
+
+def test_metadata_usar_error_invalid_symbol_metadata_preserva_motivo_original():
+    interp = InterpretadorCobra()
+    with patch("sys.stdout", new_callable=StringIO):
+        interp.ejecutar_ast(generar_ast('usar "archivo"\nimprimir(existe("README.md"))'))
+    interp._validador._metadata_simbolos_usar["existe"] = {"module": "archivo", "kind": "callable", "public_api": False, "sanitized": True}
+    with pytest.raises(PrimitivaPeligrosaError) as err:
+        interp.ejecutar_ast(generar_ast('imprimir(existe("README.md"))'))
+    mensaje = str(err.value)
+    assert "codigo_interno='invalid_symbol_metadata'" in mensaje
+    assert "símbolo 'existe'" in mensaje
+    assert "validation_reason='" in mensaje
+    assert "troubleshooting='metadata_validador_no_cumple_contrato'" in mensaje
+
+
+def test_metadata_usar_error_missing_keys_incluye_troubleshooting():
+    interp = InterpretadorCobra()
+    with patch("sys.stdout", new_callable=StringIO):
+        interp.ejecutar_ast(generar_ast('usar "archivo"\nimprimir(existe("README.md"))'))
+    interp._validador._metadata_simbolos_usar.pop("existe", None)
+    with pytest.raises(PrimitivaPeligrosaError) as err:
+        interp.ejecutar_ast(generar_ast('imprimir(existe("README.md"))'))
+    mensaje = str(err.value)
+    assert "codigo_interno='missing_keys'" in mensaje
+    assert "troubleshooting='claves_de_metadata_desincronizadas'" in mensaje
+
+
+def test_metadata_usar_error_mismatch_payload_incluye_detalle_simbolo_tipo_y_clave():
+    interp = InterpretadorCobra()
+    with patch("sys.stdout", new_callable=StringIO):
+        interp.ejecutar_ast(generar_ast('usar "archivo"\nimprimir(existe("README.md"))'))
+    interp._validador._metadata_simbolos_usar["existe"] = dict(interp._validador._metadata_simbolos_usar["existe"])
+    interp._validador._metadata_simbolos_usar["existe"]["module"] = "otro_modulo"
+    with pytest.raises(PrimitivaPeligrosaError) as err:
+        interp.ejecutar_ast(generar_ast('imprimir(existe("README.md"))'))
+    mensaje = str(err.value)
+    assert "codigo_interno='mismatch_payload'" in mensaje
+    assert "símbolo='existe'" in mensaje
+    assert "clave_esperada='module|kind|public_api|sanitized'" in mensaje
+    assert "tipo='dict'" in mensaje
+    assert "troubleshooting='payload_de_metadata_difiere'" in mensaje
