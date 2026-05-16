@@ -15,6 +15,7 @@ from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.utils.unicode_sanitize import sanitize_source_for_tokenizer
 from pcobra.cobra.cli.utils.validators import normalizar_validadores_extra
 from pcobra.cobra.core.runtime import ValidadorBase, construir_cadena
+from pcobra.core.usar_symbol_policy import validate_usar_symbol_metadata
 
 
 @dataclass(frozen=True)
@@ -144,6 +145,7 @@ def validar_ast_seguro(
     *,
     validadores_extra: Any,
     interpretador: Any | None = None,
+    validar_metadata_usar: bool = True,
     construir_cadena_fn: Callable[[Any], Any] = construir_cadena,
 ) -> None:
     """Aplica la cadena de validadores de seguridad sobre el AST."""
@@ -167,11 +169,21 @@ def validar_ast_seguro(
         for nombre, metadata in metadata_usar.items():
             if not isinstance(metadata, dict):
                 continue
-            modulo = metadata.get("module")
+            metadata_normalizada = dict(metadata)
+            if validar_metadata_usar:
+                metadata_normalizada = validate_usar_symbol_metadata(
+                    nombre,
+                    metadata_normalizada,
+                )
+            modulo = metadata_normalizada.get("module")
             if not isinstance(modulo, str):
                 continue
             for validador_registrable in validadores_registrables:
-                validador_registrable.registrar_simbolo_publico_usar(nombre, modulo, metadata=dict(metadata))
+                validador_registrable.registrar_simbolo_publico_usar(
+                    nombre,
+                    modulo,
+                    metadata=dict(metadata_normalizada),
+                )
     for nodo in ast:
         nodo.aceptar(validador)
 
