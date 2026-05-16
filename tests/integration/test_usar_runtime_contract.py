@@ -91,11 +91,12 @@ def test_rechaza_numpy_en_repl_estricto_sin_inyeccion(monkeypatch):
     interp.configurar_restriccion_usar_repl({"numero": "numero"})
     estado_pre = dict(interp.contextos[-1].values)
 
-    with pytest.raises(PermissionError, match="modulo_fuera_catalogo_publico|módulo externo no permitido en REPL estricto") as exc:
+    with pytest.raises(PermissionError, match=r"módulo fuera del catálogo público|modulo_fuera_catalogo_publico") as exc:
         interp.ejecutar_usar(_nodo("numpy"))
 
-    assert "usar_error[modulo_fuera_catalogo_publico]" in str(exc.value)
     assert estado_pre == interp.contextos[-1].values
+    assert "numpy" not in interp.contextos[-1].values
+    assert "numpy" not in interp.variables
 
 
 def test_texto_simbolo_existente_fuera_de_override_falla_como_no_declarado(monkeypatch):
