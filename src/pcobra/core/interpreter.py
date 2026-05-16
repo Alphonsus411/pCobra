@@ -516,10 +516,19 @@ class InterpretadorCobra:
         Este método es idempotente: solo crea contenedores cuando faltan o
         cuando están en ``None``, sin reescribir diccionarios ya poblados.
         """
-        self._normalizar_contenedor_metadata_usar_inicial()
+        self._normalizar_metadata_usar_en_inicializacion()
 
-    def _normalizar_contenedor_metadata_usar_inicial(self) -> None:
-        """Inicializa contenedores de metadata de `usar` solo en el arranque."""
+    def _normalizar_metadata_usar_en_inicializacion(self) -> None:
+        """Normaliza contenedores mínimos de metadata para etapa='inicialización'.
+
+        Reglas:
+        - Si falta ``_usar_symbol_metadata`` o está en ``None``, crear ``{}``.
+        - Si falta ``_metadata_simbolos_usar`` en validador o está en ``None``,
+          crear ``{}``.
+        - Si ``_metadata_simbolos_usar`` existe y no es ``dict``, no corregir de
+          forma silenciosa aquí; la validación estricta en etapa='pre-auditoría'
+          debe fallar con ``invalid_container``.
+        """
         if (not hasattr(self, "_usar_symbol_metadata")) or self._usar_symbol_metadata is None:
             self._usar_symbol_metadata = {}
 
@@ -1020,8 +1029,17 @@ class InterpretadorCobra:
                 metadata_validador[nombre] = dict(metadata_interp)
 
     def _asegurar_metadata_usar_sincronizada(self, *, etapa: str | None = None) -> None:
+        """Valida sincronización estricta para etapa='pre-auditoría'.
+
+        Política fail-closed: cualquier tipo inválido de contenedor dispara
+        ``invalid_container`` y aborta la ejecución segura.
+        """
         if not self.safe_mode or self._validador is None:
             return
+        self._validar_metadata_usar_en_ejecucion(etapa=etapa)
+
+    def _validar_metadata_usar_en_ejecucion(self, *, etapa: str | None = None) -> None:
+        """Valida metadata de `usar` en etapa='pre-auditoría' de forma estricta."""
         metadata_validador = getattr(self._validador, "_metadata_simbolos_usar", None)
         detalle_etapa = f" etapa='{etapa}'" if etapa else ""
         if not isinstance(metadata_validador, dict):
