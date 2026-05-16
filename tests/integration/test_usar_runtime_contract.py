@@ -212,6 +212,23 @@ def test_usar_archivo_carga_existe_sin_error_metadata():
     assert isinstance(existe("README.md"), bool)
 
 
+def test_usar_modulos_validos_no_reporta_error_metadata():
+    interp = InterpretadorCobra()
+    interp.configurar_restriccion_usar_repl({"datos": "datos", "numero": "numero", "texto": "texto", "archivo": "archivo"})
+
+    interp.ejecutar_usar(_nodo("datos"))
+    interp.ejecutar_usar(_nodo("numero"))
+    interp.ejecutar_usar(_nodo("texto"))
+    interp.ejecutar_usar(_nodo("archivo"))
+
+    simbolos = interp.contextos[-1].values
+    assert interp.contextos[-1].get("longitud")([1, 2, 3]) == 3
+    assert interp.contextos[-1].get("es_finito")(10) is True
+    assert callable(interp.contextos[-1].get("recortar"))
+    assert isinstance(interp.contextos[-1].get("existe")("README.md"), bool)
+    assert all("metadata" not in str(k).lower() for k in simbolos.keys())
+
+
 def test_usar_carga_modulos_publicos_datos_numero_texto():
     interp = InterpretadorCobra()
     interp.configurar_restriccion_usar_repl({"datos": "datos", "numero": "numero", "texto": "texto"})
@@ -237,6 +254,24 @@ def test_repl_funcional_minimo_datos_numero_archivo_via_runtime():
 
     interp.ejecutar_usar(_nodo("archivo"))
     assert isinstance(interp.contextos[-1].get("existe")("README.md"), bool)
+
+
+def test_sanear_exports_descarta_simbolo_fuera_api_publica_al_usar():
+    modulo = ModuleType("texto")
+    modulo.__all__ = [*USAR_RUNTIME_EXPORT_OVERRIDES["texto"], "normalizar_unicode"]
+    for nombre in USAR_RUNTIME_EXPORT_OVERRIDES["texto"]:
+        setattr(modulo, nombre, lambda *args, **kwargs: (args, kwargs))
+    modulo.normalizar_unicode = lambda texto, forma="NFC": texto
+
+    mapa_limpio, conflictos = cobra_usar_loader.sanitizar_exports_publicos(modulo, "texto")
+    permitidos, _clasificacion, _warnings = usar_symbol_policy.sanear_exportables_para_usar(list(mapa_limpio.items()))
+
+    nombres = {nombre for nombre, _ in permitidos}
+    assert "normalizar_unicode" not in nombres
+    assert any(
+        conflicto.get("symbol") == "normalizar_unicode" and conflicto.get("code") == "outside_public_api"
+        for conflicto in conflictos
+    )
 
 
 def test_integridad_estatica_lexer_y_parser_sin_diff_inesperado():
