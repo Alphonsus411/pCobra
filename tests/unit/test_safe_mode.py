@@ -468,3 +468,31 @@ def test_regresion_imports_no_publicos_permanece_bloqueado_en_modo_seguro():
 
     with pytest.raises(PrimitivaPeligrosaError):
         interp.ejecutar_ast(ast)
+
+
+def test_metadata_usar_error_expone_codigo_interno_missing_keys_y_mensaje_claro():
+    interp = InterpretadorCobra()
+    with patch("sys.stdout", new_callable=StringIO):
+        interp.ejecutar_ast(generar_ast('usar "archivo"\nimprimir(existe("README.md"))'))
+    interp._validador._metadata_simbolos_usar.pop("existe", None)
+    with pytest.raises(PrimitivaPeligrosaError) as err:
+        interp.ejecutar_ast(generar_ast('imprimir(existe("README.md"))'))
+    mensaje = str(err.value)
+    assert "Divergencia de metadata usar entre intérprete y validador" in mensaje
+    assert "codigo_interno='missing_keys'" in mensaje
+    assert "claves divergentes" in mensaje
+
+
+def test_metadata_usar_error_debug_agrega_detalle_estructurado():
+    interp = InterpretadorCobra()
+    with patch("sys.stdout", new_callable=StringIO):
+        interp.ejecutar_ast(generar_ast('usar "archivo"\nimprimir(existe("README.md"))'))
+    interp._validador._metadata_simbolos_usar["existe"]["sanitized"] = False
+    with patch("core.interpreter._usar_detalle_habilitado", return_value=True):
+        with pytest.raises(PrimitivaPeligrosaError) as err:
+            interp.ejecutar_ast(generar_ast('imprimir(existe("README.md"))'))
+    mensaje = str(err.value)
+    assert "validator_type" in mensaje
+    assert "validate_usar_symbol_metadata" in mensaje
+    assert "symbol" in mensaje
+    assert "existe" in mensaje
