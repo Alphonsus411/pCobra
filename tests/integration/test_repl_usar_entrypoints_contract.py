@@ -963,7 +963,7 @@ def test_repl_archivo_hardening_no_expone_backend_crudo():
 
 def test_repl_usar_archivo_requiere_cadena_entre_comillas():
     cmd = ReplCommandV2()
-    with pytest.raises(Exception, match=r"comillas|cadena"):
+    with pytest.raises(Exception, match=r"Se esperaba una ruta de módulo entre comillas"):
         cmd._ejecutar_en_modo_normal("usar archivo")
 
 
