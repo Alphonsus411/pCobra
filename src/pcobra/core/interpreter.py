@@ -508,6 +508,18 @@ class InterpretadorCobra:
         # Metadatos de símbolos inyectados por `usar` para soportar reimport idempotente.
         # nombre_simbolo -> {"module": str, "exported_name": str, "callable_id": int}
         self._usar_symbol_metadata: dict[str, dict[str, object]] = {}
+        self._normalizar_contenedor_metadata_usar_inicial()
+
+    def _normalizar_contenedor_metadata_usar_inicial(self) -> None:
+        """Inicializa contenedores de metadata de `usar` solo en el arranque."""
+        if (not hasattr(self, "_usar_symbol_metadata")) or self._usar_symbol_metadata is None:
+            self._usar_symbol_metadata = {}
+
+        if hasattr(self, "_validador"):
+            if not hasattr(self._validador, "_metadata_simbolos_usar"):
+                self._validador._metadata_simbolos_usar = {}
+            elif self._validador._metadata_simbolos_usar is None:
+                self._validador._metadata_simbolos_usar = {}
 
     def configurar_restriccion_usar_repl(self, alias_map: dict[str, str] | None) -> None:
         """Configura whitelist explícita de módulos `usar` para flujo REPL.
