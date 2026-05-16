@@ -5,6 +5,7 @@ from types import ModuleType
 import pytest
 
 from pcobra.core import usar_loader as core_usar_loader
+from pcobra.core import interpreter as core_interpreter
 from pcobra.cobra.cli.commands_v2.repl_cmd import ReplCommandV2
 
 
@@ -17,6 +18,14 @@ def _modulo_numero_stub() -> ModuleType:
     mod.desviacion_estandar = lambda _valores: 0.0
     mod._interno = lambda _valor: "oculto"
     mod.__file__ = "/workspace/pCobra/src/pcobra/corelibs/numero.py"
+    return mod
+
+
+def _modulo_datos_stub() -> ModuleType:
+    mod = ModuleType("datos")
+    mod.__all__ = ["longitud"]
+    mod.longitud = lambda valor: len(valor)
+    mod.__file__ = "/workspace/pCobra/src/pcobra/corelibs/datos.py"
     return mod
 
 
@@ -198,3 +207,78 @@ def test_entrypoint_repl_lista_con_expresiones_y_longitud(capsys):
 
     salida = [linea.strip() for linea in capsys.readouterr().out.splitlines() if linea.strip()]
     assert "2" in salida
+
+
+def test_entrypoint_repl_metadata_longitud_persistente_entre_sentencias(monkeypatch, capsys):
+    """Regresión REPL: metadata de `usar` persiste entre sentencias incrementales."""
+    mod_datos = _modulo_datos_stub()
+    monkeypatch.setattr(
+        core_usar_loader,
+        "obtener_modulo_cobra_oficial",
+        lambda nombre: mod_datos if nombre == "datos" else (_ for _ in ()).throw(ModuleNotFoundError(nombre)),
+    )
+    monkeypatch.setattr(
+        core_usar_loader,
+        "obtener_modulo",
+        lambda nombre, **_kwargs: mod_datos if nombre == "datos" else (_ for _ in ()).throw(ModuleNotFoundError(nombre)),
+    )
+    monkeypatch.setattr(
+        core_interpreter,
+        "build_and_validate_usar_symbol_metadata",
+        lambda *, module_name, symbol_name, callable_obj: {
+            "origin_kind": "usar",
+            "module": module_name,
+            "symbol": symbol_name,
+            "sanitized": True,
+            "public_api": True,
+            "backend_exposed": False,
+            "callable": callable(callable_obj),
+        },
+    )
+
+    cmd = ReplCommandV2()
+    interp = cmd._delegate.interpretador
+
+    # Sentencia 1
+    cmd._ejecutar_en_modo_normal('usar "datos"')
+    metadata_s1 = dict(getattr(interp, "_usar_symbol_metadata", {}))
+    metadata_validador_s1 = dict(getattr(interp._validador, "_metadata_simbolos_usar", {}))
+    ref_metadata_interp = getattr(interp, "_usar_symbol_metadata", None)
+    ref_metadata_validador = getattr(interp._validador, "_metadata_simbolos_usar", None)
+
+    assert "longitud" in metadata_s1
+    assert isinstance(metadata_validador_s1, dict)
+
+    # Sentencia 2
+    cmd._ejecutar_en_modo_normal("var xs = [1,2,3]")
+    metadata_s2 = dict(getattr(interp, "_usar_symbol_metadata", {}))
+    metadata_validador_s2 = dict(getattr(interp._validador, "_metadata_simbolos_usar", {}))
+    assert getattr(interp, "_usar_symbol_metadata", None) is ref_metadata_interp
+    assert getattr(interp._validador, "_metadata_simbolos_usar", None) is ref_metadata_validador
+
+    # Snapshot interno: para claves existentes, mismo contenido (se permiten adiciones).
+    for clave, valor_s1 in metadata_s1.items():
+        assert clave in metadata_s2
+        assert metadata_s2[clave] == valor_s1
+    for clave, valor_s1 in metadata_validador_s1.items():
+        assert clave in metadata_validador_s2
+        assert metadata_validador_s2[clave] == valor_s1
+
+    # Sentencia 3
+    cmd._ejecutar_en_modo_normal("imprimir(longitud(xs))")
+    salida = [linea.strip() for linea in capsys.readouterr().out.splitlines() if linea.strip()]
+
+    assert "3" in salida
+
+    metadata_s3 = dict(getattr(interp, "_usar_symbol_metadata", {}))
+    metadata_validador_s3 = dict(getattr(interp._validador, "_metadata_simbolos_usar", {}))
+    assert getattr(interp, "_usar_symbol_metadata", None) is ref_metadata_interp
+    assert getattr(interp._validador, "_metadata_simbolos_usar", None) is ref_metadata_validador
+
+    # Invariante: no se pierde metadata previa ni se degrada a NoneType en llamadas posteriores.
+    for clave, valor_s1 in metadata_s1.items():
+        assert clave in metadata_s3
+        assert metadata_s3[clave] == valor_s1
+    for clave, valor_s1 in metadata_validador_s1.items():
+        assert clave in metadata_validador_s3
+        assert metadata_validador_s3[clave] == valor_s1
