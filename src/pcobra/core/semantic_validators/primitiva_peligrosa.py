@@ -1,6 +1,6 @@
 from .base import ValidadorBase
 from ..ast_nodes import NodoLlamadaFuncion, NodoHilo, NodoLlamadaMetodo
-from ..usar_symbol_policy import make_usar_symbol_metadata, validate_usar_symbol_metadata
+from ..usar_symbol_policy import validate_usar_symbol_metadata
 
 
 class PrimitivaPeligrosaError(Exception):
@@ -44,16 +44,17 @@ class ValidadorPrimitivaPeligrosa(ValidadorBase):
         modulo: str,
         metadata: dict[str, object] | None = None,
     ) -> None:
-        self._simbolos_publicos_usar.add((modulo, nombre))
-        metadata_base = metadata
-        if metadata_base is None:
-            metadata_base = make_usar_symbol_metadata(
-                module_name=modulo,
-                symbol_name=nombre,
-                callable_obj=object(),
+        if metadata is None:
+            raise ValueError(
+                "Metadata inválida para símbolo usar: se requiere metadata canónica preconstruida"
             )
-        metadata_validada = dict(validate_usar_symbol_metadata(nombre, metadata_base))
-        self._metadata_simbolos_usar[nombre] = metadata_validada
+        metadata_validada = validate_usar_symbol_metadata(nombre, metadata)
+        if metadata_validada.get("module") != modulo:
+            raise ValueError(
+                f"Metadata inválida para símbolo usar '{nombre}': module no coincide con registro"
+            )
+        self._simbolos_publicos_usar.add((modulo, nombre))
+        self._metadata_simbolos_usar[nombre] = dict(metadata_validada)
 
     def _es_wrapper_publico_permitido(self, nodo: NodoLlamadaFuncion) -> tuple[bool, str | None]:
         # Contrato de seguridad: No basta el nombre del símbolo.

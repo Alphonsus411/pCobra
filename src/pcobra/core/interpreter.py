@@ -916,7 +916,7 @@ class InterpretadorCobra:
         for nombre, metadata in (self._usar_symbol_metadata or {}).items():
             if not isinstance(metadata, dict):
                 continue
-            modulo = metadata.get("module") or metadata.get("canonical_module") or metadata.get("origin_module")
+            modulo = metadata.get("module")
             if isinstance(modulo, str):
                 for validador_registrable in validadores_registrables:
                     validador_registrable.registrar_simbolo_publico_usar(nombre, modulo, metadata=dict(metadata))
@@ -2091,8 +2091,17 @@ class InterpretadorCobra:
                 raise ImportError(mensaje_usuario)
 
             # Fase A: detectar colisiones de forma completa antes de definir.
+            metadata_por_simbolo = {
+                nombre: make_usar_symbol_metadata(
+                    module_name=nodo.modulo,
+                    symbol_name=nombre,
+                    callable_obj=simbolo,
+                )
+                for nombre, simbolo in simbolos_saneados
+            }
             conflictos = self._detectar_conflictos_usar_en_contexto(
-                simbolos_saneados, nodo.modulo
+                simbolos_saneados,
+                metadata_por_simbolo=metadata_por_simbolo,
             )
             if conflictos:
                 for simbolo_conflictivo in conflictos:
@@ -2170,7 +2179,7 @@ class InterpretadorCobra:
             # Fase B: inyectar de forma atómica y sin sobreescritura silenciosa.
             self._inyectar_simbolos_usar_en_contexto(
                 simbolos_saneados,
-                modulo=nodo.modulo,
+                metadata_por_simbolo=metadata_por_simbolo,
             )
         except Exception as exc:
             if _usar_detalle_habilitado():
@@ -2192,7 +2201,10 @@ class InterpretadorCobra:
             raise
 
     def _detectar_conflictos_usar_en_contexto(
-        self, simbolos_saneados: list[tuple[str, object]], modulo: str
+        self,
+        simbolos_saneados: list[tuple[str, object]],
+        *,
+        metadata_por_simbolo: Mapping[str, dict[str, object]],
     ) -> list[str]:
         """Devuelve símbolos en conflicto real (ignora reimport idempotente por metadatos)."""
         contexto_actual = self.contextos[-1]
@@ -2201,11 +2213,9 @@ class InterpretadorCobra:
             if not contexto_actual.contains(nombre):
                 continue
             previo = self._usar_symbol_metadata.get(nombre)
-            metadata_actual = make_usar_symbol_metadata(
-                module_name=modulo,
-                symbol_name=nombre,
-                callable_obj=simbolo,
-            )
+            metadata_actual = metadata_por_simbolo.get(nombre)
+            if metadata_actual is None:
+                continue
             if previo and previo == metadata_actual:
                 # Reimport idempotente: mismo símbolo, mismo módulo origen y misma identidad.
                 continue
@@ -2213,7 +2223,7 @@ class InterpretadorCobra:
         if conflictos:
             self._trace_debug(
                 "[USAR_COLLISION][PREFLIGHT] "
-                f"módulo={modulo} conflictos={','.join(conflictos)}"
+                f"módulo={metadata_por_simbolo[conflictos[0]].get('module')} conflictos={','.join(conflictos)}"
             )
         return conflictos
 
@@ -2221,7 +2231,7 @@ class InterpretadorCobra:
         self,
         simbolos_saneados: list[tuple[str, object]],
         *,
-        modulo: str,
+        metadata_por_simbolo: Mapping[str, dict[str, object]],
         permitir_sobrescritura: bool = False,
     ) -> None:
         """Inyecta símbolos saneados en el entorno activo centralizando el binding."""
@@ -2229,14 +2239,13 @@ class InterpretadorCobra:
         for nombre, simbolo in simbolos_saneados:
             if contexto_actual.contains(nombre) and not permitir_sobrescritura:
                 previo = self._usar_symbol_metadata.get(nombre)
-                metadata_actual = make_usar_symbol_metadata(
-                    module_name=modulo,
-                    symbol_name=nombre,
-                    callable_obj=simbolo,
-                )
+                metadata_actual = metadata_por_simbolo.get(nombre)
+                if metadata_actual is None:
+                    continue
                 if previo and previo == metadata_actual:
                     # No-op idempotente: evita warning/ruido al reimportar lo mismo.
                     continue
+                modulo = str(metadata_actual.get("module"))
                 detalle = {
                     "module": modulo,
                     "symbol": nombre,
@@ -2251,20 +2260,18 @@ class InterpretadorCobra:
                 )
                 raise NameError(
                     "No se puede usar el módulo "
-                    f"'{modulo}': {USAR_SYMBOL_CONFLICT_ERROR} colisión estructurada={detalle}"
+                    f"'{metadata_actual.get('module')}': {USAR_SYMBOL_CONFLICT_ERROR} colisión estructurada={detalle}"
                 )
-            metadata_simbolo = make_usar_symbol_metadata(
-                module_name=modulo,
-                symbol_name=nombre,
-                callable_obj=simbolo,
-            )
+            metadata_simbolo = metadata_por_simbolo.get(nombre)
+            if metadata_simbolo is None:
+                continue
             self._validar_metadata_usar_o_fallar(nombre, metadata_simbolo)
             contexto_actual.define(nombre, simbolo)
             self._usar_symbol_metadata[nombre] = dict(metadata_simbolo)
             if self.safe_mode and self._validador is not None and hasattr(self._validador, "registrar_simbolo_publico_usar"):
                 self._validador.registrar_simbolo_publico_usar(
                     nombre,
-                    modulo,
+                    str(metadata_simbolo["module"]),
                     metadata=dict(metadata_simbolo),
                 )
                 self._asegurar_metadata_usar_sincronizada(etapa="post-registro")
