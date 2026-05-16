@@ -248,6 +248,7 @@ USAR_SYMBOL_METADATA_REQUIRED_KEYS = frozenset(
 # Claves legacy mantenidas solo por compatibilidad histórica.
 USAR_SYMBOL_METADATA_LEGACY_KEYS = frozenset(
     {
+        "kind",
         "origen_modulo",
         "canonical_module",
         "origin_module",
@@ -365,6 +366,10 @@ def _normalizar_metadata_simbolo_usar(nombre: str, metadata: object) -> dict[str
         raise ValueError(f"Metadata inválida para símbolo usar '{nombre}': tipo no permitido")
 
     metadata_dict = dict(metadata)
+    # Compatibilidad legacy estricta: aceptar `kind="usar"` como alias de
+    # `origin_kind` solo cuando el campo canónico no existe.
+    if "origin_kind" not in metadata_dict and "kind" in metadata_dict:
+        metadata_dict["origin_kind"] = metadata_dict["kind"]
     faltantes = USAR_SYMBOL_METADATA_REQUIRED_KEYS - set(metadata_dict.keys())
     if faltantes:
         raise ValueError(f"Metadata inválida para símbolo usar '{nombre}': faltan claves {sorted(faltantes)}")
