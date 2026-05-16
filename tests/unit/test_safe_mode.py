@@ -224,22 +224,18 @@ def test_usar_datos_longitud_metadata_completa_en_interprete_y_validador():
 
     interp.ejecutar_ast(ast)
 
-    metadata_interp = interp._usar_symbol_metadata["longitud"]
-    assert metadata_interp["module"] == "datos"
-    assert metadata_interp["origin_kind"] == "usar"
-    assert metadata_interp["sanitized"] is True
-    assert metadata_interp["public_api"] is True
-    assert metadata_interp["symbol"] == "longitud"
-    assert isinstance(metadata_interp["callable"], bool)
-
+    metadata = interp._usar_symbol_metadata["longitud"]
     metadata_validador = interp._validador._metadata_simbolos_usar["longitud"]
-    assert metadata_validador["module"] == "datos"
-    assert metadata_validador["origin_kind"] == "usar"
-    assert metadata_validador["sanitized"] is True
-    assert metadata_validador["public_api"] is True
-    assert metadata_validador["symbol"] == "longitud"
-    assert isinstance(metadata_validador["callable"], bool)
-    assert metadata_validador == metadata_interp
+
+    assert metadata["module"] == "datos"
+    assert metadata["origin_kind"] == "usar"
+    assert metadata["sanitized"] is True
+    assert metadata["public_api"] is True
+    assert metadata["symbol"] == "longitud"
+    assert isinstance(metadata["callable"], bool)
+
+    # El payload registrado en intérprete y validador debe ser idéntico.
+    assert metadata_validador == metadata
 
 
 def test_roundtrip_metadata_usar_registro_y_sincronizacion_sin_mutaciones():

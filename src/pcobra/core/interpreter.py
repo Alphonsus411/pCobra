@@ -2213,12 +2213,6 @@ class InterpretadorCobra:
                     symbol_name=nombre,
                     callable_obj=simbolo,
                 )
-                # Refuerza explícitamente el contrato canónico durante la fase
-                # de preflight para evitar mutaciones parciales aguas abajo.
-                metadata_simbolo["module"] = nodo.modulo
-                metadata_simbolo["origin_kind"] = "usar"
-                metadata_simbolo["sanitized"] = True
-                metadata_simbolo["public_api"] = True
                 metadata_por_simbolo[nombre] = validate_usar_symbol_metadata(
                     nombre,
                     metadata_simbolo,
