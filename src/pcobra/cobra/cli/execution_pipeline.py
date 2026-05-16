@@ -108,6 +108,9 @@ def prevalidar_y_parsear_codigo(codigo: str) -> Any:
 def ejecutar_ast(ast: Any, interpreter: Any) -> Any:
     """Ejecuta un AST usando una instancia explícita de intérprete."""
 
+    asegurar_estado_runtime = getattr(interpreter, "asegurar_estado_runtime_inicial", None)
+    if callable(asegurar_estado_runtime):
+        asegurar_estado_runtime()
     return interpreter.ejecutar_ast(ast)
 
 
@@ -232,6 +235,9 @@ def preparar_interpretador(
         safe_mode=opciones.safe_mode,
         extra_validators=opciones.validadores_extra,
     )
+    asegurar_estado_runtime = getattr(interpretador, "asegurar_estado_runtime_inicial", None)
+    if callable(asegurar_estado_runtime):
+        asegurar_estado_runtime()
     return InterpreterSetup(
         interpretador_cls=interpretador_cls,
         safe_mode=opciones.safe_mode,

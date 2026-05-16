@@ -508,6 +508,14 @@ class InterpretadorCobra:
         # Metadatos de símbolos inyectados por `usar` para soportar reimport idempotente.
         # nombre_simbolo -> {"module": str, "exported_name": str, "callable_id": int}
         self._usar_symbol_metadata: dict[str, dict[str, object]] = {}
+        self.asegurar_estado_runtime_inicial()
+
+    def asegurar_estado_runtime_inicial(self) -> None:
+        """Garantiza estado mínimo de runtime para metadata de `usar`.
+
+        Este método es idempotente: solo crea contenedores cuando faltan o
+        cuando están en ``None``, sin reescribir diccionarios ya poblados.
+        """
         self._normalizar_contenedor_metadata_usar_inicial()
 
     def _normalizar_contenedor_metadata_usar_inicial(self) -> None:
