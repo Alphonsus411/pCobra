@@ -143,8 +143,9 @@ def test_usar_datos_expone_longitud_y_metadata_canonica(monkeypatch):
         lambda module_name, symbol_name, callable_obj: {"origin_kind": "usar", "module": module_name, "symbol": symbol_name, "sanitized": True, "public_api": True, "backend_exposed": False, "callable": True},
     )
     mod = ModuleType("datos")
-    mod.__all__ = ["longitud"]
+    mod.__all__ = ["longitud", "elemento"]
     mod.longitud = lambda valores: len(valores)
+    mod.elemento = lambda coleccion, indice: coleccion[indice]
     mod.__file__ = "/workspace/pCobra/src/pcobra/corelibs/datos.py"
 
     monkeypatch.setattr(cobra_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: mod)
@@ -156,6 +157,15 @@ def test_usar_datos_expone_longitud_y_metadata_canonica(monkeypatch):
 
     assert "longitud" in interp.contextos[-1].values
     assert interp.contextos[-1].get("longitud")([1, 2, 3]) == 3
+    assert interp.contextos[-1].get("elemento")([10, 20, 30], 1) == 20
+
+    metadata = interp._usar_symbol_metadata.get("elemento")
+    assert metadata is not None
+    assert metadata["symbol"] == "elemento"
+    assert metadata["module"] == "datos"
+    assert metadata["origin_kind"] == "usar"
+    assert metadata["public_api"] is True
+    assert metadata["backend_exposed"] is False
 
 
 
