@@ -14,6 +14,31 @@ from pcobra.cobra.stdlib_contract import get_contract_manifests
 
 logger = logging.getLogger(__name__)
 
+_LEGACY_BACKEND_KEYS = {"go", "java", "cpp", "asm", "wasm"}
+
+
+def _build_policy_error(
+    *,
+    category: str,
+    module: str,
+    symbol: str,
+    key: str,
+    detail: str,
+) -> ValueError:
+    """Construye errores de validación con UX amigable + trazabilidad en logs."""
+    logger.debug(
+        "module_map_policy_error category=%s module=%s symbol=%s key=%s detail=%s",
+        category,
+        module,
+        symbol,
+        key,
+        detail,
+    )
+    return ValueError(
+        "Configuración de módulos inválida. "
+        f"[categoria={category}] [modulo={module}] [simbolo={symbol}] [clave={key}]"
+    )
+
 
 if OFFICIAL_TARGETS != PUBLIC_BACKENDS:
     raise RuntimeError(
@@ -174,9 +199,12 @@ def _validate_public_backend_policy(data: Dict[str, Any]) -> None:
 
         if raw_targets is not None:
             if not isinstance(raw_targets, list):
-                raise ValueError(
-                    "Config local inválida: [project].required_targets debe ser una lista de strings. "
-                    f"Permitidos: {allowed_text}"
+                raise _build_policy_error(
+                    category="missing_required_field",
+                    module="project",
+                    symbol="required_targets",
+                    key="required_targets",
+                    detail="[project].required_targets debe ser lista de strings",
                 )
             invalid_targets: list[str] = []
             for raw_target in raw_targets:
@@ -188,9 +216,12 @@ def _validate_public_backend_policy(data: Dict[str, Any]) -> None:
                     invalid_targets.append(raw_target)
 
             if invalid_targets:
-                raise ValueError(
-                    "Config local inválida: [project].required_targets contiene targets fuera de PUBLIC_BACKENDS: "
-                    f"{', '.join(invalid_targets)}. Permitidos: {allowed_text}"
+                raise _build_policy_error(
+                    category="unknown_critical_key",
+                    module="project",
+                    symbol="required_targets",
+                    key=",".join(invalid_targets),
+                    detail=f"Targets fuera de PUBLIC_BACKENDS. Permitidos: {allowed_text}",
                 )
 
     modulos = data.get("modulos")
@@ -205,23 +236,29 @@ def _validate_public_backend_policy(data: Dict[str, Any]) -> None:
         invalid_keys: list[str] = []
         for key in module_mapping:
             if not isinstance(key, str):
-                invalid_keys.append(repr(key))
+                invalid_keys.append((repr(key), "unknown_critical_key"))
                 continue
             canonical = normalize_target_name(key)
             if canonical not in allowed:
-                invalid_keys.append(key)
+                if key in _LEGACY_BACKEND_KEYS:
+                    invalid_keys.append((key, "legacy_mapped_ok"))
+                elif canonical in allowed and canonical != key:
+                    invalid_keys.append((key, "semantic_contradiction"))
+                else:
+                    invalid_keys.append((key, "unknown_critical_key"))
 
         if invalid_keys:
             invalid_by_module[str(module_name)] = invalid_keys
 
     if invalid_by_module:
-        rendered = "; ".join(
-            f"{module}: {', '.join(keys)}"
-            for module, keys in sorted(invalid_by_module.items())
-        )
-        raise ValueError(
-            "Config local inválida: [modulos.<nombre>] contiene targets fuera de PUBLIC_BACKENDS. "
-            f"Detalle: {rendered}. Permitidos: {allowed_text}"
+        first_module, entries = sorted(invalid_by_module.items())[0]
+        first_key, first_category = entries[0]
+        raise _build_policy_error(
+            category=first_category,
+            module=first_module,
+            symbol="[modulos.<nombre>]",
+            key=first_key,
+            detail=f"Clave inválida en mapeo de módulo. Permitidos: {allowed_text}",
         )
 
 
@@ -251,7 +288,10 @@ def get_mapped_path(module: str, backend: str) -> str:
     exclusivamente desde ``cobra.toml`` usando la estructura
     ``[modulos."<module>"]``. Si no hay mapeo válido, devuelve ``module``.
     """
-    canonical_backend = resolve_backend_for_module(module, backend)
+    try:
+        canonical_backend = resolve_backend_for_module(module, backend)
+    except ValueError:
+        return module
     if canonical_backend not in OFFICIAL_TARGETS:
         raise ValueError(
             "CONTRACT_ERROR: backend no oficial en get_mapped_path: "
