@@ -176,12 +176,23 @@ def test_repl_interpreter_datos_elemento_errores_limpios():
     repl.ejecutar_codigo('usar "datos"')
     repl.ejecutar_codigo('var ys = [10, 20, 30]')
 
-    with pytest.raises(IndexError, match="índice fuera de rango"):
-        repl.ejecutar_codigo('imprimir(elemento(ys, 99))')
-    with pytest.raises(TypeError, match="índice debe ser entero"):
-        repl.ejecutar_codigo('imprimir(elemento(ys, "0"))')
-    with pytest.raises(TypeError, match="objeto no indexable"):
-        repl.ejecutar_codigo('imprimir(elemento(10, 0))')
+    with pytest.raises(IndexError, match=r"^Error: índice fuera de rango$") as err_indice:
+        repl.ejecutar_codigo("elemento(ys, 99)")
+    assert "Traceback" not in str(err_indice.value)
+    assert "File " not in str(err_indice.value)
+    assert "line " not in str(err_indice.value)
+
+    with pytest.raises(TypeError, match=r"^Error: índice debe ser entero$") as err_tipo_indice:
+        repl.ejecutar_codigo('elemento(ys, "0")')
+    assert "Traceback" not in str(err_tipo_indice.value)
+    assert "File " not in str(err_tipo_indice.value)
+    assert "line " not in str(err_tipo_indice.value)
+
+    with pytest.raises(TypeError, match=r"^Error: objeto no indexable$") as err_objeto:
+        repl.ejecutar_codigo("elemento(10, 0)")
+    assert "Traceback" not in str(err_objeto.value)
+    assert "File " not in str(err_objeto.value)
+    assert "line " not in str(err_objeto.value)
 
 
 def test_repl_v2_datos_elemento_errores_cortos_sin_traceback(capsys):
