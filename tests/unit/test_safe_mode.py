@@ -73,6 +73,8 @@ def test_usar_archivo_existe_imprime_booleano_sin_primitiva_peligrosa():
 
     salida = out.getvalue().strip()
     assert salida in {"verdadero", "falso"}
+    assert "invalid_container" not in salida
+    assert "NoneType" not in salida
 
 
 
@@ -84,9 +86,12 @@ def test_usar_numero_es_finito_true_y_texto_carga_ok_en_modo_seguro():
     with patch("sys.stdout", new_callable=StringIO) as out:
         interp.ejecutar_ast(ast)
 
-    lineas = [linea.strip() for linea in out.getvalue().splitlines() if linea.strip()]
+    salida = out.getvalue()
+    lineas = [linea.strip() for linea in salida.splitlines() if linea.strip()]
     assert "verdadero" in lineas
     assert "OK" in lineas
+    assert "invalid_container" not in salida
+    assert "NoneType" not in salida
 
 
 def test_usar_archivo_existe_readme_no_falla_por_metadata():
@@ -96,9 +101,12 @@ def test_usar_archivo_existe_readme_no_falla_por_metadata():
     with patch("sys.stdout", new_callable=StringIO) as out:
         interp.ejecutar_ast(ast)
 
-    salida = out.getvalue().strip().splitlines()
-    assert salida
-    assert salida[-1].strip() in {"verdadero", "falso"}
+    salida = out.getvalue()
+    lineas = salida.strip().splitlines()
+    assert lineas
+    assert lineas[-1].strip() in {"verdadero", "falso"}
+    assert "invalid_container" not in salida
+    assert "NoneType" not in salida
     assert "existe" in interp._usar_symbol_metadata
     assert "existe" in interp._validador._metadata_simbolos_usar
 
@@ -114,8 +122,24 @@ def test_usar_datos_longitud_builtin_permanece_en_3():
     with patch("sys.stdout", new_callable=StringIO) as out:
         interp.ejecutar_ast(ast)
 
-    lineas = [linea.strip() for linea in out.getvalue().splitlines() if linea.strip()]
+    salida = out.getvalue()
+    lineas = [linea.strip() for linea in salida.splitlines() if linea.strip()]
     assert lineas[-2:] == ["3", "3"]
+    assert "invalid_container" not in salida
+    assert "NoneType" not in salida
+
+
+def test_regresion_var_xs_lista_no_dispara_invalid_container_ni_nonetype():
+    interp = InterpretadorCobra()
+    ast = generar_ast("var xs = [1,2,3]")
+
+    with patch("sys.stdout", new_callable=StringIO) as out:
+        interp.ejecutar_ast(ast)
+
+    salida = out.getvalue()
+    assert "invalid_container" not in salida
+    assert "NoneType" not in salida
+    assert interp.obtener_variable("xs") == [1, 2, 3]
 
 
 def test_existe_backend_crudo_sigue_bloqueado_aun_con_usar_archivo():
