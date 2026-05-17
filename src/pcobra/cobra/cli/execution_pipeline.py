@@ -183,19 +183,19 @@ def validar_ast_seguro(
             if not isinstance(metadata, dict):
                 continue
             metadata_normalizada = dict(metadata)
+            modulo_ctx = ""
+            if isinstance(metadata_normalizada.get("module"), str):
+                modulo_ctx = str(metadata_normalizada["module"])
+            metadata_normalizada = normalizar_metadata_simbolo_usar(
+                metadata_normalizada,
+                modulo_ctx,
+                nombre,
+            )
+            metadata_normalizada = validate_usar_symbol_metadata(
+                nombre,
+                metadata_normalizada,
+            )
             if validar_metadata_usar:
-                modulo_ctx = ""
-                if isinstance(metadata_normalizada.get("module"), str):
-                    modulo_ctx = str(metadata_normalizada["module"])
-                metadata_normalizada = normalizar_metadata_simbolo_usar(
-                    metadata_normalizada,
-                    modulo_ctx,
-                    nombre,
-                )
-                metadata_normalizada = validate_usar_symbol_metadata(
-                    nombre,
-                    metadata_normalizada,
-                )
                 logging.debug(
                     "USAR_METADATA_PIPELINE route=legacy-normalized module=%s symbol=%s",
                     metadata_normalizada.get("module"),
