@@ -197,20 +197,6 @@ def validar_ast_seguro(
         nodo.aceptar(validador)
 
 
-def construir_interprete(
-    *,
-    interpretador_cls: Any,
-    safe_mode: bool,
-    extra_validators: Any,
-) -> Any:
-    """Construye una instancia del intérprete con la configuración común."""
-
-    return interpretador_cls(
-        safe_mode=safe_mode,
-        extra_validators=extra_validators,
-    )
-
-
 def construir_interprete_seguro_canonico(
     *,
     interpretador_cls: Any,
@@ -225,8 +211,7 @@ def construir_interprete_seguro_canonico(
     ``usar`` entre intérprete y validador.
     """
 
-    interpretador = construir_interprete(
-        interpretador_cls=interpretador_cls,
+    interpretador = interpretador_cls(
         safe_mode=safe_mode,
         extra_validators=extra_validators,
     )
@@ -243,7 +228,11 @@ def construir_interprete_seguro_canonico(
             "Invariante runtime violada: en safe_mode=True debe existir interpreter._validador."
         )
     validador = getattr(interpretador, "_validador", None)
-    if validador is not None and not isinstance(
+    if safe_mode and validador is None:
+        raise TypeError(
+            "Invariante runtime violada: en safe_mode=True debe existir interpreter._validador."
+        )
+    if safe_mode and not isinstance(
         getattr(validador, "_metadata_simbolos_usar", None), dict
     ):
         raise TypeError(
