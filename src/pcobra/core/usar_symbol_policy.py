@@ -348,23 +348,35 @@ def _resolver_valor_canonico_desde_aliases(
     metadata_dict: dict[str, object],
     canonical_key: str,
     alias_keys: list[str],
+    symbol_name: str,
 ) -> None:
     if not alias_keys:
         return
-    valores: list[object] = []
+
+    pares_valores: list[tuple[str, object]] = []
     if canonical_key in metadata_dict:
-        valores.append(metadata_dict[canonical_key])
-    valores.extend(metadata_dict[k] for k in alias_keys)
-    if len({repr(v) for v in valores}) > 1:
+        pares_valores.append((canonical_key, metadata_dict[canonical_key]))
+    pares_valores.extend((k, metadata_dict[k]) for k in alias_keys)
+
+    representaciones: dict[str, list[str]] = {}
+    for source_key, valor in pares_valores:
+        representaciones.setdefault(repr(valor), []).append(source_key)
+
+    if len(representaciones) > 1:
         valor_seguro = USAR_METADATA_SECURE_DEFAULTS.get(canonical_key)
-        if valor_seguro is not None and valor_seguro in valores:
-            metadata_dict[canonical_key] = valor_seguro
-        else:
+        if valor_seguro is None:
             raise ValueError(
-                f"Metadata inválida para símbolo usar: aliases inconsistentes para {canonical_key}"
+                f"Metadata inválida para símbolo usar '{symbol_name}': aliases inconsistentes para {canonical_key}"
             )
-    elif canonical_key not in metadata_dict:
-        metadata_dict[canonical_key] = valores[0]
+        if all(valor != valor_seguro for _, valor in pares_valores):
+            raise ValueError(
+                f"Metadata inválida para símbolo usar '{symbol_name}': aliases inconsistentes para {canonical_key} sin valor seguro"
+            )
+        metadata_dict[canonical_key] = valor_seguro
+        return
+
+    if canonical_key not in metadata_dict:
+        metadata_dict[canonical_key] = pares_valores[0][1]
 
 
 def make_usar_symbol_metadata(
@@ -481,6 +493,7 @@ def normalizar_metadata_simbolo_usar(raw_metadata: object, module_name: str, sym
             metadata_dict=metadata_dict,
             canonical_key=canonical_key,
             alias_keys=aliases_presentes,
+            symbol_name=symbol_name,
         )
 
     # Alias legacy adicional (`kind -> origin_kind`) mantenido por compatibilidad.
@@ -490,6 +503,7 @@ def normalizar_metadata_simbolo_usar(raw_metadata: object, module_name: str, sym
             metadata_dict=metadata_dict,
             canonical_key="origin_kind",
             alias_keys=["kind"],
+            symbol_name=symbol_name,
         )
 
     for legacy_key, canonical_key in USAR_SCHEMA_LEGACY_CONSISTENCY.items():
@@ -512,9 +526,8 @@ def normalizar_metadata_simbolo_usar(raw_metadata: object, module_name: str, sym
                 f"Metadata inválida para símbolo usar '{symbol_name}': inconsistencia semántica: symbol distinto del contexto"
             )
         metadata_dict.setdefault("symbol", symbol_name)
-    # 2) Aplicar defaults seguros sobre contrato canónico.
+    # 2) Aplicar defaults seguros solo cuando faltan claves canónicas.
     metadata_dict.setdefault("origin_kind", USAR_SCHEMA_VALUE_CONSTRAINTS["origin_kind"])
-    metadata_dict["origin_kind"] = USAR_SCHEMA_VALUE_CONSTRAINTS["origin_kind"]
     for key, default in USAR_METADATA_SECURE_BOOL_DEFAULTS.items():
         metadata_dict.setdefault(key, default)
 
