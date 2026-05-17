@@ -266,7 +266,7 @@ def test_rechaza_metadata_con_clave_desconocida_maliciosa():
     try:
         normalizar_metadata_simbolo_usar(raw, "archivo", "existe")
     except ValueError as exc:
-        assert "claves inesperadas críticas" in str(exc)
+        assert "claves desconocidas potencialmente maliciosas" in str(exc)
         assert "__proto_payload_inyectado__" in str(exc)
     else:
         raise AssertionError("Se esperaba ValueError por clave desconocida.")
@@ -274,7 +274,7 @@ def test_rechaza_metadata_con_clave_desconocida_maliciosa():
 
 def test_rechaza_metadata_con_contradiccion_backend_exposed_true_en_validacion_estricta():
     raw = {
-        "origin_kind": "backend_privado",
+        "origin_kind": "usar",
         "module": "archivo",
         "symbol": "existe",
         "public_api": True,
@@ -287,7 +287,7 @@ def test_rechaza_metadata_con_contradiccion_backend_exposed_true_en_validacion_e
     try:
         validate_usar_symbol_metadata("existe", raw)
     except ValueError as exc:
-        assert "backend_exposed inválido" in str(exc)
+        assert "backend_exposed debe ser False" in str(exc)
     else:
         raise AssertionError("Se esperaba ValueError por contradicción maliciosa de metadata.")
 

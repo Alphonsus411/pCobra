@@ -575,7 +575,7 @@ def normalizar_metadata_simbolo_usar(raw_metadata: object, module_name: str, sym
 def validate_usar_symbol_metadata(nombre: str, metadata: object) -> dict[str, object]:
     """Valida el contrato canónico de metadata `usar` (única puerta de validación).
 
-    Orden contractual de uso: ``normalizar -> validar -> almacenar``.
+    Secuencia fija exigida: ``normalizar -> validar constraints -> devolver payload canónico``.
 
     # SEGURIDAD
     # Este validador es fail-closed y centraliza todo control de integridad
@@ -584,60 +584,70 @@ def validate_usar_symbol_metadata(nombre: str, metadata: object) -> dict[str, ob
     module_name = str(metadata.get("module")) if isinstance(metadata, dict) and metadata.get("module") is not None else ""
     try:
         metadata_dict = normalizar_metadata_simbolo_usar(metadata, module_name, nombre)
-    except ValueError:
+    except ValueError as exc:
+        mensaje = str(exc)
+        detalle = "legacy normalizable" if "legacy" in mensaje else "violación de seguridad"
         logging.error(
-            "USAR rechazo por metadata inválida tras normalizar module=%s symbol=%s",
+            "USAR rechazo tras normalizar (%s) module=%s symbol=%s error=%s",
+            detalle,
             module_name,
             nombre,
+            mensaje,
         )
-        raise
+        raise ValueError(f"{mensaje} [troubleshooting: {detalle}]") from exc
+
+    faltantes = USAR_SCHEMA_REQUIRED_KEYS - set(metadata_dict.keys())
+    if faltantes:
+        raise ValueError(
+            f"Metadata inválida para símbolo usar '{nombre}': faltan claves {sorted(faltantes)} [troubleshooting: violación de seguridad]"
+        )
 
     if metadata_dict.get("origin_kind") != USAR_SCHEMA_VALUE_CONSTRAINTS["origin_kind"]:
-        raise ValueError(f"Metadata inválida para símbolo usar '{nombre}': inconsistencia semántica: origin_kind inválido")
+        raise ValueError(
+            f"Metadata inválida para símbolo usar '{nombre}': origin_kind debe ser 'usar' [troubleshooting: violación de seguridad]"
+        )
 
     module = metadata_dict.get("module")
     if not isinstance(module, str) or not module.strip():
-        raise ValueError(f"Metadata inválida para símbolo usar '{nombre}': inconsistencia semántica: module no canónico")
+        raise ValueError(
+            f"Metadata inválida para símbolo usar '{nombre}': module no canónico [troubleshooting: violación de seguridad]"
+        )
 
     symbol = metadata_dict.get("symbol")
     if not isinstance(symbol, str) or symbol != nombre:
-        raise ValueError(f"Metadata inválida para símbolo usar '{nombre}': inconsistencia semántica: symbol alterado")
+        raise ValueError(
+            f"Metadata inválida para símbolo usar '{nombre}': module/symbol no coinciden con el contexto [troubleshooting: violación de seguridad]"
+        )
 
-    if metadata_dict.get("sanitized") is not USAR_SCHEMA_VALUE_CONSTRAINTS["sanitized"]:
-        raise ValueError(f"Metadata inválida para símbolo usar '{nombre}': contradicción booleana: sanitized debe ser True")
-    if metadata_dict.get("safe_wrapper") is not USAR_SCHEMA_VALUE_CONSTRAINTS["safe_wrapper"]:
-        raise ValueError(f"Metadata inválida para símbolo usar '{nombre}': contradicción booleana: safe_wrapper debe ser True")
-    if metadata_dict.get("safe_wrapper") is not metadata_dict.get("sanitized"):
-        raise ValueError(f"Metadata inválida para símbolo usar '{nombre}': contradicción booleana: safe_wrapper contradice sanitized")
     if metadata_dict.get("public_api") is not USAR_SCHEMA_VALUE_CONSTRAINTS["public_api"]:
-        raise ValueError(f"Metadata inválida para símbolo usar '{nombre}': public_api inválida")
+        raise ValueError(
+            f"Metadata inválida para símbolo usar '{nombre}': public_api debe ser True [troubleshooting: violación de seguridad]"
+        )
     if metadata_dict.get("backend_exposed") is not USAR_SCHEMA_VALUE_CONSTRAINTS["backend_exposed"]:
-        raise ValueError(f"Metadata inválida para símbolo usar '{nombre}': backend_exposed inválido")
+        raise ValueError(
+            f"Metadata inválida para símbolo usar '{nombre}': backend_exposed debe ser False [troubleshooting: violación de seguridad]"
+        )
+    if metadata_dict.get("safe_wrapper") is not metadata_dict.get("sanitized"):
+        raise ValueError(
+            f"Metadata inválida para símbolo usar '{nombre}': safe_wrapper contradice sanitized [troubleshooting: violación de seguridad]"
+        )
     if not isinstance(metadata_dict.get("callable"), USAR_SCHEMA_VALUE_CONSTRAINTS["callable"]):
-        raise ValueError(f"Metadata inválida para símbolo usar '{nombre}': callable debe ser booleano")
-
-    # Compatibilidad legacy estricta: nunca reemplaza/contradice canónico.
-    for legacy_key, canonical_key in USAR_SCHEMA_LEGACY_CONSISTENCY.items():
-        if legacy_key in metadata_dict and metadata_dict[legacy_key] != metadata_dict.get(canonical_key):
-            raise ValueError(
-                f"Metadata inválida para símbolo usar '{nombre}': {legacy_key} contradice {canonical_key}"
-            )
-
-    for legacy_key, canonical_key in USAR_SCHEMA_LEGACY_BOOL_TRUE.items():
-        if legacy_key in metadata_dict and metadata_dict[legacy_key] is not metadata_dict.get(canonical_key):
-            raise ValueError(
-                f"Metadata inválida para símbolo usar '{nombre}': {legacy_key} contradice {canonical_key}"
-            )
+        raise ValueError(
+            f"Metadata inválida para símbolo usar '{nombre}': callable debe ser booleano [troubleshooting: violación de seguridad]"
+        )
 
     return metadata_dict
 
 
 def validate_usar_symbol_metadata_normalized(nombre: str, metadata: object) -> dict[str, object]:
     """Valida metadata `usar` exigiendo payload ya normalizado (sin claves legacy)."""
-    metadata_dict = validate_usar_symbol_metadata(nombre, metadata)
-    legacy_presentes = set(metadata_dict).intersection(USAR_SYMBOL_METADATA_LEGACY_KEYS)
+    if not isinstance(metadata, dict):
+        raise ValueError(
+            f"Metadata inválida para símbolo usar '{nombre}': payload no normalizado (se esperaba dict) [troubleshooting: legacy normalizable]"
+        )
+    legacy_presentes = set(metadata).intersection(USAR_SYMBOL_METADATA_LEGACY_KEYS)
     if legacy_presentes:
         raise ValueError(
-            f"Metadata inválida para símbolo usar '{nombre}': payload no normalizado, contiene claves legacy {sorted(legacy_presentes)}"
+            f"Metadata inválida para símbolo usar '{nombre}': payload no normalizado, contiene claves legacy {sorted(legacy_presentes)} [troubleshooting: legacy normalizable]"
         )
-    return metadata_dict
+    return validate_usar_symbol_metadata(nombre, metadata)
