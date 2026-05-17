@@ -309,6 +309,9 @@ def _is_expected_user_contract_error(exc: Exception) -> bool:
         "modulo_no_permitido",
         "modulo_no_canonico",
         "backend_import_directo",
+        "error: índice fuera de rango",
+        "error: índice debe ser entero",
+        "error: objeto no indexable",
     )
     return any(m in mensaje for m in marcadores)
 
