@@ -24,3 +24,18 @@ def test_rechazo_continuo_backend_real_en_saneamiento():
 
 def test_import_datos_corelib_elemento_resuelve_indice():
     assert core_datos.elemento([10, 20, 30], 1) == 20
+
+
+def test_import_datos_corelib_elemento_valida_indice_entero():
+    with pytest.raises(TypeError, match="^índice debe ser entero$"):
+        core_datos.elemento([10, 20, 30], 1.5)
+
+
+def test_import_datos_corelib_elemento_rechaza_no_indexable():
+    with pytest.raises(TypeError, match="^objeto no indexable$"):
+        core_datos.elemento({"a": 1}, 0)
+
+
+def test_import_datos_corelib_elemento_fuera_de_rango():
+    with pytest.raises(IndexError, match="^índice fuera de rango$"):
+        core_datos.elemento([10], 2)
