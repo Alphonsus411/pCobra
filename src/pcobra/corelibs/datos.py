@@ -63,6 +63,11 @@ def longitud(valor):
     return _datos.longitud(valor)
 
 
+def elemento(coleccion, indice):
+    """Wrapper público seguro hacia :mod:`pcobra.standard_library.datos`."""
+    return _datos.elemento(coleccion, indice)
+
+
 def filtrar(tabla, condicion):
     """Wrapper público seguro hacia :mod:`pcobra.standard_library.datos`."""
     return _datos.filtrar(tabla, condicion)
@@ -109,6 +114,7 @@ PUBLIC_API_DATOS: tuple[str, ...] = (
     "claves",
     "valores",
     "longitud",
+    "elemento",
 )
 
 

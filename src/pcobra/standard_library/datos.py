@@ -67,6 +67,7 @@ __all__ = [
     "claves",
     "valores",
     "longitud",
+    "elemento",
     "invertir_tabla",
     "tomar",
 ]
@@ -598,6 +599,19 @@ def longitud(valor: Sized | Sequence[Any] | Mapping[str, Any]) -> int:
         return len(valor)
     except TypeError as exc:
         raise TypeError("valor no soporta longitud") from exc
+
+
+def elemento(coleccion: Any, indice: int) -> Any:
+    """Devuelve ``coleccion[indice]`` con validaciones Cobra-facing."""
+
+    if not isinstance(indice, int) or isinstance(indice, bool):
+        raise TypeError("índice debe ser entero")
+    try:
+        return coleccion[indice]
+    except TypeError as exc:
+        raise TypeError("objeto no indexable") from exc
+    except IndexError as exc:
+        raise IndexError("índice fuera de rango") from exc
 
 
 def seleccionar_columnas(tabla: Iterable[Registro], columnas: Sequence[str]) -> Tabla:
