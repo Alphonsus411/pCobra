@@ -3,6 +3,8 @@ from __future__ import annotations
 from contextlib import redirect_stdout
 from io import StringIO
 
+import pytest
+
 from pcobra.cobra.cli.commands.interactive_cmd import InteractiveCommand
 from pcobra.cobra.cli.commands_v2.repl_cmd import ReplCommandV2
 from pcobra.cobra.core.runtime import InterpretadorCobra
@@ -123,3 +125,33 @@ def test_repl_interpreter_longitud_lista_con_expresiones_y_repr_razonable():
     repr_lista = lineas[-1]
     assert "10" in repr_lista and "11" in repr_lista and "3" in repr_lista
     assert repr_lista.startswith("[") and repr_lista.endswith("]")
+
+
+def test_repl_interpreter_datos_elemento_variable_y_literal():
+    repl = InteractiveCommand(InterpretadorCobra())
+    out = StringIO()
+
+    with redirect_stdout(out):
+        repl.ejecutar_codigo('usar "datos"')
+        repl.ejecutar_codigo('var ys = [10, 20, 30]')
+        repl.ejecutar_codigo('imprimir(elemento(ys, 0))')
+        repl.ejecutar_codigo('imprimir(elemento(ys, 1))')
+        repl.ejecutar_codigo('imprimir(elemento(ys, 2))')
+        repl.ejecutar_codigo('imprimir(elemento([1, 2, 3], 2))')
+
+    lineas = [linea.strip() for linea in out.getvalue().splitlines() if linea.strip()]
+    valores = [linea for linea in lineas if linea.isdigit()]
+    assert valores[-4:] == ["10", "20", "30", "3"]
+
+
+def test_repl_interpreter_datos_elemento_errores_limpios():
+    repl = InteractiveCommand(InterpretadorCobra())
+    repl.ejecutar_codigo('usar "datos"')
+    repl.ejecutar_codigo('var ys = [10, 20, 30]')
+
+    with pytest.raises(IndexError, match="índice fuera de rango"):
+        repl.ejecutar_codigo('imprimir(elemento(ys, 99))')
+    with pytest.raises(TypeError, match="índice debe ser entero"):
+        repl.ejecutar_codigo('imprimir(elemento(ys, "0"))')
+    with pytest.raises(TypeError, match="objeto no indexable"):
+        repl.ejecutar_codigo('imprimir(elemento(10, 0))')

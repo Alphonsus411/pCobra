@@ -274,6 +274,7 @@ USAR_RUNTIME_EXPORT_OVERRIDES: dict[str, tuple[str, ...]] = {
         "claves",
         "valores",
         "longitud",
+        "elemento",
         "invertir_tabla",
         "tomar",
     ),
