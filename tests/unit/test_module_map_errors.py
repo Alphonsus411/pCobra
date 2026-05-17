@@ -45,7 +45,7 @@ def test_get_toml_map_rechaza_required_targets_fuera_de_public_backends(tmp_path
     )
     monkeypatch.setattr(module_map, "COBRA_TOML_PATH", str(bad_toml))
 
-    with pytest.raises(ValueError, match="required_targets"):
+    with pytest.raises(ValueError, match="unknown_critical_key"):
         module_map.get_toml_map()
 
 
@@ -58,8 +58,26 @@ def test_get_toml_map_rechaza_targets_legacy_en_modulos(tmp_path, monkeypatch):
     )
     monkeypatch.setattr(module_map, "COBRA_TOML_PATH", str(bad_toml))
 
-    with pytest.raises(ValueError, match="\\[modulos"):
+    with pytest.raises(ValueError, match="legacy_mapped_ok"):
         module_map.get_toml_map()
+
+
+def test_get_toml_map_error_incluye_modulo_simbolo_y_clave(tmp_path, monkeypatch):
+    module_map._toml_cache = None
+    bad_toml = tmp_path / "cobra.toml"
+    bad_toml.write_text(
+        "[modulos]\n[modulos.'demo.co']\nunknown_key = 'demo.js'\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(module_map, "COBRA_TOML_PATH", str(bad_toml))
+
+    with pytest.raises(ValueError) as exc:
+        module_map.get_toml_map()
+
+    msg = str(exc.value)
+    assert "modulo=demo.co" in msg
+    assert "simbolo=[modulos.<nombre>]" in msg
+    assert "clave=unknown_key" in msg
 
 
 def test_get_mapped_path_returns_original_when_no_mapping(monkeypatch):
