@@ -188,23 +188,22 @@ def test_repl_v2_datos_elemento_errores_cortos_sin_traceback(capsys):
     cmd._ejecutar_en_modo_normal('usar "datos"')
     cmd._ejecutar_en_modo_normal('var ys = [10, 20, 30]')
 
-    with pytest.raises(IndexError, match="índice fuera de rango") as excinfo:
-        cmd._ejecutar_en_modo_normal('imprimir(elemento(ys, 99))')
-    salida = capsys.readouterr().out
-    assert "índice fuera de rango" in str(excinfo.value)
-    assert "Traceback" not in salida
+    def _assert_error_esperado_sin_traceback(linea: str, tipo_exc: type[Exception], detalle: str):
+        with pytest.raises(tipo_exc, match=detalle) as excinfo:
+            cmd._ejecutar_en_modo_normal(linea)
+        salida = capsys.readouterr().out
+        assert str(excinfo.value) == f"Error: {detalle}"
+        assert "Traceback" not in salida
 
-    with pytest.raises(TypeError, match="índice debe ser entero") as excinfo:
-        cmd._ejecutar_en_modo_normal('imprimir(elemento(ys, "0"))')
-    salida = capsys.readouterr().out
-    assert "índice debe ser entero" in str(excinfo.value)
-    assert "Traceback" not in salida
-
-    with pytest.raises(TypeError, match="objeto no indexable") as excinfo:
-        cmd._ejecutar_en_modo_normal('imprimir(elemento(10, 0))')
-    salida = capsys.readouterr().out
-    assert "objeto no indexable" in str(excinfo.value)
-    assert "Traceback" not in salida
+    _assert_error_esperado_sin_traceback(
+        'imprimir(elemento([10, 20, 30], 99))', IndexError, 'índice fuera de rango'
+    )
+    _assert_error_esperado_sin_traceback(
+        'imprimir(elemento([10, 20, 30], "0"))', TypeError, 'índice debe ser entero'
+    )
+    _assert_error_esperado_sin_traceback(
+        'imprimir(elemento(10, 0))', TypeError, 'objeto no indexable'
+    )
 
 
 def test_repl_v2_usar_fronteras_rechaza_numpy_y_sintaxis_invalida(capsys):
