@@ -221,8 +221,9 @@ def _modulo_tiempo_stub() -> ModuleType:
 
 def _modulo_datos_stub() -> ModuleType:
     mod = ModuleType("datos")
-    mod.__all__ = ["longitud"]
+    mod.__all__ = ["longitud", "elemento"]
     mod.longitud = lambda valores: len(valores)
+    mod.elemento = lambda valores, indice: valores[indice]
     mod._backend = object()
     mod.module_object = object()
     mod.__file__ = "/workspace/pCobra/src/pcobra/corelibs/datos.py"
@@ -474,12 +475,21 @@ def test_repl_usar_datos_longitud_imprimir_lista_y_variable(factory, executor, g
     interp = get_interp(cmd)
 
     executor(cmd, 'usar "datos"')
+
+    assert callable(interp.obtener_variable("elemento"))
+    assert interp.obtener_variable("elemento")([10, 20, 30], 0) == 10
+
+    interp.contextos[-1].define("ys", [10, 20, 30])
+    assert interp.obtener_variable("elemento")(interp.obtener_variable("ys"), 1) == 20
+    assert interp.obtener_variable("elemento")([1, 2, 3], 2) == 3
+
     interp.contextos[-1].define("xs", [1, 2, 3])
     executor(cmd, "imprimir(longitud(xs))")
     executor(cmd, "imprimir(longitud([1,2,3]))")
 
     salida = capsys.readouterr().out
     assert salida.count("3") >= 2
+    assert interp.obtener_variable("longitud")([1, 2, 3]) == 3
 
 
 @pytest.mark.parametrize(
