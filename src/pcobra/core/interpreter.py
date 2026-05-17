@@ -1041,7 +1041,13 @@ class InterpretadorCobra:
         self._validar_metadata_usar_en_ejecucion(etapa=etapa)
 
     def _validar_metadata_usar_en_ejecucion(self, *, etapa: str | None = None) -> None:
-        """Valida metadata de `usar` en etapa='pre-auditoría' de forma estricta."""
+        """Valida metadata de `usar` en etapa='pre-auditoría' de forma estricta.
+
+        Nota de contrato:
+        - En esta fase no se realizan coerciones ni normalizaciones de contenedor.
+        - Solo se acepta ``dict`` como contenedor de ``_metadata_simbolos_usar``.
+        - La validación por símbolo se delega en ``validate_usar_symbol_metadata``.
+        """
         metadata_validador = getattr(self._validador, "_metadata_simbolos_usar", None)
         detalle_etapa = f" etapa='{etapa}'" if etapa else ""
         if not isinstance(metadata_validador, dict):
@@ -1062,6 +1068,7 @@ class InterpretadorCobra:
                 f"extras_en_validador={extras_en_validador}, codigo_interno='missing_keys', troubleshooting='claves_de_metadata_desincronizadas')."
                 f"{self._detalle_debug_metadata_usar(expected_keys=claves_interp, received_keys=claves_validador)}{detalle_etapa}"
             )
+        # Fail-closed: no conversiones implícitas de payloads en pre-auditoría.
         for nombre, metadata_interp in self._usar_symbol_metadata.items():
             try:
                 self._validar_metadata_usar_o_fallar(nombre, metadata_interp)
