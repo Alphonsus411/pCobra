@@ -961,6 +961,8 @@ class InterpretadorCobra:
         for nombre, metadata in (self._usar_symbol_metadata or {}).items():
             if not isinstance(metadata, dict):
                 continue
+            metadata = self._canonicalizar_metadata_usar(nombre, metadata)
+            self._usar_symbol_metadata[nombre] = dict(metadata)
             modulo = metadata.get("module")
             if isinstance(modulo, str):
                 for validador_registrable in validadores_registrables:
@@ -976,6 +978,34 @@ class InterpretadorCobra:
             raise PrimitivaPeligrosaError(
                 f"validation_reason='{exc}'"
             ) from exc
+
+    def _canonicalizar_metadata_usar(
+        self,
+        nombre: str,
+        metadata: object,
+        *,
+        module_name: str | None = None,
+    ) -> dict[str, object]:
+        """Canonicaliza metadata de `usar` por la ruta única normalizar+validar."""
+        modulo = module_name if isinstance(module_name, str) else ""
+        if not modulo and isinstance(metadata, dict):
+            modulo_metadata = metadata.get("module")
+            if isinstance(modulo_metadata, str):
+                modulo = modulo_metadata
+        metadata_normalizada = normalizar_metadata_simbolo_usar(metadata, modulo, nombre)
+        return validate_usar_symbol_metadata(nombre, metadata_normalizada)
+
+    @staticmethod
+    def _metadata_usar_equivalente_idempotente(
+        previo: dict[str, object] | None,
+        actual: dict[str, object] | None,
+    ) -> bool:
+        if not isinstance(previo, dict) or not isinstance(actual, dict):
+            return False
+        claves_ignorar = {"callable_id"}
+        previo_cmp = {k: v for k, v in previo.items() if k not in claves_ignorar}
+        actual_cmp = {k: v for k, v in actual.items() if k not in claves_ignorar}
+        return previo_cmp == actual_cmp
 
     @staticmethod
     def _detalle_debug_metadata_usar(
@@ -1022,12 +1052,15 @@ class InterpretadorCobra:
         for nombre, metadata_interp in self._usar_symbol_metadata.items():
             if not isinstance(metadata_interp, dict):
                 continue
+            metadata_interp = self._canonicalizar_metadata_usar(nombre, metadata_interp)
+            self._usar_symbol_metadata[nombre] = dict(metadata_interp)
             metadata_val_actual = metadata_validador.get(nombre)
             if metadata_val_actual is None:
                 metadata_validador[nombre] = dict(metadata_interp)
                 continue
             if not isinstance(metadata_val_actual, dict):
                 continue
+            metadata_val_actual = self._canonicalizar_metadata_usar(nombre, metadata_val_actual)
             mismo_modulo = metadata_val_actual.get("module") == metadata_interp.get("module")
             payload_cambio = metadata_val_actual != metadata_interp
             if mismo_modulo and payload_cambio:
@@ -1053,12 +1086,10 @@ class InterpretadorCobra:
         metadata_validador = getattr(self._validador, "_metadata_simbolos_usar", None)
         if isinstance(self._usar_symbol_metadata, dict):
             for nombre, metadata in list(self._usar_symbol_metadata.items()):
-                module_name = str(metadata.get("module")) if isinstance(metadata, dict) and metadata.get("module") is not None else ""
-                self._usar_symbol_metadata[nombre] = normalizar_metadata_simbolo_usar(metadata, module_name, nombre)
+                self._usar_symbol_metadata[nombre] = self._canonicalizar_metadata_usar(nombre, metadata)
         if isinstance(metadata_validador, dict):
             for nombre, metadata in list(metadata_validador.items()):
-                module_name = str(metadata.get("module")) if isinstance(metadata, dict) and metadata.get("module") is not None else ""
-                metadata_validador[nombre] = normalizar_metadata_simbolo_usar(metadata, module_name, nombre)
+                metadata_validador[nombre] = self._canonicalizar_metadata_usar(nombre, metadata)
 
     def _validar_metadata_usar_en_ejecucion(self, *, etapa: str | None = None) -> None:
         """Valida metadata de `usar` en etapa='pre-auditoría' de forma estricta.
@@ -2363,7 +2394,7 @@ class InterpretadorCobra:
             metadata_actual = metadata_por_simbolo.get(nombre)
             if metadata_actual is None:
                 continue
-            if previo and previo == metadata_actual:
+            if self._metadata_usar_equivalente_idempotente(previo, metadata_actual):
                 # Reimport idempotente: mismo símbolo, mismo módulo origen y misma identidad.
                 continue
             conflictos.append(nombre)
@@ -2389,7 +2420,7 @@ class InterpretadorCobra:
                 metadata_actual = metadata_por_simbolo.get(nombre)
                 if metadata_actual is None:
                     continue
-                if previo and previo == metadata_actual:
+                if self._metadata_usar_equivalente_idempotente(previo, metadata_actual):
                     # No-op idempotente: evita warning/ruido al reimportar lo mismo.
                     continue
                 modulo = str(metadata_actual.get("module"))
@@ -2412,7 +2443,7 @@ class InterpretadorCobra:
             metadata_simbolo = metadata_por_simbolo.get(nombre)
             if metadata_simbolo is None:
                 continue
-            metadata_simbolo = validate_usar_symbol_metadata(nombre, metadata_simbolo)
+            metadata_simbolo = self._canonicalizar_metadata_usar(nombre, metadata_simbolo)
             contexto_actual.define(nombre, simbolo)
             self._usar_symbol_metadata[nombre] = dict(metadata_simbolo)
             if self._validador is not None and hasattr(self._validador, "registrar_simbolo_publico_usar"):
