@@ -254,6 +254,7 @@ USAR_METADATA_LEGACY_ALIASES = {
     "origen_tipo": "origin_kind",
     "is_public_export": "public_api",
     "safe_wrapper": "safe_wrapper",
+    "wrapper_safe": "safe_wrapper",
 }
 USAR_METADATA_LEGACY_CONSISTENCY = {
     "origen_modulo": "module",
@@ -448,6 +449,14 @@ def normalizar_metadata_simbolo_usar(raw_metadata: object, module_name: str, sym
             alias_keys=alias_keys,
         )
 
+    for legacy_key, canonical_key in CANONICAL_USAR_METADATA_SCHEMA["legacy_consistency"].items():
+        if legacy_key in metadata_dict and canonical_key not in metadata_dict:
+            metadata_dict[canonical_key] = metadata_dict[legacy_key]
+
+    for legacy_key, canonical_key in CANONICAL_USAR_METADATA_SCHEMA["legacy_bool_true"].items():
+        if legacy_key in metadata_dict and canonical_key not in metadata_dict:
+            metadata_dict[canonical_key] = metadata_dict[legacy_key]
+
     if isinstance(module_name, str) and module_name.strip():
         if "module" in metadata_dict and metadata_dict["module"] != module_name:
             raise ValueError(
@@ -483,6 +492,16 @@ def normalizar_metadata_simbolo_usar(raw_metadata: object, module_name: str, sym
     if faltantes:
         raise ValueError(f"Metadata inválida para símbolo usar '{symbol_name}': faltan claves {sorted(faltantes)}")
 
+    claves_canonicas_y_opcionales = (
+        CANONICAL_USAR_METADATA_SCHEMA["required_keys"]
+        | USAR_SYMBOL_METADATA_OPTIONAL_KEYS
+    )
+    metadata_final = {
+        clave: metadata_dict[clave]
+        for clave in metadata_dict
+        if clave in claves_canonicas_y_opcionales
+    }
+
     inesperadas_criticas = set(metadata_dict.keys()) - CANONICAL_USAR_METADATA_SCHEMA["allowed_keys"]
     if inesperadas_criticas:
         raise ValueError(
@@ -490,7 +509,7 @@ def normalizar_metadata_simbolo_usar(raw_metadata: object, module_name: str, sym
             f"'{symbol_name}': claves inesperadas críticas {sorted(inesperadas_criticas)}"
         )
 
-    return metadata_dict
+    return metadata_final
 
 
 def validate_usar_symbol_metadata(nombre: str, metadata: object) -> dict[str, object]:
