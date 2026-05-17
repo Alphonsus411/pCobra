@@ -607,13 +607,15 @@ def elemento(coleccion: Any, indice: int) -> Any:
     if not isinstance(indice, int) or isinstance(indice, bool):
         raise TypeError("índice debe ser entero")
 
-    if not isinstance(coleccion, list):
+    if not isinstance(coleccion, Sequence) or isinstance(coleccion, (str, bytes, bytearray)):
         raise TypeError("objeto no indexable")
 
     try:
         return coleccion[indice]
     except IndexError as exc:
         raise IndexError("índice fuera de rango") from exc
+    except TypeError as exc:
+        raise TypeError("objeto no indexable") from exc
 
 
 def seleccionar_columnas(tabla: Iterable[Registro], columnas: Sequence[str]) -> Tabla:
