@@ -278,18 +278,10 @@ USAR_SYMBOL_METADATA_OPTIONAL_KEYS = frozenset(
     }
 )
 
-# Claves inesperadas consideradas críticas: no forman parte del contrato
-# canónico ni de compatibilidad y deben bloquearse por fail-closed.
-USAR_SYMBOL_METADATA_ALLOWED_KEYS = (
-    USAR_SYMBOL_METADATA_REQUIRED_KEYS
-    | USAR_SYMBOL_METADATA_LEGACY_KEYS
-    | USAR_SYMBOL_METADATA_OPTIONAL_KEYS
-)
-
-CANONICAL_USAR_METADATA_SCHEMA = {
-    "allowed_keys": USAR_SYMBOL_METADATA_ALLOWED_KEYS,
-    "required_keys": USAR_SYMBOL_METADATA_REQUIRED_KEYS,
-    "value_constraints": {
+USAR_SYMBOL_METADATA_FINAL_CONTRACT = {
+    "required": USAR_SYMBOL_METADATA_REQUIRED_KEYS,
+    "optional": USAR_SYMBOL_METADATA_OPTIONAL_KEYS,
+    "constraints": {
         "origin_kind": "usar",
         "sanitized": True,
         "safe_wrapper": True,
@@ -297,6 +289,22 @@ CANONICAL_USAR_METADATA_SCHEMA = {
         "backend_exposed": False,
         "callable": bool,
     },
+}
+
+# Claves inesperadas consideradas críticas: no forman parte del contrato
+# canónico ni de compatibilidad y deben bloquearse por fail-closed.
+USAR_SYMBOL_METADATA_ALLOWED_KEYS = frozenset(
+    {
+        *USAR_SYMBOL_METADATA_REQUIRED_KEYS,
+        *USAR_SYMBOL_METADATA_LEGACY_KEYS,
+        *USAR_SYMBOL_METADATA_OPTIONAL_KEYS,
+    }
+)
+
+CANONICAL_USAR_METADATA_SCHEMA = {
+    "allowed_keys": USAR_SYMBOL_METADATA_ALLOWED_KEYS,
+    "required_keys": USAR_SYMBOL_METADATA_FINAL_CONTRACT["required"],
+    "value_constraints": USAR_SYMBOL_METADATA_FINAL_CONTRACT["constraints"],
     "legacy_aliases": USAR_METADATA_LEGACY_ALIASES,
     "legacy_consistency": USAR_METADATA_LEGACY_CONSISTENCY,
     "legacy_bool_true": USAR_METADATA_LEGACY_BOOL_TRUE,
@@ -307,6 +315,21 @@ USAR_SCHEMA_VALUE_CONSTRAINTS = CANONICAL_USAR_METADATA_SCHEMA["value_constraint
 USAR_SCHEMA_LEGACY_ALIASES = CANONICAL_USAR_METADATA_SCHEMA["legacy_aliases"]
 USAR_SCHEMA_LEGACY_CONSISTENCY = CANONICAL_USAR_METADATA_SCHEMA["legacy_consistency"]
 USAR_SCHEMA_LEGACY_BOOL_TRUE = CANONICAL_USAR_METADATA_SCHEMA["legacy_bool_true"]
+
+
+def _assert_usar_schema_allowed_keys_exact() -> None:
+    esperadas = (
+        USAR_SYMBOL_METADATA_REQUIRED_KEYS
+        | USAR_SYMBOL_METADATA_LEGACY_KEYS
+        | USAR_SYMBOL_METADATA_OPTIONAL_KEYS
+    )
+    if USAR_SCHEMA_ALLOWED_KEYS != esperadas:
+        raise RuntimeError(
+            "USAR_SCHEMA_ALLOWED_KEYS desalineado: debe contener exactamente canónicas + legacy conocidas + opcionales"
+        )
+
+
+_assert_usar_schema_allowed_keys_exact()
 
 USAR_METADATA_SECURE_BOOL_DEFAULTS: dict[str, bool] = {
     "sanitized": True,
@@ -480,13 +503,13 @@ def normalizar_metadata_simbolo_usar(raw_metadata: object, module_name: str, sym
     if isinstance(module_name, str) and module_name.strip():
         if "module" in metadata_dict and metadata_dict["module"] != module_name:
             raise ValueError(
-                f"Metadata inválida para símbolo usar '{symbol_name}': module inconsistente con contexto"
+                f"Metadata inválida para símbolo usar '{symbol_name}': inconsistencia semántica: module distinto del contexto"
             )
         metadata_dict.setdefault("module", module_name)
     if isinstance(symbol_name, str) and symbol_name.strip():
         if "symbol" in metadata_dict and metadata_dict["symbol"] != symbol_name:
             raise ValueError(
-                f"Metadata inválida para símbolo usar '{symbol_name}': symbol inconsistente con contexto"
+                f"Metadata inválida para símbolo usar '{symbol_name}': inconsistencia semántica: symbol distinto del contexto"
             )
         metadata_dict.setdefault("symbol", symbol_name)
     # 2) Aplicar defaults seguros sobre contrato canónico.
@@ -516,7 +539,7 @@ def normalizar_metadata_simbolo_usar(raw_metadata: object, module_name: str, sym
     if inesperadas_criticas:
         raise ValueError(
             "Metadata inválida para símbolo usar "
-            f"'{symbol_name}': claves inesperadas críticas {sorted(inesperadas_criticas)}"
+            f"'{symbol_name}': claves desconocidas potencialmente maliciosas {sorted(inesperadas_criticas)}"
         )
 
     faltantes = USAR_SCHEMA_REQUIRED_KEYS - set(metadata_dict.keys())
@@ -557,22 +580,22 @@ def validate_usar_symbol_metadata(nombre: str, metadata: object) -> dict[str, ob
         raise
 
     if metadata_dict.get("origin_kind") != USAR_SCHEMA_VALUE_CONSTRAINTS["origin_kind"]:
-        raise ValueError(f"Metadata inválida para símbolo usar '{nombre}': origin_kind inválido")
+        raise ValueError(f"Metadata inválida para símbolo usar '{nombre}': inconsistencia semántica: origin_kind inválido")
 
     module = metadata_dict.get("module")
     if not isinstance(module, str) or not module.strip():
-        raise ValueError(f"Metadata inválida para símbolo usar '{nombre}': module no canónico")
+        raise ValueError(f"Metadata inválida para símbolo usar '{nombre}': inconsistencia semántica: module no canónico")
 
     symbol = metadata_dict.get("symbol")
     if not isinstance(symbol, str) or symbol != nombre:
-        raise ValueError(f"Metadata inválida para símbolo usar '{nombre}': symbol alterado")
+        raise ValueError(f"Metadata inválida para símbolo usar '{nombre}': inconsistencia semántica: symbol alterado")
 
     if metadata_dict.get("sanitized") is not USAR_SCHEMA_VALUE_CONSTRAINTS["sanitized"]:
-        raise ValueError(f"Metadata inválida para símbolo usar '{nombre}': wrapper no sanitizado")
+        raise ValueError(f"Metadata inválida para símbolo usar '{nombre}': contradicción booleana: sanitized debe ser True")
     if metadata_dict.get("safe_wrapper") is not USAR_SCHEMA_VALUE_CONSTRAINTS["safe_wrapper"]:
-        raise ValueError(f"Metadata inválida para símbolo usar '{nombre}': safe_wrapper inválido")
+        raise ValueError(f"Metadata inválida para símbolo usar '{nombre}': contradicción booleana: safe_wrapper debe ser True")
     if metadata_dict.get("safe_wrapper") is not metadata_dict.get("sanitized"):
-        raise ValueError(f"Metadata inválida para símbolo usar '{nombre}': safe_wrapper contradice sanitized")
+        raise ValueError(f"Metadata inválida para símbolo usar '{nombre}': contradicción booleana: safe_wrapper contradice sanitized")
     if metadata_dict.get("public_api") is not USAR_SCHEMA_VALUE_CONSTRAINTS["public_api"]:
         raise ValueError(f"Metadata inválida para símbolo usar '{nombre}': public_api inválida")
     if metadata_dict.get("backend_exposed") is not USAR_SCHEMA_VALUE_CONSTRAINTS["backend_exposed"]:
