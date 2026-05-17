@@ -284,7 +284,14 @@ CANONICAL_USAR_METADATA_SCHEMA = {
         "backend_exposed": False,
         "callable": bool,
     },
-    "legacy_aliases": {"kind": "origin_kind"},
+    "legacy_aliases": {
+        "kind": "origin_kind",
+        "introduced_by": "origin_kind",
+        "introduced_by_usar": "origin_kind",
+        "origen_tipo": "origin_kind",
+        "is_public_export": "public_api",
+        "safe_wrapper": "sanitized",
+    },
     "legacy_consistency": {
         "origen_modulo": "module",
         "canonical_module": "module",
@@ -293,6 +300,40 @@ CANONICAL_USAR_METADATA_SCHEMA = {
     },
     "legacy_bool_true": {"is_sanitized_wrapper": "sanitized"},
 }
+
+USAR_METADATA_SECURE_BOOL_DEFAULTS: dict[str, bool] = {
+    "sanitized": True,
+    "public_api": True,
+    "backend_exposed": False,
+}
+USAR_METADATA_SECURE_DEFAULTS: dict[str, object] = {
+    **USAR_METADATA_SECURE_BOOL_DEFAULTS,
+    "origin_kind": "usar",
+}
+
+
+def _resolver_valor_canonico_desde_aliases(
+    *,
+    metadata_dict: dict[str, object],
+    canonical_key: str,
+    alias_keys: list[str],
+) -> None:
+    if not alias_keys:
+        return
+    valores: list[object] = []
+    if canonical_key in metadata_dict:
+        valores.append(metadata_dict[canonical_key])
+    valores.extend(metadata_dict[k] for k in alias_keys)
+    if len({repr(v) for v in valores}) > 1:
+        valor_seguro = USAR_METADATA_SECURE_DEFAULTS.get(canonical_key)
+        if valor_seguro is not None and valor_seguro in valores:
+            metadata_dict[canonical_key] = valor_seguro
+        else:
+            raise ValueError(
+                f"Metadata inválida para símbolo usar: aliases inconsistentes para {canonical_key}"
+            )
+    elif canonical_key not in metadata_dict:
+        metadata_dict[canonical_key] = valores[0]
 
 
 def make_usar_symbol_metadata(
@@ -390,19 +431,43 @@ def normalizar_metadata_simbolo_usar(raw_metadata: object, module_name: str, sym
     # Compatibilidad legacy estricta: aceptar `kind="usar"` como alias de
     # `origin_kind` solo cuando el campo canónico no existe.
     aliases_normalizados: list[str] = []
+    aliases_por_canonica: dict[str, list[str]] = {}
     for legacy_key, canonical_key in CANONICAL_USAR_METADATA_SCHEMA["legacy_aliases"].items():
-        if canonical_key not in metadata_dict and legacy_key in metadata_dict:
-            metadata_dict[canonical_key] = metadata_dict[legacy_key]
+        if legacy_key in metadata_dict:
+            aliases_por_canonica.setdefault(canonical_key, []).append(legacy_key)
             aliases_normalizados.append(legacy_key)
+    for canonical_key, alias_keys in aliases_por_canonica.items():
+        _resolver_valor_canonico_desde_aliases(
+            metadata_dict=metadata_dict,
+            canonical_key=canonical_key,
+            alias_keys=alias_keys,
+        )
 
     if isinstance(module_name, str) and module_name.strip():
+        if "module" in metadata_dict and metadata_dict["module"] != module_name:
+            raise ValueError(
+                f"Metadata inválida para símbolo usar '{symbol_name}': module inconsistente con contexto"
+            )
         metadata_dict.setdefault("module", module_name)
     if isinstance(symbol_name, str) and symbol_name.strip():
+        if "symbol" in metadata_dict and metadata_dict["symbol"] != symbol_name:
+            raise ValueError(
+                f"Metadata inválida para símbolo usar '{symbol_name}': symbol inconsistente con contexto"
+            )
         metadata_dict.setdefault("symbol", symbol_name)
     metadata_dict.setdefault("sanitized", True)
+    metadata_dict["origin_kind"] = "usar"
 
     for legacy_key in aliases_normalizados:
         metadata_dict.pop(legacy_key, None)
+    for optional_legacy_key in (
+        "origen_modulo",
+        "canonical_module",
+        "origin_module",
+        "exported_name",
+        "is_sanitized_wrapper",
+    ):
+        metadata_dict.pop(optional_legacy_key, None)
 
 
     if aliases_normalizados:

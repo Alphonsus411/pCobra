@@ -179,3 +179,46 @@ def test_normalizar_metadata_simbolo_usar_convierte_alias_legacy_y_derivados():
     assert normalizada["symbol"] == "formatear"
     assert normalizada["sanitized"] is True
     assert "kind" not in normalizada
+    assert "origen_modulo" not in normalizada
+
+
+def test_normaliza_aliases_explicitos_a_claves_canonicas_y_filtra_legacy():
+    raw = {
+        "introduced_by": "legacy",
+        "introduced_by_usar": "usar",
+        "origen_tipo": "usar",
+        "is_public_export": True,
+        "safe_wrapper": True,
+        "public_api": True,
+        "backend_exposed": False,
+        "callable": True,
+    }
+    normalizada = normalizar_metadata_simbolo_usar(raw, "archivo", "existe")
+    assert normalizada["origin_kind"] == "usar"
+    assert normalizada["public_api"] is True
+    assert normalizada["sanitized"] is True
+    assert set(normalizada.keys()) == {
+        "origin_kind",
+        "module",
+        "symbol",
+        "sanitized",
+        "public_api",
+        "backend_exposed",
+        "callable",
+    }
+
+
+def test_rechaza_conflicto_semantico_en_aliases_no_resoluble():
+    raw = {
+        "introduced_by": "legacy",
+        "introduced_by_usar": "otro_origen",
+        "public_api": True,
+        "backend_exposed": False,
+        "callable": True,
+    }
+    try:
+        normalizar_metadata_simbolo_usar(raw, "texto", "formatear")
+    except ValueError as exc:
+        assert "aliases inconsistentes para origin_kind" in str(exc)
+    else:
+        raise AssertionError("Se esperaba ValueError por conflicto semántico en aliases.")
