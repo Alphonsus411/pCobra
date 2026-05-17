@@ -605,18 +605,15 @@ def elemento(coleccion: Any, indice: int) -> Any:
     """Devuelve ``coleccion[indice]`` con validaciones Cobra-facing."""
 
     if not isinstance(indice, int) or isinstance(indice, bool):
-        raise TypeError("índice debe ser entero")
+        raise TypeError("Error: índice debe ser entero")
 
-    getitem = getattr(coleccion, "__getitem__", None)
-    if not callable(getitem):
-        raise TypeError("objeto no indexable")
+    if not isinstance(coleccion, list):
+        raise TypeError("Error: objeto no indexable")
 
     try:
         return coleccion[indice]
-    except TypeError as exc:
-        raise TypeError("objeto no indexable") from exc
-    except (IndexError, KeyError) as exc:
-        raise IndexError("índice fuera de rango") from exc
+    except IndexError as exc:
+        raise IndexError("Error: índice fuera de rango") from exc
 
 
 def seleccionar_columnas(tabla: Iterable[Registro], columnas: Sequence[str]) -> Tabla:
