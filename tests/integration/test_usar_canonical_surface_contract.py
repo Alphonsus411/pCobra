@@ -12,6 +12,22 @@ from pcobra.cobra.cli.commands_v2.repl_cmd import ReplCommandV2
 from pcobra.core import usar_loader as core_usar_loader
 from pcobra.cobra.core.runtime import InterpretadorCobra
 
+_USAR_METADATA_CANONICAL_KEYS = frozenset(
+    {
+        "origin_kind",
+        "module",
+        "symbol",
+        "sanitized",
+        "safe_wrapper",
+        "public_api",
+        "backend_exposed",
+        "callable",
+        "python_module",
+        "callable_id",
+        "stable_signature",
+    }
+)
+
 
 def _modulo_stub(nombre: str, exports: dict[str, object], file_path: str) -> ModuleType:
     mod = ModuleType(nombre)
@@ -158,3 +174,24 @@ def test_caso_9_startup_runtime_y_cli_no_cargan_backends_legacy():
 
 def test_caso_10_public_backends_contrato_exacto():
     assert PUBLIC_BACKENDS == ("python", "javascript", "rust")
+
+
+@pytest.mark.parametrize("factory", [lambda: InteractiveCommand(InterpretadorCobra(safe_mode=True)), ReplCommandV2])
+def test_usar_reimportes_reinyecciones_metadata_canonica_e_idempotente(factory):
+    cmd, ejecutar, interp = _crear_comando(factory)
+    if hasattr(cmd, "_delegate"):
+        cmd._delegate.interpretador.safe_mode = True
+    for modulo in ("datos", "numero", "archivo"):
+        ejecutar(f'usar "{modulo}"')
+        snapshot_interp_1 = dict(interp._usar_symbol_metadata)
+        snapshot_val_1 = dict(getattr(interp._validador, "_metadata_simbolos_usar", {}))
+        ejecutar(f'usar "{modulo}"')
+        snapshot_interp_2 = dict(interp._usar_symbol_metadata)
+        snapshot_val_2 = dict(getattr(interp._validador, "_metadata_simbolos_usar", {}))
+        assert snapshot_interp_1 == snapshot_interp_2
+        assert set(snapshot_val_1.keys()).issubset(set(snapshot_val_2.keys()))
+        assert snapshot_interp_2 == snapshot_val_2
+
+    for nombre, metadata in interp._usar_symbol_metadata.items():
+        assert isinstance(metadata, dict), f"metadata de {nombre} debe ser dict"
+        assert set(metadata).issubset(_USAR_METADATA_CANONICAL_KEYS)

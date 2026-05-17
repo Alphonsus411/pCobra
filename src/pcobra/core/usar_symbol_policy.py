@@ -253,7 +253,6 @@ USAR_METADATA_LEGACY_ALIASES = {
     "introduced_by_usar": "origin_kind",
     "origen_tipo": "origin_kind",
     "is_public_export": "public_api",
-    "safe_wrapper": "safe_wrapper",
     "wrapper_safe": "safe_wrapper",
 }
 USAR_METADATA_LEGACY_CONSISTENCY = {
