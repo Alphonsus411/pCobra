@@ -198,6 +198,17 @@ def test_entrypoint_repl_usar_datos_longitud_argumento_inline(capsys):
     assert "3" in salida
 
 
+
+
+def test_entrypoint_repl_usar_datos_longitud_variable_y_literal_exactos(capsys):
+    cmd = ReplCommandV2()
+    cmd._ejecutar_en_modo_normal("var xs = [1, 2, 3]")
+    cmd._ejecutar_en_modo_normal('usar "datos"')
+    cmd._ejecutar_en_modo_normal("imprimir(longitud(xs))")
+    cmd._ejecutar_en_modo_normal("imprimir(longitud([1, 2, 3]))")
+
+    salida = [linea.strip() for linea in capsys.readouterr().out.splitlines() if linea.strip()]
+    assert salida.count("3") >= 2
 def test_entrypoint_repl_lista_con_expresiones_y_longitud(capsys):
     cmd = ReplCommandV2()
     cmd._ejecutar_en_modo_normal('usar "datos"')
