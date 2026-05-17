@@ -247,16 +247,27 @@ USAR_SYMBOL_METADATA_REQUIRED_KEYS = frozenset(
     }
 )
 
+USAR_METADATA_LEGACY_ALIASES = {
+    "kind": "origin_kind",
+    "introduced_by": "origin_kind",
+    "introduced_by_usar": "origin_kind",
+    "origen_tipo": "origin_kind",
+    "is_public_export": "public_api",
+    "safe_wrapper": "safe_wrapper",
+}
+USAR_METADATA_LEGACY_CONSISTENCY = {
+    "origen_modulo": "module",
+    "canonical_module": "module",
+    "origin_module": "module",
+    "exported_name": "symbol",
+}
+USAR_METADATA_LEGACY_BOOL_TRUE = {"is_sanitized_wrapper": "sanitized"}
+
 # Claves legacy mantenidas solo por compatibilidad histórica.
 USAR_SYMBOL_METADATA_LEGACY_KEYS = frozenset(
-    {
-        "kind",
-        "origen_modulo",
-        "canonical_module",
-        "origin_module",
-        "exported_name",
-        "is_sanitized_wrapper",
-    }
+    set(USAR_METADATA_LEGACY_ALIASES)
+    | set(USAR_METADATA_LEGACY_CONSISTENCY)
+    | set(USAR_METADATA_LEGACY_BOOL_TRUE)
 )
 
 USAR_SYMBOL_METADATA_OPTIONAL_KEYS = frozenset(
@@ -286,21 +297,9 @@ CANONICAL_USAR_METADATA_SCHEMA = {
         "backend_exposed": False,
         "callable": bool,
     },
-    "legacy_aliases": {
-        "kind": "origin_kind",
-        "introduced_by": "origin_kind",
-        "introduced_by_usar": "origin_kind",
-        "origen_tipo": "origin_kind",
-        "is_public_export": "public_api",
-        "safe_wrapper": "safe_wrapper",
-    },
-    "legacy_consistency": {
-        "origen_modulo": "module",
-        "canonical_module": "module",
-        "origin_module": "module",
-        "exported_name": "symbol",
-    },
-    "legacy_bool_true": {"is_sanitized_wrapper": "sanitized"},
+    "legacy_aliases": USAR_METADATA_LEGACY_ALIASES,
+    "legacy_consistency": USAR_METADATA_LEGACY_CONSISTENCY,
+    "legacy_bool_true": USAR_METADATA_LEGACY_BOOL_TRUE,
 }
 
 USAR_METADATA_SECURE_BOOL_DEFAULTS: dict[str, bool] = {
@@ -468,13 +467,7 @@ def normalizar_metadata_simbolo_usar(raw_metadata: object, module_name: str, sym
     for legacy_key in aliases_normalizados:
         if legacy_key != CANONICAL_USAR_METADATA_SCHEMA["legacy_aliases"][legacy_key]:
             metadata_dict.pop(legacy_key, None)
-    for optional_legacy_key in (
-        "origen_modulo",
-        "canonical_module",
-        "origin_module",
-        "exported_name",
-        "is_sanitized_wrapper",
-    ):
+    for optional_legacy_key in set(USAR_METADATA_LEGACY_CONSISTENCY) | set(USAR_METADATA_LEGACY_BOOL_TRUE):
         metadata_dict.pop(optional_legacy_key, None)
 
 
