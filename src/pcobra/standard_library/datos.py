@@ -606,11 +606,16 @@ def elemento(coleccion: Any, indice: int) -> Any:
 
     if not isinstance(indice, int) or isinstance(indice, bool):
         raise TypeError("índice debe ser entero")
+
+    getitem = getattr(coleccion, "__getitem__", None)
+    if not callable(getitem):
+        raise TypeError("objeto no indexable")
+
     try:
         return coleccion[indice]
     except TypeError as exc:
         raise TypeError("objeto no indexable") from exc
-    except IndexError as exc:
+    except (IndexError, KeyError) as exc:
         raise IndexError("índice fuera de rango") from exc
 
 
