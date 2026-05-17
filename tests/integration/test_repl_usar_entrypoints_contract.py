@@ -140,6 +140,31 @@ def test_repl_usar_texto_end_to_end_superficie_publica_callables(factory, execut
     assert interp.obtener_variable("sufijo_comun")("programacion", "nacion") == "acion"
 
 
+def test_repl_entrypoint_numero_es_finito_imprime_verdadero(capsys):
+    cmd = ReplCommandV2()
+    cmd._ejecutar_en_modo_normal('usar "numero"')
+    cmd._ejecutar_en_modo_normal("imprimir(es_finito(10))")
+
+    salida = [linea.strip() for linea in capsys.readouterr().out.splitlines() if linea.strip()]
+    assert "verdadero" in salida
+
+
+def test_repl_entrypoint_archivo_existe_booleano_sin_error_metadata(capsys):
+    cmd = ReplCommandV2()
+    cmd._ejecutar_en_modo_normal('usar "archivo"')
+    cmd._ejecutar_en_modo_normal('imprimir(existe("README.md"))')
+
+    salida = capsys.readouterr().out
+    assert "Error: metadata" not in salida
+    assert any(token in salida for token in ("verdadero", "falso"))
+
+
+def test_repl_entrypoint_usar_archivo_sin_comillas_falla_por_sintaxis():
+    cmd = ReplCommandV2()
+    with pytest.raises(Exception, match=r"(Token inesperado|Token no reconocido|sintaxis|SyntaxError|ruta de módulo entre comillas)"):
+        cmd._ejecutar_en_modo_normal("usar archivo")
+
+
 @pytest.mark.parametrize(
     ("factory", "executor", "get_interp"),
     [

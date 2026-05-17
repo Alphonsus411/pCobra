@@ -192,6 +192,7 @@ def test_normaliza_aliases_explicitos_a_claves_canonicas_y_filtra_legacy():
         "origen_tipo": "usar",
         "is_public_export": True,
         "safe_wrapper": True,
+        "wrapper_safe": True,
         "public_api": True,
         "backend_exposed": False,
         "callable": True,
@@ -242,6 +243,7 @@ def test_rechaza_metadata_con_clave_desconocida_maliciosa():
         normalizar_metadata_simbolo_usar(raw, "archivo", "existe")
     except ValueError as exc:
         assert "claves inesperadas críticas" in str(exc)
+        assert "__proto_payload_inyectado__" in str(exc)
     else:
         raise AssertionError("Se esperaba ValueError por clave desconocida.")
 
@@ -254,6 +256,7 @@ def test_rechaza_metadata_con_contradiccion_backend_exposed_true_en_validacion_e
         "public_api": True,
         "sanitized": True,
         "safe_wrapper": True,
+        "wrapper_safe": True,
         "backend_exposed": True,
         "callable": True,
     }
@@ -278,6 +281,7 @@ def test_normalizacion_acepta_y_canonicaliza_claves_legacy_compatibles_sin_criti
         "origen_tipo": "usar",
         "is_public_export": True,
         "safe_wrapper": True,
+        "wrapper_safe": True,
         "backend_exposed": False,
         "callable": True,
     }
@@ -337,3 +341,47 @@ def test_regresion_runtime_usar_archivo_existe_no_aborta_por_safe_wrapper():
     assert normalizada["safe_wrapper"] is True
     assert normalizada["safe_wrapper"] is normalizada["sanitized"]
     assert normalizada["backend_exposed"] is False
+
+
+def test_rechaza_contradicciones_criticas_de_metadata_usar():
+    casos_invalidos_normalizacion = [
+        {
+            "origin_kind": "usar",
+            "module": "archivo",
+            "symbol": "existe",
+            "sanitized": True,
+            "safe_wrapper": True,
+            "public_api": False,
+            "backend_exposed": False,
+            "callable": True,
+        },
+        {
+            "origin_kind": "usar",
+            "module": "archivo",
+            "symbol": "existe",
+            "sanitized": True,
+            "safe_wrapper": True,
+            "public_api": True,
+            "backend_exposed": True,
+            "callable": True,
+        },
+        {
+            "origin_kind": "usar",
+            "module": "texto",
+            "symbol": "recortar",
+            "sanitized": True,
+            "safe_wrapper": True,
+            "public_api": True,
+            "backend_exposed": False,
+            "callable": True,
+        },
+    ]
+
+    for metadata in casos_invalidos_normalizacion:
+        try:
+            validate_usar_symbol_metadata("existe", metadata)
+        except ValueError:
+            pass
+        else:
+            raise AssertionError(f"Se esperaba rechazo para metadata inválida: {metadata}")
+
