@@ -224,15 +224,19 @@ def test_usar_datos_longitud_metadata_completa_en_interprete_y_validador():
 
     interp.ejecutar_ast(ast)
 
+    assert "longitud" in interp._usar_symbol_metadata
+    assert "longitud" in interp._validador._metadata_simbolos_usar
+
     metadata = interp._usar_symbol_metadata["longitud"]
     metadata_validador = interp._validador._metadata_simbolos_usar["longitud"]
 
-    assert metadata["module"] == "datos"
-    assert metadata["origin_kind"] == "usar"
-    assert metadata["sanitized"] is True
-    assert metadata["public_api"] is True
-    assert metadata["symbol"] == "longitud"
-    assert isinstance(metadata["callable"], bool)
+    for payload in (metadata, metadata_validador):
+        assert payload["module"] == "datos"
+        assert payload["origin_kind"] == "usar"
+        assert payload["sanitized"] is True
+        assert payload["public_api"] is True
+        assert payload["symbol"] == "longitud"
+        assert isinstance(payload["callable"], bool)
 
     # El payload registrado en intérprete y validador debe ser idéntico.
     assert metadata_validador == metadata
