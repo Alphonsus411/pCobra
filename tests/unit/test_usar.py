@@ -1233,3 +1233,33 @@ def test_usar_warning_colision_alias_formato_compacto(monkeypatch, caplog):
     )
     assert "{" not in warning
     assert "detalle=" not in warning
+
+
+def test_repl_usar_datos_elemento_basico_y_errores(monkeypatch, capsys):
+    import pcobra.standard_library.datos as modulo_datos
+
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: modulo_datos)
+    interp = InterpretadorCobra()
+    interp.configurar_restriccion_usar_repl({"datos": "datos"})
+
+    _ejecutar_codigo('''usar "datos"
+var ys = [10, 20, 30]
+imprimir(elemento(ys, 0))
+imprimir(elemento([1, 2, 3], 2))''', interp)
+
+    out = capsys.readouterr().out.strip().splitlines()
+    assert out[-2:] == ["10", "3"]
+
+    with pytest.raises(IndexError, match="índice fuera de rango"):
+        _ejecutar_codigo('''usar "datos"
+var ys = [10, 20, 30]
+elemento(ys, 99)''', interp)
+
+    with pytest.raises(TypeError, match="índice debe ser entero"):
+        _ejecutar_codigo('''usar "datos"
+var ys = [10, 20, 30]
+elemento(ys, "0")''', interp)
+
+    with pytest.raises(TypeError, match="objeto no indexable"):
+        _ejecutar_codigo('''usar "datos"
+elemento(10, 0)''', interp)

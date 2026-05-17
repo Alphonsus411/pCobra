@@ -7,7 +7,7 @@ from pcobra.core.usar_symbol_policy import sanear_simbolo_para_usar
 
 
 def test_import_datos_corelib_expone_callables_directos():
-    for simbolo in ("longitud", "filtrar", "mapear", "agregar"):
+    for simbolo in ("longitud", "elemento", "filtrar", "mapear", "agregar"):
         assert callable(getattr(core_datos, simbolo))
 
 
@@ -20,3 +20,7 @@ def test_rechazo_continuo_backend_real_en_saneamiento():
 
     assert resultado.rechazado is True
     assert resultado.codigo == "backend_module_object"
+
+
+def test_import_datos_corelib_elemento_resuelve_indice():
+    assert core_datos.elemento([10, 20, 30], 1) == 20
