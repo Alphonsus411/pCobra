@@ -2,6 +2,7 @@ from types import ModuleType
 
 from pcobra.core.usar_symbol_policy import (
     PoliticaSaneamientoUsar,
+    normalizar_metadata_simbolo_usar,
     sanear_exportables_para_usar,
     sanear_simbolo_para_usar,
 )
@@ -163,3 +164,18 @@ def test_rechaza_clase_interna_con_rastro_sdk_en_modulo():
     resultado = sanear_simbolo_para_usar("adaptador", ClaseInterna)
     assert resultado.rechazado is True
     assert resultado.codigo == "backend_module_object"
+
+
+def test_normalizar_metadata_simbolo_usar_convierte_alias_legacy_y_derivados():
+    raw = {
+        "kind": "usar",
+        "public_api": True,
+        "backend_exposed": False,
+        "callable": True,
+    }
+    normalizada = normalizar_metadata_simbolo_usar(raw, "texto", "formatear")
+    assert normalizada["origin_kind"] == "usar"
+    assert normalizada["module"] == "texto"
+    assert normalizada["symbol"] == "formatear"
+    assert normalizada["sanitized"] is True
+    assert "kind" not in normalizada

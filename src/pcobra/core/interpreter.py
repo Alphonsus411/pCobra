@@ -91,6 +91,7 @@ from .utils import validar_ast_estructural, ErrorEstructuraAST
 from .errors import CondicionNoBooleanaError
 from .usar_symbol_policy import (
     build_and_validate_usar_symbol_metadata,
+    normalizar_metadata_simbolo_usar,
     validate_usar_symbol_metadata,
 )
 from .environment import Environment
@@ -1043,7 +1044,21 @@ class InterpretadorCobra:
         """
         if not self.safe_mode or self._validador is None:
             return
+        if etapa == "pre-auditoría":
+            self._normalizar_metadata_usar_pre_auditoria()
         self._validar_metadata_usar_en_ejecucion(etapa=etapa)
+
+    def _normalizar_metadata_usar_pre_auditoria(self) -> None:
+        """Normaliza metadata `usar` de intérprete/validador antes de pre-auditoría."""
+        metadata_validador = getattr(self._validador, "_metadata_simbolos_usar", None)
+        if isinstance(self._usar_symbol_metadata, dict):
+            for nombre, metadata in list(self._usar_symbol_metadata.items()):
+                module_name = str(metadata.get("module")) if isinstance(metadata, dict) and metadata.get("module") is not None else ""
+                self._usar_symbol_metadata[nombre] = normalizar_metadata_simbolo_usar(metadata, module_name, nombre)
+        if isinstance(metadata_validador, dict):
+            for nombre, metadata in list(metadata_validador.items()):
+                module_name = str(metadata.get("module")) if isinstance(metadata, dict) and metadata.get("module") is not None else ""
+                metadata_validador[nombre] = normalizar_metadata_simbolo_usar(metadata, module_name, nombre)
 
     def _validar_metadata_usar_en_ejecucion(self, *, etapa: str | None = None) -> None:
         """Valida metadata de `usar` en etapa='pre-auditoría' de forma estricta.
