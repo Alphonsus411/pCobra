@@ -2400,7 +2400,7 @@ class InterpretadorCobra:
             metadata_simbolo = validate_usar_symbol_metadata(nombre, metadata_simbolo)
             contexto_actual.define(nombre, simbolo)
             self._usar_symbol_metadata[nombre] = dict(metadata_simbolo)
-            if self.safe_mode and self._validador is not None and hasattr(self._validador, "registrar_simbolo_publico_usar"):
+            if self._validador is not None and hasattr(self._validador, "registrar_simbolo_publico_usar"):
                 resumen = {
                     "module": metadata_simbolo.get("module"),
                     "symbol": metadata_simbolo.get("symbol"),
