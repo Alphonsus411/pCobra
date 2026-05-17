@@ -11,6 +11,12 @@ from pcobra.cobra.core.parser import ParserError
 from pcobra.cobra.core.runtime import InterpretadorCobra
 
 
+def _assert_valores_numericos_salida(out: StringIO, esperados: list[str]) -> None:
+    lineas = [linea.strip() for linea in out.getvalue().splitlines() if linea.strip()]
+    valores = [linea for linea in lineas if linea.isdigit()]
+    assert valores[-len(esperados):] == esperados
+
+
 def _estado(factory, executor, getter, codigo: str):
     cmd = factory()
     executor(cmd, codigo)
@@ -77,9 +83,7 @@ def test_repl_interpreter_longitud_lista_literal_y_variable_desde_datos():
         repl.ejecutar_codigo('imprimir(longitud(xs))')
         repl.ejecutar_codigo('imprimir(longitud([1, 2, 3]))')
 
-    lineas = [linea.strip() for linea in out.getvalue().splitlines() if linea.strip()]
-    valores = [linea for linea in lineas if linea.isdigit()]
-    assert valores[-2:] == ["3", "3"]
+    _assert_valores_numericos_salida(out, ["3", "3"])
 
 
 def test_repl_interpreter_datos_longitud_lista_literal_directa():
@@ -163,11 +167,8 @@ def test_repl_interpreter_datos_elemento_regresion_variante_solicitada():
         repl.ejecutar_codigo('var ys = [10, 20, 30]')
         repl.ejecutar_codigo('imprimir(elemento(ys, 1))')
         repl.ejecutar_codigo('imprimir(elemento([1, 2, 3], 2))')
-        repl.ejecutar_codigo('imprimir(longitud([1, 2, 3]))')
 
-    lineas = [linea.strip() for linea in out.getvalue().splitlines() if linea.strip()]
-    valores = [linea for linea in lineas if linea.isdigit()]
-    assert valores[-4:] == ["10", "20", "3", "3"]
+    _assert_valores_numericos_salida(out, ["10", "20", "3"])
 
 
 def test_repl_interpreter_datos_elemento_errores_limpios():
