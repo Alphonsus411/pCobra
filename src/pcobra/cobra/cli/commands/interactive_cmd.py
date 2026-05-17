@@ -122,17 +122,26 @@ def format_user_error(exc: Exception) -> str:
 def _es_error_usuario_repl(exc: Exception) -> bool:
     """Clasifica errores esperados de contrato `usar` como errores de usuario."""
     msg = str(exc)
+    msg_lower = msg.lower()
     if isinstance(exc, (PermissionError, ValueError, ImportError)):
         if "usar_error[" in msg:
             return True
-        if "catálogo público" in msg or "catalogo publico" in msg.lower():
+        if "catálogo público" in msg or "catalogo publico" in msg_lower:
             return True
-        if "conflicto de símbolos" in msg or "conflicto de simbolos" in msg.lower():
+        if "conflicto de símbolos" in msg or "conflicto de simbolos" in msg_lower:
             return True
-        if "referencia circular" in msg.lower() or "import circular" in msg.lower():
+        if "referencia circular" in msg_lower or "import circular" in msg_lower:
             return True
-        if "export_invalido" in msg or "sanitize" in msg.lower():
+        if "export_invalido" in msg or "sanitize" in msg_lower:
             return True
+
+    if isinstance(exc, (IndexError, TypeError)):
+        return msg_lower in {
+            "error: índice fuera de rango",
+            "error: índice debe ser entero",
+            "error: objeto no indexable",
+        }
+
     return False
 
 
