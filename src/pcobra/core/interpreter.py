@@ -1051,6 +1051,7 @@ class InterpretadorCobra:
         """
         if not self.safe_mode or self._validador is None:
             return
+        self.asegurar_estado_runtime_inicial()
         metadata_validador = getattr(self._validador, "_metadata_simbolos_usar", None)
         if not isinstance(metadata_validador, dict):
             return
@@ -1090,6 +1091,7 @@ class InterpretadorCobra:
 
     def _normalizar_metadata_usar_pre_auditoria(self) -> None:
         """Normaliza metadata `usar` de intérprete/validador antes de pre-auditoría."""
+        self.asegurar_estado_runtime_inicial()
         metadata_validador = getattr(self._validador, "_metadata_simbolos_usar", None)
         if isinstance(self._usar_symbol_metadata, dict):
             for nombre, metadata in list(self._usar_symbol_metadata.items()):
@@ -1106,8 +1108,16 @@ class InterpretadorCobra:
         - Solo se acepta ``dict`` como contenedor de ``_metadata_simbolos_usar``.
         - La validación por símbolo se delega en ``validate_usar_symbol_metadata``.
         """
+        self.asegurar_estado_runtime_inicial()
         metadata_validador = getattr(self._validador, "_metadata_simbolos_usar", None)
         detalle_etapa = f" etapa='{etapa}'" if etapa else ""
+        if not isinstance(self._usar_symbol_metadata, dict):
+            tipo_recibido = type(self._usar_symbol_metadata).__name__
+            raise PrimitivaPeligrosaError(
+                "Metadata de intérprete inválida para símbolos usar: "
+                f"tipo inválido en _usar_symbol_metadata (tipo='{tipo_recibido}', codigo_interno='invalid_container', troubleshooting='container_metadata_debe_ser_dict')."
+                f"{self._detalle_debug_metadata_usar(received_keys=set())}{detalle_etapa}"
+            )
         if not isinstance(metadata_validador, dict):
             tipo_recibido = type(metadata_validador).__name__
             raise PrimitivaPeligrosaError(
@@ -1129,7 +1139,8 @@ class InterpretadorCobra:
         # Fail-closed: no conversiones implícitas de payloads en pre-auditoría.
         for nombre, metadata_interp in self._usar_symbol_metadata.items():
             try:
-                self._validar_metadata_usar_o_fallar(nombre, metadata_interp)
+                metadata_interp_canonica = self._canonicalizar_metadata_usar(nombre, metadata_interp)
+                self._usar_symbol_metadata[nombre] = dict(metadata_interp_canonica)
             except PrimitivaPeligrosaError as exc:
                 raise PrimitivaPeligrosaError(
                     "Metadata de validador inválida para símbolos usar: "
@@ -1139,7 +1150,8 @@ class InterpretadorCobra:
                 ) from exc
             metadata_val = metadata_validador.get(nombre)
             try:
-                self._validar_metadata_usar_o_fallar(nombre, metadata_val)
+                metadata_val_canonica = self._canonicalizar_metadata_usar(nombre, metadata_val)
+                metadata_validador[nombre] = dict(metadata_val_canonica)
             except PrimitivaPeligrosaError as exc:
                 tipo_recibido = type(metadata_val).__name__
                 raise PrimitivaPeligrosaError(
@@ -1148,11 +1160,11 @@ class InterpretadorCobra:
                     f"(clave_esperada='module|kind|public_api|sanitized', tipo='{tipo_recibido}', codigo_interno='invalid_symbol_metadata', troubleshooting='metadata_validador_no_cumple_contrato', detalle={exc})."
                     f"{self._detalle_debug_metadata_usar(symbol=nombre)}{detalle_etapa}"
                 ) from exc
-            if metadata_interp != metadata_val:
+            if metadata_interp_canonica != metadata_val_canonica:
                 raise PrimitivaPeligrosaError(
                     "Divergencia de metadata usar entre intérprete y validador"
                     f": metadata por símbolo no coincide (símbolo='{nombre}', clave_esperada='module|kind|public_api|sanitized', tipo='{type(metadata_val).__name__}', codigo_interno='mismatch_payload', troubleshooting='payload_de_metadata_difiere')."
-                    f"{self._detalle_debug_metadata_usar(symbol=nombre, expected_keys=set(metadata_interp.keys()), received_keys=set(metadata_val.keys()))}{detalle_etapa}"
+                    f"{self._detalle_debug_metadata_usar(symbol=nombre, expected_keys=set(metadata_interp_canonica.keys()), received_keys=set(metadata_val_canonica.keys()))}{detalle_etapa}"
                 )
 
     def _contiene_yield(self, nodo, visitados_ids: set[int] | None = None):
