@@ -1235,7 +1235,7 @@ def test_usar_warning_colision_alias_formato_compacto(monkeypatch, caplog):
     assert "detalle=" not in warning
 
 
-def test_repl_usar_datos_elemento_basico_y_errores(monkeypatch, capsys):
+def test_repl_runtime_usar_datos_elemento_y_regresiones_con_errores_limpios(monkeypatch, capsys):
     import pcobra.standard_library.datos as modulo_datos
 
     monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: modulo_datos)
@@ -1245,21 +1245,33 @@ def test_repl_usar_datos_elemento_basico_y_errores(monkeypatch, capsys):
     _ejecutar_codigo('''usar "datos"
 var ys = [10, 20, 30]
 imprimir(elemento(ys, 0))
-imprimir(elemento([1, 2, 3], 2))''', interp)
+imprimir(elemento([1, 2, 3], 2))
+imprimir(elemento(ys, 1))
+imprimir(longitud([1, 2, 3]))''', interp)
 
     out = capsys.readouterr().out.strip().splitlines()
-    assert out[-2:] == ["10", "3"]
+    assert "elemento" in interp.variables
+    assert out[-4:] == ["10", "3", "20", "3"]
 
-    with pytest.raises(IndexError, match="índice fuera de rango"):
+    with pytest.raises(IndexError, match="^Error: índice fuera de rango$") as err_indice:
         _ejecutar_codigo('''usar "datos"
 var ys = [10, 20, 30]
 elemento(ys, 99)''', interp)
+    assert "Traceback" not in str(err_indice.value)
 
-    with pytest.raises(TypeError, match="índice debe ser entero"):
+    with pytest.raises(TypeError, match="^Error: índice debe ser entero$") as err_tipo_indice:
         _ejecutar_codigo('''usar "datos"
 var ys = [10, 20, 30]
 elemento(ys, "0")''', interp)
+    assert "Traceback" not in str(err_tipo_indice.value)
 
-    with pytest.raises(TypeError, match="objeto no indexable"):
+    with pytest.raises(TypeError, match="^Error: objeto no indexable$") as err_objeto:
         _ejecutar_codigo('''usar "datos"
 elemento(10, 0)''', interp)
+    assert "Traceback" not in str(err_objeto.value)
+
+    with pytest.raises(PermissionError, match="No se puede usar 'numpy': módulo fuera del catálogo público"):
+        _ejecutar_codigo('usar "numpy"', interp)
+
+    with pytest.raises(InvalidTokenError, match="Se esperaba una cadena"):
+        _ejecutar_codigo('usar archivo', interp)
