@@ -273,6 +273,26 @@ USAR_SYMBOL_METADATA_ALLOWED_KEYS = (
     | USAR_SYMBOL_METADATA_OPTIONAL_KEYS
 )
 
+CANONICAL_USAR_METADATA_SCHEMA = {
+    "allowed_keys": USAR_SYMBOL_METADATA_ALLOWED_KEYS,
+    "required_keys": USAR_SYMBOL_METADATA_REQUIRED_KEYS,
+    "value_constraints": {
+        "origin_kind": "usar",
+        "sanitized": True,
+        "public_api": True,
+        "backend_exposed": False,
+        "callable": bool,
+    },
+    "legacy_aliases": {"kind": "origin_kind"},
+    "legacy_consistency": {
+        "origen_modulo": "module",
+        "canonical_module": "module",
+        "origin_module": "module",
+        "exported_name": "symbol",
+    },
+    "legacy_bool_true": {"is_sanitized_wrapper": "sanitized"},
+}
+
 
 def make_usar_symbol_metadata(
     module_name: str,
@@ -305,11 +325,6 @@ def make_usar_symbol_metadata(
         "backend_exposed": False,
         "callable": es_callable,
         "python_module": modulo_objeto,
-        "origen_tipo": "public_wrapper",
-        "is_public_export": True,
-        "safe_wrapper": True,
-        "introduced_by": "usar",
-        "introduced_by_usar": True,
         "callable_id": id(callable_obj),
         "stable_signature": firma_estable,
         # Legacy:
@@ -368,13 +383,14 @@ def _normalizar_metadata_simbolo_usar(nombre: str, metadata: object) -> dict[str
     metadata_dict = dict(metadata)
     # Compatibilidad legacy estricta: aceptar `kind="usar"` como alias de
     # `origin_kind` solo cuando el campo canónico no existe.
-    if "origin_kind" not in metadata_dict and "kind" in metadata_dict:
-        metadata_dict["origin_kind"] = metadata_dict["kind"]
-    faltantes = USAR_SYMBOL_METADATA_REQUIRED_KEYS - set(metadata_dict.keys())
+    for legacy_key, canonical_key in CANONICAL_USAR_METADATA_SCHEMA["legacy_aliases"].items():
+        if canonical_key not in metadata_dict and legacy_key in metadata_dict:
+            metadata_dict[canonical_key] = metadata_dict[legacy_key]
+    faltantes = CANONICAL_USAR_METADATA_SCHEMA["required_keys"] - set(metadata_dict.keys())
     if faltantes:
         raise ValueError(f"Metadata inválida para símbolo usar '{nombre}': faltan claves {sorted(faltantes)}")
 
-    inesperadas_criticas = set(metadata_dict.keys()) - USAR_SYMBOL_METADATA_ALLOWED_KEYS
+    inesperadas_criticas = set(metadata_dict.keys()) - CANONICAL_USAR_METADATA_SCHEMA["allowed_keys"]
     if inesperadas_criticas:
         raise ValueError(
             "Metadata inválida para símbolo usar "
@@ -393,7 +409,7 @@ def validate_usar_symbol_metadata(nombre: str, metadata: object) -> dict[str, ob
     """
     metadata_dict = _normalizar_metadata_simbolo_usar(nombre, metadata)
 
-    if metadata_dict.get("origin_kind") != "usar":
+    if metadata_dict.get("origin_kind") != CANONICAL_USAR_METADATA_SCHEMA["value_constraints"]["origin_kind"]:
         raise ValueError(f"Metadata inválida para símbolo usar '{nombre}': origin_kind inválido")
 
     module = metadata_dict.get("module")
@@ -404,25 +420,26 @@ def validate_usar_symbol_metadata(nombre: str, metadata: object) -> dict[str, ob
     if not isinstance(symbol, str) or symbol != nombre:
         raise ValueError(f"Metadata inválida para símbolo usar '{nombre}': symbol alterado")
 
-    if metadata_dict.get("sanitized") is not True:
+    if metadata_dict.get("sanitized") is not CANONICAL_USAR_METADATA_SCHEMA["value_constraints"]["sanitized"]:
         raise ValueError(f"Metadata inválida para símbolo usar '{nombre}': wrapper no sanitizado")
-    if metadata_dict.get("public_api") is not True:
+    if metadata_dict.get("public_api") is not CANONICAL_USAR_METADATA_SCHEMA["value_constraints"]["public_api"]:
         raise ValueError(f"Metadata inválida para símbolo usar '{nombre}': public_api inválida")
-    if metadata_dict.get("backend_exposed") is not False:
+    if metadata_dict.get("backend_exposed") is not CANONICAL_USAR_METADATA_SCHEMA["value_constraints"]["backend_exposed"]:
         raise ValueError(f"Metadata inválida para símbolo usar '{nombre}': backend_exposed inválido")
-    if not isinstance(metadata_dict.get("callable"), bool):
+    if not isinstance(metadata_dict.get("callable"), CANONICAL_USAR_METADATA_SCHEMA["value_constraints"]["callable"]):
         raise ValueError(f"Metadata inválida para símbolo usar '{nombre}': callable debe ser booleano")
 
     # Compatibilidad legacy estricta: nunca reemplaza/contradice canónico.
-    if "origen_modulo" in metadata_dict and metadata_dict["origen_modulo"] != module:
-        raise ValueError(f"Metadata inválida para símbolo usar '{nombre}': origen_modulo contradice module")
-    if "canonical_module" in metadata_dict and metadata_dict["canonical_module"] != module:
-        raise ValueError(f"Metadata inválida para símbolo usar '{nombre}': canonical_module contradice module")
-    if "origin_module" in metadata_dict and metadata_dict["origin_module"] != module:
-        raise ValueError(f"Metadata inválida para símbolo usar '{nombre}': origin_module contradice module")
-    if "exported_name" in metadata_dict and metadata_dict["exported_name"] != symbol:
-        raise ValueError(f"Metadata inválida para símbolo usar '{nombre}': exported_name contradice symbol")
-    if "is_sanitized_wrapper" in metadata_dict and metadata_dict["is_sanitized_wrapper"] is not True:
-        raise ValueError(f"Metadata inválida para símbolo usar '{nombre}': is_sanitized_wrapper contradice sanitized")
+    for legacy_key, canonical_key in CANONICAL_USAR_METADATA_SCHEMA["legacy_consistency"].items():
+        if legacy_key in metadata_dict and metadata_dict[legacy_key] != metadata_dict.get(canonical_key):
+            raise ValueError(
+                f"Metadata inválida para símbolo usar '{nombre}': {legacy_key} contradice {canonical_key}"
+            )
+
+    for legacy_key, canonical_key in CANONICAL_USAR_METADATA_SCHEMA["legacy_bool_true"].items():
+        if legacy_key in metadata_dict and metadata_dict[legacy_key] is not metadata_dict.get(canonical_key):
+            raise ValueError(
+                f"Metadata inválida para símbolo usar '{nombre}': {legacy_key} contradice {canonical_key}"
+            )
 
     return metadata_dict
