@@ -40,3 +40,17 @@ def test_rechaza_imports_directos_backend_en_usar():
 def test_flags_cobra_facing_cubren_modulos_repl():
     assert tuple(USAR_COBRA_FACING_MODULE_FLAGS.keys()) == tuple(REPL_COBRA_MODULE_MAP.keys())
     assert all(USAR_COBRA_FACING_MODULE_FLAGS.values())
+
+
+def test_fuera_de_catalogo_no_llega_a_resolucion_de_modulo(monkeypatch):
+    from pcobra.cobra import usar_loader
+
+    def _no_debe_llamarse(*_args, **_kwargs):
+        raise AssertionError("No debe intentarse resolver/cargar módulo fuera de catálogo.")
+
+    monkeypatch.setattr(usar_loader, "obtener_modulo_cobra_oficial", _no_debe_llamarse)
+
+    with pytest.raises(PermissionError) as excinfo:
+        usar_loader.obtener_modulo("numpy")
+
+    assert "fuera del catálogo público" in str(excinfo.value) or "Importación no permitida" in str(excinfo.value)
