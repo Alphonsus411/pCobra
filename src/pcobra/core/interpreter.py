@@ -1005,9 +1005,11 @@ class InterpretadorCobra:
         """Sincroniza metadata de `usar` sin borrar contenedores existentes.
 
         Estrategia:
-        - Crear contenedores únicamente durante inicialización.
-        - En ejecución, solo merge no destructivo de símbolos faltantes
-          o actualización del mismo símbolo (mismo módulo) cuando cambió.
+        - No recrear/limpiar diccionarios durante ciclos por sentencia.
+        - En ejecución, aplicar *merge* no destructivo símbolo a símbolo.
+        - Insertar símbolos faltantes del intérprete en el validador.
+        - Actualizar un símbolo únicamente si pertenece al mismo módulo
+          y cambió su payload.
         """
         if not self.safe_mode or self._validador is None:
             return
@@ -1025,16 +1027,19 @@ class InterpretadorCobra:
                 continue
             if not isinstance(metadata_val_actual, dict):
                 continue
-            if metadata_val_actual == metadata_interp:
-                continue
-            if metadata_val_actual.get("module") == metadata_interp.get("module"):
+            mismo_modulo = metadata_val_actual.get("module") == metadata_interp.get("module")
+            payload_cambio = metadata_val_actual != metadata_interp
+            if mismo_modulo and payload_cambio:
                 metadata_validador[nombre] = dict(metadata_interp)
 
     def _asegurar_metadata_usar_sincronizada(self, *, etapa: str | None = None) -> None:
         """Valida sincronización estricta para etapa='pre-auditoría'.
 
-        Política fail-closed: cualquier tipo inválido de contenedor dispara
-        ``invalid_container`` y aborta la ejecución segura.
+        Contrato en pre-auditoría:
+        - Debe ejecutarse antes de auditar nodos en ejecución.
+        - No muta estructura ni normaliza payload; solo valida.
+        - Política fail-closed: cualquier contenedor inválido dispara
+          ``invalid_container`` y aborta la ejecución segura.
         """
         if not self.safe_mode or self._validador is None:
             return
