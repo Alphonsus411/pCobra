@@ -972,7 +972,8 @@ class InterpretadorCobra:
 
     def _validar_metadata_usar_o_fallar(self, nombre: str, metadata: object) -> None:
         try:
-            validate_usar_symbol_metadata(nombre, metadata)
+            metadata_normalizada = self._canonicalizar_metadata_usar(nombre, metadata)
+            validate_usar_symbol_metadata(nombre, metadata_normalizada)
         except ValueError as exc:
             # Preserva el motivo original para diagnóstico en REPL sin exponer internals sensibles.
             raise PrimitivaPeligrosaError(
@@ -993,7 +994,13 @@ class InterpretadorCobra:
             if isinstance(modulo_metadata, str):
                 modulo = modulo_metadata
         metadata_normalizada = normalizar_metadata_simbolo_usar(metadata, modulo, nombre)
-        return validate_usar_symbol_metadata(nombre, metadata_normalizada)
+        metadata_validada = validate_usar_symbol_metadata(nombre, metadata_normalizada)
+        logging.debug(
+            "USAR_METADATA_PIPELINE route=legacy-normalized module=%s symbol=%s",
+            metadata_validada.get("module"),
+            nombre,
+        )
+        return metadata_validada
 
     @staticmethod
     def _metadata_usar_equivalente_idempotente(
@@ -2273,10 +2280,12 @@ class InterpretadorCobra:
                     symbol_name=nombre,
                     callable_obj=simbolo,
                 )
-                metadata_por_simbolo[nombre] = validate_usar_symbol_metadata(
+                logging.debug(
+                    "USAR_METADATA_PIPELINE route=factory module=%s symbol=%s",
+                    nodo.modulo,
                     nombre,
-                    metadata_simbolo,
                 )
+                metadata_por_simbolo[nombre] = dict(metadata_simbolo)
             conflictos = self._detectar_conflictos_usar_en_contexto(
                 simbolos_saneados,
                 metadata_por_simbolo=metadata_por_simbolo,

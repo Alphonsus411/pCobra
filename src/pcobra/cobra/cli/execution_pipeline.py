@@ -15,7 +15,11 @@ from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.utils.unicode_sanitize import sanitize_source_for_tokenizer
 from pcobra.cobra.cli.utils.validators import normalizar_validadores_extra
 from pcobra.cobra.core.runtime import ValidadorBase, construir_cadena
-from pcobra.core.usar_symbol_policy import validate_usar_symbol_metadata
+from pcobra.core.usar_symbol_policy import (
+    normalizar_metadata_simbolo_usar,
+    validate_usar_symbol_metadata,
+)
+import logging
 
 
 @dataclass(frozen=True)
@@ -180,9 +184,22 @@ def validar_ast_seguro(
                 continue
             metadata_normalizada = dict(metadata)
             if validar_metadata_usar:
+                modulo_ctx = ""
+                if isinstance(metadata_normalizada.get("module"), str):
+                    modulo_ctx = str(metadata_normalizada["module"])
+                metadata_normalizada = normalizar_metadata_simbolo_usar(
+                    metadata_normalizada,
+                    modulo_ctx,
+                    nombre,
+                )
                 metadata_normalizada = validate_usar_symbol_metadata(
                     nombre,
                     metadata_normalizada,
+                )
+                logging.debug(
+                    "USAR_METADATA_PIPELINE route=legacy-normalized module=%s symbol=%s",
+                    metadata_normalizada.get("module"),
+                    nombre,
                 )
             modulo = metadata_normalizada.get("module")
             if not isinstance(modulo, str):
