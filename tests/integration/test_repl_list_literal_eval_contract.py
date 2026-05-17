@@ -207,14 +207,22 @@ def test_repl_v2_datos_elemento_errores_cortos_sin_traceback(capsys):
 
 
 def test_repl_v2_usar_fronteras_rechaza_numpy_y_sintaxis_invalida(capsys):
+    """Fase actual: validar fronteras de `usar` sin tocar gramática/tokenización."""
     cmd = ReplCommandV2()
 
-    with pytest.raises(PermissionError):
+    with pytest.raises(PermissionError, match=r"(módulo fuera del catálogo público|modulo_fuera_catalogo_publico)"):
         cmd._ejecutar_en_modo_normal('usar "numpy"')
     salida_numpy = capsys.readouterr().out
     assert "Traceback" not in salida_numpy
 
-    with pytest.raises(ParserError):
+    with pytest.raises(ParserError, match=r"comillas"):
         cmd._ejecutar_en_modo_normal("usar archivo")
     salida_archivo = capsys.readouterr().out
     assert "Traceback" not in salida_archivo
+
+    cmd._ejecutar_en_modo_normal('usar "datos"')
+    cmd._ejecutar_en_modo_normal("var ys = [10, 20, 30]")
+    with pytest.raises(ParserError):
+        cmd._ejecutar_en_modo_normal("imprimir(ys[0])")
+    salida_indice = capsys.readouterr().out
+    assert "Traceback" not in salida_indice
