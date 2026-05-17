@@ -1,56 +1,144 @@
 {
-  "contexto_general": {
-    "proyecto": "pCobra / Cobra",
-    "objetivo_de_la_sesion": "Validar mediante pruebas de concepto desde CLI/REPL los avances sobre `usar`, módulos Cobra-facing, binding runtime y limpieza de salida de errores.",
-    "principio_operativo": "Probar primero desde la CLI antes de seguir refactorizando arquitectura.",
+  "proyecto": "pCobra / Cobra",
+  "sesion": {
+    "objetivo_general": "Validar mediante pruebas de concepto desde REPL/CLI los avances sobre `usar`, módulos Cobra-facing, metadata de seguridad, listas, sandbox de archivo y errores limpios.",
+    "principio_operativo": "Probar primero desde CLI/REPL antes de continuar refactorizando arquitectura.",
     "restricciones_mantenidas": [
       "No modificar Lexer",
       "No modificar Parser",
       "No cambiar sintaxis pública",
-      "Mantener CLI y contratos actuales",
       "No relajar sanitización de `usar`",
       "No permitir imports externos directos",
-      "No exponer objetos backend, SDKs ni símbolos privados"
+      "No exponer objetos backend, SDKs, os, pathlib ni símbolos privados",
+      "Mantener rechazo de módulos fuera del catálogo público",
+      "Mantener errores cortos sin traceback en REPL normal"
     ]
   },
-  "estado_inicial_recordado": {
-    "problema_raiz": "Frontera semántica de Cobra no completamente cerrada",
-    "hallazgos_previos": [
-      "`usar` resolvía y sanitizaba módulos, pero no enlazaba funciones ejecutables al runtime",
-      "Los módulos core debían actuar como API Cobra-facing, no como exposición directa de Python/backend",
-      "Los errores del REPL imprimían diccionarios enormes y tracebacks",
-      "Algunos módulos tenían desalineación entre `corelibs`, `standard_library` y `usar_policy`"
-    ]
+  "estado_git_entorno": {
+    "problema_inicial": "El entorno virtual estaba roto porque apuntaba a una instalación inexistente de Python 3.10.",
+    "diagnostico_venv": {
+      "error": "No Python at '...Python310\\python.exe'",
+      "causa": "`.venv` creado contra una ruta de Python que ya no existía.",
+      "accion_recomendada": "Eliminar `.venv` y recrearlo con Python disponible."
+    },
+    "python_disponible": {
+      "python_3_12": "Registrado pero ejecutable no encontrado",
+      "python_3_11": "Disponible y recomendado para continuar"
+    },
+    "git": {
+      "estado": "verde",
+      "fsck": "Sin errores fatales",
+      "dangling_objects": [
+        "dangling blob",
+        "dangling tree"
+      ],
+      "interpretacion": "Objetos huérfanos tolerables, no corrupción real del historial.",
+      "branch": "master",
+      "remote": "origin https://github.com/Alphonsus411/pCobra.git",
+      "working_tree": "clean",
+      "ultimo_head_observado": "99e8e420 Merge pull request #2716"
+    },
+    "github_desktop": {
+      "diagnostico": "El problema parece estar en GitHub Desktop/configuración local, no en el repositorio Git.",
+      "acciones_realizadas": [
+        "git gc",
+        "git maintenance run"
+      ],
+      "resultado": "Repositorio saneado; Git CLI operativo."
+    }
   },
-  "implementacion_previa_validada": {
-    "binding_runtime_usar": {
-      "estado": "corregido",
-      "descripcion": "El intérprete ahora puede ejecutar callables importados por `usar` que ya pasaron sanitización y fueron inyectados en el contexto.",
-      "evidencia": [
-        "`usar \"numero\"` seguido de `imprimir(es_finito(10))` devuelve `verdadero`",
-        "`imprimir(es_nan(10))` devuelve `falso`",
-        "`imprimir(es_infinito(10))` devuelve `falso`",
-        "`imprimir(signo(0-5))` devuelve `-1`"
+  "correcciones_y_regresiones": {
+    "metadata_usar_none": {
+      "estado": "resuelto",
+      "error_anterior": "Metadata de validador inválida para símbolos usar: tipo inválido en _metadata_simbolos_usar (NoneType)",
+      "diagnostico": "El contenedor `_metadata_simbolos_usar` no se inicializaba como dict.",
+      "resultado_actual": "El REPL ya no falla al ejecutar sentencias normales como `var xs = [1, 2, 3]`."
+    },
+    "metadata_schema_usar": {
+      "estado": "resuelto",
+      "error_anterior": "Metadata inválida para símbolo usar por claves inesperadas críticas",
+      "claves_conflictivas": [
+        "introduced_by",
+        "introduced_by_usar",
+        "is_public_export",
+        "origen_tipo",
+        "safe_wrapper"
+      ],
+      "diagnostico": "Había dos dialectos de metadata entre loader/sanitizer y validador.",
+      "resultado_actual": "`usar \"datos\"`, `usar \"numero\"`, `usar \"texto\"`, `usar \"archivo\"` cargan correctamente."
+    },
+    "archivo_existe_sandbox": {
+      "estado": "resuelto",
+      "error_anterior": "Error: Uso de primitiva peligrosa: 'existe'",
+      "resultado_actual": "`usar \"archivo\"` seguido de `imprimir(existe(\"README.md\"))` devuelve `verdadero`.",
+      "criterio": "Se permite como wrapper Cobra-facing seguro sin relajar sandbox global."
+    },
+    "nodo_lista": {
+      "estado": "resuelto",
+      "error_anterior": "Expresión no soportada: tipo=NodoLista",
+      "resultado_actual": [
+        "`var xs = [1, 2, 3]` funciona",
+        "`imprimir(longitud(xs))` devuelve `3`",
+        "`imprimir(longitud([1, 2, 3]))` devuelve `3`"
       ]
     },
-    "funciones_cobra_usuario": {
-      "estado": "sin regresión",
-      "evidencia": [
-        "`func doble(n): retorno n * 2 fin` funciona",
-        "`imprimir(doble(21))` devuelve `42`",
-        "`imprimir(es_finito(doble(21)))` devuelve `verdadero` tras importar `numero`"
+    "indexacion_corchetes": {
+      "estado": "no implementada por decisión",
+      "casos_observados": [
+        "`imprimir(ys[0])` falla con error de parser",
+        "`retorno xs[0]` no se comportaba como indexación real"
+      ],
+      "decision": "No tocar Lexer ni Parser. No implementar `xs[0]` en esta fase.",
+      "alternativa_implementada": "Añadir API pública segura `elemento(coleccion, indice)` en módulo `datos`."
+    },
+    "datos_elemento": {
+      "estado": "resuelto",
+      "descripcion": "Nueva función Cobra-facing segura para acceder por índice sin cambiar sintaxis.",
+      "validaciones_exitosas": [
+        "`elemento(ys, 0)` devuelve `10`",
+        "`elemento(ys, 1)` devuelve `20`",
+        "`elemento(ys, 2)` devuelve `30`",
+        "`elemento([1, 2, 3], 2)` devuelve `3`"
+      ],
+      "errores_controlados": [
+        "`elemento(ys, 99)` -> `Error: índice fuera de rango`",
+        "`elemento(ys, \"0\")` -> `Error: índice debe ser entero`",
+        "`elemento(10, 0)` -> `Error: objeto no indexable`"
       ]
     }
   },
-  "pruebas_de_concepto_realizadas": {
+  "pruebas_de_concepto": {
+    "datos": {
+      "estado": "verde",
+      "comandos_validados": [
+        "usar \"datos\"",
+        "var xs = [1, 2, 3]",
+        "imprimir(longitud(xs))",
+        "imprimir(longitud([1, 2, 3]))",
+        "var ys = [10, 20, 30]",
+        "imprimir(longitud(ys))",
+        "imprimir(elemento(ys, 0))",
+        "imprimir(elemento(ys, 1))",
+        "imprimir(elemento(ys, 2))",
+        "imprimir(elemento([1, 2, 3], 2))"
+      ],
+      "resultados": [
+        "longitud(xs) -> 3",
+        "longitud([1, 2, 3]) -> 3",
+        "longitud(ys) -> 3",
+        "elemento(ys, 0) -> 10",
+        "elemento(ys, 1) -> 20",
+        "elemento(ys, 2) -> 30",
+        "elemento([1, 2, 3], 2) -> 3"
+      ]
+    },
     "numero": {
       "estado": "verde",
-      "comandos_repl": [
+      "comandos_validados": [
         "usar \"numero\"",
         "imprimir(es_finito(10))",
         "imprimir(signo(0-5))",
         "imprimir(limitar(15, 0, 10))",
-        "imprimir(raiz_entera(16))",
         "imprimir(es_par(8))",
         "imprimir(es_primo(7))"
       ],
@@ -58,23 +146,14 @@
         "es_finito(10) -> verdadero",
         "signo(0-5) -> -1",
         "limitar(15, 0, 10) -> 10",
-        "raiz_entera(16) -> 4",
         "es_par(8) -> verdadero",
         "es_primo(7) -> verdadero"
       ],
-      "observaciones": [
-        "La sanitización sigue activa",
-        "Los símbolos fuera de API pública siguen descartados",
-        "La salida de conflictos se compactó a `module=numero count=10`"
-      ]
+      "observacion": "La sanitización descartó símbolos fuera de API pública, por ejemplo `entero_a_base`, `entero_desde_base`, `longitud_bits`."
     },
     "texto": {
-      "estado": "verde tras cambios",
-      "problemas_previos": [
-        "Al cargar desde `corelibs/texto.py`, faltaban `recortar`, `repetir` y `quitar_acentos`",
-        "Al apuntar a `standard_library/texto.py`, apareció un import circular con `grupo_tareas`"
-      ],
-      "comandos_repl_validados": [
+      "estado": "verde",
+      "comandos_validados": [
         "usar \"texto\"",
         "imprimir(mayusculas(\"cobra\"))",
         "imprimir(minusculas(\"COBRA\"))",
@@ -93,187 +172,144 @@
         "jajaja",
         "cancion"
       ],
-      "observaciones": [
-        "El import circular quedó resuelto",
-        "La API pública textual declarada ya está disponible",
-        "La salida de sanitización se compactó a `module=texto count=58`"
-      ]
+      "observacion": "La sanitización descartó 58 símbolos fuera de API pública."
     },
     "logica": {
       "estado": "verde",
-      "comandos_repl": [
+      "comandos_validados": [
         "usar \"logica\"",
         "imprimir(conjuncion(verdadero, falso))",
         "imprimir(negacion(falso))"
       ],
       "resultados": [
-        "conjuncion(verdadero, falso) -> falso",
-        "negacion(falso) -> verdadero"
-      ],
-      "observaciones": [
-        "El binding runtime funciona con módulo `logica`",
-        "Se detectó previamente que reimportar el mismo módulo generaba colisiones masivas; se pidió tratarlo como idempotente"
+        "falso",
+        "verdadero"
       ]
     },
     "tiempo": {
       "estado": "verde",
-      "comandos_repl": [
+      "comandos_validados": [
         "usar \"tiempo\"",
         "imprimir(epoch())"
       ],
-      "resultado": "epoch() devuelve un timestamp numérico",
-      "observaciones": [
-        "El módulo carga y ejecuta correctamente"
-      ]
-    },
-    "datos": {
-      "estado": "parcialmente verde",
-      "problema_previo": "`usar \"datos\"` rechazaba todos los símbolos como `backend_module_object`",
-      "estado_actual": "`usar \"datos\"` ya carga y `longitud(\"cobra\")` funciona",
-      "comandos_repl_validados": [
-        "usar \"datos\"",
-        "imprimir(longitud(\"cobra\"))"
-      ],
-      "resultado": "5",
-      "pendiente_detectado": {
-        "problema": "El intérprete no evalúa literales de lista (`NodoLista`)",
-        "comandos_que_fallan": [
-          "var xs = [1, 2, 3]",
-          "imprimir(longitud([1, 2, 3]))"
-        ],
-        "error": "Error: Expresión no soportada: tipo=NodoLista",
-        "diagnostico": "El problema ya no está en `usar` ni en `datos`, sino en el evaluador de expresiones del intérprete."
-      }
+      "resultado": "Timestamp numérico",
+      "ejemplo_observado": 1779012070.91134
     },
     "archivo": {
-      "estado": "pendiente",
-      "comandos_repl": [
+      "estado": "verde",
+      "comandos_validados": [
         "usar \"archivo\"",
-        "imprimir(existe(\"README.md\"))"
+        "imprimir(existe(\"README.md\"))",
+        "imprimir(existe(\"archivo_que_no_deberia_existir_123456.tmp\"))",
+        "imprimir(existe(\"../README.md\"))"
       ],
-      "resultado_actual": "Error: Uso de primitiva peligrosa: 'existe'",
-      "diagnostico": "El módulo carga y sanitiza, pero el sandbox/validador bloquea `existe` aunque forma parte de la API pública Cobra-facing.",
-      "decision_pendiente": "Permitir `archivo.existe` como wrapper seguro para rutas permitidas/relativas, sin desactivar el sandbox global."
+      "resultados": [
+        "existe(\"README.md\") -> verdadero",
+        "existe(\"archivo_que_no_deberia_existir_123456.tmp\") -> falso",
+        "existe(\"../README.md\") -> falso"
+      ],
+      "observacion": "La ruta `../README.md` no produjo traceback ni acceso inseguro; se resolvió como falso/bloqueo seguro."
     },
-    "modulos_externos": {
-      "estado": "correcto",
-      "comando": "usar \"numpy\"",
-      "resultado_esperado": "Rechazo por estar fuera del catálogo público de Cobra",
-      "observacion": "Debe mantenerse rechazado con error corto y sin traceback en modo normal."
+    "seguridad_imports": {
+      "estado": "verde",
+      "comandos_validados": [
+        "usar \"numpy\"",
+        "usar archivo"
+      ],
+      "resultados": [
+        "`usar \"numpy\"` -> rechazado por estar fuera de USAR_COBRA_PUBLIC_MODULES",
+        "`usar archivo` -> Error: Se esperaba una ruta de módulo entre comillas"
+      ],
+      "observacion": "Se mantiene la sintaxis pública de `usar` con cadena obligatoria."
+    },
+    "funciones_usuario": {
+      "estado": "verde",
+      "comandos_validados": [
+        "func doble(n): retorno n * 2 fin",
+        "imprimir(doble(21))",
+        "imprimir(longitud(xs))",
+        "imprimir(es_finito(doble(21)))"
+      ],
+      "resultados": [
+        "doble(21) -> 42",
+        "longitud(xs) -> 3",
+        "es_finito(doble(21)) -> verdadero"
+      ],
+      "observacion": "Funciones Cobra de usuario, módulos importados por `usar`, listas y llamadas anidadas conviven correctamente."
+    },
+    "errores_limpios": {
+      "estado": "verde",
+      "casos": [
+        {
+          "comando": "imprimir(funcion_inexistente(1))",
+          "resultado": "Error: Variable no declarada: funcion_inexistente"
+        },
+        {
+          "comando": "imprimir(elemnto(ys, 0))",
+          "resultado": "Error: Variable no declarada: elemnto"
+        },
+        {
+          "comando": "usar \"datos2",
+          "resultado": "Cadena sin cerrar"
+        }
+      ],
+      "observacion": "No se observaron tracebacks en estos errores esperados."
     }
   },
-  "mejoras_de_ux_detectadas": {
-    "salida_abusiva": {
-      "estado": "mejorada parcialmente",
-      "antes": [
-        "Se imprimían diccionarios completos de conflictos",
-        "Se imprimían tracebacks largos en errores esperados",
-        "Reimportar módulos podía imprimir un warning por símbolo"
-      ],
-      "ahora": [
-        "Los eventos de sanitización se compactan, por ejemplo `WARNING: USAR sanitize conflicts event module=numero count=10`",
-        "La salida es mucho más legible en PoC"
-      ],
-      "pendiente": [
-        "Decidir si esos warnings compactos deben permanecer visibles en modo normal o pasar a debug",
-        "Garantizar que no haya tracebacks en REPL normal para errores esperados"
-      ]
-    },
-    "sugerencias_de_typo": {
-      "estado": "funciona parcialmente",
-      "evidencia": [
-        "`imrprimir(epoch())` sugiere `imprimir`"
-      ],
-      "observacion": [
-        "`e_finito` no sugirió `es_finito`, pero no se consideró bloqueante"
-      ]
-    }
-  },
-  "bugs_pendientes_acotados": {
-    "nodo_lista": {
-      "prioridad": "alta",
-      "descripcion": "El intérprete no soporta `NodoLista` como expresión.",
-      "impacto": [
-        "No permite `var xs = [1, 2, 3]`",
-        "No permite pasar listas literales a funciones importadas como `longitud([1, 2, 3])`"
-      ],
-      "ruta_probable": [
-        "src/pcobra/core/interpreter.py",
-        "método `evaluar_expresion` o equivalente"
-      ],
-      "solucion_propuesta": "Convertir `NodoLista` en lista Python evaluando recursivamente sus elementos y aplicando verificaciones de contexto/seguridad existentes."
-    },
-    "archivo_existe_sandbox": {
-      "prioridad": "alta",
-      "descripcion": "`archivo.existe` queda bloqueado como primitiva peligrosa pese a ser API pública de `usar \"archivo\"`.",
-      "impacto": [
-        "`imprimir(existe(\"README.md\"))` falla"
-      ],
-      "rutas_probables": [
-        "src/pcobra/core/interpreter.py",
-        "src/pcobra/core/semantic_validators/primitiva_peligrosa.py",
-        "src/pcobra/core/sandbox.py",
-        "módulo `archivo` en corelibs/standard_library"
-      ],
-      "solucion_propuesta": "Permitir wrappers Cobra-facing seguros importados por `usar \"archivo\"` para rutas relativas permitidas, sin relajar el sandbox global ni permitir rutas inseguras."
-    },
-    "idempotencia_usar": {
-      "prioridad": "media",
-      "descripcion": "Reimportar el mismo módulo, como `usar \"logica\"` dos veces, generaba colisiones masivas.",
-      "solucion_propuesta": "Registrar metadata de origen de símbolos importados por `usar` y considerar idempotente reimportar el mismo módulo con los mismos símbolos/callables."
-    },
-    "errores_repl_debug": {
-      "prioridad": "media",
-      "descripcion": "Separar definitivamente mensajes de usuario y trazas técnicas.",
-      "solucion_propuesta": "Mostrar mensajes cortos en modo normal y dejar eventos completos/tracebacks solo para debug/verbose."
-    }
-  },
-  "prompts_generados_para_codex": {
-    "binding_runtime_usar": "Prompt para permitir que `ejecutar_llamada_funcion` ejecute callables seguros importados por `usar`.",
-    "texto_datos_superficie_publica": "Prompt para alinear `texto` y `datos` con sus superficies Cobra-facing reales y evitar imports circulares.",
-    "salida_abusiva": "Prompt para compactar warnings/eventos y ocultar tracebacks en REPL normal.",
-    "nodo_lista_y_archivo": "Prompt reunido para implementar soporte de `NodoLista` y permitir `archivo.existe` bajo sandbox seguro."
-  },
-  "ultimo_prompt_entregado": {
-    "tema": "Modificar `NodoLista` y `archivo.existe`",
-    "objetivos": [
-      "Añadir soporte runtime para listas literales en el intérprete",
-      "Alinear `archivo.existe` con la API pública Cobra-facing y sandbox"
+  "warnings_y_ux": {
+    "estado": "pendiente_no_bloqueante",
+    "warnings_observados": [
+      "WARNING: Usar modulo: ...",
+      "WARNING: Llamada a funcion: ...",
+      "WARNING: USAR sanitize conflicts event module=... count=..."
     ],
-    "criterios_de_aceptacion": [
-      "`var xs = [1, 2, 3]` debe funcionar",
-      "`imprimir(longitud(xs))` debe devolver `3`",
-      "`imprimir(longitud([1, 2, 3]))` debe devolver `3`",
-      "`usar \"archivo\"` + `imprimir(existe(\"README.md\"))` debe devolver `verdadero` o `falso`, no primitiva peligrosa",
-      "`usar \"numpy\"` debe seguir rechazado",
-      "No modificar Lexer ni Parser"
-    ]
+    "diagnostico": "Funcionalmente no bloquean, pero ensucian la experiencia normal del REPL.",
+    "recomendacion": "Mover warnings técnicos y eventos de sanitización a modo debug/verbose, dejando REPL normal con salida limpia y errores de usuario breves."
   },
   "estado_global_actual": {
     "verde": [
-      "numero",
-      "texto",
-      "logica",
-      "tiempo",
-      "datos con string",
-      "binding runtime de `usar`",
-      "funciones Cobra de usuario",
-      "llamadas anidadas",
-      "salida de sanitización compactada parcialmente"
+      "Git CLI y remoto",
+      "Entorno REPL operativo",
+      "Inicialización de metadata de `usar`",
+      "Canonicalización/schema de metadata de `usar`",
+      "Binding runtime de callables importados por `usar`",
+      "`usar \"datos\"`",
+      "`usar \"numero\"`",
+      "`usar \"texto\"`",
+      "`usar \"logica\"`",
+      "`usar \"tiempo\"`",
+      "`usar \"archivo\"`",
+      "Sanitización de símbolos fuera de API pública",
+      "Rechazo de `usar \"numpy\"`",
+      "Rechazo de `usar archivo`",
+      "NodoLista como literal",
+      "Listas en variables",
+      "Listas inline como argumentos",
+      "`datos.longitud`",
+      "`datos.elemento`",
+      "`archivo.existe` bajo sandbox seguro",
+      "Funciones Cobra de usuario",
+      "Llamadas anidadas",
+      "Errores esperados sin traceback"
     ],
     "pendiente": [
-      "NodoLista en evaluador",
-      "archivo.existe bajo sandbox seguro",
-      "idempotencia completa de `usar`",
-      "terminar separación modo normal/debug para errores del REPL"
+      "UX/logging del REPL",
+      "Sugerencias de typo para funciones importadas, por ejemplo `elemnto` -> `elemento`",
+      "Decidir si en el futuro se implementará indexación real `xs[0]`, lo cual requeriría tocar Parser y queda fuera de esta fase"
     ],
-    "conclusion": "La frontera `usar` ya está mucho más sólida. Los problemas restantes son específicos del runtime/evaluador y de la política de sandbox, no del Lexer/Parser ni de la sintaxis pública."
+    "no_hacer_en_esta_fase": [
+      "No implementar `xs[0]`",
+      "No modificar Lexer",
+      "No modificar Parser",
+      "No añadir sintaxis nueva",
+      "No relajar el sandbox",
+      "No ampliar imports externos"
+    ]
   },
-  "siguientes_pasos_recomendados": [
-    "Aplicar prompt reunido de `NodoLista` + `archivo.existe` con Codex",
-    "Ejecutar PoC mínima: `var xs = [1, 2, 3]`, `longitud([1,2,3])`, `existe(\"README.md\")`",
-    "Revalidar regresiones: `numero`, `texto`, `logica`, `tiempo`, `datos(\"cobra\")`",
-    "Probar `usar \"numpy\"` para confirmar rechazo limpio",
-    "Opcional: implementar idempotencia de `usar` si no quedó resuelta"
-  ]
+  "siguiente_paso_recomendado": {
+    "prioridad_1": "Limpiar UX/logging del REPL: ocultar warnings técnicos en modo normal y mantenerlos en debug/verbose.",
+    "prioridad_2": "Añadir pruebas automáticas de regresión para todos los casos verdes validados manualmente.",
+    "prioridad_3": "Mejorar sugerencias de typo para funciones importadas por `usar`.",
+    "prioridad_4": "Documentar `datos.elemento(coleccion, indice)` como alternativa oficial mientras `xs[0]` no forme parte de la sintaxis soportada."
+  }
 }
