@@ -1,7 +1,9 @@
 from types import ModuleType
 
 from pcobra.core.usar_symbol_policy import (
+    CANONICAL_USAR_METADATA_SCHEMA,
     PoliticaSaneamientoUsar,
+    USAR_SYMBOL_METADATA_ALLOWED_KEYS,
     normalizar_metadata_simbolo_usar,
     sanear_exportables_para_usar,
     sanear_simbolo_para_usar,
@@ -261,3 +263,28 @@ def test_rechaza_metadata_con_contradiccion_backend_exposed_true_en_validacion_e
         assert "backend_exposed inválido" in str(exc)
     else:
         raise AssertionError("Se esperaba ValueError por contradicción maliciosa de metadata.")
+
+
+def test_claves_legacy_compatibles_forman_parte_del_set_permitido():
+    legacy_compatibles = {"introduced_by", "introduced_by_usar", "origen_tipo", "is_public_export"}
+    assert legacy_compatibles.issubset(USAR_SYMBOL_METADATA_ALLOWED_KEYS)
+    assert legacy_compatibles.issubset(set(CANONICAL_USAR_METADATA_SCHEMA["legacy_aliases"]))
+
+
+def test_normalizacion_acepta_y_canonicaliza_claves_legacy_compatibles_sin_criticas():
+    raw = {
+        "introduced_by": "usar",
+        "introduced_by_usar": "usar",
+        "origen_tipo": "usar",
+        "is_public_export": True,
+        "safe_wrapper": True,
+        "backend_exposed": False,
+        "callable": True,
+    }
+    normalizada = normalizar_metadata_simbolo_usar(raw, "archivo", "existe")
+    assert normalizada["origin_kind"] == "usar"
+    assert normalizada["public_api"] is True
+    assert "introduced_by" not in normalizada
+    assert "introduced_by_usar" not in normalizada
+    assert "origen_tipo" not in normalizada
+    assert "is_public_export" not in normalizada
