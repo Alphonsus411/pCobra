@@ -288,3 +288,52 @@ def test_normalizacion_acepta_y_canonicaliza_claves_legacy_compatibles_sin_criti
     assert "introduced_by_usar" not in normalizada
     assert "origen_tipo" not in normalizada
     assert "is_public_export" not in normalizada
+
+
+def test_normaliza_wrapper_safe_legacy_hacia_safe_wrapper_canonico():
+    raw = {
+        "origin_kind": "usar",
+        "module": "archivo",
+        "symbol": "existe",
+        "sanitized": True,
+        "wrapper_safe": True,
+        "public_api": True,
+        "backend_exposed": False,
+        "callable": True,
+    }
+    normalizada = normalizar_metadata_simbolo_usar(raw, "archivo", "existe")
+    assert normalizada["safe_wrapper"] is True
+    assert "wrapper_safe" not in normalizada
+    assert set(normalizada.keys()) == {
+        "origin_kind",
+        "module",
+        "symbol",
+        "sanitized",
+        "safe_wrapper",
+        "public_api",
+        "backend_exposed",
+        "callable",
+    }
+
+
+def test_regresion_runtime_usar_archivo_existe_no_aborta_por_safe_wrapper():
+    metadata_runtime_real = {
+        "introduced_by_usar": "usar",
+        "canonical_module": "archivo",
+        "exported_name": "existe",
+        "is_sanitized_wrapper": True,
+        "wrapper_safe": True,
+        "is_public_export": True,
+        "backend_exposed": False,
+        "callable": True,
+        "python_module": "pcobra.std.archivo",
+    }
+
+    normalizada = validate_usar_symbol_metadata("existe", metadata_runtime_real)
+
+    assert normalizada["module"] == "archivo"
+    assert normalizada["symbol"] == "existe"
+    assert normalizada["sanitized"] is True
+    assert normalizada["safe_wrapper"] is True
+    assert normalizada["safe_wrapper"] is normalizada["sanitized"]
+    assert normalizada["backend_exposed"] is False
