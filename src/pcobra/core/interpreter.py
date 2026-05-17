@@ -136,6 +136,12 @@ def _usar_error_esperado(exc: Exception) -> bool:
     return isinstance(exc, (PermissionError, NameError, ImportError, ValueError))
 
 
+_ERRORES_USUARIO_ELEMENTO: dict[type[Exception], set[str]] = {
+    IndexError: {"índice fuera de rango"},
+    TypeError: {"índice debe ser entero", "objeto no indexable"},
+}
+
+
 def _usar_detalle_habilitado() -> bool:
     """Determina si `usar` puede exponer detalles extendidos en salida de error."""
     return _runtime_debug_enabled() or InterpretadorCobra._debug_trazas_habilitadas()
@@ -1988,12 +1994,8 @@ class InterpretadorCobra:
 
                 try:
                     resultado = funcion(*argumentos_resueltos)
-                except Exception:
-                    logging.exception(
-                        "Error en callable '%s' durante ejecutar_llamada_funcion",
-                        nodo.nombre,
-                    )
-                    raise
+                except (TypeError, IndexError) as exc:
+                    raise self._normalizar_error_publico_usar(nodo.nombre, exc) from exc
                 self._verificar_valor_contexto(resultado)
                 return resultado
 
@@ -2068,6 +2070,19 @@ class InterpretadorCobra:
                     return resultado
                 finally:
                     limpiar_contexto()
+
+    def _normalizar_error_publico_usar(self, nombre: str, exc: Exception) -> Exception:
+        """Normaliza errores contractuales de APIs públicas `usar`.
+
+        Captura únicamente errores esperados para evitar ocultar fallas reales.
+        """
+        metadata = self._usar_symbol_metadata.get(nombre) or {}
+        if metadata.get("module") == "datos" and metadata.get("symbol") == "elemento":
+            mensaje = str(exc).strip()
+            mensajes_permitidos = _ERRORES_USUARIO_ELEMENTO.get(type(exc), set())
+            if mensaje in mensajes_permitidos:
+                return type(exc)(f"Error: {mensaje}")
+        return exc
 
     def ejecutar_clase(self, nodo):
         """Registra una clase definida por el usuario."""
