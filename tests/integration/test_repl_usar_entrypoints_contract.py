@@ -1166,6 +1166,9 @@ def test_regresion_metadata_usar_none_pre_auditoria(factory, executor, get_inter
     assert callable(interp.obtener_variable("es_finito"))
     executor(cmd, "imprimir(es_finito(10))")
     salida_numero = capsys.readouterr()
+    combinado_numero = f"{salida_numero.out}\n{salida_numero.err}"
+    assert "invalid_container" not in combinado_numero
+    assert "NoneType" not in combinado_numero
     lineas_numero = [linea.strip() for linea in salida_numero.out.splitlines() if linea.strip()]
     assert lineas_numero and lineas_numero[-1] == "verdadero"
 
@@ -1173,6 +1176,7 @@ def test_regresion_metadata_usar_none_pre_auditoria(factory, executor, get_inter
     executor(cmd, 'imprimir(existe("README.md"))')
     salida_archivo = capsys.readouterr()
     combinado_archivo = f"{salida_archivo.out}\n{salida_archivo.err}"
+    assert "invalid_container" not in combinado_archivo
     assert "_metadata_simbolos_usar" not in combinado_archivo
     assert "NoneType" not in combinado_archivo
 
@@ -1182,3 +1186,6 @@ def test_regresion_metadata_usar_none_pre_auditoria(factory, executor, get_inter
         ultimo in {"verdadero", "falso"}
         or "Uso de primitiva peligrosa" in combinado_archivo
     )
+
+    with pytest.raises(PermissionError, match=r"(módulo fuera del catálogo público|modulo_fuera_catalogo_publico)"):
+        executor(cmd, 'usar "numpy"')
