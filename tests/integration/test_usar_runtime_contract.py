@@ -301,6 +301,39 @@ def test_integridad_estatica_lexer_y_parser_sin_diff_inesperado():
         assert hashlib.sha256(contenido).hexdigest() == hash_esperado, f"Hash inesperado en {ruta}"
 
 
+
+def test_repl_incremental_usar_datos_preserva_estado_y_longitud(capsys):
+    from pcobra.cobra.cli.commands.interactive_cmd import InteractiveCommand
+
+    cmd = InteractiveCommand(InterpretadorCobra())
+    cmd.ejecutar_codigo("var xs=[1,2,3]")
+    cmd.ejecutar_codigo('usar "datos"')
+    cmd.ejecutar_codigo("imprimir(longitud(xs))")
+    cmd.ejecutar_codigo("imprimir(longitud([1,2,3]))")
+
+    salida = capsys.readouterr().out
+    assert salida.count("3") >= 2
+
+
+def test_sintaxis_usar_sin_comillas_falla_como_hoy():
+    from pcobra.cobra.cli.commands.interactive_cmd import InteractiveCommand
+
+    cmd = InteractiveCommand(InterpretadorCobra())
+    from pcobra.cobra.core.parser import ParserError
+
+    with pytest.raises(ParserError, match="comillas"):
+        cmd.ejecutar_codigo("usar archivo")
+
+
+def test_sintaxis_usar_cadena_sin_cerrar_falla_como_hoy():
+    from pcobra.cobra.cli.commands.interactive_cmd import InteractiveCommand
+
+    cmd = InteractiveCommand(InterpretadorCobra())
+    from pcobra.core.errors import UnclosedStringError
+
+    with pytest.raises(UnclosedStringError, match="Cadena sin cerrar"):
+        cmd.ejecutar_codigo('usar "datos2')
+
 def test_runtime_metadata_legacy_aliases_se_normalizan_a_canonico():
     raw = {
         "introduced_by": "usar",
@@ -336,8 +369,8 @@ def test_runtime_metadata_clave_desconocida_maliciosa_rechazada_fail_closed():
         "public_api": True,
         "backend_exposed": False,
         "callable": True,
-        "__backend_hook__": "pwn",
+        "__inject_backend__": "pwn",
     }
 
-    with pytest.raises(ValueError, match=r"unexpected_keys|claves inesperadas"):
+    with pytest.raises(ValueError, match=r"claves desconocidas|unexpected_keys|claves inesperadas"):
         usar_symbol_policy.validate_usar_symbol_metadata("es_finito", raw)
