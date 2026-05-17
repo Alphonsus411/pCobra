@@ -93,6 +93,30 @@ def test_rechaza_todos_los_alias_ingleses_prohibidos():
         assert resultado.codigo in {"explicit_forbidden_name", "cobra_public_equivalent"}
 
 
+def test_schema_usar_consistencia_interna():
+    required_keys = CANONICAL_USAR_METADATA_SCHEMA["required_keys"]
+    allowed_keys = CANONICAL_USAR_METADATA_SCHEMA["allowed_keys"]
+    value_constraints = CANONICAL_USAR_METADATA_SCHEMA["value_constraints"]
+    legacy_aliases = CANONICAL_USAR_METADATA_SCHEMA["legacy_aliases"]
+    legacy_consistency = CANONICAL_USAR_METADATA_SCHEMA["legacy_consistency"]
+    legacy_bool_true = CANONICAL_USAR_METADATA_SCHEMA["legacy_bool_true"]
+
+    assert required_keys.issubset(allowed_keys)
+    assert set(value_constraints).issubset(required_keys)
+
+    legacy_keys = set(legacy_aliases) | set(legacy_consistency) | set(legacy_bool_true)
+    canonicas = set(value_constraints)
+    assert legacy_keys.isdisjoint(canonicas)
+    assert legacy_keys.issubset(allowed_keys)
+    assert set(legacy_aliases.values()).issubset(canonicas)
+    assert set(legacy_consistency.values()).issubset(allowed_keys)
+    assert set(legacy_bool_true.values()).issubset(allowed_keys)
+
+    # Seguridad contractual: si existe política dependiente de `archivo.existe`,
+    # la clave canónica `safe_wrapper` debe ser requerida.
+    assert "safe_wrapper" in required_keys
+
+
 def test_modo_estricto_cobra_facing_rechaza_nombres_no_canonicos():
     politica = PoliticaSaneamientoUsar(validar_nombre_canonico_espanol_en_cobra_facing=True)
 
@@ -384,4 +408,3 @@ def test_rechaza_contradicciones_criticas_de_metadata_usar():
             pass
         else:
             raise AssertionError(f"Se esperaba rechazo para metadata inválida: {metadata}")
-
