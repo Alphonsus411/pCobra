@@ -433,19 +433,32 @@ def normalizar_metadata_simbolo_usar(raw_metadata: object, module_name: str, sym
         raise ValueError(f"Metadata inválida para símbolo usar '{symbol_name}': tipo no permitido")
 
     metadata_dict = dict(raw_metadata)
-    # Compatibilidad legacy estricta: aceptar `kind="usar"` como alias de
-    # `origin_kind` solo cuando el campo canónico no existe.
+
+    # 1) Resolver aliases en orden estable e invariable.
     aliases_normalizados: list[str] = []
-    aliases_por_canonica: dict[str, list[str]] = {}
-    for legacy_key, canonical_key in CANONICAL_USAR_METADATA_SCHEMA["legacy_aliases"].items():
-        if legacy_key in metadata_dict:
-            aliases_por_canonica.setdefault(canonical_key, []).append(legacy_key)
-            aliases_normalizados.append(legacy_key)
-    for canonical_key, alias_keys in aliases_por_canonica.items():
+    aliases_prioritarios_en_orden = (
+        ("origin_kind", ["introduced_by", "introduced_by_usar", "origen_tipo"]),
+        ("public_api", ["is_public_export"]),
+        ("safe_wrapper", ["wrapper_safe"]),
+    )
+    for canonical_key, alias_keys_ordenados in aliases_prioritarios_en_orden:
+        aliases_presentes = [k for k in alias_keys_ordenados if k in metadata_dict]
+        if not aliases_presentes:
+            continue
+        aliases_normalizados.extend(aliases_presentes)
         _resolver_valor_canonico_desde_aliases(
             metadata_dict=metadata_dict,
             canonical_key=canonical_key,
-            alias_keys=alias_keys,
+            alias_keys=aliases_presentes,
+        )
+
+    # Alias legacy adicional (`kind -> origin_kind`) mantenido por compatibilidad.
+    if "kind" in metadata_dict:
+        aliases_normalizados.append("kind")
+        _resolver_valor_canonico_desde_aliases(
+            metadata_dict=metadata_dict,
+            canonical_key="origin_kind",
+            alias_keys=["kind"],
         )
 
     for legacy_key, canonical_key in CANONICAL_USAR_METADATA_SCHEMA["legacy_consistency"].items():
@@ -468,9 +481,11 @@ def normalizar_metadata_simbolo_usar(raw_metadata: object, module_name: str, sym
                 f"Metadata inválida para símbolo usar '{symbol_name}': symbol inconsistente con contexto"
             )
         metadata_dict.setdefault("symbol", symbol_name)
-    metadata_dict.setdefault("sanitized", True)
-    metadata_dict.setdefault("safe_wrapper", True)
+    # 2) Aplicar defaults seguros sobre contrato canónico.
+    metadata_dict.setdefault("origin_kind", "usar")
     metadata_dict["origin_kind"] = "usar"
+    for key, default in USAR_METADATA_SECURE_BOOL_DEFAULTS.items():
+        metadata_dict.setdefault(key, default)
 
     for legacy_key in aliases_normalizados:
         if legacy_key != CANONICAL_USAR_METADATA_SCHEMA["legacy_aliases"][legacy_key]:
@@ -487,6 +502,15 @@ def normalizar_metadata_simbolo_usar(raw_metadata: object, module_name: str, sym
             sorted(aliases_normalizados),
         )
 
+    # 3) Evaluar claves críticas inesperadas con fail-closed, al final del
+    # pipeline de normalización/control de compatibilidad.
+    inesperadas_criticas = set(metadata_dict.keys()) - CANONICAL_USAR_METADATA_SCHEMA["allowed_keys"]
+    if inesperadas_criticas:
+        raise ValueError(
+            "Metadata inválida para símbolo usar "
+            f"'{symbol_name}': claves inesperadas críticas {sorted(inesperadas_criticas)}"
+        )
+
     faltantes = CANONICAL_USAR_METADATA_SCHEMA["required_keys"] - set(metadata_dict.keys())
     if faltantes:
         raise ValueError(f"Metadata inválida para símbolo usar '{symbol_name}': faltan claves {sorted(faltantes)}")
@@ -500,13 +524,6 @@ def normalizar_metadata_simbolo_usar(raw_metadata: object, module_name: str, sym
         for clave in metadata_dict
         if clave in claves_canonicas_y_opcionales
     }
-
-    inesperadas_criticas = set(metadata_dict.keys()) - CANONICAL_USAR_METADATA_SCHEMA["allowed_keys"]
-    if inesperadas_criticas:
-        raise ValueError(
-            "Metadata inválida para símbolo usar "
-            f"'{symbol_name}': claves inesperadas críticas {sorted(inesperadas_criticas)}"
-        )
 
     return metadata_final
 
