@@ -1,6 +1,9 @@
 from .base import ValidadorBase
 from ..ast_nodes import NodoLlamadaFuncion, NodoHilo, NodoLlamadaMetodo
-from ..usar_symbol_policy import validate_usar_symbol_metadata
+from ..usar_symbol_policy import (
+    normalizar_metadata_simbolo_usar,
+    validate_usar_symbol_metadata_normalized,
+)
 
 
 class PrimitivaPeligrosaError(Exception):
@@ -56,7 +59,8 @@ class ValidadorPrimitivaPeligrosa(ValidadorBase):
             raise ValueError(
                 "Metadata inválida para símbolo usar: se requiere metadata canónica preconstruida"
             )
-        metadata_validada = validate_usar_symbol_metadata(nombre, metadata)
+        metadata_normalizada = normalizar_metadata_simbolo_usar(metadata, modulo, nombre)
+        metadata_validada = validate_usar_symbol_metadata_normalized(nombre, metadata_normalizada)
         if metadata_validada.get("module") != modulo:
             raise ValueError(
                 f"Metadata inválida para símbolo usar '{nombre}': module no coincide con registro"
@@ -78,7 +82,7 @@ class ValidadorPrimitivaPeligrosa(ValidadorBase):
 
         # Única puerta de validación del contrato canónico.
         try:
-            metadata_validada = validate_usar_symbol_metadata(nodo.nombre, metadata)
+            metadata_validada = validate_usar_symbol_metadata_normalized(nodo.nombre, metadata)
         except ValueError as exc:
             return False, str(exc)
 

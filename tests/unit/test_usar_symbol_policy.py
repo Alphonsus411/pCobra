@@ -202,6 +202,7 @@ def test_normaliza_aliases_explicitos_a_claves_canonicas_y_filtra_legacy():
         "module",
         "symbol",
         "sanitized",
+        "safe_wrapper",
         "public_api",
         "backend_exposed",
         "callable",
