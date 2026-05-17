@@ -48,6 +48,24 @@ El módulo `standard_library.datos` encapsula operaciones comunes sobre datos ta
 - **`a_listas(datos)`**: transforma la tabla a un diccionario columna → lista.
 - **`de_listas(columnas)`**: genera una lista de diccionarios a partir de un mapeo de columnas.
 
+- **`elemento(coleccion, indice)`**: obtiene el valor por índice con validaciones Cobra-facing. Esta API **reemplaza temporalmente** la indexación con corchetes (`coleccion[indice]`) mientras no exista soporte sintáctico formal para esa forma en Cobra.
+
+
+### Ejemplos mínimos de `elemento`
+
+```cobra
+usar "datos"
+
+elemento([10, 20, 30], 0)
+# -> 10
+
+elemento([10, 20, 30], "0")
+# -> Error: índice debe ser entero
+
+elemento([10, 20, 30], 10)
+# -> Error: índice fuera de rango
+```
+
 ### Dependencias para trabajar con Excel
 
 Las operaciones con libros de Excel delegan en motores opcionales de `pandas`. Para archivos modernos (`.xlsx`) se recomienda instalar `openpyxl`::
@@ -147,6 +165,7 @@ En el objetivo JavaScript se ofrece una implementación parcial que mantiene las
 | `de_listas` |
 | `describir` |
 | `desplegar_tabla` |
+| `elemento` |
 | `escribir_csv` |
 | `escribir_excel` |
 | `escribir_feather` |
