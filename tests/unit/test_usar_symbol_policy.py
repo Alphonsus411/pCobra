@@ -5,6 +5,7 @@ from pcobra.core.usar_symbol_policy import (
     normalizar_metadata_simbolo_usar,
     sanear_exportables_para_usar,
     sanear_simbolo_para_usar,
+    validate_usar_symbol_metadata,
 )
 
 
@@ -223,3 +224,40 @@ def test_rechaza_conflicto_semantico_en_aliases_no_resoluble():
         assert "aliases inconsistentes para origin_kind" in str(exc)
     else:
         raise AssertionError("Se esperaba ValueError por conflicto semántico en aliases.")
+
+def test_rechaza_metadata_con_clave_desconocida_maliciosa():
+    raw = {
+        "origin_kind": "usar",
+        "module": "archivo",
+        "symbol": "existe",
+        "public_api": True,
+        "sanitized": True,
+        "callable": True,
+        "backend_exposed": False,
+        "__proto_payload_inyectado__": "boom",
+    }
+    try:
+        normalizar_metadata_simbolo_usar(raw, "archivo", "existe")
+    except ValueError as exc:
+        assert "claves inesperadas críticas" in str(exc)
+    else:
+        raise AssertionError("Se esperaba ValueError por clave desconocida.")
+
+
+def test_rechaza_metadata_con_contradiccion_backend_exposed_true_en_validacion_estricta():
+    raw = {
+        "origin_kind": "backend_privado",
+        "module": "archivo",
+        "symbol": "existe",
+        "public_api": True,
+        "sanitized": True,
+        "safe_wrapper": True,
+        "backend_exposed": True,
+        "callable": True,
+    }
+    try:
+        validate_usar_symbol_metadata("existe", raw)
+    except ValueError as exc:
+        assert "backend_exposed inválido" in str(exc)
+    else:
+        raise AssertionError("Se esperaba ValueError por contradicción maliciosa de metadata.")

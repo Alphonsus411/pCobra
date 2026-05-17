@@ -111,6 +111,16 @@ def test_usar_archivo_existe_readme_no_falla_por_metadata():
     assert "existe" in interp._validador._metadata_simbolos_usar
 
 
+def test_carga_basica_modulos_publicos_datos_numero_texto_archivo():
+    interp = InterpretadorCobra()
+    ast = generar_ast('usar "datos"\nusar "numero"\nusar "texto"\nusar "archivo"')
+
+    with patch("sys.stdout", new_callable=StringIO):
+        interp.ejecutar_ast(ast)
+
+    for simbolo in ("longitud", "es_finito", "mayusculas", "existe"):
+        assert simbolo in interp.variables
+
 def test_sintaxis_usar_sin_cadena_rechaza_con_error_claro():
     with pytest.raises(Exception, match=r"Se esperaba una ruta de módulo entre comillas"):
         generar_ast('usar archivo')
