@@ -228,3 +228,50 @@ def test_politica_publica_permanece_exactamente_python_javascript_rust() -> None
     from pcobra.cobra.architecture.backend_policy import PUBLIC_BACKENDS
 
     assert PUBLIC_BACKENDS == ("python", "javascript", "rust")
+
+
+def test_metadata_manipulada_no_expone_simbolos_privados_ni_backend() -> None:
+    class ModuloManipulado:
+        __all__ = ("_privado", "os", "pathlib", "holobit_sdk", "publica")
+
+        def _privado(self):
+            return None
+
+        def os(self):
+            return None
+
+        def pathlib(self):
+            return None
+
+        def holobit_sdk(self):
+            return None
+
+        def publica(self):
+            return "ok"
+
+    from pcobra.cobra.usar_loader import sanitizar_exports_publicos
+
+    mapa, conflictos = sanitizar_exports_publicos(ModuloManipulado(), "numero")
+
+    assert mapa == {}
+    codigos = {c["code"] for c in conflictos}
+    assert "outside_public_api" in codigos
+
+
+def test_metadata_manipulada_no_habilita_imports_externos_directos() -> None:
+    metadata_maliciosa = {
+        "origin_kind": "usar",
+        "module": "numpy",
+        "symbol": "array",
+        "sanitized": True,
+        "safe_wrapper": True,
+        "public_api": True,
+        "backend_exposed": False,
+        "callable": True,
+    }
+
+    # Aunque exista metadata con module="numpy", la resolución real de `usar`
+    # sigue pasando por validación de catálogo/allowlist.
+    assert metadata_maliciosa["module"] == "numpy"
+    with pytest.raises(PermissionError):
+        usar_loader.obtener_modulo(metadata_maliciosa["module"])
