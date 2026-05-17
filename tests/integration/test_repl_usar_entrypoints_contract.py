@@ -1189,3 +1189,23 @@ def test_regresion_metadata_usar_none_pre_auditoria(factory, executor, get_inter
 
     with pytest.raises(PermissionError, match=r"(módulo fuera del catálogo público|modulo_fuera_catalogo_publico)"):
         executor(cmd, 'usar "numpy"')
+
+
+def test_repl_usar_datos_numero_archivo_contrato_basico_sin_errores_metadata(capsys):
+    cmd = ReplCommandV2()
+
+    cmd._ejecutar_en_modo_normal('usar "datos"')
+    cmd._ejecutar_en_modo_normal('var xs = [1, 2, 3]')
+    cmd._ejecutar_en_modo_normal('imprimir(longitud(xs))')
+
+    cmd._ejecutar_en_modo_normal('usar "numero"')
+    cmd._ejecutar_en_modo_normal('imprimir(es_finito(10))')
+
+    cmd._ejecutar_en_modo_normal('usar "archivo"')
+    cmd._ejecutar_en_modo_normal('imprimir(existe("README.md"))')
+
+    salida = capsys.readouterr().out
+    assert 'Traceback' not in salida
+    assert 'metadata' not in salida.lower()
+    assert '3' in salida
+    assert 'verdadero' in salida or 'falso' in salida

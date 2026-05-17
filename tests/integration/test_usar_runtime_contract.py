@@ -299,3 +299,45 @@ def test_integridad_estatica_lexer_y_parser_sin_diff_inesperado():
     for ruta, hash_esperado in hashes_esperados.items():
         contenido = Path(ruta).read_bytes()
         assert hashlib.sha256(contenido).hexdigest() == hash_esperado, f"Hash inesperado en {ruta}"
+
+
+def test_runtime_metadata_legacy_aliases_se_normalizan_a_canonico():
+    raw = {
+        "introduced_by": "usar",
+        "introduced_by_usar": "usar",
+        "origen_tipo": "usar",
+        "is_public_export": True,
+        "module": "numero",
+        "symbol": "es_finito",
+        "sanitized": True,
+        "safe_wrapper": True,
+        "backend_exposed": False,
+        "callable": True,
+    }
+
+    normalizada = usar_symbol_policy.normalizar_metadata_simbolo_usar(raw, "numero", "es_finito")
+    validada = usar_symbol_policy.validate_usar_symbol_metadata("es_finito", normalizada)
+
+    assert validada["origin_kind"] == "usar"
+    assert validada["public_api"] is True
+    assert "introduced_by" not in validada
+    assert "introduced_by_usar" not in validada
+    assert "origen_tipo" not in validada
+    assert "is_public_export" not in validada
+
+
+def test_runtime_metadata_clave_desconocida_maliciosa_rechazada_fail_closed():
+    raw = {
+        "origin_kind": "usar",
+        "module": "numero",
+        "symbol": "es_finito",
+        "sanitized": True,
+        "safe_wrapper": True,
+        "public_api": True,
+        "backend_exposed": False,
+        "callable": True,
+        "__backend_hook__": "pwn",
+    }
+
+    with pytest.raises(ValueError, match=r"unexpected_keys|claves inesperadas"):
+        usar_symbol_policy.validate_usar_symbol_metadata("es_finito", raw)
