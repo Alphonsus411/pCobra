@@ -7,6 +7,7 @@ import pytest
 
 from pcobra.cobra.cli.commands.interactive_cmd import InteractiveCommand
 from pcobra.cobra.cli.commands_v2.repl_cmd import ReplCommandV2
+from pcobra.cobra.core.parser import ParserError
 from pcobra.cobra.core.runtime import InterpretadorCobra
 
 
@@ -144,6 +145,31 @@ def test_repl_interpreter_datos_elemento_variable_y_literal():
     assert valores[-4:] == ["10", "20", "30", "3"]
 
 
+def test_repl_interpreter_usar_datos_expone_elemento():
+    repl = InteractiveCommand(InterpretadorCobra())
+    repl.ejecutar_codigo('usar "datos"')
+
+    simbolos = repl.interpretador.contextos[-1].values
+    assert "elemento" in simbolos
+
+
+def test_repl_interpreter_datos_elemento_regresion_variante_solicitada():
+    repl = InteractiveCommand(InterpretadorCobra())
+    out = StringIO()
+
+    with redirect_stdout(out):
+        repl.ejecutar_codigo('usar "datos"')
+        repl.ejecutar_codigo('imprimir(elemento([10, 20, 30], 0))')
+        repl.ejecutar_codigo('var ys = [10, 20, 30]')
+        repl.ejecutar_codigo('imprimir(elemento(ys, 1))')
+        repl.ejecutar_codigo('imprimir(elemento([1, 2, 3], 2))')
+        repl.ejecutar_codigo('imprimir(longitud([1, 2, 3]))')
+
+    lineas = [linea.strip() for linea in out.getvalue().splitlines() if linea.strip()]
+    valores = [linea for linea in lineas if linea.isdigit()]
+    assert valores[-4:] == ["10", "20", "3", "3"]
+
+
 def test_repl_interpreter_datos_elemento_errores_limpios():
     repl = InteractiveCommand(InterpretadorCobra())
     repl.ejecutar_codigo('usar "datos"')
@@ -155,3 +181,41 @@ def test_repl_interpreter_datos_elemento_errores_limpios():
         repl.ejecutar_codigo('imprimir(elemento(ys, "0"))')
     with pytest.raises(TypeError, match="objeto no indexable"):
         repl.ejecutar_codigo('imprimir(elemento(10, 0))')
+
+
+def test_repl_v2_datos_elemento_errores_cortos_sin_traceback(capsys):
+    cmd = ReplCommandV2()
+    cmd._ejecutar_en_modo_normal('usar "datos"')
+    cmd._ejecutar_en_modo_normal('var ys = [10, 20, 30]')
+
+    with pytest.raises(IndexError, match="índice fuera de rango") as excinfo:
+        cmd._ejecutar_en_modo_normal('imprimir(elemento(ys, 99))')
+    salida = capsys.readouterr().out
+    assert "índice fuera de rango" in str(excinfo.value)
+    assert "Traceback" not in salida
+
+    with pytest.raises(TypeError, match="índice debe ser entero") as excinfo:
+        cmd._ejecutar_en_modo_normal('imprimir(elemento(ys, "0"))')
+    salida = capsys.readouterr().out
+    assert "índice debe ser entero" in str(excinfo.value)
+    assert "Traceback" not in salida
+
+    with pytest.raises(TypeError, match="objeto no indexable") as excinfo:
+        cmd._ejecutar_en_modo_normal('imprimir(elemento(10, 0))')
+    salida = capsys.readouterr().out
+    assert "objeto no indexable" in str(excinfo.value)
+    assert "Traceback" not in salida
+
+
+def test_repl_v2_usar_fronteras_rechaza_numpy_y_sintaxis_invalida(capsys):
+    cmd = ReplCommandV2()
+
+    with pytest.raises(PermissionError):
+        cmd._ejecutar_en_modo_normal('usar "numpy"')
+    salida_numpy = capsys.readouterr().out
+    assert "Traceback" not in salida_numpy
+
+    with pytest.raises(ParserError):
+        cmd._ejecutar_en_modo_normal("usar archivo")
+    salida_archivo = capsys.readouterr().out
+    assert "Traceback" not in salida_archivo
