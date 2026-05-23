@@ -105,6 +105,11 @@ def prevalidar_y_parsear_codigo(codigo: str) -> Any:
 
     if not isinstance(codigo, str):
         raise TypeError(_("El código fuente debe ser una cadena de texto"))
+    # Nota de compatibilidad:
+    # - El BOM de archivos (`\ufeff` al inicio) se normaliza en la frontera de
+    #   lectura de `run_service`.
+    # - Aquí sólo aplicamos saneamiento Unicode compatible para tokenización,
+    #   sin alterar reglas de Lexer/Parser.
     codigo_saneado = sanitize_source_for_tokenizer(codigo)
     tokens = Lexer(codigo_saneado).tokenizar()
     return Parser(tokens).parsear()
