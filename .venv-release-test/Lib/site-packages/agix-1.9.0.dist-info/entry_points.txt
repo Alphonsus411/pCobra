@@ -1,0 +1,8 @@
+[agix.logic_engines]
+bloom = agix.logic_engines.bloom_engine:BLOOMEngine
+claude = agix.logic_engines.claude_engine:ClaudeEngine
+hf = agix.logic_engines.hf_engine:HFEngine
+llama = agix.logic_engines.llama_engine:LLaMAEngine
+
+[console_scripts]
+agix = agix.cli.main:main

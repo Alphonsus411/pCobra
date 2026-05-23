@@ -1,0 +1,2 @@
+[console_scripts]
+cobra = pcobra.cli:main

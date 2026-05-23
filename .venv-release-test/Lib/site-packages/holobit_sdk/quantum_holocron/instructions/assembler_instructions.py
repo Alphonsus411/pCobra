@@ -1,0 +1,24 @@
+class QuantumInstruction:
+    """
+    Representa una instrucción cuántica genérica.
+    """
+
+    def __init__(self, name, func):
+        self.name = name
+        self.func = func
+
+    def apply(self, holobits):
+        """
+        Aplica la instrucción a un conjunto de Holobits.
+        """
+        return self.func(holobits)
+
+
+# Ejemplo de instrucciones
+def quantum_flip(holobits):
+    """
+    Ejemplo de operación cuántica: invierte el estado de los Holobits.
+    """
+    return [~holobit for holobit in holobits]
+
+FLIP = QuantumInstruction("FLIP", quantum_flip)

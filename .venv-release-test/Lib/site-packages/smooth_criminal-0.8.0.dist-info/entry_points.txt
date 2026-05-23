@@ -1,0 +1,2 @@
+[console_scripts]
+smooth-criminal = smooth_criminal.cli:main
