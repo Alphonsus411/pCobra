@@ -716,3 +716,47 @@ def test_run_no_corta_sentencias_posteriores_en_bloque_si(tmp_path, monkeypatch)
     assert rc_run == 0
     assert err_run.getvalue() == ""
     assert [ln.strip() for ln in out_run.getvalue().splitlines() if ln.strip()] == ["medio", "fin"]
+
+
+@pytest.mark.integration
+def test_run_retorno_fuera_de_funcion_muestra_error_corto_sin_traceback(tmp_path, monkeypatch):
+    monkeypatch.setattr("pcobra.cobra.cli.services.run_service.limitar_cpu_segundos", lambda *_: None)
+    archivo = tmp_path / "retornar_top_level.co"
+    archivo.write_text("retornar 1\n", encoding="utf-8")
+
+    out_run, err_run = StringIO(), StringIO()
+    with redirect_stdout(out_run), redirect_stderr(err_run):
+        rc_run = RunCommandV2().run(_run_args(str(archivo)))
+
+    assert rc_run != 0
+    salida = out_run.getvalue() + err_run.getvalue()
+    assert "Traceback" not in salida
+    assert salida.strip() != ""
+
+
+@pytest.mark.integration
+def test_run_conservar_control_break_y_continue_en_mientras(tmp_path, monkeypatch):
+    monkeypatch.setattr("pcobra.cobra.cli.services.run_service.limitar_cpu_segundos", lambda *_: None)
+    codigo = (
+        "var i = 0\n"
+        "mientras verdadero:\n"
+        "    i = i + 1\n"
+        "    si i == 2:\n"
+        "        continuar\n"
+        "    fin\n"
+        "    imprimir(i)\n"
+        "    si i == 4:\n"
+        "        romper\n"
+        "    fin\n"
+        "fin\n"
+    )
+    archivo = tmp_path / "control_break_continue.co"
+    archivo.write_text(codigo, encoding="utf-8")
+
+    out_run, err_run = StringIO(), StringIO()
+    with redirect_stdout(out_run), redirect_stderr(err_run):
+        rc_run = RunCommandV2().run(_run_args(str(archivo)))
+
+    assert rc_run == 0
+    assert err_run.getvalue() == ""
+    assert [ln.strip() for ln in out_run.getvalue().splitlines() if ln.strip()] == ["1", "3", "4"]
