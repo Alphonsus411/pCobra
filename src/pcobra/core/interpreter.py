@@ -1417,6 +1417,7 @@ class InterpretadorCobra:
             self._trace_debug(self._resumir_ast(ast))
         self._asegurar_ast_tipado(ast, "post_optimizacion")
         self.ultimo_ir = None
+        ultimo_resultado = None
         self._trace_debug("[RUN] antes de iterar AST")
         for index, nodo in enumerate(ast):
             self._trace_debug(
@@ -1429,10 +1430,10 @@ class InterpretadorCobra:
                 self._trace_debug("[RUN] antes de ejecutar_nodo")
                 resultado = self.ejecutar_nodo(nodo)
                 if resultado is not None:
-                    return resultado
+                    ultimo_resultado = resultado
             finally:
                 self._set_mode(modo_prev)
-        return None
+        return ultimo_resultado
 
     # -- Generación de IR ----------------------------------------------------
     def generar_internal_ir(self, ast) -> InternalIRModule:
