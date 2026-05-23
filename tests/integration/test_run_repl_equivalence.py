@@ -827,3 +827,52 @@ def test_run_error_lexico_sigue_siendo_corto_sin_traceback_con_y_sin_bom(tmp_pat
         salida = out_run.getvalue() + err_run.getvalue()
         assert "Traceback" not in salida
         assert salida.strip() != ""
+
+
+@pytest.mark.integration
+def test_run_usar_archivo_habilita_existe_readme_local(tmp_path, monkeypatch):
+    monkeypatch.setattr("pcobra.cobra.cli.services.run_service.limitar_cpu_segundos", lambda *_: None)
+    codigo = 'usar "archivo"\nimprimir(existe("README.md"))\n'
+    archivo = tmp_path / "programa.co"
+    archivo.write_text(codigo, encoding="utf-8")
+
+    out_run, err_run = StringIO(), StringIO()
+    with redirect_stdout(out_run), redirect_stderr(err_run):
+        rc_run = RunCommandV2().run(_run_args(str(archivo)))
+
+    assert rc_run == 0
+    assert err_run.getvalue() == ""
+    assert out_run.getvalue().strip().endswith("verdadero")
+
+
+@pytest.mark.integration
+def test_run_usar_archivo_existe_parent_es_falso_por_wrapper_seguro(tmp_path, monkeypatch):
+    monkeypatch.setattr("pcobra.cobra.cli.services.run_service.limitar_cpu_segundos", lambda *_: None)
+    codigo = 'usar "archivo"\nimprimir(existe("../README.md"))\n'
+    archivo = tmp_path / "programa.co"
+    archivo.write_text(codigo, encoding="utf-8")
+
+    out_run, err_run = StringIO(), StringIO()
+    with redirect_stdout(out_run), redirect_stderr(err_run):
+        rc_run = RunCommandV2().run(_run_args(str(archivo)))
+
+    assert rc_run == 0
+    assert err_run.getvalue() == ""
+    assert out_run.getvalue().strip().endswith("falso")
+
+
+@pytest.mark.integration
+def test_run_existe_sin_usar_archivo_permanece_bloqueado(tmp_path, monkeypatch):
+    monkeypatch.setattr("pcobra.cobra.cli.services.run_service.limitar_cpu_segundos", lambda *_: None)
+    codigo = 'imprimir(existe("README.md"))\n'
+    archivo = tmp_path / "programa.co"
+    archivo.write_text(codigo, encoding="utf-8")
+
+    out_run, err_run = StringIO(), StringIO()
+    with redirect_stdout(out_run), redirect_stderr(err_run):
+        rc_run = RunCommandV2().run(_run_args(str(archivo)))
+
+    assert rc_run == 1
+    salida = out_run.getvalue() + err_run.getvalue()
+    assert "existe" in salida.lower()
+    assert "traceback" not in salida.lower()
