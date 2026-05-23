@@ -69,7 +69,7 @@ def _capturar_repl(cmd: InteractiveCommand, codigo: str) -> tuple[str, list[str]
         logger.setLevel(prev_level)
 
 
-def test_repl_warning_llamada_funcion_simple_conteo_unico_y_resultado_visible() -> None:
+def test_repl_modo_normal_no_muestra_warning_llamada_funcion_y_resultado_visible() -> None:
     cmd = InteractiveCommand(InterpretadorCobra())
     _capturar_repl(cmd, """
 func test(x):
@@ -78,12 +78,12 @@ fin
 """)
     salida_stdout, salida_logging = _capturar_repl(cmd, "test(1)")
 
-    assert salida_stdout.splitlines().count("WARNING: Llamada a funcion: test") == 1
+    assert "WARNING: Llamada a funcion: test" not in salida_stdout
     assert "1" in salida_stdout
-    assert not any("WARNING: Llamada a funcion: test" in ln for ln in salida_logging)
+    assert not any("Llamada a función: test" in ln for ln in salida_logging)
 
 
-def test_repl_warning_llamada_funcion_anidada_orden_cardinalidad_y_resultado() -> None:
+def test_repl_modo_normal_llamada_anidada_sin_warning_y_resultado() -> None:
     cmd = InteractiveCommand(InterpretadorCobra())
     salida_def, logs_def = _capturar_repl(cmd, """
 func doble(x):
@@ -98,21 +98,13 @@ fin
 
     salida_stdout, salida_logging = _capturar_repl(cmd, "triple(3)")
 
-    warnings = [
-        ln
-        for ln in salida_stdout.splitlines()
-        if ln.startswith("WARNING: Llamada a funcion:")
-    ]
-    assert warnings == [
-        "WARNING: Llamada a funcion: triple",
-        "WARNING: Llamada a funcion: doble",
-    ]
+    assert "WARNING: Llamada a funcion:" not in salida_stdout
     assert "9" in salida_stdout
-    assert not any("WARNING: Llamada a funcion: triple" in ln for ln in salida_logging)
-    assert not any("WARNING: Llamada a funcion: doble" in ln for ln in salida_logging)
+    assert not any("Llamada a función: triple" in ln for ln in salida_logging)
+    assert not any("Llamada a función: doble" in ln for ln in salida_logging)
 
 
-def test_no_regresion_llamadas_anidadas_triple_warning_unico_por_funcion() -> None:
+def test_repl_debug_muestra_traza_llamadas_anidadas_en_logging() -> None:
     cmd = InteractiveCommand(InterpretadorCobra())
     salida_def, _ = _capturar_repl(
         cmd,
@@ -127,11 +119,27 @@ fin
     )
     assert salida_def == ""
 
-    salida_stdout, _ = _capturar_repl(cmd, "triple(3)")
-    lineas = salida_stdout.splitlines()
-    assert lineas.count("WARNING: Llamada a funcion: triple") == 1
-    assert lineas.count("WARNING: Llamada a funcion: doble") == 1
-    assert lineas[-1] == "9"
+    import logging
+
+    logger = logging.getLogger()
+    prev_handlers = list(logger.handlers)
+    prev_level = logger.level
+    stream_logs = StringIO()
+    logger.handlers = [logging.StreamHandler(stream_logs)]
+    logger.setLevel(logging.DEBUG)
+    try:
+        with patch("sys.stdout", new_callable=StringIO) as out:
+            cmd.ejecutar_codigo("triple(3)")
+        salida_stdout = out.getvalue()
+    finally:
+        logger.handlers = prev_handlers
+        logger.setLevel(prev_level)
+
+    lineas_logs = stream_logs.getvalue()
+    assert "Llamada a función: triple" in lineas_logs
+    assert "Llamada a función: doble" in lineas_logs
+    assert "WARNING: Llamada a funcion" not in salida_stdout
+    assert salida_stdout.splitlines()[-1] == "9"
 
 
 def test_regresion_repl_fase_analisis_y_ejecucion_para_func_test() -> None:
@@ -150,5 +158,5 @@ fin
 
     salida_call, _ = _capturar_repl(cmd, "test(1)")
     lineas = salida_call.splitlines()
-    assert lineas.count("WARNING: Llamada a funcion: test") == 1
+    assert "WARNING: Llamada a funcion: test" not in salida_call
     assert lineas[-1] == "1"
