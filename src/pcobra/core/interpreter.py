@@ -1443,6 +1443,9 @@ class InterpretadorCobra:
 
     def ejecutar_nodo(self, nodo):
         self._trace_debug(f"[EXEC] node_type={type(nodo).__name__} node_id={id(nodo)}")
+        # Contrato de control de flujo:
+        # - Las declaraciones (`var`/`variable`) no emiten señal de corte.
+        # - Solo nodos de control (retorno/romper/continuar/errores) interrumpen bloques.
         if self.mode == "analysis":
             # En análisis no se ejecutan nodos: evita prints, mutaciones y efectos observables.
             return None
@@ -1546,6 +1549,8 @@ class InterpretadorCobra:
 
     def ejecutar_asignacion(self, nodo, visitados=None):
         """Evalúa una asignación de variable o atributo."""
+        # Contrato: una declaración (`var`/`variable`) solo muta contexto y nunca
+        # devuelve señal de control para cortar un bloque.
         visitados = set() if visitados is None else visitados
         nombre = getattr(nodo, "identificador", getattr(nodo, "variable", None))
         valor_nodo = getattr(nodo, "expresion", getattr(nodo, "valor", None))
