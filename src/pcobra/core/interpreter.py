@@ -1518,6 +1518,8 @@ class InterpretadorCobra:
             try:
                 for instr in nodo.cuerpo:
                     resultado = self.ejecutar_nodo(instr)
+                    if isinstance(instr, NodoAsignacion) and getattr(instr, "declaracion", False):
+                        continue
                     if resultado is not None:
                         return resultado
             finally:
@@ -1895,6 +1897,8 @@ class InterpretadorCobra:
         if condicion is True:
             for instruccion in bloque_si:
                 resultado = self.ejecutar_nodo(instruccion)
+                if isinstance(instruccion, NodoAsignacion) and getattr(instruccion, "declaracion", False):
+                    continue
                 if resultado is not None:
                     return resultado
             return None
@@ -1904,6 +1908,8 @@ class InterpretadorCobra:
             return None
         for instruccion in bloque_sino:
             resultado = self.ejecutar_nodo(instruccion)
+            if isinstance(instruccion, NodoAsignacion) and getattr(instruccion, "declaracion", False):
+                continue
             if resultado is not None:
                 return resultado
 
@@ -1932,6 +1938,8 @@ class InterpretadorCobra:
         try:
             for instruccion in nodo.bloque_try:
                 resultado = self.ejecutar_nodo(instruccion)
+                if isinstance(instruccion, NodoAsignacion) and getattr(instruccion, "declaracion", False):
+                    continue
                 if resultado is not None:
                     return resultado
         except ExcepcionCobra as exc:
@@ -1943,11 +1951,15 @@ class InterpretadorCobra:
                     contexto_actual.define(nodo.nombre_excepcion, exc.valor)
             for instruccion in nodo.bloque_catch:
                 resultado = self.ejecutar_nodo(instruccion)
+                if isinstance(instruccion, NodoAsignacion) and getattr(instruccion, "declaracion", False):
+                    continue
                 if resultado is not None:
                     return resultado
         finally:
             for instruccion in nodo.bloque_finally:
                 resultado = self.ejecutar_nodo(instruccion)
+                if isinstance(instruccion, NodoAsignacion) and getattr(instruccion, "declaracion", False):
+                    continue
                 if resultado is not None:
                     return resultado
 

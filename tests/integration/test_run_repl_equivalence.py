@@ -673,3 +673,46 @@ def test_sandbox_normaliza_safe_mode_y_validadores_igual_en_run_y_repl(monkeypat
     assert capturas[0][1] is True and capturas[1][1] is True
     assert [getattr(v, "origen", None) for v in capturas[0][2]] == ["uno.py", "dos.py"]
     assert [getattr(v, "origen", None) for v in capturas[1][2]] == ["uno.py", "dos.py"]
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("declarador", ["var", "variable"])
+def test_run_no_corta_bloque_secuencial_tras_declaracion(tmp_path, declarador: str, monkeypatch):
+    monkeypatch.setattr("pcobra.cobra.cli.services.run_service.limitar_cpu_segundos", lambda *_: None)
+    codigo = (
+        'imprimir("antes")\n'
+        f"{declarador} x {":=" if declarador == "variable" else "="} 3\n"
+        'imprimir("despues")\n'
+    )
+    archivo = tmp_path / "secuencial.co"
+    archivo.write_text(codigo, encoding="utf-8")
+
+    out_run, err_run = StringIO(), StringIO()
+    with redirect_stdout(out_run), redirect_stderr(err_run):
+        rc_run = RunCommandV2().run(_run_args(str(archivo)))
+
+    assert rc_run == 0
+    assert err_run.getvalue() == ""
+    assert [ln.strip() for ln in out_run.getvalue().splitlines() if ln.strip()] == ["antes", "despues"]
+
+
+@pytest.mark.integration
+def test_run_no_corta_sentencias_posteriores_en_bloque_si(tmp_path, monkeypatch):
+    monkeypatch.setattr("pcobra.cobra.cli.services.run_service.limitar_cpu_segundos", lambda *_: None)
+    codigo = (
+        "si verdadero:\n"
+        "    var x = 3\n"
+        '    imprimir("medio")\n'
+        "fin\n"
+        'imprimir("fin")\n'
+    )
+    archivo = tmp_path / "bloque_si.co"
+    archivo.write_text(codigo, encoding="utf-8")
+
+    out_run, err_run = StringIO(), StringIO()
+    with redirect_stdout(out_run), redirect_stderr(err_run):
+        rc_run = RunCommandV2().run(_run_args(str(archivo)))
+
+    assert rc_run == 0
+    assert err_run.getvalue() == ""
+    assert [ln.strip() for ln in out_run.getvalue().splitlines() if ln.strip()] == ["medio", "fin"]
