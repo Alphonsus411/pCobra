@@ -1,116 +1,50 @@
 {
+  "asistente": "Bella",
   "proyecto": "pCobra / Cobra",
-  "sesion": {
-    "objetivo_general": "Validar mediante pruebas de concepto desde REPL/CLI los avances sobre `usar`, módulos Cobra-facing, metadata de seguridad, listas, sandbox de archivo y errores limpios.",
-    "principio_operativo": "Probar primero desde CLI/REPL antes de continuar refactorizando arquitectura.",
-    "restricciones_mantenidas": [
-      "No modificar Lexer",
-      "No modificar Parser",
-      "No cambiar sintaxis pública",
-      "No relajar sanitización de `usar`",
-      "No permitir imports externos directos",
-      "No exponer objetos backend, SDKs, os, pathlib ni símbolos privados",
-      "Mantener rechazo de módulos fuera del catálogo público",
-      "Mantener errores cortos sin traceback en REPL normal"
+  "objetivo_actual": "Continuar validando funcionalidades mediante pruebas de concepto tras subir una versión estable a PyPI, dejando temporalmente aparcados los tests legacy.",
+  "version_publicada": {
+    "version": "10.1.0",
+    "estado": "subida como versión estable",
+    "cambios_preparados": [
+      {
+        "archivo": "pyproject.toml",
+        "cambio": "version 10.0.13 -> 10.1.0"
+      },
+      {
+        "archivo": "src/pcobra/__init__.py",
+        "cambio": "mensajes de calendario legacy actualizados para no mencionar versiones antiguas 2.x/3.0.0"
+      }
     ]
   },
-  "estado_git_entorno": {
-    "problema_inicial": "El entorno virtual estaba roto porque apuntaba a una instalación inexistente de Python 3.10.",
-    "diagnostico_venv": {
-      "error": "No Python at '...Python310\\python.exe'",
-      "causa": "`.venv` creado contra una ruta de Python que ya no existía.",
-      "accion_recomendada": "Eliminar `.venv` y recrearlo con Python disponible."
+  "entorno": {
+    "sistema": "Windows PowerShell",
+    "python": "3.11.9",
+    "venv": ".venv",
+    "paquete_desarrollo": "instalado con python -m pip install -e .",
+    "import_runtime_validado": {
+      "comando": "python -c \"import pcobra; print(pcobra.__file__)\"",
+      "resultado": "C:\\Users\\Adolfo\\PycharmProjects\\pCobra\\src\\pcobra\\__init__.py"
     },
-    "python_disponible": {
-      "python_3_12": "Registrado pero ejecutable no encontrado",
-      "python_3_11": "Disponible y recomendado para continuar"
-    },
-    "git": {
-      "estado": "verde",
-      "fsck": "Sin errores fatales",
-      "dangling_objects": [
-        "dangling blob",
-        "dangling tree"
-      ],
-      "interpretacion": "Objetos huérfanos tolerables, no corrupción real del historial.",
-      "branch": "master",
-      "remote": "origin https://github.com/Alphonsus411/pCobra.git",
-      "working_tree": "clean",
-      "ultimo_head_observado": "99e8e420 Merge pull request #2716"
-    },
-    "github_desktop": {
-      "diagnostico": "El problema parece estar en GitHub Desktop/configuración local, no en el repositorio Git.",
-      "acciones_realizadas": [
-        "git gc",
-        "git maintenance run"
-      ],
-      "resultado": "Repositorio saneado; Git CLI operativo."
+    "backends_publicos_validados": {
+      "comando": "python -c \"from pcobra.cobra.architecture.backend_policy import PUBLIC_BACKENDS; print(PUBLIC_BACKENDS)\"",
+      "resultado": "('python', 'javascript', 'rust')"
     }
   },
-  "correcciones_y_regresiones": {
-    "metadata_usar_none": {
-      "estado": "resuelto",
-      "error_anterior": "Metadata de validador inválida para símbolos usar: tipo inválido en _metadata_simbolos_usar (NoneType)",
-      "diagnostico": "El contenedor `_metadata_simbolos_usar` no se inicializaba como dict.",
-      "resultado_actual": "El REPL ya no falla al ejecutar sentencias normales como `var xs = [1, 2, 3]`."
-    },
-    "metadata_schema_usar": {
-      "estado": "resuelto",
-      "error_anterior": "Metadata inválida para símbolo usar por claves inesperadas críticas",
-      "claves_conflictivas": [
-        "introduced_by",
-        "introduced_by_usar",
-        "is_public_export",
-        "origen_tipo",
-        "safe_wrapper"
-      ],
-      "diagnostico": "Había dos dialectos de metadata entre loader/sanitizer y validador.",
-      "resultado_actual": "`usar \"datos\"`, `usar \"numero\"`, `usar \"texto\"`, `usar \"archivo\"` cargan correctamente."
-    },
-    "archivo_existe_sandbox": {
-      "estado": "resuelto",
-      "error_anterior": "Error: Uso de primitiva peligrosa: 'existe'",
-      "resultado_actual": "`usar \"archivo\"` seguido de `imprimir(existe(\"README.md\"))` devuelve `verdadero`.",
-      "criterio": "Se permite como wrapper Cobra-facing seguro sin relajar sandbox global."
-    },
-    "nodo_lista": {
-      "estado": "resuelto",
-      "error_anterior": "Expresión no soportada: tipo=NodoLista",
-      "resultado_actual": [
-        "`var xs = [1, 2, 3]` funciona",
-        "`imprimir(longitud(xs))` devuelve `3`",
-        "`imprimir(longitud([1, 2, 3]))` devuelve `3`"
-      ]
-    },
-    "indexacion_corchetes": {
-      "estado": "no implementada por decisión",
-      "casos_observados": [
-        "`imprimir(ys[0])` falla con error de parser",
-        "`retorno xs[0]` no se comportaba como indexación real"
-      ],
-      "decision": "No tocar Lexer ni Parser. No implementar `xs[0]` en esta fase.",
-      "alternativa_implementada": "Añadir API pública segura `elemento(coleccion, indice)` en módulo `datos`."
-    },
-    "datos_elemento": {
-      "estado": "resuelto",
-      "descripcion": "Nueva función Cobra-facing segura para acceder por índice sin cambiar sintaxis.",
-      "validaciones_exitosas": [
-        "`elemento(ys, 0)` devuelve `10`",
-        "`elemento(ys, 1)` devuelve `20`",
-        "`elemento(ys, 2)` devuelve `30`",
-        "`elemento([1, 2, 3], 2)` devuelve `3`"
-      ],
-      "errores_controlados": [
-        "`elemento(ys, 99)` -> `Error: índice fuera de rango`",
-        "`elemento(ys, \"0\")` -> `Error: índice debe ser entero`",
-        "`elemento(10, 0)` -> `Error: objeto no indexable`"
-      ]
-    }
+  "decision_tests": {
+    "estado": "aplazados",
+    "motivo": "La suite pytest fallaba en colección por tests legacy/desalineados, no por las PoC principales.",
+    "fallos_observados": [
+      "tests que importan transpiladores legacy go/cpp retirados",
+      "tests que importan scripts.ci no resolubles como paquete",
+      "compile_cmd legacy importando enabled_internal_legacy_targets inexistente"
+    ],
+    "decision": "Obviar temporalmente estos tests y seguir con pruebas manuales funcionales desde REPL/CLI."
   },
-  "pruebas_de_concepto": {
+  "poc_repl": {
+    "estado_general": "verde",
     "datos": {
       "estado": "verde",
-      "comandos_validados": [
+      "comandos": [
         "usar \"datos\"",
         "var xs = [1, 2, 3]",
         "imprimir(longitud(xs))",
@@ -123,193 +57,239 @@
         "imprimir(elemento([1, 2, 3], 2))"
       ],
       "resultados": [
-        "longitud(xs) -> 3",
-        "longitud([1, 2, 3]) -> 3",
-        "longitud(ys) -> 3",
-        "elemento(ys, 0) -> 10",
-        "elemento(ys, 1) -> 20",
-        "elemento(ys, 2) -> 30",
-        "elemento([1, 2, 3], 2) -> 3"
+        "3",
+        "3",
+        "3",
+        "10",
+        "20",
+        "30",
+        "3"
       ]
     },
-    "numero": {
-      "estado": "verde",
-      "comandos_validados": [
-        "usar \"numero\"",
-        "imprimir(es_finito(10))",
-        "imprimir(signo(0-5))",
-        "imprimir(limitar(15, 0, 10))",
-        "imprimir(es_par(8))",
-        "imprimir(es_primo(7))"
-      ],
-      "resultados": [
-        "es_finito(10) -> verdadero",
-        "signo(0-5) -> -1",
-        "limitar(15, 0, 10) -> 10",
-        "es_par(8) -> verdadero",
-        "es_primo(7) -> verdadero"
-      ],
-      "observacion": "La sanitización descartó símbolos fuera de API pública, por ejemplo `entero_a_base`, `entero_desde_base`, `longitud_bits`."
-    },
-    "texto": {
-      "estado": "verde",
-      "comandos_validados": [
-        "usar \"texto\"",
-        "imprimir(mayusculas(\"cobra\"))",
-        "imprimir(minusculas(\"COBRA\"))",
-        "imprimir(prefijo_comun(\"cobra\", \"cobre\"))",
-        "imprimir(sufijo_comun(\"programacion\", \"nacion\"))",
-        "imprimir(recortar(\" cobra \"))",
-        "imprimir(repetir(\"ja\", 3))",
-        "imprimir(quitar_acentos(\"canción\"))"
-      ],
-      "resultados": [
-        "COBRA",
-        "cobra",
-        "cobr",
-        "acion",
-        "cobra",
-        "jajaja",
-        "cancion"
-      ],
-      "observacion": "La sanitización descartó 58 símbolos fuera de API pública."
-    },
-    "logica": {
-      "estado": "verde",
-      "comandos_validados": [
-        "usar \"logica\"",
-        "imprimir(conjuncion(verdadero, falso))",
-        "imprimir(negacion(falso))"
-      ],
-      "resultados": [
-        "falso",
-        "verdadero"
-      ]
-    },
-    "tiempo": {
-      "estado": "verde",
-      "comandos_validados": [
-        "usar \"tiempo\"",
-        "imprimir(epoch())"
-      ],
-      "resultado": "Timestamp numérico",
-      "ejemplo_observado": 1779012070.91134
-    },
-    "archivo": {
-      "estado": "verde",
-      "comandos_validados": [
-        "usar \"archivo\"",
-        "imprimir(existe(\"README.md\"))",
-        "imprimir(existe(\"archivo_que_no_deberia_existir_123456.tmp\"))",
-        "imprimir(existe(\"../README.md\"))"
-      ],
-      "resultados": [
-        "existe(\"README.md\") -> verdadero",
-        "existe(\"archivo_que_no_deberia_existir_123456.tmp\") -> falso",
-        "existe(\"../README.md\") -> falso"
-      ],
-      "observacion": "La ruta `../README.md` no produjo traceback ni acceso inseguro; se resolvió como falso/bloqueo seguro."
-    },
-    "seguridad_imports": {
-      "estado": "verde",
-      "comandos_validados": [
-        "usar \"numpy\"",
-        "usar archivo"
-      ],
-      "resultados": [
-        "`usar \"numpy\"` -> rechazado por estar fuera de USAR_COBRA_PUBLIC_MODULES",
-        "`usar archivo` -> Error: Se esperaba una ruta de módulo entre comillas"
-      ],
-      "observacion": "Se mantiene la sintaxis pública de `usar` con cadena obligatoria."
-    },
-    "funciones_usuario": {
-      "estado": "verde",
-      "comandos_validados": [
-        "func doble(n): retorno n * 2 fin",
-        "imprimir(doble(21))",
-        "imprimir(longitud(xs))",
-        "imprimir(es_finito(doble(21)))"
-      ],
-      "resultados": [
-        "doble(21) -> 42",
-        "longitud(xs) -> 3",
-        "es_finito(doble(21)) -> verdadero"
-      ],
-      "observacion": "Funciones Cobra de usuario, módulos importados por `usar`, listas y llamadas anidadas conviven correctamente."
-    },
-    "errores_limpios": {
+    "datos_errores_controlados": {
       "estado": "verde",
       "casos": [
         {
-          "comando": "imprimir(funcion_inexistente(1))",
-          "resultado": "Error: Variable no declarada: funcion_inexistente"
+          "codigo": "imprimir(elemento(ys, 99))",
+          "resultado": "Error: índice fuera de rango"
         },
         {
-          "comando": "imprimir(elemnto(ys, 0))",
-          "resultado": "Error: Variable no declarada: elemnto"
+          "codigo": "imprimir(elemento(ys, \"0\"))",
+          "resultado": "Error: índice debe ser entero"
         },
         {
-          "comando": "usar \"datos2",
-          "resultado": "Cadena sin cerrar"
+          "codigo": "imprimir(elemento(10, 0))",
+          "resultado": "Error: objeto no indexable"
         }
       ],
-      "observacion": "No se observaron tracebacks en estos errores esperados."
+      "observacion": "Sin traceback."
+    },
+    "numero": {
+      "estado": "verde",
+      "resultados": {
+        "es_finito(10)": "verdadero",
+        "signo(0-5)": "-1",
+        "limitar(15, 0, 10)": "10",
+        "es_par(8)": "verdadero",
+        "es_primo(7)": "verdadero"
+      }
+    },
+    "texto": {
+      "estado": "verde",
+      "resultados": {
+        "mayusculas(\"cobra\")": "COBRA",
+        "minusculas(\"COBRA\")": "cobra",
+        "prefijo_comun(\"cobra\", \"cobre\")": "cobr",
+        "sufijo_comun(\"programacion\", \"nacion\")": "acion",
+        "recortar(\" cobra \")": "cobra",
+        "repetir(\"ja\", 3)": "jajaja",
+        "quitar_acentos(\"canción\")": "cancion"
+      },
+      "extra": "El typo primir(...) produjo sugerencia limpia: ¿Quiso decir 'imprimir'?"
+    },
+    "archivo": {
+      "estado": "verde",
+      "resultados": {
+        "existe(\"README.md\")": "verdadero",
+        "existe(\"archivo_que_no_deberia_existir_123456.tmp\")": "falso",
+        "existe(\"../README.md\")": "falso"
+      },
+      "observacion": "Sandbox correcto en REPL; sin traceback."
+    },
+    "seguridad_imports": {
+      "estado": "verde",
+      "casos": [
+        {
+          "codigo": "usar \"numpy\"",
+          "resultado": "Error limpio: módulo fuera del catálogo público"
+        },
+        {
+          "codigo": "usar archivo",
+          "resultado": "Error limpio: Se esperaba una ruta de módulo entre comillas"
+        }
+      ]
+    },
+    "logica": {
+      "estado": "verde",
+      "resultados": {
+        "conjuncion(verdadero, falso)": "falso",
+        "negacion(falso)": "verdadero"
+      }
+    },
+    "tiempo": {
+      "estado": "verde",
+      "resultado": "epoch() devuelve timestamp numérico",
+      "ejemplo": "1779527431.128157"
     }
   },
-  "warnings_y_ux": {
-    "estado": "pendiente_no_bloqueante",
-    "warnings_observados": [
-      "WARNING: Usar modulo: ...",
-      "WARNING: Llamada a funcion: ...",
-      "WARNING: USAR sanitize conflicts event module=... count=..."
+  "poc_cobra_run": {
+    "estado_general": "parcial",
+    "casos_verdes": [
+      {
+        "archivo": "poc_run_print_min.cobra",
+        "codigo": "imprimir(\"hola\")",
+        "resultado": "hola"
+      },
+      {
+        "archivo": "poc_run_datos_longitud_literal.cobra",
+        "codigo": "usar \"datos\"\nimprimir(longitud([1, 2, 3]))",
+        "resultado": "3"
+      },
+      {
+        "archivo": "poc_numero_min.cobra",
+        "codigo": "usar \"numero\"\nimprimir(es_primo(7))",
+        "resultado": "verdadero"
+      },
+      {
+        "archivo": "poc_run_funcion_constante.cobra",
+        "codigo": "func sumar():\n    retorno 3\nfin\n\nimprimir(sumar())",
+        "resultado": "3"
+      },
+      {
+        "archivo": "poc_run_funcion_print_simple.cobra",
+        "codigo": "func saludar():\n    imprimir(\"hola desde funcion\")\nfin\n\nsaludar()",
+        "resultado": "hola desde funcion"
+      },
+      {
+        "archivo": "poc_run_funcion_print_y_retorno.cobra",
+        "codigo": "func saludar():\n    imprimir(\"hola interno\")\n    retorno \"ok\"\nfin\n\nimprimir(saludar())",
+        "resultado": "hola interno\nok"
+      },
+      {
+        "archivo": "poc_run_funcion_retorno_lista.cobra",
+        "codigo": "func main():\n    var xs = [10, 20, 30]\n    retorno xs\nfin\n\nimprimir(main())",
+        "resultado": "[10, 20, 30]"
+      }
     ],
-    "diagnostico": "Funcionalmente no bloquean, pero ensucian la experiencia normal del REPL.",
-    "recomendacion": "Mover warnings técnicos y eventos de sanitización a modo debug/verbose, dejando REPL normal con salida limpia y errores de usuario breves."
-  },
-  "estado_global_actual": {
-    "verde": [
-      "Git CLI y remoto",
-      "Entorno REPL operativo",
-      "Inicialización de metadata de `usar`",
-      "Canonicalización/schema de metadata de `usar`",
-      "Binding runtime de callables importados por `usar`",
-      "`usar \"datos\"`",
-      "`usar \"numero\"`",
-      "`usar \"texto\"`",
-      "`usar \"logica\"`",
-      "`usar \"tiempo\"`",
-      "`usar \"archivo\"`",
-      "Sanitización de símbolos fuera de API pública",
-      "Rechazo de `usar \"numpy\"`",
-      "Rechazo de `usar archivo`",
-      "NodoLista como literal",
-      "Listas en variables",
-      "Listas inline como argumentos",
-      "`datos.longitud`",
-      "`datos.elemento`",
-      "`archivo.existe` bajo sandbox seguro",
-      "Funciones Cobra de usuario",
-      "Llamadas anidadas",
-      "Errores esperados sin traceback"
+    "bugs_confirmados": [
+      {
+        "id": "BUG-001",
+        "titulo": "Declaración var/variable corta la ejecución secuencial en cobra run",
+        "descripcion": "En cobra run, una declaración var o variable asigna correctamente el valor inicial, pero impide que se ejecuten sentencias normales posteriores del mismo bloque.",
+        "evidencia": [
+          {
+            "archivo": "poc_run_var_corta.cobra",
+            "codigo": "imprimir(\"antes\")\nvar x = 3\nimprimir(\"despues\")",
+            "resultado_actual": "antes",
+            "resultado_esperado": "antes\ndespues"
+          },
+          {
+            "archivo": "poc_run_var_funcion_corta.cobra",
+            "codigo": "func main():\n    imprimir(\"antes\")\n    var x = 3\n    imprimir(\"despues\")\nfin\n\nmain()",
+            "resultado_actual": "antes",
+            "resultado_esperado": "antes\ndespues"
+          },
+          {
+            "archivo": "poc_run_reasignacion_funcion.cobra",
+            "codigo": "func main():\n    var x = 1\n    x = 2\n    imprimir(x)\n    retorno x\nfin\n\nimprimir(main())",
+            "resultado_actual": "1",
+            "resultado_esperado": "2\n2"
+          }
+        ],
+        "diagnostico_probable": "El manejador de declaración var/variable registra la variable pero retorna desde el bloque en lugar de continuar con la siguiente sentencia. Probable return donde debería haber continue."
+      },
+      {
+        "id": "BUG-002",
+        "titulo": "archivo.existe se bloquea como primitiva peligrosa en cobra run",
+        "descripcion": "En REPL, usar \"archivo\" seguido de existe(...) funciona como wrapper seguro. En cobra run, la misma llamada se bloquea como primitiva peligrosa.",
+        "evidencia": [
+          {
+            "archivo": "poc_archivo_min.cobra",
+            "codigo": "usar \"archivo\"\nimprimir(existe(\"README.md\"))",
+            "resultado_actual": "Error: Uso de primitiva peligrosa: 'existe'",
+            "resultado_esperado": "verdadero"
+          }
+        ],
+        "diagnostico_probable": "La ruta cobra run no propaga o consulta correctamente la metadata de símbolos importados por usar, especialmente wrappers seguros del módulo archivo."
+      }
     ],
-    "pendiente": [
-      "UX/logging del REPL",
-      "Sugerencias de typo para funciones importadas, por ejemplo `elemnto` -> `elemento`",
-      "Decidir si en el futuro se implementará indexación real `xs[0]`, lo cual requeriría tocar Parser y queda fuera de esta fase"
-    ],
-    "no_hacer_en_esta_fase": [
-      "No implementar `xs[0]`",
-      "No modificar Lexer",
-      "No modificar Parser",
-      "No añadir sintaxis nueva",
-      "No relajar el sandbox",
-      "No ampliar imports externos"
+    "casos_adicionales": [
+      {
+        "archivo": "poc_run_assign_simple.cobra",
+        "codigo": "x = 3\nimprimir(x)",
+        "resultado": "Error: Variable no declarada: x",
+        "interpretacion": "Correcto si Cobra exige declaración previa."
+      },
+      {
+        "archivo": "poc_run_variable_keyword.cobra",
+        "codigo": "variable x = 3\nimprimir(x)",
+        "resultado": "Error de análisis: Se esperaba TipoToken.ASIGNAR_INFERENCIA, pero se encontró TipoToken.ASIGNAR"
+      },
+      {
+        "archivo": "poc_run_variable_inferencia.cobra",
+        "codigo": "variable x := 3\nimprimir(x)",
+        "resultado": "sin salida",
+        "interpretacion": "Mismo patrón que BUG-001 para declaraciones globales."
+      }
     ]
   },
-  "siguiente_paso_recomendado": {
-    "prioridad_1": "Limpiar UX/logging del REPL: ocultar warnings técnicos en modo normal y mantenerlos en debug/verbose.",
-    "prioridad_2": "Añadir pruebas automáticas de regresión para todos los casos verdes validados manualmente.",
-    "prioridad_3": "Mejorar sugerencias de typo para funciones importadas por `usar`.",
-    "prioridad_4": "Documentar `datos.elemento(coleccion, indice)` como alternativa oficial mientras `xs[0]` no forme parte de la sintaxis soportada."
+  "deuda_ux": {
+    "id": "UX-001",
+    "descripcion": "Los warnings son demasiado ruidosos en REPL y cobra run normal.",
+    "ejemplos": [
+      "WARNING: Usar modulo: datos",
+      "WARNING: USAR sanitize conflicts event module=numero count=10 ...",
+      "WARNING: Llamada a funcion: elemento"
+    ],
+    "recomendacion": "Bajar a debug o mostrarlos solo con modo verbose."
+  },
+  "prompt_codex_generado": {
+    "objetivo": "Pedir a Codex que corrija BUG-001 y BUG-002 con una solución mínima y localizada.",
+    "restricciones": [
+      "No modificar Lexer",
+      "No modificar Parser",
+      "No cambiar sintaxis pública",
+      "No relajar sanitización de usar",
+      "No permitir imports externos directos",
+      "No exponer objetos backend, SDKs, os, pathlib ni símbolos privados",
+      "Mantener rechazo de módulos fuera del catálogo público",
+      "Mantener errores cortos sin traceback",
+      "No intentar arreglar tests legacy globales",
+      "No reintroducir backends legacy go/cpp"
+    ],
+    "criterios_aceptacion": [
+      "var y variable no cortan ejecución secuencial en cobra run",
+      "sentencias posteriores a una declaración se ejecutan normalmente",
+      "reasignaciones posteriores a var funcionan",
+      "archivo.existe funciona en cobra run solo como wrapper seguro introducido por usar \"archivo\"",
+      "existe(\"../README.md\") devuelve falso sin traceback",
+      "usar \"numpy\" sigue siendo rechazado",
+      "no se toca Lexer/Parser",
+      "no se amplía indebidamente el catálogo público",
+      "no se reintroducen backends legacy",
+      "solución mínima y compatible con contrato python/javascript/rust"
+    ]
+  },
+  "estado_final": {
+    "release": "10.1.0 publicada",
+    "pruebas_repl": "verdes",
+    "pruebas_cobra_run": "parciales",
+    "siguientes_pasos_recomendados": [
+      "Aplicar prompt a Codex para resolver BUG-001 y BUG-002",
+      "Reinstalar en modo editable con python -m pip install -e .",
+      "Repetir PoC mínimas de cobra run",
+      "Después abordar UX-001 de warnings",
+      "Más adelante revisar tests legacy uno a uno"
+    ]
   }
 }
