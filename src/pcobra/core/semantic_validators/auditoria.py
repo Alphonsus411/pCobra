@@ -29,7 +29,7 @@ class ValidadorAuditoria(ValidadorBase):
         # Fuente de verdad centralizada para side effects de auditoría.
         if not self.in_execution():
             return
-        logging.warning(mensaje)
+        logging.getLogger(__name__).debug(mensaje)
 
     def in_execution(self) -> bool:
         """Indica si la auditoría debe emitir side effects en fase de ejecución."""

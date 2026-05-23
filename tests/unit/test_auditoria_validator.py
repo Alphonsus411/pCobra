@@ -1,10 +1,10 @@
 import logging
 import pcobra  # garantiza rutas para submódulos
 import pytest
-from core.interpreter import InterpretadorCobra
-from core.ast_nodes import NodoLlamadaFuncion, NodoValor
-from core.semantic_validators import PrimitivaPeligrosaError
-from core.semantic_validators.auditoria import ValidadorAuditoria
+from pcobra.core.interpreter import InterpretadorCobra
+from pcobra.core.ast_nodes import NodoLlamadaFuncion, NodoUsar, NodoValor
+from pcobra.core.semantic_validators import PrimitivaPeligrosaError
+from pcobra.core.semantic_validators.auditoria import ValidadorAuditoria
 
 
 def test_auditoria_no_emite_en_analysis_durante_semantica(caplog):
@@ -16,16 +16,25 @@ def test_auditoria_no_emite_en_analysis_durante_semantica(caplog):
     assert not caplog.records
 
 
-def test_validador_auditoria_emite_solo_en_execution(caplog):
-    nodo = NodoLlamadaFuncion("funcion_demo", [])
-
-    validador_analysis = ValidadorAuditoria(emitir_side_effects=False)
-    with caplog.at_level(logging.WARNING):
-        validador_analysis.visit_llamada_funcion(nodo)
-    assert not caplog.records
+def test_validador_auditoria_diagnostico_solo_en_debug(caplog):
+    validador = ValidadorAuditoria(emitir_side_effects=True)
 
     caplog.clear()
-    validador_execution = ValidadorAuditoria(emitir_side_effects=True)
-    with caplog.at_level(logging.WARNING):
-        validador_execution.visit_llamada_funcion(nodo)
-    assert any("funcion_demo" in rec.message for rec in caplog.records)
+    with caplog.at_level(logging.INFO):
+        validador.visit_llamada_funcion(NodoLlamadaFuncion("main", []))
+        validador.visit_usar(NodoUsar("archivo"))
+    assert not [r for r in caplog.records if "Llamada a funcion" in r.message or "Usar modulo" in r.message]
+
+    caplog.clear()
+    with caplog.at_level(logging.DEBUG):
+        validador.visit_llamada_funcion(NodoLlamadaFuncion("main", []))
+        validador.visit_usar(NodoUsar("archivo"))
+    mensajes = [r.message for r in caplog.records]
+    assert "Usar modulo: archivo" in mensajes
+
+
+def test_validador_auditoria_no_emite_side_effects_en_analysis(caplog):
+    validador_analysis = ValidadorAuditoria(emitir_side_effects=False)
+    with caplog.at_level(logging.DEBUG):
+        validador_analysis.visit_usar(NodoUsar("archivo"))
+    assert not caplog.records
