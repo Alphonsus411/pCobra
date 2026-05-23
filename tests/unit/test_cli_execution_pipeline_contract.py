@@ -386,6 +386,21 @@ def test_contrato_resultado_igual_entre_modo_archivo_y_interactivo():
     assert out_file.getvalue() == out_repl.getvalue()
 
 
+def test_execute_archivo_no_corta_bloque_principal_en_declaracion_var():
+    codigo = 'imprimir("antes")\nvar x = 3\nimprimir("despues")'
+
+    cmd_execute = ExecuteCommand()
+    out_file, err_file = StringIO(), StringIO()
+    with redirect_stdout(out_file), redirect_stderr(err_file):
+        result_file = cmd_execute._service.ejecutar_normal(
+            codigo, seguro=False, extra_validators=None
+        )
+
+    assert result_file == 0
+    assert err_file.getvalue() == ""
+    assert out_file.getvalue().splitlines() == ["antes", "despues"]
+
+
 @pytest.mark.parametrize(
     ("caso", "codigo"),
     [
