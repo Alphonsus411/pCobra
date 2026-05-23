@@ -54,3 +54,12 @@ def test_fuera_de_catalogo_no_llega_a_resolucion_de_modulo(monkeypatch):
         usar_loader.obtener_modulo("numpy")
 
     assert "fuera del catálogo público" in str(excinfo.value) or "Importación no permitida" in str(excinfo.value)
+
+
+def test_modulo_no_publico_error_controlado_sin_traceback():
+    with pytest.raises(PermissionError) as excinfo:
+        validar_nombre_modulo_usar("modulo_interno_privado")
+
+    mensaje = str(excinfo.value)
+    assert "fuera del catálogo público" in mensaje or "módulo externo no permitido" in mensaje
+    assert "Traceback" not in mensaje

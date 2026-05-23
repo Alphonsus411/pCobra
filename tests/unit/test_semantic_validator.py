@@ -40,3 +40,17 @@ def test_import_no_permitido():
     with pytest.raises(PrimitivaPeligrosaError):
         for nodo in ast:
             nodo.aceptar(validador)
+
+
+def test_primitiva_peligrosa_sin_usar_autorizado_rechazada():
+    codigo = "imprimir(leer_archivo('README.md'))"
+    ast = generar_ast(codigo)
+    validador = construir_cadena()
+
+    with pytest.raises(PrimitivaPeligrosaError) as excinfo:
+        for nodo in ast:
+            nodo.aceptar(validador)
+
+    mensaje = str(excinfo.value)
+    assert "Traceback" not in mensaje
+    assert "leer_archivo" in mensaje or "Primitiva peligrosa" in mensaje
