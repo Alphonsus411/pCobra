@@ -59,7 +59,7 @@ def configure_encoding() -> None:
     os.environ["PYTHONIOENCODING"] = "utf-8"
 
 
-def configure_logging(debug: bool) -> None:
+def configure_logging(debug: bool, verbose: int = 0) -> None:
     """Configura logging de CLI con un único handler efectivo de consola.
 
     Contrato de logging del proyecto:
@@ -69,7 +69,8 @@ def configure_logging(debug: bool) -> None:
       y propagar al root.
     """
 
-    level = logging.DEBUG if debug else logging.WARNING
+    modo_diagnostico = bool(debug) or int(verbose or 0) > 0
+    level = logging.DEBUG if modo_diagnostico else logging.ERROR
     formatter = logging.Formatter("%(levelname)s: %(message)s")
     handler = logging.StreamHandler()
     handler.setFormatter(formatter)
@@ -299,7 +300,17 @@ def main(argumentos: Optional[List[str]] = None) -> int:
     argv_entrada: Iterable[str] = argumentos if argumentos is not None else sys.argv[1:]
     argv = _preprocesar_argumentos_cli(argv_entrada)
     debug = bool(argv and "--debug" in argv)
-    configure_logging(debug=debug)
+    verbose = 0
+    if argv:
+        for arg in argv:
+            if arg == "-v" or arg == "--verbose":
+                verbose += 1
+            elif arg.startswith("--verbose="):
+                try:
+                    verbose += int(arg.split("=", 1)[1] or 0)
+                except ValueError:
+                    verbose += 1
+    configure_logging(debug=debug, verbose=verbose)
     if debug:
         os.environ["PCOBRA_DEBUG_TRACES"] = "1"
     else:
