@@ -37,6 +37,12 @@ except ModuleNotFoundError as canon_exc:  # pragma: no cover
 
 RUNTIME_MANAGER = RuntimeManager()
 
+def _normalizar_codigo_entrada(codigo: str) -> str:
+    if codigo.startswith("\ufeff"):
+        return codigo[1:]
+    return codigo
+
+
 
 def _importar_modulo_sandbox() -> Any:
     """Compatibilidad para tests/adaptadores legacy; evita import dinámico en run."""
@@ -111,6 +117,7 @@ class RunService:
 
         try:
             codigo = Path(archivo_resuelto).read_text(encoding="utf-8")
+            codigo = _normalizar_codigo_entrada(codigo)
         except (PermissionError, UnicodeDecodeError) as e:
             mostrar_error(f"Error al leer el archivo: {e}", registrar_log=False)
             return 1
