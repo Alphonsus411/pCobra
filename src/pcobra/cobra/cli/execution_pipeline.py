@@ -15,6 +15,7 @@ from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.utils.unicode_sanitize import sanitize_source_for_tokenizer
 from pcobra.cobra.cli.utils.validators import normalizar_validadores_extra
 from pcobra.cobra.core.runtime import ValidadorBase, construir_cadena
+from pcobra.cobra.usar_policy import REPL_COBRA_MODULE_MAP
 from pcobra.core.usar_symbol_policy import (
     normalizar_metadata_simbolo_usar,
     validate_usar_symbol_metadata,
@@ -260,6 +261,12 @@ def construir_interprete_seguro_canonico(
         raise TypeError(
             "Invariante runtime violada: interpreter._validador._metadata_simbolos_usar debe ser dict."
         )
+
+    # Ruta única de resolución segura para `usar` en CLI (run/repl):
+    # solo alias/módulos canónicos del catálogo público.
+    configurar_restriccion = getattr(interpretador, "configurar_restriccion_usar_repl", None)
+    if callable(configurar_restriccion):
+        configurar_restriccion(REPL_COBRA_MODULE_MAP)
     return interpretador
 
 
