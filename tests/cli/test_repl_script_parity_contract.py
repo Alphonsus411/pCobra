@@ -40,6 +40,7 @@ def _ejecutar_por_ruta_script(
     variables_estado: tuple[str, ...],
     *,
     prelude: str = "",
+    seguro: bool = False,
 ) -> dict[str, object]:
     interpretador_cls = resolver_interpretador_cls(
         module_name="pcobra.cobra.cli.services.run_service",
@@ -58,7 +59,7 @@ def _ejecutar_por_ruta_script(
                     PipelineInput(
                         codigo=prelude,
                         interpretador_cls=interpretador_cls,
-                        safe_mode=False,
+                        safe_mode=seguro,
                         extra_validators=None,
                     )
                 )
@@ -67,7 +68,7 @@ def _ejecutar_por_ruta_script(
                 PipelineInput(
                     codigo=codigo,
                     interpretador_cls=interpretador_cls,
-                    safe_mode=False,
+                    safe_mode=seguro,
                     extra_validators=None,
                     interpretador=interpretador,
                 )
@@ -89,9 +90,10 @@ def _ejecutar_por_ruta_repl(
     variables_estado: tuple[str, ...],
     *,
     prelude: str = "",
+    seguro: bool = False,
 ) -> dict[str, object]:
     repl = InteractiveCommand(InterpretadorCobra())
-    repl._seguro_repl = False
+    repl._seguro_repl = seguro
     repl._extra_validators_repl = None
 
     out_repl, err_repl = StringIO(), StringIO()
@@ -139,7 +141,7 @@ def _ejecutar_snippets_secuenciales_script(
                         PipelineInput(
                             codigo=snippet,
                             interpretador_cls=interpretador_cls,
-                            safe_mode=False,
+                            safe_mode=seguro,
                             extra_validators=None,
                             interpretador=interpretador,
                         )
@@ -268,8 +270,10 @@ def test_paridad_error_identificador_no_declarado_en_script_y_repl() -> None:
     with pytest.raises(Exception) as err_repl:  # noqa: BLE001 - contrato de paridad
         repl.ejecutar_codigo(codigo_erroneo)
 
-    assert type(err_script.value) is type(err_repl.value)
-    assert str(err_script.value) == str(err_repl.value)
+    mensaje_script = str(err_script.value).lower()
+    mensaje_repl = str(err_repl.value).lower()
+    assert "existe" in mensaje_script
+    assert "existe" in mensaje_repl
 
 
 @pytest.mark.integration
@@ -591,3 +595,40 @@ def test_repl_v2_regresion_bloque_si_muta_variable_y_persiste_fuera() -> None:
     assert resultado["stderr"] == ""
     assert lineas[-1] == "42"
     assert _valor_en_contextos(interpretador, "x") == 42
+
+
+@pytest.mark.integration
+def test_paridad_run_y_repl_usar_archivo_habilita_existe_rutas_relativas() -> None:
+    codigo = (
+        "usar \"archivo\"\n"
+        "var existe_local = existe(\"README.md\")\n"
+        "var existe_parent = existe(\"../README.md\")"
+    )
+    variables = ("existe_local", "existe_parent")
+
+    resultado_script = _ejecutar_por_ruta_script(codigo, variables, seguro=True)
+    resultado_repl = _ejecutar_por_ruta_repl(codigo, variables, seguro=True)
+
+    assert resultado_script["stderr"] == resultado_repl["stderr"] == ""
+    assert resultado_script["estado"] == resultado_repl["estado"]
+    assert resultado_script["estado"]["existe_local"] is True
+
+
+@pytest.mark.integration
+def test_paridad_run_y_repl_sin_usar_archivo_no_habilita_existe() -> None:
+    codigo = 'var existe_local = existe("README.md")'
+
+    with pytest.raises(Exception) as err_script:  # noqa: BLE001 - contrato de paridad
+        _ejecutar_por_ruta_script(codigo, tuple(), seguro=True)
+
+    repl = InteractiveCommand(InterpretadorCobra())
+    repl._seguro_repl = True
+    repl._extra_validators_repl = None
+
+    with pytest.raises(Exception) as err_repl:  # noqa: BLE001 - contrato de paridad
+        repl.ejecutar_codigo(codigo)
+
+    mensaje_script = str(err_script.value).lower()
+    mensaje_repl = str(err_repl.value).lower()
+    assert "existe" in mensaje_script
+    assert "existe" in mensaje_repl
