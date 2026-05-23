@@ -109,8 +109,8 @@ def test_parity_contract_run_service_vs_repl(caso: str, snippets: list[str], sal
 
 
 @pytest.mark.parametrize("declaracion", ["var x = 3", "variable x := 3"])
-def test_parity_secuencia_repl_vs_run_no_corta_flujo(declaracion: str) -> None:
-    # Cubre la divergencia histórica REPL vs RUN: en RUN no debe cortarse la secuencia.
+def test_parity_secuencia_run_vs_repl_con_declaraciones_equivalentes(declaracion: str) -> None:
+    # Contrato de paridad: RUN y REPL deben ejecutar toda la secuencia y producir la misma salida observable.
     snippets = [
         'imprimir("antes")',
         declaracion,
@@ -125,5 +125,4 @@ def test_parity_secuencia_repl_vs_run_no_corta_flujo(declaracion: str) -> None:
     assert resultado_script["stderr"] == resultado_repl["stderr"] == "", (
         "No debe existir salida de error en RUN ni REPL para esta secuencia"
     )
-    assert resultado_script["stdout"] == salida_esperada
-    assert resultado_repl["stdout"] == salida_esperada
+    assert resultado_script["stdout"] == resultado_repl["stdout"] == salida_esperada
