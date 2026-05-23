@@ -35,6 +35,24 @@ def _ejecutar_modo_script(snippets: list[str]) -> dict[str, str | int]:
     }
 
 
+def _ejecutar_modo_script_seguro(snippets: list[str]) -> dict[str, str | int]:
+    codigo = "\n\n".join(snippets)
+    servicio = RunService()
+    out, err = StringIO(), StringIO()
+    with redirect_stdout(out), redirect_stderr(err):
+        with patch.object(
+            InterpretadorCobra,
+            "_asegurar_no_autorreferencia_asignacion",
+            return_value=None,
+        ):
+            rc = servicio.ejecutar_normal(codigo, seguro=True, extra_validators=None)
+    return {
+        "rc": rc,
+        "stdout": _normalizar_salida(out.getvalue()),
+        "stderr": _normalizar_salida(err.getvalue()),
+    }
+
+
 def _ejecutar_modo_repl(snippets: list[str]) -> dict[str, str]:
     repl = InteractiveCommand(InterpretadorCobra())
     repl._seguro_repl = False
@@ -126,3 +144,29 @@ def test_parity_secuencia_run_vs_repl_con_declaraciones_equivalentes(declaracion
         "No debe existir salida de error en RUN ni REPL para esta secuencia"
     )
     assert resultado_script["stdout"] == resultado_repl["stdout"] == salida_esperada
+
+
+def test_run_seguro_permite_existe_solo_con_usar_archivo() -> None:
+    resultado = _ejecutar_modo_script_seguro(
+        [
+            'usar "archivo"',
+            'imprimir(existe("README.md"))',
+            'imprimir(existe("../README.md"))',
+        ]
+    )
+
+    assert resultado["rc"] == 0
+    assert resultado["stderr"] == ""
+    assert "verdadero" in resultado["stdout"]
+    assert resultado["stdout"].splitlines()[-1] == "falso"
+
+
+def test_run_seguro_bloquea_existe_sin_usar_archivo() -> None:
+    resultado = _ejecutar_modo_script_seguro(
+        [
+            'imprimir(existe("README.md"))',
+        ]
+    )
+
+    assert resultado["rc"] == 1
+    assert "Uso de primitiva peligrosa: 'existe'" in resultado["stdout"]

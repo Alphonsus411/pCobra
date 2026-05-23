@@ -329,9 +329,15 @@ def ejecutar_codigo_canonico(
 
     ast = analizar_codigo_fn(codigo)
     if seguro:
+        nodos_usar = [
+            nodo for nodo in ast if getattr(nodo, "__class__", type("", (), {})).__name__ == "NodoUsar"
+        ]
+        if nodos_usar:
+            ejecutar_ast(nodos_usar, interpretador)
         validar_ast_seguro(
             ast,
             validadores_extra=extra_validators,
+            interpretador=interpretador,
             construir_cadena_fn=construir_cadena_fn,
         )
     resultado = ejecutar_ast(ast, interpretador)
