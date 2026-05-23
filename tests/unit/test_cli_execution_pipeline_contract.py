@@ -386,7 +386,7 @@ def test_contrato_resultado_igual_entre_modo_archivo_y_interactivo():
     assert out_file.getvalue() == out_repl.getvalue()
 
 
-def test_execute_archivo_no_corta_bloque_principal_en_declaracion_var():
+def test_execute_archivo_no_corta_bloque_principal_en_declaracion_var_smoke_contrato():
     codigo = 'imprimir("antes")\nvar x = 3\nimprimir("despues")'
 
     cmd_execute = ExecuteCommand()
@@ -399,6 +399,33 @@ def test_execute_archivo_no_corta_bloque_principal_en_declaracion_var():
     assert result_file == 0
     assert err_file.getvalue() == ""
     assert out_file.getvalue().splitlines() == ["antes", "despues"]
+
+
+@pytest.mark.parametrize(
+    ("caso", "declaracion"),
+    [
+        ("BUG-001-var", "var x = 3"),
+        ("BUG-001-variable", "variable x := 3"),
+    ],
+)
+def test_regresion_bug_001_execute_no_corta_flujo_tras_declaracion(caso, declaracion):
+    codigo = f'imprimir("antes")\n{declaracion}\nimprimir("despues")'
+
+    cmd_execute = ExecuteCommand()
+    out_file, err_file = StringIO(), StringIO()
+    with redirect_stdout(out_file), redirect_stderr(err_file):
+        result_file = cmd_execute._service.ejecutar_normal(
+            codigo, seguro=False, extra_validators=None
+        )
+
+    salida = out_file.getvalue().splitlines()
+    assert result_file == 0, f"{caso}: la ejecución debe terminar en éxito"
+    assert err_file.getvalue() == "", f"{caso}: no debe haber errores en stderr"
+    assert salida.count("antes") == 1, f"{caso}: debe imprimir 'antes' exactamente una vez"
+    assert salida.count("despues") == 1, f"{caso}: debe imprimir 'despues' exactamente una vez"
+    assert salida.index("antes") < salida.index("despues"), (
+        f"{caso}: el flujo no debe cortarse tras la declaración; la sentencia posterior debe ejecutarse"
+    )
 
 
 @pytest.mark.parametrize(
