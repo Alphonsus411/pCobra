@@ -675,25 +675,54 @@ def test_sandbox_normaliza_safe_mode_y_validadores_igual_en_run_y_repl(monkeypat
     assert [getattr(v, "origen", None) for v in capturas[1][2]] == ["uno.py", "dos.py"]
 
 
+
+
 @pytest.mark.integration
-@pytest.mark.parametrize("declarador", ["var", "variable"])
-def test_run_no_corta_bloque_secuencial_tras_declaracion(tmp_path, declarador: str, monkeypatch):
+@pytest.mark.parametrize(
+    ("caso", "codigo", "estado_esperado"),
+    [
+        (
+            "var",
+            'imprimir("antes")\nvar x = 3\nimprimir("despues")',
+            {"x": 3},
+        ),
+        (
+            "variable",
+            'imprimir("antes")\nvariable y := 4\nimprimir("despues")',
+            {"y": 4},
+        ),
+    ],
+)
+def test_paridad_funcional_acotada_run_y_repl_en_declaraciones_secuenciales(
+    tmp_path, caso: str, codigo: str, estado_esperado: dict[str, int], monkeypatch
+):
     monkeypatch.setattr("pcobra.cobra.cli.services.run_service.limitar_cpu_segundos", lambda *_: None)
-    codigo = (
-        'imprimir("antes")\n'
-        f"{declarador} x {":=" if declarador == "variable" else "="} 3\n"
-        'imprimir("despues")\n'
-    )
-    archivo = tmp_path / "secuencial.co"
-    archivo.write_text(codigo, encoding="utf-8")
+    archivo = tmp_path / f"paridad_{caso}.co"
+    archivo.write_text(codigo + "\n", encoding="utf-8")
 
     out_run, err_run = StringIO(), StringIO()
     with redirect_stdout(out_run), redirect_stderr(err_run):
         rc_run = RunCommandV2().run(_run_args(str(archivo)))
 
+    repl = InteractiveCommand(InterpretadorCobra())
+    repl._seguro_repl = False
+    repl._extra_validators_repl = None
+    out_repl, err_repl = StringIO(), StringIO()
+    with redirect_stdout(out_repl), redirect_stderr(err_repl):
+        repl.ejecutar_codigo(codigo)
+
+    lineas_run = [ln.strip() for ln in out_run.getvalue().splitlines() if ln.strip()]
+    lineas_repl = [ln.strip() for ln in out_repl.getvalue().splitlines() if ln.strip()]
+    salida_run = out_run.getvalue() + err_run.getvalue()
+    salida_repl = out_repl.getvalue() + err_repl.getvalue()
+
     assert rc_run == 0
-    assert err_run.getvalue() == ""
-    assert [ln.strip() for ln in out_run.getvalue().splitlines() if ln.strip()] == ["antes", "despues"]
+    assert lineas_run == lineas_repl == ["antes", "despues"]
+    assert "Traceback" not in salida_run
+    assert "Traceback" not in salida_repl
+    assert err_run.getvalue() == err_repl.getvalue() == ""
+    for nombre, valor in estado_esperado.items():
+        assert repl.interpretador.contextos[-1].get(nombre) == valor
 
 
 @pytest.mark.integration
