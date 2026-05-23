@@ -1976,8 +1976,8 @@ class InterpretadorCobra:
     def ejecutar_llamada_funcion(self, nodo):
         """Ejecuta la invocación de una función, interna o del usuario."""
         emitir_salida_llamada = self.in_execution()
-        if emitir_salida_llamada:
-            print(f"WARNING: Llamada a funcion: {nodo.nombre}")
+        if logging.getLogger().isEnabledFor(logging.DEBUG):
+            logging.debug("Llamada a función: %s", nodo.nombre)
         if nodo.nombre == "imprimir":
             for arg in nodo.argumentos:
                 if isinstance(arg, Token) and arg.tipo == TipoToken.IDENTIFICADOR:
@@ -2292,7 +2292,7 @@ class InterpretadorCobra:
                     "severity": "warning",
                     "module": nodo.modulo,
                 }
-                logging.warning(
+                logging.debug(
                     "USAR sanitize conflicts event module=%s %s",
                     nodo.modulo,
                     _resumen_conflictos_usar(conflictos_saneamiento),
@@ -2341,7 +2341,7 @@ class InterpretadorCobra:
                         "policy": self._usar_collision_policy,
                         "detail": detalle_por_simbolo,
                     }
-                    logging.warning(
+                    logging.debug(
                         "USAR collision symbol event module=%s symbol=%s policy=%s count=%s",
                         nodo.modulo,
                         simbolo_conflictivo,
@@ -2361,13 +2361,8 @@ class InterpretadorCobra:
                     "phase": "preflight",
                 }
                 if self._usar_collision_policy == USAR_COLLISION_WARN_ALIAS_REQUIRED:
-                    logging.warning(
-                        "WARNING: %s module=%s count=%s",
-                        formatear_error_usar_usuario(
-                            "conflicto_simbolo",
-                            nodo.modulo,
-                            "Use alias explícito para resolver la colisión.",
-                        ),
+                    logging.debug(
+                        "usar_conflicto_simbolo module=%s count=%s",
                         nodo.modulo,
                         len(conflictos),
                     )
