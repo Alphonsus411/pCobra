@@ -789,3 +789,41 @@ def test_run_conservar_control_break_y_continue_en_mientras(tmp_path, monkeypatc
     assert rc_run == 0
     assert err_run.getvalue() == ""
     assert [ln.strip() for ln in out_run.getvalue().splitlines() if ln.strip()] == ["1", "3", "4"]
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("con_bom", [True, False])
+def test_run_acepta_utf8_bom_en_frontera_de_entrada(tmp_path, monkeypatch, con_bom: bool):
+    monkeypatch.setattr("pcobra.cobra.cli.services.run_service.limitar_cpu_segundos", lambda *_: None)
+    contenido = 'imprimir("antes")\nvar x = 3\nimprimir("despues")\n'
+    if con_bom:
+        contenido = "\ufeff" + contenido
+
+    archivo = tmp_path / ("programa_bom.co" if con_bom else "programa_sin_bom.co")
+    archivo.write_text(contenido, encoding="utf-8")
+
+    out_run, err_run = StringIO(), StringIO()
+    with redirect_stdout(out_run), redirect_stderr(err_run):
+        rc_run = RunCommandV2().run(_run_args(str(archivo)))
+
+    assert rc_run == 0
+    assert err_run.getvalue() == ""
+    assert [ln.strip() for ln in out_run.getvalue().splitlines() if ln.strip()] == ["antes", "despues"]
+
+
+@pytest.mark.integration
+def test_run_error_lexico_sigue_siendo_corto_sin_traceback_con_y_sin_bom(tmp_path, monkeypatch):
+    monkeypatch.setattr("pcobra.cobra.cli.services.run_service.limitar_cpu_segundos", lambda *_: None)
+
+    for prefijo in ("", "\ufeff"):
+        archivo = tmp_path / ("error_sin_bom.co" if not prefijo else "error_con_bom.co")
+        archivo.write_text(prefijo + 'imprimir("cadena sin cerrar)\n', encoding="utf-8")
+
+        out_run, err_run = StringIO(), StringIO()
+        with redirect_stdout(out_run), redirect_stderr(err_run):
+            rc_run = RunCommandV2().run(_run_args(str(archivo)))
+
+        assert rc_run != 0
+        salida = out_run.getvalue() + err_run.getvalue()
+        assert "Traceback" not in salida
+        assert salida.strip() != ""
