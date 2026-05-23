@@ -1,5 +1,6 @@
 # ============= ENTORNOS VIRTUALES =============
 .venv/
+.venv-release-test
 venv/
 VENV/
 ENV/
