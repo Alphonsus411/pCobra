@@ -238,3 +238,43 @@ def test_repl_v2_usar_fronteras_rechaza_numpy_y_sintaxis_invalida(capsys):
         cmd._ejecutar_en_modo_normal("imprimir(ys[0])")
     salida_indice = capsys.readouterr().out
     assert "Traceback" not in salida_indice
+
+
+def test_repl_v2_usar_bloquea_primitiva_peligrosa_sin_origen_permitido(capsys):
+    cmd = ReplCommandV2()
+
+    with pytest.raises(Exception, match=r"Uso de primitiva peligrosa: 'existe'") as excinfo:
+        cmd._ejecutar_en_modo_normal('imprimir(existe("/tmp"))')
+
+    assert "Traceback" not in capsys.readouterr().out
+    assert str(excinfo.value).startswith("Uso de primitiva peligrosa")
+
+
+def test_repl_v2_usar_no_expone_os_pathlib_sdk_ni_privados(capsys):
+    cmd = ReplCommandV2()
+    cmd._ejecutar_en_modo_normal('usar "datos"')
+
+    for simbolo in ("os", "pathlib", "holobit_sdk", "_privado"):
+        with pytest.raises(NameError):
+            cmd._ejecutar_en_modo_normal(f"imprimir({simbolo})")
+        salida = capsys.readouterr().out
+        assert "Traceback" not in salida
+
+
+def test_repl_v2_revalida_bug_001_var_global_funcion_y_reasignacion(capsys):
+    cmd = ReplCommandV2()
+    programa = """
+var g = 1
+func valor_local():
+    var interno = 2
+    retorno interno
+fin
+imprimir(g)
+imprimir(valor_local())
+var g = 9
+imprimir(g)
+""".strip()
+
+    cmd._ejecutar_en_modo_normal(programa)
+    salida = [ln.strip() for ln in capsys.readouterr().out.splitlines() if ln.strip().isdigit()]
+    assert salida[-3:] == ["1", "2", "9"]
