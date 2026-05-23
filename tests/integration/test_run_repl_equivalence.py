@@ -812,6 +812,30 @@ def test_run_acepta_utf8_bom_en_frontera_de_entrada(tmp_path, monkeypatch, con_b
 
 
 @pytest.mark.integration
+def test_run_utf8_bom_y_sin_bom_producen_salida_identica(tmp_path, monkeypatch):
+    monkeypatch.setattr("pcobra.cobra.cli.services.run_service.limitar_cpu_segundos", lambda *_: None)
+    script = 'imprimir("antes")\nvar x = 3\nimprimir("despues")\n'
+
+    archivo_sin_bom = tmp_path / "script_sin_bom.co"
+    archivo_con_bom = tmp_path / "script_con_bom.co"
+    archivo_sin_bom.write_text(script, encoding="utf-8")
+    archivo_con_bom.write_text("\ufeff" + script, encoding="utf-8")
+
+    salidas = []
+    for archivo in (archivo_sin_bom, archivo_con_bom):
+        out_run, err_run = StringIO(), StringIO()
+        with redirect_stdout(out_run), redirect_stderr(err_run):
+            rc_run = RunCommandV2().run(_run_args(str(archivo)))
+
+        assert rc_run == 0
+        assert err_run.getvalue() == ""
+        salidas.append(out_run.getvalue())
+
+    assert salidas[0] == salidas[1]
+    assert [ln.strip() for ln in salidas[0].splitlines() if ln.strip()] == ["antes", "despues"]
+
+
+@pytest.mark.integration
 def test_run_error_lexico_sigue_siendo_corto_sin_traceback_con_y_sin_bom(tmp_path, monkeypatch):
     monkeypatch.setattr("pcobra.cobra.cli.services.run_service.limitar_cpu_segundos", lambda *_: None)
 
