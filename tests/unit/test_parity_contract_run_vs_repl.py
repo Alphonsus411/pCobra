@@ -58,6 +58,15 @@ def _ejecutar_modo_repl(snippets: list[str]) -> dict[str, str]:
     ("caso", "snippets", "salida_esperada"),
     [
         (
+            "usar_datos_y_longitud_lista",
+            [
+                'usar "datos"',
+                "var xs = [1,2,3]",
+                "imprimir(longitud(xs))",
+            ],
+            "3",
+        ),
+        (
             "declaracion_externa_mutacion_en_mientras_y_lectura_posterior",
             [
                 "var contador = 0\nmientras contador < 3:\n    contador = contador + 1\nfin",
