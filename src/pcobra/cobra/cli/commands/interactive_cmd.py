@@ -523,6 +523,12 @@ class InteractiveCommand(BaseCommand):
 
         # Contrato: REPL incremental = intérprete; no batch pipeline.
         if self._seguro_repl:
+            nodos_usar = [
+                nodo for nodo in ast if getattr(nodo, "__class__", type("", (), {})).__name__ == "NodoUsar"
+            ]
+            if nodos_usar:
+                for nodo_usar in nodos_usar:
+                    self.interpretador.ejecutar_nodo(nodo_usar)
             validar_ast_seguro(
                 ast,
                 validadores_extra=self._extra_validators_repl,
