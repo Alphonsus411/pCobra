@@ -9,7 +9,7 @@ from pcobra.cobra.cli.commands.interactive_cmd import InteractiveCommand
 
 def _run_interactive_and_capture_debug_traces(debug: bool) -> str:
     configure_logging(debug=debug)
-    cmd = InteractiveCommand(SimpleNamespace(ejecutar_ast=lambda ast: None))
+    cmd = InteractiveCommand(SimpleNamespace(ejecutar_ast=lambda ast: None, ejecutar_nodo=lambda nodo: None))
     cmd.procesar_ast = lambda codigo, validador=None: []  # type: ignore[assignment]
     buffer = StringIO()
     root_logger = logging.getLogger()
@@ -95,3 +95,42 @@ def test_configure_logging_pcobra_sin_handlers_locales_y_con_propagacion():
 
     assert app_logger.handlers == []
     assert app_logger.propagate is True
+
+
+def _capturar_mensajes_diagnosticos(*, debug: bool, verbose: int = 0) -> str:
+    configure_logging(debug=debug, verbose=verbose)
+    buffer = StringIO()
+    root_logger = logging.getLogger()
+    handler = root_logger.handlers[0]
+    original_stream = getattr(handler, "stream", None)
+    if hasattr(handler, "setStream"):
+        handler.setStream(buffer)
+    try:
+        logging.warning("Llamada a funcion: demo")
+        logging.warning("Usar modulo: demo")
+        logging.warning("USAR sanitize conflicts event module=demo count=1")
+    finally:
+        if original_stream is not None and hasattr(handler, "setStream"):
+            handler.setStream(original_stream)
+    return buffer.getvalue()
+
+
+def test_modo_normal_oculta_warnings_diagnosticos():
+    salida = _capturar_mensajes_diagnosticos(debug=False, verbose=0)
+    assert "Llamada a funcion: demo" not in salida
+    assert "Usar modulo: demo" not in salida
+    assert "USAR sanitize conflicts event module=demo" not in salida
+
+
+def test_modo_debug_muestra_warnings_diagnosticos():
+    salida = _capturar_mensajes_diagnosticos(debug=True, verbose=0)
+    assert "Llamada a funcion: demo" in salida
+    assert "Usar modulo: demo" in salida
+    assert "USAR sanitize conflicts event module=demo" in salida
+
+
+def test_modo_verbose_muestra_warnings_diagnosticos():
+    salida = _capturar_mensajes_diagnosticos(debug=False, verbose=1)
+    assert "Llamada a funcion: demo" in salida
+    assert "Usar modulo: demo" in salida
+    assert "USAR sanitize conflicts event module=demo" in salida

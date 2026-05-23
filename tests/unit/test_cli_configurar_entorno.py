@@ -140,7 +140,7 @@ def test_main_reconfigura_consola_antes_de_logging_y_cli(monkeypatch):
 
     monkeypatch.setattr(cli, "configure_encoding", lambda: orden.append("utf8"))
     monkeypatch.setattr(cli, "_bootstrap_dev_path_si_opt_in", lambda: orden.append("bootstrap"))
-    monkeypatch.setattr(cli, "configure_logging", lambda debug: orden.append("logging"))
+    monkeypatch.setattr(cli, "configure_logging", lambda debug, verbose=0: orden.append("logging"))
     monkeypatch.setattr(cli, "configurar_entorno", lambda: orden.append("entorno"))
 
     class _DummyApp:
@@ -158,7 +158,7 @@ def test_main_reconfigura_consola_antes_de_logging_y_cli(monkeypatch):
 def test_main_devuelve_exit_code_1_si_falla_configuracion_entorno(monkeypatch, caplog):
     monkeypatch.setattr(cli, "configure_encoding", lambda: None)
     monkeypatch.setattr(cli, "_bootstrap_dev_path_si_opt_in", lambda: None)
-    monkeypatch.setattr(cli, "configure_logging", lambda debug: None)
+    monkeypatch.setattr(cli, "configure_logging", lambda debug, verbose=0: None)
     monkeypatch.setattr(
         cli,
         "configurar_entorno",
