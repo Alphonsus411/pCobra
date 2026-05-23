@@ -38,6 +38,11 @@ except ModuleNotFoundError as canon_exc:  # pragma: no cover
 RUNTIME_MANAGER = RuntimeManager()
 
 def _normalizar_codigo_entrada(codigo: str) -> str:
+    """Normaliza la frontera de entrada de archivos de código.
+
+    Mantiene comportamiento no invasivo: únicamente remueve BOM UTF-8
+    (`\ufeff`) cuando aparece en la posición 0 del archivo.
+    """
     if codigo.startswith("\ufeff"):
         return codigo[1:]
     return codigo
