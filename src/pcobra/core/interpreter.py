@@ -1573,6 +1573,9 @@ class InterpretadorCobra:
                 indice = self.solicitar_memoria(1)
                 self.mem_contextos[indice_contexto][nombre] = (indice, 1)
                 self.contextos[-1].define(nombre, valor)
+                # Contrato de flujo: una declaración no emite señal de control
+                # ni valor de corte; el bloque secuencial debe continuar.
+                return None
             else:
                 indice_contexto = self._indice_entorno_variable(nombre)
                 if indice_contexto is None:
