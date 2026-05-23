@@ -230,7 +230,7 @@ class InterpretadorCobra:
             payload["hash_corto"] = hash_corto
         if fase:
             payload["fase"] = fase
-        logging.warning("Auditoria validador extra: %s", payload)
+        logging.debug("Auditoria validador extra: %s", payload)
 
     @staticmethod
     def _cargar_validadores(ruta):
