@@ -18,9 +18,9 @@ _LEGACY_IMPORT_PHASE_ENV = "PCOBRA_LEGACY_IMPORT_PHASE"
 _LEGACY_IMPORT_OPT_IN_ENV = "PCOBRA_ENABLE_LEGACY_IMPORTS"
 _LEGACY_IMPORT_PHASE_DEFAULT = 1
 _LEGACY_IMPORT_SCHEDULE = {
-    1: "Fase 1 (warning explícito): activa en 2.3.x.",
-    2: "Fase 2 (opt-in): prevista para 2.4.0, requiere flag/env.",
-    3: "Fase 3 (eliminación): prevista para 3.0.0.",
+    1: "Fase 1: warning explícito para imports heredados.",
+    2: "Fase 2: compatibilidad legacy solo con opt-in mediante variable de entorno.",
+    3: "Fase 3: eliminación de alias legacy; usar rutas canónicas pcobra.*.",
 }
 LEGACY_IMPORT_ALIAS_INVENTORY: Dict[str, str] = {
     "cobra": "pcobra.cobra",
