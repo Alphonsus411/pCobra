@@ -300,6 +300,22 @@ def test_paridad_script_vs_repl_con_snippets_secuenciales_y_estado_final() -> No
 
 
 @pytest.mark.integration
+def test_run_script_no_interrumpe_secuencia_con_asignacion_var_variable() -> None:
+    codigo = (
+        'imprimir("antes")\n'
+        "var x = 3\n"
+        'imprimir("despues")'
+    )
+
+    resultado = _ejecutar_por_ruta_script(codigo, ("x",))
+    lineas = [linea.strip() for linea in str(resultado["stdout"]).splitlines() if linea.strip()]
+
+    assert resultado["stderr"] == ""
+    assert lineas == ["antes", "despues"]
+    assert resultado["estado"]["x"] == 3
+
+
+@pytest.mark.integration
 def test_paridad_script_vs_repl_con_error_en_snippet_secuencial() -> None:
     snippets = [
         "var base = 7",
