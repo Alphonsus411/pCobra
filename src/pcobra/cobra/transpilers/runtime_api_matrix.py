@@ -22,7 +22,7 @@ from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
 
 STANDARD_LIBRARY_INIT: Final[Path] = Path(str(files("pcobra.standard_library").joinpath("__init__.py")))
 CORELIBS_INIT: Final[Path] = Path(str(files("pcobra.corelibs").joinpath("__init__.py")))
-SNAPSHOT_PATH: Final[Path] = Path(__file__).resolve().with_name("runtime_api_parity_snapshot.json")
+SNAPSHOT_PATH: Final[Path] = Path(str(files("pcobra.cobra.transpilers").joinpath("runtime_api_parity_snapshot.json")))
 
 
 @dataclass(frozen=True)
