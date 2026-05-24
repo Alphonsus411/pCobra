@@ -13,15 +13,15 @@ consumible desde ``compatibility_matrix.py`` y scripts de documentación.
 
 from dataclasses import dataclass
 import ast
+from importlib.resources import files
 import json
 from pathlib import Path
 from typing import Final
 
 from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
 
-REPO_ROOT: Final[Path] = Path(__file__).resolve().parents[4]
-STANDARD_LIBRARY_INIT: Final[Path] = REPO_ROOT / "src/pcobra/standard_library/__init__.py"
-CORELIBS_INIT: Final[Path] = REPO_ROOT / "src/pcobra/corelibs/__init__.py"
+STANDARD_LIBRARY_INIT: Final[Path] = Path(str(files("pcobra.standard_library").joinpath("__init__.py")))
+CORELIBS_INIT: Final[Path] = Path(str(files("pcobra.corelibs").joinpath("__init__.py")))
 SNAPSHOT_PATH: Final[Path] = Path(__file__).resolve().with_name("runtime_api_parity_snapshot.json")
 
 
