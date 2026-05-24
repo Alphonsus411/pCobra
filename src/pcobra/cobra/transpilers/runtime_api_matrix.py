@@ -13,15 +13,14 @@ consumible desde ``compatibility_matrix.py`` y scripts de documentación.
 
 from dataclasses import dataclass
 import ast
+from importlib import resources
+from importlib.resources.abc import Traversable
 import json
 from pathlib import Path
 from typing import Final
 
 from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
 
-REPO_ROOT: Final[Path] = Path(__file__).resolve().parents[4]
-STANDARD_LIBRARY_INIT: Final[Path] = REPO_ROOT / "src/pcobra/standard_library/__init__.py"
-CORELIBS_INIT: Final[Path] = REPO_ROOT / "src/pcobra/corelibs/__init__.py"
 SNAPSHOT_PATH: Final[Path] = Path(__file__).resolve().with_name("runtime_api_parity_snapshot.json")
 
 
@@ -35,7 +34,21 @@ class RuntimeApiExportSets:
         return tuple(sorted(set(self.standard_library) | set(self.corelibs)))
 
 
-def _read_all_exports(path: Path) -> tuple[str, ...]:
+def _resolve_package_init(package: str) -> Traversable:
+    init_path = resources.files(package).joinpath("__init__.py")
+    if not init_path.is_file():
+        raise RuntimeError(
+            f"No se pudo resolver {package}.__init__.py para matriz runtime: "
+            f"ruta obtenida '{init_path}' no es un archivo válido."
+        )
+    return init_path
+
+
+STANDARD_LIBRARY_INIT: Final[Traversable] = _resolve_package_init("pcobra.standard_library")
+CORELIBS_INIT: Final[Traversable] = _resolve_package_init("pcobra.corelibs")
+
+
+def _read_all_exports(path: Path | Traversable) -> tuple[str, ...]:
     source = path.read_text(encoding="utf-8")
     module = ast.parse(source, filename=str(path))
     for node in module.body:
