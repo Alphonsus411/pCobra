@@ -627,9 +627,13 @@ def validate_usar_symbol_metadata(nombre: str, metadata: object) -> dict[str, ob
         raise ValueError(
             f"Metadata inválida para símbolo usar '{nombre}': backend_exposed debe ser False [troubleshooting: violación de seguridad]"
         )
-    if metadata_dict.get("safe_wrapper") is not metadata_dict.get("sanitized"):
+    if metadata_dict.get("sanitized") is not USAR_SCHEMA_VALUE_CONSTRAINTS["sanitized"]:
         raise ValueError(
-            f"Metadata inválida para símbolo usar '{nombre}': safe_wrapper contradice sanitized [troubleshooting: violación de seguridad]"
+            f"Metadata inválida para símbolo usar '{nombre}': sanitized debe ser True [troubleshooting: violación de seguridad]"
+        )
+    if metadata_dict.get("safe_wrapper") is not USAR_SCHEMA_VALUE_CONSTRAINTS["safe_wrapper"]:
+        raise ValueError(
+            f"Metadata inválida para símbolo usar '{nombre}': safe_wrapper debe ser True [troubleshooting: violación de seguridad]"
         )
     if not isinstance(metadata_dict.get("callable"), USAR_SCHEMA_VALUE_CONSTRAINTS["callable"]):
         raise ValueError(
