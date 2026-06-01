@@ -94,6 +94,25 @@ def test_get_mapped_path_devuelve_original_para_backend_fuera_del_set_canonico(m
     assert module_map.get_mapped_path("m", "fantasy") == "m"
 
 
+def test_get_mapped_path_propaga_backend_prohibido_por_contrato(monkeypatch):
+    monkeypatch.setattr(
+        module_map,
+        "get_stdlib_contract",
+        lambda module: {
+            "backend_preferido": "javascript",
+            "fallback_permitido": [],
+        },
+    )
+    monkeypatch.setattr(
+        module_map,
+        "get_toml_map",
+        lambda: {"modulos": {"m": {"python": "dist/m.py", "javascript": "dist/m.js"}}},
+    )
+
+    with pytest.raises(ValueError, match="backend no permitido por contrato"):
+        module_map.get_mapped_path("m", "python")
+
+
 def test_get_mapped_path_resuelve_desde_tabla_modulos_en_toml(monkeypatch):
     monkeypatch.setattr(
         module_map,
