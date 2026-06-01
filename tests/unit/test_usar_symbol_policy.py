@@ -399,6 +399,26 @@ def test_rechaza_contradicciones_criticas_de_metadata_usar():
             "backend_exposed": False,
             "callable": True,
         },
+        {
+            "origin_kind": "usar",
+            "module": "archivo",
+            "symbol": "existe",
+            "sanitized": False,
+            "safe_wrapper": False,
+            "public_api": True,
+            "backend_exposed": False,
+            "callable": True,
+        },
+        {
+            "origin_kind": "usar",
+            "module": "archivo",
+            "symbol": "existe",
+            "sanitized": True,
+            "safe_wrapper": False,
+            "public_api": True,
+            "backend_exposed": False,
+            "callable": True,
+        },
     ]
 
     for metadata in casos_invalidos_normalizacion:
