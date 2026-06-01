@@ -47,9 +47,15 @@ class ValidadorPrimitivaPeligrosa(ValidadorBase):
         if metadata:
             self._metadata_simbolos_usar[nombre] = dict(metadata)
 
-    def _es_wrapper_publico_permitido(self, nodo: NodoLlamadaFuncion) -> bool:
+    def _es_wrapper_publico_permitido(
+        self, nodo: NodoLlamadaFuncion | NodoLlamadaMetodo
+    ) -> bool:
         # Único escape permitido para primitivas peligrosas:
         # usar archivo.existe con metadata de sanitización de API pública.
+        # Las llamadas de método no son la ruta canónica de `usar` y deben
+        # fallar esta compuerta aunque el método se llame `existe`.
+        if not isinstance(nodo, NodoLlamadaFuncion):
+            return False
         if nodo.nombre != "existe":
             return False
         if ("archivo", "existe") not in self._simbolos_publicos_usar:
@@ -70,7 +76,10 @@ class ValidadorPrimitivaPeligrosa(ValidadorBase):
 
     def visit_llamada_funcion(self, nodo: NodoLlamadaFuncion):
         # Contrato: permitido solo si metadata canónica de usar+sanitización API pública.
-        if nodo.nombre in self.PRIMITIVAS_PELIGROSAS and not self._es_wrapper_publico_permitido(nodo):
+        if (
+            nodo.nombre in self.PRIMITIVAS_PELIGROSAS
+            and not self._es_wrapper_publico_permitido(nodo)
+        ):
             raise PrimitivaPeligrosaError(
                 f"Uso de primitiva peligrosa: '{nodo.nombre}'"
             )
@@ -87,7 +96,10 @@ class ValidadorPrimitivaPeligrosa(ValidadorBase):
         nodo.llamada.aceptar(self)
 
     def visit_llamada_metodo(self, nodo: NodoLlamadaMetodo):
-        if nodo.nombre_metodo in self.PRIMITIVAS_PELIGROSAS and nodo.nombre_metodo != "existe":
+        if (
+            nodo.nombre_metodo in self.PRIMITIVAS_PELIGROSAS
+            and not self._es_wrapper_publico_permitido(nodo)
+        ):
             raise PrimitivaPeligrosaError(
                 f"Uso de primitiva peligrosa: '{nodo.nombre_metodo}'"
             )
