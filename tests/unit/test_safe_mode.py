@@ -17,6 +17,16 @@ def generar_ast(codigo: str):
     return Parser(tokens).parsear()
 
 
+def metadata_validador_usar(interp):
+    cursor = interp._validador
+    while cursor is not None:
+        metadata = getattr(cursor, "_metadata_simbolos_usar", None)
+        if metadata is not None:
+            return metadata
+        cursor = getattr(cursor, "siguiente", None)
+    raise AssertionError("validador de metadata usar no encontrado")
+
+
 @pytest.mark.parametrize(
     "codigo",
     [
@@ -95,7 +105,7 @@ def test_metadata_usar_archivo_existe_cadena_completa():
         "cobra.standard_library.archivo",
     }
 
-    metadata_validador = interp._validador._metadata_simbolos_usar["existe"]
+    metadata_validador = metadata_validador_usar(interp)["existe"]
     assert metadata_validador["module"] == "archivo"
     assert metadata_validador["origen_modulo"] == "archivo"
     assert metadata_validador["canonical_module"] == "archivo"
@@ -128,8 +138,40 @@ def test_usar_metadata_minima_y_consistente_entre_interprete_y_validador():
         assert metadata["public_api"] is True
         assert metadata["introduced_by_usar"] is True
 
-        metadata_validador = interp._validador._metadata_simbolos_usar[nombre]
+        metadata_validador = metadata_validador_usar(interp)[nombre]
         assert metadata_validador == metadata
+
+
+def test_usar_numero_reimport_idempotente_conserva_modulo_original():
+    interp = InterpretadorCobra()
+    ast = generar_ast('usar "numero"\nusar "numero"')
+
+    interp.ejecutar_ast(ast)
+
+    assert interp._usar_symbol_metadata["absoluto"]["module"] == "numero"
+    assert metadata_validador_usar(interp)["absoluto"]["module"] == "numero"
+
+
+def test_usar_metadata_se_sincroniza_con_validador_detras_de_auditoria():
+    interp = InterpretadorCobra()
+    ast = generar_ast('usar "archivo"\nimprimir(existe("README.md"))')
+
+    with patch("sys.stdout", new_callable=StringIO):
+        interp.ejecutar_ast(ast)
+
+    assert (
+        metadata_validador_usar(interp)["existe"]
+        == interp._usar_symbol_metadata["existe"]
+    )
+
+
+def test_usar_metadata_no_fuga_entre_interpretes():
+    primer_interp = InterpretadorCobra()
+    primer_interp.ejecutar_ast(generar_ast('usar "archivo"'))
+
+    segundo_interp = InterpretadorCobra()
+    with pytest.raises(PrimitivaPeligrosaError):
+        segundo_interp.ejecutar_ast(generar_ast('imprimir(existe("README.md"))'))
 
 
 def test_usar_detecta_divergencia_metadata_interprete_y_validador():
@@ -139,7 +181,7 @@ def test_usar_detecta_divergencia_metadata_interprete_y_validador():
     with patch("sys.stdout", new_callable=StringIO):
         interp.ejecutar_ast(ast)
 
-    interp._validador._metadata_simbolos_usar["existe"]["public_api"] = False
+    metadata_validador_usar(interp)["existe"]["public_api"] = False
     ast_llamada = generar_ast('imprimir(existe("README.md"))')
 
     with pytest.raises(PrimitivaPeligrosaError):
@@ -154,7 +196,7 @@ def test_existe_rechaza_metadata_ausente_sin_fallback_permisivo():
         interp.ejecutar_ast(ast)
 
     # Simula bypass: símbolo registrado pero metadata ausente.
-    interp._validador._metadata_simbolos_usar.pop("existe", None)
+    metadata_validador_usar(interp).pop("existe", None)
     ast_llamada = generar_ast('imprimir(existe("README.md"))')
     with pytest.raises(PrimitivaPeligrosaError):
         interp.ejecutar_ast(ast_llamada)
@@ -169,7 +211,7 @@ def test_existe_rechaza_metadata_no_dict_sin_fallback_permisivo():
     with patch("sys.stdout", new_callable=StringIO):
         interp.ejecutar_ast(ast)
 
-    interp._validador._metadata_simbolos_usar["existe"] = []
+    metadata_validador_usar(interp)["existe"] = []
     ast_llamada = generar_ast('imprimir(existe("README.md"))')
     with pytest.raises(PrimitivaPeligrosaError):
         interp.ejecutar_ast(ast_llamada)
@@ -195,7 +237,7 @@ def test_existe_rechaza_metadata_sin_clave_obligatoria():
     with patch("sys.stdout", new_callable=StringIO):
         interp.ejecutar_ast(ast)
 
-    interp._validador._metadata_simbolos_usar["existe"].pop("introduced_by_usar", None)
+    metadata_validador_usar(interp)["existe"].pop("introduced_by_usar", None)
     ast_llamada = generar_ast('imprimir(existe("README.md"))')
     with pytest.raises(PrimitivaPeligrosaError):
         interp.ejecutar_ast(ast_llamada)
@@ -208,7 +250,7 @@ def test_existe_rechaza_metadata_con_modulo_distinto(modulo):
     with patch("sys.stdout", new_callable=StringIO):
         interp.ejecutar_ast(ast)
 
-    interp._validador._metadata_simbolos_usar["existe"]["module"] = modulo
+    metadata_validador_usar(interp)["existe"]["module"] = modulo
     ast_llamada = generar_ast('imprimir(existe("README.md"))')
     with pytest.raises(PrimitivaPeligrosaError):
         interp.ejecutar_ast(ast_llamada)
@@ -221,7 +263,7 @@ def test_existe_rechaza_metadata_con_exported_name_distinto():
     with patch("sys.stdout", new_callable=StringIO):
         interp.ejecutar_ast(ast)
 
-    interp._validador._metadata_simbolos_usar["existe"]["exported_name"] = "leer_archivo"
+    metadata_validador_usar(interp)["existe"]["exported_name"] = "leer_archivo"
     ast_llamada = generar_ast('imprimir(existe("README.md"))')
     with pytest.raises(PrimitivaPeligrosaError):
         interp.ejecutar_ast(ast_llamada)
@@ -234,7 +276,7 @@ def test_existe_rechaza_metadata_con_public_api_tipo_incorrecto():
     with patch("sys.stdout", new_callable=StringIO):
         interp.ejecutar_ast(ast)
 
-    interp._validador._metadata_simbolos_usar["existe"]["public_api"] = "true"
+    metadata_validador_usar(interp)["existe"]["public_api"] = "true"
     ast_llamada = generar_ast('imprimir(existe("README.md"))')
     with pytest.raises(PrimitivaPeligrosaError):
         interp.ejecutar_ast(ast_llamada)
@@ -327,7 +369,7 @@ def test_existe_rechaza_metadata_con_is_sanitized_wrapper_false():
     with patch("sys.stdout", new_callable=StringIO):
         interp.ejecutar_ast(ast)
 
-    interp._validador._metadata_simbolos_usar["existe"]["is_sanitized_wrapper"] = False
+    metadata_validador_usar(interp)["existe"]["is_sanitized_wrapper"] = False
     ast_llamada = generar_ast('imprimir(existe("README.md"))')
     with pytest.raises(PrimitivaPeligrosaError):
         interp.ejecutar_ast(ast_llamada)

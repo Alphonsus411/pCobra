@@ -483,8 +483,16 @@ class InterpretadorCobra:
         # Regla de fases: analysis = sin efectos, execution = con efectos.
         # Por defecto iniciamos en ejecución para preservar compatibilidad fuera del REPL.
         self.mode = "execution"
+        # La cadena por defecto de ``construir_cadena`` se cachea globalmente.
+        # El intérprete mantiene estado mutable por ejecución en el validador de
+        # primitivas peligrosas (metadata de símbolos importados con ``usar``),
+        # por lo que aquí pedimos una cadena fresca cuando no hay validadores
+        # extra para evitar fugas entre instancias de intérprete.
+        validadores_extra_cadena = extra if extra is not None else []
         self._validador = (
-            construir_cadena(extra, emitir_side_effects=True) if safe_mode else None
+            construir_cadena(validadores_extra_cadena, emitir_side_effects=True)
+            if safe_mode
+            else None
         )
         # Analizador semántico persistente para mantener contexto entre ejecuciones
         self.analizador = AnalizadorSemantico()
@@ -909,20 +917,21 @@ class InterpretadorCobra:
         """Ejecuta la auditoría funcional únicamente durante la fase de ejecución."""
         if not self.in_execution() or not self.safe_mode or self._validador is None:
             return
-        validadores_registrables = []
-        cursor = self._validador
-        while cursor is not None:
-            if hasattr(cursor, "registrar_simbolo_publico_usar"):
-                validadores_registrables.append(cursor)
-            cursor = getattr(cursor, "siguiente", None)
+        validadores_registrables = self._validadores_registrables_usar()
         self._asegurar_metadata_usar_sincronizada()
         for nombre, metadata in (self._usar_symbol_metadata or {}).items():
             if not isinstance(metadata, dict):
                 continue
-            modulo = metadata.get("module") or metadata.get("canonical_module") or metadata.get("origin_module")
+            modulo = (
+                metadata.get("module")
+                or metadata.get("canonical_module")
+                or metadata.get("origin_module")
+            )
             if isinstance(modulo, str):
                 for validador_registrable in validadores_registrables:
-                    validador_registrable.registrar_simbolo_publico_usar(nombre, modulo, metadata=dict(metadata))
+                    validador_registrable.registrar_simbolo_publico_usar(
+                        nombre, modulo, metadata=dict(metadata)
+                    )
         # En ejecución permitimos side effects de auditoría visibles al usuario.
         nodo.aceptar(self._validador)
 
@@ -936,7 +945,8 @@ class InterpretadorCobra:
             raise PrimitivaPeligrosaError(
                 f"Metadata inválida para símbolo usar '{nombre}': faltan claves {sorted(faltantes)}"
             )
-        if metadata.get("module") != "archivo":
+        modulo = metadata.get("module")
+        if not isinstance(modulo, str) or not modulo:
             raise PrimitivaPeligrosaError(
                 f"Metadata inválida para símbolo usar '{nombre}': module no canónico"
             )
@@ -957,10 +967,34 @@ class InterpretadorCobra:
                 f"Metadata inválida para símbolo usar '{nombre}': origen no confiable"
             )
 
+    def _validadores_registrables_usar(self) -> list[object]:
+        """Devuelve los validadores de la cadena que registran metadata de ``usar``."""
+        validadores_registrables = []
+        cursor = self._validador
+        while cursor is not None:
+            if hasattr(cursor, "registrar_simbolo_publico_usar"):
+                validadores_registrables.append(cursor)
+            cursor = getattr(cursor, "siguiente", None)
+        return validadores_registrables
+
+    def _validador_metadata_usar(self) -> object | None:
+        """Localiza el validador dueño de ``_metadata_simbolos_usar`` en la cadena."""
+        cursor = self._validador
+        while cursor is not None:
+            if hasattr(cursor, "_metadata_simbolos_usar"):
+                return cursor
+            cursor = getattr(cursor, "siguiente", None)
+        return None
+
     def _asegurar_metadata_usar_sincronizada(self) -> None:
         if not self.safe_mode or self._validador is None:
             return
-        metadata_validador = getattr(self._validador, "_metadata_simbolos_usar", None)
+        validador_usar = self._validador_metadata_usar()
+        if validador_usar is None:
+            raise PrimitivaPeligrosaError(
+                "Validador de metadata usar no disponible en cadena"
+            )
+        metadata_validador = getattr(validador_usar, "_metadata_simbolos_usar", None)
         if not isinstance(metadata_validador, dict):
             raise PrimitivaPeligrosaError(
                 "Metadata de validador inválida para símbolos usar"
@@ -2211,8 +2245,8 @@ class InterpretadorCobra:
                 nombre_exportado=nombre,
                 simbolo=simbolo,
             )
-            if previo and previo == metadata_actual:
-                # Reimport idempotente: mismo símbolo, mismo módulo origen y misma identidad.
+            if self._metadata_usar_equivalente_idempotente(previo, metadata_actual):
+                # Reimport idempotente: mismo símbolo, mismo módulo origen y misma firma estable.
                 continue
             conflictos.append(nombre)
         if conflictos:
@@ -2221,6 +2255,23 @@ class InterpretadorCobra:
                 f"módulo={modulo} conflictos={','.join(conflictos)}"
             )
         return conflictos
+
+    @staticmethod
+    def _metadata_usar_equivalente_idempotente(
+        metadata_previa: object, metadata_actual: object
+    ) -> bool:
+        """Compara metadata de ``usar`` ignorando identidades efímeras de wrappers."""
+        if not isinstance(metadata_previa, dict) or not isinstance(metadata_actual, dict):
+            return False
+        previa = dict(metadata_previa)
+        actual = dict(metadata_actual)
+        if (
+            previa.get("stable_signature")
+            and previa.get("stable_signature") == actual.get("stable_signature")
+        ):
+            previa.pop("callable_id", None)
+            actual.pop("callable_id", None)
+        return previa == actual
 
     def _inyectar_simbolos_usar_en_contexto(
         self,
@@ -2239,7 +2290,9 @@ class InterpretadorCobra:
                     nombre_exportado=nombre,
                     simbolo=simbolo,
                 )
-                if previo and previo == metadata_actual:
+                if self._metadata_usar_equivalente_idempotente(
+                    previo, metadata_actual
+                ):
                     # No-op idempotente: evita warning/ruido al reimportar lo mismo.
                     continue
                 detalle = {
@@ -2263,7 +2316,7 @@ class InterpretadorCobra:
                 nombre_exportado=nombre,
                 simbolo=simbolo,
             )
-            metadata_simbolo["module"] = "archivo"
+            metadata_simbolo["module"] = modulo
             metadata_simbolo["exported_name"] = nombre
             metadata_simbolo["is_sanitized_wrapper"] = True
             metadata_simbolo["public_api"] = True
@@ -2274,12 +2327,13 @@ class InterpretadorCobra:
             self._validar_metadata_simbolo_usar(nombre, metadata_simbolo)
             contexto_actual.define(nombre, simbolo)
             self._usar_symbol_metadata[nombre] = dict(metadata_simbolo)
-            if self.safe_mode and self._validador is not None and hasattr(self._validador, "registrar_simbolo_publico_usar"):
-                self._validador.registrar_simbolo_publico_usar(
-                    nombre,
-                    modulo,
-                    metadata=dict(metadata_simbolo),
-                )
+            if self.safe_mode and self._validador is not None:
+                for validador_registrable in self._validadores_registrables_usar():
+                    validador_registrable.registrar_simbolo_publico_usar(
+                        nombre,
+                        modulo,
+                        metadata=dict(metadata_simbolo),
+                    )
                 self._asegurar_metadata_usar_sincronizada()
 
     def _construir_metadata_simbolo_usar(
