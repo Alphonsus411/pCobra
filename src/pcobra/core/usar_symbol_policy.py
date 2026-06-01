@@ -328,6 +328,10 @@ def _resolver_valor_canonico_desde_aliases(
         valores.append(metadata_dict[canonical_key])
     valores.extend(metadata_dict[k] for k in alias_keys)
     if len({repr(v) for v in valores}) > 1:
+        if canonical_key == "safe_wrapper":
+            raise ValueError(
+                f"Metadata inválida para símbolo usar: aliases inconsistentes para {canonical_key}"
+            )
         valor_seguro = USAR_METADATA_SECURE_DEFAULTS.get(canonical_key)
         if valor_seguro is not None and valor_seguro in valores:
             metadata_dict[canonical_key] = valor_seguro
