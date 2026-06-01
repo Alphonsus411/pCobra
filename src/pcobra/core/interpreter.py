@@ -1060,7 +1060,10 @@ class InterpretadorCobra:
         for nombre, metadata_interp in self._usar_symbol_metadata.items():
             if not isinstance(metadata_interp, dict):
                 continue
-            metadata_interp = self._canonicalizar_metadata_usar(nombre, metadata_interp)
+            try:
+                metadata_interp = self._canonicalizar_metadata_usar(nombre, metadata_interp)
+            except (PrimitivaPeligrosaError, ValueError):
+                continue
             self._usar_symbol_metadata[nombre] = dict(metadata_interp)
             metadata_val_actual = metadata_validador.get(nombre)
             if metadata_val_actual is None:
@@ -1068,7 +1071,10 @@ class InterpretadorCobra:
                 continue
             if not isinstance(metadata_val_actual, dict):
                 continue
-            metadata_val_actual = self._canonicalizar_metadata_usar(nombre, metadata_val_actual)
+            try:
+                metadata_val_actual = self._canonicalizar_metadata_usar(nombre, metadata_val_actual)
+            except (PrimitivaPeligrosaError, ValueError):
+                continue
             mismo_modulo = metadata_val_actual.get("module") == metadata_interp.get("module")
             payload_cambio = metadata_val_actual != metadata_interp
             if mismo_modulo and payload_cambio:
@@ -1095,10 +1101,27 @@ class InterpretadorCobra:
         metadata_validador = getattr(self._validador, "_metadata_simbolos_usar", None)
         if isinstance(self._usar_symbol_metadata, dict):
             for nombre, metadata in list(self._usar_symbol_metadata.items()):
-                self._usar_symbol_metadata[nombre] = self._canonicalizar_metadata_usar(nombre, metadata)
+                try:
+                    self._usar_symbol_metadata[nombre] = self._canonicalizar_metadata_usar(nombre, metadata)
+                except (PrimitivaPeligrosaError, ValueError) as exc:
+                    raise PrimitivaPeligrosaError(
+                        "Metadata de validador inválida para símbolos usar: "
+                        f"metadata de intérprete inválida para símbolo '{nombre}' "
+                        f"(clave_esperada='module|kind|public_api|sanitized', tipo='{type(metadata).__name__}', codigo_interno='invalid_symbol_metadata', troubleshooting='metadata_interprete_no_cumple_contrato', detalle=validation_reason='{exc}')."
+                        f"{self._detalle_debug_metadata_usar(symbol=nombre)}"
+                    ) from exc
         if isinstance(metadata_validador, dict):
             for nombre, metadata in list(metadata_validador.items()):
-                metadata_validador[nombre] = self._canonicalizar_metadata_usar(nombre, metadata)
+                try:
+                    metadata_validador[nombre] = self._canonicalizar_metadata_usar(nombre, metadata)
+                except (PrimitivaPeligrosaError, ValueError) as exc:
+                    tipo_recibido = type(metadata).__name__
+                    raise PrimitivaPeligrosaError(
+                        "Metadata de validador inválida para símbolos usar: "
+                        f"metadata por símbolo inválida para '{nombre}' "
+                        f"(clave_esperada='module|kind|public_api|sanitized', tipo='{tipo_recibido}', codigo_interno='invalid_symbol_metadata', troubleshooting='metadata_validador_no_cumple_contrato', detalle=validation_reason='{exc}')."
+                        f"{self._detalle_debug_metadata_usar(symbol=nombre)}"
+                    ) from exc
 
     def _validar_metadata_usar_en_ejecucion(self, *, etapa: str | None = None) -> None:
         """Valida metadata de `usar` en etapa='pre-auditoría' de forma estricta.
@@ -1141,23 +1164,23 @@ class InterpretadorCobra:
             try:
                 metadata_interp_canonica = self._canonicalizar_metadata_usar(nombre, metadata_interp)
                 self._usar_symbol_metadata[nombre] = dict(metadata_interp_canonica)
-            except PrimitivaPeligrosaError as exc:
+            except (PrimitivaPeligrosaError, ValueError) as exc:
                 raise PrimitivaPeligrosaError(
                     "Metadata de validador inválida para símbolos usar: "
                     f"metadata de intérprete inválida para símbolo '{nombre}' "
-                    f"(clave_esperada='module|kind|public_api|sanitized', tipo='{type(metadata_interp).__name__}', codigo_interno='invalid_symbol_metadata', troubleshooting='metadata_interprete_no_cumple_contrato', detalle={exc})."
+                    f"(clave_esperada='module|kind|public_api|sanitized', tipo='{type(metadata_interp).__name__}', codigo_interno='invalid_symbol_metadata', troubleshooting='metadata_interprete_no_cumple_contrato', detalle=validation_reason='{exc}')."
                     f"{self._detalle_debug_metadata_usar(symbol=nombre)}{detalle_etapa}"
                 ) from exc
             metadata_val = metadata_validador.get(nombre)
             try:
                 metadata_val_canonica = self._canonicalizar_metadata_usar(nombre, metadata_val)
                 metadata_validador[nombre] = dict(metadata_val_canonica)
-            except PrimitivaPeligrosaError as exc:
+            except (PrimitivaPeligrosaError, ValueError) as exc:
                 tipo_recibido = type(metadata_val).__name__
                 raise PrimitivaPeligrosaError(
                     "Metadata de validador inválida para símbolos usar: "
                     f"metadata por símbolo inválida para '{nombre}' "
-                    f"(clave_esperada='module|kind|public_api|sanitized', tipo='{tipo_recibido}', codigo_interno='invalid_symbol_metadata', troubleshooting='metadata_validador_no_cumple_contrato', detalle={exc})."
+                    f"(clave_esperada='module|kind|public_api|sanitized', tipo='{tipo_recibido}', codigo_interno='invalid_symbol_metadata', troubleshooting='metadata_validador_no_cumple_contrato', detalle=validation_reason='{exc}')."
                     f"{self._detalle_debug_metadata_usar(symbol=nombre)}{detalle_etapa}"
                 ) from exc
             if metadata_interp_canonica != metadata_val_canonica:
