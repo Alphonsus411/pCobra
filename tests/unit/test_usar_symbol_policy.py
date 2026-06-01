@@ -316,6 +316,26 @@ def test_normaliza_wrapper_safe_legacy_hacia_safe_wrapper_canonico():
     }
 
 
+def test_rechaza_wrapper_safe_legacy_contradicendo_safe_wrapper_canonico():
+    raw = {
+        "origin_kind": "usar",
+        "module": "archivo",
+        "symbol": "existe",
+        "sanitized": True,
+        "safe_wrapper": False,
+        "wrapper_safe": True,
+        "public_api": True,
+        "backend_exposed": False,
+        "callable": True,
+    }
+
+    try:
+        validate_usar_symbol_metadata("existe", raw)
+    except ValueError as exc:
+        assert "aliases inconsistentes para safe_wrapper" in str(exc)
+    else:
+        raise AssertionError("Se esperaba ValueError por wrapper_safe contradictorio.")
+
 def test_regresion_runtime_usar_archivo_existe_no_aborta_por_safe_wrapper():
     metadata_runtime_real = {
         "introduced_by_usar": "usar",
