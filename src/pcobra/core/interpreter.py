@@ -480,8 +480,14 @@ class InterpretadorCobra:
         # Regla de fases: analysis = sin efectos, execution = con efectos.
         # Por defecto iniciamos en ejecución para preservar compatibilidad fuera del REPL.
         self.mode = "execution"
+        # Cada intérprete mantiene estado propio de permisos introducidos por
+        # ``usar``. Evitamos el singleton de ``construir_cadena(None)`` para que
+        # un REPL no herede wrappers públicos registrados por otra sesión viva.
+        validadores_cadena = [] if extra is None else extra
         self._validador = (
-            construir_cadena(extra, emitir_side_effects=True) if safe_mode else None
+            construir_cadena(validadores_cadena, emitir_side_effects=True)
+            if safe_mode
+            else None
         )
         # Analizador semántico persistente para mantener contexto entre ejecuciones
         self.analizador = AnalizadorSemantico()
