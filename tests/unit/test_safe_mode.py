@@ -678,6 +678,32 @@ def test_metadata_usar_error_invalid_symbol_metadata_preserva_motivo_original():
     assert "troubleshooting='metadata_validador_no_cumple_contrato'" in mensaje
 
 
+
+def test_metadata_usar_valueerror_interprete_se_envuelve_como_primitiva_peligrosa():
+    interp = InterpretadorCobra()
+    metadata_valida = {
+        "origin_kind": "usar",
+        "module": "archivo",
+        "symbol": "existe",
+        "sanitized": True,
+        "safe_wrapper": True,
+        "public_api": True,
+        "backend_exposed": False,
+        "callable": True,
+    }
+    metadata_invalida = dict(metadata_valida)
+    metadata_invalida["public_api"] = False
+    interp._usar_symbol_metadata = {"existe": metadata_invalida}
+    interp._validador._metadata_simbolos_usar = {"existe": metadata_valida}
+
+    with pytest.raises(PrimitivaPeligrosaError) as err:
+        interp._validar_metadata_usar_en_ejecucion(etapa="pre-auditoría")
+
+    mensaje = str(err.value)
+    assert "codigo_interno='invalid_symbol_metadata'" in mensaje
+    assert "troubleshooting='metadata_interprete_no_cumple_contrato'" in mensaje
+    assert "public_api debe ser True" in mensaje
+
 def test_metadata_usar_error_missing_keys_incluye_troubleshooting():
     interp = InterpretadorCobra()
     with patch("sys.stdout", new_callable=StringIO):
