@@ -170,3 +170,17 @@ def test_run_seguro_bloquea_existe_sin_usar_archivo() -> None:
 
     assert resultado["rc"] == 1
     assert "Uso de primitiva peligrosa: 'existe'" in resultado["stdout"]
+
+
+def test_run_seguro_respeta_orden_usar_al_validar_existe_sombreado() -> None:
+    resultado = _ejecutar_modo_script_seguro(
+        [
+            "var existe = 1",
+            'usar "archivo"',
+            'imprimir(existe("README.md"))',
+        ]
+    )
+
+    assert resultado["rc"] == 1
+    assert "conflicto de símbolos" in resultado["stdout"]
+    assert "Función 'existe' no implementada" not in resultado["stdout"]

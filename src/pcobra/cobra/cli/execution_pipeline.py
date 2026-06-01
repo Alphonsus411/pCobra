@@ -328,18 +328,12 @@ def ejecutar_codigo_canonico(
     """Función canónica para analizar+validar+ejecutar código Cobra."""
 
     ast = analizar_codigo_fn(codigo)
-    if seguro:
-        nodos_usar = [
-            nodo for nodo in ast if getattr(nodo, "__class__", type("", (), {})).__name__ == "NodoUsar"
-        ]
-        if nodos_usar:
-            ejecutar_ast(nodos_usar, interpretador)
-        validar_ast_seguro(
-            ast,
-            validadores_extra=extra_validators,
-            interpretador=interpretador,
-            construir_cadena_fn=construir_cadena_fn,
-        )
+    # En modo seguro, la validación con estado dependiente de ``usar`` debe
+    # ocurrir durante la ejecución ordenada del intérprete.  Pre-ejecutar o
+    # pre-registrar todos los ``NodoUsar`` del script adelanta metadata que aún
+    # no existe en el punto real de ejecución y puede autorizar primitivas sobre
+    # bindings sombreados.  ``ejecutar_ast`` ya valida/audita cada nodo con el
+    # ``interpretador`` seguro preservando el orden fuente.
     resultado = ejecutar_ast(ast, interpretador)
     return PipelineResult(
         ast=ast,

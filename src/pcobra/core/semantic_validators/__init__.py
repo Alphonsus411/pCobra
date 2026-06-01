@@ -24,8 +24,8 @@ _CACHE_INFO: tuple[FunctionType, bool, bool] | None = None
 def construir_cadena(extra_validators=None, *, emitir_side_effects: bool = False):
     """Devuelve la cadena de validadores por defecto.
 
-    Si no se proporcionan validadores extra, la cadena se crea una única vez y
-    se reutiliza en llamadas sucesivas.
+    Si no se proporcionan validadores extra y no se piden efectos de ejecución,
+    la cadena se crea una única vez y se reutiliza en llamadas sucesivas.
     """
     global _CADENA_DEFECTO, _CACHE_INFO
 
@@ -33,6 +33,7 @@ def construir_cadena(extra_validators=None, *, emitir_side_effects: bool = False
 
     if (
         extra_validators is None
+        and not emitir_side_effects
         and _CADENA_DEFECTO is not None
         and _CACHE_INFO == (ValidadorPrimitivaPeligrosa.__init__, auditoria, emitir_side_effects)
     ):
@@ -52,7 +53,7 @@ def construir_cadena(extra_validators=None, *, emitir_side_effects: bool = False
         for val in extra_validators:
             actual = actual.set_siguiente(val)
 
-    if extra_validators is None:
+    if extra_validators is None and not emitir_side_effects:
         _CADENA_DEFECTO = primero
         _CACHE_INFO = (ValidadorPrimitivaPeligrosa.__init__, auditoria, emitir_side_effects)
 
