@@ -1008,6 +1008,35 @@ class InterpretadorCobra:
         return previo_cmp == actual_cmp
 
     @staticmethod
+    def _binding_usar_preserva_identidad_previa(
+        valor_actual: object,
+        previo: dict[str, object] | None,
+    ) -> bool:
+        """Confirma que el binding vigente sigue siendo el símbolo importado previamente."""
+        if not isinstance(previo, dict):
+            return False
+        callable_id_previo = previo.get("callable_id")
+        if not isinstance(callable_id_previo, int):
+            return False
+        return id(valor_actual) == callable_id_previo
+
+    def _reimport_usar_es_idempotente_en_contexto(
+        self,
+        contexto_actual: Environment,
+        nombre: str,
+        previo: dict[str, object] | None,
+        actual: dict[str, object] | None,
+    ) -> bool:
+        """Valida reimport idempotente sin ocultar sobrescrituras del contexto."""
+        if not self._metadata_usar_equivalente_idempotente(previo, actual):
+            return False
+        try:
+            valor_actual = contexto_actual.get(nombre)
+        except NameError:
+            return False
+        return self._binding_usar_preserva_identidad_previa(valor_actual, previo)
+
+    @staticmethod
     def _detalle_debug_metadata_usar(
         *,
         symbol: str | None = None,
@@ -2384,7 +2413,7 @@ class InterpretadorCobra:
         *,
         metadata_por_simbolo: Mapping[str, dict[str, object]],
     ) -> list[str]:
-        """Devuelve símbolos en conflicto real (ignora reimport idempotente por metadatos)."""
+        """Devuelve conflictos reales; solo ignora reimport si metadata y binding siguen intactos."""
         contexto_actual = self.contextos[-1]
         conflictos: list[str] = []
         for nombre, simbolo in simbolos_saneados:
@@ -2394,8 +2423,8 @@ class InterpretadorCobra:
             metadata_actual = metadata_por_simbolo.get(nombre)
             if metadata_actual is None:
                 continue
-            if self._metadata_usar_equivalente_idempotente(previo, metadata_actual):
-                # Reimport idempotente: mismo símbolo, mismo módulo origen y misma identidad.
+            if self._reimport_usar_es_idempotente_en_contexto(contexto_actual, nombre, previo, metadata_actual):
+                # Reimport idempotente: metadata equivalente y binding vigente intacto.
                 continue
             conflictos.append(nombre)
         if conflictos:
@@ -2420,8 +2449,8 @@ class InterpretadorCobra:
                 metadata_actual = metadata_por_simbolo.get(nombre)
                 if metadata_actual is None:
                     continue
-                if self._metadata_usar_equivalente_idempotente(previo, metadata_actual):
-                    # No-op idempotente: evita warning/ruido al reimportar lo mismo.
+                if self._reimport_usar_es_idempotente_en_contexto(contexto_actual, nombre, previo, metadata_actual):
+                    # No-op idempotente: evita warning/ruido al reimportar lo mismo si el binding sigue intacto.
                     continue
                 modulo = str(metadata_actual.get("module"))
                 detalle = {

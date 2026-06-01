@@ -195,3 +195,20 @@ def test_usar_reimportes_reinyecciones_metadata_canonica_e_idempotente(factory):
     for nombre, metadata in interp._usar_symbol_metadata.items():
         assert isinstance(metadata, dict), f"metadata de {nombre} debe ser dict"
         assert set(metadata).issubset(_USAR_METADATA_CANONICAL_KEYS)
+
+
+@pytest.mark.parametrize("factory", [lambda: InteractiveCommand(InterpretadorCobra(safe_mode=True)), ReplCommandV2])
+def test_usar_reimport_colisiona_si_binding_contexto_fue_sobrescrito(factory):
+    _cmd, ejecutar, interp = _crear_comando(factory)
+    if hasattr(_cmd, "_delegate"):
+        _cmd._delegate.interpretador.safe_mode = True
+
+    ejecutar('usar "archivo"')
+    metadata_original = dict(interp._usar_symbol_metadata["existe"])
+    interp.contextos[-1].define("existe", 1)
+
+    with pytest.raises(NameError, match="conflicto de símbolos|colisión"):
+        ejecutar('usar "archivo"')
+
+    assert interp.contextos[-1].values["existe"] == 1
+    assert interp._usar_symbol_metadata["existe"] == metadata_original
