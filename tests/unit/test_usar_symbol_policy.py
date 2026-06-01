@@ -4,10 +4,12 @@ from pcobra.core.usar_symbol_policy import (
     CANONICAL_USAR_METADATA_SCHEMA,
     PoliticaSaneamientoUsar,
     USAR_SYMBOL_METADATA_ALLOWED_KEYS,
+    USAR_SYMBOL_METADATA_LEGACY_KEYS,
     normalizar_metadata_simbolo_usar,
     sanear_exportables_para_usar,
     sanear_simbolo_para_usar,
     validate_usar_symbol_metadata,
+    validate_usar_symbol_metadata_normalized,
 )
 
 
@@ -263,6 +265,28 @@ def test_rechaza_metadata_con_contradiccion_backend_exposed_true_en_validacion_e
         assert "backend_exposed inválido" in str(exc)
     else:
         raise AssertionError("Se esperaba ValueError por contradicción maliciosa de metadata.")
+
+
+def test_claves_legacy_no_incluyen_safe_wrapper_canonico():
+    assert "safe_wrapper" in USAR_SYMBOL_METADATA_ALLOWED_KEYS
+    assert "safe_wrapper" not in USAR_SYMBOL_METADATA_LEGACY_KEYS
+
+
+def test_validacion_normalizada_acepta_payload_canonico_con_safe_wrapper():
+    metadata = {
+        "origin_kind": "usar",
+        "module": "archivo",
+        "symbol": "existe",
+        "sanitized": True,
+        "safe_wrapper": True,
+        "public_api": True,
+        "backend_exposed": False,
+        "callable": True,
+    }
+
+    validada = validate_usar_symbol_metadata_normalized("existe", metadata)
+
+    assert validada == metadata
 
 
 def test_claves_legacy_compatibles_forman_parte_del_set_permitido():
