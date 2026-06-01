@@ -941,6 +941,7 @@ class InterpretadorCobra:
         if self.mode != "analysis":
             return
         if self.safe_mode and id(nodo) not in self._validados:
+            self._sincronizar_metadata_usar_no_destructiva()
             nodo.aceptar(self._validador)
             self._validados.add(id(nodo))
 
@@ -1045,6 +1046,14 @@ class InterpretadorCobra:
         serializado = json.dumps(metadata, sort_keys=True, ensure_ascii=False, default=repr)
         return hashlib.sha256(serializado.encode("utf-8")).hexdigest()
 
+    def _iter_validadores_registrables_usar(self):
+        """Itera validadores de la cadena que aceptan metadata pública de ``usar``."""
+        cursor = self._validador
+        while cursor is not None:
+            if hasattr(cursor, "registrar_simbolo_publico_usar"):
+                yield cursor
+            cursor = getattr(cursor, "siguiente", None)
+
     def _sincronizar_metadata_usar_no_destructiva(self) -> None:
         """Sincroniza metadata de `usar` sin borrar contenedores existentes.
 
@@ -1071,14 +1080,20 @@ class InterpretadorCobra:
             metadata_val_actual = metadata_validador.get(nombre)
             if metadata_val_actual is None:
                 metadata_validador[nombre] = dict(metadata_interp)
-                continue
-            if not isinstance(metadata_val_actual, dict):
-                continue
-            metadata_val_actual = self._canonicalizar_metadata_usar(nombre, metadata_val_actual)
-            mismo_modulo = metadata_val_actual.get("module") == metadata_interp.get("module")
-            payload_cambio = metadata_val_actual != metadata_interp
-            if mismo_modulo and payload_cambio:
-                metadata_validador[nombre] = dict(metadata_interp)
+            elif isinstance(metadata_val_actual, dict):
+                metadata_val_actual = self._canonicalizar_metadata_usar(nombre, metadata_val_actual)
+                mismo_modulo = metadata_val_actual.get("module") == metadata_interp.get("module")
+                payload_cambio = metadata_val_actual != metadata_interp
+                if mismo_modulo and payload_cambio:
+                    metadata_validador[nombre] = dict(metadata_interp)
+            modulo = metadata_interp.get("module")
+            if isinstance(modulo, str):
+                for validador_registrable in self._iter_validadores_registrables_usar():
+                    validador_registrable.registrar_simbolo_publico_usar(
+                        nombre,
+                        modulo,
+                        metadata=dict(metadata_interp),
+                    )
 
     def _asegurar_metadata_usar_sincronizada(self, *, etapa: str | None = None) -> None:
         """Valida sincronización estricta para etapa='pre-auditoría'.
@@ -2489,7 +2504,7 @@ class InterpretadorCobra:
             metadata_simbolo = self._canonicalizar_metadata_usar(nombre, metadata_simbolo)
             contexto_actual.define(nombre, simbolo)
             self._usar_symbol_metadata[nombre] = dict(metadata_simbolo)
-            if self._validador is not None and hasattr(self._validador, "registrar_simbolo_publico_usar"):
+            if self._validador is not None:
                 resumen = {
                     "module": metadata_simbolo.get("module"),
                     "symbol": metadata_simbolo.get("symbol"),
@@ -2498,11 +2513,12 @@ class InterpretadorCobra:
                     "sanitized": metadata_simbolo.get("sanitized"),
                 }
                 self._trace_debug(f"[USAR_METADATA][PRE_REGISTRO] {resumen}")
-                self._validador.registrar_simbolo_publico_usar(
-                    nombre,
-                    str(metadata_simbolo["module"]),
-                    metadata=dict(metadata_simbolo),
-                )
+                for validador_registrable in self._iter_validadores_registrables_usar():
+                    validador_registrable.registrar_simbolo_publico_usar(
+                        nombre,
+                        str(metadata_simbolo["module"]),
+                        metadata=dict(metadata_simbolo),
+                    )
                 self._sincronizar_metadata_usar_no_destructiva()
                 self._trace_debug(f"[USAR_METADATA][POST_REGISTRO] {resumen}")
                 if str(metadata_simbolo.get("module")) == "archivo" and nombre == "existe":
