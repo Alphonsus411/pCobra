@@ -119,7 +119,7 @@ def _ejecutar_por_ruta_repl(
 
 
 def _ejecutar_snippets_secuenciales_script(
-    snippets: list[str], *, variables_estado: tuple[str, ...]
+    snippets: list[str], *, variables_estado: tuple[str, ...], seguro: bool = False
 ) -> dict[str, object]:
     interpretador_cls = resolver_interpretador_cls(
         module_name="pcobra.cobra.cli.services.run_service",
@@ -272,8 +272,10 @@ def test_paridad_error_identificador_no_declarado_en_script_y_repl() -> None:
 
     mensaje_script = str(err_script.value).lower()
     mensaje_repl = str(err_repl.value).lower()
-    assert "existe" in mensaje_script
-    assert "existe" in mensaje_repl
+    assert "variable no declarada" in mensaje_script
+    assert "variable no declarada" in mensaje_repl
+    assert "no_declarado" in mensaje_script
+    assert "no_declarado" in mensaje_repl
 
 
 @pytest.mark.integration
