@@ -155,7 +155,16 @@ def validar_ast_seguro(
             raise TypeError(
                 _("Los validadores extra deben ser una lista de instancias de validadores")
             )
-    validador = construir_cadena_fn(validadores_extra)
+    # Cuando hay un intérprete de sesión, la hidratación con metadatos de
+    # ``usar`` debe quedar confinada a esa sesión.  ``construir_cadena``
+    # reutiliza un singleton cuando ``validadores_extra is None``; registrar
+    # símbolos sobre esa cadena compartida filtraría permisos entre REPLs vivos.
+    validadores_para_cadena = (
+        []
+        if interpretador is not None and validadores_extra is None
+        else validadores_extra
+    )
+    validador = construir_cadena_fn(validadores_para_cadena)
     if interpretador is not None:
         metadata_usar = getattr(interpretador, "_usar_symbol_metadata", {}) or {}
         validadores_registrables = []
@@ -167,11 +176,19 @@ def validar_ast_seguro(
         for nombre, metadata in metadata_usar.items():
             if not isinstance(metadata, dict):
                 continue
-            modulo = metadata.get("module") or metadata.get("canonical_module") or metadata.get("origin_module")
+            modulo = (
+                metadata.get("module")
+                or metadata.get("canonical_module")
+                or metadata.get("origin_module")
+            )
             if not isinstance(modulo, str):
                 continue
             for validador_registrable in validadores_registrables:
-                validador_registrable.registrar_simbolo_publico_usar(nombre, modulo, metadata=dict(metadata))
+                validador_registrable.registrar_simbolo_publico_usar(
+                    nombre,
+                    modulo,
+                    metadata=dict(metadata),
+                )
     for nodo in ast:
         nodo.aceptar(validador)
 

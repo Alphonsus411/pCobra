@@ -864,6 +864,17 @@ def test_repl_archivo_invocacion_cruda_sin_usar_permanece_bloqueada():
     with pytest.raises(Exception, match='Uso de primitiva peligrosa'):
         cmd._ejecutar_en_modo_normal('imprimir(existe("README.md"))')
 
+
+def test_repl_archivo_permisos_usar_no_se_filtran_entre_sesiones():
+    cmd_con_usar = ReplCommandV2()
+    cmd_sin_usar = ReplCommandV2()
+
+    cmd_con_usar._ejecutar_en_modo_normal('usar "archivo"')
+
+    with pytest.raises(Exception, match='Uso de primitiva peligrosa'):
+        cmd_sin_usar._ejecutar_en_modo_normal('imprimir(existe("README.md"))')
+
+
 def test_repl_archivo_invocacion_directa_permitida_tras_usar_sin_traceback(capsys):
     cmd = ReplCommandV2()
     cmd._ejecutar_en_modo_normal('usar "archivo"')
