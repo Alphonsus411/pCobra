@@ -12,6 +12,8 @@ class ValidadorPrimitivaPeligrosa(ValidadorBase):
     """Validador que detecta llamadas a primitivas peligrosas."""
 
     WRAPPERS_PYTHON_MODULES_PERMITIDOS = frozenset({
+        "archivo",
+        "pcobra.corelibs.archivo",
         "pcobra.standard_library.archivo",
         "cobra.standard_library.archivo",
     })
@@ -49,7 +51,7 @@ class ValidadorPrimitivaPeligrosa(ValidadorBase):
 
     def _es_wrapper_publico_permitido(self, nodo: NodoLlamadaFuncion) -> bool:
         # Único escape permitido para primitivas peligrosas:
-        # usar archivo.existe con metadata de sanitización de API pública.
+        # usar archivo.existe con metadata canónica de sanitización de API pública.
         if nodo.nombre != "existe":
             return False
         if ("archivo", "existe") not in self._simbolos_publicos_usar:
@@ -60,11 +62,29 @@ class ValidadorPrimitivaPeligrosa(ValidadorBase):
 
         if metadata.get("module") != "archivo":
             return False
+        if metadata.get("origen_modulo") != "archivo":
+            return False
+        if metadata.get("origin_module") != "archivo":
+            return False
+        if metadata.get("canonical_module") != "archivo":
+            return False
+        if metadata.get("python_module") not in self.WRAPPERS_PYTHON_MODULES_PERMITIDOS:
+            return False
+        if metadata.get("origen_tipo") != "public_wrapper":
+            return False
         if metadata.get("exported_name") != "existe":
+            return False
+        if metadata.get("introduced_by") != "usar":
+            return False
+        if metadata.get("introduced_by_usar") is not True:
+            return False
+        if metadata.get("is_public_export") is not True:
+            return False
+        if metadata.get("public_api") is not True:
             return False
         if metadata.get("is_sanitized_wrapper") is not True:
             return False
-        if metadata.get("public_api") is not True:
+        if metadata.get("safe_wrapper") is not True:
             return False
         return True
 

@@ -91,6 +91,8 @@ def test_metadata_usar_archivo_existe_cadena_completa():
     assert metadata["introduced_by"] == "usar"
     assert metadata["introduced_by_usar"] is True
     assert metadata["python_module"] in {
+        "archivo",
+        "pcobra.corelibs.archivo",
         "pcobra.standard_library.archivo",
         "cobra.standard_library.archivo",
     }
@@ -155,6 +157,58 @@ def test_existe_rechaza_metadata_incompleta_aunque_simbolo_este_registrado():
 
     # Simula bypass: símbolo registrado pero metadata incompleta/no canónica.
     interp._validador._metadata_simbolos_usar["existe"].pop("origen_modulo", None)
+    ast_llamada = generar_ast('imprimir(existe("README.md"))')
+    with pytest.raises(PrimitivaPeligrosaError):
+        interp.ejecutar_ast(ast_llamada)
+
+
+def test_existe_rechaza_metadata_sin_introduced_by_usar():
+    interp = InterpretadorCobra()
+    ast = generar_ast('usar "archivo"\nimprimir(existe("README.md"))')
+
+    with patch("sys.stdout", new_callable=StringIO):
+        interp.ejecutar_ast(ast)
+
+    interp._validador._metadata_simbolos_usar["existe"].pop("introduced_by_usar", None)
+    ast_llamada = generar_ast('imprimir(existe("README.md"))')
+    with pytest.raises(PrimitivaPeligrosaError):
+        interp.ejecutar_ast(ast_llamada)
+
+
+def test_existe_rechaza_metadata_con_origen_tipo_distinto():
+    interp = InterpretadorCobra()
+    ast = generar_ast('usar "archivo"\nimprimir(existe("README.md"))')
+
+    with patch("sys.stdout", new_callable=StringIO):
+        interp.ejecutar_ast(ast)
+
+    interp._validador._metadata_simbolos_usar["existe"]["origen_tipo"] = "backend"
+    ast_llamada = generar_ast('imprimir(existe("README.md"))')
+    with pytest.raises(PrimitivaPeligrosaError):
+        interp.ejecutar_ast(ast_llamada)
+
+
+def test_existe_rechaza_metadata_con_canonical_module_distinto():
+    interp = InterpretadorCobra()
+    ast = generar_ast('usar "archivo"\nimprimir(existe("README.md"))')
+
+    with patch("sys.stdout", new_callable=StringIO):
+        interp.ejecutar_ast(ast)
+
+    interp._validador._metadata_simbolos_usar["existe"]["canonical_module"] = "io"
+    ast_llamada = generar_ast('imprimir(existe("README.md"))')
+    with pytest.raises(PrimitivaPeligrosaError):
+        interp.ejecutar_ast(ast_llamada)
+
+
+def test_existe_rechaza_metadata_con_python_module_no_permitido():
+    interp = InterpretadorCobra()
+    ast = generar_ast('usar "archivo"\nimprimir(existe("README.md"))')
+
+    with patch("sys.stdout", new_callable=StringIO):
+        interp.ejecutar_ast(ast)
+
+    interp._validador._metadata_simbolos_usar["existe"]["python_module"] = "modulo.no.permitido"
     ast_llamada = generar_ast('imprimir(existe("README.md"))')
     with pytest.raises(PrimitivaPeligrosaError):
         interp.ejecutar_ast(ast_llamada)
