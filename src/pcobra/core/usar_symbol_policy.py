@@ -263,11 +263,16 @@ USAR_METADATA_LEGACY_CONSISTENCY = {
 }
 USAR_METADATA_LEGACY_BOOL_TRUE = {"is_sanitized_wrapper": "sanitized"}
 
-# Claves legacy mantenidas solo por compatibilidad histórica.
+# Claves legacy mantenidas solo por compatibilidad histórica. Los aliases
+# canónicos idempotentes (por ejemplo ``safe_wrapper``) no deben tratarse como
+# legacy porque también forman parte del contrato normalizado obligatorio.
 USAR_SYMBOL_METADATA_LEGACY_KEYS = frozenset(
-    set(USAR_METADATA_LEGACY_ALIASES)
-    | set(USAR_METADATA_LEGACY_CONSISTENCY)
-    | set(USAR_METADATA_LEGACY_BOOL_TRUE)
+    (
+        set(USAR_METADATA_LEGACY_ALIASES)
+        | set(USAR_METADATA_LEGACY_CONSISTENCY)
+        | set(USAR_METADATA_LEGACY_BOOL_TRUE)
+    )
+    - USAR_SYMBOL_METADATA_REQUIRED_KEYS
 )
 
 USAR_SYMBOL_METADATA_OPTIONAL_KEYS = frozenset(
