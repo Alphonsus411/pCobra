@@ -228,7 +228,7 @@ def _validate_public_backend_policy(data: Dict[str, Any]) -> None:
     if not isinstance(modulos, dict):
         return
 
-    invalid_by_module: dict[str, list[str]] = {}
+    invalid_by_module: dict[str, list[tuple[str, str]]] = {}
     for module_name, module_mapping in modulos.items():
         if not isinstance(module_mapping, dict):
             continue
@@ -287,11 +287,16 @@ def get_mapped_path(module: str, backend: str) -> str:
     Solo acepta nombres canónicos incluidos en ``OFFICIAL_TARGETS`` y resuelve
     exclusivamente desde ``cobra.toml`` usando la estructura
     ``[modulos."<module>"]``. Si no hay mapeo válido, devuelve ``module``.
+
+    Los backends solicitados que no pertenecen al conjunto oficial se tratan
+    como ausencia de mapeo, pero las violaciones del contrato del módulo que
+    detecta ``resolve_backend_for_module`` se dejan propagar para fallar rápido.
     """
-    try:
-        canonical_backend = resolve_backend_for_module(module, backend)
-    except ValueError:
+    canonical_request = normalize_target_name(backend)
+    if canonical_request not in OFFICIAL_TARGETS:
         return module
+
+    canonical_backend = resolve_backend_for_module(module, backend)
     if canonical_backend not in OFFICIAL_TARGETS:
         raise ValueError(
             "CONTRACT_ERROR: backend no oficial en get_mapped_path: "

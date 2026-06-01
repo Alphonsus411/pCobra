@@ -15,7 +15,7 @@ def test_module_map_rechaza_target_fuera_de_public_backends_en_cobra_toml(tmp_pa
     module_map.COBRA_TOML_PATH = str(toml_file)
     module_map._toml_cache = None
 
-    with pytest.raises(ValueError, match="PUBLIC_BACKENDS"):
+    with pytest.raises(ValueError, match="legacy_mapped_ok"):
         module_map.get_toml_map()
 
 
@@ -64,4 +64,5 @@ def test_module_map_resuelve_backend_por_contrato_stdlib(tmp_path, monkeypatch):
     module_map._stdlib_contract_cache = None
     module_map._toml_cache = None
 
-    assert module_map.get_mapped_path("cobra.web", "rust") == "cobra_web.js"
+    with pytest.raises(ValueError, match="backend no permitido por contrato"):
+        module_map.get_mapped_path("cobra.web", "rust")
