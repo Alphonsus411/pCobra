@@ -930,18 +930,27 @@ class InterpretadorCobra:
             raise PrimitivaPeligrosaError(str(exc)) from exc
 
     @staticmethod
+    def _ordenar_claves_metadata_usar(keys: set[object]) -> list[object]:
+        """Ordena claves de metadata heterogéneas sin comparar tipos incompatibles."""
+        return sorted(keys, key=lambda key: (type(key).__name__, repr(key)))
+
+    @staticmethod
     def _detalle_debug_metadata_usar(
         *,
         symbol: str | None = None,
-        expected_keys: set[str] | None = None,
-        received_keys: set[str] | None = None,
+        expected_keys: set[object] | None = None,
+        received_keys: set[object] | None = None,
     ) -> str:
         if not _usar_detalle_habilitado():
             return ""
         payload = {
             "symbol": symbol,
-            "expected_keys": sorted(expected_keys) if expected_keys is not None else None,
-            "received_keys": sorted(received_keys) if received_keys is not None else None,
+            "expected_keys": InterpretadorCobra._ordenar_claves_metadata_usar(expected_keys)
+            if expected_keys is not None
+            else None,
+            "received_keys": InterpretadorCobra._ordenar_claves_metadata_usar(received_keys)
+            if received_keys is not None
+            else None,
             "validator_type": "validate_usar_symbol_metadata",
         }
         return f" detalle_debug={payload}"
@@ -961,8 +970,12 @@ class InterpretadorCobra:
         claves_interp = set(self._usar_symbol_metadata.keys())
         claves_validador = set(metadata_validador.keys())
         if claves_validador != claves_interp:
-            faltantes_en_validador = sorted(claves_interp - claves_validador)
-            extras_en_validador = sorted(claves_validador - claves_interp)
+            faltantes_en_validador = self._ordenar_claves_metadata_usar(
+                claves_interp - claves_validador
+            )
+            extras_en_validador = self._ordenar_claves_metadata_usar(
+                claves_validador - claves_interp
+            )
             raise PrimitivaPeligrosaError(
                 "Divergencia de metadata usar entre intérprete y validador"
                 f": claves divergentes (faltantes_en_validador={faltantes_en_validador}, "
