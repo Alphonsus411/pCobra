@@ -304,7 +304,7 @@ def test_existe_como_metodo_sigue_bloqueado_en_modo_seguro():
 
 def test_hilo_con_primitiva_peligrosa_fuera_de_ruta_canonica_se_bloquea():
     interp = InterpretadorCobra()
-    ast = generar_ast('hilo(leer_archivo, "README.md")')
+    ast = generar_ast('hilo leer_archivo("README.md")')
 
     with pytest.raises(PrimitivaPeligrosaError):
         interp.ejecutar_ast(ast)
