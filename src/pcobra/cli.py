@@ -21,6 +21,11 @@ except ModuleNotFoundError:  # pragma: no cover - rama dependiente del entorno
     load_dotenv = None
 
 logger = logging.getLogger(__name__)
+_DIAGNOSTIC_WARNING_PREFIXES = (
+    "Llamada a funcion:",
+    "Usar modulo:",
+    "USAR sanitize conflicts event",
+)
 _CLI_BOOTSTRAP_PATH_ENV = "PCOBRA_CLI_BOOTSTRAP_PATH"
 _CLI_BOOTSTRAP_PATH_ENV_ALIAS = "COBRA_CLI_BOOTSTRAP_PATH"
 _DEFAULT_DB_PATH = str(Path("~/.cobra/sqliteplus/core.db").expanduser())
@@ -59,6 +64,16 @@ def configure_encoding() -> None:
     os.environ["PYTHONIOENCODING"] = "utf-8"
 
 
+class _FiltroWarningsDiagnosticos(logging.Filter):
+    """Oculta warnings internos de diagnóstico sin silenciar avisos de seguridad."""
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        if record.levelno != logging.WARNING:
+            return True
+        mensaje = record.getMessage()
+        return not mensaje.startswith(_DIAGNOSTIC_WARNING_PREFIXES)
+
+
 def configure_logging(debug: bool, verbose: int = 0) -> None:
     """Configura logging de CLI con un único handler efectivo de consola.
 
@@ -67,13 +82,17 @@ def configure_logging(debug: bool, verbose: int = 0) -> None:
     - Los módulos (incluido ``pcobra`` y sus submódulos) **no** deben adjuntar
       handlers locales; sólo deben obtener su logger con ``getLogger(__name__)``
       y propagar al root.
+    - En modo normal se filtran únicamente warnings diagnósticos internos; los
+      warnings funcionales y de seguridad siguen visibles para el usuario.
     """
 
     modo_diagnostico = bool(debug) or int(verbose or 0) > 0
-    level = logging.DEBUG if modo_diagnostico else logging.ERROR
+    level = logging.DEBUG if modo_diagnostico else logging.WARNING
     formatter = logging.Formatter("%(levelname)s: %(message)s")
     handler = logging.StreamHandler()
     handler.setFormatter(formatter)
+    if not modo_diagnostico:
+        handler.addFilter(_FiltroWarningsDiagnosticos())
 
     root_logger = logging.getLogger()
     for existing_handler in list(root_logger.handlers):
