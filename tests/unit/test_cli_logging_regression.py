@@ -3,7 +3,7 @@ from contextlib import redirect_stderr
 from io import StringIO
 from types import SimpleNamespace
 
-from pcobra.cli import configure_logging
+from pcobra.cli import configure_logging, ensure_sqlite_db_key_for_command
 from pcobra.cobra.cli.commands.interactive_cmd import InteractiveCommand
 
 
@@ -134,3 +134,49 @@ def test_modo_verbose_muestra_warnings_diagnosticos():
     assert "Llamada a funcion: demo" in salida
     assert "Usar modulo: demo" in salida
     assert "USAR sanitize conflicts event module=demo" in salida
+
+
+def _capturar_warning_seguridad(*, debug: bool, verbose: int = 0) -> str:
+    configure_logging(debug=debug, verbose=verbose)
+    buffer = StringIO()
+    root_logger = logging.getLogger()
+    handler = root_logger.handlers[0]
+    original_stream = getattr(handler, "stream", None)
+    if hasattr(handler, "setStream"):
+        handler.setStream(buffer)
+    try:
+        ensure_sqlite_db_key_for_command(
+            command_name="cache",
+            dev_ephemeral_cli_confirmation=True,
+        )
+    finally:
+        if original_stream is not None and hasattr(handler, "setStream"):
+            handler.setStream(original_stream)
+    return buffer.getvalue()
+
+
+def test_modo_normal_preserva_warnings_seguridad_runtime(monkeypatch):
+    monkeypatch.delenv("SQLITE_DB_KEY", raising=False)
+    monkeypatch.setenv("COBRA_DEV_MODE", "1")
+    monkeypatch.setenv("COBRA_DEV_ALLOW_EPHEMERAL_KEY", "1")
+
+    salida = _capturar_warning_seguridad(debug=False, verbose=0)
+    assert "Modo desarrollo confirmado" in salida
+    assert "SQLITE_DB_KEY" in salida
+
+
+def test_modo_normal_preserva_warnings_funcionales_no_diagnosticos():
+    configure_logging(debug=False, verbose=0)
+    buffer = StringIO()
+    root_logger = logging.getLogger()
+    handler = root_logger.handlers[0]
+    original_stream = getattr(handler, "stream", None)
+    if hasattr(handler, "setStream"):
+        handler.setStream(buffer)
+    try:
+        logging.getLogger("pcobra.test").warning("Aviso funcional importante")
+    finally:
+        if original_stream is not None and hasattr(handler, "setStream"):
+            handler.setStream(original_stream)
+
+    assert "Aviso funcional importante" in buffer.getvalue()
