@@ -278,6 +278,11 @@ USAR_SYMBOL_METADATA_ALLOWED_KEYS = (
 )
 
 
+def _ordenar_claves_metadata(keys: set[object]) -> list[object]:
+    """Ordena claves de metadata heterogéneas sin comparar tipos incompatibles."""
+    return sorted(keys, key=lambda key: (type(key).__name__, repr(key)))
+
+
 def make_usar_symbol_metadata(
     module_name: str,
     symbol_name: str,
@@ -346,13 +351,16 @@ def _normalizar_metadata_simbolo_usar(nombre: str, metadata: object) -> dict[str
     metadata_dict = dict(metadata)
     faltantes = USAR_SYMBOL_METADATA_REQUIRED_KEYS - set(metadata_dict.keys())
     if faltantes:
-        raise ValueError(f"Metadata inválida para símbolo usar '{nombre}': faltan claves {sorted(faltantes)}")
+        raise ValueError(
+            "Metadata inválida para símbolo usar "
+            f"'{nombre}': faltan claves {_ordenar_claves_metadata(faltantes)}"
+        )
 
     inesperadas_criticas = set(metadata_dict.keys()) - USAR_SYMBOL_METADATA_ALLOWED_KEYS
     if inesperadas_criticas:
         raise ValueError(
             "Metadata inválida para símbolo usar "
-            f"'{nombre}': claves inesperadas críticas {sorted(inesperadas_criticas)}"
+            f"'{nombre}': claves inesperadas críticas {_ordenar_claves_metadata(inesperadas_criticas)}"
         )
 
     return metadata_dict
