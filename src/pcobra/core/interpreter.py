@@ -977,7 +977,7 @@ class InterpretadorCobra:
             cursor = getattr(cursor, "siguiente", None)
         return validadores_registrables
 
-    def _validador_metadata_usar(self) -> object | None:
+    def _validador_metadata_usar(self) -> Optional[object]:
         """Localiza el validador dueño de ``_metadata_simbolos_usar`` en la cadena."""
         cursor = self._validador
         while cursor is not None:
