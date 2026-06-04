@@ -115,7 +115,7 @@ _USAR_METADATA_REQUIRED_KEYS = frozenset(
     {"module", "exported_name", "is_sanitized_wrapper", "public_api", "introduced_by_usar"}
 )
 
-def formatear_error_usar_usuario(codigo: str, modulo: str, contexto_minimo: str | None = None) -> str:
+def formatear_error_usar_usuario(codigo: str, modulo: str, contexto_minimo: Optional[str] = None) -> str:
     """Devuelve errores cortos y legibles para la salida de usuario en `usar`."""
     mensajes = {
         "modulo_fuera_catalogo": f"No se puede usar '{modulo}': módulo fuera del catálogo público.",
@@ -205,10 +205,10 @@ class InterpretadorCobra:
     def _registrar_auditoria_validador(
         ruta_real: str,
         resultado: str,
-        razon: str | None = None,
+        razon: Optional[str] = None,
         *,
-        hash_corto: str | None = None,
-        fase: str | None = None,
+        hash_corto: Optional[str] = None,
+        fase: Optional[str] = None,
     ) -> None:
         """Registra eventos de auditoría durante la carga de validadores extra."""
         payload = {
@@ -510,13 +510,13 @@ class InterpretadorCobra:
         # Último IR generado a partir del AST ejecutado
         self.ultimo_ir: Optional[InternalIRModule] = None
         # Restricción opcional para `usar` en REPL/evaluador incremental.
-        self._repl_usar_alias_map: dict[str, str] | None = None
+        self._repl_usar_alias_map: Optional[dict[str, str]] = None
         self._usar_collision_policy = USAR_COLLISION_STRICT_ERROR
         # Metadatos de símbolos inyectados por `usar` para soportar reimport idempotente.
         # nombre_simbolo -> {"module": str, "exported_name": str, "callable_id": int}
         self._usar_symbol_metadata: dict[str, dict[str, object]] = {}
 
-    def configurar_restriccion_usar_repl(self, alias_map: dict[str, str] | None) -> None:
+    def configurar_restriccion_usar_repl(self, alias_map: Optional[dict[str, str]]) -> None:
         """Configura whitelist explícita de módulos `usar` para flujo REPL.
 
         Cuando ``alias_map`` es ``None``, no se aplica restricción adicional.
@@ -570,7 +570,7 @@ class InterpretadorCobra:
         contexto_activo.values.clear()
         contexto_activo.values.update(nuevos_valores)
 
-    def _indice_entorno_variable(self, nombre: str) -> int | None:
+    def _indice_entorno_variable(self, nombre: str) -> Optional[int]:
         """Retorna el índice del primer entorno (de adentro hacia afuera) con ``nombre``."""
         for indice in range(len(self.contextos) - 1, -1, -1):
             if nombre in self.contextos[indice].values:
@@ -599,7 +599,7 @@ class InterpretadorCobra:
         self,
         expresion,
         nombre,
-        visitados_ids: set[int] | None = None,
+        visitados_ids: Optional[set[int]] = None,
     ):
         """Detecta si una expresión contiene una referencia al identificador."""
         if visitados_ids is None:
@@ -1012,7 +1012,7 @@ class InterpretadorCobra:
                     f"Divergencia de metadata usar para símbolo '{nombre}'"
                 )
 
-    def _contiene_yield(self, nodo, visitados_ids: set[int] | None = None):
+    def _contiene_yield(self, nodo, visitados_ids: Optional[set[int]] = None):
         if visitados_ids is None:
             visitados_ids = set()
         if isinstance(nodo, NodoYield):
