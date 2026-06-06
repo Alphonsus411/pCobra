@@ -9,12 +9,12 @@ Ejemplos:
     >>> transpiler = ReverseFromJS()
     >>> ast = transpiler.generate_ast("function main() { return 0; }")
 """
-from typing import Any, List
+from typing import Any, List, TYPE_CHECKING
 
-try:  # pragma: no cover - depende de tree-sitter
-    from tree_sitter import Node  # type: ignore
-except ModuleNotFoundError:  # pragma: no cover - permite importación sin dependencia
-    from typing import Any as Node  # type: ignore
+if TYPE_CHECKING:
+    from tree_sitter import Node
+else:
+    Node = Any
 
 from pcobra.cobra.core import Token, TipoToken
 from pcobra.cobra.core.ast_nodes import (
@@ -57,6 +57,22 @@ class ReverseFromJS(TreeSitterReverseTranspiler):
         "<=": Token(TipoToken.MENORIGUAL, "<="),
         ">=": Token(TipoToken.MAYORIGUAL, ">="),
     }
+
+    @staticmethod
+    def _first_named_child(node: Node) -> Node | None:
+        """Devuelve el primer hijo nombrado de un nodo tree-sitter."""
+        return next((child for child in node.children if child.is_named), None)
+
+    @staticmethod
+    def _same_tree_sitter_node(left: Node | None, right: Node | None) -> bool:
+        """Compara nodos tree-sitter por posición y tipo."""
+        if left is None or right is None:
+            return False
+        return (
+            left.type == right.type
+            and left.start_byte == right.start_byte
+            and left.end_byte == right.end_byte
+        )
 
     # ------------------------------------------------------------------
     # Definiciones
@@ -142,7 +158,7 @@ class ReverseFromJS(TreeSitterReverseTranspiler):
 
     def visit_switch_statement(self, node: Node) -> NodoSwitch:
         """Convierte un switch de JavaScript."""
-        expr_n = node.child_by_field_name("value")
+        expr_n = node.child_by_field_name("value") or self._first_named_child(node)
         body_n = node.child_by_field_name("body")
         expr = self.visit(expr_n) if expr_n else NodoValor(None)
         casos: List[NodoCase] = []
@@ -150,18 +166,26 @@ class ReverseFromJS(TreeSitterReverseTranspiler):
         if body_n:
             for child in body_n.children:
                 if child.type == "switch_case":
-                    val_n = child.child_by_field_name("value")
+                    val_n = child.child_by_field_name("value") or self._first_named_child(child)
                     val = self.visit(val_n) if val_n else NodoValor(None)
                     if not isinstance(val, NodoPattern):
                         val = NodoPattern(val)
                     cuerpo = [
                         self.visit(c)
                         for c in child.children
-                        if c.is_named and c is not val_n
+                        if (
+                            c.is_named
+                            and not self._same_tree_sitter_node(c, val_n)
+                            and c.type != "break_statement"
+                        )
                     ]
                     casos.append(NodoCase(val, cuerpo))
                 elif child.type == "switch_default":
-                    por_defecto = [self.visit(c) for c in child.children if c.is_named]
+                    por_defecto = [
+                        self.visit(c)
+                        for c in child.children
+                        if c.is_named and c.type != "break_statement"
+                    ]
         return NodoSwitch(expr, casos, por_defecto)
 
     # ------------------------------------------------------------------
@@ -178,6 +202,10 @@ class ReverseFromJS(TreeSitterReverseTranspiler):
                 value = self.visit(child.child_by_field_name("value"))
                 pares.append((key, value))
         return NodoDiccionario(pares)
+
+    def visit_lexical_declaration(self, node: Node) -> NodoAsignacion:
+        """Convierte declaraciones let/const de gramáticas actuales."""
+        return self.visit_variable_declaration(node)
 
     def visit_variable_declaration(self, node: Node) -> NodoAsignacion:
         declarator = next((c for c in node.children if c.type == "variable_declarator"), None)

@@ -299,11 +299,11 @@ traitlets==5.15.1
     #   jupyter-client
     #   jupyter-core
     #   matplotlib-inline
-tree-sitter==0.23.2
-    # via
-    #   pcobra (pyproject.toml)
-    #   tree-sitter-languages
-tree-sitter-languages==1.10.2
+tree-sitter==0.25.2
+    # via pcobra (pyproject.toml)
+tree-sitter-java==0.23.5
+    # via pcobra (pyproject.toml)
+tree-sitter-javascript==0.25.0
     # via pcobra (pyproject.toml)
 typing-extensions==4.15.0
     # via
