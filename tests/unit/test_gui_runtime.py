@@ -30,32 +30,23 @@ def test_ejecutar_transpilar_tokens_y_ast() -> None:
 
 
 def test_formatear_error_lexico_y_sintaxis() -> None:
-    deps = runtime.require_gui_dependencies()
+    class FakeLexerError(Exception):
+        linea = 2
+        columna = 4
 
-    try:
-        deps["Lexer"]("\x00").tokenizar()
-    except Exception as exc:
-        mensaje = runtime.formatear_error(
-            exc,
-            lexer_error_type=deps["LexerError"],
-            parser_error_type=deps["ParserError"],
-        )
-        assert mensaje.startswith("Error léxico")
-    else:  # pragma: no cover
-        pytest.fail("Se esperaba error léxico")
+    class FakeParserError(Exception):
+        pass
 
-    try:
-        tokens = deps["Lexer"]("imprimir('x'").tokenizar()
-        deps["Parser"](tokens).parsear()
-    except Exception as exc:
-        mensaje = runtime.formatear_error(
-            exc,
-            lexer_error_type=deps["LexerError"],
-            parser_error_type=deps["ParserError"],
-        )
-        assert mensaje.startswith("Error de sintaxis")
-    else:  # pragma: no cover
-        pytest.fail("Se esperaba error de sintaxis")
+    assert runtime.formatear_error(
+        FakeLexerError("carácter inválido"),
+        lexer_error_type=FakeLexerError,
+        parser_error_type=FakeParserError,
+    ).startswith("Error léxico")
+    assert runtime.formatear_error(
+        FakeParserError("faltó cierre"),
+        lexer_error_type=FakeLexerError,
+        parser_error_type=FakeParserError,
+    ).startswith("Error de sintaxis")
 
 
 def test_gui_target_choices_filtra_targets_no_oficiales(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -64,12 +55,12 @@ def test_gui_target_choices_filtra_targets_no_oficiales(monkeypatch: pytest.Monk
         "require_gui_dependencies",
         lambda: {
             "target_cli_choices": lambda targets: tuple(sorted(targets)),
-            "OFFICIAL_TARGETS": ("python", "java", "asm"),
-            "TRANSPILERS": {"python": object, "backend_x": object, "asm": object},
+            "OFFICIAL_TARGETS": ("python", "javascript", "rust"),
+            "TRANSPILERS": {"python": object, "backend_x": object, "rust": object},
         },
     )
 
-    assert runtime.gui_target_choices() == ("asm", "python")
+    assert runtime.gui_target_choices() == ("python", "rust")
 
 
 def test_require_flet_error_accionable(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -92,7 +83,7 @@ def test_require_gui_dependencies_error_accionable_modulo_ausente(
     real_import = __import__
 
     def _import_fail_core(name, globals=None, locals=None, fromlist=(), level=0):
-        if name == "pcobra.core.interpreter":
+        if name == "pcobra.cobra.gui" and fromlist:
             raise ModuleNotFoundError(
                 "No module named 'pcobra.core.interpreter'", name="pcobra.core.interpreter"
             )
@@ -111,7 +102,7 @@ def test_require_gui_dependencies_error_accionable_simbolo_ausente(
     real_import = __import__
 
     def _import_fail_symbol(name, globals=None, locals=None, fromlist=(), level=0):
-        if name == "pcobra.cobra.core" and fromlist:
+        if name == "pcobra.cobra.gui" and fromlist:
             raise ImportError("cannot import name 'Lexer' from 'pcobra.cobra.core'")
         return real_import(name, globals, locals, fromlist, level)
 
@@ -122,10 +113,33 @@ def test_require_gui_dependencies_error_accionable_simbolo_ausente(
     assert "corrige el import local de 'pcobra.cobra.core.Lexer'" in str(excinfo.value)
 
 
-def test_require_gui_dependencies_cachea_resultado() -> None:
+def test_require_gui_dependencies_cachea_resultado(monkeypatch: pytest.MonkeyPatch) -> None:
+    llamadas = {"count": 0}
+    fake_deps = SimpleNamespace(
+        Lexer=object,
+        LexerError=Exception,
+        Parser=object,
+        ParserError=Exception,
+        target_cli_choices=lambda _targets: (),
+        OFFICIAL_TARGETS=("python", "javascript", "rust"),
+        InterpretadorCobra=object,
+        get_transpilers=lambda: {"python": object},
+    )
+    real_import = __import__
+
+    def _import_fake_gui(name, globals=None, locals=None, fromlist=(), level=0):
+        if name == "pcobra.cobra.gui" and fromlist:
+            llamadas["count"] += 1
+            return SimpleNamespace(deps=fake_deps)
+        return real_import(name, globals, locals, fromlist, level)
+
+    monkeypatch.setattr("builtins.__import__", _import_fake_gui)
+
     deps_a = runtime.require_gui_dependencies()
     deps_b = runtime.require_gui_dependencies()
+
     assert deps_a is deps_b
+    assert llamadas["count"] == 1
 
 
 def test_formatear_error_no_masking_si_fallan_dependencias() -> None:

@@ -7,6 +7,7 @@ from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 from pcobra.cobra.cli.utils.messages import mostrar_error
+from pcobra.gui import runtime as gui_runtime
 
 
 class FletCommand(BaseCommand):
@@ -66,9 +67,12 @@ class FletCommand(BaseCommand):
         gui_module = "pcobra.gui.idle" if ui_target == "idle" else "pcobra.gui.app"
 
         try:
-            import flet as flet_runtime
-        except (ImportError, ModuleNotFoundError) as exc:
-            self._report_import_error(exc, context="flet")
+            flet_runtime = gui_runtime.require_flet()
+        except RuntimeError:
+            self._report_import_error(
+                ModuleNotFoundError("No module named 'flet'", name="flet"),
+                context="flet",
+            )
             return 1
 
         try:
@@ -80,7 +84,7 @@ class FletCommand(BaseCommand):
             self._report_import_error(e, context=gui_module)
             return 1
         try:
-            flet_runtime.app(target=main)
+            gui_runtime.flet_app(main, ft=flet_runtime)
             return 0
         except Exception as e:
             mostrar_error(_("Error inesperado al ejecutar la aplicación: {0}").format(str(e)))
