@@ -170,7 +170,7 @@ If you prefer to automate the process, run:
 ./scripts/install.sh --dev      # install in editable mode
 ```
 
-3. Create a virtual environment and activate it (Python 3.10 or higher):
+3. Create a virtual environment and activate it (Python 3.9 or higher):
 
 ```bash
 python -m venv .venv
@@ -225,7 +225,7 @@ PYTHONPATH=$PWD/src python -c "from src.core.main import main; main()"
 
 ### Installation with pipx
 
-[pipx](https://pypa.github.io/pipx/) is a tool to install and run Python applications in isolation and requires Python 3.10 or higher. To install Cobra with pipx run:
+[pipx](https://pypa.github.io/pipx/) is a tool to install and run Python applications in isolation and requires Python 3.10 or higher; Cobra itself supports Python 3.9 or higher. To install Cobra with pipx run:
 
 ```bash
 pipx install pcobra
