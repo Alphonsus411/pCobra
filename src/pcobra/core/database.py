@@ -307,7 +307,12 @@ def _get_sqliteplus_instance():
     with _INIT_LOCK:
         if _SQLITEPLUS_INSTANCE is not None:
             return _SQLITEPLUS_INSTANCE
-        sqliteplus_cls = _load_sqliteplus_class()
+        try:
+            sqliteplus_cls = _load_sqliteplus_class(silent_optional=True)
+        except TypeError:
+            # Compatibilidad con pruebas/adaptadores que sustituyen el loader
+            # por callables sin el parámetro opcional.
+            sqliteplus_cls = _load_sqliteplus_class()
         db_path, cipher_key = _resolve_paths()
         _SQLITEPLUS_INSTANCE = sqliteplus_cls(db_path=str(db_path), cipher_key=cipher_key)
         return _SQLITEPLUS_INSTANCE

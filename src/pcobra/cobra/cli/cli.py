@@ -2,6 +2,8 @@ import argparse
 import logging
 import os
 import sys
+import tomllib
+from importlib.metadata import PackageNotFoundError, version as package_version
 from os import environ
 from pathlib import Path
 from typing import List, Dict, Optional, Type, Any, ContextManager
@@ -74,8 +76,24 @@ from pcobra.cobra.cli.utils.autocomplete import (
     files_completer,
 )
 
-# Metadata injected at build time
-CLI_VERSION = environ.get("COBRA_CLI_VERSION", "dev")
+# Metadata injected at build time, with package metadata fallback for editable installs.
+def _resolve_cli_version() -> str:
+    env_version = environ.get("COBRA_CLI_VERSION")
+    if env_version:
+        return env_version
+    try:
+        return package_version("pcobra")
+    except PackageNotFoundError:
+        pyproject_path = Path(__file__).resolve().parents[4] / "pyproject.toml"
+        try:
+            metadata = tomllib.loads(pyproject_path.read_text(encoding="utf-8"))
+            version = metadata.get("project", {}).get("version")
+        except (OSError, tomllib.TOMLDecodeError):
+            version = None
+        return str(version) if version else "dev"
+
+
+CLI_VERSION = _resolve_cli_version()
 CLI_COMMIT = environ.get("COBRA_CLI_COMMIT", "unknown")
 COBRA_INTERNAL_ENABLE_CLI_V1_ENV = "COBRA_INTERNAL_ENABLE_CLI_V1"
 COBRA_ENABLE_LEGACY_CLI_ENV = "COBRA_INTERNAL_ENABLE_LEGACY_CLI"

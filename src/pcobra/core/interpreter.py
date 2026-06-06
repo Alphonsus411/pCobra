@@ -3,7 +3,6 @@
 import logging
 import os
 import hashlib
-import json
 from typing import Mapping, Optional
 
 from .lexer import (
@@ -95,6 +94,7 @@ from .usar_symbol_policy import (
     validate_usar_symbol_metadata,
 )
 from .environment import Environment
+from pcobra.cobra.usar_loader import obtener_modulo, sanitizar_exports_publicos
 
 MODULES_PATH = _DEFAULT_MODULES_PATH
 REPL_USAR_EXTERNAL_MODULE_ERROR = (
@@ -1051,11 +1051,35 @@ class InterpretadorCobra:
 
     @staticmethod
     def _hash_estructural_metadata(metadata: object) -> str:
-        """Calcula hash estable para detectar cambios estructurales de metadata."""
+        """Calcula hash estable y acotado para metadata canónica de ``usar``.
+
+        La metadata esperada solo contiene escalares pequeños; aun así evitamos
+        serializar objetos arbitrarios con ``default=repr`` para no disparar
+        ``repr`` costosos de dependencias opcionales durante la auditoría.
+        """
         if not isinstance(metadata, dict):
             return f"tipo-invalido:{type(metadata).__name__}"
-        serializado = json.dumps(metadata, sort_keys=True, ensure_ascii=False, default=repr)
-        return hashlib.sha256(serializado.encode("utf-8")).hexdigest()
+
+        partes: list[str] = []
+        for nombre in sorted(str(clave) for clave in metadata):
+            valor = metadata.get(nombre)
+            if isinstance(valor, dict):
+                campos = []
+                for clave_meta in sorted(str(clave) for clave in valor):
+                    dato = valor.get(clave_meta)
+                    if isinstance(dato, (str, int, bool, type(None))):
+                        dato_seguro = dato
+                    else:
+                        dato_seguro = f"<{type(dato).__name__}>"
+                    campos.append(f"{clave_meta}={dato_seguro!r}")
+                partes.append(f"{nombre}:" + ";".join(campos))
+            else:
+                partes.append(f"{nombre}=<{type(valor).__name__}>")
+        digest = hashlib.sha256()
+        for parte in partes:
+            digest.update(parte.encode("utf-8", errors="replace"))
+            digest.update(b"\n")
+        return digest.hexdigest()
 
     def _sincronizar_metadata_usar_no_destructiva(self) -> None:
         """Sincroniza metadata de `usar` sin borrar contenedores existentes.
@@ -2233,8 +2257,6 @@ class InterpretadorCobra:
             canónicos del catálogo oficial Cobra.
         """
         from pathlib import Path
-        from .usar_loader import obtener_modulo, sanitizar_exports_publicos
-
         def _resolver_carga_modulo_usar(nombre_modulo: str):
             """Resuelve módulos `usar` únicamente desde el catálogo canónico Cobra."""
             es_repl_estricto = self._repl_usar_alias_map is not None
@@ -2413,7 +2435,7 @@ class InterpretadorCobra:
             if _usar_detalle_habilitado():
                 logging.exception("Error al usar el módulo '%s': %s", nodo.modulo, exc)
             elif _usar_error_esperado(exc):
-                logging.error("Error al usar el módulo '%s': %s", nodo.modulo, exc)
+                logging.debug("Error esperado al usar el módulo '%s': %s", nodo.modulo, exc)
             else:
                 logging.error("Error al usar el módulo '%s': %s", nodo.modulo, exc)
             if isinstance(exc, PermissionError):

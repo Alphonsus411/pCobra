@@ -148,6 +148,12 @@ def _cargar_modulo_local_desde_directorio(nombre: str, directorio: Path):
 def _cargar_modulo_local_desde_ruta(nombre: str, ruta: Path):
     """Carga un módulo Python desde una ruta absoluta explícita."""
 
+    modulo_existente = sys.modules.get(nombre)
+    if modulo_existente is not None:
+        modulo_file = getattr(modulo_existente, "__file__", None)
+        if modulo_file and Path(modulo_file).resolve() == ruta:
+            return modulo_existente
+
     mod_spec = importlib.util.spec_from_file_location(nombre, ruta)
     if mod_spec is None or mod_spec.loader is None:
         raise ImportError(f"No se pudo crear spec para el módulo '{nombre}'")
@@ -174,6 +180,26 @@ def obtener_modulo_cobra_oficial(nombre: str):
             "Módulo oficial Cobra permitido no resoluble en runtime: "
             f"alias='{nombre}' ruta='{rel_path}'."
         )
+
+    if rel_path.startswith("src/pcobra/corelibs/"):
+        nombre_import = f"pcobra.corelibs.{ruta_modulo.stem}"
+    elif rel_path.startswith("src/pcobra/standard_library/"):
+        nombre_import = f"pcobra.standard_library.{ruta_modulo.stem}"
+    else:
+        nombre_import = ""
+
+    if nombre_import:
+        modulo = importlib.import_module(nombre_import)
+        modulo_file = getattr(modulo, "__file__", None)
+        if modulo_file and Path(modulo_file).resolve() == ruta_modulo:
+            for export_name in getattr(modulo, "__all__", ()):  # Cobra-facing: alias público.
+                export = getattr(modulo, export_name, None)
+                if callable(export) and hasattr(export, "__module__"):
+                    try:
+                        export.__module__ = nombre
+                    except (AttributeError, TypeError):
+                        pass
+            return modulo
 
     return _cargar_modulo_local_desde_ruta(nombre, ruta_modulo)
 
