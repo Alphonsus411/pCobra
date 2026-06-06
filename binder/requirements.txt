@@ -1,2 +1,4 @@
 -r ../requirements.txt
-jupyterlab
+# Dependencia exclusiva del entorno Binder: se fija aquí para evitar
+# que repo2docker resuelva una versión flotante distinta en cada build.
+jupyterlab==4.5.8
