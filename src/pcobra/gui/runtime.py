@@ -80,6 +80,53 @@ def require_flet() -> Any:
     return ft
 
 
+def _flet_attr(ft: Any, attr_name: str, api_name: str) -> Any:
+    """Devuelve una API raíz de Flet o falla con un mensaje homogéneo."""
+
+    attr = getattr(ft, attr_name, None)
+    if attr is None:
+        raise RuntimeError(f"La versión instalada de 'flet' no expone {api_name}.")
+    return attr
+
+
+def flet_app(target: Any, *args: Any, ft: Any | None = None, **kwargs: Any) -> Any:
+    """Lanza ``ft.app`` desde un único adaptador compatible."""
+
+    flet_runtime = ft if ft is not None else require_flet()
+    app_factory = _flet_attr(flet_runtime, "app", "app")
+    return app_factory(*args, target=target, **kwargs)
+
+
+def flet_text_field(ft: Any, **kwargs: Any) -> Any:
+    """Crea ``ft.TextField`` validando la API desde el runtime central."""
+
+    return _flet_attr(ft, "TextField", "TextField")(**kwargs)
+
+
+def flet_text(ft: Any, *args: Any, **kwargs: Any) -> Any:
+    """Crea ``ft.Text`` validando la API desde el runtime central."""
+
+    return _flet_attr(ft, "Text", "Text")(*args, **kwargs)
+
+
+def flet_dropdown(ft: Any, **kwargs: Any) -> Any:
+    """Crea ``ft.Dropdown`` validando la API desde el runtime central."""
+
+    return _flet_attr(ft, "Dropdown", "Dropdown")(**kwargs)
+
+
+def flet_switch(ft: Any, **kwargs: Any) -> Any:
+    """Crea ``ft.Switch`` validando la API desde el runtime central."""
+
+    return _flet_attr(ft, "Switch", "Switch")(**kwargs)
+
+
+def flet_elevated_button(ft: Any, *args: Any, **kwargs: Any) -> Any:
+    """Crea ``ft.ElevatedButton`` validando la API desde el runtime central."""
+
+    return _flet_attr(ft, "ElevatedButton", "ElevatedButton")(*args, **kwargs)
+
+
 def flet_dropdown_option(ft: Any, value: str) -> Any:
     """Crea una opción de Dropdown compatible con versiones recientes de Flet."""
 

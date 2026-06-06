@@ -796,31 +796,25 @@ GuiTarget = Callable[[Any], None]
 def iniciar_gui(*, destino: GuiTarget | None = None, **kwargs: Any) -> None:
     """Inicia la aplicación gráfica principal basada en Flet."""
 
-    try:
-        import flet as ft
-    except ModuleNotFoundError as exc:  # pragma: no cover - rama dependiente del entorno
-        raise RuntimeError("Flet no está instalado. Ejecuta 'pip install flet'.") from exc
+    from pcobra.gui import runtime
 
     target = destino
     if target is None:
         from pcobra.gui.app import main as target  # type: ignore[assignment]
 
-    ft.app(target=target, **kwargs)
+    runtime.flet_app(target, **kwargs)
 
 
 def iniciar_gui_idle(*, destino: GuiTarget | None = None, **kwargs: Any) -> None:
     """Abre el entorno interactivo (IDLE) de Cobra usando Flet."""
 
-    try:
-        import flet as ft
-    except ModuleNotFoundError as exc:  # pragma: no cover - rama dependiente del entorno
-        raise RuntimeError("Flet no está instalado. Ejecuta 'pip install flet'.") from exc
+    from pcobra.gui import runtime
 
     target = destino
     if target is None:
         from pcobra.gui.idle import main as target  # type: ignore[assignment]
 
-    ft.app(target=target, **kwargs)
+    runtime.flet_app(target, **kwargs)
 
 
 __all__ = [

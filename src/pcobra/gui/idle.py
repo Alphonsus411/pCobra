@@ -12,16 +12,16 @@ def main(page: "ft.Page"):
     """Función principal para el entorno IDLE."""
     ft = runtime.require_flet()
 
-    entrada = ft.TextField(multiline=True, expand=True)
-    salida = ft.Text(value="", selectable=True)
+    entrada = runtime.flet_text_field(ft, multiline=True, expand=True)
+    salida = runtime.flet_text(ft, value="", selectable=True)
     lenguajes = list(runtime.gui_target_choices())
-    selector = ft.Dropdown(
-        options=[runtime.flet_dropdown_option(ft, lang) for lang in lenguajes]
+    selector = runtime.flet_dropdown(
+        ft, options=[runtime.flet_dropdown_option(ft, lang) for lang in lenguajes]
     )
     if lenguajes:
         selector.value = lenguajes[0]
 
-    activar = ft.Switch(label="Transpilar", disabled=not lenguajes)
+    activar = runtime.flet_switch(ft, label="Transpilar", disabled=not lenguajes)
 
     def ejecutar_handler(_e):
         deps = runtime.require_gui_dependencies()
@@ -74,8 +74,8 @@ def main(page: "ft.Page"):
         entrada,
         selector,
         activar,
-        ft.ElevatedButton("Ejecutar", on_click=ejecutar_handler),
-        ft.ElevatedButton("Tokens", on_click=tokens_handler),
-        ft.ElevatedButton("AST", on_click=ast_handler),
+        runtime.flet_elevated_button(ft, "Ejecutar", on_click=ejecutar_handler),
+        runtime.flet_elevated_button(ft, "Tokens", on_click=tokens_handler),
+        runtime.flet_elevated_button(ft, "AST", on_click=ast_handler),
         salida,
     )

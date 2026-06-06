@@ -36,7 +36,7 @@ dependencies = [
     "python-dotenv>=1.2.2,<2",
     "pexpect>=4.9,<5",
     "requests>=2.34.2,<3",
-    "flet>=0.28.3,<0.29",
+    "flet>=0.28.3,!=0.29.*,<0.86",
     "packaging>=26.2,<27",
     "pybind11>=3.0.4,<4",
     "tree-sitter>=0.25.2,<0.26",

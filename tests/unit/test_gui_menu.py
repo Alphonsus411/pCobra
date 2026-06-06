@@ -1,74 +1,79 @@
 import importlib
-import sys
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 
 
-def _fake_flet():
-    class TextField:
-        def __init__(self, **kwargs):
-            self.value = ""
+class FakeTextField:
+    def __init__(self, **kwargs):
+        self.kwargs = kwargs
+        self.value = ""
 
-    class Text:
-        def __init__(self, value="", **kwargs):
-            self.value = value
 
-    class Dropdown:
-        def __init__(self, options=None, **kwargs):
-            self.options = options or []
-            self.value = None
+class FakeText:
+    def __init__(self, value="", **kwargs):
+        self.kwargs = kwargs
+        self.value = value
 
-    class Switch:
-        def __init__(self, **kwargs):
-            self.value = False
 
-    class ElevatedButton:
-        def __init__(self, text, on_click=None):
-            self.text = text
-            self.on_click = on_click
+class FakeDropdown:
+    def __init__(self, options=None, **kwargs):
+        self.kwargs = kwargs
+        self.options = options or []
+        self.value = None
 
-    class Page:
-        def __init__(self):
-            self.controls = []
 
-        def add(self, *args):
-            self.controls.extend(args)
+class FakeSwitch:
+    def __init__(self, **kwargs):
+        self.kwargs = kwargs
+        self.value = False
 
-        def update(self):
-            pass
 
-    return SimpleNamespace(
-        TextField=TextField,
-        Text=Text,
-        Dropdown=Dropdown,
-        Switch=Switch,
-        ElevatedButton=ElevatedButton,
-        Page=Page,
-        dropdown=SimpleNamespace(Option=lambda v: v),
-    )
+class FakeElevatedButton:
+    def __init__(self, text, on_click=None):
+        self.text = text
+        self.on_click = on_click
+
+
+class FakePage:
+    def __init__(self):
+        self.controls = []
+        self.updated = 0
+
+    def add(self, *args):
+        self.controls.extend(args)
+
+    def update(self):
+        self.updated += 1
+
+
+def _fake_flet(*, root_option=None, dropdown_option=None, app=None):
+    attrs = {
+        "TextField": FakeTextField,
+        "Text": FakeText,
+        "Dropdown": FakeDropdown,
+        "Switch": FakeSwitch,
+        "ElevatedButton": FakeElevatedButton,
+        "Page": FakePage,
+        "dropdown": SimpleNamespace(Option=dropdown_option or (lambda value: f"dropdown:{value}")),
+        "app": app or (lambda **kwargs: kwargs),
+    }
+    if root_option is not None:
+        attrs["Option"] = root_option
+    return SimpleNamespace(**attrs)
 
 
 def _prepare_module(monkeypatch, module_name):
     fake_ft = _fake_flet()
-    dummy_compile = SimpleNamespace(TRANSPILERS={"py": object()})
-    monkeypatch.setitem(sys.modules, "flet", fake_ft)
-    monkeypatch.setitem(sys.modules, "cobra.cli.commands.compile_cmd", dummy_compile)
     module = importlib.import_module(module_name)
     importlib.reload(module)
+    monkeypatch.setattr(module.runtime, "require_flet", lambda: fake_ft)
+    monkeypatch.setattr(module.runtime, "gui_target_choices", lambda: ("py",))
+    monkeypatch.setattr(
+        module.runtime,
+        "require_gui_dependencies",
+        lambda: {"TRANSPILERS": {"py": object()}, "LexerError": None, "ParserError": None},
+    )
     return module, fake_ft
-
-
-def _prepare_transpiler(monkeypatch, module):
-    inst = MagicMock()
-    cls = MagicMock(return_value=inst)
-    monkeypatch.setattr(module, "TRANSPILERS", {"py": cls})
-    lexer_inst = MagicMock()
-    parser_inst = MagicMock()
-    lexer_inst.tokenizar.return_value = "TOK"
-    parser_inst.parsear.return_value = "AST"
-    monkeypatch.setattr(module, "Lexer", MagicMock(return_value=lexer_inst))
-    monkeypatch.setattr(module, "Parser", MagicMock(return_value=parser_inst))
-    return cls, inst
 
 
 def _run_handler(ft, page, text):
@@ -87,18 +92,55 @@ def _run_handler(ft, page, text):
 
 
 def test_app_transpiler_invocado(monkeypatch):
-    module, ft = _prepare_module(monkeypatch, "gui.app")
-    _, inst = _prepare_transpiler(monkeypatch, module)
+    module, ft = _prepare_module(monkeypatch, "pcobra.gui.app")
+    transpilar = MagicMock(return_value="codigo python")
+    monkeypatch.setattr(module.runtime, "transpilar_codigo", transpilar)
+
     page = ft.Page()
     module.main(page)
     _run_handler(ft, page, "print(1)")
-    inst.generate_code.assert_called_once_with("AST")
+
+    transpilar.assert_called_once_with("print(1)", "py")
+    assert next(c for c in page.controls if isinstance(c, ft.Text)).value == "codigo python"
+    assert page.updated == 1
 
 
 def test_idle_transpiler_invocado(monkeypatch):
-    module, ft = _prepare_module(monkeypatch, "gui.idle")
-    _, inst = _prepare_transpiler(monkeypatch, module)
+    module, ft = _prepare_module(monkeypatch, "pcobra.gui.idle")
+    transpilar = MagicMock(return_value="codigo python")
+    monkeypatch.setattr(module.runtime, "transpilar_codigo", transpilar)
+
     page = ft.Page()
     module.main(page)
     _run_handler(ft, page, "print(1)")
-    inst.generate_code.assert_called_once_with("AST")
+
+    transpilar.assert_called_once_with("print(1)", "py")
+    assert next(c for c in page.controls if isinstance(c, ft.Text)).value == "codigo python"
+    assert page.updated == 1
+
+
+def test_dropdown_option_prefiere_api_raiz_si_existe():
+    from pcobra.gui import runtime
+
+    ft = _fake_flet(root_option=lambda value: f"root:{value}")
+
+    assert runtime.flet_dropdown_option(ft, "py") == "root:py"
+
+
+def test_dropdown_option_usa_dropdown_option_en_flet_0852():
+    from pcobra.gui import runtime
+
+    ft = _fake_flet(dropdown_option=lambda value: f"dropdown:{value}")
+
+    assert runtime.flet_dropdown_option(ft, "py") == "dropdown:py"
+
+
+def test_flet_app_centraliza_lanzamiento():
+    from pcobra.gui import runtime
+
+    app = MagicMock(return_value="ok")
+    target = object()
+    ft = _fake_flet(app=app)
+
+    assert runtime.flet_app(target, ft=ft, view="web_browser") == "ok"
+    app.assert_called_once_with(target=target, view="web_browser")
