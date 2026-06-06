@@ -1,226 +1,245 @@
 {
   "asistente": "Bella",
   "proyecto": "pCobra / Cobra",
-  "fecha_contexto": "2026-05-23",
-  "objetivo_actual": "Preparar una actualización potente para PyPI tras validar correcciones funcionales mediante pruebas de concepto en Windows PowerShell.",
-  "entorno_validado": {
-    "sistema": "Windows PowerShell",
-    "python": "3.11.9",
-    "venv_desarrollo": ".venv",
-    "paquete_local": "editable",
-    "import_pcobra": {
-      "comando": "python -c \"import pcobra; print(pcobra.__file__)\"",
-      "resultado": "C:\\Users\\Adolfo\\PycharmProjects\\pCobra\\src\\pcobra\\__init__.py",
-      "estado": "verde"
-    },
-    "backends_publicos": {
-      "comando": "python -c \"from pcobra.cobra.architecture.backend_policy import PUBLIC_BACKENDS; print(PUBLIC_BACKENDS)\"",
-      "resultado": "('python', 'javascript', 'rust')",
-      "estado": "verde"
-    },
-    "cli_version_desarrollo": {
-      "comando": "cobra --version",
-      "resultado": "cobra dev (commit unknown)",
-      "observacion": "No bloquea funcionalmente, pero la CLI no expone aún la versión 10.1.1."
-    }
+  "fecha_contexto_conversacion": "2026-06-06",
+  "objetivo_actual": "Continuar validando la CLI y las pruebas de concepto antes de publicar la versión 10.1.1 en PyPI.",
+  "estado_general": {
+    "release_objetivo": "10.1.1",
+    "publicacion_pypi": "pendiente",
+    "criterio_actual": "No publicar hasta resolver o confirmar el comportamiento de cobra build con archivos UTF-8 BOM.",
+    "balance": "La CLI, REPL y cobra run están mayoritariamente en verde. cobra build ha revelado un posible bug específico de BOM."
   },
-  "version_release_preparada": {
+  "contexto_previo_cargado": {
     "version_anterior": "10.1.0",
     "version_objetivo": "10.1.1",
-    "archivo_actualizado": {
-      "pyproject.toml": "version = \"10.1.1\""
+    "bloqueante_previo": {
+      "id": "RELEASE-BLOCKER-001",
+      "descripcion": "La wheel instalada fallaba al ejecutar cobra --version por intentar leer rutas tipo src/pcobra/... dentro del entorno instalado.",
+      "diagnostico": "runtime_api_matrix.py asumía layout de repositorio en vez de layout de paquete instalado.",
+      "solucion_recomendada": "Usar importlib.resources o rutas relativas robustas al paquete instalado.",
+      "estado_en_conversacion": "La CLI ya arranca correctamente en el entorno probado, por lo que el bloqueante parece superado funcionalmente."
     },
-    "src_pcobra_init": {
-      "__version__": "no existe",
-      "resultado_getattr": "sin __version__"
+    "contrato_publico_recordado": {
+      "comandos_cli": ["run", "build", "test", "mod", "repl"],
+      "backends_oficiales": ["python", "javascript", "rust"],
+      "nota": "La CLI actual no expone --target como argumento público para cobra build."
     }
   },
-  "validaciones_poc": {
-    "BUG_001_var_variable": {
-      "descripcion": "Antes, declaraciones var/variable podían cortar ejecución secuencial en cobra run.",
-      "estado": "verde / no se reproduce",
-      "casos_validados": [
-        {
-          "archivo": "poc_run_var_corta.cobra",
-          "codigo": "imprimir(\"antes\")\nvar x = 3\nimprimir(\"despues\")",
-          "resultado": "antes\ndespues",
-          "estado": "verde"
-        },
-        {
-          "archivo": "poc_run_var_funcion_corta.cobra",
-          "codigo": "func main():\n    imprimir(\"antes\")\n    var x = 3\n    imprimir(\"despues\")\nfin\n\nmain()",
-          "resultado": "antes\ndespues",
-          "estado": "verde"
-        },
-        {
-          "archivo": "poc_run_reasignacion_funcion.cobra",
-          "codigo": "func main():\n    var x = 1\n    x = 2\n    imprimir(x)\n    retorno x\nfin\n\nmain()",
-          "resultado": "2",
-          "estado": "verde",
-          "observacion": "La salida única era correcta porque main() no estaba envuelto en imprimir(...)."
-        },
-        {
-          "archivo": "poc_run_retorno_var_simple.cobra",
-          "codigo": "func main():\n    var x = 2\n    retorno x\nfin\n\nimprimir(main())",
-          "resultado": "2",
-          "estado": "verde"
-        },
-        {
-          "archivo": "poc_run_print_y_retorno_var.cobra",
-          "codigo": "func main():\n    var x = 2\n    imprimir(x)\n    retorno x\nfin\n\nimprimir(main())",
-          "resultado": "2\n2",
-          "estado": "verde"
-        }
-      ]
-    },
-    "BUG_002_archivo_existe_run": {
-      "descripcion": "cobra run bloqueaba archivo.existe como primitiva peligrosa aunque hubiera usar \"archivo\".",
-      "estado": "corregido",
-      "antes": {
-        "codigo": "usar \"archivo\"\nimprimir(existe(\"README.md\"))\nimprimir(existe(\"../README.md\"))",
-        "resultado": "Error: Uso de primitiva peligrosa: 'existe'"
-      },
-      "despues": {
-        "archivo": "poc_archivo_existe_run.cobra",
-        "codigo": "usar \"archivo\"\nimprimir(existe(\"README.md\"))\nimprimir(existe(\"../README.md\"))",
-        "resultado": "verdadero\nfalso",
-        "estado": "verde"
-      },
-      "control_seguridad_run": {
-        "archivo": "poc_archivo_existe_sin_usar.cobra",
-        "codigo": "imprimir(existe(\"README.md\"))",
-        "resultado": "Error: Uso de primitiva peligrosa: 'existe'",
-        "estado": "verde",
-        "interpretacion": "No se abrió la primitiva peligrosa sin import explícito."
-      },
-      "control_repl": {
-        "codigo": "usar \"archivo\"\nimprimir(existe(\"README.md\"))\nimprimir(existe(\"../README.md\"))",
-        "resultado": "verdadero\nfalso",
-        "estado": "verde"
-      },
-      "control_repl_sin_usar": {
-        "codigo": "imprimir(existe(\"README.md\"))",
-        "resultado": "Error: Uso de primitiva peligrosa: 'existe'",
-        "estado": "verde"
-      }
-    },
-    "BUG_BOM_WIN": {
-      "descripcion": "Archivos UTF-8 con BOM creados por Set-Content -Encoding UTF8 fallaban en tokenización.",
-      "estado": "corregido",
-      "antes": {
-        "resultado": "Token no reconocido: '﻿' en línea 1, columna 1"
-      },
-      "despues": {
-        "archivo": "poc_bom_win.cobra",
-        "creacion": "@' ... '@ | Set-Content -Encoding UTF8 .\\poc_bom_win.cobra",
-        "codigo": "imprimir(\"antes\")\nvar x = 3\nimprimir(\"despues\")",
-        "resultado": "antes\ndespues",
-        "estado": "verde"
-      }
-    },
-    "UX_001_warnings_ruidosos": {
-      "descripcion": "Warnings como 'WARNING: Llamada a funcion' y 'WARNING: Usar modulo' aparecían en modo normal.",
-      "estado": "mejorado",
-      "observacion": "En las PoC posteriores ya no aparecieron warnings ruidosos en cobra run ni en REPL normal."
-    },
-    "imports_publicos_y_seguridad": {
-      "modulo_externo_numpy": {
-        "archivo": "poc_import_numpy_run.cobra",
-        "codigo": "usar \"numpy\"",
-        "resultado": "ERROR: Error al usar el módulo 'numpy': usar_error[modulo_fuera_catalogo_publico]: el módulo solicitado está fuera de USAR_COBRA_PUBLIC_MODULES\nError: Error ejecutando el script: No se puede usar 'numpy': módulo fuera del catálogo público.",
-        "estado": "verde",
-        "observacion": "Se rechaza sin traceback. Hay duplicación de mensaje, considerada deuda UX menor."
-      },
-      "modulos_publicos_basicos": {
-        "archivo": "poc_modulos_publicos_run.cobra",
-        "codigo": "usar \"datos\"\nimprimir(longitud([1, 2, 3]))\nimprimir(elemento([10, 20, 30], 1))\n\nusar \"numero\"\nimprimir(es_primo(7))\nimprimir(es_par(8))\n\nusar \"texto\"\nimprimir(mayusculas(\"cobra\"))\nimprimir(quitar_acentos(\"canción\"))",
-        "resultado": "3\n20\nverdadero\nverdadero\nCOBRA\ncancion",
-        "estado": "verde"
-      }
-    }
+  "cambios_mencionados_por_usuario": {
+    "herramientas_usadas": ["Codex", "Trae"],
+    "tipo_de_cambios": ["actualizacion_de_librerias", "ajustes_en_pyproject", "posibles_cambios_de_packaging"],
+    "riesgo_detectado": "Las actualizaciones de dependencias obligan a revalidar CLI, imports, runtime, seguridad, build y wheel limpia."
   },
-  "release_10_1_1": {
-    "intencion": "Subir actualización correctiva a PyPI.",
-    "herramientas_usadas_o_recomendadas": [
-      "python -m build",
-      "python -m twine check",
-      "twine upload"
-    ],
-    "pasos_realizados": [
-      "Actualizar pyproject.toml a 10.1.1.",
-      "Construir wheel y sdist.",
-      "Instalar wheel en entorno limpio .venv-release-test.",
-      "Ejecutar smoke test desde wheel antes de subir a PyPI."
-    ],
-    "estado": "bloqueado antes de publicar",
-    "motivo": "El smoke install desde wheel detectó un fallo real de empaquetado/runtime instalado."
-  },
-  "bloqueante_release": {
-    "id": "RELEASE-BLOCKER-001",
-    "titulo": "La wheel instalada falla al ejecutar cobra --version por ruta src/ inexistente",
-    "estado": "pendiente de corrección",
-    "contexto": {
-      "venv": ".venv-release-test",
+  "validaciones_cli_base": {
+    "cobra_version": {
       "comando": "cobra --version",
-      "resultado": "Traceback"
+      "resultado": "cobra dev (commit unknown)",
+      "estado": "verde_funcional",
+      "observacion": "Sigue siendo deuda UX porque no expone todavía 10.1.1, pero no bloquea funcionalmente."
     },
-    "error_clave": {
-      "tipo": "FileNotFoundError",
-      "ruta_fallida": "C:\\Users\\Adolfo\\PycharmProjects\\pCobra\\.venv-release-test\\Lib\\src\\pcobra\\standard_library\\__init__.py"
+    "cobra_help": {
+      "comando": "cobra --help",
+      "estado": "verde",
+      "observacion": "Carga sin traceback y muestra comandos públicos run/build/test/mod/repl."
     },
-    "stack_relevante": [
-      "pcobra.cli.main",
-      "pcobra.cobra.cli.cli",
-      "pcobra.cobra.core.interpreter",
-      "pcobra.core.semantico",
-      "pcobra.cobra.semantico.mod_validator",
-      "pcobra.cobra.transpilers",
-      "pcobra.cobra.transpilers.common.utils",
-      "pcobra.cobra.transpilers.compatibility_matrix",
-      "pcobra.cobra.transpilers.runtime_api_matrix",
-      "extract_runtime_export_sets",
-      "_read_all_exports(STANDARD_LIBRARY_INIT)"
-    ],
-    "diagnostico_probable": "runtime_api_matrix.py asume layout de repositorio con src/pcobra/... En instalación real desde wheel, los archivos viven bajo site-packages/pcobra/..., por lo que la ruta calculada no existe.",
-    "impacto": "No se debe subir a PyPI hasta corregirlo, porque la wheel instalada falla incluso en cobra --version.",
-    "solucion_recomendada": {
-      "preferida": "Usar importlib.resources para leer archivos empaquetados.",
-      "ejemplo": "resources.files(\"pcobra.standard_library\").joinpath(\"__init__.py\")",
-      "alternativa": "Resolver rutas relativas a Path(__file__).resolve() dentro del paquete instalado, sin asumir src/."
-    },
-    "restricciones_para_fix": [
-      "No reescribir Lexer ni Parser.",
-      "No cambiar sintaxis pública.",
-      "No tocar política de seguridad de imports.",
-      "No relajar validadores.",
-      "No introducir dependencias externas nuevas.",
-      "No hacer refactor grande.",
-      "No esconder el error con try/except silencioso.",
-      "Mantener comportamiento existente en editable."
-    ],
-    "criterios_aceptacion": [
-      "Tras construir wheel e instalarla en venv limpio, cobra --version no lanza traceback.",
-      "Desde wheel funciona: python -c \"from pcobra.cobra.transpilers.runtime_api_matrix import build_runtime_api_matrix; print(type(build_runtime_api_matrix()).__name__)\".",
-      "Desde wheel funciona cobra run con usar \"archivo\" + existe(\"README.md\") + existe(\"../README.md\").",
-      "Desde wheel existe(\"README.md\") sin usar \"archivo\" sigue bloqueado.",
-      "UTF-8 BOM sigue funcionando.",
-      "python -m twine check dist/* sigue pasando."
+    "cobra_mod_list": {
+      "comando": "cobra mod list",
+      "resultado": "No hay módulos instalados",
+      "estado": "verde"
+    }
+  },
+  "fase_A_repl": {
+    "estado": "verde",
+    "pruebas": [
+      {
+        "id": "REPL-01",
+        "codigo": "imprimir(\"Hola desde repl\")",
+        "resultado": "Hola desde repl",
+        "estado": "verde"
+      },
+      {
+        "id": "REPL-02",
+        "codigo": "var x = 3\nimprimir(x)",
+        "resultado": "3",
+        "estado": "verde"
+      },
+      {
+        "id": "REPL-03",
+        "codigo": "func doble(n):\nretorno n * 2\nfin\nimprimir(doble(4))",
+        "resultado": "8",
+        "estado": "verde"
+      },
+      {
+        "id": "REPL-04",
+        "codigo": "usar \"numero\"\nimprimir(es_primo(7))\nimprimir(es_par(8))",
+        "resultado": "verdadero\nverdadero",
+        "estado": "verde"
+      },
+      {
+        "id": "REPL-05",
+        "codigo": "imprimir(existe(\"README.md\"))",
+        "resultado": "Error: Uso de primitiva peligrosa",
+        "estado": "verde_como_control_negativo"
+      },
+      {
+        "id": "REPL-06",
+        "codigo": "usar \"archivo\"\nimprimir(existe(\"README.md\"))\nimprimir(existe(\"../README.md\"))",
+        "resultado": "verdadero\nfalso",
+        "estado": "verde"
+      },
+      {
+        "id": "REPL-07",
+        "codigo": "usar \"texto\"\nimprimir(mayusculas(\"cobra\"))\nimprimir(quitar_acentos(\"canción\"))",
+        "resultado": "COBRA\ncancion",
+        "estado": "verde"
+      },
+      {
+        "id": "REPL-08",
+        "codigo": "usar \"datos\"\nimprimir(longitud([1, 2, 3]))\nimprimir(elemento([10, 20, 30], 1))",
+        "resultado": "3\n20",
+        "estado": "verde"
+      }
     ]
   },
-  "comandos_pendientes_sugeridos": {
-    "volver_al_entorno_dev": [
-      "deactivate",
-      ".\\.venv\\Scripts\\Activate.ps1"
+  "fase_B_cobra_run": {
+    "estado": "verde",
+    "archivo_principal": "poc_run_repl_equivalente.cobra",
+    "resultado_observado": [
+      "antes",
+      "despues",
+      "8",
+      "verdadero",
+      "verdadero",
+      "verdadero",
+      "falso",
+      "COBRA",
+      "cancion",
+      "3",
+      "20"
     ],
-    "comprobacion_archivo_en_wheel": [
-      ".\\.venv-release-test\\Scripts\\python.exe -c \"import pcobra, pathlib; p=pathlib.Path(pcobra.__file__).resolve(); print(p); print((p.parent / 'standard_library' / '__init__.py').exists())\""
+    "validaciones_confirmadas": [
+      "ejecucion_secuencial_con_var",
+      "funciones_y_retorno",
+      "usar_numero",
+      "usar_archivo_y_existe",
+      "proteccion_de_path_parent_con_../README.md",
+      "usar_texto",
+      "usar_datos",
+      "lectura_de_archivo_creado_con_Set-Content_-Encoding_UTF8_en_run"
     ],
-    "rebuild_tras_fix": [
-      "Remove-Item -Recurse -Force .\\dist, .\\build, .\\*.egg-info -ErrorAction SilentlyContinue",
-      "Get-ChildItem -Recurse -Directory -Filter \"*.egg-info\" | Remove-Item -Recurse -Force",
-      "python -m build",
-      "python -m twine check .\\dist\\*"
+    "control_negativo": {
+      "archivo": "poc_run_existe_sin_usar.cobra",
+      "codigo": "imprimir(existe(\"README.md\"))",
+      "resultado": "Error: Uso de primitiva peligrosa: 'existe'",
+      "estado": "verde"
+    }
+  },
+  "fase_C_errores_e_imports": {
+    "estado": "verde_funcional_con_deuda_ux",
+    "pruebas": [
+      {
+        "id": "ERR-01",
+        "codigo": "usar \"numpy\"",
+        "resultado": "Rechazado por modulo_fuera_catalogo_publico, sin traceback.",
+        "estado": "verde_funcional",
+        "deuda": "Mensaje duplicado."
+      },
+      {
+        "id": "ERR-02",
+        "codigo": "usar \"modulo_que_no_existe\"",
+        "resultado": "Rechazado por modulo_fuera_catalogo_publico, sin traceback.",
+        "estado": "verde_funcional",
+        "deuda": "El mensaje es funcional pero quizá poco específico para módulo inexistente."
+      },
+      {
+        "id": "ERR-03",
+        "codigo": "usar \"numero\"\nimprimir(funcion_que_no_existe(1))",
+        "resultado_inicial": "Pareció mostrar Variable no declarada: fun",
+        "estado_inicial": "sospechoso",
+        "resultado_reproducido": "Variable no declarada: funcion_que_no_existe",
+        "estado_final": "descartado_como_bug"
+      }
+    ],
+    "bug_descartado": {
+      "id": "BUG-UX-001",
+      "descripcion": "Posible truncado de identificador funcion_que_no_existe a fun.",
+      "estado": "no_reproducible",
+      "accion": "No bloquear release."
+    },
+    "deuda_confirmada": {
+      "id": "UX-ERR-001",
+      "descripcion": "Mensajes duplicados al rechazar módulos fuera del catálogo público.",
+      "severidad": "baja",
+      "bloquea_release": false
+    }
+  },
+  "fase_D_cobra_build": {
+    "estado": "amarillo_rojo",
+    "hallazgo_principal": {
+      "id": "BUG-BUILD-001",
+      "titulo": "cobra build falla con archivos UTF-8 BOM aunque cobra run los acepta",
+      "comando": "cobra build .\\poc_run_repl_equivalente.cobra",
+      "resultado": "ERROR: Error durante la tokenización: Token no reconocido: '﻿' en línea 1, columna 1",
+      "diagnostico": "La ruta de build/tokenización no parece limpiar BOM, mientras que run sí lo tolera.",
+      "severidad": "alta si build forma parte del contrato público estable",
+      "bloquea_release": true,
+      "solucion_recomendada": "Centralizar lectura de fuente para run/build usando utf-8-sig o eliminar \\ufeff al inicio antes de tokenizar."
+    },
+    "warning_adicional": {
+      "mensaje": "'sqliteplus-enhanced' no está instalado; se utilizará SQLite simplificada sin cifrado.",
+      "tipo": "RuntimeWarning",
+      "estado": "deuda_dependencia_o_warning",
+      "bloquea_release": "pendiente_de_decidir",
+      "observacion": "No rompió por sí mismo, pero ensucia salida de build."
+    },
+    "target_argument": {
+      "comandos_probados": [
+        "cobra build .\\poc_run_repl_equivalente.cobra --target python",
+        "cobra build .\\poc_run_repl_equivalente.cobra --target javascript",
+        "cobra build .\\poc_run_repl_equivalente.cobra --target rust"
+      ],
+      "resultado": "unrecognized arguments: --target ...",
+      "estado": "no_bug",
+      "motivo": "La CLI actual no expone --target en cobra build según --help.",
+      "accion": "Ajustar pruebas y documentación para no usar --target como interfaz pública."
+    }
+  },
+  "problema_powershell_detectado": {
+    "descripcion": "El usuario usa Windows PowerShell 5.1, donde Set-Content -Encoding utf8NoBOM no existe.",
+    "error": "No se puede hacer coincidir el nombre de identificador utf8NoBOM.",
+    "solucion_propuesta": {
+      "crear_utf8_sin_bom": "$code = @'\nimprimir(\"build sin bom\")\nvar x = 3\nimprimir(x)\n'@\n\n$utf8SinBom = New-Object System.Text.UTF8Encoding $false\n[System.IO.File]::WriteAllText(\".\\poc_build_sin_bom.cobra\", $code, $utf8SinBom)\n\ncobra build .\\poc_build_sin_bom.cobra",
+      "crear_utf8_con_bom": "@'\nimprimir(\"build con bom\")\nvar x = 3\nimprimir(x)\n'@ | Set-Content -Encoding UTF8 .\\poc_build_con_bom.cobra\n\ncobra build .\\poc_build_con_bom.cobra",
+      "verificar_bytes": "[System.BitConverter]::ToString([System.IO.File]::ReadAllBytes(\".\\poc_build_sin_bom.cobra\")[0..2])\n[System.BitConverter]::ToString([System.IO.File]::ReadAllBytes(\".\\poc_build_con_bom.cobra\")[0..2])",
+      "bytes_esperados": {
+        "sin_bom": "69-6D-70",
+        "con_bom": "EF-BB-BF"
+      }
+    }
+  },
+  "estado_de_release": {
+    "puede_publicarse_ahora": false,
+    "motivo": "Hay un bug reproducible o muy probable en cobra build con BOM UTF-8.",
+    "bloqueantes_actuales": [
+      "BUG-BUILD-001"
+    ],
+    "no_bloqueantes": [
+      "UX-ERR-001",
+      "cobra --version muestra cobra dev (commit unknown)",
+      "warning sqliteplus-enhanced no instalado",
+      "no usar --target en pruebas públicas"
     ]
   },
-  "decision_actual": "No publicar aún en PyPI. Primero corregir RELEASE-BLOCKER-001, reconstruir wheel, repetir smoke install desde venv limpio y solo entonces subir pcobra 10.1.1."
+  "siguiente_paso_recomendado": {
+    "prioridad_1": "Confirmar BUG-BUILD-001 comparando build con archivo sin BOM y con BOM.",
+    "prioridad_2": "Aplicar fix común de lectura utf-8-sig o limpieza de BOM en build.",
+    "prioridad_3": "Repetir cobra build con ambos archivos.",
+    "prioridad_4": "Repetir smoke de run/repl/imports tras el fix.",
+    "prioridad_5": "Reconstruir wheel/sdist, instalar en entorno limpio y repetir cobra --version, run, build y tests mínimos."
+  },
+  "referencias_contextuales": {
+    "contexto_release_y_bloqueantes_previos": ":contentReference[oaicite:0]{index=0}",
+    "contrato_publico_cli_y_backends": ":contentReference[oaicite:1]{index=1}",
+    "log_build_bom_y_target": ":contentReference[oaicite:2]{index=2}"
+  }
 }
