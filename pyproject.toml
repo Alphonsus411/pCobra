@@ -17,6 +17,7 @@ classifiers = [
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
 ]
 
 dependencies = [
@@ -37,7 +38,7 @@ dependencies = [
     "flet~=0.28",
     "packaging>=24,<26",
     "pybind11>=2.13,<3",
-    "tree-sitter~=0.25",
+    "tree-sitter~=0.23.2",
     "RestrictedPython==8.0",
     "prompt_toolkit~=3.0",
     "Pygments~=2.19",
@@ -131,7 +132,7 @@ cobra = "pcobra.cli:main"
 
 [tool.black]
 line-length = 88
-target-version = ["py39", "py310", "py311"]
+target-version = ["py39", "py310", "py311", "py312"]
 
 [tool.isort]
 profile = "black"
@@ -140,7 +141,7 @@ known_first_party = ["pcobra"]
 
 [tool.ruff]
 line-length = 88
-target-version = "py311"
+target-version = "py39"
 exclude = [
     "docs/frontend",
     "docs/build",
@@ -153,7 +154,7 @@ select = ["E9", "F63", "F7", "F82"]
 ignore = []
 
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.9"
 ignore_missing_imports = true
 exclude = "^(docs/build/|docs/frontend/|venv/|.venv/|tests/|build/|dist/|examples/|notebooks/)"
 warn_unused_ignores = true
@@ -177,7 +178,7 @@ exclude = [
 ignore = []
 reportMissingImports = false
 reportMissingTypeStubs = false
-pythonVersion = "3.11"
+pythonVersion = "3.9"
 typeCheckingMode = "basic"
 useLibraryCodeForTypes = true
 
