@@ -4,49 +4,51 @@
 #
 #    pip-compile --output-file=requirements.txt --strip-extras pyproject.toml
 #
-agix==1.8.0
+agix==1.4.0
     # via pcobra (pyproject.toml)
+annotated-doc==0.0.4
+    # via fastapi
 annotated-types==0.7.0
     # via pydantic
-anyio==4.9.0
+anyio==4.13.0
     # via
     #   httpx
     #   starlette
-argcomplete==3.6.2
+argcomplete==3.6.3
     # via pcobra (pyproject.toml)
-attrs==25.3.0
+attrs==26.1.0
     # via
     #   jsonschema
     #   referencing
-certifi==2025.4.26
+certifi==2026.5.20
     # via
     #   httpcore
     #   httpx
     #   requests
 chardet==5.2.0
     # via pcobra (pyproject.toml)
-charset-normalizer==3.4.1
+charset-normalizer==3.4.7
     # via requests
-click==8.2.1
+click==8.4.1
     # via uvicorn
 contourpy==1.3.3
     # via matplotlib
 cycler==0.12.1
     # via matplotlib
-fastapi==0.116.1
+fastapi==0.136.3
     # via agix
 flet==0.28.3
     # via
     #   agix
     #   pcobra (pyproject.toml)
     #   smooth-criminal
-fonttools==4.59.1
+fonttools==4.63.0
     # via matplotlib
 h11==0.16.0
     # via
     #   httpcore
     #   uvicorn
-holobit-sdk==1.0.8 ; python_version >= "3.10"
+holobit-sdk==1.2.0 ; python_version >= "3.10"
     # via pcobra (pyproject.toml)
 httpcore==1.0.9
     # via httpx
@@ -54,20 +56,20 @@ httpx==0.28.1
     # via
     #   flet
     #   pcobra (pyproject.toml)
-idna==3.10
+idna==3.18
     # via
     #   anyio
     #   httpx
     #   requests
-jsonschema==4.25.0
+jsonschema==4.25.1
     # via pcobra (pyproject.toml)
-jsonschema-specifications==2025.4.1
+jsonschema-specifications==2025.9.1
     # via jsonschema
-kiwisolver==1.4.9
+kiwisolver==1.5.0
     # via matplotlib
 lark==1.3.1
     # via pcobra (pyproject.toml)
-markdown-it-py==3.0.0
+markdown-it-py==4.2.0
     # via rich
 matplotlib==3.9.4
     # via
@@ -79,9 +81,9 @@ mdurl==0.1.2
     # via markdown-it-py
 mpmath==1.3.0
     # via sympy
-networkx==3.5
+networkx==3.6.1
     # via agix
-numpy==1.26.4
+numpy==2.0.2
     # via
     #   agix
     #   contourpy
@@ -90,47 +92,47 @@ numpy==1.26.4
     #   pandas
     #   pcobra (pyproject.toml)
     #   scipy
-oauthlib==3.2.2
+oauthlib==3.3.1
     # via flet
-packaging==25.0
+packaging==26.2
     # via
     #   matplotlib
     #   pcobra (pyproject.toml)
-pandas==2.3.1
+pandas==2.3.3
     # via
     #   pcobra (pyproject.toml)
     #   smooth-criminal
 pexpect==4.9.0
     # via pcobra (pyproject.toml)
-pillow==11.3.0
+pillow==12.2.0
     # via matplotlib
-prompt-toolkit==3.0.51
+prompt-toolkit==3.0.52
     # via pcobra (pyproject.toml)
 ptyprocess==0.7.0
     # via pexpect
-pybind11==2.13.1
+pybind11==3.0.4
     # via pcobra (pyproject.toml)
-pydantic==2.11.7
+pydantic==2.13.4
     # via fastapi
-pydantic-core==2.33.2
+pydantic-core==2.46.4
     # via pydantic
-pygments==2.19.2
+pygments==2.20.0
     # via
     #   pcobra (pyproject.toml)
     #   rich
-pyparsing==3.2.3
+pyparsing==3.3.2
     # via matplotlib
 python-dateutil==2.9.0.post0
     # via
     #   matplotlib
     #   pandas
-python-dotenv==1.1.1
+python-dotenv==1.2.1
     # via pcobra (pyproject.toml)
-pytz==2025.2
+pytz==2026.2
     # via pandas
-pyyaml==6.0.2
+pyyaml==6.0.3
     # via pcobra (pyproject.toml)
-referencing==0.36.2
+referencing==0.37.0
     # via
     #   jsonschema
     #   jsonschema-specifications
@@ -138,11 +140,11 @@ repath==0.9.0
     # via flet
 requests==2.32.5
     # via pcobra (pyproject.toml)
-restrictedpython==8.0
+restrictedpython==8.1
     # via pcobra (pyproject.toml)
-rich==14.0.0
+rich==15.0.0
     # via pcobra (pyproject.toml)
-rpds-py==0.27.0
+rpds-py==2026.5.1
     # via
     #   jsonschema
     #   referencing
@@ -154,21 +156,19 @@ six==1.17.0
     # via
     #   python-dateutil
     #   repath
-smooth-criminal==0.4.0
+smooth-criminal==0.8.0
     # via pcobra (pyproject.toml)
-sniffio==1.3.1
-    # via anyio
-starlette==0.47.2
+starlette==1.2.1
     # via fastapi
 sympy==1.14.0
     # via pcobra (pyproject.toml)
-tabulate==0.9.0
+tabulate==0.10.0
     # via smooth-criminal
-tomli==2.2.1
+tomli==2.4.1
     # via pcobra (pyproject.toml)
 tree-sitter==0.23.2
     # via pcobra (pyproject.toml)
-typing-extensions==4.13.2
+typing-extensions==4.15.0
     # via
     #   anyio
     #   fastapi
@@ -177,13 +177,15 @@ typing-extensions==4.13.2
     #   referencing
     #   starlette
     #   typing-inspection
-typing-inspection==0.4.1
-    # via pydantic
-tzdata==2025.2
+typing-inspection==0.4.2
+    # via
+    #   fastapi
+    #   pydantic
+tzdata==2026.2
     # via pandas
-urllib3==2.4.0
+urllib3==2.7.0
     # via requests
-uvicorn==0.35.0
+uvicorn==0.49.0
     # via agix
-wcwidth==0.2.13
+wcwidth==0.8.0
     # via prompt-toolkit
