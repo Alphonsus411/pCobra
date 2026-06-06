@@ -20,11 +20,14 @@ from collections import Counter, defaultdict
 from contextlib import suppress
 from itertools import groupby
 from pathlib import Path
-from typing import Any, Callable, Iterable, Iterator, Mapping, MutableMapping, Sequence, Sized
+from typing import Any, Callable, Iterable, Iterator, Mapping, MutableMapping, Sequence, Sized, TYPE_CHECKING
 
 from pcobra._stubs.compat import import_optional_module
 
 np = import_optional_module("numpy", safe_stub=True)
+
+if TYPE_CHECKING:  # pragma: no cover - solo para anotaciones
+    from pandas import DataFrame
 
 Registro = dict[str, Any]
 Tabla = list[Registro]
@@ -421,32 +424,38 @@ def leer_excel(
     from openpyxl import load_workbook  # type: ignore[import-not-found]
 
     libro = load_workbook(Path(ruta), read_only=True, data_only=True)
-    if hoja is None:
-        hoja_obj = libro.active
-    elif isinstance(hoja, int):
-        hoja_obj = libro.worksheets[hoja]
-    else:
-        hoja_obj = libro[hoja]
+    try:
+        if hoja is None:
+            hoja_obj = libro.active
+        elif isinstance(hoja, int):
+            hoja_obj = libro.worksheets[hoja]
+        else:
+            hoja_obj = libro[hoja]
 
-    filas = list(hoja_obj.iter_rows(values_only=True))
-    if not filas:
-        return []
+        filas = list(hoja_obj.iter_rows(values_only=True))
+        if not filas:
+            return []
 
-    if encabezado is None:
-        columnas = [i for i in range(len(filas[0]))]
-        inicio_datos = 0
-    else:
-        encabezados = filas[encabezado]
-        columnas = [enc if enc is not None else indice for indice, enc in enumerate(encabezados)]
-        inicio_datos = encabezado + 1
+        if encabezado is None:
+            columnas = [i for i in range(len(filas[0]))]
+            inicio_datos = 0
+        else:
+            encabezados = filas[encabezado]
+            columnas = [
+                enc if enc is not None else indice
+                for indice, enc in enumerate(encabezados)
+            ]
+            inicio_datos = encabezado + 1
 
-    resultado: Tabla = []
-    for fila in filas[inicio_datos:]:
-        registro: Registro = {}
-        for indice, columna in enumerate(columnas):
-            registro[columna] = fila[indice] if indice < len(fila) else None
-        resultado.append(registro)
-    return resultado
+        resultado: Tabla = []
+        for fila in filas[inicio_datos:]:
+            registro: Registro = {}
+            for indice, columna in enumerate(columnas):
+                registro[columna] = fila[indice] if indice < len(fila) else None
+            resultado.append(registro)
+        return resultado
+    finally:
+        libro.close()
 
 
 def _asegurar_pyarrow(accion: str) -> tuple[Any, Any]:
@@ -483,9 +492,9 @@ def leer_parquet(
     *,
     engine: str | None = None,
 ) -> Tabla:
-    pa, (_, pq) = _asegurar_pyarrow("leer el archivo Parquet")
+    _pa, (_feather, pq) = _asegurar_pyarrow("leer el archivo Parquet")
     tabla = pq.read_table(Path(ruta))
-    return [dict(zip(tabla.column_names, fila)) for fila in zip(*[col.to_pylist() for col in tabla.columns])]
+    return [dict(fila) for fila in tabla.to_pylist()]
 
 
 def escribir_feather(
@@ -502,9 +511,9 @@ def escribir_feather(
 
 
 def leer_feather(ruta: str | Path) -> Tabla:
-    pa, (feather, _) = _asegurar_pyarrow("leer el archivo Feather")
+    _pa, (feather, _pq) = _asegurar_pyarrow("leer el archivo Feather")
     tabla = feather.read_table(Path(ruta))
-    return [dict(zip(tabla.column_names, fila)) for fila in zip(*[col.to_pylist() for col in tabla.columns])]
+    return [dict(fila) for fila in tabla.to_pylist()]
 
 
 # ---------------------------------------------------------------------------

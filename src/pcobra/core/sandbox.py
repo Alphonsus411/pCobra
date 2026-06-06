@@ -20,24 +20,62 @@ from pathlib import Path
 from typing import Any, Callable
 from packaging.version import Version
 
-try:  # pragma: no cover - dependencia opcional
-    from RestrictedPython import compile_restricted, safe_builtins
-    from RestrictedPython.Eval import default_guarded_getitem, default_guarded_getattr
-    from RestrictedPython.Guards import (
-        guarded_iter_unpack_sequence,
-        guarded_unpack_sequence,
-    )
-    from RestrictedPython.PrintCollector import PrintCollector
-    HAS_RESTRICTED_PYTHON = True
-except ModuleNotFoundError:  # pragma: no cover - entornos sin RestrictedPython
-    compile_restricted = None  # type: ignore[assignment]
-    safe_builtins = {}  # type: ignore[assignment]
-    default_guarded_getitem = None  # type: ignore[assignment]
-    default_guarded_getattr = None  # type: ignore[assignment]
-    guarded_iter_unpack_sequence = None  # type: ignore[assignment]
-    guarded_unpack_sequence = None  # type: ignore[assignment]
-    PrintCollector = None  # type: ignore[assignment]
-    HAS_RESTRICTED_PYTHON = False
+def cargar_simbolos_restrictedpython() -> tuple[dict[str, Any], bool]:
+    """Carga la API estable de RestrictedPython usada por Cobra.
+
+    RestrictedPython ha movido o ajustado detalles internos entre versiones,
+    pero estos símbolos siguen formando la superficie que necesita la sandbox:
+    ``compile_restricted``, ``safe_builtins``, los guards de acceso, los guards
+    de desempaquetado y ``PrintCollector``. Centralizar la carga evita que el
+    intérprete y la sandbox diverjan.
+    """
+
+    try:  # pragma: no cover - dependencia opcional
+        from RestrictedPython import compile_restricted as rp_compile_restricted
+        from RestrictedPython import safe_builtins as rp_safe_builtins
+        from RestrictedPython.Eval import (
+            default_guarded_getattr as rp_default_guarded_getattr,
+        )
+        from RestrictedPython.Eval import (
+            default_guarded_getitem as rp_default_guarded_getitem,
+        )
+        from RestrictedPython.Guards import (
+            guarded_iter_unpack_sequence as rp_guarded_iter_unpack_sequence,
+        )
+        from RestrictedPython.Guards import (
+            guarded_unpack_sequence as rp_guarded_unpack_sequence,
+        )
+        from RestrictedPython.PrintCollector import PrintCollector as rp_print_collector
+    except (ImportError, AttributeError):  # pragma: no cover - dependencia opcional
+        return {
+            "compile_restricted": None,
+            "safe_builtins": {},
+            "default_guarded_getitem": None,
+            "default_guarded_getattr": None,
+            "guarded_iter_unpack_sequence": None,
+            "guarded_unpack_sequence": None,
+            "PrintCollector": None,
+        }, False
+
+    return {
+        "compile_restricted": rp_compile_restricted,
+        "safe_builtins": rp_safe_builtins,
+        "default_guarded_getitem": rp_default_guarded_getitem,
+        "default_guarded_getattr": rp_default_guarded_getattr,
+        "guarded_iter_unpack_sequence": rp_guarded_iter_unpack_sequence,
+        "guarded_unpack_sequence": rp_guarded_unpack_sequence,
+        "PrintCollector": rp_print_collector,
+    }, True
+
+
+_RESTRICTEDPYTHON_SYMBOLS, HAS_RESTRICTED_PYTHON = cargar_simbolos_restrictedpython()
+compile_restricted = _RESTRICTEDPYTHON_SYMBOLS["compile_restricted"]
+safe_builtins = _RESTRICTEDPYTHON_SYMBOLS["safe_builtins"]
+default_guarded_getitem = _RESTRICTEDPYTHON_SYMBOLS["default_guarded_getitem"]
+default_guarded_getattr = _RESTRICTEDPYTHON_SYMBOLS["default_guarded_getattr"]
+guarded_iter_unpack_sequence = _RESTRICTEDPYTHON_SYMBOLS["guarded_iter_unpack_sequence"]
+guarded_unpack_sequence = _RESTRICTEDPYTHON_SYMBOLS["guarded_unpack_sequence"]
+PrintCollector = _RESTRICTEDPYTHON_SYMBOLS["PrintCollector"]
 
 
 MIN_VM2_VERSION = Version("3.9.19")
