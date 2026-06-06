@@ -20,6 +20,7 @@ from pcobra.cobra.cli.services.contracts import RunRequest, normalize_run_reques
 from pcobra.cobra.cli.services.format_service import format_code_with_black
 from pcobra.cobra.cli.target_policies import resolve_docker_backend
 from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
+from pcobra.cobra.cli.utils.source import read_cobra_source
 from pcobra.cobra.cli.utils.validators import validar_archivo_existente
 from pcobra.cobra.core import LexerError, ParserError
 from pcobra.cobra.core.runtime import (
@@ -36,17 +37,6 @@ except ModuleNotFoundError as canon_exc:  # pragma: no cover
     sandbox_module = load_legacy_core_sandbox(canonical_error=canon_exc)
 
 RUNTIME_MANAGER = RuntimeManager()
-
-def _normalizar_codigo_entrada(codigo: str) -> str:
-    """Normaliza la frontera de entrada de archivos de código.
-
-    Mantiene comportamiento no invasivo: únicamente remueve BOM UTF-8
-    (`\ufeff`) cuando aparece en la posición 0 del archivo.
-    """
-    if codigo.startswith("\ufeff"):
-        return codigo[1:]
-    return codigo
-
 
 
 def _importar_modulo_sandbox() -> Any:
@@ -121,8 +111,7 @@ class RunService:
         self.logger.setLevel(logging.DEBUG if depurar else logging.INFO)
 
         try:
-            codigo = Path(archivo_resuelto).read_text(encoding="utf-8")
-            codigo = _normalizar_codigo_entrada(codigo)
+            codigo = read_cobra_source(archivo_resuelto)
         except (PermissionError, UnicodeDecodeError) as e:
             mostrar_error(f"Error al leer el archivo: {e}", registrar_log=False)
             return 1
@@ -246,7 +235,7 @@ class RunService:
         except (LexerError, ParserError) as e:
             mostrar_error(f"Error de análisis: {e}", registrar_log=False)
             return 1
-        except (TypeError, ValueError) as e:
+        except (TypeError, ValueError, PermissionError, NameError) as e:
             mostrar_error(str(e), registrar_log=False)
             return 1
         except PrimitivaPeligrosaError as pe:

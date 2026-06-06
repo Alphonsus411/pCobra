@@ -19,6 +19,7 @@ from pcobra.cobra.architecture.contracts import (
 )
 from pcobra.cobra.bindings.runtime_manager import RuntimeManager
 from pcobra.cobra.build.orchestrator import BackendResolution, BuildOrchestrator
+from pcobra.cobra.cli.utils.source import read_cobra_source
 from pcobra.cobra.core.ast_cache import obtener_ast
 
 ORCHESTRATOR = BuildOrchestrator()
@@ -165,7 +166,7 @@ def build(source: str, hints: dict[str, Any] | None = None) -> dict[str, Any]:
     source_path = Path(source)
     if source_path.exists() and source_path.is_file():
         source_file = str(source_path)
-        codigo = source_path.read_text(encoding="utf-8")
+        codigo = read_cobra_source(source_path)
     else:
         source_file = str(context.get("source_file", "<memory>"))
         codigo = source

@@ -7,6 +7,7 @@ import pytest
 from unittest.mock import call, patch
 
 from pcobra.cobra.cli.commands_v2.run_cmd import RunCommandV2
+from pcobra.cobra.cli.services.build_service import BuildService
 from pcobra.cobra.cli.commands.interactive_cmd import InteractiveCommand
 from pcobra.cobra.cli.execution_pipeline import (
     PipelineInput,
@@ -836,6 +837,33 @@ def test_run_utf8_bom_y_sin_bom_producen_salida_identica(tmp_path, monkeypatch):
 
 
 @pytest.mark.integration
+def test_build_utf8_bom_y_sin_bom_compilan_sin_token_bom(tmp_path, monkeypatch):
+    monkeypatch.setenv("SQLITE_DB_KEY", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=")
+    script = 'imprimir("hola")\n'
+
+    archivo_sin_bom = tmp_path / "build_sin_bom.co"
+    archivo_con_bom = tmp_path / "build_con_bom.co"
+    archivo_sin_bom.write_text(script, encoding="utf-8")
+    archivo_con_bom.write_text("\ufeff" + script, encoding="utf-8")
+
+    salidas = []
+    for archivo in (archivo_sin_bom, archivo_con_bom):
+        out_build, err_build = StringIO(), StringIO()
+        with redirect_stdout(out_build), redirect_stderr(err_build):
+            rc_build = BuildService().run(Namespace(file=str(archivo), debug=False))
+
+        salida = out_build.getvalue() + err_build.getvalue()
+        assert rc_build == 0, salida
+        assert "Token no reconocido" not in salida
+        assert "\ufeff" not in salida
+        assert "sqliteplus-enhanced" not in salida
+        salidas.append(out_build.getvalue())
+
+    assert "print('hola')" in salidas[0]
+    assert "print('hola')" in salidas[1]
+
+
+@pytest.mark.integration
 def test_run_error_lexico_sigue_siendo_corto_sin_traceback_con_y_sin_bom(tmp_path, monkeypatch):
     monkeypatch.setattr("pcobra.cobra.cli.services.run_service.limitar_cpu_segundos", lambda *_: None)
 
@@ -851,6 +879,24 @@ def test_run_error_lexico_sigue_siendo_corto_sin_traceback_con_y_sin_bom(tmp_pat
         salida = out_run.getvalue() + err_run.getvalue()
         assert "Traceback" not in salida
         assert salida.strip() != ""
+
+
+@pytest.mark.integration
+def test_run_usar_numpy_rechaza_sin_traceback_ni_error_duplicado(tmp_path, monkeypatch):
+    monkeypatch.setattr("pcobra.cobra.cli.services.run_service.limitar_cpu_segundos", lambda *_: None)
+    archivo = tmp_path / "numpy.co"
+    archivo.write_text('usar "numpy"\n', encoding="utf-8")
+
+    out_run, err_run = StringIO(), StringIO()
+    with redirect_stdout(out_run), redirect_stderr(err_run):
+        rc_run = RunCommandV2().run(_run_args(str(archivo)))
+
+    salida = out_run.getvalue() + err_run.getvalue()
+    assert rc_run == 1
+    assert "numpy" in salida
+    assert "catálogo público" in salida
+    assert "traceback" not in salida.lower()
+    assert salida.lower().count("error") == 1
 
 
 @pytest.mark.integration
