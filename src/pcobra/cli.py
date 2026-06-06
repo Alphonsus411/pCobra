@@ -245,7 +245,11 @@ def ensure_sqlite_db_key_for_command(
     dev_mode_enabled = env_flag_activado(COBRA_DEV_MODE_ENV)
     dev_ephemeral_env_confirmation = env_flag_activado(COBRA_DEV_EPHEMERAL_CONFIRM_ENV)
 
-    if dev_mode_enabled and dev_ephemeral_env_confirmation and dev_ephemeral_cli_confirmation:
+    if (
+        dev_mode_enabled
+        and dev_ephemeral_env_confirmation
+        and dev_ephemeral_cli_confirmation
+    ):
         os.environ[SQLITE_DB_KEY_ENV] = secrets.token_urlsafe(32)
         logging.getLogger(__name__).warning(
             "Modo desarrollo confirmado para comando '%s' (%s=1 + %s=1 + --dev-ephemeral-key): usando clave efímera local para %s.",
@@ -283,7 +287,9 @@ def _normalizar_argumentos(argumentos: Optional[Iterable[str]]) -> Optional[List
     return normalizados
 
 
-def _preprocesar_argumentos_cli(argumentos: Optional[Iterable[str]]) -> Optional[List[str]]:
+def _preprocesar_argumentos_cli(
+    argumentos: Optional[Iterable[str]],
+) -> Optional[List[str]]:
     """Aplica saneamiento Unicode y normalización de alias a ``argumentos``."""
     from pcobra.cobra.cli.utils.unicode_sanitize import sanitize_input
 
@@ -291,6 +297,39 @@ def _preprocesar_argumentos_cli(argumentos: Optional[Iterable[str]]) -> Optional
     if normalizados is None:
         return None
     return [sanitize_input(arg) for arg in normalizados]
+
+
+def _es_ayuda_global_temprana(argv: Optional[List[str]]) -> bool:
+    """Detecta ayuda global que no necesita cargar runtime ni subcomandos."""
+
+    if not argv:
+        return False
+
+    opciones_neutras = {"--debug", "-v", "--verbose", "--no-color"}
+    tokens = [token for token in argv if token not in opciones_neutras]
+    return tokens in (["-h"], ["--help"], ["--ayuda"])
+
+
+def _mostrar_ayuda_global_temprana() -> None:
+    """Imprime ayuda pública mínima sin importar comandos opcionales/runtime."""
+
+    print(
+        "uso: cobra [-h] [--version] [--debug] [-v] "
+        "[--modo {cobra,transpilar,mixto}] {run,build,test,mod,repl} ...\n"
+        "\n"
+        "Lenguaje Cobra CLI. Comandos públicos:\n"
+        "  run    Ejecuta un archivo Cobra.\n"
+        "  build  Genera salida desde un archivo Cobra.\n"
+        "  test   Ejecuta pruebas Cobra.\n"
+        "  mod    Gestiona módulos Cobra.\n"
+        "  repl   Inicia el modo interactivo.\n"
+        "\n"
+        "Opciones:\n"
+        "  -h, --help, --ayuda  Muestra esta ayuda y termina.\n"
+        "  --version            Muestra la versión y termina.\n"
+        "  --debug              Muestra mensajes de depuración.\n"
+        "  -v, --verbose        Incrementa el nivel de detalle."
+    )
 
 
 def main(argumentos: Optional[List[str]] = None) -> int:
@@ -320,6 +359,10 @@ def main(argumentos: Optional[List[str]] = None) -> int:
     env_legacy_imports = os.environ.get("PCOBRA_ENABLE_LEGACY_IMPORTS") == "1"
     if flag_legacy_imports:
         os.environ["PCOBRA_ENABLE_LEGACY_IMPORTS"] = "1"
+
+    if _es_ayuda_global_temprana(argv):
+        _mostrar_ayuda_global_temprana()
+        return 0
 
     if flag_legacy_imports or env_legacy_imports:
         from pcobra import activar_aliases_legacy
