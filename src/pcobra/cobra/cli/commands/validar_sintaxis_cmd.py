@@ -5,23 +5,23 @@ from pathlib import Path
 from typing import Any
 
 from pcobra.cobra.cli.commands.base import BaseCommand
+from pcobra.cobra.cli.i18n import _
+from pcobra.cobra.cli.mode_policy import validar_politica_modo
 from pcobra.cobra.cli.transpiler_registry import (
     cli_transpiler_targets_csv,
     cli_transpilers,
 )
-from pcobra.cobra.cli.i18n import _
-from pcobra.cobra.cli.mode_policy import validar_politica_modo
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
 from pcobra.cobra.qa.syntax_validation import (
     SUPPORTED_VALIDATION_PROFILES,
     SUPPORTED_VALIDATOR_TARGETS,
     SyntaxReport,
+    SyntaxValidationExecution,
     TargetSummary,
     ValidationResult,
     build_syntax_report_payload,
     execute_syntax_validation,
-    SyntaxValidationExecution,
     run_transpiler_syntax_validation,
     validate_cobra_parse,
     validate_python_syntax,
@@ -80,22 +80,30 @@ class ValidarSintaxisCommand(BaseCommand):
     def _parse_targets(self, targets_raw: str) -> list[str]:
         if not targets_raw.strip():
             return list(SUPPORTED_VALIDATOR_TARGETS)
-        parsed = [item.strip().lower() for item in targets_raw.split(",") if item.strip()]
+        parsed = [
+            item.strip().lower() for item in targets_raw.split(",") if item.strip()
+        ]
         if not parsed:
             raise ValueError(_("La lista --targets está vacía"))
         invalid = sorted(set(parsed) - set(SUPPORTED_VALIDATOR_TARGETS))
         if invalid:
-            raise ValueError(_("Targets no soportados en --targets: {}.").format(", ".join(invalid)))
+            raise ValueError(
+                _("Targets no soportados en --targets: {}.").format(", ".join(invalid))
+            )
         return parsed
 
-    def _run_transpilers_syntax(self, targets: list[str], strict: bool) -> tuple[dict[str, TargetSummary], dict[str, list[str]], bool]:
+    def _run_transpilers_syntax(
+        self, targets: list[str], strict: bool
+    ) -> tuple[dict[str, TargetSummary], dict[str, list[str]], bool]:
         from pcobra.cobra.qa.syntax_validation import TRANSPILER_FIXTURES
 
         fixtures = [fixture for fixture in TRANSPILER_FIXTURES if fixture.exists()]
         if not fixtures:
-            raise FileNotFoundError(_("No hay fixtures disponibles para validar transpiladores."))
+            raise FileNotFoundError(
+                _("No hay fixtures disponibles para validar transpiladores.")
+            )
 
-        report, _, has_failures = run_transpiler_syntax_validation(
+        report, _validation_summary, has_failures = run_transpiler_syntax_validation(
             fixtures=fixtures,
             targets=targets,
             transpilers=cli_transpilers(),
@@ -103,7 +111,13 @@ class ValidarSintaxisCommand(BaseCommand):
         )
         return report.targets, report.errors_by_target, has_failures
 
-    def _emit_report(self, report: SyntaxReport, destination: str | None, profile: str, targets_requested: list[str]) -> None:
+    def _emit_report(
+        self,
+        report: SyntaxReport,
+        destination: str | None,
+        profile: str,
+        targets_requested: list[str],
+    ) -> None:
         if not destination:
             return
 
@@ -127,7 +141,9 @@ class ValidarSintaxisCommand(BaseCommand):
         try:
             validar_politica_modo(self.name, args, capability=self.capability)
             strict = bool(getattr(args, "strict", False))
-            profile = str(getattr(args, "perfil", "completo")).strip().lower() or "completo"
+            profile = (
+                str(getattr(args, "perfil", "completo")).strip().lower() or "completo"
+            )
             if bool(getattr(args, "solo_cobra", False)):
                 profile = "solo-cobra"
 

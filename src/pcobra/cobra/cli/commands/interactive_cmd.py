@@ -1,25 +1,29 @@
+import hashlib
+import inspect
+import json
 import logging
 import os
 import re
 import sys
 import warnings
-import json
-import hashlib
-from typing import Optional, Any
 from types import TracebackType
+from typing import Any, Optional
 
 try:  # pragma: no cover - dependencia opcional
     from prompt_toolkit import PromptSession
-    from prompt_toolkit.lexers import PygmentsLexer
     from prompt_toolkit.history import FileHistory
+    from prompt_toolkit.lexers import PygmentsLexer
     from prompt_toolkit.output import DummyOutput
+
     try:
         from prompt_toolkit.output.win32 import NoConsoleScreenBufferError
     except Exception:  # pragma: no cover - solo disponible en Windows
+
         class NoConsoleScreenBufferError(Exception):
             """Excepción usada cuando la consola no soporta buffer de pantalla."""
 
             pass
+
     PROMPT_TOOLKIT_AVAILABLE = True
 except ModuleNotFoundError:  # pragma: no cover - entornos sin prompt_toolkit
     PromptSession = None  # type: ignore[assignment]
@@ -34,31 +38,24 @@ except ModuleNotFoundError:  # pragma: no cover - entornos sin prompt_toolkit
 
     PROMPT_TOOLKIT_AVAILABLE = False
 
-from pcobra.cobra.core import Lexer, LexerError, TipoToken, UnclosedStringError
-from pcobra.cobra.core import ParserError
+from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.cli.execution_pipeline import (
     construir_script_sandbox_canonico,
     prevalidar_y_parsear_codigo,
     resolver_interpretador_cls,
     validar_ast_seguro,
 )
-from pcobra.cobra.core import (
-    NodoBucleMientras,
-    NodoCondicional,
-    NodoPara,
-    NodoSwitch,
-    NodoTryCatch,
-)
-from pcobra.cobra.core.runtime import (
-    InterpretadorCobra,
-    ejecutar_en_contenedor,
-    ejecutar_en_sandbox,
-    limitar_memoria_mb,
-    PrimitivaPeligrosaError,
-    validar_dependencias,
-)
-from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.cli.i18n import _, format_traceback
+from pcobra.cobra.cli.repl.cobra_lexer import CobraLexer
+from pcobra.cobra.cli.target_policies import (
+    DOCKER_EXECUTABLE_TARGETS,
+    DOCKER_RUNTIME_BY_TARGET,
+    OFFICIAL_RUNTIME_TARGETS_HELP,
+    build_runtime_capability_message,
+    parse_runtime_target,
+    resolve_docker_backend,
+)
+from pcobra.cobra.cli.transpiler_registry import cli_toml_map
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 from pcobra.cobra.cli.utils.messages import (
     color_disabled,
@@ -70,17 +67,28 @@ from pcobra.cobra.cli.utils.parser_error_classifier import (
     es_parser_error_de_bloque_incompleto,
 )
 from pcobra.cobra.cli.utils.unicode_sanitize import sanitize_input
-from pcobra.cobra.cli.repl.cobra_lexer import CobraLexer
-from pcobra.cobra.cli.target_policies import (
-    DOCKER_EXECUTABLE_TARGETS,
-    DOCKER_RUNTIME_BY_TARGET,
-    OFFICIAL_RUNTIME_TARGETS_HELP,
-    build_runtime_capability_message,
-    parse_runtime_target,
-    resolve_docker_backend,
+from pcobra.cobra.core import (
+    Lexer,
+    LexerError,
+    NodoBucleMientras,
+    NodoCondicional,
+    NodoPara,
+    NodoSwitch,
+    NodoTryCatch,
+    ParserError,
+    TipoToken,
+    UnclosedStringError,
 )
-from pcobra.cobra.cli.transpiler_registry import cli_toml_map
+from pcobra.cobra.core.runtime import (
+    InterpretadorCobra,
+    PrimitivaPeligrosaError,
+    ejecutar_en_contenedor,
+    ejecutar_en_sandbox,
+    limitar_memoria_mb,
+    validar_dependencias,
+)
 from pcobra.cobra.usar_policy import REPL_COBRA_MODULE_MAP
+
 DOCKER_RUNTIME_TARGETS = tuple(DOCKER_RUNTIME_BY_TARGET.values())
 SANDBOX_DOCKER_CHOICES = DOCKER_EXECUTABLE_TARGETS
 SANDBOX_DOCKER_HELP = OFFICIAL_RUNTIME_TARGETS_HELP
@@ -167,7 +175,9 @@ class _SessionHistoryFallback:
         with open(self._path, "a", encoding="utf-8") as fh:
             fh.write(f"{sanitized}\n")
 
+
 if FileHistory is not None:
+
     class SafeFileHistory(FileHistory):
         """Historial endurecido que sanitiza entradas antes de persistir."""
 
@@ -252,8 +262,14 @@ class InteractiveCommand(BaseCommand):
         if not self._runtime_debug_enabled():
             return
         runtime_file = inspect.getfile(self.interpretador.__class__)
-        evaluador_llamadas = getattr(self.interpretador, "ejecutar_llamada_funcion", None)
-        evaluador_clase = type(evaluador_llamadas.__self__).__name__ if evaluador_llamadas else "desconocido"
+        evaluador_llamadas = getattr(
+            self.interpretador, "ejecutar_llamada_funcion", None
+        )
+        evaluador_clase = (
+            type(evaluador_llamadas.__self__).__name__
+            if evaluador_llamadas
+            else "desconocido"
+        )
         self.logger.info(
             "[PCOBRA_DEBUG_RUNTIME] interpreter_file=%s call_evaluator_class=%s",
             runtime_file,
@@ -268,7 +284,9 @@ class InteractiveCommand(BaseCommand):
         """
         super().__init__()
         self.interpretador = interpretador
-        asegurar_estado_runtime = getattr(self.interpretador, "asegurar_estado_runtime_inicial", None)
+        asegurar_estado_runtime = getattr(
+            self.interpretador, "asegurar_estado_runtime_inicial", None
+        )
         if callable(asegurar_estado_runtime):
             asegurar_estado_runtime()
         self._allow_insecure_fallback = False
@@ -417,7 +435,6 @@ class InteractiveCommand(BaseCommand):
 
         return ast
 
-
     def _recorrer_validacion_ast(
         self,
         ast: list[Any],
@@ -467,19 +484,26 @@ class InteractiveCommand(BaseCommand):
             except Exception:
                 pass
 
-    def _validar_ast_para_analisis(self, ast: list[Any], validador: Optional[Any]) -> None:
+    def _validar_ast_para_analisis(
+        self, ast: list[Any], validador: Optional[Any]
+    ) -> None:
         """Valida AST para análisis estático sin side effects observables."""
         # Guarda de consistencia: en fase efectiva de ejecución no se debe
         # disparar esta validación para evitar doble emisión de auditoría
         # sobre un mismo nodo ya ejecutado.
-        if self.mode == "execution" or getattr(self.interpretador, "mode", None) == "execution":
+        if (
+            self.mode == "execution"
+            or getattr(self.interpretador, "mode", None) == "execution"
+        ):
             self.logger.debug(
                 "[GUARD] Se omite validación de análisis porque el modo efectivo es execution."
             )
             return
         self._recorrer_validacion_ast(ast, validador, silencioso=True)
 
-    def _validar_ast_para_ejecucion(self, ast: list[Any], validador: Optional[Any]) -> None:
+    def _validar_ast_para_ejecucion(
+        self, ast: list[Any], validador: Optional[Any]
+    ) -> None:
         """Valida AST para ejecución con side effects de auditoría habilitados."""
         self._recorrer_validacion_ast(ast, validador, silencioso=False)
 
@@ -524,7 +548,9 @@ class InteractiveCommand(BaseCommand):
         # Contrato: REPL incremental = intérprete; no batch pipeline.
         if self._seguro_repl:
             nodos_usar = [
-                nodo for nodo in ast if getattr(nodo, "__class__", type("", (), {})).__name__ == "NodoUsar"
+                nodo
+                for nodo in ast
+                if getattr(nodo, "__class__", type("", (), {})).__name__ == "NodoUsar"
             ]
             if nodos_usar:
                 for nodo_usar in nodos_usar:
@@ -575,7 +601,11 @@ class InteractiveCommand(BaseCommand):
         modo_previo = self.mode
         snapshot_inicio = self._debug_snapshot_sentencia_repl()
         try:
-            ast = ast_preparseado if ast_preparseado is not None else prevalidar_y_parsear_codigo(codigo)
+            ast = (
+                ast_preparseado
+                if ast_preparseado is not None
+                else prevalidar_y_parsear_codigo(codigo)
+            )
             # Si no viene AST preparseado, esta fase sigue siendo de análisis
             # (sin emisión); la ejecución con emisión se habilita únicamente
             # dentro de ``_ejecutar_ast_en_repl``.
@@ -588,7 +618,9 @@ class InteractiveCommand(BaseCommand):
                 validador,
             )
         except Exception as err_original:
-            if not self._debe_intentar_fallback_expresion_top_level(codigo, err_original):
+            if not self._debe_intentar_fallback_expresion_top_level(
+                codigo, err_original
+            ):
                 raise
 
             codigo_fallback = f"imprimir({codigo.strip()})"
@@ -600,7 +632,9 @@ class InteractiveCommand(BaseCommand):
                     validador,
                 )
             except Exception as err_fallback:
-                if self._debe_intentar_fallback_expresion_top_level(codigo, err_fallback):
+                if self._debe_intentar_fallback_expresion_top_level(
+                    codigo, err_fallback
+                ):
                     raise err_original
                 raise
         finally:
@@ -765,17 +799,20 @@ class InteractiveCommand(BaseCommand):
         nombre_nodo_ast = ast[0].__class__.__name__
         return match_nodo.group(1) == nombre_nodo_ast
 
-
     @staticmethod
     def _snapshot_usar_metadata(interp: Any) -> dict[str, Any]:
         metadata = getattr(interp, "_usar_symbol_metadata", {})
         if not isinstance(metadata, dict):
             return {}
-        return {str(k): dict(v) if isinstance(v, dict) else v for k, v in metadata.items()}
+        return {
+            str(k): dict(v) if isinstance(v, dict) else v for k, v in metadata.items()
+        }
 
     @staticmethod
     def _hash_estructural_metadata(metadata: dict[str, Any]) -> str:
-        serializado = json.dumps(metadata, sort_keys=True, ensure_ascii=False, default=str)
+        serializado = json.dumps(
+            metadata, sort_keys=True, ensure_ascii=False, default=str
+        )
         return hashlib.sha256(serializado.encode("utf-8")).hexdigest()
 
     def _debug_assert_invariantes_sentencia_repl(
@@ -789,11 +826,13 @@ class InteractiveCommand(BaseCommand):
             return
 
         codigo_normalizado = codigo.strip()
-        contiene_usar = bool(codigo_normalizado) and "usar" in codigo_normalizado.lower()
+        contiene_usar = (
+            bool(codigo_normalizado) and "usar" in codigo_normalizado.lower()
+        )
         if not contiene_usar:
-            assert inicio["hash"] == fin["hash"], (
-                "Invariante REPL violada: metadata `usar` cambió sin sentencia `usar`."
-            )
+            assert (
+                inicio["hash"] == fin["hash"]
+            ), "Invariante REPL violada: metadata `usar` cambió sin sentencia `usar`."
 
         assert fin["keys"] >= inicio["keys"], (
             "Invariante REPL violada: el número de claves de metadata `usar` no debe decrecer "
@@ -885,7 +924,9 @@ class InteractiveCommand(BaseCommand):
         # Obtener modos de ejecución
         sandbox = getattr(args, "sandbox", False)
         sandbox_docker = getattr(args, "sandbox_docker", None)
-        self._allow_insecure_fallback = bool(getattr(args, "allow_insecure_fallback", False))
+        self._allow_insecure_fallback = bool(
+            getattr(args, "allow_insecure_fallback", False)
+        )
         if sandbox_docker and sandbox_docker not in DOCKER_EXECUTABLE_TARGETS:
             mostrar_error(
                 build_runtime_capability_message(
@@ -910,9 +951,7 @@ class InteractiveCommand(BaseCommand):
             )
         except NoConsoleScreenBufferError:
             mostrar_advertencia(
-                _(
-                    "Entorno sin consola compatible, usando salida simplificada."
-                )
+                _("Entorno sin consola compatible, usando salida simplificada.")
             )
             session = PromptSession(
                 lexer=PygmentsLexer(CobraLexer),
@@ -976,7 +1015,9 @@ class InteractiveCommand(BaseCommand):
             try:
                 prompt = "... " if estado["buffer_lineas"] else ">>> "
                 raw_linea = leer_linea(prompt)
-                linea = sanitize_input(raw_linea if isinstance(raw_linea, str) else str(raw_linea))
+                linea = sanitize_input(
+                    raw_linea if isinstance(raw_linea, str) else str(raw_linea)
+                )
                 linea = linea.strip()
                 _debug_assert_boundary_text_sanitized(
                     linea,
@@ -984,7 +1025,9 @@ class InteractiveCommand(BaseCommand):
                 )
             except (KeyboardInterrupt, EOFError):
                 if estado["buffer_lineas"]:
-                    mostrar_error(_("Bloque incompleto; se limpiará la entrada actual."))
+                    mostrar_error(
+                        _("Bloque incompleto; se limpiará la entrada actual.")
+                    )
                     self._limpiar_estado_repl(estado)
                     continue
                 mostrar_info(_("Saliendo..."))
@@ -1069,7 +1112,9 @@ class InteractiveCommand(BaseCommand):
             self.interpretador = self._interpretador_sesion
             self._configurar_restriccion_usar_repl()
 
-        asegurar_estado_runtime = getattr(self.interpretador, "asegurar_estado_runtime_inicial", None)
+        asegurar_estado_runtime = getattr(
+            self.interpretador, "asegurar_estado_runtime_inicial", None
+        )
         if callable(asegurar_estado_runtime):
             asegurar_estado_runtime()
 
@@ -1172,7 +1217,9 @@ class InteractiveCommand(BaseCommand):
         if nuevo_nivel != 0:
             return None
 
-        if linea.strip() == "fin" and self._bloque_con_solo_lineas_vacias(buffer_lineas):
+        if linea.strip() == "fin" and self._bloque_con_solo_lineas_vacias(
+            buffer_lineas
+        ):
             buffer_lineas.clear()
             raise ParserError(self.ERROR_BLOQUE_VACIO)
 
@@ -1225,7 +1272,9 @@ class InteractiveCommand(BaseCommand):
 
         return False
 
-    def _ejecutar_pipeline_explicito_solo_setup_sandbox(self, interpretador_cls: type[Any]) -> Any:
+    def _ejecutar_pipeline_explicito_solo_setup_sandbox(
+        self, interpretador_cls: type[Any]
+    ) -> Any:
         """Inicializa setup de sandbox con pipeline explícito (uso restringido).
 
         Contrato: este helper existe para aislar el único uso permitido de
@@ -1233,8 +1282,8 @@ class InteractiveCommand(BaseCommand):
         sandbox/setup. No debe reutilizarse para el flujo normal incremental.
         """
         from pcobra.cobra.cli.execution_pipeline import (
-            ejecutar_pipeline_explicito,
             PipelineInput,
+            ejecutar_pipeline_explicito,
         )
 
         setup_input = PipelineInput(
@@ -1352,6 +1401,7 @@ class InteractiveCommand(BaseCommand):
                 _("Error al finalizar REPL: {exc_val}").format(exc_val=exc_val)
             )
         self.logger.debug(_("Finalizando REPL de Cobra"))
+
     def _construir_historial(self, history_path: str) -> Any:
         if FileHistory is not None:
             return FileHistory(history_path)
