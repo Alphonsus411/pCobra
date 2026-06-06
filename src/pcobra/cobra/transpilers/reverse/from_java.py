@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 """Transpilador inverso desde Java a Cobra usando tree-sitter."""
-from typing import List
+from typing import Any, List, TYPE_CHECKING
 
-from tree_sitter import Node
+if TYPE_CHECKING:
+    from tree_sitter import Node
+else:
+    Node = Any
 
 from pcobra.cobra.core import Token, TipoToken
 from pcobra.cobra.core.ast_nodes import (
@@ -37,6 +40,20 @@ class ReverseFromJava(TreeSitterReverseTranspiler):
         ">=": Token(TipoToken.MAYORIGUAL, ">="),
     }
 
+    @staticmethod
+    def _extract_param_names(params_n: Node) -> List[str]:
+        """Extrae parámetros con gramáticas Java antiguas y actuales."""
+        params: List[str] = []
+        for child in params_n.children:
+            if child.type == "identifier":
+                params.append(TreeSitterNode(child).get_text())
+                continue
+
+            name_n = child.child_by_field_name("name")
+            if name_n is not None:
+                params.append(TreeSitterNode(name_n).get_text())
+        return params
+
     # ------------------------------------------------------------------
     def visit_class_declaration(self, node: Node) -> NodoClase:
         """Convierte una declaración de clase."""
@@ -57,11 +74,7 @@ class ReverseFromJava(TreeSitterReverseTranspiler):
         body_n = node.child_by_field_name("body")
 
         nombre = TreeSitterNode(nombre_n).get_text() if nombre_n else ""
-        params = [
-            TreeSitterNode(c).get_text()
-            for c in params_n.children
-            if c.type == "identifier"
-        ] if params_n else []
+        params = self._extract_param_names(params_n) if params_n else []
 
         cuerpo = [
             self.visit(c)

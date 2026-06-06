@@ -2,6 +2,8 @@
 """Transpiladores inversos basados en tree-sitter."""
 from __future__ import annotations
 from typing import Any, List, Optional, Union
+import importlib
+import importlib.util
 import logging
 from dataclasses import dataclass
 
@@ -9,33 +11,72 @@ TREE_SITTER_AVAILABLE = True
 _TREE_SITTER_IMPORT_ERROR: Exception | None = None
 
 try:  # pragma: no cover - depende de dependencias opcionales
-    from tree_sitter import Node, Tree  # type: ignore
+    from tree_sitter import Language, Node, Parser, Tree  # type: ignore
 except ModuleNotFoundError as exc:  # pragma: no cover - depende de tree-sitter
     TREE_SITTER_AVAILABLE = False
     _TREE_SITTER_IMPORT_ERROR = exc
-    Node = Tree = Any  # type: ignore[assignment]
+    Language = Node = Parser = Tree = Any  # type: ignore[assignment]
 else:
-    try:  # pragma: no cover - depende de tree_sitter-languages
-        from tree_sitter_languages import get_parser
-    except ModuleNotFoundError as exc:  # pragma: no cover - depende de tree_sitter-languages
-        TREE_SITTER_AVAILABLE = False
-        _TREE_SITTER_IMPORT_ERROR = exc
-        _MISSING_TREE_SITTER_LANG_ERROR = exc
+    _LANGUAGE_PACKAGES = {
+        "javascript": "tree_sitter_javascript",
+        "java": "tree_sitter_java",
+    }
 
-        def get_parser(language: str) -> Any:
-            raise NotImplementedError(
-                "Las funciones basadas en tree-sitter requieren instalar "
-                "las dependencias opcionales 'tree-sitter' y 'tree-sitter-languages'."
-            ) from _MISSING_TREE_SITTER_LANG_ERROR
-    else:
-        try:  # Compatibilidad con versiones antiguas
-            from tree_sitter_languages import TreeSitterLanguageError as TreeSitterError  # type: ignore
-        except Exception:  # pragma: no cover - dependencia opcional
+    class TreeSitterError(Exception):
+        """Excepción genérica para errores de tree-sitter."""
 
-            class TreeSitterError(Exception):
-                """Excepción genérica para errores de tree-sitter."""
+        pass
 
-                pass
+    def _parser_with_language(language_obj: Any) -> Parser:
+        """Crea un Parser compatible con tree-sitter 0.23+ y 0.25+."""
+        parser = Parser()
+        if hasattr(parser, "set_language"):
+            parser.set_language(language_obj)
+        else:
+            parser.language = language_obj
+        return parser
+
+    def _get_parser_from_language_package(language: str) -> Parser | None:
+        """Obtiene un parser desde los paquetes tree_sitter_<lenguaje>."""
+        module_name = _LANGUAGE_PACKAGES.get(language)
+        if module_name is None or importlib.util.find_spec(module_name) is None:
+            return None
+
+        language_module = importlib.import_module(module_name)
+        language_factory = getattr(language_module, "language", None)
+        if language_factory is None:
+            return None
+
+        language_obj = language_factory()
+        if not isinstance(language_obj, Language):
+            language_obj = Language(language_obj)
+        return _parser_with_language(language_obj)
+
+    def _get_parser_from_legacy_languages(language: str) -> Parser | None:
+        """Obtiene un parser con tree_sitter_languages cuando está disponible."""
+        if importlib.util.find_spec("tree_sitter_languages") is None:
+            return None
+
+        languages_module = importlib.import_module("tree_sitter_languages")
+        legacy_get_parser = getattr(languages_module, "get_parser", None)
+        if legacy_get_parser is None:
+            return None
+        return legacy_get_parser(language)
+
+    def get_parser(language: str) -> Parser:
+        """Obtiene un parser para un lenguaje soportado por tree-sitter."""
+        parser = _get_parser_from_language_package(language)
+        if parser is not None:
+            return parser
+
+        parser = _get_parser_from_legacy_languages(language)
+        if parser is not None:
+            return parser
+
+        raise NotImplementedError(
+            "Las funciones basadas en tree-sitter requieren instalar las "
+            "gramáticas opcionales del lenguaje solicitado."
+        )
 
 
 if "TreeSitterError" not in globals():  # pragma: no cover - solo cuando faltan dependencias
@@ -75,9 +116,12 @@ class TreeSitterNode:
 
     def get_text(self) -> str:
         """Obtiene el texto del nodo de forma segura."""
-        if hasattr(self.node, 'text'):
+        if hasattr(self.node, "text"):
+            text = self.node.text
+            if isinstance(text, str):
+                return text
             try:
-                return self.node.text.decode(CODIFICACION)
+                return text.decode(CODIFICACION)
             except UnicodeDecodeError as e:
                 logger.error(f"Error decodificando texto del nodo: {e}")
                 return ""
@@ -96,8 +140,8 @@ class TreeSitterReverseTranspiler(BaseReverseTranspiler):
             raise ValueError("LANGUAGE debe definirse en la subclase")
         if not TREE_SITTER_AVAILABLE:
             raise NotImplementedError(
-                "Las capacidades de transpilación inversa requieren las "
-                "dependencias opcionales 'tree-sitter' y 'tree-sitter-languages'."
+                "Las capacidades de transpilación inversa requieren la "
+                "dependencia opcional 'tree-sitter'."
             ) from _TREE_SITTER_IMPORT_ERROR
         try:
             self.parser = get_parser(self.LANGUAGE)
@@ -190,6 +234,10 @@ class TreeSitterReverseTranspiler(BaseReverseTranspiler):
             except ValueError:
                 logger.warning(f"No se pudo convertir el número: {texto}")
                 return NodoValor(texto)
+
+    def visit_decimal_integer_literal(self, node: Node) -> NodoValor:
+        """Procesa literales enteros de gramáticas tree-sitter actuales."""
+        return self.visit_number(node)
 
     def visit_string(self, node: Node) -> NodoValor:
         """Procesa una cadena literal.
