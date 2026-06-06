@@ -16,6 +16,8 @@ from pcobra.cobra.transpilers.target_utils import normalize_target_name, target_
 # Carpeta donde se encuentran los transpiladores individuales
 BASE_DIR = Path(__file__).resolve().parent / "transpiler"
 
+TRANSPILERS = tuple(official_transpiler_targets())
+
 def _resolve_transpiler_file(target: str) -> str:
     canonical = normalize_target_name(target)
     return f"to_{canonical}.py"

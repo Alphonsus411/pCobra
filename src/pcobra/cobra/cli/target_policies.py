@@ -547,6 +547,12 @@ def add_internal_legacy_targets_flag(parser) -> None:
     add_internal_legacy_target_flag(parser)
 
 
+def enabled_internal_legacy_targets() -> tuple[str, ...]:
+    """Alias histórico con carga diferida de targets legacy internos."""
+    compat = _internal_compat_bindings()
+    return compat["enabled_internal_legacy_targets"]()
+
+
 def parse_target(value: str) -> str:
     """Valida target CLI público, con bypass interno temporal controlado por flag."""
     raw = value.strip()

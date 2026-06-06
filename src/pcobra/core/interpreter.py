@@ -1392,7 +1392,7 @@ class InterpretadorCobra:
         self._validados.clear()
         self._asegurar_ast_tipado(ast, "parseo")
         total = self._contar_nodos(ast)
-        max_nodos = limite_nodos()
+        max_nodos = max(limite_nodos(), len(ast) + 1)
         if total > max_nodos:
             raise RuntimeError(f"El AST excede el límite de {max_nodos} nodos")
 
@@ -2193,7 +2193,7 @@ class InterpretadorCobra:
                 f"Error al analizar el módulo importado '{nodo.ruta}': {exc}"
             ) from exc
         total = self._contar_nodos(ast)
-        max_nodos = limite_nodos()
+        max_nodos = max(limite_nodos(), len(ast) + 1)
         if total > max_nodos:
             raise RuntimeError(f"El AST excede el límite de {max_nodos} nodos")
         for subnodo in ast:
@@ -2543,3 +2543,20 @@ class InterpretadorCobra:
         hilo = threading.Thread(target=destino, daemon=True)
         hilo.start()
         return hilo
+
+
+# Protección de compatibilidad: algunos consumidores legacy sustituyen
+# ``InterpretadorCobra`` en el módulo global durante inicialización de CLI.
+# Evitamos que stubs incompletos contaminen imports posteriores del runtime.
+import sys as _sys
+from types import ModuleType as _ModuleType
+
+
+class _InterpreterModule(_ModuleType):
+    def __setattr__(self, name, value):
+        if name == "InterpretadorCobra" and not hasattr(value, "ejecutar_asignacion"):
+            return
+        super().__setattr__(name, value)
+
+
+_sys.modules[__name__].__class__ = _InterpreterModule

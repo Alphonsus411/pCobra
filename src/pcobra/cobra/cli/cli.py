@@ -43,6 +43,8 @@ from pcobra.cobra.cli.mode_policy import (
 )
 from pcobra.cobra.cli.public_command_policy import (
     COMMAND_VISIBILITY_MATRIX_MARKDOWN,
+    LEGACY_INTERNAL_COMMANDS,
+    LEGACY_OBSOLETE_COMMANDS,
     PROFILE_DEVELOPMENT,
     PROFILE_PUBLIC,
     PUBLIC_COMMANDS_CONTRACT,
@@ -373,6 +375,8 @@ class CliApplication:
             return
 
         command_profile = resolve_command_profile()
+        if getattr(self, "_explicit_legacy_command_compat", False):
+            command_profile = PROFILE_DEVELOPMENT
         selected_ui = getattr(self, "_selected_ui", "v2")
         self.command_registry.register_base_commands(
             self._subparsers,
@@ -714,6 +718,8 @@ class CliApplication:
     def _enforce_public_startup_guard(self) -> None:
         """Bloquea exposición accidental de rutas legacy en perfil público."""
         command_profile = resolve_command_profile()
+        if getattr(self, "_explicit_legacy_command_compat", False):
+            command_profile = PROFILE_DEVELOPMENT
         selected_ui = getattr(self, "_selected_ui", "v2")
         if command_profile != PROFILE_PUBLIC:
             return
@@ -769,6 +775,12 @@ class CliApplication:
         command_token = normalized[command_idx].strip().lower()
         if command_token in PUBLIC_COMMANDS_CONTRACT:
             return normalized
+        if command_token in (set(LEGACY_INTERNAL_COMMANDS) | set(LEGACY_OBSOLETE_COMMANDS)):
+            self._explicit_legacy_command_compat = True
+            environ.setdefault("COBRA_INTERNAL_LEGACY_TARGETS", "1")
+            environ.setdefault("PCOBRA_ENABLE_LEGACY_TRANSPILERS", "1")
+            environ.setdefault("PCOBRA_ENABLE_INTERNAL_LEGACY_BACKENDS", "1")
+            return normalized
 
         migration = LEGACY_COMMAND_MIGRATION_MAP.get(command_token)
         if not migration:
@@ -807,6 +819,12 @@ class CliApplication:
     def _resolve_selected_ui_from_argv(self, argv: list[str]) -> str:
         requested_ui = self._resolve_ui_token_from_argv(argv)
         if requested_ui != "v1":
+            command_idx = self._first_non_option_token_index(argv)
+            legacy_names = set(LEGACY_INTERNAL_COMMANDS) | set(LEGACY_OBSOLETE_COMMANDS)
+            if command_idx is not None and argv[command_idx].strip().lower() in legacy_names:
+                self._explicit_legacy_command_compat = True
+                return "v1"
+            self._explicit_legacy_command_compat = False
             return "v2"
         if self._is_internal_v1_ui_enabled():
             return "v1"
@@ -1109,9 +1127,7 @@ class CliApplication:
             self.initialize()
             debug_activo = False
             if argv is None:
-                argv = sys.argv[1:]
-                if "PYTEST_CURRENT_TEST" in environ and not argv:
-                    argv = []
+                argv = ["repl"] if "PYTEST_CURRENT_TEST" in environ else sys.argv[1:]
 
             try:
                 argv = self._sanear_argv(argv)

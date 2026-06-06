@@ -101,6 +101,9 @@ class AgixCommand(BaseCommand):
                 )
                 return 1
 
+        raw_archivo = Path(args.archivo)
+        if not raw_archivo.is_file():
+            raise FileNotFoundError(f"El archivo '{raw_archivo}' no existe")
         archivo = validar_archivo_existente(args.archivo)
 
         try:

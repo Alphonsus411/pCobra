@@ -13,6 +13,7 @@ SRC_ROOT = ROOT / "src"
 if str(SRC_ROOT) not in sys.path:
     sys.path.insert(0, str(SRC_ROOT))
 
+from pcobra.cobra.architecture.backend_policy import PUBLIC_BACKENDS  # noqa: E402
 from pcobra.cobra.cli.target_policies import (  # noqa: E402
     OFFICIAL_RUNTIME_TARGETS,
     OFFICIAL_TRANSPILATION_TARGETS,
@@ -23,11 +24,7 @@ from pcobra.cobra.transpilers.registry import (  # noqa: E402
 )
 from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS  # noqa: E402
 
-EXPECTED_CANONICAL_TARGETS: tuple[str, ...] = (
-    "python",
-    "rust",
-    "javascript",
-)
+EXPECTED_CANONICAL_TARGETS: tuple[str, ...] = PUBLIC_BACKENDS
 
 FORBIDDEN_TERMS: tuple[tuple[re.Pattern[str], str], ...] = (
     (re.compile(r"(?<![\\w/-])hololang(?![\\w/-])", re.IGNORECASE), "hololang"),

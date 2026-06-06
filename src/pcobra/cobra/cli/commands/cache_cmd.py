@@ -1,5 +1,7 @@
 from typing import Any
 import sqlite3
+import os
+from pathlib import Path
 
 from pcobra.cobra.core.ast_cache import limpiar_cache
 from pcobra.cobra.core.database import DatabaseDependencyError, DatabaseKeyError
@@ -35,7 +37,11 @@ class CacheCommand(BaseCommand):
     def run(self, args: Any) -> int:
         """Ejecuta la lógica del comando."""
 
+        legacy_cache_dir = os.environ.get("COBRA_AST_CACHE")
         try:
+            if legacy_cache_dir:
+                for item in Path(legacy_cache_dir).glob("*.ast"):
+                    item.unlink(missing_ok=True)
             limpiar_cache(vacuum=getattr(args, "vacuum", False))
             mostrar_info(_("Caché limpiada exitosamente"))
             return 0

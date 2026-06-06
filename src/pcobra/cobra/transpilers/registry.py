@@ -80,6 +80,13 @@ def ordered_internal_legacy_transpiler_entries() -> tuple[tuple[str, tuple[str, 
     return _legacy_registry_module().ordered_internal_legacy_transpiler_entries()
 
 
+def internal_legacy_transpiler_lifecycle_status() -> dict[str, str]:
+    return _legacy_registry_module().internal_legacy_transpiler_lifecycle_status()
+
+
+INTERNAL_LEGACY_TRANSPILER_LIFECYCLE_STATUS = internal_legacy_transpiler_lifecycle_status()
+
+
 def build_internal_legacy_transpilers() -> dict[str, type]:
     return _legacy_registry_module().build_internal_legacy_transpilers()
 

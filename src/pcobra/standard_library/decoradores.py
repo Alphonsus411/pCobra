@@ -23,7 +23,7 @@ import importlib.util
 from typing import Any, Awaitable, Callable, Optional, ParamSpec, Sequence, TypeVar, overload
 
 from pcobra._stubs.compat import import_optional_attr
-from pcobra.corelibs import reintentar_async as _reintentar_async
+from pcobra.corelibs.asincrono import reintentar_async as _reintentar_async
 
 try:  # pragma: no branch - inicialización simple
     _rich_spec = importlib.util.find_spec("rich.console")

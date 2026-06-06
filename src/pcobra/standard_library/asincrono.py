@@ -15,13 +15,6 @@ from typing import (
     TypeVar,
 )
 
-from pcobra.corelibs import (
-    grupo_tareas as _grupo_tareas,
-    proteger_tarea as _proteger_tarea,
-    ejecutar_en_hilo as _ejecutar_en_hilo,
-    reintentar_async as _reintentar_async,
-    limitar_tiempo as _limitar_tiempo,
-)
 
 T = TypeVar("T")
 
@@ -53,7 +46,7 @@ def grupo_tareas() -> AsyncContextManager[Any]:
     ``asyncio.TaskGroup`` todavía no existe.
     """
 
-    return _grupo_tareas()
+    return _asincrono.grupo_tareas()
 
 
 @asynccontextmanager
@@ -62,7 +55,7 @@ async def limitar_tiempo(
 ) -> AsyncIterator[None]:
     """Limita la ejecución del bloque actual a ``segundos`` como máximo."""
 
-    async with _limitar_tiempo(segundos, mensaje=mensaje):
+    async with _asincrono.limitar_tiempo(segundos, mensaje=mensaje):
         yield
 
 
@@ -75,7 +68,7 @@ def proteger_tarea(awaitable: Awaitable[T] | Coroutine[Any, Any, T]):
     sobre la tarea actual invalide el trabajo original.
     """
 
-    return _proteger_tarea(awaitable)
+    return _asincrono.proteger_tarea(awaitable)
 
 
 async def ejecutar_en_hilo(funcion: Callable[..., T], *args: Any, **kwargs: Any) -> T:
@@ -87,7 +80,7 @@ async def ejecutar_en_hilo(funcion: Callable[..., T], *args: Any, **kwargs: Any)
     envuelven operaciones bloqueantes y se espera su resultado en JavaScript.
     """
 
-    return await _ejecutar_en_hilo(funcion, *args, **kwargs)
+    return await _asincrono.ejecutar_en_hilo(funcion, *args, **kwargs)
 
 
 async def reintentar_async(
@@ -113,7 +106,7 @@ async def reintentar_async(
     fallos transitorios y se desea espaciar los intentos para aliviar la carga.
     """
 
-    return await _reintentar_async(
+    return await _asincrono.reintentar_async(
         funcion,
         intentos=intentos,
         excepciones=excepciones,

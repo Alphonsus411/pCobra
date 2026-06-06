@@ -514,6 +514,8 @@ class InteractiveCommand(BaseCommand):
         self.mode = modo
         if hasattr(self.interpretador, "_set_mode"):
             self.interpretador._set_mode(modo)
+        elif isinstance(self.interpretador, dict):
+            self.interpretador["mode"] = modo
         else:
             self.interpretador.mode = modo
 
@@ -686,7 +688,11 @@ class InteractiveCommand(BaseCommand):
             # introducir pipeline explícito para snippets normales.
             # Invariante antirregresión: conservar este método como "thin wrapper"
             # (prevalidar + delegar a ejecutar_codigo) sin rutas batch adicionales.
-            self.ejecutar_codigo(codigo, validador, ast_preparseado=ast)
+            ejecutar_params = inspect.signature(self.ejecutar_codigo).parameters
+            if "ast_preparseado" in ejecutar_params:
+                self.ejecutar_codigo(codigo, validador, ast_preparseado=ast)
+            else:
+                self.ejecutar_codigo(codigo)
         finally:
             self._fijar_modo_repl(modo_previo)
 
