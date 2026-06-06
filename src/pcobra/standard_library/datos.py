@@ -191,6 +191,12 @@ def _valores_numericos(tabla: Tabla, columna: str) -> list[float]:
     return [float(valor) for valor in _valores_columna(tabla, columna, solo_numeros=True)]
 
 
+def _percentil_lineal(valores: Sequence[float], percentil: float) -> float:
+    """Calcula percentiles con interpolación lineal estable entre NumPy 2.x."""
+
+    return float(np.percentile(valores, percentil, method="linear"))
+
+
 def _valores_numericos_alineados(tabla: Tabla, columnas: Sequence[str]) -> list[list[float]]:
     alineados: list[list[float]] = []
     for fila in tabla:
@@ -1086,9 +1092,9 @@ def describir(datos: Iterable[Registro]) -> dict[str, dict[str, float]]:
             "mean": media,
             "std": desviacion,
             "min": min(valores),
-            "25%": float(np.percentile(valores, 25)),
-            "50%": float(np.percentile(valores, 50)),
-            "75%": float(np.percentile(valores, 75)),
+            "25%": _percentil_lineal(valores, 25),
+            "50%": _percentil_lineal(valores, 50),
+            "75%": _percentil_lineal(valores, 75),
             "max": max(valores),
         }
     return resultado
@@ -1218,7 +1224,7 @@ def calcular_percentiles(
             continue
         resultado[columna] = {}
         for percentil in percentiles:
-            resultado[columna][f"p{percentil}"] = float(np.percentile(valores, percentil))
+            resultado[columna][f"p{percentil}"] = _percentil_lineal(valores, percentil)
     return resultado
 
 
