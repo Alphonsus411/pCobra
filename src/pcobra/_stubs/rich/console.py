@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from .status import Status
 
 RenderableType = Any
 
@@ -28,7 +31,9 @@ class _ConsoleGroup:
             self._console.print(self._title)
         return self._console
 
-    def __exit__(self, *exc_info: object) -> None:  # pragma: no cover - comportamiento trivial
+    def __exit__(
+        self, *exc_info: object
+    ) -> None:  # pragma: no cover - comportamiento trivial
         return None
 
 

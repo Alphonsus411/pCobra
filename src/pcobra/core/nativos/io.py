@@ -12,10 +12,10 @@ except ModuleNotFoundError as exc:  # pragma: no cover - entorno sin requests
     class _Response:  # pragma: no cover - interfaz mínima
         pass
 
-    def _missing(*_args, **_kwargs):
+    def _missing(*_args, _exc: ModuleNotFoundError = exc, **_kwargs):
         raise ModuleNotFoundError(
             "El módulo opcional 'requests' es necesario para realizar peticiones HTTP."
-        ) from exc
+        ) from _exc
 
     requests.Response = _Response
     requests.get = _missing
@@ -76,7 +76,7 @@ def _obtener_hosts_permitidos() -> set[str]:
     allowed = os.environ.get("COBRA_HOST_WHITELIST")
     if not allowed:
         raise ValueError("COBRA_HOST_WHITELIST no establecido")
-    hosts = {h.strip().lower() for h in allowed.split(',') if h.strip()}
+    hosts = {h.strip().lower() for h in allowed.split(",") if h.strip()}
     if not hosts:
         raise ValueError("COBRA_HOST_WHITELIST vacío")
     return hosts
@@ -89,9 +89,7 @@ def _validar_host(url: str, hosts: set[str]) -> None:
         raise ValueError("Host no permitido")
 
 
-def _resolver_redireccion(
-    url_actual: str, destino: str | None, hosts: set[str]
-) -> str:
+def _resolver_redireccion(url_actual: str, destino: str | None, hosts: set[str]) -> str:
     if not destino:
         raise ValueError("Redirección sin encabezado Location")
     nueva_url = urllib.parse.urljoin(url_actual, destino)
@@ -117,9 +115,7 @@ def obtener_url(url, permitir_redirecciones: bool = False):
 
     while True:
         _validar_host(url_actual, hosts)
-        resp = requests.get(
-            url_actual, timeout=5, allow_redirects=False, stream=True
-        )
+        resp = requests.get(url_actual, timeout=5, allow_redirects=False, stream=True)
         if permitir_redirecciones and 300 <= resp.status_code < 400:
             if redirecciones_restantes == 0:
                 resp.close()
