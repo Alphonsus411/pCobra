@@ -219,12 +219,6 @@ def diferencia_simetrica(*colecciones: Iterable[bool]) -> tuple[bool, ...]:
     return _logica.diferencia_simetrica(*colecciones)
 
 
-def coalesce(*args, **kwargs):
-    """Delega en ``pcobra.corelibs.logica.coalesce``."""
-
-    return _logica.coalesce(*args, **kwargs)
-
-
 def si_condicional(*args, **kwargs):
     """Delega en ``pcobra.corelibs.logica.si_condicional``."""
 

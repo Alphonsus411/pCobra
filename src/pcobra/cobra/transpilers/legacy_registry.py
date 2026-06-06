@@ -105,6 +105,16 @@ def ordered_internal_legacy_transpiler_entries() -> tuple[tuple[str, tuple[str, 
     )
 
 
+def internal_legacy_transpiler_lifecycle_status() -> dict[str, str]:
+    """Devuelve estado lifecycle por backend legacy interno."""
+    return {target: status for target, _path, status in ordered_internal_legacy_transpiler_entries()}
+
+
+INTERNAL_LEGACY_TRANSPILER_LIFECYCLE_STATUS: Final[dict[str, str]] = (
+    internal_legacy_transpiler_lifecycle_status()
+)
+
+
 def build_internal_legacy_transpilers() -> dict[str, type]:
     """Carga las clases legacy internas para procesos de migración interna."""
     registry: dict[str, type] = {}

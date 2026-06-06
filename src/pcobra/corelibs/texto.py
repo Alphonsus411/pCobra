@@ -1081,76 +1081,106 @@ def quitar_acentos(texto: str) -> str:
     )
     return unicodedata.normalize("NFC", sin_marcas)
 
-__all__ = [
-    "mayusculas",
-    "minusculas",
-    "capitalizar",
-    "titulo",
-    "intercambiar_mayusculas",
-    "invertir",
-    "concatenar",
-    "codificar",
-    "decodificar",
-    "quitar_espacios",
-    "dividir",
-    "dividir_derecha",
-    "encontrar",
-    "encontrar_derecha",
-    "indice",
-    "indice_derecha",
-    "subcadena_antes",
-    "subcadena_despues",
-    "subcadena_antes_ultima",
-    "subcadena_despues_ultima",
-    "unir",
-    "formatear",
-    "formatear_mapa",
-    "tabla_traduccion",
-    "traducir",
-    "reemplazar",
-    "empieza_con",
-    "termina_con",
-    "incluye",
-    "quitar_prefijo",
-    "quitar_sufijo",
-    "a_snake",
-    "a_camel",
-    "quitar_envoltura",
-    "prefijo_comun",
-    "sufijo_comun",
-    "rellenar_izquierda",
-    "particionar",
-    "particionar_derecha",
-    "rellenar_derecha",
-    "normalizar_unicode",
-    "dividir_lineas",
-    "expandir_tabulaciones",
-    "contar_subcadena",
-    "indentar_texto",
-    "desindentar_texto",
-    "envolver_texto",
-    "acortar_texto",
-    "centrar_texto",
-    "rellenar_ceros",
-    "minusculas_casefold",
-    "es_alfabetico",
-    "es_alfa_numerico",
-    "es_decimal",
-    "es_numerico",
-    "es_identificador",
-    "es_imprimible",
-    "es_ascii",
-    "es_mayusculas",
-    "es_minusculas",
-    "es_espacio",
-    "es_titulo",
-    "es_digito",
-    "lineas_no_vacias",
-    "recortar",
-    "repetir",
-    "quitar_acentos",
-]
 
+def normalizar_espacios(texto: str) -> str:
+    """Colapsa espacios Unicode consecutivos y recorta extremos."""
+
+    return " ".join(texto.split())
+
+
+def es_palindromo(texto: str) -> bool:
+    """Indica si ``texto`` se lee igual de izquierda a derecha ignorando espacios/caso."""
+
+    normalizado = re.sub(r"\W+", "", quitar_acentos(texto).casefold(), flags=re.UNICODE)
+    return normalizado == normalizado[::-1]
+
+
+def es_anagrama(a: str, b: str) -> bool:
+    """Indica si dos textos contienen los mismos caracteres ignorando espacios/caso."""
+
+    normalizar = lambda valor: sorted(re.sub(r"\W+", "", quitar_acentos(valor).casefold(), flags=re.UNICODE))
+    return normalizar(a) == normalizar(b)
+
+
+def separar(texto: str, separador: str | None = None, maximo: int | None = None) -> list[str]:
+    """Alias canónico de :func:`dividir`."""
+
+    return dividir(texto, separador, maximo)
+
+
+def contiene(texto: str, subcadena: str) -> bool:
+    """Alias canónico de :func:`incluye`."""
+
+    return incluye(texto, subcadena)
+
+
+def longitud(texto: str) -> int:
+    """Devuelve la longitud de ``texto``."""
+
+    return len(texto)
+
+__all__ = [
+    'quitar_acentos',
+    'normalizar_espacios',
+    'es_palindromo',
+    'es_anagrama',
+    'codificar',
+    'decodificar',
+    'es_alfabetico',
+    'es_alfa_numerico',
+    'es_decimal',
+    'es_numerico',
+    'es_identificador',
+    'es_imprimible',
+    'es_ascii',
+    'es_mayusculas',
+    'es_minusculas',
+    'es_titulo',
+    'es_digito',
+    'es_espacio',
+    'quitar_prefijo',
+    'quitar_sufijo',
+    'a_snake',
+    'a_camel',
+    'quitar_envoltura',
+    'prefijo_comun',
+    'sufijo_comun',
+    'dividir_lineas',
+    'dividir_derecha',
+    'encontrar',
+    'encontrar_derecha',
+    'subcadena_antes',
+    'subcadena_despues',
+    'subcadena_antes_ultima',
+    'subcadena_despues_ultima',
+    'indice',
+    'indice_derecha',
+    'contar_subcadena',
+    'centrar_texto',
+    'rellenar_ceros',
+    'minusculas',
+    'mayusculas',
+    'minusculas_casefold',
+    'intercambiar_mayusculas',
+    'expandir_tabulaciones',
+    'particionar',
+    'particionar_derecha',
+    'indentar_texto',
+    'desindentar_texto',
+    'envolver_texto',
+    'acortar_texto',
+    'formatear',
+    'formatear_mapa',
+    'tabla_traduccion',
+    'traducir',
+    'recortar',
+    'reemplazar',
+    'separar',
+    'unir',
+    'contiene',
+    'longitud',
+    'repetir',
+]
 
 PUBLIC_API_TEXTO: tuple[str, ...] = tuple(__all__)
 

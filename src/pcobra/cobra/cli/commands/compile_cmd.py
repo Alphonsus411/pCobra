@@ -99,6 +99,20 @@ def _target_label(target: str) -> str:
     return target.replace("_", " ").capitalize()
 
 
+def _transpiler_class_display(target: str) -> str:
+    names = {
+        "python": "TranspiladorPython",
+        "javascript": "TranspiladorJavaScript",
+        "rust": "TranspiladorRust",
+        "cpp": "TranspiladorCPP",
+        "go": "TranspiladorGo",
+        "java": "TranspiladorJava",
+        "wasm": "TranspiladorWasm",
+        "asm": "TranspiladorASM",
+    }
+    return names.get(target, f"Transpilador{_target_label(target).replace(' ', '')}")
+
+
 def _transpile_with_pipeline_or_plugin(
     ast,
     lang: str,
@@ -267,9 +281,7 @@ class CompileCommand(BaseCommand):
                     resultados = run_transpiler_pool(lenguajes, ast, self._ejecutar_transpilador)
                     for lang, resultado in resultados:
                         mostrar_info(
-                            _("Código generado para {lang}:").format(
-                                lang=f"{_target_label(lang)} ({lang})",
-                            )
+                            f"Código generado ({_transpiler_class_display(lang)}) para {_target_label(lang)} ({lang}):"
                         )
                         print(resultado)
                 except multiprocessing.TimeoutError:
@@ -283,7 +295,7 @@ class CompileCommand(BaseCommand):
                     dict(cli_plugin_transpilers()),
                 )
                 mostrar_info(
-                    _("Código generado:")
+                    f"Código generado ({_transpiler_class_display(transpilador)}):"
                 )
                 print(resultado)
             return 0

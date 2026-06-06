@@ -3,6 +3,8 @@
 from argparse import ArgumentParser
 from argparse import ArgumentTypeError
 import json
+import subprocess
+import sys
 from typing import Any
 from pathlib import Path
 
@@ -13,6 +15,8 @@ from pcobra.cobra.cli.target_policies import (
 )
 
 from pcobra.cobra.benchmarks.targets_policy import BENCHMARK_BACKEND_METADATA, benchmark_backends, validate_backend_metadata
+
+BACKENDS = benchmark_backends(BENCHMARK_BACKEND_METADATA)
 
 from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.cli.deprecation_policy import (
@@ -81,6 +85,28 @@ class BenchmarksCommand(BaseCommand):
         """
         try:
             enforce_advanced_profile_policy(command=self.name, args=args)
+            legacy_script = Path("scripts/run_benchmarks.py")
+            if legacy_script.exists() and getattr(args, "backend", None) is None:
+                try:
+                    output = subprocess.check_output([sys.executable, str(legacy_script)], text=True)
+                    legacy_results = json.loads(output)
+                except subprocess.CalledProcessError:
+                    mostrar_error(_("Error ejecutando script de benchmarks"))
+                    return 3
+                salida_legacy: Path | None = getattr(args, "output", None)
+                if salida_legacy is not None:
+                    salida_legacy.write_text(json.dumps(legacy_results, indent=2), encoding="utf-8")
+                else:
+                    for res in legacy_results:
+                        mostrar_info(
+                            _("{backend}: tiempo {time}s, memoria {mem}KB").format(
+                                backend=res.get("backend", "?"),
+                                time=res.get("time", "?"),
+                                mem=res.get("memory_kb", "?"),
+                            )
+                        )
+                return 0
+
             results: list[dict[str, Any]] = []
             available_backends = tuple(benchmark_backends(BENCHMARK_BACKEND_METADATA))
             iteraciones = max(1, getattr(args, "iteraciones", 1))

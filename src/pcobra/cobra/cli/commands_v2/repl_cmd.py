@@ -188,13 +188,11 @@ class ReplCommandV2(BaseCommand):
                 continue
 
             comando = linea.strip()
-            if comando in {"salir", "exit"}:
+            if comando in {"salir", "salir()", "exit", "exit()"}:
                 if buffer:
                     mostrar_info(_("Entrada multilinea cancelada. Saliendo del REPL."))
                     self._reset_buffer_local(buffer)
                     self._reset_estado_delegate()
-                else:
-                    mostrar_info(_("Saliendo..."))
                 break
 
             buffer.append(linea)

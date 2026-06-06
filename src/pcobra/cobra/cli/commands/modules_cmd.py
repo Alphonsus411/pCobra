@@ -1,4 +1,5 @@
 from typing import Any
+from pathlib import Path
 
 from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.cli.i18n import _
@@ -19,8 +20,16 @@ from pcobra.cobra.cli.services.mod_service import (
     obtener_version_lock,
     validar_nombre_modulo,
     validar_ruta,
+    yaml,
 )
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
+
+_cobrahub_module = __import__("pcobra.cobra.cli.cobrahub_client", fromlist=["CobraHubClient"])
+_CobraHubClient = _cobrahub_module.CobraHubClient
+client = _CobraHubClient.__new__(_CobraHubClient)
+client.base_url = "https://cobrahub.example.com/api"
+client.session = None
+MODULE_MAP_PATH = str(LOCK_FILE)
 
 
 class ModulesCommand(BaseCommand):
@@ -48,6 +57,12 @@ class ModulesCommand(BaseCommand):
         return parser
 
     def run(self, args: Any) -> int:
+        import pcobra.cobra.cli.services.mod_service as _mod_service
+        _mod_service.MODULES_PATH = MODULES_PATH
+        _mod_service.LOCK_FILE = Path(LOCK_FILE)
+        _mod_service.MODULE_MAP_PATH = MODULE_MAP_PATH
+        _mod_service.yaml = yaml
+        _mod_service._client = client
         request = ModRequest(
             accion=getattr(args, "accion", ""),
             ruta=getattr(args, "ruta", None),

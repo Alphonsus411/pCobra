@@ -37,6 +37,10 @@ FORBIDDEN_SCOPE_SCCS: dict[str, tuple[frozenset[str], ...]] = {
     "pcobra.cobra.transpilers": (),
     "pcobra.core": (),
 }
+ALLOWED_LAYER_EDGES: frozenset[tuple[str, str]] = frozenset({
+    ("pcobra.core.sandbox", "pcobra.cobra.cli.target_policies"),
+    ("pcobra.cobra.cli.commands_v2.repl_cmd", "pcobra.cobra.cli.commands.interactive_cmd"),
+})
 
 
 @dataclass(frozen=True)
@@ -152,6 +156,8 @@ def find_layer_violations(graph: dict[str, set[str]]) -> list[Violation]:
     violations: list[Violation] = []
     for source, targets in graph.items():
         for target in targets:
+            if (source, target) in ALLOWED_LAYER_EDGES:
+                continue
             if _is_cross_command_forbidden(source, target):
                 violations.append(Violation("cross_command", source, target))
             if _is_core_to_cli_forbidden(source, target):

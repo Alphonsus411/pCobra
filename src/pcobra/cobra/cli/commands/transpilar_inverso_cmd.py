@@ -152,6 +152,9 @@ def _runtime_destino_choices() -> tuple[str, ...]:
     return cli_transpiler_targets()
 
 
+DESTINO_CHOICES = _runtime_destino_choices()
+
+
 def _validate_official_target_or_raise(target: str, *, context: str) -> str:
     """Valida que un target pertenezca a la whitelist oficial."""
     canonical = parse_target(target)

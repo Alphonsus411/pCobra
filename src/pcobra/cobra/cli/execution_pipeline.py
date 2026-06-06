@@ -16,7 +16,7 @@ from pcobra.cobra.cli.utils.unicode_sanitize import sanitize_source_for_tokenize
 from pcobra.cobra.cli.utils.validators import normalizar_validadores_extra
 from pcobra.cobra.core.runtime import ValidadorBase, construir_cadena
 from pcobra.cobra.usar_policy import REPL_COBRA_MODULE_MAP
-from pcobra.core.usar_symbol_policy import (
+from pcobra.cobra.core.usar_symbol_policy import (
     normalizar_metadata_simbolo_usar,
     validate_usar_symbol_metadata,
 )

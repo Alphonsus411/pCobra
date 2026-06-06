@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from argparse import Namespace
+from collections.abc import Mapping
 
 from pcobra.cobra.cli.commands.base import CommandCapability
 from pcobra.cobra.cli.i18n import _
@@ -36,10 +37,11 @@ CAPABILIDAD_POR_COMANDO: dict[str, CommandCapability] = {
 }
 
 
-def obtener_modo_desde_args(args: Namespace) -> str:
+def obtener_modo_desde_args(args: Namespace | Mapping[str, object]) -> str:
     """Obtiene y normaliza el modo CLI desde ``args``."""
 
-    modo = str(getattr(args, "modo", MODO_POR_DEFECTO) or MODO_POR_DEFECTO).strip().lower()
+    raw_modo = args.get("modo", MODO_POR_DEFECTO) if isinstance(args, Mapping) else getattr(args, "modo", MODO_POR_DEFECTO)
+    modo = str(raw_modo or MODO_POR_DEFECTO).strip().lower()
     if modo not in CLI_MODOS_PERMITIDOS:
         return MODO_POR_DEFECTO
     return modo
@@ -53,7 +55,7 @@ def _resolver_capacidad(command_name: str, capability: CommandCapability | None)
 
 def validar_politica_modo(
     command_name: str,
-    args: Namespace,
+    args: Namespace | Mapping[str, object],
     *,
     capability: CommandCapability | None = None,
 ) -> None:

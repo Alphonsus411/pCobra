@@ -64,7 +64,7 @@ PUBLIC_ARCHITECTURE_OVERVIEW: Final[PublicArchitectureOverview] = (
 
 # Diagrama de flujo corto (sin cambios en AST).
 PUBLIC_FLOW_DIAGRAM: Final[str] = (
-    "Frontend Cobra -> BackendPipeline -> Bindings"
+    "Cobra source -> AST (sin cambios) -> backend_pipeline -> runtime/binding"
 )
 
 
