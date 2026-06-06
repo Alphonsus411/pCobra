@@ -15,7 +15,9 @@ def main(page: "ft.Page"):
     entrada = ft.TextField(multiline=True, expand=True)
     salida = ft.Text(value="", selectable=True)
     lenguajes = list(runtime.gui_target_choices())
-    selector = ft.Dropdown(options=[ft.dropdown.Option(lang) for lang in lenguajes])
+    selector = ft.Dropdown(
+        options=[runtime.flet_dropdown_option(ft, lang) for lang in lenguajes]
+    )
     if lenguajes:
         selector.value = lenguajes[0]
 

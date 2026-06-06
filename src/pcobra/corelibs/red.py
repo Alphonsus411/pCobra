@@ -256,10 +256,11 @@ async def descargar_archivo(
     *,
     permitir_redirecciones: bool = False,
     crear_padres: bool = True,
-) -> str:
+) -> Path:
     """Descarga una URL ``https://`` a ``destino`` respetando la lista blanca.
 
-    Devuelve la ruta final como ``str`` para evitar fugas de tipos backend.
+    Devuelve la ruta final como :class:`pathlib.Path`, alineado con la ruta
+    recibida y con las utilidades de archivos locales.
     """
 
     ruta = Path(destino)
@@ -269,12 +270,12 @@ async def descargar_archivo(
         resultado = await _realizar_peticion_async(
             "GET", url, permitir_redirecciones=permitir_redirecciones, destino=ruta
         )
-    except Exception as exc:
+    except Exception:
         if ruta.exists():
             ruta.unlink()
-        raise _error_red("descargar_archivo", exc) from None
+        raise
     assert isinstance(resultado, Path)
-    return str(resultado)
+    return resultado
 
 
 async def obtener_url_texto(url: str, permitir_redirecciones: bool = False) -> str:

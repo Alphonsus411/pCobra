@@ -230,7 +230,7 @@ class InterpretadorCobra:
             payload["hash_corto"] = hash_corto
         if fase:
             payload["fase"] = fase
-        logging.debug("Auditoria validador extra: %s", payload)
+        logging.warning("Auditoria validador extra: %s", payload)
 
     @staticmethod
     def _cargar_validadores(ruta):
@@ -365,36 +365,48 @@ class InterpretadorCobra:
                             "ImportError: uso de introspección dinámica no permitido en el validador adicional."
                         )
 
-        from RestrictedPython import compile_restricted
-        from RestrictedPython.Eval import default_guarded_getitem, default_guarded_getattr
-        from RestrictedPython.Guards import (
-            guarded_iter_unpack_sequence,
-            guarded_unpack_sequence,
-        )
-        from RestrictedPython.PrintCollector import PrintCollector
+        from .sandbox import cargar_simbolos_restrictedpython
+        from .semantic_validators.base import ValidadorBase
 
         import builtins
 
+        rp_symbols, has_restricted_python = cargar_simbolos_restrictedpython()
+        if not has_restricted_python:
+            raise ImportError(
+                "Los validadores adicionales requieren RestrictedPython instalado "
+                "y compatible con la API de seguridad de Cobra."
+            )
+
+        rp_safe_builtins = rp_symbols["safe_builtins"]
         safe_builtins = {
-            "len": builtins.len,
-            "range": builtins.range,
-            "__build_class__": builtins.__build_class__,
-            "Exception": builtins.Exception,
-            "object": builtins.object,
+            nombre: rp_safe_builtins[nombre]
+            for nombre in (
+                "len",
+                "range",
+                "__build_class__",
+                "Exception",
+                "object",
+            )
+            if nombre in rp_safe_builtins
         }
-        from .semantic_validators.base import ValidadorBase
+        safe_builtins.setdefault("len", builtins.len)
+        safe_builtins.setdefault("range", builtins.range)
+        safe_builtins.setdefault("__build_class__", builtins.__build_class__)
+        safe_builtins.setdefault("Exception", builtins.Exception)
+        safe_builtins.setdefault("object", builtins.object)
 
         namespace = {
             "__builtins__": safe_builtins,
             "ValidadorBase": ValidadorBase,
             "__name__": "validators",
             "__metaclass__": builtins.type,
-            "_print_": PrintCollector,
-            "_getattr_": default_guarded_getattr,
-            "_getitem_": default_guarded_getitem,
-            "_iter_unpack_sequence_": guarded_iter_unpack_sequence,
-            "_unpack_sequence_": guarded_unpack_sequence,
+            "_print_": rp_symbols["PrintCollector"],
+            "_getattr_": rp_symbols["default_guarded_getattr"],
+            "_getitem_": rp_symbols["default_guarded_getitem"],
+            "_iter_unpack_sequence_": rp_symbols["guarded_iter_unpack_sequence"],
+            "_unpack_sequence_": rp_symbols["guarded_unpack_sequence"],
         }
+        compile_restricted = rp_symbols["compile_restricted"]
         mem_limit = limite_memoria_mb()
         cpu_limit = limite_cpu_segundos()
         if mem_limit is not None:

@@ -80,6 +80,22 @@ def require_flet() -> Any:
     return ft
 
 
+def flet_dropdown_option(ft: Any, value: str) -> Any:
+    """Crea una opción de Dropdown compatible con versiones recientes de Flet."""
+
+    option_factory = getattr(ft, "Option", None)
+    if option_factory is not None:
+        return option_factory(value)
+
+    dropdown_module = getattr(ft, "dropdown", None)
+    option_factory = getattr(dropdown_module, "Option", None)
+    if option_factory is None:
+        raise RuntimeError(
+            "La versión instalada de 'flet' no expone Option ni dropdown.Option."
+        )
+    return option_factory(value)
+
+
 def normalizar_codigo(codigo: str | None) -> str:
     """Normaliza la entrada para evitar valores ``None``."""
     return codigo or ""
