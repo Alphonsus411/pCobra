@@ -1,3 +1,5 @@
+from types import SimpleNamespace
+
 try:
     from pcobra.core.ast_nodes import (
         NodoAsignacion,
@@ -18,6 +20,7 @@ try:
         NodoWith,
         NodoDefer,
         NodoRetorno,
+        NodoOperacionBinaria,
     )
     from pcobra.core.ast_nodes import NodoSwitch, NodoCase, NodoPattern, NodoGuard
 except ImportError:  # pragma: no cover - compatibilidad
@@ -40,6 +43,7 @@ except ImportError:  # pragma: no cover - compatibilidad
         NodoWith,
         NodoDefer,
         NodoRetorno,
+        NodoOperacionBinaria,
     )
     from core.ast_nodes import (  # type: ignore
         NodoSwitch,
@@ -148,6 +152,29 @@ fin"""
     assert transpilador.codigo == "def doble(n):\n" + "    return n * 2\n"
     assert "ExitStack" not in transpilador.codigo
     assert transpilador.usa_contextlib is False
+
+
+def test_transpilar_python_conserva_funcion_simple_inlineable():
+    ast = [
+        NodoFuncion(
+            "doble",
+            ["n"],
+            [
+                NodoRetorno(
+                    NodoOperacionBinaria(
+                        NodoIdentificador("n"),
+                        SimpleNamespace(tipo=None, valor="*"),
+                        NodoValor(2),
+                    )
+                )
+            ],
+        )
+    ]
+
+    codigo = TranspiladorPython().generate_code(ast)
+
+    assert "def doble(n):\n" in codigo
+    assert "    return n * 2\n" in codigo
 
 
 def test_transpilador_funcion_sin_defer_retorna_identificador_basico():
