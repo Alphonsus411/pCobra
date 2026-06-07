@@ -79,3 +79,6 @@ def main(page: "ft.Page"):
         runtime.flet_elevated_button(ft, "AST", on_click=ast_handler),
         salida,
     )
+
+if __name__ == "__main__":
+    runtime.flet_app(main)

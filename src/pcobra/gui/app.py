@@ -49,3 +49,6 @@ def main(page: "ft.Page"):
         runtime.flet_elevated_button(ft, "Ejecutar", on_click=ejecutar_handler),
         salida,
     )
+
+if __name__ == "__main__":
+    runtime.flet_app(main)
