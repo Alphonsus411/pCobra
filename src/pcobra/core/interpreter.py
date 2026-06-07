@@ -2432,20 +2432,21 @@ class InterpretadorCobra:
                 metadata_por_simbolo=metadata_por_simbolo,
             )
         except Exception as exc:
-            if _usar_detalle_habilitado():
+            detalle_usar_habilitado = _usar_detalle_habilitado()
+            if detalle_usar_habilitado:
                 logging.exception("Error al usar el módulo '%s': %s", nodo.modulo, exc)
             elif _usar_error_esperado(exc):
-                logging.debug("Error esperado al usar el módulo '%s': %s", nodo.modulo, exc)
+                logging.debug("Error esperado al usar el módulo '%s'", nodo.modulo)
             else:
                 logging.error("Error al usar el módulo '%s': %s", nodo.modulo, exc)
             if isinstance(exc, PermissionError):
                 mensaje = formatear_error_usar_usuario("modulo_fuera_catalogo", nodo.modulo)
-                if _usar_detalle_habilitado():
+                if detalle_usar_habilitado:
                     mensaje = f"{mensaje} ({exc})"
                 raise PermissionError(mensaje) from exc
             if isinstance(exc, ModuleNotFoundError):
                 mensaje = formatear_error_usar_usuario("carga_modulo_error", nodo.modulo)
-                if _usar_detalle_habilitado():
+                if detalle_usar_habilitado:
                     mensaje = f"{mensaje} ({exc})"
                 raise ImportError(mensaje) from exc
             raise
