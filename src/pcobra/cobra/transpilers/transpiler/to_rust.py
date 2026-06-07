@@ -2,6 +2,7 @@
 
 Los parámetros de tipo de Cobra se convierten en genéricos idiomáticos de Rust."""
 
+from pcobra.cobra.core import TipoToken
 from pcobra.cobra.core.ast_nodes import (
     NodoLista,
     NodoDiccionario,
@@ -36,35 +37,34 @@ from pcobra.cobra.core.ast_nodes import (
     NodoTransformar,
     NodoGraficar,
 )
-from pcobra.cobra.core import TipoToken
-from pcobra.cobra.core.visitor import NodeVisitor
+from pcobra.cobra.core.optimizations import optimize_constants
+from pcobra.cobra.macro import expandir_macros
 from pcobra.cobra.transpilers.common.utils import (
     BaseTranspiler,
     get_runtime_hooks,
     get_standard_imports,
 )
-from pcobra.cobra.core.optimizations import optimize_constants, remove_dead_code, inline_functions
-from pcobra.cobra.macro import expandir_macros
 from pcobra.cobra.transpilers.internal_ir_bridge import normalize_to_cobra_ast
-
 from pcobra.cobra.transpilers.transpiler.rust_nodes.asignacion import visit_asignacion as _visit_asignacion
-from pcobra.cobra.transpilers.transpiler.rust_nodes.condicional import visit_condicional as _visit_condicional
 from pcobra.cobra.transpilers.transpiler.rust_nodes.bucle_mientras import visit_bucle_mientras as _visit_bucle_mientras
-from pcobra.cobra.transpilers.transpiler.rust_nodes.funcion import visit_funcion as _visit_funcion
-from pcobra.cobra.transpilers.transpiler.rust_nodes.llamada_funcion import visit_llamada_funcion as _visit_llamada_funcion
-from pcobra.cobra.transpilers.transpiler.rust_nodes.holobit import visit_holobit as _visit_holobit
 from pcobra.cobra.transpilers.transpiler.rust_nodes.clase import visit_clase as _visit_clase
-from pcobra.cobra.transpilers.transpiler.rust_nodes.metodo import visit_metodo as _visit_metodo
-from pcobra.cobra.transpilers.transpiler.rust_nodes.retorno import visit_retorno as _visit_retorno
-from pcobra.cobra.transpilers.transpiler.rust_nodes.yield_ import visit_yield as _visit_yield
-from pcobra.cobra.transpilers.transpiler.rust_nodes.romper import visit_romper as _visit_romper
+from pcobra.cobra.transpilers.transpiler.rust_nodes.condicional import visit_condicional as _visit_condicional
 from pcobra.cobra.transpilers.transpiler.rust_nodes.continuar import visit_continuar as _visit_continuar
-from pcobra.cobra.transpilers.transpiler.rust_nodes.pasar import visit_pasar as _visit_pasar
-from pcobra.cobra.transpilers.transpiler.rust_nodes.switch import visit_switch as _visit_switch
-from pcobra.cobra.transpilers.transpiler.rust_nodes.try_catch import visit_try_catch as _visit_try_catch
-from pcobra.cobra.transpilers.transpiler.rust_nodes.throw import visit_throw as _visit_throw
-from pcobra.cobra.transpilers.transpiler.rust_nodes.option import visit_option as _visit_option
 from pcobra.cobra.transpilers.transpiler.rust_nodes.defer import visit_defer as _visit_defer
+from pcobra.cobra.transpilers.transpiler.rust_nodes.funcion import visit_funcion as _visit_funcion
+from pcobra.cobra.transpilers.transpiler.rust_nodes.holobit import visit_holobit as _visit_holobit
+from pcobra.cobra.transpilers.transpiler.rust_nodes.llamada_funcion import \
+    visit_llamada_funcion as _visit_llamada_funcion
+from pcobra.cobra.transpilers.transpiler.rust_nodes.metodo import visit_metodo as _visit_metodo
+from pcobra.cobra.transpilers.transpiler.rust_nodes.option import visit_option as _visit_option
+from pcobra.cobra.transpilers.transpiler.rust_nodes.pasar import visit_pasar as _visit_pasar
+from pcobra.cobra.transpilers.transpiler.rust_nodes.retorno import visit_retorno as _visit_retorno
+from pcobra.cobra.transpilers.transpiler.rust_nodes.romper import visit_romper as _visit_romper
+from pcobra.cobra.transpilers.transpiler.rust_nodes.switch import visit_switch as _visit_switch
+from pcobra.cobra.transpilers.transpiler.rust_nodes.throw import visit_throw as _visit_throw
+from pcobra.cobra.transpilers.transpiler.rust_nodes.try_catch import visit_try_catch as _visit_try_catch
+from pcobra.cobra.transpilers.transpiler.rust_nodes.yield_ import visit_yield as _visit_yield
+from pcobra.cobra.transpilers.transpiler.rust_nodes.imprimir import visit_imprimir as _visit_imprimir
 
 
 def visit_assert(self, nodo):
@@ -333,3 +333,5 @@ TranspiladorRust.visit_transformar = visit_transformar
 TranspiladorRust.visit_graficar = visit_graficar
 
 TranspiladorRust.visit_esperar = visit_esperar
+TranspiladorRust.visit_imprimir = _visit_imprimir
+TranspiladorRust.visit_NodoImprimir = _visit_imprimir
