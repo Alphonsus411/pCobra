@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import base64
 import binascii
+import inspect
 import json
 import logging
 import os
@@ -223,18 +224,36 @@ def _load_sqliteplus_class(*, silent_optional: bool = False):
     return _SQLITEPLUS_CLASS
 
 
+def _load_sqliteplus_class_silent_optional():
+    """Carga SQLitePlus sin avisos para rutas donde el fallback opcional es esperado."""
+
+    loader = _load_sqliteplus_class
+    try:
+        accepts_silent_optional = (
+            "silent_optional" in inspect.signature(loader).parameters
+        )
+    except (TypeError, ValueError):  # pragma: no cover - callables no introspectables
+        accepts_silent_optional = True
+
+    if accepts_silent_optional:
+        return loader(silent_optional=True)
+
+    # Compatibilidad con pruebas/adaptadores heredados que sustituyen el loader
+    # por callables sin el parámetro opcional. No se usa en el flujo normal de
+    # ``cobra build`` y el motivo queda limitado al log de depuración.
+    LOGGER.debug(
+        "Loader SQLitePlus sin parámetro silent_optional; se invoca sin avisos de usuario."
+    )
+    return loader()
+
+
 def is_sqliteplus_available() -> bool:
     """Indica si la dependencia opcional ``sqliteplus-enhanced`` está operativa."""
 
     global _SQLITEPLUS_AVAILABILITY
     if _SQLITEPLUS_AVAILABILITY is None:
         try:
-            try:
-                _load_sqliteplus_class(silent_optional=True)
-            except TypeError:
-                # Compatibilidad con pruebas que sustituyen el loader por una
-                # lambda sin parámetros.
-                _load_sqliteplus_class()
+            _load_sqliteplus_class_silent_optional()
         except Exception as exc:  # pragma: no cover - ruta defensiva opcional
             LOGGER.debug(
                 "No se pudo validar sqliteplus-enhanced; se asume indisponible: %s",
@@ -307,14 +326,11 @@ def _get_sqliteplus_instance():
     with _INIT_LOCK:
         if _SQLITEPLUS_INSTANCE is not None:
             return _SQLITEPLUS_INSTANCE
-        try:
-            sqliteplus_cls = _load_sqliteplus_class(silent_optional=True)
-        except TypeError:
-            # Compatibilidad con pruebas/adaptadores que sustituyen el loader
-            # por callables sin el parámetro opcional.
-            sqliteplus_cls = _load_sqliteplus_class()
+        sqliteplus_cls = _load_sqliteplus_class_silent_optional()
         db_path, cipher_key = _resolve_paths()
-        _SQLITEPLUS_INSTANCE = sqliteplus_cls(db_path=str(db_path), cipher_key=cipher_key)
+        _SQLITEPLUS_INSTANCE = sqliteplus_cls(
+            db_path=str(db_path), cipher_key=cipher_key
+        )
         return _SQLITEPLUS_INSTANCE
 
 
