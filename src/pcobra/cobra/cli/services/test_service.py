@@ -17,6 +17,7 @@ from pcobra.cobra.cli.target_policies import (
     VERIFICATION_EXECUTABLE_TARGETS,
 )
 from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
+from pcobra.cobra.cli.utils.source import read_cobra_source
 from pcobra.cobra.cli.utils.validators import validar_archivo_existente
 from pcobra.cobra.core import Lexer, Parser
 
@@ -110,7 +111,7 @@ class TestService:
         self.validate_file(file_path)
 
         try:
-            return Path(file_path).read_text(encoding="utf-8")
+            return read_cobra_source(file_path)
         except PermissionError:
             raise PermissionError(_("No hay permisos para leer el archivo '{}'").format(file_path))
         except UnicodeDecodeError as e:
