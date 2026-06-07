@@ -2,9 +2,11 @@ from argparse import Namespace
 from contextlib import redirect_stderr, redirect_stdout
 from io import StringIO
 import re
+from unittest.mock import call, patch
 
 import pytest
-from unittest.mock import call, patch
+
+_ANSI_RE = re.compile(r"\x1b\[[0-9;]*m")
 
 from pcobra.cobra.cli.commands_v2.run_cmd import RunCommandV2
 from pcobra.cobra.cli.services.build_service import BuildService
@@ -27,6 +29,10 @@ def _run_args(file_path: str) -> Namespace:
         formatear=False,
         modo="mixto",
     )
+
+
+def _salida_limpia(*fragmentos: str) -> str:
+    return _ANSI_RE.sub("", "".join(fragmentos))
 
 
 def _run_pipeline_and_repl(
@@ -106,7 +112,9 @@ def _run_pipeline_and_repl(
 
 @pytest.mark.integration
 def test_misma_secuencia_semantica_equivale_entre_run_y_repl(tmp_path, monkeypatch):
-    monkeypatch.setattr("pcobra.cobra.cli.services.run_service.limitar_cpu_segundos", lambda *_: None)
+    monkeypatch.setattr(
+        "pcobra.cobra.cli.services.run_service.limitar_cpu_segundos", lambda *_: None
+    )
     codigo = (
         "mientras verdadero:\n"
         "    var total = 7\n"
@@ -433,7 +441,9 @@ def test_repl_persistencia_entre_entradas_tras_error_intermedio_real() -> None:
 
 @pytest.mark.integration
 def test_anidacion_condicional_bucle_equivale_en_salida_y_estado(tmp_path, monkeypatch):
-    monkeypatch.setattr("pcobra.cobra.cli.services.run_service.limitar_cpu_segundos", lambda *_: None)
+    monkeypatch.setattr(
+        "pcobra.cobra.cli.services.run_service.limitar_cpu_segundos", lambda *_: None
+    )
     codigo = (
         "si verdadero:\n"
         "    mientras verdadero:\n"
@@ -697,7 +707,9 @@ def test_sandbox_normaliza_safe_mode_y_validadores_igual_en_run_y_repl(monkeypat
 def test_paridad_funcional_acotada_run_y_repl_en_declaraciones_secuenciales(
     tmp_path, caso: str, codigo: str, estado_esperado: dict[str, int], monkeypatch
 ):
-    monkeypatch.setattr("pcobra.cobra.cli.services.run_service.limitar_cpu_segundos", lambda *_: None)
+    monkeypatch.setattr(
+        "pcobra.cobra.cli.services.run_service.limitar_cpu_segundos", lambda *_: None
+    )
     archivo = tmp_path / f"paridad_{caso}.co"
     archivo.write_text(codigo + "\n", encoding="utf-8")
 
@@ -728,7 +740,9 @@ def test_paridad_funcional_acotada_run_y_repl_en_declaraciones_secuenciales(
 
 @pytest.mark.integration
 def test_run_no_corta_sentencias_posteriores_en_bloque_si(tmp_path, monkeypatch):
-    monkeypatch.setattr("pcobra.cobra.cli.services.run_service.limitar_cpu_segundos", lambda *_: None)
+    monkeypatch.setattr(
+        "pcobra.cobra.cli.services.run_service.limitar_cpu_segundos", lambda *_: None
+    )
     codigo = (
         "si verdadero:\n"
         "    var x = 3\n"
@@ -750,7 +764,9 @@ def test_run_no_corta_sentencias_posteriores_en_bloque_si(tmp_path, monkeypatch)
 
 @pytest.mark.integration
 def test_run_retorno_fuera_de_funcion_muestra_error_corto_sin_traceback(tmp_path, monkeypatch):
-    monkeypatch.setattr("pcobra.cobra.cli.services.run_service.limitar_cpu_segundos", lambda *_: None)
+    monkeypatch.setattr(
+        "pcobra.cobra.cli.services.run_service.limitar_cpu_segundos", lambda *_: None
+    )
     archivo = tmp_path / "retornar_top_level.co"
     archivo.write_text("retornar 1\n", encoding="utf-8")
 
@@ -766,7 +782,9 @@ def test_run_retorno_fuera_de_funcion_muestra_error_corto_sin_traceback(tmp_path
 
 @pytest.mark.integration
 def test_run_conservar_control_break_y_continue_en_mientras(tmp_path, monkeypatch):
-    monkeypatch.setattr("pcobra.cobra.cli.services.run_service.limitar_cpu_segundos", lambda *_: None)
+    monkeypatch.setattr(
+        "pcobra.cobra.cli.services.run_service.limitar_cpu_segundos", lambda *_: None
+    )
     codigo = (
         "var i = 0\n"
         "mientras verdadero:\n"
@@ -795,7 +813,9 @@ def test_run_conservar_control_break_y_continue_en_mientras(tmp_path, monkeypatc
 @pytest.mark.integration
 @pytest.mark.parametrize("con_bom", [True, False])
 def test_run_acepta_utf8_bom_en_frontera_de_entrada(tmp_path, monkeypatch, con_bom: bool):
-    monkeypatch.setattr("pcobra.cobra.cli.services.run_service.limitar_cpu_segundos", lambda *_: None)
+    monkeypatch.setattr(
+        "pcobra.cobra.cli.services.run_service.limitar_cpu_segundos", lambda *_: None
+    )
     contenido = 'imprimir("antes")\nvar x = 3\nimprimir("despues")\n'
     if con_bom:
         contenido = "\ufeff" + contenido
@@ -814,7 +834,9 @@ def test_run_acepta_utf8_bom_en_frontera_de_entrada(tmp_path, monkeypatch, con_b
 
 @pytest.mark.integration
 def test_run_utf8_bom_y_sin_bom_producen_salida_identica(tmp_path, monkeypatch):
-    monkeypatch.setattr("pcobra.cobra.cli.services.run_service.limitar_cpu_segundos", lambda *_: None)
+    monkeypatch.setattr(
+        "pcobra.cobra.cli.services.run_service.limitar_cpu_segundos", lambda *_: None
+    )
     script = 'imprimir("antes")\nvar x = 3\nimprimir("despues")\n'
 
     archivo_sin_bom = tmp_path / "script_sin_bom.co"
@@ -850,22 +872,72 @@ def test_build_utf8_bom_y_sin_bom_compilan_sin_token_bom(tmp_path, monkeypatch):
     for archivo in (archivo_sin_bom, archivo_con_bom):
         out_build, err_build = StringIO(), StringIO()
         with redirect_stdout(out_build), redirect_stderr(err_build):
+            # Contrato: no pasar --target en estas pruebas de cobra build.
             rc_build = BuildService().run(Namespace(file=str(archivo), debug=False))
 
-        salida = out_build.getvalue() + err_build.getvalue()
-        assert rc_build == 0, salida
-        assert "Token no reconocido" not in salida
-        assert "\ufeff" not in salida
-        assert "sqliteplus-enhanced" not in salida
-        salidas.append(out_build.getvalue())
+        salida_normal = out_build.getvalue()
+        salida_total = salida_normal + err_build.getvalue()
+        assert rc_build == 0, salida_total
+        assert "Token no reconocido" not in salida_total
+        assert "\ufeff" not in salida_total
+        assert "sqliteplus-enhanced" not in salida_normal
+        salidas.append(salida_normal)
 
     assert "print('hola')" in salidas[0]
     assert "print('hola')" in salidas[1]
 
 
 @pytest.mark.integration
+def test_run_usar_modulos_oficiales_produce_salida_exacta(tmp_path, monkeypatch):
+    monkeypatch.setattr(
+        "pcobra.cobra.cli.services.run_service.limitar_cpu_segundos", lambda *_: None
+    )
+    codigo = (
+        'usar "numero"\n'
+        'usar "archivo"\n'
+        'usar "texto"\n'
+        'usar "datos"\n'
+        'imprimir("antes")\n'
+        'imprimir("despues")\n'
+        'imprimir(mcd(16, 24))\n'
+        'imprimir(es_finito(8))\n'
+        'imprimir(existe("README.md"))\n'
+        'imprimir(existe("pyproject.toml"))\n'
+        'imprimir(existe("../README.md"))\n'
+        'imprimir(mayusculas("cobra"))\n'
+        'imprimir(reemplazar("mi-cancion", "mi-", ""))\n'
+        'imprimir(longitud([1, 2, 3]))\n'
+        'imprimir(elemento([10, 20, 30], 1))\n'
+    )
+    archivo = tmp_path / "modulos_oficiales.co"
+    archivo.write_text(codigo, encoding="utf-8")
+
+    out_run, err_run = StringIO(), StringIO()
+    with redirect_stdout(out_run), redirect_stderr(err_run):
+        rc_run = RunCommandV2().run(_run_args(str(archivo)))
+
+    assert rc_run == 0
+    assert err_run.getvalue() == ""
+    assert out_run.getvalue().splitlines() == [
+        "antes",
+        "despues",
+        "8",
+        "verdadero",
+        "verdadero",
+        "verdadero",
+        "falso",
+        "COBRA",
+        "cancion",
+        "3",
+        "20",
+    ]
+
+
+@pytest.mark.integration
 def test_run_error_lexico_sigue_siendo_corto_sin_traceback_con_y_sin_bom(tmp_path, monkeypatch):
-    monkeypatch.setattr("pcobra.cobra.cli.services.run_service.limitar_cpu_segundos", lambda *_: None)
+    monkeypatch.setattr(
+        "pcobra.cobra.cli.services.run_service.limitar_cpu_segundos", lambda *_: None
+    )
 
     for prefijo in ("", "\ufeff"):
         archivo = tmp_path / ("error_sin_bom.co" if not prefijo else "error_con_bom.co")
@@ -883,7 +955,9 @@ def test_run_error_lexico_sigue_siendo_corto_sin_traceback_con_y_sin_bom(tmp_pat
 
 @pytest.mark.integration
 def test_run_usar_numpy_rechaza_sin_traceback_ni_error_duplicado(tmp_path, monkeypatch):
-    monkeypatch.setattr("pcobra.cobra.cli.services.run_service.limitar_cpu_segundos", lambda *_: None)
+    monkeypatch.setattr(
+        "pcobra.cobra.cli.services.run_service.limitar_cpu_segundos", lambda *_: None
+    )
     archivo = tmp_path / "numpy.co"
     archivo.write_text('usar "numpy"\n', encoding="utf-8")
 
@@ -891,17 +965,18 @@ def test_run_usar_numpy_rechaza_sin_traceback_ni_error_duplicado(tmp_path, monke
     with redirect_stdout(out_run), redirect_stderr(err_run):
         rc_run = RunCommandV2().run(_run_args(str(archivo)))
 
-    salida = out_run.getvalue() + err_run.getvalue()
+    salida = _salida_limpia(out_run.getvalue(), err_run.getvalue())
+    lineas = [linea for linea in salida.splitlines() if linea.strip()]
     assert rc_run == 1
-    assert "numpy" in salida
-    assert "catálogo público" in salida
+    assert lineas == ["Error: No se puede usar 'numpy': módulo fuera del catálogo público."]
     assert "traceback" not in salida.lower()
-    assert salida.lower().count("error") == 1
 
 
 @pytest.mark.integration
 def test_run_usar_archivo_habilita_existe_readme_local(tmp_path, monkeypatch):
-    monkeypatch.setattr("pcobra.cobra.cli.services.run_service.limitar_cpu_segundos", lambda *_: None)
+    monkeypatch.setattr(
+        "pcobra.cobra.cli.services.run_service.limitar_cpu_segundos", lambda *_: None
+    )
     codigo = 'usar "archivo"\nimprimir(existe("README.md"))\n'
     archivo = tmp_path / "programa.co"
     archivo.write_text(codigo, encoding="utf-8")
@@ -917,7 +992,9 @@ def test_run_usar_archivo_habilita_existe_readme_local(tmp_path, monkeypatch):
 
 @pytest.mark.integration
 def test_run_usar_archivo_existe_parent_es_falso_por_wrapper_seguro(tmp_path, monkeypatch):
-    monkeypatch.setattr("pcobra.cobra.cli.services.run_service.limitar_cpu_segundos", lambda *_: None)
+    monkeypatch.setattr(
+        "pcobra.cobra.cli.services.run_service.limitar_cpu_segundos", lambda *_: None
+    )
     codigo = 'usar "archivo"\nimprimir(existe("../README.md"))\n'
     archivo = tmp_path / "programa.co"
     archivo.write_text(codigo, encoding="utf-8")
@@ -933,7 +1010,9 @@ def test_run_usar_archivo_existe_parent_es_falso_por_wrapper_seguro(tmp_path, mo
 
 @pytest.mark.integration
 def test_run_existe_sin_usar_archivo_permanece_bloqueado(tmp_path, monkeypatch):
-    monkeypatch.setattr("pcobra.cobra.cli.services.run_service.limitar_cpu_segundos", lambda *_: None)
+    monkeypatch.setattr(
+        "pcobra.cobra.cli.services.run_service.limitar_cpu_segundos", lambda *_: None
+    )
     codigo = 'imprimir(existe("README.md"))\n'
     archivo = tmp_path / "programa.co"
     archivo.write_text(codigo, encoding="utf-8")
@@ -943,6 +1022,25 @@ def test_run_existe_sin_usar_archivo_permanece_bloqueado(tmp_path, monkeypatch):
         rc_run = RunCommandV2().run(_run_args(str(archivo)))
 
     assert rc_run == 1
-    salida = out_run.getvalue() + err_run.getvalue()
-    assert "existe" in salida.lower()
+    salida = _salida_limpia(out_run.getvalue(), err_run.getvalue())
+    assert salida.strip() == "Error: Uso de primitiva peligrosa: 'existe'"
+    assert "traceback" not in salida.lower()
+
+
+@pytest.mark.integration
+def test_run_error_funcion_no_declarada_conserva_identificador_completo(tmp_path, monkeypatch):
+    monkeypatch.setattr(
+        "pcobra.cobra.cli.services.run_service.limitar_cpu_segundos", lambda *_: None
+    )
+    codigo = 'usar "numero"\nimprimir(funcion_que_no_existe(1))\n'
+    archivo = tmp_path / "funcion_no_declarada.co"
+    archivo.write_text(codigo, encoding="utf-8")
+
+    out_run, err_run = StringIO(), StringIO()
+    with redirect_stdout(out_run), redirect_stderr(err_run):
+        rc_run = RunCommandV2().run(_run_args(str(archivo)))
+
+    salida = _salida_limpia(out_run.getvalue(), err_run.getvalue())
+    assert rc_run == 1
+    assert salida.strip() == "Error: Variable no declarada: funcion_que_no_existe"
     assert "traceback" not in salida.lower()
