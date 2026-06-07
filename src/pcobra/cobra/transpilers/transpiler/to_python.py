@@ -258,11 +258,17 @@ class TranspiladorPython(BaseTranspiler):
     def obtener_indentacion(self):
         return "    " * self.nivel_indentacion
 
+    def _contiene_funciones(self, nodos):
+        """Indica si el programa declara funciones de primer nivel."""
+        return any(isinstance(nodo, NodoFuncion) for nodo in nodos)
 
     def transpilar(self, nodos):
         nodos = normalize_to_cobra_ast(nodos)
         nodos = expandir_macros(nodos)
-        nodos = remove_dead_code(inline_functions(optimize_constants(nodos)))
+        nodos = optimize_constants(nodos)
+        if not self._contiene_funciones(nodos):
+            nodos = inline_functions(nodos)
+        nodos = remove_dead_code(nodos)
         usa_holobit = ast_requires_holobit_runtime(nodos)
         self.codigo = get_standard_imports("python")
         if usa_holobit:
