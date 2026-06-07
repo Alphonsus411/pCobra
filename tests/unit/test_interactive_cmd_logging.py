@@ -86,6 +86,24 @@ def test_format_user_error_elimina_prefijos_duplicados():
     assert format_user_error(Exception("Error general: Error: fallo")) == "fallo"
 
 
+def test_format_user_error_preserva_mensaje_usar_corto_sin_prefijo_extra():
+    mensaje = "No se puede usar 'numpy': módulo fuera del catálogo público."
+    assert format_user_error(PermissionError(f"Error general: Error: {mensaje}")) == mensaje
+
+
+def test_log_error_usar_no_antepone_categoria_repl():
+    cmd = InteractiveCommand(types.SimpleNamespace())
+    cmd._debug_mode = False
+    mock_mostrar_error = Mock()
+    globals_log_error = InteractiveCommand._log_error.__globals__
+    mensaje = "No se puede usar 'numpy': módulo fuera del catálogo público."
+
+    with patch.dict(globals_log_error, {"mostrar_error": mock_mostrar_error}):
+        cmd._log_error(_("Error general"), PermissionError(f"Error: {mensaje}"))
+
+    mock_mostrar_error.assert_called_once_with(mensaje, registrar_log=False)
+
+
 def test_log_error_no_debug_solo_imprime_error_limpio():
     cmd = InteractiveCommand(types.SimpleNamespace())
     cmd._debug_mode = False

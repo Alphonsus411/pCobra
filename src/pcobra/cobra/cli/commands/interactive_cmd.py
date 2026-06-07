@@ -111,7 +111,12 @@ def _debug_assert_boundary_text_sanitized(text: str, *, context: str) -> None:
 
 
 def format_user_error(exc: Exception) -> str:
-    """Normaliza mensajes de error para salida limpia en la CLI."""
+    """Normaliza mensajes de error para salida limpia en la CLI.
+
+    La categoría del REPL se mantiene solo para logging interno; la salida de
+    usuario no debe recibir un segundo prefijo ``Error:`` ni ``Error general:``
+    cuando el intérprete ya entregó un mensaje accionable como ``usar``.
+    """
     msg = " ".join(str(exc).strip().split())
     prefijos_redundantes = re.compile(
         r"^(?:error\s+general|error\s+cr[ií]tico|error\s+de\s+sintaxis|error)\s*[:：\-–—]?\s*",
