@@ -1,245 +1,297 @@
 {
   "asistente": "Bella",
   "proyecto": "pCobra / Cobra",
-  "fecha_contexto_conversacion": "2026-06-06",
-  "objetivo_actual": "Continuar validando la CLI y las pruebas de concepto antes de publicar la versión 10.1.1 en PyPI.",
+  "fecha_contexto": "2026-06-07",
+  "release_objetivo": "10.1.1",
   "estado_general": {
-    "release_objetivo": "10.1.1",
-    "publicacion_pypi": "pendiente",
-    "criterio_actual": "No publicar hasta resolver o confirmar el comportamiento de cobra build con archivos UTF-8 BOM.",
-    "balance": "La CLI, REPL y cobra run están mayoritariamente en verde. cobra build ha revelado un posible bug específico de BOM."
+    "decision_actual": "Release casi lista, con un bug localizado en la transpilación Python de funciones antes de distribución final.",
+    "bloqueantes_originales": [
+      {
+        "id": "BUG-BUILD-001",
+        "descripcion": "cobra build fallaba con archivos UTF-8 BOM.",
+        "estado": "descartado / corregido / no reproducible",
+        "evidencia": [
+          "cobra build .\\poc_build_sin_bom.cobra genera artefacto correctamente",
+          "cobra build .\\poc_build_con_bom.cobra genera artefacto correctamente"
+        ]
+      }
+    ],
+    "bloqueantes_actuales": [
+      {
+        "id": "BUG-TRANSPILE-PY-FUNC-001",
+        "descripcion": "Transpilar a Python desde GUI falla con funciones Cobra simples.",
+        "estado": "localizado, pendiente de parche",
+        "error": "maximum recursion depth exceeded",
+        "severidad": "media",
+        "bloquea_release": "recomendado corregir antes de publicar nueva distribución si se quiere dejar GUI/transpilación saneada"
+      }
+    ],
+    "deudas_no_bloqueantes": [
+      {
+        "id": "GUI-UX-ENC-001",
+        "descripcion": "Salida Unicode con acentos aparece mojibakeada en GUI/Flet.",
+        "ejemplo": "programaciÃ³n en espaÃ±ol",
+        "severidad": "baja-media",
+        "bloquea_release": false
+      },
+      {
+        "id": "UX-ERR-001",
+        "descripcion": "Mensajes duplicados al rechazar módulos fuera del catálogo público.",
+        "severidad": "baja",
+        "bloquea_release": false
+      }
+    ]
   },
-  "contexto_previo_cargado": {
-    "version_anterior": "10.1.0",
-    "version_objetivo": "10.1.1",
-    "bloqueante_previo": {
-      "id": "RELEASE-BLOCKER-001",
-      "descripcion": "La wheel instalada fallaba al ejecutar cobra --version por intentar leer rutas tipo src/pcobra/... dentro del entorno instalado.",
-      "diagnostico": "runtime_api_matrix.py asumía layout de repositorio en vez de layout de paquete instalado.",
-      "solucion_recomendada": "Usar importlib.resources o rutas relativas robustas al paquete instalado.",
-      "estado_en_conversacion": "La CLI ya arranca correctamente en el entorno probado, por lo que el bloqueante parece superado funcionalmente."
-    },
-    "contrato_publico_recordado": {
-      "comandos_cli": ["run", "build", "test", "mod", "repl"],
-      "backends_oficiales": ["python", "javascript", "rust"],
-      "nota": "La CLI actual no expone --target como argumento público para cobra build."
-    }
-  },
-  "cambios_mencionados_por_usuario": {
-    "herramientas_usadas": ["Codex", "Trae"],
-    "tipo_de_cambios": ["actualizacion_de_librerias", "ajustes_en_pyproject", "posibles_cambios_de_packaging"],
-    "riesgo_detectado": "Las actualizaciones de dependencias obligan a revalidar CLI, imports, runtime, seguridad, build y wheel limpia."
-  },
-  "validaciones_cli_base": {
+  "validaciones_cli": {
     "cobra_version": {
       "comando": "cobra --version",
-      "resultado": "cobra dev (commit unknown)",
-      "estado": "verde_funcional",
-      "observacion": "Sigue siendo deuda UX porque no expone todavía 10.1.1, pero no bloquea funcionalmente."
+      "resultado": "cobra 10.1.1",
+      "estado": "verde"
     },
     "cobra_help": {
       "comando": "cobra --help",
-      "estado": "verde",
-      "observacion": "Carga sin traceback y muestra comandos públicos run/build/test/mod/repl."
-    },
-    "cobra_mod_list": {
-      "comando": "cobra mod list",
-      "resultado": "No hay módulos instalados",
+      "resultado": "Muestra comandos públicos run, build, test, mod, repl.",
       "estado": "verde"
+    },
+    "contrato_publico": {
+      "comandos": ["run", "build", "test", "mod", "repl"],
+      "nota": "cobra build no expone --target como argumento público; esto se considera correcto."
     }
   },
-  "fase_A_repl": {
-    "estado": "verde",
-    "pruebas": [
-      {
-        "id": "REPL-01",
-        "codigo": "imprimir(\"Hola desde repl\")",
-        "resultado": "Hola desde repl",
-        "estado": "verde"
-      },
-      {
-        "id": "REPL-02",
-        "codigo": "var x = 3\nimprimir(x)",
-        "resultado": "3",
-        "estado": "verde"
-      },
-      {
-        "id": "REPL-03",
-        "codigo": "func doble(n):\nretorno n * 2\nfin\nimprimir(doble(4))",
-        "resultado": "8",
-        "estado": "verde"
-      },
-      {
-        "id": "REPL-04",
-        "codigo": "usar \"numero\"\nimprimir(es_primo(7))\nimprimir(es_par(8))",
-        "resultado": "verdadero\nverdadero",
-        "estado": "verde"
-      },
-      {
-        "id": "REPL-05",
-        "codigo": "imprimir(existe(\"README.md\"))",
-        "resultado": "Error: Uso de primitiva peligrosa",
-        "estado": "verde_como_control_negativo"
-      },
-      {
-        "id": "REPL-06",
-        "codigo": "usar \"archivo\"\nimprimir(existe(\"README.md\"))\nimprimir(existe(\"../README.md\"))",
-        "resultado": "verdadero\nfalso",
-        "estado": "verde"
-      },
-      {
-        "id": "REPL-07",
-        "codigo": "usar \"texto\"\nimprimir(mayusculas(\"cobra\"))\nimprimir(quitar_acentos(\"canción\"))",
-        "resultado": "COBRA\ncancion",
-        "estado": "verde"
-      },
-      {
-        "id": "REPL-08",
-        "codigo": "usar \"datos\"\nimprimir(longitud([1, 2, 3]))\nimprimir(elemento([10, 20, 30], 1))",
-        "resultado": "3\n20",
-        "estado": "verde"
-      }
+  "validaciones_build": {
+    "utf8_sin_bom": {
+      "archivo": "poc_build_sin_bom.cobra",
+      "comando": "cobra build .\\poc_build_sin_bom.cobra",
+      "estado": "verde",
+      "salida_clave": [
+        "Artefacto Cobra generado.",
+        "print('build sin bom')",
+        "x = 3",
+        "print(x)"
+      ]
+    },
+    "utf8_con_bom": {
+      "archivo": "poc_build_con_bom.cobra",
+      "comando": "cobra build .\\poc_build_con_bom.cobra",
+      "estado": "verde",
+      "salida_clave": [
+        "Artefacto Cobra generado.",
+        "print('build con bom')",
+        "x = 3",
+        "print(x)"
+      ]
+    }
+  },
+  "validaciones_gui_flet": {
+    "diagnostico_inicial": {
+      "problema": "python -m pcobra.gui.app y python -m pcobra.gui.idle terminaban sin error pero no abrían ventana.",
+      "causa": "app.py e idle.py tenían def main(page), pero no tenían bloque ejecutable para lanzar Flet.",
+      "parche": "Añadir if __name__ == '__main__': runtime.flet_app(main) al final de ambos archivos."
+    },
+    "app_py": {
+      "archivo": "src/pcobra/gui/app.py",
+      "estado": "verde",
+      "validaciones": [
+        "Arranca ventana Flet",
+        "Ejecuta código Cobra simple",
+        "Ejecuta asignación e imprimir",
+        "Transpila a Python"
+      ]
+    },
+    "idle_py": {
+      "archivo": "src/pcobra/gui/idle.py",
+      "estado": "verde",
+      "validaciones": [
+        "Arranca ventana Flet",
+        "Botón Ejecutar funciona",
+        "Botón Tokens funciona",
+        "Botón AST funciona",
+        "Selector de target funciona",
+        "Switch Transpilar funciona"
+      ]
+    },
+    "script_complejo_ejecucion": {
+      "estado": "verde",
+      "caracteristicas_validadas": [
+        "usar \"numero\"",
+        "usar \"texto\"",
+        "usar \"datos\"",
+        "funciones",
+        "retorno",
+        "condicionales si/sino",
+        "listas",
+        "longitud(datos)",
+        "elemento(datos, 2)",
+        "salida acumulada en UI"
+      ],
+      "resultado_observado": [
+        "=== Prueba compleja de GUI Cobra ===",
+        "COBRA GUI",
+        "programaciÃ³n en espaÃ±ol",
+        "es impar",
+        "es primo",
+        "14",
+        "49",
+        "4",
+        "30",
+        "10",
+        "y mayor que 8",
+        "=== Fin prueba GUI ==="
+      ]
+    }
+  },
+  "validaciones_transpilacion_gui": {
+    "python_simple": {
+      "estado": "verde",
+      "script": "imprimir(\"=== Prueba transpilar ===\")\n\nvar titulo = \"cobra gui\"\nimprimir(titulo)",
+      "resultado": "Genera código Python con preámbulo runtime, asignación e imprimir."
+    },
+    "python_con_usar_texto": {
+      "estado": "verde",
+      "script": "usar \"texto\"\n\nvar titulo = \"cobra gui\"\nimprimir(mayusculas(titulo))\nimprimir(quitar_acentos(\"programación en español\"))",
+      "resultado": "Genera código Python con obtener_modulo('texto') y llamadas a mayusculas/quitar_acentos."
+    },
+    "python_con_funcion": {
+      "estado": "rojo_localizado",
+      "script": "func doble(n):\nretorno n * 2\nfin\n\nvar x = doble(5)\nimprimir(x)",
+      "error": "maximum recursion depth exceeded",
+      "diagnostico": "El fallo aparece al introducir una declaración de función Cobra."
+    },
+    "javascript": {
+      "estado": "verde_smoke",
+      "resultado": "Genera código JavaScript con imports/runtime y código transpilado."
+    },
+    "rust_simple": {
+      "estado": "verde_tras_parche",
+      "script": "var x = 3\nimprimir(x)",
+      "resultado": "Genera let x = 3; y println!(\"{}\", x);"
+    }
+  },
+  "parches_realizados_o_recomendados": {
+    "gui_entrypoints": {
+      "archivos": [
+        "src/pcobra/gui/app.py",
+        "src/pcobra/gui/idle.py"
+      ],
+      "codigo": "if __name__ == \"__main__\":\n    runtime.flet_app(main)",
+      "estado": "aplicado y validado"
+    },
+    "rust_nodo_imprimir": {
+      "archivo_nuevo": "src/pcobra/cobra/transpilers/transpiler/rust_nodes/imprimir.py",
+      "codigo": "\"\"\"Transpilación de NodoImprimir a Rust.\"\"\"\n\n\ndef visit_imprimir(self, nodo):\n    expresion = self.obtener_valor(nodo.expresion)\n    self.agregar_linea(f'println!(\"{{}}\", {expresion});')",
+      "archivo_modificado": "src/pcobra/cobra/transpilers/transpiler/to_rust.py",
+      "imports_a_anadir": [
+        "from pcobra.cobra.transpilers.transpiler.rust_nodes.imprimir import visit_imprimir as _visit_imprimir"
+      ],
+      "asignaciones_a_anadir": [
+        "TranspiladorRust.visit_imprimir = _visit_imprimir",
+        "TranspiladorRust.visit_NodoImprimir = _visit_imprimir"
+      ],
+      "estado": "aplicado y validado por prueba directa"
+    },
+    "python_funcion_recursion": {
+      "archivo_sospechoso": "src/pcobra/cobra/transpilers/transpiler/python_nodes/funcion.py",
+      "hallazgo": "visit_funcion envuelve siempre el cuerpo de toda función en contextlib.ExitStack(), incluso si no hay defer.",
+      "hipotesis": "La recursión puede venir de la interacción entre visit_funcion, defer stack, retorno o dispatch del visitor.",
+      "estado": "pendiente de reparación",
+      "restriccion": "No tocar Lexer ni Parser."
+    }
+  },
+  "prompt_codex_generado": {
+    "objetivo": "Pedir a Codex una reparación quirúrgica del bug de transpilación Python de funciones.",
+    "restricciones_clave": [
+      "NO modificar Lexer",
+      "NO modificar Parser",
+      "NO modificar gramática",
+      "NO cambiar sintaxis Cobra",
+      "NO romper ejecución normal/intérprete",
+      "Mantener arquitectura actual de visitors externos",
+      "Hacer patch mínimo y localizado"
+    ],
+    "archivos_relevantes": [
+      "src/pcobra/cobra/transpilers/transpiler/python_nodes/funcion.py",
+      "src/pcobra/cobra/transpilers/transpiler/python_nodes/retorno.py",
+      "src/pcobra/cobra/transpilers/transpiler/to_python.py",
+      "src/pcobra/cobra/transpilers/common/utils.py"
+    ],
+    "casos_minimos": [
+      "función simple con retorno",
+      "función vacía",
+      "función llamada desde asignación",
+      "script complejo GUI con usar/funciones/condicionales/listas"
     ]
   },
-  "fase_B_cobra_run": {
-    "estado": "verde",
-    "archivo_principal": "poc_run_repl_equivalente.cobra",
-    "resultado_observado": [
-      "antes",
-      "despues",
-      "8",
-      "verdadero",
-      "verdadero",
-      "verdadero",
-      "falso",
-      "COBRA",
-      "cancion",
-      "3",
-      "20"
-    ],
-    "validaciones_confirmadas": [
-      "ejecucion_secuencial_con_var",
-      "funciones_y_retorno",
-      "usar_numero",
-      "usar_archivo_y_existe",
-      "proteccion_de_path_parent_con_../README.md",
-      "usar_texto",
-      "usar_datos",
-      "lectura_de_archivo_creado_con_Set-Content_-Encoding_UTF8_en_run"
-    ],
-    "control_negativo": {
-      "archivo": "poc_run_existe_sin_usar.cobra",
-      "codigo": "imprimir(existe(\"README.md\"))",
-      "resultado": "Error: Uso de primitiva peligrosa: 'existe'",
-      "estado": "verde"
-    }
-  },
-  "fase_C_errores_e_imports": {
-    "estado": "verde_funcional_con_deuda_ux",
-    "pruebas": [
-      {
-        "id": "ERR-01",
-        "codigo": "usar \"numpy\"",
-        "resultado": "Rechazado por modulo_fuera_catalogo_publico, sin traceback.",
-        "estado": "verde_funcional",
-        "deuda": "Mensaje duplicado."
-      },
-      {
-        "id": "ERR-02",
-        "codigo": "usar \"modulo_que_no_existe\"",
-        "resultado": "Rechazado por modulo_fuera_catalogo_publico, sin traceback.",
-        "estado": "verde_funcional",
-        "deuda": "El mensaje es funcional pero quizá poco específico para módulo inexistente."
-      },
-      {
-        "id": "ERR-03",
-        "codigo": "usar \"numero\"\nimprimir(funcion_que_no_existe(1))",
-        "resultado_inicial": "Pareció mostrar Variable no declarada: fun",
-        "estado_inicial": "sospechoso",
-        "resultado_reproducido": "Variable no declarada: funcion_que_no_existe",
-        "estado_final": "descartado_como_bug"
-      }
-    ],
-    "bug_descartado": {
-      "id": "BUG-UX-001",
-      "descripcion": "Posible truncado de identificador funcion_que_no_existe a fun.",
-      "estado": "no_reproducible",
-      "accion": "No bloquear release."
+  "dependencias_pyproject": {
+    "problema_detectado": {
+      "descripcion": "Conflicto entre pcobra==10.1.1 y agix==1.9.0 por rango de numpy.",
+      "pcobra_actual": "numpy>=2.4.6,<2.5",
+      "agix_1_9_0": "numpy>=1.24,<2.2",
+      "resultado": "ResolutionImpossible"
     },
-    "deuda_confirmada": {
-      "id": "UX-ERR-001",
-      "descripcion": "Mensajes duplicados al rechazar módulos fuera del catálogo público.",
-      "severidad": "baja",
-      "bloquea_release": false
-    }
-  },
-  "fase_D_cobra_build": {
-    "estado": "amarillo_rojo",
-    "hallazgo_principal": {
-      "id": "BUG-BUILD-001",
-      "titulo": "cobra build falla con archivos UTF-8 BOM aunque cobra run los acepta",
-      "comando": "cobra build .\\poc_run_repl_equivalente.cobra",
-      "resultado": "ERROR: Error durante la tokenización: Token no reconocido: '﻿' en línea 1, columna 1",
-      "diagnostico": "La ruta de build/tokenización no parece limpiar BOM, mientras que run sí lo tolera.",
-      "severidad": "alta si build forma parte del contrato público estable",
-      "bloquea_release": true,
-      "solucion_recomendada": "Centralizar lectura de fuente para run/build usando utf-8-sig o eliminar \\ufeff al inicio antes de tokenizar."
+    "correccion_recomendada": {
+      "numpy": "numpy>=1.26,<2.2",
+      "scipy": "scipy>=1.13,<1.14",
+      "pandas": "pandas>=2.3,<3",
+      "chardet": "chardet>=5.2,<6",
+      "holobit-sdk": "holobit-sdk>=1.0.8,<2",
+      "packaging": "packaging>=24,<26",
+      "pybind11": "pybind11>=2.13,<3",
+      "RestrictedPython": "RestrictedPython>=8.0,<9"
     },
-    "warning_adicional": {
-      "mensaje": "'sqliteplus-enhanced' no está instalado; se utilizará SQLite simplificada sin cifrado.",
-      "tipo": "RuntimeWarning",
-      "estado": "deuda_dependencia_o_warning",
-      "bloquea_release": "pendiente_de_decidir",
-      "observacion": "No rompió por sí mismo, pero ensucia salida de build."
-    },
-    "target_argument": {
-      "comandos_probados": [
-        "cobra build .\\poc_run_repl_equivalente.cobra --target python",
-        "cobra build .\\poc_run_repl_equivalente.cobra --target javascript",
-        "cobra build .\\poc_run_repl_equivalente.cobra --target rust"
-      ],
-      "resultado": "unrecognized arguments: --target ...",
-      "estado": "no_bug",
-      "motivo": "La CLI actual no expone --target en cobra build según --help.",
-      "accion": "Ajustar pruebas y documentación para no usar --target como interfaz pública."
-    }
+    "estado": "pendiente de aplicar en distribución final si se reconstruye release"
   },
-  "problema_powershell_detectado": {
-    "descripcion": "El usuario usa Windows PowerShell 5.1, donde Set-Content -Encoding utf8NoBOM no existe.",
-    "error": "No se puede hacer coincidir el nombre de identificador utf8NoBOM.",
-    "solucion_propuesta": {
-      "crear_utf8_sin_bom": "$code = @'\nimprimir(\"build sin bom\")\nvar x = 3\nimprimir(x)\n'@\n\n$utf8SinBom = New-Object System.Text.UTF8Encoding $false\n[System.IO.File]::WriteAllText(\".\\poc_build_sin_bom.cobra\", $code, $utf8SinBom)\n\ncobra build .\\poc_build_sin_bom.cobra",
-      "crear_utf8_con_bom": "@'\nimprimir(\"build con bom\")\nvar x = 3\nimprimir(x)\n'@ | Set-Content -Encoding UTF8 .\\poc_build_con_bom.cobra\n\ncobra build .\\poc_build_con_bom.cobra",
-      "verificar_bytes": "[System.BitConverter]::ToString([System.IO.File]::ReadAllBytes(\".\\poc_build_sin_bom.cobra\")[0..2])\n[System.BitConverter]::ToString([System.IO.File]::ReadAllBytes(\".\\poc_build_con_bom.cobra\")[0..2])",
-      "bytes_esperados": {
-        "sin_bom": "69-6D-70",
-        "con_bom": "EF-BB-BF"
-      }
-    }
-  },
-  "estado_de_release": {
-    "puede_publicarse_ahora": false,
-    "motivo": "Hay un bug reproducible o muy probable en cobra build con BOM UTF-8.",
-    "bloqueantes_actuales": [
-      "BUG-BUILD-001"
+  "estado_release_actualizado": {
+    "puede_publicarse_inmediatamente": false,
+    "motivo": "Aunque CLI/build/run/GUI ejecución están verdes, se detectó bug de transpilación Python con funciones desde GUI. Recomendado corregir antes de subir nueva distribución.",
+    "publicable_tras_fix": true,
+    "riesgo_actual": "medio-bajo",
+    "bloqueantes_para_release_cuidada": [
+      "BUG-TRANSPILE-PY-FUNC-001",
+      "conflicto de dependencias numpy/agix en pyproject si no se corrige"
     ],
     "no_bloqueantes": [
+      "GUI-UX-ENC-001",
       "UX-ERR-001",
-      "cobra --version muestra cobra dev (commit unknown)",
-      "warning sqliteplus-enhanced no instalado",
-      "no usar --target en pruebas públicas"
+      "paridad parcial Rust en scripts complejos"
     ]
   },
-  "siguiente_paso_recomendado": {
-    "prioridad_1": "Confirmar BUG-BUILD-001 comparando build con archivo sin BOM y con BOM.",
-    "prioridad_2": "Aplicar fix común de lectura utf-8-sig o limpieza de BOM en build.",
-    "prioridad_3": "Repetir cobra build con ambos archivos.",
-    "prioridad_4": "Repetir smoke de run/repl/imports tras el fix.",
-    "prioridad_5": "Reconstruir wheel/sdist, instalar en entorno limpio y repetir cobra --version, run, build y tests mínimos."
+  "comandos_usados_o_recomendados": {
+    "build_final": [
+      "python -m pip install --upgrade build twine",
+      "Remove-Item -Recurse -Force dist, build -ErrorAction SilentlyContinue",
+      "python -m build",
+      "twine check dist/*"
+    ],
+    "subida_pypi": [
+      "twine upload dist/*"
+    ],
+    "gui": [
+      "python -m pcobra.gui.app",
+      "python -m pcobra.gui.idle"
+    ],
+    "prueba_rust_directa": [
+      "python -c \"from pcobra.cobra.core.lexer import Lexer; from pcobra.cobra.core.parser import Parser; from pcobra.cobra.transpilers.transpiler.to_rust import TranspiladorRust; code='var x = 3\\nimprimir(x)'; ast=Parser(Lexer(code).analizar_token()).parsear(); print(TranspiladorRust().generate_code(ast))\""
+    ],
+    "validacion_post_fix_sugerida": [
+      "cobra --version",
+      "cobra --help",
+      "cobra build .\\poc_build_con_bom.cobra",
+      "python -m pcobra.gui.idle",
+      "python -m pytest tests -k \"python and funcion\""
+    ]
   },
-  "referencias_contextuales": {
-    "contexto_release_y_bloqueantes_previos": ":contentReference[oaicite:0]{index=0}",
-    "contrato_publico_cli_y_backends": ":contentReference[oaicite:1]{index=1}",
-    "log_build_bom_y_target": ":contentReference[oaicite:2]{index=2}"
+  "commits_sugeridos": [
+    "fix(gui): add executable Flet entrypoints for app and idle",
+    "fix(rust): add NodoImprimir visitor",
+    "fix(transpiler-python): repair function transpilation recursion",
+    "fix(deps): align numpy range with agix compatibility"
+  ],
+  "siguiente_paso_recomendado": {
+    "prioridad_1": "Pedir a Codex o aplicar manualmente patch mínimo para BUG-TRANSPILE-PY-FUNC-001 sin tocar Lexer/Parser.",
+    "prioridad_2": "Añadir tests de regresión para transpilación Python de funciones.",
+    "prioridad_3": "Corregir pyproject.toml para evitar conflicto numpy/agix.",
+    "prioridad_4": "Reconstruir wheel/sdist y ejecutar twine check.",
+    "prioridad_5": "Instalar en entorno limpio y repetir smoke CLI + GUI.",
+    "prioridad_6": "Publicar en PyPI con twine upload dist/*."
   }
 }
