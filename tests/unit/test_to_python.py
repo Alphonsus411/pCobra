@@ -136,6 +136,58 @@ def test_transpilador_funcion_con_defer():
     assert resultado == esperado
 
 
+def test_transpilador_funcion_sin_defer_retorna_operacion_basica():
+    codigo_fuente = """func doble(n):
+    retorno n * 2
+fin"""
+    func = Parser(Lexer(codigo_fuente).analizar_token()).parsear()[0]
+    transpilador = TranspiladorPython()
+
+    func.aceptar(transpilador)
+
+    assert transpilador.codigo == "def doble(n):\n" + "    return n * 2\n"
+    assert "ExitStack" not in transpilador.codigo
+    assert transpilador.usa_contextlib is False
+
+
+def test_transpilador_funcion_sin_defer_retorna_identificador_basico():
+    func = NodoFuncion("identidad", ["n"], [NodoRetorno(NodoIdentificador("n"))])
+    transpilador = TranspiladorPython()
+
+    func.aceptar(transpilador)
+
+    assert transpilador.codigo == "def identidad(n):\n" + "    return n\n"
+    assert "ExitStack" not in transpilador.codigo
+    assert transpilador.usa_contextlib is False
+
+
+def test_transpilador_funcion_con_defer_retorno_conserva_exitstack_solo_con_defer():
+    con_defer = NodoFuncion(
+        "cerrar",
+        [],
+        [
+            NodoDefer(NodoLlamadaFuncion("limpiar", []), linea=1, columna=1),
+            NodoRetorno(NodoValor(1)),
+        ],
+    )
+    sin_defer = NodoFuncion("uno", [], [NodoRetorno(NodoValor(1))])
+    transpilador_con_defer = TranspiladorPython()
+    transpilador_sin_defer = TranspiladorPython()
+
+    con_defer.aceptar(transpilador_con_defer)
+    sin_defer.aceptar(transpilador_sin_defer)
+
+    assert (
+        "    with contextlib.ExitStack() as __cobra_defer_stack_0:\n"
+        in transpilador_con_defer.codigo
+    )
+    assert "        return 1\n" in transpilador_con_defer.codigo
+    assert transpilador_con_defer.usa_contextlib is True
+    assert transpilador_sin_defer.codigo == "def uno():\n" + "    return 1\n"
+    assert "ExitStack" not in transpilador_sin_defer.codigo
+    assert transpilador_sin_defer.usa_contextlib is False
+
+
 def test_detector_defer_por_nombre_en_bloques_anidados():
     from pcobra.cobra.transpilers.transpiler.python_nodes.funcion import _contiene_defer
 
