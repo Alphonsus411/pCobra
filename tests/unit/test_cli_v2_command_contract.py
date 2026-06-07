@@ -164,7 +164,29 @@ def test_build_v2_help_no_expone_flags_backend():
 
     assert "--tipo" not in help_text
     assert "--backend" not in help_text
+    assert "--target" not in help_text
     assert "--tipos" not in help_text
+
+
+def test_build_v2_parser_publico_registra_solo_file_posicional():
+    subparsers = _build_subparsers()
+    command = BuildCommandV2()
+    command.register_subparser(subparsers)
+    parser = subparsers.choices[command.name]
+
+    public_actions = [
+        action
+        for action in parser._actions
+        if not any(option in ("-h", "--help") for option in action.option_strings)
+    ]
+
+    assert [(action.dest, tuple(action.option_strings)) for action in public_actions] == [
+        ("file", ()),
+    ]
+    assert parser.parse_args(["programa.co"]).file == "programa.co"
+
+    with pytest.raises(SystemExit):
+        parser.parse_args(["programa.co", "--target", "python"])
 
 
 def test_run_v2_valida_seguridad_por_ruta_binding(monkeypatch):

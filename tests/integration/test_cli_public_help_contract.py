@@ -79,6 +79,7 @@ def test_cli_build_help_public_contract_no_expone_flags_backend():
     assert result.returncode == 0
     output = result.stdout.lower()
     assert "--backend" not in output
+    assert "--target" not in output
     assert "--tipo" not in output
     assert "--tipos" not in output
 
