@@ -17,7 +17,9 @@ from pcobra.core.ast_nodes import (
     NodoIdentificador,
     NodoGarantia,
     NodoRetorno,
+    NodoLlamadaFuncion,
 )
+from pcobra.core.lexer import TipoToken, Token
 import pcobra.cobra.core as cobra_core
 
 # Registrar nodos adicionales en el módulo ``cobra.core`` para evitar errores de importación
@@ -60,6 +62,49 @@ def test_transpilador_python_garantia() -> None:
     codigo = transpiler.generate_code([nodo])
     assert "if not ok:" in codigo
     assert "return 0" in codigo
+
+
+def test_transpilador_python_retorno_usa_expresion_y_obtener_valor() -> None:
+    class TranspiladorPythonRastreador(TranspiladorPython):
+        def __init__(self):
+            super().__init__()
+            self.tipos_visitados = []
+
+        def obtener_valor(self, nodo):
+            self.tipos_visitados.append(type(nodo).__name__)
+            return super().obtener_valor(nodo)
+
+    casos = [
+        (
+            NodoOperacionBinaria(
+                NodoIdentificador("n"),
+                Token(TipoToken.MULT, "*"),
+                NodoValor(2),
+            ),
+            "return n * 2",
+            "NodoOperacionBinaria",
+        ),
+        (NodoIdentificador("n"), "return n", "NodoIdentificador"),
+        (
+            NodoLlamadaFuncion("doble", [NodoValor(5)]),
+            "return doble(5)",
+            "NodoLlamadaFuncion",
+        ),
+        (
+            NodoLlamadaFuncion("identidad", [NodoValor(3)]),
+            "return identidad(3)",
+            "NodoLlamadaFuncion",
+        ),
+        (NodoValor(3), "return 3", "NodoValor"),
+    ]
+
+    for expresion, salida_esperada, tipo_esperado in casos:
+        transpiler = TranspiladorPythonRastreador()
+        transpiler.visit_retorno(NodoRetorno(expresion))
+
+        assert transpiler.codigo.strip() == salida_esperada
+        assert transpiler.tipos_visitados[0] == tipo_esperado
+        assert all(tipo != "NodoRetorno" for tipo in transpiler.tipos_visitados)
 
 
 def test_transpilador_js_garantia() -> None:
