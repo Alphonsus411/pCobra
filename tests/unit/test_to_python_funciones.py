@@ -96,3 +96,22 @@ imprimir(x)
     assert "x = doble(5)" in codigo_python
     assert "print(x)" in codigo_python
     assert "contextlib.ExitStack" not in codigo_python
+
+
+def test_transpila_funcion_vacia_e_imprimir_sin_exitstack_ni_recursion():
+    codigo_fuente = '''func vacia(n):
+fin
+imprimir("ok")
+'''
+
+    try:
+        tokens = Lexer(codigo_fuente).analizar_token()
+        ast = Parser(tokens).parsear()
+        codigo_python = TranspiladorPython().generate_code(ast)
+    except RecursionError as exc:  # pragma: no cover - el fallo debe ser explícito
+        raise AssertionError("La transpilación no debe lanzar RecursionError") from exc
+
+    assert "def vacia(n):" in codigo_python
+    assert "pass" in codigo_python
+    assert "print('ok')" in codigo_python
+    assert "contextlib.ExitStack" not in codigo_python
