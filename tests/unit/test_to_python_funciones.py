@@ -74,3 +74,25 @@ imprimir(resumen)
     assert "def resumen_numero(n):" in codigo_python
     assert "y = doble(5)" in codigo_python
     assert "print(y)" in codigo_python
+
+
+def test_transpila_funcion_doble_asignacion_e_imprimir_sin_exitstack_ni_recursion():
+    codigo_fuente = """func doble(n):
+    retorno n * 2
+fin
+var x = doble(5)
+imprimir(x)
+"""
+
+    try:
+        tokens = Lexer(codigo_fuente).analizar_token()
+        ast = Parser(tokens).parsear()
+        codigo_python = TranspiladorPython().generate_code(ast)
+    except RecursionError as exc:  # pragma: no cover - el fallo debe ser explícito
+        raise AssertionError("La transpilación no debe lanzar RecursionError") from exc
+
+    assert "def doble(n):" in codigo_python
+    assert "return n * 2" in codigo_python
+    assert "x = doble(5)" in codigo_python
+    assert "print(x)" in codigo_python
+    assert "contextlib.ExitStack" not in codigo_python
