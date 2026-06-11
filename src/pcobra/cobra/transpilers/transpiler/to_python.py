@@ -334,7 +334,16 @@ class TranspiladorPython(BaseTranspiler):
             codigo = "import asyncio\n" + codigo
         return codigo
 
-    def _contiene_nodo_valor(self, nodo):
+    def _contiene_nodo_valor(self, nodo, _visitados=None):
+        if _visitados is None:
+            _visitados = set()
+
+        if hasattr(nodo, "__dict__"):
+            identificador = id(nodo)
+            if identificador in _visitados:
+                return False
+            _visitados.add(identificador)
+
         if hasattr(nodo, "valor") and len(getattr(nodo, "__dict__", {})) == 1:
             return True
         for atributo in getattr(nodo, "__dict__", {}).values():
@@ -343,12 +352,16 @@ class TranspiladorPython(BaseTranspiler):
                     if isinstance(elem, (list, tuple)):
                         for sub in elem:
                             if hasattr(sub, "__dict__") and self._contiene_nodo_valor(
-                                sub
+                                sub, _visitados
                             ):
                                 return True
-                    elif hasattr(elem, "__dict__") and self._contiene_nodo_valor(elem):
+                    elif hasattr(elem, "__dict__") and self._contiene_nodo_valor(
+                        elem, _visitados
+                    ):
                         return True
-            elif hasattr(atributo, "__dict__") and self._contiene_nodo_valor(atributo):
+            elif hasattr(atributo, "__dict__") and self._contiene_nodo_valor(
+                atributo, _visitados
+            ):
                 return True
         return False
 

@@ -121,3 +121,17 @@ def test_transpilar_metodo():
         + "def mi_metodo(a, b):\n    resultado = a + b\n"
     )
     assert result == expected, "Error en la transpilación de método"
+
+
+class NodoCiclicoArtificial:
+    def __init__(self):
+        self.hijos = []
+
+
+def test_contiene_nodo_valor_ignora_ciclos_sin_recursion_error():
+    nodo = NodoCiclicoArtificial()
+    nodo.hijos.append(nodo)
+
+    transpiler = TranspiladorPython()
+
+    assert transpiler._contiene_nodo_valor(nodo) is False
