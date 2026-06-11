@@ -1,6 +1,7 @@
 """Transpilador que convierte código Cobra en código Python."""
 
 from pcobra.cobra.core.ast_nodes import (
+    NodoAST,
     NodoAsignacion,
     NodoCondicional,
     NodoGarantia,
@@ -259,8 +260,34 @@ class TranspiladorPython(BaseTranspiler):
         return "    " * self.nivel_indentacion
 
     def _contiene_funciones(self, nodos):
-        """Indica si el programa declara funciones de primer nivel."""
-        return any(isinstance(nodo, NodoFuncion) for nodo in nodos)
+        """Indica si el AST declara alguna función.
+
+        El backend Python conserva las declaraciones ``def`` tal como aparecen en
+        el programa fuente; por eso no debe ejecutar el inliner cuando haya
+        funciones en el árbol.
+        """
+        pendientes = list(nodos)
+        visitados = set()
+
+        while pendientes:
+            actual = pendientes.pop()
+            if actual is None:
+                continue
+            if isinstance(actual, NodoFuncion):
+                return True
+            if isinstance(actual, (list, tuple)):
+                pendientes.extend(actual)
+                continue
+
+            identificador = id(actual)
+            if identificador in visitados:
+                continue
+            visitados.add(identificador)
+
+            if isinstance(actual, NodoAST):
+                pendientes.extend(vars(actual).values())
+
+        return False
 
     def transpilar(self, nodos):
         nodos = normalize_to_cobra_ast(nodos)

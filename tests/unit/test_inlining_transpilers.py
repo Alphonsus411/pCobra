@@ -14,18 +14,15 @@ def _ast_inline():
     ]
 
 
-def test_inline_python_transpiler():
+def test_python_transpiler_preserves_inlineable_function_declarations():
     codigo = TranspiladorPython().generate_code(_ast_inline())
-    assert codigo == IMPORTS + "x = 1\n"
+
+    assert codigo == IMPORTS + "def uno():\n    return 1\nx = uno()\n"
+    assert "def uno():" in codigo
 
 
 def test_inline_js_transpiler():
     codigo = TranspiladorJavaScript().generate_code(_ast_inline())
-    esperado = (
-        "import * as io from './nativos/io.js';\n"
-        + "import * as net from './nativos/io.js';\n"
-        + "import * as matematicas from './nativos/matematicas.js';\n"
-        + "import { Pila, Cola } from './nativos/estructuras.js';\n"
-        + "let x = 1;"
-    )
-    assert codigo == esperado
+    assert codigo.startswith("\n".join(get_standard_imports("javascript")) + "\n")
+    assert codigo.endswith("let x = 1;")
+    assert "function uno" not in codigo
