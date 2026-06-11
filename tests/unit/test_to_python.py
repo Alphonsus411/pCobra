@@ -107,13 +107,23 @@ def test_transpilador_funcion():
         NodoFuncion(
             "miFuncion",
             ["a", "b"],
-            [NodoAsignacion("x", NodoValor("a + b"))],
+            [
+                NodoAsignacion(
+                    "x",
+                    NodoOperacionBinaria(
+                        NodoIdentificador("a"),
+                        SimpleNamespace(tipo=None, valor="+"),
+                        NodoIdentificador("b"),
+                    ),
+                )
+            ],
         )
     ]
     transpilador = TranspiladorPython()
     resultado = transpilador.generate_code(ast)
-    esperado = IMPORTS + "def miFuncion(a, b):\n" + "    x = 'a + b'\n"
+    esperado = IMPORTS + "def miFuncion(a, b):\n" + "    x = a + b\n"
     assert resultado == esperado
+    assert "contextlib.ExitStack" not in resultado
 
 
 def test_transpilador_funcion_con_defer():
@@ -138,6 +148,8 @@ def test_transpilador_funcion_con_defer():
         + "        return 1\n"
     )
     assert resultado == esperado
+    assert "contextlib.ExitStack" in resultado
+    assert transpilador._defer_stack == []
 
 
 def test_transpilador_funcion_sin_defer_retorna_operacion_basica():
