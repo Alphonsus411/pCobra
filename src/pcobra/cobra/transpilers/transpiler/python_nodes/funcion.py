@@ -17,7 +17,27 @@ _ATRIBUTOS_AST_CON_DEFER = (
 )
 
 
+_COLECCIONES_AST = (list, tuple, set, frozenset)
+
+
+def _agregar_hijos_ast_con_defer(pendientes, nodo):
+    if isinstance(nodo, dict):
+        pendientes.extend(nodo.values())
+        return
+
+    if isinstance(nodo, _COLECCIONES_AST):
+        pendientes.extend(nodo)
+        return
+
+    for atributo in _ATRIBUTOS_AST_CON_DEFER:
+        if hasattr(nodo, atributo):
+            valor = getattr(nodo, atributo)
+            if valor is not None:
+                pendientes.append(valor)
+
+
 def _contiene_defer(nodo):
+    """Detecta ``NodoDefer`` en un cuerpo o en bloques de control anidados."""
     pendientes = [nodo]
     visitados = set()
 
@@ -26,7 +46,11 @@ def _contiene_defer(nodo):
         if actual is None:
             continue
 
-        if isinstance(actual, (list, tuple)):
+        if isinstance(actual, dict):
+            pendientes.extend(actual.values())
+            continue
+
+        if isinstance(actual, _COLECCIONES_AST):
             pendientes.extend(actual)
             continue
 
@@ -38,13 +62,18 @@ def _contiene_defer(nodo):
         if _es_nodo_defer(actual):
             return True
 
-        for atributo in _ATRIBUTOS_AST_CON_DEFER:
-            if hasattr(actual, atributo):
-                valor = getattr(actual, atributo)
-                if valor is not None:
-                    pendientes.append(valor)
+        _agregar_hijos_ast_con_defer(pendientes, actual)
 
     return False
+
+
+def _emitir_cuerpo_funcion(self, cuerpo):
+    if not cuerpo:
+        self.codigo += f"{self.obtener_indentacion()}pass\n"
+        return
+
+    for instruccion in cuerpo:
+        instruccion.aceptar(self)
 
 
 def visit_funcion(self, nodo):
@@ -64,11 +93,7 @@ def visit_funcion(self, nodo):
 
     usa_defer = _contiene_defer(nodo.cuerpo)
     if not usa_defer:
-        if not nodo.cuerpo:
-            self.codigo += f"{self.obtener_indentacion()}pass\n"
-        else:
-            for instruccion in nodo.cuerpo:
-                instruccion.aceptar(self)
+        _emitir_cuerpo_funcion(self, nodo.cuerpo)
         self.nivel_indentacion -= 1
         return
 
@@ -82,11 +107,7 @@ def visit_funcion(self, nodo):
         )
         self.nivel_indentacion += 1
         try:
-            if not nodo.cuerpo:
-                self.codigo += f"{self.obtener_indentacion()}pass\n"
-            else:
-                for instruccion in nodo.cuerpo:
-                    instruccion.aceptar(self)
+            _emitir_cuerpo_funcion(self, nodo.cuerpo)
         finally:
             self.nivel_indentacion -= 1
     finally:

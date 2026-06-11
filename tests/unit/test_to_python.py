@@ -20,6 +20,7 @@ try:
         NodoWith,
         NodoDefer,
         NodoRetorno,
+        NodoTryCatch,
         NodoOperacionBinaria,
     )
     from pcobra.core.ast_nodes import NodoSwitch, NodoCase, NodoPattern, NodoGuard
@@ -43,6 +44,7 @@ except ImportError:  # pragma: no cover - compatibilidad
         NodoWith,
         NodoDefer,
         NodoRetorno,
+        NodoTryCatch,
         NodoOperacionBinaria,
     )
     from core.ast_nodes import (  # type: ignore
@@ -198,6 +200,45 @@ def test_transpilador_funcion_sin_defer_retorna_identificador_basico():
     assert transpilador.codigo == "def identidad(n):\n" + "    return n\n"
     assert "ExitStack" not in transpilador.codigo
     assert transpilador.usa_contextlib is False
+
+
+def test_transpilador_funcion_vacia_sin_defer_emite_pass_sin_exitstack():
+    func = NodoFuncion("vacia", [], [])
+    transpilador = TranspiladorPython()
+
+    func.aceptar(transpilador)
+
+    assert transpilador.codigo == "def vacia():\n" + "    pass\n"
+    assert "ExitStack" not in transpilador.codigo
+    assert transpilador.usa_contextlib is False
+
+
+def test_transpilador_funcion_con_defer_en_try_anidado_emite_exitstack():
+    func = NodoFuncion(
+        "cerrar",
+        [],
+        [
+            NodoTryCatch(
+                [NodoDefer(NodoLlamadaFuncion("limpiar", []), linea=1, columna=1)],
+                bloque_catch=[NodoRetorno(NodoValor(0))],
+            ),
+            NodoRetorno(NodoValor(1)),
+        ],
+    )
+    transpilador = TranspiladorPython()
+
+    func.aceptar(transpilador)
+
+    assert (
+        "    with contextlib.ExitStack() as __cobra_defer_stack_0:\n"
+        in transpilador.codigo
+    )
+    assert (
+        "            __cobra_defer_stack_0.callback(lambda: limpiar())\n"
+        in transpilador.codigo
+    )
+    assert transpilador.usa_contextlib is True
+    assert transpilador._defer_stack == []
 
 
 def test_transpilador_funcion_con_defer_retorno_conserva_exitstack_solo_con_defer():
