@@ -303,16 +303,42 @@ def validate_minimal_runtime_routes() -> None:
 validate_runtime_contracts()
 
 
-def ast_contains_node_types(tree, node_type_names: tuple[str, ...]) -> bool:
-    """Indica si ``tree`` contiene algún nodo cuyo nombre de clase esté en ``node_type_names``."""
+def ast_contains_node_types(
+    tree, node_type_names: tuple[str, ...], _visited: set[int] | None = None
+) -> bool:
+    """Indica si ``tree`` contiene algún nodo de los tipos indicados.
+
+    Algunos nodos conservan referencias a objetos auxiliares compartidos (por
+    ejemplo tokens) que pueden formar ciclos. El recorrido usa identidades ya
+    visitadas para evitar recursión infinita mientras inspecciona el AST.
+    """
     if tree is None:
         return False
+
+    if _visited is None:
+        _visited = set()
+
+    if isinstance(tree, (list, tuple, set, dict)) or hasattr(tree, "__dict__"):
+        identifier = id(tree)
+        if identifier in _visited:
+            return False
+        _visited.add(identifier)
+
+    if isinstance(tree, dict):
+        return any(
+            ast_contains_node_types(item, node_type_names, _visited)
+            for pair in tree.items()
+            for item in pair
+        )
+
     if isinstance(tree, (list, tuple, set)):
-        return any(ast_contains_node_types(item, node_type_names) for item in tree)
+        return any(
+            ast_contains_node_types(item, node_type_names, _visited) for item in tree
+        )
     if tree.__class__.__name__ in node_type_names:
         return True
     for value in getattr(tree, "__dict__", {}).values():
-        if ast_contains_node_types(value, node_type_names):
+        if ast_contains_node_types(value, node_type_names, _visited):
             return True
     return False
 

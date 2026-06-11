@@ -485,3 +485,32 @@ def test_transpilador_clase_generica():
         + "            pass\n"
     )
     assert codigo == esperado
+
+
+def test_transpilador_python_funcion_condicional_parser_sin_recursion_ni_defer():
+    codigo_fuente = """func resumen_numero(n):
+    si n > 0:
+        imprimir("positivo")
+    sino:
+        imprimir("no positivo")
+    fin
+
+    retorno n
+fin
+
+var x = resumen_numero(3)
+imprimir(x)
+"""
+
+    tokens = Lexer(codigo_fuente).analizar_token()
+    ast = Parser(tokens).parsear()
+    codigo = TranspiladorPython().generate_code(ast)
+
+    assert "def resumen_numero(n):" in codigo
+    assert "if n > 0:" in codigo
+    assert "else:" in codigo
+    assert ("print('positivo')" in codigo) or ('print("positivo")' in codigo)
+    assert "return n" in codigo
+    assert "x = resumen_numero(3)" in codigo
+    assert "maximum recursion depth exceeded" not in codigo
+    assert "contextlib.ExitStack" not in codigo
