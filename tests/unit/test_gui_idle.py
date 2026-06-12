@@ -128,8 +128,8 @@ def test_main_handlers_smoke(monkeypatch):
 
     ast_btn.on_click(None)
     assert salida.value == "[Nodo]"
-    assert ejecutar_mock.call_count == 1
-    assert transpilar_mock.call_count == 1
+    ejecutar_mock.assert_called_once_with("imprimir('x')")
+    transpilar_mock.assert_called_once_with("imprimir('x')", "python")
     assert page.update.call_count == 5
 
 
