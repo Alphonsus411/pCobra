@@ -29,6 +29,50 @@ def test_ejecutar_transpilar_tokens_y_ast() -> None:
     assert "NodoImprimir" in runtime.mostrar_ast(codigo)
 
 
+def test_transpilar_codigo_usa_transpilador_python_registrado(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    llamadas = {"transpiler_inits": 0, "ast": None}
+
+    class FakeLexer:
+        def __init__(self, codigo: str):
+            self.codigo = codigo
+
+        def tokenizar(self):
+            assert self.codigo == "imprimir('Hola')"
+            return ["TOKEN"]
+
+    class FakeParser:
+        def __init__(self, tokens):
+            assert tokens == ["TOKEN"]
+
+        def parsear(self):
+            return ["AST"]
+
+    class TranspiladorPythonRegistrado:
+        def __init__(self):
+            llamadas["transpiler_inits"] += 1
+
+        def generate_code(self, ast):
+            llamadas["ast"] = ast
+            return "codigo python registrado"
+
+    monkeypatch.setattr(
+        runtime,
+        "require_gui_dependencies",
+        lambda: {
+            "Lexer": FakeLexer,
+            "Parser": FakeParser,
+            "TRANSPILERS": {"python": TranspiladorPythonRegistrado},
+        },
+    )
+
+    assert (
+        runtime.transpilar_codigo("imprimir('Hola')", "python")
+        == "codigo python registrado"
+    )
+    assert llamadas == {"transpiler_inits": 1, "ast": ["AST"]}
+
 def test_formatear_error_lexico_y_sintaxis() -> None:
     class FakeLexerError(Exception):
         linea = 2
