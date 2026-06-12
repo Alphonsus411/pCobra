@@ -1,6 +1,7 @@
 import importlib
 import importlib.util
 import logging
+import os
 import re
 from pathlib import Path
 import sys
@@ -20,6 +21,11 @@ from pcobra.cobra.core.usar_symbol_policy import (
 
 # Regex estricta para mantener la sintaxis `usar "modulo"` acotada a identificadores simples.
 _VALID_NAME_RE = re.compile(r"^[a-z][a-z0-9_]*$")
+
+
+# Segmentos seguros para módulos de proyecto: ruta lógica punteada, no ruta del sistema.
+_VALID_PROJECT_MODULE_SEGMENT_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+_PROJECT_MODULE_FORBIDDEN_CHARS = frozenset('/\\@$%*?"\'<>|;`!()[]{}=+,')
 
 # Patrones que deben bloquearse explícitamente para evitar imports de backend o rutas internas.
 _INTERNAL_HINTS = (
@@ -125,6 +131,91 @@ def validar_nombre_modulo_usar(nombre: str, *, require_allowlist: bool = True) -
         )
 
     return nombre
+
+
+
+def validar_nombre_modulo_cobra_proyecto(nombre: str) -> tuple[str, ...]:
+    """Valida una ruta lógica punteada de módulo Cobra de proyecto.
+
+    Esta validación es deliberadamente independiente de
+    :func:`validar_nombre_modulo_usar` para no relajar el contrato público de
+    módulos oficiales/corelibs.
+    """
+
+    if not isinstance(nombre, str):
+        raise ValueError("Nombre de módulo de proyecto inválido: se esperaba string.")
+
+    nombre_raw = nombre.strip()
+    if not nombre_raw:
+        raise ValueError("Nombre de módulo de proyecto vacío.")
+
+    if any(sep in nombre_raw for sep in ("/", "\\")):
+        raise ValueError(
+            f"Nombre de módulo de proyecto inválido: '{nombre_raw}' no debe contener separadores de ruta."
+        )
+
+    segmentos = nombre_raw.split(".")
+    for segmento in segmentos:
+        if segmento in {"", ".", ".."}:
+            raise ValueError(
+                f"Nombre de módulo de proyecto inválido: '{nombre_raw}' contiene segmentos vacíos/traversal."
+            )
+        if any(caracter in segmento for caracter in _PROJECT_MODULE_FORBIDDEN_CHARS):
+            raise ValueError(
+                f"Nombre de módulo de proyecto inválido: '{nombre_raw}' contiene caracteres no seguros."
+            )
+        if ":" in segmento:
+            raise ValueError(
+                f"Nombre de módulo de proyecto inválido: '{nombre_raw}' parece una unidad Windows."
+            )
+        if not _VALID_PROJECT_MODULE_SEGMENT_RE.fullmatch(segmento):
+            raise ValueError(
+                "Nombre de módulo de proyecto inválido: usa segmentos tipo identificador "
+                "separados por puntos (ej. 'utilidades.fechas')."
+            )
+
+    return tuple(segmentos)
+
+
+def _verificar_path_dentro_de_root(ruta: Path, root: Path) -> None:
+    """Verifica con rutas canónicas que ``ruta`` queda dentro de ``root``."""
+
+    try:
+        common = os.path.commonpath((str(root), str(ruta)))
+    except ValueError as exc:
+        raise ValueError("Ruta de módulo de proyecto fuera de la raíz autorizada.") from exc
+
+    if common != str(root):
+        raise ValueError("Ruta de módulo de proyecto fuera de la raíz autorizada.")
+
+
+def resolver_modulo_cobra_proyecto(
+    nombre: str,
+    *,
+    project_root: Path,
+    current_file: Path | None = None,
+) -> Path:
+    """Resuelve un módulo Cobra de proyecto a un archivo ``.co`` seguro.
+
+    ``nombre`` es una ruta lógica punteada (por ejemplo
+    ``utilidades.fechas``), que se transforma en
+    ``project_root / "utilidades" / "fechas.co"``. La función sólo devuelve
+    una ruta canónica; no carga ni importa el módulo para evitar introducir un
+    segundo sistema de imports.
+    """
+
+    segmentos = validar_nombre_modulo_cobra_proyecto(nombre)
+    root_resuelto = Path(project_root).resolve(strict=False)
+
+    if current_file is not None:
+        current_resuelto = Path(current_file).resolve(strict=False)
+        _verificar_path_dentro_de_root(current_resuelto, root_resuelto)
+
+    ruta_logica = root_resuelto.joinpath(*segmentos[:-1], f"{segmentos[-1]}.co")
+    ruta_resuelta = ruta_logica.resolve(strict=False)
+    _verificar_path_dentro_de_root(ruta_resuelta, root_resuelto)
+
+    return ruta_resuelta
 
 
 def _cargar_modulo_local_desde_directorio(nombre: str, directorio: Path):
