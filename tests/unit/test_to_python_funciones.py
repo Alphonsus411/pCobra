@@ -141,3 +141,35 @@ imprimir(identidad(3))
     assert "print(identidad(3))" in codigo_python
     assert "contextlib.ExitStack" not in codigo_python
     assert "maximum recursion depth exceeded" not in codigo_python
+
+
+def test_transpila_script_gui_reducido_sin_exitstack_ni_recursion():
+    codigo_fuente = '''func doble(n):
+    retorno n * 2
+fin
+
+func resumen_numero(n):
+    si n > 0: imprimir("positivo") sino: imprimir("no positivo") fin
+    imprimir(doble(n))
+fin
+
+var x = 7
+resumen_numero(x)
+'''
+
+    try:
+        tokens = Lexer(codigo_fuente).analizar_token()
+        ast = Parser(tokens).parsear()
+        codigo_python = TranspiladorPython().generate_code(ast)
+    except RecursionError as exc:  # pragma: no cover - el fallo debe ser explícito
+        raise AssertionError("La transpilación no debe lanzar RecursionError") from exc
+
+    assert "def doble(n):" in codigo_python
+    assert "return n * 2" in codigo_python
+    assert "def resumen_numero(n):" in codigo_python
+    assert "if n > 0:" in codigo_python
+    assert "else:" in codigo_python
+    assert "print(doble(n))" in codigo_python
+    assert "x = 7" in codigo_python
+    assert "resumen_numero(x)" in codigo_python
+    assert "contextlib.ExitStack" not in codigo_python
