@@ -241,6 +241,32 @@ def test_transpilador_funcion_con_defer_en_try_anidado_emite_exitstack():
     assert transpilador._defer_stack == []
 
 
+def test_transpilador_python_parser_funcion_con_defer_importa_contextlib_y_exitstack():
+    codigo_fuente = """func cerrar():
+    defer limpiar()
+    retorno 1
+fin"""
+    ast = Parser(Lexer(codigo_fuente).analizar_token()).parsear()
+
+    codigo = TranspiladorPython().generate_code(ast)
+
+    assert "import contextlib\n" in codigo
+    assert "with contextlib.ExitStack() as __cobra_defer_stack_" in codigo
+    assert ".callback(lambda:" in codigo
+
+
+def test_transpilador_python_parser_funcion_sin_defer_no_importa_contextlib():
+    codigo_fuente = """func identidad(n):
+    retorno n
+fin"""
+    ast = Parser(Lexer(codigo_fuente).analizar_token()).parsear()
+
+    codigo = TranspiladorPython().generate_code(ast)
+
+    assert "import contextlib" not in codigo
+    assert "contextlib.ExitStack" not in codigo
+
+
 def test_transpilador_funcion_con_defer_retorno_conserva_exitstack_solo_con_defer():
     con_defer = NodoFuncion(
         "cerrar",
