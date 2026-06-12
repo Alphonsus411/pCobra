@@ -115,3 +115,29 @@ imprimir("ok")
     assert "pass" in codigo_python
     assert "print('ok')" in codigo_python
     assert "contextlib.ExitStack" not in codigo_python
+
+
+def test_transpila_funcion_identidad_e_imprimir_sin_exitstack_ni_recursion():
+    codigo_fuente = """func identidad(n):
+    retorno n
+fin
+imprimir(identidad(3))
+"""
+
+    try:
+        tokens = Lexer(codigo_fuente).analizar_token()
+        ast = Parser(tokens).parsear()
+        codigo_python = TranspiladorPython().generate_code(ast)
+    except RecursionError as exc:  # pragma: no cover - el fallo debe ser explícito
+        raise AssertionError(
+            "La transpilación no debe producir maximum recursion depth exceeded"
+        ) from exc
+    except Exception as exc:
+        assert "maximum recursion depth exceeded" not in str(exc)
+        raise
+
+    assert "def identidad(n):" in codigo_python
+    assert "return n" in codigo_python
+    assert "print(identidad(3))" in codigo_python
+    assert "contextlib.ExitStack" not in codigo_python
+    assert "maximum recursion depth exceeded" not in codigo_python
