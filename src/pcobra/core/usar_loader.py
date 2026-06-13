@@ -25,6 +25,12 @@ def obtener_modulo(*args, **kwargs):
     return _impl.obtener_modulo(*args, **kwargs)
 
 
+def usar_modulo(*args, **kwargs):
+    """Delega en la implementación canónica de `pcobra.cobra.usar_loader`."""
+
+    return _impl.usar_modulo(*args, **kwargs)
+
+
 def obtener_modulo_cobra_oficial(*args, **kwargs):
     """Delega en la implementación canónica de `pcobra.cobra.usar_loader`."""
 
