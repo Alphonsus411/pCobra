@@ -7,6 +7,7 @@ from pcobra.cobra.usar_loader import (
     obtener_cache_ast_import_co,
     obtener_cache_modulos_cobra_proyecto,
     obtener_pila_carga_modulos_cobra_proyecto,
+    usar_modulo,
 )
 from pcobra.cobra.core import Lexer, Parser # Importar Lexer y Parser
 
@@ -55,7 +56,7 @@ def test_usar_modulo_en_subcarpeta_con_puntos(interprete_limpio, crear_modulo_co
     crear_modulo_cobra(
         "utilidades/fechas.co",
         """
-        variable hoy = "2026-06-13"
+        variable hoy := "2026-06-13"
         """
     )
     crear_modulo_cobra(
@@ -67,11 +68,73 @@ def test_usar_modulo_en_subcarpeta_con_puntos(interprete_limpio, crear_modulo_co
     )
     source_code = (tmp_path / "main.co").read_text()
     lexer = Lexer(source_code)
-    tokens = lexer.tokens
+    tokens = lexer.tokenizar()
     parser = Parser(tokens)
     ast = parser.parsear()
     interprete_limpio.ejecutar_ast(ast)
     assert interprete_limpio.obtener_variable("hoy") == "2026-06-13"
+
+def test_usar_modulo_proyecto_exportar_api_idempotencia_y_conflicto(
+    interprete_limpio, crear_modulo_cobra, tmp_path
+):
+    crear_modulo_cobra(
+        "utilidades/fechas.co",
+        """
+        exportar hoy
+        exportar formato
+        variable hoy := "2026-06-13"
+        variable formato := "iso"
+        variable visible_sin_exportar := "no debe importarse"
+        variable _privado := "secreto"
+        """,
+    )
+    crear_modulo_cobra(
+        "main.co",
+        """
+        usar utilidades.fechas
+        usar utilidades.fechas
+        """,
+    )
+
+    source_code = (tmp_path / "main.co").read_text()
+    lexer = Lexer(source_code)
+    tokens = lexer.tokenizar()
+    parser = Parser(tokens)
+    ast = parser.parsear()
+
+    interprete_principal = InterpretadorCobra(
+        safe_mode=False, main_file=tmp_path / "main.co"
+    )
+    interprete_principal.ejecutar_ast(ast)
+
+    nombres_exportados_interprete = {"hoy", "formato"}
+    assert {
+        nombre
+        for nombre in nombres_exportados_interprete
+        if nombre in interprete_principal.contextos[-1].values
+    } == nombres_exportados_interprete
+    assert interprete_principal.obtener_variable("hoy") == "2026-06-13"
+    assert interprete_principal.obtener_variable("formato") == "iso"
+    assert "visible_sin_exportar" not in interprete_principal.contextos[-1].values
+    assert "_privado" not in interprete_principal.contextos[-1].values
+
+    exports_api = usar_modulo(
+        "utilidades.fechas",
+        project_root=tmp_path,
+        current_file=tmp_path / "main.co",
+    )
+    assert {
+        nombre for nombre in exports_api if nombre not in {"simbolos", "metadata"}
+    } == nombres_exportados_interprete
+    assert exports_api["hoy"] == interprete_principal.obtener_variable("hoy")
+    assert exports_api["formato"] == interprete_principal.obtener_variable("formato")
+
+    interprete_conflicto = InterpretadorCobra(
+        safe_mode=False, main_file=tmp_path / "main.co"
+    )
+    interprete_conflicto.contextos[-1].define("hoy", "valor preexistente incompatible")
+    with pytest.raises(NameError, match="conflicto de símbolos"):
+        interprete_conflicto.ejecutar_ast(ast[:1])
 
 def test_usar_modulo_anidado(interprete_limpio, crear_modulo_cobra, tmp_path):
     crear_modulo_cobra(
@@ -221,7 +284,7 @@ def test_compatibilidad_import_archivo_co(interprete_limpio, crear_modulo_cobra,
     parser = Parser(tokens)
     ast = parser.parsear()
     interprete_limpio.ejecutar_ast(ast)
-    assert interprete_limpio.obtener_variable("legacy_var") == "Soy legacy"
+    assert interprete_principal.obtener_variable("legacy_var") == "Soy legacy"
 
 def test_bloqueo_rutas_escape_con_puntos_dobles(interprete_limpio, crear_modulo_cobra, tmp_path):
     # Crear un archivo fuera de la raíz del proyecto simulada por tmp_path

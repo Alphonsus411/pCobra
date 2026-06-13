@@ -505,7 +505,9 @@ def _cargar_exports_modulo_cobra_proyecto(
     except FileNotFoundError as exc:
         raise FileNotFoundError(f"Módulo no encontrado: {nombre}") from exc
 
-    interpretador = InterpretadorCobra(main_file=current_file or ruta_modulo)
+    interpretador = InterpretadorCobra(
+        safe_mode=False, main_file=current_file or ruta_modulo
+    )
     interpretador._project_root = canonicalizar_ruta_usar_proyecto(project_root)
     interpretador._main_file = (
         canonicalizar_ruta_usar_proyecto(current_file) if current_file else ruta_modulo

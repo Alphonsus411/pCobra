@@ -46,6 +46,7 @@ from pcobra.cobra.core.ast_nodes import (
     NodoPasar,
     NodoImport,
     NodoUsar,
+    NodoExport,
     NodoMacro,
     NodoAssert,
     NodoDel,
@@ -123,6 +124,7 @@ class ClassicParser:
             TipoToken.FUNC: self.declaracion_funcion,
             TipoToken.IMPORT: self.declaracion_import,
             TipoToken.USAR: self.declaracion_usar,
+            TipoToken.EXPORTAR: self.declaracion_exportar,
             TipoToken.OPTION: self.declaracion_option,
             TipoToken.IMPRIMIR: self.declaracion_imprimir,
             TipoToken.HILO: self.declaracion_hilo,
@@ -914,11 +916,31 @@ class ClassicParser:
     def declaracion_usar(self):
         """Parsea una declaración 'usar' para importar módulos."""
         self.comer(TipoToken.USAR)
-        if self.token_actual().tipo != TipoToken.CADENA:
-            raise ParserError("Se esperaba una ruta de módulo entre comillas")
-        ruta = self.token_actual().valor
-        self.comer(TipoToken.CADENA)
+        if self.token_actual().tipo == TipoToken.CADENA:
+            ruta = self.token_actual().valor
+            self.comer(TipoToken.CADENA)
+            return NodoUsar(ruta)
+        if self.token_actual().tipo != TipoToken.IDENTIFICADOR:
+            raise ParserError("Se esperaba una ruta de módulo")
+        partes = [self.token_actual().valor]
+        self.comer(TipoToken.IDENTIFICADOR)
+        while self.token_actual().tipo == TipoToken.PUNTO:
+            self.comer(TipoToken.PUNTO)
+            if self.token_actual().tipo != TipoToken.IDENTIFICADOR:
+                raise ParserError("Se esperaba un identificador después de '.' en usar")
+            partes.append(self.token_actual().valor)
+            self.comer(TipoToken.IDENTIFICADOR)
+        ruta = ".".join(partes)
         return NodoUsar(ruta)
+
+    def declaracion_exportar(self):
+        """Parsea una declaración 'exportar' para marcar símbolos públicos."""
+        self.comer(TipoToken.EXPORTAR)
+        if self.token_actual().tipo != TipoToken.IDENTIFICADOR:
+            raise ParserError("Se esperaba un identificador después de 'exportar'")
+        nombre = self.token_actual().valor
+        self.comer(TipoToken.IDENTIFICADOR)
+        return NodoExport(nombre)
 
     def declaracion_option(self):
         """Parsea una declaración de valor opcional."""
