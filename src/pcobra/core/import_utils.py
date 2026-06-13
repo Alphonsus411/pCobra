@@ -109,7 +109,11 @@ def cargar_ast_modulo(
 
     if loading_stack is not None:
         if ruta_real_path in loading_stack:
-            cadena = formatear_ciclo_modulos_cobra_proyecto(ruta_real_path)
+            cadena = formatear_ciclo_modulos_cobra_proyecto(
+                ruta_real_path,
+                project_root=Path(modules_path) if modules_path is not None else None,
+                loading_stack=loading_stack,
+            )
             raise ImportError(f"Ciclo de módulos detectado en import: {cadena}")
         loading_stack.append(ruta_real_path)
 
