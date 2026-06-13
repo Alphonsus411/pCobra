@@ -97,9 +97,13 @@ from .usar_symbol_policy import (
 )
 from .environment import Environment
 from pcobra.cobra.usar_loader import (
+    canonicalizar_ruta_usar_proyecto,
     descubrir_raiz_proyecto,
+    formatear_ciclo_modulos_cobra_proyecto,
+    obtener_cache_modulos_cobra_proyecto,
     obtener_modulo,
-    resolver_modulo_cobra_proyecto,
+    obtener_pila_carga_modulos_cobra_proyecto,
+    resolver_ruta_canonica_modulo_cobra_proyecto,
     sanitizar_exports_publicos,
 )
 
@@ -551,8 +555,8 @@ class InterpretadorCobra:
             self._main_file, self._main_file
         )
         self._current_module_stack: list[Path] = []
-        self._usar_module_cache: dict[Path, dict[str, object]] = {}
-        self._usar_loading_stack: list[Path] = []
+        self._usar_module_cache = obtener_cache_modulos_cobra_proyecto()
+        self._usar_loading_stack = obtener_pila_carga_modulos_cobra_proyecto()
         # Debe ejecutarse siempre después de crear _validador y _usar_symbol_metadata.
         self.asegurar_estado_runtime_inicial()
 
@@ -2282,11 +2286,11 @@ class InterpretadorCobra:
             current_file or self._project_root, self._main_file
         )
         try:
-            ruta_modulo = resolver_modulo_cobra_proyecto(
+            ruta_modulo = resolver_ruta_canonica_modulo_cobra_proyecto(
                 nombre_modulo,
                 project_root=self._project_root,
                 current_file=current_file,
-            ).resolve()
+            )
         except FileNotFoundError as exc:
             ruta_buscada = self._project_root.joinpath(
                 *str(nombre_modulo).split(".")
@@ -2300,8 +2304,7 @@ class InterpretadorCobra:
             return
 
         if ruta_modulo in self._usar_loading_stack:
-            ciclo = [*self._usar_loading_stack, ruta_modulo]
-            cadena = " -> ".join(ruta.name for ruta in ciclo[ciclo.index(ruta_modulo):])
+            cadena = formatear_ciclo_modulos_cobra_proyecto(ruta_modulo)
             raise ImportError(f"Ciclo de módulos detectado en usar: {cadena}")
 
         try:
@@ -2371,7 +2374,7 @@ class InterpretadorCobra:
 
         simbolos_saneados: list[tuple[str, object]] = []
         metadata_por_simbolo: dict[str, dict[str, object]] = {}
-        modulo_canonico = str(ruta_modulo.resolve())
+        modulo_canonico = str(canonicalizar_ruta_usar_proyecto(ruta_modulo))
         for nombre in nombres_exportados:
             if nombre in entorno_modulo.values:
                 simbolo = entorno_modulo.values[nombre]
