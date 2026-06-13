@@ -602,6 +602,9 @@ def _worker(
 
         builtins_dict = dict(_SANDBOX_BASE_BUILTINS)
         builtins_dict["__import__"] = _safe_import
+        builtins_dict["globals"] = globals
+        builtins_dict["dir"] = dir
+        builtins_dict["getattr"] = getattr
         builtins_dict.setdefault("print", print)
 
         env = {

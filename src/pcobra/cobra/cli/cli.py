@@ -1183,6 +1183,8 @@ class CliApplication:
                     )
                 self._enforce_runtime_safety_policy(args)
                 debug_activo = bool(getattr(args, "debug", False))
+                if debug_activo:
+                    logging.getLogger().setLevel(logging.DEBUG)
                 setup_gettext(str(getattr(args, "lang", AppConfig.DEFAULT_LANGUAGE)))
                 messages.disable_colors(bool(getattr(args, "no_color", False)))
                 if getattr(args, "legacy_imports", False):
@@ -1215,7 +1217,13 @@ def main(argv: Optional[List[str]] = None) -> int:
     """Main entry point for the CLI."""
     configure_encoding()
     application = CliApplication()
-    return application.run(argv)
+    try:
+        result_code = application.run(argv)
+        if result_code != 0:
+            raise SystemExit(result_code)
+        return result_code
+    except SystemExit as e:
+        return e.code
 
 
 def __getattr__(name: str):

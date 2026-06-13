@@ -30,9 +30,8 @@ def _stub_gettext(monkeypatch):
 
 def test_cli_help():
     with patch("sys.stdout", new_callable=StringIO) as out:
-        with pytest.raises(SystemExit) as exc:
-            main(["--help"])
-        assert exc.value.code == 0
+        result_code = main(["--help"])
+        assert result_code == 0
     assert "uso" in out.getvalue().lower() or "usage" in out.getvalue().lower()
 
 
@@ -49,7 +48,7 @@ def test_modulos_instalar_ruta_no_archivo(tmp_path, monkeypatch):
     ruta = tmp_path / "dir"
     ruta.mkdir()
     with patch("sys.stdout", new_callable=StringIO) as out:
-        main(["modulos", "instalar", str(ruta)])
+        main(["mod", "install", str(ruta)])
     assert "inv\u00e1lida" in out.getvalue().lower()
 
 
@@ -66,7 +65,7 @@ def test_modulos_instalar_extension_invalida(tmp_path, monkeypatch):
     archivo = tmp_path / "m.txt"
     archivo.write_text("x = 1")
     with patch("sys.stdout", new_callable=StringIO) as out:
-        main(["modulos", "instalar", str(archivo)])
+        main(["mod", "install", str(archivo)])
     assert "inv\u00e1lida" in out.getvalue().lower()
 
 

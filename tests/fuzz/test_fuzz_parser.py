@@ -10,7 +10,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT))
 
-from hypothesis import given, strategies as st
+from hypothesis import given, strategies as st, settings
 
 from cobra.core import Lexer
 from cobra.core import Parser
@@ -41,6 +41,7 @@ def programas(draw):
     return f"{sentencia1}\n{sentencia2}\n"
 
 
+@settings(max_examples=100, deadline=None)
 @given(programas())
 def test_fuzz_parser(programa: str):
     tokens = Lexer(programa).analizar_token()

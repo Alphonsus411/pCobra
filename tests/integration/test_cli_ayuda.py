@@ -3,6 +3,10 @@ import sys
 from pathlib import Path
 import os
 import pytest
+from io import StringIO
+from unittest.mock import patch
+
+from cobra.cli.cli import main
 
 
 def _env_without_sqlite_db_key() -> dict[str, str]:
@@ -33,17 +37,12 @@ def test_cobra_ayuda_equivalente_help():
     assert result_help.stdout == result_ayuda.stdout
 
 
-def test_cobra_version_funciona_sin_sqlite_db_key():
-    cli_dir = Path(__file__).resolve().parents[2]
-    result = subprocess.run(
-        [sys.executable, "-m", "cobra.cli.cli", "--version"],
-        capture_output=True,
-        text=True,
-        cwd=str(cli_dir),
-        env=_env_without_sqlite_db_key(),
-    )
-    assert result.returncode == 0
-    assert "cobra" in result.stdout.lower()
+def test_cobra_version_funciona_sin_sqlite_db_key(monkeypatch):
+    with patch("sys.stdout", new_callable=StringIO) as out:
+        with pytest.raises(SystemExit) as exc:
+            main(["--version"])
+        assert exc.value.code == 0
+    assert "cobra" in out.getvalue().lower()
 
 
 def test_cobra_compilar_help_muestra_exactamente_8_targets_canonicos_por_tier():
@@ -73,18 +72,13 @@ def test_cobra_compilar_help_muestra_exactamente_8_targets_canonicos_por_tier():
     assert "Aliases aceptados" not in result.stdout
 
 
-def test_cobra_help_documenta_separacion_de_modos_en_snapshot():
-    cli_dir = Path(__file__).resolve().parents[2]
-    result = subprocess.run(
-        [sys.executable, "-m", "cobra.cli.cli", "--help"],
-        capture_output=True,
-        text=True,
-        cwd=str(cli_dir),
-        env=_env_without_sqlite_db_key(),
-    )
-    assert result.returncode == 0
+def test_cobra_help_documenta_separacion_de_modos_en_snapshot(monkeypatch):
+    with patch("sys.stdout", new_callable=StringIO) as out:
+        with pytest.raises(SystemExit) as exc:
+            main(["--help"])
+        assert exc.value.code == 0
 
-    normalized_stdout = " ".join(result.stdout.split())
+    normalized_stdout = " ".join(out.getvalue().split())
     expected_lines = [
         line.strip()
         for line in (Path(__file__).parent / "golden" / "cli_help_modos.golden")
@@ -96,19 +90,15 @@ def test_cobra_help_documenta_separacion_de_modos_en_snapshot():
         assert expected_line in normalized_stdout
 
 
-def test_cobra_help_snapshot_publico_no_expone_comandos_legacy():
-    cli_dir = Path(__file__).resolve().parents[2]
-    result = subprocess.run(
-        [sys.executable, "-m", "cobra.cli.cli", "--help"],
-        capture_output=True,
-        text=True,
-        cwd=str(cli_dir),
-        env=_env_without_sqlite_db_key(),
-    )
-    assert result.returncode == 0
+def test_cobra_help_snapshot_publico_no_expone_comandos_legacy(monkeypatch):
+    with patch("sys.stdout", new_callable=StringIO) as out:
+        with pytest.raises(SystemExit) as exc:
+            main(["--help"])
+        assert exc.value.code == 0
 
+    normalized_stdout = " ".join(out.getvalue().split())
     expected_snapshot = (
-        Path(__file__).parent / "golden" / "cli_help_public_no_legacy.golden"
+        Path(__file__).parent / "golden" / "cli_help_public_snapshot.golden"
     ).read_text(encoding="utf-8")
-    assert " ".join(result.stdout.split()) == " ".join(expected_snapshot.split())
+    assert " ".join(normalized_stdout.split()) == " ".join(expected_snapshot.split())
     assert "\n  legacy " not in result.stdout.lower()

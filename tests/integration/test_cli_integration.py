@@ -26,6 +26,7 @@ def _spawn(args, extra_env=None):
     )
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="pexpect no es compatible con Windows")
 def test_ejecutar_modo_normal():
     child = _spawn("ejecutar tests/data/ejemplo.co")
     child.expect("hola")
@@ -34,6 +35,7 @@ def test_ejecutar_modo_normal():
     assert child.exitstatus == 0
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="pexpect no es compatible con Windows")
 def test_jupyter_command():
     if not shutil.which("jupyter"):
         pytest.skip("jupyter no disponible")

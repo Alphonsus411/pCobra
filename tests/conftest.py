@@ -4,6 +4,7 @@ import importlib
 import os
 import shutil
 import sqlite3
+import time
 import sys
 import tempfile
 from pathlib import Path
@@ -331,6 +332,11 @@ def base_datos_temporal(tmp_path_factory, monkeypatch):
     )
     monkeypatch.setitem(sys.modules, "core.database", database_module)
 
+    # Recargar ast_cache_module para asegurar un estado fresco
+    import pcobra.cobra.core.ast_cache as ast_cache_module
+    ast_cache_module = importlib.reload(ast_cache_module)
+    ast_cache_module.limpiar_cache()
+
     yield db_path
 
     # Explicitly close any lingering database connections before unlinking the file
@@ -342,5 +348,10 @@ def base_datos_temporal(tmp_path_factory, monkeypatch):
     )
 
     if db_path.exists():
-        db_path.unlink()
+        for _ in range(5):  # Retry up to 5 times
+            try:
+                db_path.unlink()
+                break
+            except PermissionError:
+                time.sleep(0.1)  # Wait a bit before retrying
     shutil.rmtree(db_dir, ignore_errors=True)
