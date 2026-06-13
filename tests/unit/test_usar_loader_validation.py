@@ -68,9 +68,13 @@ def test_modulo_no_publico_error_controlado_sin_traceback():
 def test_resolver_modulo_cobra_proyecto_convierte_nombre_punteado_en_co(tmp_path):
     from pcobra.cobra.usar_loader import resolver_modulo_cobra_proyecto
 
+    modulo = tmp_path / "utilidades" / "fechas.co"
+    modulo.parent.mkdir()
+    modulo.write_text("", encoding="utf-8")
+
     ruta = resolver_modulo_cobra_proyecto("utilidades.fechas", project_root=tmp_path)
 
-    assert ruta == (tmp_path / "utilidades" / "fechas.co").resolve(strict=False)
+    assert ruta == modulo.resolve()
 
 
 @pytest.mark.parametrize(
@@ -100,6 +104,7 @@ def test_resolver_modulo_cobra_proyecto_rechaza_traversal_por_symlink(tmp_path):
 
     destino_externo = tmp_path.parent / f"{tmp_path.name}_externo"
     destino_externo.mkdir()
+    (destino_externo / "fechas.co").write_text("", encoding="utf-8")
     (tmp_path / "utilidades").symlink_to(destino_externo, target_is_directory=True)
 
     with pytest.raises(ValueError, match="fuera de la raíz autorizada"):

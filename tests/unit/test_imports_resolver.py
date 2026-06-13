@@ -130,6 +130,34 @@ def test_politica_colisiones_desde_config(monkeypatch, tmp_path):
         resolver.resolve("datos")
 
 
+
+def test_modulo_proyecto_expone_file_path_canonico(tmp_path):
+    modulo = tmp_path / "utilidades" / "fechas.co"
+    modulo.parent.mkdir()
+    modulo.write_text("", encoding="utf-8")
+
+    resolver = CobraImportResolver(project_root=tmp_path)
+    result = resolver.resolve("utilidades.fechas")
+
+    assert result.source == "project"
+    assert result.import_path is None
+    assert result.file_path == str(modulo.resolve())
+
+
+def test_modulo_proyecto_rechaza_file_path_canonico_fuera_de_root(tmp_path):
+    destino_externo = tmp_path.parent / f"{tmp_path.name}_externo_resolver"
+    destino_externo.mkdir()
+    (destino_externo / "fechas.co").write_text("", encoding="utf-8")
+    (tmp_path / "utilidades").symlink_to(destino_externo, target_is_directory=True)
+
+    resolver = CobraImportResolver(project_root=tmp_path)
+
+    with pytest.raises(ImportResolutionError) as excinfo:
+        resolver.resolve("utilidades.fechas")
+
+    assert excinfo.value.code == "IMP-PROJECT-PATH-001"
+
+
 def test_bridge_python_directo():
     resolver = CobraImportResolver()
 
