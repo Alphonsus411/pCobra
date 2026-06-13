@@ -63,3 +63,63 @@ def test_modulo_no_publico_error_controlado_sin_traceback():
     mensaje = str(excinfo.value)
     assert "fuera del catálogo público" in mensaje or "módulo externo no permitido" in mensaje
     assert "Traceback" not in mensaje
+
+
+def test_resolver_modulo_cobra_proyecto_convierte_nombre_punteado_en_co(tmp_path):
+    from pcobra.cobra.usar_loader import resolver_modulo_cobra_proyecto
+
+    ruta = resolver_modulo_cobra_proyecto("utilidades.fechas", project_root=tmp_path)
+
+    assert ruta == (tmp_path / "utilidades" / "fechas.co").resolve(strict=False)
+
+
+@pytest.mark.parametrize(
+    "nombre",
+    [
+        "",
+        "utilidades..fechas",
+        ".utilidades",
+        "utilidades.",
+        "../secreto",
+        "utilidades/fechas",
+        r"utilidades\\fechas",
+        "C:secreto",
+        "utilidades.fecha$",
+        "utilidades.-fecha",
+    ],
+)
+def test_resolver_modulo_cobra_proyecto_rechaza_nombres_inseguros(tmp_path, nombre):
+    from pcobra.cobra.usar_loader import resolver_modulo_cobra_proyecto
+
+    with pytest.raises(ValueError):
+        resolver_modulo_cobra_proyecto(nombre, project_root=tmp_path)
+
+
+def test_resolver_modulo_cobra_proyecto_rechaza_traversal_por_symlink(tmp_path):
+    from pcobra.cobra.usar_loader import resolver_modulo_cobra_proyecto
+
+    destino_externo = tmp_path.parent / f"{tmp_path.name}_externo"
+    destino_externo.mkdir()
+    (tmp_path / "utilidades").symlink_to(destino_externo, target_is_directory=True)
+
+    with pytest.raises(ValueError, match="fuera de la raíz autorizada"):
+        resolver_modulo_cobra_proyecto("utilidades.fechas", project_root=tmp_path)
+
+
+def test_resolver_modulo_cobra_proyecto_valida_current_file_dentro_de_root(tmp_path):
+    from pcobra.cobra.usar_loader import resolver_modulo_cobra_proyecto
+
+    externo = tmp_path.parent / f"{tmp_path.name}_archivo_externo.co"
+    externo.write_text("", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="fuera de la raíz autorizada"):
+        resolver_modulo_cobra_proyecto(
+            "utilidades.fechas",
+            project_root=tmp_path,
+            current_file=externo,
+        )
+
+
+def test_validacion_oficial_sigue_rechazando_nombres_punteados():
+    with pytest.raises(ValueError):
+        validar_nombre_modulo_usar("utilidades.fechas", require_allowlist=False)
