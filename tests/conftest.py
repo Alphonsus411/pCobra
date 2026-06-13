@@ -333,6 +333,14 @@ def base_datos_temporal(tmp_path_factory, monkeypatch):
 
     yield db_path
 
+    # Explicitly close any lingering database connections before unlinking the file
+    monkeypatch.setattr(
+        database_module, "_SQLITEPLUS_INSTANCE", None, raising=False
+    )
+    monkeypatch.setattr(
+        database_module, "_TABLES_READY", False, raising=False
+    )
+
     if db_path.exists():
         db_path.unlink()
     shutil.rmtree(db_dir, ignore_errors=True)

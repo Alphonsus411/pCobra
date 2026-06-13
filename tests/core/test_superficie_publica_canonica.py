@@ -16,36 +16,13 @@ RAIZ_REPO = Path(__file__).resolve().parents[2]
 
 
 def _nombres_publicos(path_modulo: Path) -> list[str]:
-    arbol = ast.parse(path_modulo.read_text(encoding="utf-8"))
-    simbolos: dict[str, list[str]] = {}
-
-    for nodo in arbol.body:
-        destinos = []
-        valor = None
-        if isinstance(nodo, ast.Assign):
-            destinos = [d for d in nodo.targets if isinstance(d, ast.Name)]
-            valor = nodo.value
-        elif isinstance(nodo, ast.AnnAssign) and isinstance(nodo.target, ast.Name):
-            destinos = [nodo.target]
-            valor = nodo.value
-
-        if not destinos or valor is None:
-            continue
-
-        for destino in destinos:
-            nombre = destino.id
-            if isinstance(valor, (ast.List, ast.Tuple)):
-                simbolos[nombre] = [
-                    x.value for x in valor.elts if isinstance(x, ast.Constant) and isinstance(x.value, str)
-                ]
-            elif isinstance(valor, ast.Call) and isinstance(valor.func, ast.Name) and valor.func.id == "list":
-                arg = valor.args[0] if valor.args else None
-                if isinstance(arg, ast.Name) and arg.id in simbolos:
-                    simbolos[nombre] = list(simbolos[arg.id])
-
-    if "__all__" not in simbolos:
+    modulo_globals: dict[str, Any] = {}
+    exec(path_modulo.read_text(encoding="utf-8"), modulo_globals)
+    if "__all__" not in modulo_globals:
         raise AssertionError(f"{path_modulo} no define __all__")
-    return simbolos["__all__"]
+    publicos = modulo_globals["__all__"]
+    # Debug print statement was removed.
+    return publicos
 
 
 def _simbolos_definidos_modulo(path_modulo: Path) -> set[str]:

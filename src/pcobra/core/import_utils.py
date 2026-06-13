@@ -5,10 +5,12 @@ from __future__ import annotations
 import os
 from functools import lru_cache
 from pathlib import Path
-from typing import Iterable, FrozenSet, Tuple
+from pathlib import Path
+from typing import Iterable, FrozenSet, Tuple, List
 
 from pcobra.core.lexer import Lexer
 from pcobra.core.parser import Parser
+from pcobra.cobra.usar_loader import formatear_ciclo_modulos_cobra_proyecto
 from .ast_nodes import NodoAsignacion, NodoClase, NodoFuncion, NodoExport
 
 # Ruta por defecto donde se instalan los módulos del usuario.
@@ -98,19 +100,32 @@ def cargar_ast_modulo(
     modules_path: str | None = None,
     whitelist: Iterable[str] | None = None,
     expected_fingerprint: FingerprintArchivo | None = None,
+    loading_stack: List[Path] | None = None, # Nuevo parámetro
 ):
     """Parsa un módulo Cobra y devuelve su AST."""
 
     codigo, ruta_real = _leer_codigo_modulo(ruta, modules_path, whitelist)
-    if expected_fingerprint is not None:
-        if _fingerprint_archivo(ruta_real) != expected_fingerprint:
-            raise _ArchivoModuloInestableError(
-                f"El módulo cambió durante la lectura: {ruta_real}"
-            )
-    lexer = Lexer(codigo)
-    tokens = lexer.analizar_token()
-    parser = Parser(tokens)
-    return parser.parsear()
+    ruta_real_path = Path(ruta_real) # Convertir a Path para comparación
+
+    if loading_stack is not None:
+        if ruta_real_path in loading_stack:
+            cadena = formatear_ciclo_modulos_cobra_proyecto(ruta_real_path)
+            raise ImportError(f"Ciclo de módulos detectado en import: {cadena}")
+        loading_stack.append(ruta_real_path)
+
+    try:
+        if expected_fingerprint is not None:
+            if _fingerprint_archivo(ruta_real) != expected_fingerprint:
+                raise _ArchivoModuloInestableError(
+                    f"El módulo cambió durante la lectura: {ruta_real}"
+                )
+        lexer = Lexer(codigo)
+        tokens = lexer.analizar_token()
+        parser = Parser(tokens)
+        return parser.parsear()
+    finally:
+        if loading_stack is not None:
+            loading_stack.pop()
 
 
 def _extraer_simbolos(ast_modulo: Iterable) -> FrozenSet[Tuple[str, str]]:

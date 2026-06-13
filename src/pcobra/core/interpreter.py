@@ -5,6 +5,7 @@ import os
 import hashlib
 from pathlib import Path
 from typing import Mapping, Optional
+from pcobra.cobra.usar_loader import usar_modulo
 
 from .lexer import (
     Token,
@@ -105,6 +106,7 @@ from pcobra.cobra.usar_loader import (
     obtener_pila_carga_modulos_cobra_proyecto,
     resolver_ruta_canonica_modulo_cobra_proyecto,
     sanitizar_exports_publicos,
+    obtener_cache_ast_import_co,
 )
 
 MODULES_PATH = _DEFAULT_MODULES_PATH
@@ -2241,38 +2243,30 @@ class InterpretadorCobra:
                 self.liberar_memoria(idx, tam)
             self.contextos.pop()
 
-    def ejecutar_import(self, nodo):
-        """Carga y ejecuta un módulo especificado en la declaración import."""
-        # Cada módulo inicia su propia validación
-        self._validados.clear()
+    def ejecutar_import(self, nodo: NodoImport) -> None:
+        """Ejecuta una declaración de importación de módulo."""
         ruta = nodo.ruta
-        _sincronizar_config_import()
-        try:
+        # La ruta ya viene canonicalizada desde el parser/transpilador
+        # o es una ruta absoluta de un archivo .co.
+        # No necesitamos resolverla de nuevo aquí.
+
+        ruta_canonica = Path(ruta).expanduser().resolve(strict=False)
+        ast_cache = obtener_cache_ast_import_co() # Obtener la caché de ASTs de import .co
+
+        if ruta_canonica in ast_cache:
+            ast = ast_cache[ruta_canonica]
+        else:
+            # Pasar la pila de carga del intérprete a cargar_ast_modulo
             ast = cargar_ast_modulo(
                 ruta,
-                modules_path=MODULES_PATH,
+                modules_path=str(MODULES_PATH), # Asegurarse de pasar el modules_path correcto
                 whitelist=IMPORT_WHITELIST,
+                loading_stack=self._usar_loading_stack, # Pasar la pila de carga
             )
-        except PermissionError as exc:
-            raise PrimitivaPeligrosaError(str(exc)) from exc
-        except FileNotFoundError:
-            raise FileNotFoundError(f"Módulo no encontrado: {nodo.ruta}")
-        except Exception as exc:
-            raise ImportError(
-                f"Error al analizar el módulo importado '{nodo.ruta}': {exc}"
-            ) from exc
-        total = self._contar_nodos(ast)
-        max_nodos = max(limite_nodos(), len(ast) + 1)
-        if total > max_nodos:
-            raise RuntimeError(f"El AST excede el límite de {max_nodos} nodos")
+            ast_cache[ruta_canonica] = ast
+
         for subnodo in ast:
-            modo_prev = self._set_mode("analysis")
-            try:
-                self._validar(subnodo)
-                self._set_mode("execution")
-                self.ejecutar_nodo(subnodo)
-            finally:
-                self._set_mode(modo_prev)
+            self.ejecutar_nodo(subnodo)
 
     def _ejecutar_usar_modulo_proyecto(self, nombre_modulo: str) -> None:
         """Ejecuta un módulo Cobra de proyecto resuelto por ruta canónica."""
@@ -2303,27 +2297,24 @@ class InterpretadorCobra:
             self._inyectar_exports_modulo_proyecto(self._usar_module_cache[ruta_modulo])
             return
 
-        if ruta_modulo in self._usar_loading_stack:
-            cadena = formatear_ciclo_modulos_cobra_proyecto(ruta_modulo)
-            raise ImportError(f"Ciclo de módulos detectado en usar: {cadena}")
-
+        self._usar_loading_stack.append(ruta_modulo)
         try:
             ast = cargar_ast_modulo(
                 str(ruta_modulo),
                 modules_path=str(self._project_root),
                 whitelist={self._project_root},
+                loading_stack=self._usar_loading_stack,
             )
         except PermissionError as exc:
             raise PrimitivaPeligrosaError(str(exc)) from exc
         except FileNotFoundError as exc:
             ruta_buscada = self._project_root.joinpath(
-                *str(nombre_modulo).split(".")
-            ).with_suffix(".co")
+                *str(nombre_modulo).split("."
+            )).with_suffix(".co")
             raise FileNotFoundError(
                 f"Módulo no encontrado: {nombre_modulo}. Ruta buscada: {ruta_buscada}"
             ) from exc
 
-        self._usar_loading_stack.append(ruta_modulo)
         self._current_module_stack.append(ruta_modulo)
         entorno_modulo = Environment(parent=self.contextos[-1])
         self.contextos.append(entorno_modulo)
@@ -2485,18 +2476,20 @@ class InterpretadorCobra:
             nombre_modulo = nodo.modulo
             if isinstance(nombre_modulo, str):
                 nombre_modulo_limpio = nombre_modulo.strip()
-                if (
-                    "." in nombre_modulo_limpio
-                    or nombre_modulo_limpio not in USAR_COBRA_ALLOWLIST
-                ):
-                    try:
-                        return self._ejecutar_usar_modulo_proyecto(nombre_modulo_limpio)
-                    except FileNotFoundError:
-                        if "." in nombre_modulo_limpio:
-                            raise
-                    except ValueError:
-                        if "." in nombre_modulo_limpio:
-                            raise
+                # Intentar cargar como módulo de proyecto primero
+                try:
+                    exports = usar_modulo(
+                        nombre_modulo_limpio,
+                        project_root=self._project_root,
+                        current_file=self._main_file,
+                    )
+                    self._inyectar_exports_modulo_proyecto(exports)
+                    return
+                except (FileNotFoundError, ValueError, PermissionError) as exc:
+                    # Si falla la carga como módulo de proyecto, intentar como módulo oficial
+                    if not _usar_error_esperado(exc):
+                        raise # Re-lanzar errores inesperados
+
             modulo, es_repl_estricto, es_modulo_oficial_cobra = _resolver_carga_modulo_usar(
                 nombre_modulo
             )
@@ -2725,6 +2718,7 @@ class InterpretadorCobra:
             if metadata_simbolo is None:
                 continue
             metadata_simbolo = self._canonicalizar_metadata_usar(nombre, metadata_simbolo)
+            simbolo = self._materializar_valor(simbolo, visitados=None)
             contexto_actual.define(nombre, simbolo)
             self._usar_symbol_metadata[nombre] = dict(metadata_simbolo)
             if self._validador is not None and hasattr(self._validador, "registrar_simbolo_publico_usar"):

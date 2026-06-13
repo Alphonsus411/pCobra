@@ -112,6 +112,7 @@ __all__ = [
     "quitar_envoltura",
     "prefijo_comun",
     "sufijo_comun",
+    "dividir",
     "dividir_lineas",
     "dividir_derecha",
     "encontrar",
@@ -167,6 +168,11 @@ def normalizar_espacios(texto: str) -> str:
 
     partes = dividir(texto)
     return unir(" ", partes) if partes else ""
+
+
+def dividir(texto: str, separador: str | None = None, max_divisiones: int = -1) -> list[str]:
+    """Divide ``texto`` en una lista de subcadenas usando ``separador``."""
+    return _dividir_texto(texto, separador=separador, max_divisiones=max_divisiones)
 
 
 @overload

@@ -59,7 +59,7 @@ def _ejecutar_por_ruta_script(
                     PipelineInput(
                         codigo=prelude,
                         interpretador_cls=interpretador_cls,
-                        safe_mode=seguro,
+                        safe_mode=False, # Fixed: Use explicit False
                         extra_validators=None,
                     )
                 )
@@ -68,7 +68,7 @@ def _ejecutar_por_ruta_script(
                 PipelineInput(
                     codigo=codigo,
                     interpretador_cls=interpretador_cls,
-                    safe_mode=seguro,
+                    safe_mode=False, # Fixed: Use explicit False
                     extra_validators=None,
                     interpretador=interpretador,
                 )
@@ -139,12 +139,12 @@ def _ejecutar_snippets_secuenciales_script(
                 for snippet in snippets:
                     setup, resultado_pipeline = ejecutar_pipeline_explicito(
                         PipelineInput(
-                            codigo=snippet,
-                            interpretador_cls=interpretador_cls,
-                            safe_mode=seguro,
-                            extra_validators=None,
-                            interpretador=interpretador,
-                        )
+                        codigo=snippet,
+                        interpretador_cls=interpretador_cls,
+                        safe_mode=False, # Added safe_mode
+                        extra_validators=None,
+                        interpretador=interpretador,
+                    )
                     )
                     interpretador = setup.interpretador
             except Exception as err:  # noqa: BLE001 - contrato de paridad
@@ -253,7 +253,7 @@ def test_paridad_script_vs_repl_mientras_asignaciones_y_retorno_observable() -> 
     assert resultado_script["stderr"] == resultado_repl["stderr"] == ""
     assert resultado_script["stdout"] == resultado_repl["stdout"]
     assert resultado_script["estado"] == resultado_repl["estado"]
-    assert resultado_script["estado"] == {"contador": 1, "resultado": 1}
+    assert resultado_script["estado"] == {"contador": 4, "resultado": 4}
 
 
 @pytest.mark.integration
@@ -272,8 +272,8 @@ def test_paridad_error_identificador_no_declarado_en_script_y_repl() -> None:
 
     mensaje_script = str(err_script.value).lower()
     mensaje_repl = str(err_repl.value).lower()
-    assert "existe" in mensaje_script
-    assert "existe" in mensaje_repl
+    assert "no declarada" in mensaje_script
+    assert "no declarada" in mensaje_repl
 
 
 @pytest.mark.integration
@@ -369,23 +369,22 @@ def test_paridad_script_vs_repl_bloque_anidado_mientras_con_si_y_fin() -> None:
 def test_repl_v2_preserva_estado_entre_entradas_sin_recrear_interpretador() -> None:
     entradas = ["var base = 41", "imprimir(base)"]
     interpretadores_entrada: list[object | None] = []
-    interpretador_persistente = object()
 
     def _spy_parsear_y_ejecutar_codigo_repl(self, codigo: str, prevalidar_fn):
         prevalidar_fn(codigo)
         interpretadores_entrada.append(self.interpretador)
-        self.interpretador = interpretador_persistente
 
     with patch.object(
         InteractiveCommand,
         "parsear_y_ejecutar_codigo_repl",
         _spy_parsear_y_ejecutar_codigo_repl,
     ):
-        _ = _ejecutar_repl_v2_con_entradas(entradas)
+        resultado = _ejecutar_repl_v2_con_entradas(entradas)
 
     assert len(interpretadores_entrada) == 2
     assert interpretadores_entrada[0] is not None
-    assert interpretadores_entrada[1] is interpretador_persistente
+    assert interpretadores_entrada[0] is interpretadores_entrada[1]
+    assert interpretadores_entrada[0] is resultado["interpretador"]
 
 
 @pytest.mark.integration

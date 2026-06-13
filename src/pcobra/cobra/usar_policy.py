@@ -40,7 +40,7 @@ _USAR_CANONICAL_INTERNAL_PATHS: dict[str, str] = {
     # `numero` expone el contrato runtime de `usar` desde corelibs.
     "numero": "src/pcobra/corelibs/numero.py",
     # `texto` expone su API Cobra-facing desde corelibs para evitar inicializar agregadores.
-    "texto": "src/pcobra/corelibs/texto.py",
+    "texto": "src/pcobra/standard_library/texto.py",
     # `datos` mantiene su API pública desde standard_library.
     "datos": "src/pcobra/standard_library/datos.py",
     "logica": "src/pcobra/corelibs/logica.py",
@@ -236,6 +236,7 @@ USAR_RUNTIME_EXPORT_OVERRIDES: dict[str, tuple[str, ...]] = {
         "recortar",
         "repetir",
         "quitar_acentos",
+        "dividir",
     ),
     "datos": (
         "leer_csv",

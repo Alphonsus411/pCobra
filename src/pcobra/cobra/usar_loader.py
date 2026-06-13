@@ -30,6 +30,7 @@ _VALID_PROJECT_MODULE_SEGMENT_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 _PROJECT_MODULE_FORBIDDEN_CHARS = frozenset('/\\@$%*?"\'<>|;`!()[]{}=+,')
 _USAR_PROJECT_MODULE_CACHE: dict[Path, dict[str, Any]] = {}
 _USAR_PROJECT_LOADING_STACK: list[Path] = []
+_IMPORT_CO_AST_CACHE: dict[Path, list[Any]] = {} # Nueva caché para ASTs de .co
 
 # Patrones que deben bloquearse explícitamente para evitar imports de backend o rutas internas.
 _INTERNAL_HINTS = (
@@ -267,6 +268,11 @@ def obtener_pila_carga_modulos_cobra_proyecto() -> list[Path]:
     """Expone la pila compartida de carga para detectar ciclos entre entrypoints."""
 
     return _USAR_PROJECT_LOADING_STACK
+
+
+def obtener_cache_ast_import_co() -> dict[Path, list[Any]]:
+    """Expone la caché compartida de ASTs de módulos .co para el transpilador."""
+    return _IMPORT_CO_AST_CACHE
 
 
 def formatear_ciclo_modulos_cobra_proyecto(ruta_modulo: Path) -> str:
@@ -547,13 +553,13 @@ def usar_modulo(
                     project_root=root,
                     current_file=current,
                 )
-                return dict(exports.get("simbolos", []))
+                return exports
             except (FileNotFoundError, ValueError):
                 if "." in nombre_limpio:
                     raise
 
     modulo = obtener_modulo(nombre)
-    mapa_limpio, conflictos = sanitizar_exports_publicos(
+    simbolos_saneados, metadata_por_simbolo, conflictos = sanitizar_exports_publicos(
         modulo,
         normalizar_nombre_usar(nombre),
     )
@@ -563,9 +569,12 @@ def usar_modulo(
             nombre,
             conflictos,
         )
-    if not mapa_limpio:
+    if not simbolos_saneados:
         raise ImportError(f"No se encontraron símbolos exportables para usar '{nombre}'.")
-    return mapa_limpio
+    return {
+        "simbolos": simbolos_saneados,
+        "metadata": metadata_por_simbolo,
+    }
 
 
 def sanitizar_exports_publicos(modulo: object, alias_modulo: str) -> tuple[dict[str, Any], list[dict[str, str]]]:
@@ -657,7 +666,13 @@ def sanitizar_exports_publicos(modulo: object, alias_modulo: str) -> tuple[dict[
         simbolos_brutos,
         modulo_origen=alias_modulo,
     )
-    mapa_limpio = {nombre: simbolo for nombre, simbolo in simbolos_saneados}
+    metadata_por_simbolo: dict[str, dict[str, Any]] = {}
+    for nombre, simbolo in simbolos_saneados:
+        metadata_por_simbolo[nombre] = build_and_validate_usar_symbol_metadata(
+            module_name=alias_modulo,
+            symbol_name=nombre,
+            callable_obj=simbolo,
+        )
 
     for resultado in [*clasificacion.rechazos_duros, *warnings]:
         conflictos.append(
@@ -688,8 +703,8 @@ def sanitizar_exports_publicos(modulo: object, alias_modulo: str) -> tuple[dict[
             "USAR_SANITIZE_REJECTION_METRICS %s",
             {
                 "module": alias_modulo,
-                "rejection_metrics_by_code": metricas_rechazo_por_codigo,
+                "rejection_metrics_by_codigo": metricas_rechazo_por_codigo,
             },
         )
 
-    return mapa_limpio, conflictos
+    return simbolos_saneados, metadata_por_simbolo, conflictos

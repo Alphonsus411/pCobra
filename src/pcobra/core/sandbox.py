@@ -156,6 +156,8 @@ _SANDBOX_IMPORT_ALLOWLIST = {
     "string",
     "datetime",
     "json",
+    "pcobra",
+    "pcobra.corelibs",
 }
 
 _FORBIDDEN_CALLS = {"eval", "exec", "open"}

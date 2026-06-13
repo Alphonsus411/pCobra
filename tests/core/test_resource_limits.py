@@ -2,6 +2,8 @@ import logging
 import sys
 import types
 
+import sys
+
 import pytest
 
 from core import resource_limits
@@ -69,6 +71,7 @@ def test_limitar_cpu_sin_resource_y_psutil_sin_rlimit(monkeypatch, caplog):
     assert len(info_records) == 1
 
 
+@pytest.mark.skipif(sys.platform != "linux", reason="resource module is Unix-specific")
 def test_limitar_memoria_sin_psutil_en_linux(monkeypatch, caplog):
     import resource
 
@@ -97,6 +100,7 @@ def test_limitar_memoria_sin_psutil_en_linux(monkeypatch, caplog):
     assert err_record and err_record.levelno == logging.ERROR
 
 
+@pytest.mark.skipif(sys.platform != "linux", reason="resource module is Unix-specific")
 def test_limitar_cpu_sin_psutil_en_linux(monkeypatch, caplog):
     import resource
 

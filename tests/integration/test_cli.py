@@ -85,7 +85,7 @@ def test_modulos_instalar_enlace_simbolico(tmp_path, monkeypatch):
     link = tmp_path / "link.co"
     link.symlink_to(real_file)
     with patch("sys.stdout", new_callable=StringIO) as out:
-        main(["modulos", "instalar", str(link)])
+        main(["mod", "install", str(link)])
     assert "inv\u00e1lida" in out.getvalue().lower()
 
 
