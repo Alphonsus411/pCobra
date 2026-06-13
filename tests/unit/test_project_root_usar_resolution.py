@@ -1,12 +1,27 @@
 from pathlib import Path
 from types import SimpleNamespace
 
+import pytest
+
 from pcobra.cobra.usar_loader import (
     descubrir_raiz_proyecto,
+    obtener_cache_modulos_cobra_proyecto,
+    obtener_pila_carga_modulos_cobra_proyecto,
     resolver_modulo_cobra_proyecto,
     usar_modulo,
 )
 from pcobra.core.interpreter import InterpretadorCobra
+
+
+@pytest.fixture(autouse=True)
+def limpiar_estado_usar_proyecto_compartido():
+    """Aísla la caché/pila global compartida entre tests de módulos de proyecto."""
+
+    obtener_cache_modulos_cobra_proyecto().clear()
+    obtener_pila_carga_modulos_cobra_proyecto().clear()
+    yield
+    obtener_cache_modulos_cobra_proyecto().clear()
+    obtener_pila_carga_modulos_cobra_proyecto().clear()
 
 
 def test_descubrir_raiz_proyecto_prefiere_cobra_toml_desde_archivo_principal(tmp_path):
@@ -400,6 +415,40 @@ def test_interpretador_usar_proyecto_cachea_referencias_equivalentes(monkeypatch
 
     assert cargas == [modulo.resolve()]
     assert interp.variables["valor"] == 1
+
+
+def test_api_e_interpretador_comparten_cache_por_ruta_canonica(monkeypatch, tmp_path):
+    from pcobra.core.ast_nodes import NodoAsignacion, NodoValor
+
+    proyecto = tmp_path / "app"
+    (proyecto / "utilidades").mkdir(parents=True)
+    (proyecto / "cobra.toml").write_text("[proyecto]\n", encoding="utf-8")
+    principal = proyecto / "main.co"
+    principal.write_text("", encoding="utf-8")
+    modulo = proyecto / "utilidades" / "fechas.co"
+    modulo.write_text("", encoding="utf-8")
+    cargas = []
+
+    def fake_cargar_ast_modulo(ruta, **kwargs):
+        cargas.append(Path(ruta).resolve(strict=False))
+        return [NodoAsignacion("hoy", NodoValor(len(cargas)), declaracion=True)]
+
+    monkeypatch.setattr(
+        "pcobra.core.import_utils.cargar_ast_modulo", fake_cargar_ast_modulo
+    )
+    monkeypatch.setattr(
+        "pcobra.core.interpreter.cargar_ast_modulo", fake_cargar_ast_modulo
+    )
+
+    raiz_equivalente = proyecto / "utilidades" / ".."
+    assert usar_modulo("utilidades.fechas", project_root=raiz_equivalente)["hoy"] == 1
+
+    interp = InterpretadorCobra(safe_mode=False, main_file=principal)
+    interp.ejecutar_usar(SimpleNamespace(modulo="utilidades.fechas"))
+
+    assert interp.variables["hoy"] == 1
+    assert cargas == [modulo.resolve()]
+    assert list(obtener_cache_modulos_cobra_proyecto()) == [modulo.resolve()]
 
 
 def test_interpretador_usar_proyecto_detecta_ciclo_directo_self(monkeypatch, tmp_path):

@@ -209,10 +209,10 @@ def resolver_modulo_cobra_proyecto(
     """
 
     validar_nombre_modulo_cobra_proyecto(nombre)
-    root_resuelto = Path(project_root).resolve(strict=False)
+    root_resuelto = canonicalizar_ruta_usar_proyecto(project_root)
 
     if current_file is not None:
-        current_resuelto = Path(current_file).resolve(strict=False)
+        current_resuelto = canonicalizar_ruta_usar_proyecto(current_file)
         _verificar_path_dentro_de_root(current_resuelto, root_resuelto)
 
     try:
@@ -232,6 +232,51 @@ def resolver_modulo_cobra_proyecto(
     _verificar_path_dentro_de_root(ruta_resuelta, root_resuelto)
 
     return ruta_resuelta
+
+
+def canonicalizar_ruta_usar_proyecto(ruta: str | Path) -> Path:
+    """Devuelve la clave canónica de caché para módulos Cobra de proyecto."""
+
+    return Path(ruta).expanduser().resolve(strict=False)
+
+
+def resolver_ruta_canonica_modulo_cobra_proyecto(
+    nombre: str,
+    *,
+    project_root: Path,
+    current_file: Path | None = None,
+) -> Path:
+    """Resuelve un módulo de proyecto y normaliza su ruta como clave de caché."""
+
+    return canonicalizar_ruta_usar_proyecto(
+        resolver_modulo_cobra_proyecto(
+            nombre,
+            project_root=project_root,
+            current_file=current_file,
+        )
+    )
+
+
+def obtener_cache_modulos_cobra_proyecto() -> dict[Path, dict[str, Any]]:
+    """Expone la caché compartida de módulos de proyecto para el intérprete."""
+
+    return _USAR_PROJECT_MODULE_CACHE
+
+
+def obtener_pila_carga_modulos_cobra_proyecto() -> list[Path]:
+    """Expone la pila compartida de carga para detectar ciclos entre entrypoints."""
+
+    return _USAR_PROJECT_LOADING_STACK
+
+
+def formatear_ciclo_modulos_cobra_proyecto(ruta_modulo: Path) -> str:
+    """Construye una cadena clara del ciclo usando rutas canónicas en la pila."""
+
+    ruta_canonica = canonicalizar_ruta_usar_proyecto(ruta_modulo)
+    pila = [canonicalizar_ruta_usar_proyecto(ruta) for ruta in _USAR_PROJECT_LOADING_STACK]
+    ciclo = [*pila, ruta_canonica]
+    inicio = ciclo.index(ruta_canonica)
+    return " -> ".join(ruta.name for ruta in ciclo[inicio:])
 
 
 def _ascender_hasta_cobra_toml(candidato: Path | None) -> Path | None:
@@ -410,18 +455,17 @@ def _cargar_exports_modulo_cobra_proyecto(
     from pcobra.core.interpreter import InterpretadorCobra
     from pcobra.core.ast_nodes import NodoExport
 
-    ruta_modulo = resolver_modulo_cobra_proyecto(
+    ruta_modulo = resolver_ruta_canonica_modulo_cobra_proyecto(
         nombre,
         project_root=project_root,
         current_file=current_file,
-    ).resolve(strict=False)
+    )
 
     if ruta_modulo in _USAR_PROJECT_MODULE_CACHE:
         return _USAR_PROJECT_MODULE_CACHE[ruta_modulo]
 
     if ruta_modulo in _USAR_PROJECT_LOADING_STACK:
-        ciclo = [*_USAR_PROJECT_LOADING_STACK, ruta_modulo]
-        cadena = " -> ".join(ruta.name for ruta in ciclo[ciclo.index(ruta_modulo):])
+        cadena = formatear_ciclo_modulos_cobra_proyecto(ruta_modulo)
         raise ImportError(f"Ciclo de módulos detectado en usar: {cadena}")
 
     try:
@@ -434,9 +478,9 @@ def _cargar_exports_modulo_cobra_proyecto(
         raise FileNotFoundError(f"Módulo no encontrado: {nombre}") from exc
 
     interpretador = InterpretadorCobra()
-    interpretador._project_root = Path(project_root).resolve(strict=False)
+    interpretador._project_root = canonicalizar_ruta_usar_proyecto(project_root)
     interpretador._main_file = (
-        Path(current_file).resolve(strict=False) if current_file else ruta_modulo
+        canonicalizar_ruta_usar_proyecto(current_file) if current_file else ruta_modulo
     )
     interpretador._current_module_stack.append(ruta_modulo)
     interpretador.contextos.append(Environment(parent=interpretador.contextos[-1]))
@@ -493,7 +537,7 @@ def usar_modulo(
                 Path(current_file).expanduser() if current_file is not None else None
             )
             root = (
-                Path(project_root).expanduser().resolve(strict=False)
+                canonicalizar_ruta_usar_proyecto(project_root)
                 if project_root is not None
                 else descubrir_raiz_proyecto(current, current)
             )
