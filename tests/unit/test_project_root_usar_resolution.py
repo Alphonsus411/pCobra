@@ -4,6 +4,7 @@ from types import SimpleNamespace
 from pcobra.cobra.usar_loader import (
     descubrir_raiz_proyecto,
     resolver_modulo_cobra_proyecto,
+    usar_modulo,
 )
 from pcobra.core.interpreter import InterpretadorCobra
 
@@ -198,7 +199,74 @@ def test_resolver_modulo_cobra_proyecto_resuelve_modulo_anidado(tmp_path):
     modulo.parent.mkdir(parents=True)
     modulo.write_text("", encoding="utf-8")
 
-    assert resolver_modulo_cobra_proyecto("a.b.c", project_root=proyecto) == modulo.resolve()
+    assert (
+        resolver_modulo_cobra_proyecto("a.b.c", project_root=proyecto) == modulo.resolve()
+    )
+
+
+def test_usar_modulo_api_resuelve_util_misma_carpeta(monkeypatch, tmp_path):
+    from pcobra.core.ast_nodes import NodoAsignacion, NodoValor
+
+    proyecto = tmp_path / "app"
+    proyecto.mkdir()
+    (proyecto / "cobra.toml").write_text("[proyecto]\n", encoding="utf-8")
+    principal = proyecto / "main.co"
+    principal.write_text("", encoding="utf-8")
+    modulo = proyecto / "util.co"
+    modulo.write_text("", encoding="utf-8")
+    rutas_cargadas = []
+
+    def fake_cargar_ast_modulo(ruta, **kwargs):
+        rutas_cargadas.append((Path(ruta), kwargs["modules_path"]))
+        return [NodoAsignacion("valor_util", NodoValor(7), declaracion=True)]
+
+    monkeypatch.setattr(
+        "pcobra.core.import_utils.cargar_ast_modulo", fake_cargar_ast_modulo
+    )
+
+    exports = usar_modulo("util", current_file=principal)
+
+    assert exports["valor_util"] == 7
+    assert rutas_cargadas == [(modulo.resolve(), str(proyecto.resolve()))]
+
+
+def test_usar_modulo_api_resuelve_utilidades_fechas(monkeypatch, tmp_path):
+    from pcobra.core.ast_nodes import NodoAsignacion, NodoValor
+
+    proyecto = tmp_path / "app"
+    (proyecto / "utilidades").mkdir(parents=True)
+    (proyecto / "cobra.toml").write_text("[proyecto]\n", encoding="utf-8")
+    principal = proyecto / "main.co"
+    principal.write_text("", encoding="utf-8")
+    modulo = proyecto / "utilidades" / "fechas.co"
+    modulo.write_text("", encoding="utf-8")
+    rutas_cargadas = []
+
+    def fake_cargar_ast_modulo(ruta, **kwargs):
+        rutas_cargadas.append((Path(ruta), kwargs["modules_path"]))
+        return [NodoAsignacion("hoy", NodoValor("2026-06-13"), declaracion=True)]
+
+    monkeypatch.setattr(
+        "pcobra.core.import_utils.cargar_ast_modulo", fake_cargar_ast_modulo
+    )
+
+    exports = usar_modulo("utilidades.fechas", current_file=principal)
+
+    assert exports["hoy"] == "2026-06-13"
+    assert rutas_cargadas == [(modulo.resolve(), str(proyecto.resolve()))]
+
+
+def test_usar_modulo_api_nombre_simple_inexistente_mantiene_error_publico(tmp_path):
+    import pytest
+
+    proyecto = tmp_path / "app"
+    proyecto.mkdir()
+    (proyecto / "cobra.toml").write_text("[proyecto]\n", encoding="utf-8")
+    principal = proyecto / "main.co"
+    principal.write_text("", encoding="utf-8")
+
+    with pytest.raises(PermissionError, match="no canónico"):
+        usar_modulo("numpy", current_file=principal)
 
 
 def test_interpretador_usar_proyecto_misma_carpeta_con_nombre_simple(monkeypatch, tmp_path):
@@ -215,13 +283,68 @@ def test_interpretador_usar_proyecto_misma_carpeta_con_nombre_simple(monkeypatch
         rutas_cargadas.append(Path(ruta))
         return []
 
-    monkeypatch.setattr("pcobra.core.interpreter.cargar_ast_modulo", fake_cargar_ast_modulo)
+    monkeypatch.setattr(
+        "pcobra.core.interpreter.cargar_ast_modulo", fake_cargar_ast_modulo
+    )
 
     interp = InterpretadorCobra(main_file=principal)
     interp.ejecutar_usar(SimpleNamespace(modulo="saludos"))
 
     assert rutas_cargadas == [modulo.resolve()]
 
+
+def test_interpretador_usar_proyecto_util_misma_carpeta(monkeypatch, tmp_path):
+    from pcobra.core.ast_nodes import NodoAsignacion, NodoValor
+
+    proyecto = tmp_path / "app"
+    proyecto.mkdir()
+    (proyecto / "cobra.toml").write_text("[proyecto]\n", encoding="utf-8")
+    principal = proyecto / "main.co"
+    principal.write_text("", encoding="utf-8")
+    modulo = proyecto / "util.co"
+    modulo.write_text("", encoding="utf-8")
+    rutas_cargadas = []
+
+    def fake_cargar_ast_modulo(ruta, **kwargs):
+        rutas_cargadas.append((Path(ruta), kwargs["modules_path"]))
+        return [NodoAsignacion("valor_util", NodoValor(11), declaracion=True)]
+
+    monkeypatch.setattr(
+        "pcobra.core.interpreter.cargar_ast_modulo", fake_cargar_ast_modulo
+    )
+
+    interp = InterpretadorCobra(safe_mode=False, main_file=principal)
+    interp.ejecutar_usar(SimpleNamespace(modulo="util"))
+
+    assert interp.variables["valor_util"] == 11
+    assert rutas_cargadas == [(modulo.resolve(), str(proyecto.resolve()))]
+
+
+def test_interpretador_usar_proyecto_utilidades_fechas(monkeypatch, tmp_path):
+    from pcobra.core.ast_nodes import NodoAsignacion, NodoValor
+
+    proyecto = tmp_path / "app"
+    (proyecto / "utilidades").mkdir(parents=True)
+    (proyecto / "cobra.toml").write_text("[proyecto]\n", encoding="utf-8")
+    principal = proyecto / "main.co"
+    principal.write_text("", encoding="utf-8")
+    modulo = proyecto / "utilidades" / "fechas.co"
+    modulo.write_text("", encoding="utf-8")
+    rutas_cargadas = []
+
+    def fake_cargar_ast_modulo(ruta, **kwargs):
+        rutas_cargadas.append((Path(ruta), kwargs["modules_path"]))
+        return [NodoAsignacion("hoy", NodoValor("2026-06-13"), declaracion=True)]
+
+    monkeypatch.setattr(
+        "pcobra.core.interpreter.cargar_ast_modulo", fake_cargar_ast_modulo
+    )
+
+    interp = InterpretadorCobra(safe_mode=False, main_file=principal)
+    interp.ejecutar_usar(SimpleNamespace(modulo="utilidades.fechas"))
+
+    assert interp.variables["hoy"] == "2026-06-13"
+    assert rutas_cargadas == [(modulo.resolve(), str(proyecto.resolve()))]
 
 def test_interpretador_usar_proyecto_mantiene_raiz_al_cambiar_cwd(monkeypatch, tmp_path):
     proyecto = tmp_path / "app"
@@ -239,7 +362,9 @@ def test_interpretador_usar_proyecto_mantiene_raiz_al_cambiar_cwd(monkeypatch, t
         rutas_cargadas.append((Path(ruta), kwargs["modules_path"]))
         return []
 
-    monkeypatch.setattr("pcobra.core.interpreter.cargar_ast_modulo", fake_cargar_ast_modulo)
+    monkeypatch.setattr(
+        "pcobra.core.interpreter.cargar_ast_modulo", fake_cargar_ast_modulo
+    )
     monkeypatch.chdir(externo)
 
     interp = InterpretadorCobra(main_file=principal)
@@ -265,7 +390,9 @@ def test_interpretador_usar_proyecto_cachea_referencias_equivalentes(monkeypatch
         cargas.append(Path(ruta).resolve())
         return [NodoAsignacion("valor", NodoValor(len(cargas)), declaracion=True)]
 
-    monkeypatch.setattr("pcobra.core.interpreter.cargar_ast_modulo", fake_cargar_ast_modulo)
+    monkeypatch.setattr(
+        "pcobra.core.interpreter.cargar_ast_modulo", fake_cargar_ast_modulo
+    )
 
     interp = InterpretadorCobra(safe_mode=False, main_file=principal)
     interp.ejecutar_usar(SimpleNamespace(modulo="a.b.c"))
@@ -313,7 +440,9 @@ def test_interpretador_usar_proyecto_detecta_ciclo_indirecto(monkeypatch, tmp_pa
         siguiente = {"a.co": "b", "b.co": "c", "c.co": "a"}[Path(ruta).name]
         return [NodoUsar(siguiente)]
 
-    monkeypatch.setattr("pcobra.core.interpreter.cargar_ast_modulo", fake_cargar_ast_modulo)
+    monkeypatch.setattr(
+        "pcobra.core.interpreter.cargar_ast_modulo", fake_cargar_ast_modulo
+    )
 
     interp = InterpretadorCobra(safe_mode=False, main_file=principal)
     with pytest.raises(ImportError, match=r"a\.co -> b\.co -> c\.co -> a\.co"):
@@ -350,7 +479,9 @@ def test_import_archivo_co_mantiene_ejecutar_import(monkeypatch, tmp_path):
         llamadas.append((ruta, kwargs["modules_path"]))
         return []
 
-    monkeypatch.setattr("pcobra.core.interpreter.cargar_ast_modulo", fake_cargar_ast_modulo)
+    monkeypatch.setattr(
+        "pcobra.core.interpreter.cargar_ast_modulo", fake_cargar_ast_modulo
+    )
 
     interp = InterpretadorCobra(main_file=principal)
     interp.ejecutar_import(SimpleNamespace(ruta=str(modulo)))
