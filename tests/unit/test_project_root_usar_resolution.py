@@ -71,3 +71,66 @@ def test_interpretador_usar_proyecto_resuelve_desde_cobra_toml(monkeypatch, tmp_
         )
     ]
     assert interp._project_root == proyecto.resolve()
+
+
+def test_interpretador_usar_proyecto_cachea_por_ruta_canonica(monkeypatch, tmp_path):
+    from pcobra.core.ast_nodes import NodoAsignacion, NodoValor
+
+    proyecto = tmp_path / "app"
+    (proyecto / "utilidades").mkdir(parents=True)
+    (proyecto / "cobra.toml").write_text("[proyecto]\n", encoding="utf-8")
+    principal = proyecto / "main.co"
+    principal.write_text("", encoding="utf-8")
+    modulo = proyecto / "utilidades" / "fechas.co"
+    modulo.write_text("", encoding="utf-8")
+    cargas = []
+
+    def fake_cargar_ast_modulo(ruta, **kwargs):
+        cargas.append(Path(ruta))
+        return [NodoAsignacion("valor", NodoValor(len(cargas)), declaracion=True)]
+
+    monkeypatch.setattr(
+        "pcobra.core.interpreter.cargar_ast_modulo", fake_cargar_ast_modulo
+    )
+
+    interp = InterpretadorCobra(safe_mode=False, main_file=principal)
+    interp.ejecutar_usar(SimpleNamespace(modulo="utilidades.fechas"))
+    interp.ejecutar_usar(SimpleNamespace(modulo="utilidades.fechas"))
+
+    assert cargas == [modulo.resolve()]
+    assert interp.variables["valor"] == 1
+    assert list(interp._usar_module_cache) == [modulo.resolve()]
+
+
+def test_interpretador_usar_proyecto_detecta_ciclos_con_rutas_canonicas(monkeypatch, tmp_path):
+    from pcobra.core.ast_nodes import NodoUsar
+
+    proyecto = tmp_path / "app"
+    utilidades = proyecto / "utilidades"
+    utilidades.mkdir(parents=True)
+    (proyecto / "cobra.toml").write_text("[proyecto]\n", encoding="utf-8")
+    principal = proyecto / "main.co"
+    principal.write_text("", encoding="utf-8")
+    modulo_a = utilidades / "a.co"
+    modulo_b = utilidades / "b.co"
+    modulo_a.write_text("", encoding="utf-8")
+    modulo_b.write_text("", encoding="utf-8")
+
+    def fake_cargar_ast_modulo(ruta, **kwargs):
+        if Path(ruta).resolve() == modulo_a.resolve():
+            return [NodoUsar("utilidades.b")]
+        return [NodoUsar("utilidades.a")]
+
+    monkeypatch.setattr(
+        "pcobra.core.interpreter.cargar_ast_modulo", fake_cargar_ast_modulo
+    )
+
+    interp = InterpretadorCobra(safe_mode=False, main_file=principal)
+
+    try:
+        interp.ejecutar_usar(SimpleNamespace(modulo="utilidades.a"))
+    except ImportError as exc:
+        assert str(exc) == "Ciclo de módulos detectado en usar: a.co -> b.co -> a.co"
+    else:
+        raise AssertionError("Se esperaba un ImportError por ciclo de módulos")
+    assert interp._usar_loading_stack == []

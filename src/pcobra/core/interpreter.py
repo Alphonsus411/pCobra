@@ -55,6 +55,7 @@ from .ast_nodes import (
     NodoNoLocal,
     NodoWith,
     NodoImportDesde,
+    NodoExport,
     NodoAST,
     NodoRomper,
     NodoContinuar,
@@ -550,6 +551,8 @@ class InterpretadorCobra:
             self._main_file, self._main_file
         )
         self._current_module_stack: list[Path] = []
+        self._usar_module_cache: dict[Path, dict[str, object]] = {}
+        self._usar_loading_stack: list[Path] = []
         # Debe ejecutarse siempre después de crear _validador y _usar_symbol_metadata.
         self.asegurar_estado_runtime_inicial()
 
@@ -2268,7 +2271,7 @@ class InterpretadorCobra:
                 self._set_mode(modo_prev)
 
     def _ejecutar_usar_modulo_proyecto(self, nombre_modulo: str) -> None:
-        """Ejecuta un módulo Cobra de proyecto resuelto desde la raíz canonicalizada."""
+        """Ejecuta un módulo Cobra de proyecto resuelto por ruta canónica."""
 
         current_file = (
             self._current_module_stack[-1]
@@ -2282,9 +2285,17 @@ class InterpretadorCobra:
             nombre_modulo,
             project_root=self._project_root,
             current_file=current_file,
-        )
-        if ruta_modulo in self._current_module_stack:
-            raise ImportError(f"Importación circular detectada en usar: {nombre_modulo}")
+        ).resolve()
+
+        if ruta_modulo in self._usar_module_cache:
+            self._inyectar_exports_modulo_proyecto(self._usar_module_cache[ruta_modulo])
+            return
+
+        if ruta_modulo in self._usar_loading_stack:
+            ciclo = [*self._usar_loading_stack, ruta_modulo]
+            cadena = " -> ".join(ruta.name for ruta in ciclo[ciclo.index(ruta_modulo):])
+            raise ImportError(f"Ciclo de módulos detectado en usar: {cadena}")
+
         try:
             ast = cargar_ast_modulo(
                 str(ruta_modulo),
@@ -2296,12 +2307,53 @@ class InterpretadorCobra:
         except FileNotFoundError as exc:
             raise FileNotFoundError(f"Módulo no encontrado: {nombre_modulo}") from exc
 
+        self._usar_loading_stack.append(ruta_modulo)
         self._current_module_stack.append(ruta_modulo)
+        entorno_modulo = Environment(parent=self.contextos[-1])
+        self.contextos.append(entorno_modulo)
+        self.mem_contextos.append({})
         try:
             for subnodo in ast:
+                if isinstance(subnodo, NodoExport):
+                    continue
                 self.ejecutar_nodo(subnodo)
+            exports = self._extraer_exports_modulo_proyecto(ast, entorno_modulo)
+            self._usar_module_cache[ruta_modulo] = dict(exports)
         finally:
+            memoria_local = self.mem_contextos.pop()
+            for idx, tam in memoria_local.values():
+                self.liberar_memoria(idx, tam)
+            self.contextos.pop()
             self._current_module_stack.pop()
+            self._usar_loading_stack.pop()
+
+        self._inyectar_exports_modulo_proyecto(exports)
+
+    def _extraer_exports_modulo_proyecto(
+        self, ast: list[object], entorno_modulo: Environment
+    ) -> dict[str, object]:
+        """Obtiene los símbolos públicos de un módulo Cobra ejecutado por ``usar``."""
+
+        nombres_exportados = [
+            nodo.nombre for nodo in ast if isinstance(nodo, NodoExport)
+        ]
+        if not nombres_exportados:
+            nombres_exportados = [
+                nombre for nombre in entorno_modulo.values if not nombre.startswith("_")
+            ]
+
+        exports: dict[str, object] = {}
+        for nombre in nombres_exportados:
+            if nombre in entorno_modulo.values:
+                exports[nombre] = entorno_modulo.values[nombre]
+        return exports
+
+    def _inyectar_exports_modulo_proyecto(self, exports: Mapping[str, object]) -> None:
+        """Inyecta en el contexto activo los exports cacheados de un módulo de proyecto."""
+
+        contexto_actual = self.contextos[-1]
+        for nombre, valor in exports.items():
+            contexto_actual.define(nombre, valor)
 
     def ejecutar_usar(self, nodo):
         """Importa callables públicos al contexto actual usando la política de ``usar``.
