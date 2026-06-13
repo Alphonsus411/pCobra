@@ -6,6 +6,7 @@ import pytest
 from pcobra.cobra.cli.execution_pipeline import PipelineInput, ejecutar_pipeline_explicito
 from pcobra.cobra.usar_loader import (
     descubrir_raiz_proyecto,
+    formatear_ciclo_modulos_cobra_proyecto,
     obtener_cache_modulos_cobra_proyecto,
     obtener_pila_carga_modulos_cobra_proyecto,
     resolver_modulo_cobra_proyecto,
@@ -32,6 +33,41 @@ def limpiar_estado_usar_proyecto_compartido():
     obtener_cache_modulos_cobra_proyecto().clear()
     obtener_pila_carga_modulos_cobra_proyecto().clear()
 
+
+def test_formatear_ciclo_modulos_usa_rutas_relativas_en_subcarpetas(tmp_path):
+    proyecto = tmp_path / "app"
+    anidados = proyecto / "utilidades" / "internas"
+    anidados.mkdir(parents=True)
+    modulo_a = anidados / "a.co"
+    modulo_b = anidados / "b.co"
+    modulo_a.write_text("", encoding="utf-8")
+    modulo_b.write_text("", encoding="utf-8")
+
+    cadena = formatear_ciclo_modulos_cobra_proyecto(
+        modulo_a,
+        project_root=proyecto,
+        loading_stack=[modulo_a, modulo_b],
+    )
+
+    assert (
+        cadena
+        == "utilidades/internas/a.co -> utilidades/internas/b.co -> "
+        "utilidades/internas/a.co"
+    )
+
+def test_formatear_ciclo_modulos_fallback_canonico_fuera_de_project_root(tmp_path):
+    proyecto = tmp_path / "app"
+    externo = tmp_path / "externo"
+    proyecto.mkdir()
+    externo.mkdir()
+    modulo = externo / "a.co"
+    modulo.write_text("", encoding="utf-8")
+
+    cadena = formatear_ciclo_modulos_cobra_proyecto(
+        modulo, project_root=proyecto, loading_stack=[modulo]
+    )
+
+    assert cadena == f"{modulo.resolve()} -> {modulo.resolve()}"
 
 def test_descubrir_raiz_proyecto_prefiere_cobra_toml_desde_archivo_principal(tmp_path):
     proyecto = tmp_path / "app"
@@ -226,7 +262,10 @@ def test_interpretador_usar_proyecto_detecta_ciclos_con_rutas_canonicas(monkeypa
     try:
         interp.ejecutar_usar(SimpleNamespace(modulo="utilidades.a"))
     except ImportError as exc:
-        assert str(exc) == "Ciclo de módulos detectado en usar: a.co -> b.co -> a.co"
+        assert str(exc) == (
+            "Ciclo de módulos detectado en usar: "
+            "utilidades/a.co -> utilidades/b.co -> utilidades/a.co"
+        )
     else:
         raise AssertionError("Se esperaba un ImportError por ciclo de módulos")
     assert interp._usar_loading_stack == []
@@ -303,7 +342,7 @@ def test_usar_modulo_api_resuelve_util_misma_carpeta(monkeypatch, tmp_path):
     from pcobra.core.ast_nodes import NodoAsignacion, NodoValor
 
     proyecto = tmp_path / "app"
-    proyecto.mkdir()
+    (proyecto / "utilidades" / "internas").mkdir(parents=True)
     (proyecto / "cobra.toml").write_text("[proyecto]\n", encoding="utf-8")
     principal = proyecto / "main.co"
     principal.write_text("", encoding="utf-8")
@@ -540,17 +579,25 @@ def test_interpretador_usar_proyecto_detecta_ciclo_directo_self(monkeypatch, tmp
     (proyecto / "cobra.toml").write_text("[proyecto]\n", encoding="utf-8")
     principal = proyecto / "main.co"
     principal.write_text("", encoding="utf-8")
-    modulo = proyecto / "a.co"
+    anidados = proyecto / "utilidades" / "internas"
+    anidados.mkdir(parents=True)
+    modulo = anidados / "a.co"
     modulo.write_text("", encoding="utf-8")
 
     monkeypatch.setattr(
         "pcobra.core.import_utils.cargar_ast_modulo",
-        lambda _ruta, **_kwargs: [NodoUsar("a")],
+        lambda _ruta, **_kwargs: [NodoUsar("utilidades.internas.a")],
     )
 
     interp = InterpretadorCobra(safe_mode=False, main_file=principal)
-    with pytest.raises(ImportError, match=r"Ciclo de módulos detectado en usar: a\.co -> a\.co"):
-        interp.ejecutar_usar(SimpleNamespace(modulo="a"))
+    with pytest.raises(
+        ImportError,
+        match=(
+            r"Ciclo de módulos detectado en usar: "
+            r"utilidades/internas/a\.co -> utilidades/internas/a\.co"
+        ),
+    ):
+        interp.ejecutar_usar(SimpleNamespace(modulo="utilidades.internas.a"))
 
 
 def test_interpretador_usar_proyecto_detecta_ciclo_indirecto(monkeypatch, tmp_path):
@@ -558,15 +605,21 @@ def test_interpretador_usar_proyecto_detecta_ciclo_indirecto(monkeypatch, tmp_pa
     import pytest
 
     proyecto = tmp_path / "app"
-    proyecto.mkdir()
+    (proyecto / "utilidades" / "internas").mkdir(parents=True)
     (proyecto / "cobra.toml").write_text("[proyecto]\n", encoding="utf-8")
     principal = proyecto / "main.co"
     principal.write_text("", encoding="utf-8")
     for nombre in ("a", "b", "c"):
-        (proyecto / f"{nombre}.co").write_text("", encoding="utf-8")
+        (proyecto / "utilidades" / "internas" / f"{nombre}.co").write_text(
+            "", encoding="utf-8"
+        )
 
     def fake_cargar_ast_modulo(ruta, **kwargs):
-        siguiente = {"a.co": "b", "b.co": "c", "c.co": "a"}[Path(ruta).name]
+        siguiente = {
+            "a.co": "utilidades.internas.b",
+            "b.co": "utilidades.internas.c",
+            "c.co": "utilidades.internas.a",
+        }[Path(ruta).name]
         return [NodoUsar(siguiente)]
 
     monkeypatch.setattr(
@@ -574,8 +627,14 @@ def test_interpretador_usar_proyecto_detecta_ciclo_indirecto(monkeypatch, tmp_pa
     )
 
     interp = InterpretadorCobra(safe_mode=False, main_file=principal)
-    with pytest.raises(ImportError, match=r"a\.co -> b\.co -> c\.co -> a\.co"):
-        interp.ejecutar_usar(SimpleNamespace(modulo="a"))
+    with pytest.raises(
+        ImportError,
+        match=(
+            r"utilidades/internas/a\.co -> utilidades/internas/b\.co -> "
+            r"utilidades/internas/c\.co -> utilidades/internas/a\.co"
+        ),
+    ):
+        interp.ejecutar_usar(SimpleNamespace(modulo="utilidades.internas.a"))
 
 
 def test_interpretador_usar_proyecto_modulo_inexistente_muestra_nombre_y_ruta(tmp_path):

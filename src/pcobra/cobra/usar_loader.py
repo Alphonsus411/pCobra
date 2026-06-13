@@ -297,14 +297,40 @@ def obtener_cache_ast_import_co() -> dict[Path, list[Any]]:
     return _IMPORT_CO_AST_CACHE
 
 
-def formatear_ciclo_modulos_cobra_proyecto(ruta_modulo: Path) -> str:
-    """Construye una cadena clara del ciclo usando rutas canónicas en la pila."""
+def _formatear_ruta_ciclo_modulo(ruta: Path, project_root: Path | None) -> str:
+    """Formatea una ruta de ciclo de forma estable y legible."""
+
+    try:
+        ruta_canonica = canonicalizar_ruta_usar_proyecto(ruta)
+    except (OSError, RuntimeError, ValueError):
+        return ruta.name or str(ruta)
+
+    if project_root is not None:
+        try:
+            raiz_canonica = canonicalizar_ruta_usar_proyecto(project_root)
+            return ruta_canonica.relative_to(raiz_canonica).as_posix()
+        except (OSError, RuntimeError, ValueError):
+            pass
+
+    return str(ruta_canonica) if str(ruta_canonica) else (ruta.name or str(ruta))
+
+
+def formatear_ciclo_modulos_cobra_proyecto(
+    ruta_modulo: Path,
+    *,
+    project_root: Path | None = None,
+    loading_stack: list[Path] | None = None,
+) -> str:
+    """Construye una cadena clara del ciclo usando rutas relativas si es posible."""
 
     ruta_canonica = canonicalizar_ruta_usar_proyecto(ruta_modulo)
-    pila = [canonicalizar_ruta_usar_proyecto(ruta) for ruta in _USAR_PROJECT_LOADING_STACK]
+    pila_origen = loading_stack if loading_stack is not None else _USAR_PROJECT_LOADING_STACK
+    pila = [canonicalizar_ruta_usar_proyecto(ruta) for ruta in pila_origen]
     ciclo = [*pila, ruta_canonica]
     inicio = ciclo.index(ruta_canonica)
-    return " -> ".join(ruta.name for ruta in ciclo[inicio:])
+    return " -> ".join(
+        _formatear_ruta_ciclo_modulo(ruta, project_root) for ruta in ciclo[inicio:]
+    )
 
 
 def _ascender_hasta_cobra_toml(candidato: Path | None) -> Path | None:
@@ -493,7 +519,9 @@ def _cargar_exports_modulo_cobra_proyecto(
         return _USAR_PROJECT_MODULE_CACHE[ruta_modulo]
 
     if ruta_modulo in _USAR_PROJECT_LOADING_STACK:
-        cadena = formatear_ciclo_modulos_cobra_proyecto(ruta_modulo)
+        cadena = formatear_ciclo_modulos_cobra_proyecto(
+            ruta_modulo, project_root=project_root
+        )
         raise ImportError(f"Ciclo de módulos detectado en usar: {cadena}")
 
     try:
