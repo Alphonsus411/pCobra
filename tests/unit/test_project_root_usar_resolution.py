@@ -3,6 +3,7 @@ from types import SimpleNamespace
 
 import pytest
 
+from pcobra.cobra.cli.execution_pipeline import PipelineInput, ejecutar_pipeline_explicito
 from pcobra.cobra.usar_loader import (
     descubrir_raiz_proyecto,
     obtener_cache_modulos_cobra_proyecto,
@@ -40,6 +41,46 @@ def test_descubrir_raiz_proyecto_usa_directorio_principal_sin_cobra_toml(tmp_pat
     principal.write_text("", encoding="utf-8")
 
     assert descubrir_raiz_proyecto(None, principal) == tmp_path.resolve()
+
+
+def test_ejecucion_desde_cwd_externo_resuelve_usar_con_main_file(
+    monkeypatch, tmp_path
+):
+    from pcobra.core.ast_nodes import NodoAsignacion, NodoValor
+
+    proyecto = tmp_path / "app"
+    externo = tmp_path / "externo"
+    (proyecto / "utilidades").mkdir(parents=True)
+    externo.mkdir()
+    (proyecto / "cobra.toml").write_text("[proyecto]\n", encoding="utf-8")
+    principal = proyecto / "programas" / "main.co"
+    principal.parent.mkdir()
+    principal.write_text('usar "utilidades.fechas"\n', encoding="utf-8")
+    modulo = proyecto / "utilidades" / "fechas.co"
+    modulo.write_text("variable hoy = 13\n", encoding="utf-8")
+    rutas_cargadas = []
+
+    def fake_cargar_ast_modulo(ruta, **kwargs):
+        rutas_cargadas.append((Path(ruta), kwargs["modules_path"]))
+        return [NodoAsignacion("hoy", NodoValor(13), declaracion=True)]
+
+    monkeypatch.setattr(
+        "pcobra.core.interpreter.cargar_ast_modulo", fake_cargar_ast_modulo
+    )
+    monkeypatch.chdir(externo)
+
+    setup, _resultado = ejecutar_pipeline_explicito(
+        PipelineInput(
+            codigo=principal.read_text(encoding="utf-8"),
+            interpretador_cls=InterpretadorCobra,
+            safe_mode=False,
+            main_file=principal,
+        )
+    )
+
+    assert rutas_cargadas == [(modulo.resolve(), str(proyecto.resolve()))]
+    assert setup.interpretador.variables["hoy"] == 13
+    assert setup.interpretador._project_root == proyecto.resolve()
 
 
 def test_resolver_modulo_cobra_proyecto_usa_raiz_canonicalizada(tmp_path):

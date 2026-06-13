@@ -9,6 +9,7 @@ sys.path.append(str(Path(__file__).resolve().parent.parent / "src"))
 from pcobra.cobra.transpilers.transpiler.to_python import TranspiladorPython
 from pcobra.cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
 from pcobra.cobra.transpilers.transpiler.to_cpp import TranspiladorCPP
+from pcobra.cobra.backends.python_adapter import PythonAdapter
 from pcobra.core.ast_nodes import (
     NodoValor,
     NodoAsignacion,
@@ -209,6 +210,25 @@ def test_transpilador_python_usar_proyecto_incluye_contexto_estable(tmp_path, mo
             },
         )
     ]
+
+
+def test_python_adapter_usar_proyecto_propaga_contexto_estable(tmp_path) -> None:
+    proyecto = tmp_path / "proyecto"
+    principal = proyecto / "src" / "main.co"
+    principal.parent.mkdir(parents=True)
+    (proyecto / "cobra.toml").write_text("[project]\nname = 'demo'\n", encoding="utf-8")
+    principal.write_text('usar "utilidades.fechas"\n', encoding="utf-8")
+
+    codigo = PythonAdapter().compile(
+        [NodoUsar("utilidades.fechas")],
+        options={"source_file": principal},
+    )
+
+    assert (
+        "globals().update(usar_modulo("
+        f"'utilidades.fechas', project_root={str(proyecto.resolve())!r}, "
+        f"current_file={str(principal.resolve())!r}))"
+    ) in codigo
 
 
 def test_transpilador_python_usar_oficial_acepta_contexto(tmp_path) -> None:

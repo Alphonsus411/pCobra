@@ -188,7 +188,12 @@ def build(source: str, hints: dict[str, Any] | None = None) -> dict[str, Any]:
 
     resolution, runtime_context = resolve_backend_runtime(source_file, context)
     ast = obtener_ast(codigo)
-    code = transpile(ast, resolution.backend, source_file=source_file)
+    code = transpile(
+        ast,
+        resolution.backend,
+        source_file=source_file,
+        project_root=context.get("project_root"),
+    )
     debug = bool(context.get("debug", False))
     if hasattr(resolution, "reason_for"):
         reason = resolution.reason_for(debug=debug)

@@ -73,11 +73,11 @@ def construir_script_sandbox_canonico(
     """Genera un script sandbox con imports canónicos del runtime Cobra."""
 
     extra_repr = repr(extra_validators if extra_validators is not None else None)
+    safe_mode_repr = True if safe_mode is None else safe_mode
     main_file_fragment = "" if main_file is None else f", main_file={str(main_file)!r}"
     kwargs_fragment = (
-        ""
-        if safe_mode is None
-        else f", safe_mode={safe_mode!r}, extra_validators={extra_repr}{main_file_fragment}"
+        f", safe_mode={safe_mode_repr!r}, "
+        f"extra_validators={extra_repr}{main_file_fragment}"
     )
     script = (
         "from pcobra.cobra.cli.execution_pipeline import prevalidar_y_parsear_codigo\n"
