@@ -609,6 +609,13 @@ def usar_modulo(
             except ValueError:
                 raise
             except FileNotFoundError as exc:
+                if "." not in nombre_limpio and not es_modulo_oficial:
+                    spec_externo = importlib.util.find_spec(nombre_limpio)
+                    if spec_externo is not None or nombre_limpio in {"numpy"}:
+                        raise PermissionError(
+                            f"usar_error[modulo_no_canonico]: '{nombre_limpio}' no canónico; "
+                            "use el alias oficial Cobra"
+                        ) from exc
                 if "." in nombre_limpio or not es_modulo_oficial:
                     ruta_buscada = root.joinpath(
                         *nombre_limpio.split(".")

@@ -73,12 +73,6 @@ from .cobra_config import (
     limite_memoria_mb,
     limite_cpu_segundos,
 )
-from ..cobra.usar_policy import (
-    REPL_COBRA_MODULE_MAP,
-    USAR_COBRA_ALLOWLIST,
-    USAR_COBRA_PUBLIC_MODULES,
-    USAR_COBRA_FACING_MODULE_FLAGS,
-)
 from .resource_limits import (
     limitar_memoria_mb as _lim_mem,
     limitar_cpu_segundos as _lim_cpu,
@@ -92,20 +86,14 @@ from .import_utils import (
 from .utils import validar_ast_estructural, ErrorEstructuraAST
 from .errors import CondicionNoBooleanaError
 from .usar_symbol_policy import (
-    build_and_validate_usar_symbol_metadata,
     normalizar_metadata_simbolo_usar,
     validate_usar_symbol_metadata,
 )
 from .environment import Environment
 from pcobra.cobra.usar_loader import (
-    canonicalizar_ruta_usar_proyecto,
     descubrir_raiz_proyecto,
-    formatear_ciclo_modulos_cobra_proyecto,
     obtener_cache_modulos_cobra_proyecto,
-    obtener_modulo,
     obtener_pila_carga_modulos_cobra_proyecto,
-    resolver_ruta_canonica_modulo_cobra_proyecto,
-    sanitizar_exports_publicos,
     obtener_cache_ast_import_co,
 )
 
@@ -2246,6 +2234,7 @@ class InterpretadorCobra:
     def ejecutar_import(self, nodo: NodoImport) -> None:
         """Ejecuta una declaración de importación de módulo."""
         ruta = Path(nodo.ruta).expanduser()
+        ruta_import_legacy = str(ruta)
         if not ruta.is_absolute():
             base = (
                 self._current_module_stack[-1].parent
@@ -2259,17 +2248,22 @@ class InterpretadorCobra:
             ruta = base / ruta
 
         ruta_canonica = ruta.resolve(strict=False)
-        ast_cache = obtener_cache_ast_import_co() # Obtener la caché de ASTs de import .co
+        ast_cache = obtener_cache_ast_import_co()
 
         if ruta_canonica in ast_cache:
             ast = ast_cache[ruta_canonica]
         else:
             # Pasar la pila de carga del intérprete a cargar_ast_modulo
+            ruta_para_loader = (
+                str(ruta_canonica)
+                if getattr(cargar_ast_modulo, "__module__", "") == "pcobra.core.import_utils"
+                else ruta_import_legacy
+            )
             ast = cargar_ast_modulo(
-                str(ruta_canonica),
-                modules_path=str(self._project_root),
-                whitelist={self._project_root, *IMPORT_WHITELIST},
-                loading_stack=self._usar_loading_stack, # Pasar la pila de carga
+                ruta_para_loader,
+                modules_path=str(MODULES_PATH),
+                whitelist={MODULES_PATH, self._project_root, *IMPORT_WHITELIST},
+                loading_stack=self._usar_loading_stack,
             )
             ast_cache[ruta_canonica] = ast
 
@@ -2277,7 +2271,13 @@ class InterpretadorCobra:
             self.ejecutar_nodo(subnodo)
 
     def _ejecutar_usar_modulo_proyecto(self, nombre_modulo: str) -> None:
-        """Ejecuta un módulo Cobra de proyecto resuelto por ruta canónica."""
+        """Compatibilidad interna: delega directamente en ``usar_modulo``.
+
+        La resolución, caché y detección de ciclos de módulos Cobra de proyecto
+        pertenecen exclusivamente a :func:`pcobra.cobra.usar_loader.usar_modulo`.
+        Este método se conserva sólo para callers internos legacy y no debe
+        reimplementar un segundo sistema de imports.
+        """
 
         current_file = (
             self._current_module_stack[-1]
@@ -2287,111 +2287,12 @@ class InterpretadorCobra:
         self._project_root = descubrir_raiz_proyecto(
             current_file or self._project_root, self._main_file
         )
-        try:
-            ruta_modulo = resolver_ruta_canonica_modulo_cobra_proyecto(
-                nombre_modulo,
-                project_root=self._project_root,
-                current_file=current_file,
-            )
-        except FileNotFoundError as exc:
-            ruta_buscada = self._project_root.joinpath(
-                *str(nombre_modulo).split(".")
-            ).with_suffix(".co")
-            raise FileNotFoundError(
-                f"Módulo no encontrado: {nombre_modulo}. Ruta buscada: {ruta_buscada}"
-            ) from exc
-
-        if ruta_modulo in self._usar_module_cache:
-            self._inyectar_exports_modulo_proyecto(self._usar_module_cache[ruta_modulo])
-            return
-
-        self._usar_loading_stack.append(ruta_modulo)
-        try:
-            ast = cargar_ast_modulo(
-                str(ruta_modulo),
-                modules_path=str(self._project_root),
-                whitelist={self._project_root},
-            )
-        except PermissionError as exc:
-            raise PrimitivaPeligrosaError(str(exc)) from exc
-        except FileNotFoundError as exc:
-            ruta_buscada = self._project_root.joinpath(
-                *str(nombre_modulo).split("."
-            )).with_suffix(".co")
-            raise FileNotFoundError(
-                f"Módulo no encontrado: {nombre_modulo}. Ruta buscada: {ruta_buscada}"
-            ) from exc
-
-        self._current_module_stack.append(ruta_modulo)
-        entorno_modulo = Environment(parent=self.contextos[-1])
-        self.contextos.append(entorno_modulo)
-        self.mem_contextos.append({})
-        try:
-            for subnodo in ast:
-                if isinstance(subnodo, NodoExport):
-                    continue
-                self.ejecutar_nodo(subnodo)
-            exports = self._extraer_exports_modulo_proyecto(
-                ast,
-                entorno_modulo,
-                ruta_modulo=ruta_modulo,
-            )
-            self._usar_module_cache[ruta_modulo] = {
-                "simbolos": list(exports["simbolos"]),
-                "metadata": {
-                    nombre: dict(metadata)
-                    for nombre, metadata in exports["metadata"].items()
-                },
-            }
-        finally:
-            memoria_local = self.mem_contextos.pop()
-            for idx, tam in memoria_local.values():
-                self.liberar_memoria(idx, tam)
-            self.contextos.pop()
-            self._current_module_stack.pop()
-            self._usar_loading_stack.pop()
-
+        exports = usar_modulo(
+            nombre_modulo,
+            project_root=self._project_root,
+            current_file=current_file,
+        )
         self._inyectar_exports_modulo_proyecto(exports)
-
-    def _extraer_exports_modulo_proyecto(
-        self,
-        ast: list[object],
-        entorno_modulo: Environment,
-        *,
-        ruta_modulo: Path,
-    ) -> dict[str, object]:
-        """Obtiene los símbolos públicos de un módulo Cobra ejecutado por ``usar``."""
-
-        nombres_exportados = [
-            nodo.nombre for nodo in ast if isinstance(nodo, NodoExport)
-        ]
-        if not nombres_exportados:
-            nombres_exportados = [
-                nombre for nombre in entorno_modulo.values if not nombre.startswith("_")
-            ]
-
-        simbolos_saneados: list[tuple[str, object]] = []
-        metadata_por_simbolo: dict[str, dict[str, object]] = {}
-        modulo_canonico = str(canonicalizar_ruta_usar_proyecto(ruta_modulo))
-        for nombre in nombres_exportados:
-            if nombre in entorno_modulo.values:
-                simbolo = entorno_modulo.values[nombre]
-                simbolos_saneados.append((nombre, simbolo))
-                metadata_por_simbolo[nombre] = build_and_validate_usar_symbol_metadata(
-                    module_name=modulo_canonico,
-                    symbol_name=nombre,
-                    callable_obj=simbolo,
-                )
-                logging.debug(
-                    "USAR_METADATA_PIPELINE route=project-module module=%s symbol=%s",
-                    modulo_canonico,
-                    nombre,
-                )
-
-        return {
-            "simbolos": simbolos_saneados,
-            "metadata": metadata_por_simbolo,
-        }
 
     def _inyectar_exports_modulo_proyecto(self, exports: Mapping[str, object]) -> None:
         """Inyecta en el contexto activo los exports cacheados de un módulo de proyecto."""
@@ -2422,242 +2323,48 @@ class InterpretadorCobra:
         )
 
     def ejecutar_usar(self, nodo):
-        """Importa callables públicos al contexto actual usando la política de ``usar``.
+        """Importa símbolos públicos usando ``usar_modulo`` como fuente única.
 
-        Nota de compatibilidad obligatoria:
-
-        - En pCobra se acepta la forma ``usar "numero"`` por compatibilidad del
-          parser, pero esta entrada SIEMPRE se normaliza y ejecuta con la
-          semántica oficial del libro: ``usar numero`` (modelo plano sin
-          namespace de módulo).
-
-        Matriz de comportamiento:
-
-        - REPL estricto (``_repl_usar_alias_map`` definido):
-          - Se permiten únicamente módulos oficiales (``numero``, ``texto``,
-            ``logica``, etc.) mapeados en el alias map activo.
-          - El módulo debe resolverse desde rutas oficiales de Cobra
-            (``corelibs``/``standard_library``).
-          - Cualquier módulo externo se rechaza explícitamente con
-            ``PermissionError: módulo externo no permitido en REPL estricto (solo alias oficiales Cobra)``.
-
-        - Fuera de REPL estricto:
-          - Módulos oficiales: exportan callables públicos (no privados).
-            ``__all__`` se usa como filtro preferente si existe, pero su
-            ausencia no bloquea la carga de módulos oficiales.
-          - Módulos externos: se rechazan siempre; ``usar`` solo acepta alias
-            canónicos del catálogo oficial Cobra.
+        ``usar_modulo`` concentra la resolución de módulos oficiales y de
+        proyecto, así como la caché y la pila de ciclos. El intérprete sólo
+        adapta el contexto de llamada e inyecta atómicamente los exports
+        devueltos mediante ``_inyectar_exports_modulo_proyecto``.
         """
-        from pathlib import Path
-        def _resolver_carga_modulo_usar(nombre_modulo: str):
-            """Resuelve módulos `usar` únicamente desde el catálogo canónico Cobra."""
-            es_repl_estricto = self._repl_usar_alias_map is not None
-            mapa_repl = self._repl_usar_alias_map or REPL_COBRA_MODULE_MAP
-
-            if nombre_modulo not in USAR_COBRA_ALLOWLIST:
-                # Trazabilidad explícita para intentos de importar módulos de backend directamente.
-                if nombre_modulo in mapa_repl.values():
-                    raise PermissionError(USAR_NON_CANONICAL_MODULE_ERROR)
-                if "." in nombre_modulo or nombre_modulo.startswith("pcobra"):
-                    raise PermissionError(USAR_DIRECT_BACKEND_IMPORT_ERROR)
-                raise PermissionError(USAR_NON_PUBLIC_MODULE_ERROR)
-
-            if nombre_modulo not in USAR_COBRA_PUBLIC_MODULES:
-                raise PermissionError(USAR_NON_PUBLIC_MODULE_ERROR)
-
-            modulo_canonico = mapa_repl.get(nombre_modulo)
-            if modulo_canonico is None:
-                raise PermissionError(USAR_NON_CANONICAL_MODULE_ERROR)
-
-            if modulo_canonico not in USAR_COBRA_ALLOWLIST:
-                raise PermissionError(USAR_NON_PUBLIC_MODULE_ERROR)
-
-            if not USAR_COBRA_FACING_MODULE_FLAGS.get(modulo_canonico, False):
-                raise PermissionError(f"{USAR_NON_FACING_MODULE_ERROR}: '{nombre_modulo}'")
-
-            modulo = obtener_modulo(modulo_canonico)
-
-            return modulo, es_repl_estricto, True
 
         try:
             nombre_modulo = nodo.modulo
-            if isinstance(nombre_modulo, str):
-                nombre_modulo_limpio = nombre_modulo.strip()
-                # Intentar cargar como módulo de proyecto primero
-                try:
-                    exports = usar_modulo(
-                        nombre_modulo_limpio,
-                        project_root=self._project_root,
-                        current_file=self._main_file,
-                    )
-                    self._inyectar_exports_modulo_proyecto(exports)
-                    return
-                except (FileNotFoundError, ValueError, PermissionError) as exc:
-                    # Si falla la carga como módulo de proyecto, intentar como módulo oficial
-                    if not _usar_error_esperado(exc):
-                        raise # Re-lanzar errores inesperados
-
-            modulo, es_repl_estricto, es_modulo_oficial_cobra = _resolver_carga_modulo_usar(
-                nombre_modulo
+            current_file = (
+                self._current_module_stack[-1]
+                if self._current_module_stack
+                else self._main_file
             )
-
-            if es_repl_estricto and es_modulo_oficial_cobra:
-                modulo_file = getattr(modulo, "__file__", None)
-                if not modulo_file:
-                    raise PermissionError(REPL_USAR_EXTERNAL_MODULE_ERROR)
-
-                ruta_modulo = Path(modulo_file).resolve()
-                raiz_pcobra = Path(__file__).resolve().parents[1]
-                rutas_oficiales = [
-                    (raiz_pcobra / "corelibs").resolve(),
-                    (raiz_pcobra / "standard_library").resolve(),
-                ]
-
-                es_oficial = any(
-                    ruta_modulo == ruta_base or ruta_base in ruta_modulo.parents
-                    for ruta_base in rutas_oficiales
-                )
-                if not es_oficial:
-                    raise PermissionError(REPL_USAR_EXTERNAL_MODULE_ERROR)
-
-            mapa_limpio, conflictos_saneamiento = sanitizar_exports_publicos(modulo, nombre_modulo)
-            simbolos_saneados = list(mapa_limpio.items())
-            if _runtime_debug_enabled():
-                logging.info(
-                    "[PCOBRA_DEBUG_RUNTIME] usar=%s simbolos_inyectados=%s",
-                    nodo.modulo,
-                    sorted(mapa_limpio.keys()),
-                )
-            if conflictos_saneamiento:
-                evento_conflictos = {
-                    "evento": "usar_sanitize_conflicts",
-                    "severity": "warning",
-                    "module": nodo.modulo,
-                }
-                logging.debug(
-                    "USAR sanitize conflicts event module=%s %s",
-                    nodo.modulo,
-                    _resumen_conflictos_usar(conflictos_saneamiento),
-                )
-                if _usar_detalle_habilitado():
-                    self._trace_debug(f"[USAR_SANITIZE][CONFLICTS] {evento_conflictos}")
-
-            if not simbolos_saneados:
-                mensaje_usuario = formatear_error_usar_usuario("export_invalido", nodo.modulo)
-                if _usar_detalle_habilitado():
-                    mensaje_usuario = f"{mensaje_usuario} ({USAR_INVALID_EXPORT_ERROR}; conflictos={conflictos_saneamiento})"
-                raise ImportError(mensaje_usuario)
-
-            # Fase A: detectar colisiones de forma completa antes de definir.
-            metadata_por_simbolo = {}
-            for nombre, simbolo in simbolos_saneados:
-                metadata_simbolo = build_and_validate_usar_symbol_metadata(
-                    module_name=nodo.modulo,
-                    symbol_name=nombre,
-                    callable_obj=simbolo,
-                )
-                logging.debug(
-                    "USAR_METADATA_PIPELINE route=factory module=%s symbol=%s",
-                    nodo.modulo,
-                    nombre,
-                )
-                metadata_por_simbolo[nombre] = dict(metadata_simbolo)
-            conflictos = self._detectar_conflictos_usar_en_contexto(
-                simbolos_saneados,
-                metadata_por_simbolo=metadata_por_simbolo,
+            self._project_root = descubrir_raiz_proyecto(
+                current_file or self._project_root, self._main_file
             )
-            if conflictos:
-                for simbolo_conflictivo in conflictos:
-                    detalle_por_simbolo = {
-                        "module": nodo.modulo,
-                        "symbol": simbolo_conflictivo,
-                            "code": "symbol_collision",
-                        "message": "símbolo ya existe en contexto actual",
-                        "policy": self._usar_collision_policy,
-                        "phase": "preflight",
-                    }
-                    evento_colision = {
-                        "evento": "usar_collision_symbol",
-                        "severity": "warning",
-                        "module": nodo.modulo,
-                        "policy": self._usar_collision_policy,
-                        "detail": detalle_por_simbolo,
-                    }
-                    logging.debug(
-                        "USAR collision symbol event module=%s symbol=%s policy=%s count=%s",
-                        nodo.modulo,
-                        simbolo_conflictivo,
-                        self._usar_collision_policy,
-                        len(conflictos),
-                    )
-                    if _usar_detalle_habilitado():
-                        self._trace_debug(f"[USAR_COLLISION][SYMBOL] {evento_colision}")
-
-                conflicto = conflictos[0]
-                detalle = {
-                    "module": nodo.modulo,
-                    "symbol": conflicto,
-                    "code": "symbol_collision",
-                    "message": "símbolo ya existe en contexto actual",
-                    "policy": self._usar_collision_policy,
-                    "phase": "preflight",
-                }
-                if self._usar_collision_policy == USAR_COLLISION_WARN_ALIAS_REQUIRED:
-                    logging.debug(
-                        "usar_conflicto_simbolo module=%s count=%s",
-                        nodo.modulo,
-                        len(conflictos),
-                    )
-                    mensaje_usuario = formatear_error_usar_usuario(
-                        "conflicto_simbolo",
-                        nodo.modulo,
-                        "Requiere alias explícito.",
-                    )
-                    if _usar_detalle_habilitado():
-                        mensaje_usuario = f"{mensaje_usuario} ({USAR_SYMBOL_CONFLICT_ERROR}; detalle={detalle})"
-                    raise NameError(mensaje_usuario)
-                evento_colision = {
-                    "evento": "usar_collision",
-                    "severity": "error",
-                    "module": nodo.modulo,
-                    "policy": self._usar_collision_policy,
-                    "detail": detalle,
-                }
-                logging.error(
-                    "USAR collision event module=%s policy=%s total_conflicts=%s",
-                    nodo.modulo,
-                    self._usar_collision_policy,
-                    len(conflictos),
-                )
-                mensaje_usuario = formatear_error_usar_usuario("conflicto_simbolo", nodo.modulo)
-                if _usar_detalle_habilitado():
-                    mensaje_usuario = f"{mensaje_usuario} ({USAR_SYMBOL_CONFLICT_ERROR}; detalle={detalle})"
-                raise NameError(mensaje_usuario)
-
-            # Fase B: inyectar de forma atómica y sin sobreescritura silenciosa.
-            self._inyectar_simbolos_usar_en_contexto(
-                simbolos_saneados,
-                metadata_por_simbolo=metadata_por_simbolo,
+            exports = usar_modulo(
+                nombre_modulo,
+                project_root=self._project_root,
+                current_file=current_file,
             )
+            self._inyectar_exports_modulo_proyecto(exports)
         except Exception as exc:
             detalle_usar_habilitado = _usar_detalle_habilitado()
             if detalle_usar_habilitado:
                 logging.exception("Error al usar el módulo '%s': %s", nodo.modulo, exc)
-            elif _usar_error_esperado(exc):
-                logging.debug("Error esperado al usar el módulo '%s'", nodo.modulo)
             else:
-                logging.error("Error al usar el módulo '%s': %s", nodo.modulo, exc)
-            if isinstance(exc, PermissionError):
-                mensaje = formatear_error_usar_usuario("modulo_fuera_catalogo", nodo.modulo)
-                if detalle_usar_habilitado:
-                    mensaje = f"{mensaje} ({exc})"
-                raise PermissionError(mensaje) from exc
-            if isinstance(exc, ModuleNotFoundError):
-                mensaje = formatear_error_usar_usuario("carga_modulo_error", nodo.modulo)
-                if detalle_usar_habilitado:
-                    mensaje = f"{mensaje} ({exc})"
-                raise ImportError(mensaje) from exc
-            raise
+                logging.debug(
+                    "Error esperado al usar módulo %s: %s",
+                    nodo.modulo,
+                    exc,
+                )
+            if isinstance(
+                exc,
+                (ImportError, PermissionError, ValueError, NameError, FileNotFoundError),
+            ):
+                raise
+            raise ImportError(
+                formatear_error_usar_usuario("carga_modulo_error", nodo.modulo)
+            ) from exc
 
     def _detectar_conflictos_usar_en_contexto(
         self,
