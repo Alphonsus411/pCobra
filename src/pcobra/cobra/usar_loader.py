@@ -66,6 +66,28 @@ _BACKEND_EQUIVALENTS = {
 }
 
 
+class UsarExports(dict):
+    """Mapa de exports compatible con API directa y metadata estructurada."""
+
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, dict) and not {"simbolos", "metadata"} & set(other):
+            return {
+                nombre: self[nombre]
+                for nombre in self
+                if nombre not in {"simbolos", "metadata"}
+            } == other
+        return super().__eq__(other)
+
+
+def _construir_exports_usar(
+    simbolos: list[tuple[str, Any]],
+    metadata: dict[str, dict[str, Any]],
+) -> UsarExports:
+    exports = UsarExports({"simbolos": simbolos, "metadata": metadata})
+    exports.update(dict(simbolos))
+    return exports
+
+
 def normalizar_nombre_usar(nombre: str) -> str:
     """Normaliza nombre de módulo para validaciones canónicas de `usar`."""
 
@@ -483,7 +505,7 @@ def _cargar_exports_modulo_cobra_proyecto(
     except FileNotFoundError as exc:
         raise FileNotFoundError(f"Módulo no encontrado: {nombre}") from exc
 
-    interpretador = InterpretadorCobra()
+    interpretador = InterpretadorCobra(main_file=current_file or ruta_modulo)
     interpretador._project_root = canonicalizar_ruta_usar_proyecto(project_root)
     interpretador._main_file = (
         canonicalizar_ruta_usar_proyecto(current_file) if current_file else ruta_modulo
@@ -502,13 +524,13 @@ def _cargar_exports_modulo_cobra_proyecto(
             interpretador.contextos[-1],
             ruta_modulo=ruta_modulo,
         )
-        _USAR_PROJECT_MODULE_CACHE[ruta_modulo] = {
-            "simbolos": list(exports["simbolos"]),
-            "metadata": {
+        _USAR_PROJECT_MODULE_CACHE[ruta_modulo] = _construir_exports_usar(
+            list(exports["simbolos"]),
+            {
                 nombre: dict(metadata)
                 for nombre, metadata in exports["metadata"].items()
             },
-        }
+        )
         return _USAR_PROJECT_MODULE_CACHE[ruta_modulo]
     finally:
         memoria_local = interpretador.mem_contextos.pop()
@@ -554,9 +576,14 @@ def usar_modulo(
                     current_file=current,
                 )
                 return exports
-            except (FileNotFoundError, ValueError):
+            except (FileNotFoundError, ValueError) as exc:
                 if "." in nombre_limpio:
-                    raise
+                    ruta_buscada = root.joinpath(
+                        *nombre_limpio.split(".")
+                    ).with_suffix(".co")
+                    raise FileNotFoundError(
+                        f"Módulo no encontrado: {nombre_limpio}. Ruta buscada: {ruta_buscada}"
+                    ) from exc
 
     modulo = obtener_modulo(nombre)
     simbolos_saneados, metadata_por_simbolo, conflictos = sanitizar_exports_publicos(
@@ -571,10 +598,7 @@ def usar_modulo(
         )
     if not simbolos_saneados:
         raise ImportError(f"No se encontraron símbolos exportables para usar '{nombre}'.")
-    return {
-        "simbolos": simbolos_saneados,
-        "metadata": metadata_por_simbolo,
-    }
+    return _construir_exports_usar(simbolos_saneados, metadata_por_simbolo)
 
 
 def sanitizar_exports_publicos(modulo: object, alias_modulo: str) -> tuple[dict[str, Any], list[dict[str, str]]]:
