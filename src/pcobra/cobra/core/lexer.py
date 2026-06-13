@@ -45,6 +45,7 @@ class TipoToken(Enum):
     PARA = "PARA"
     IMPORT = "IMPORT"
     USAR = "USAR"
+    EXPORTAR = "EXPORTAR"
     OPTION = "OPTION"
     MACRO = "MACRO"
     HOLOBIT = "HOLOBIT"
@@ -84,6 +85,7 @@ class TipoToken(Enum):
     LBRACKET = "LBRACKET"
     RBRACKET = "RBRACKET"
     COMA = "COMA"
+    PUNTO = "PUNTO"
     RETORNO = "RETORNO"
     FIN = "FIN"
     EOF = "EOF"
@@ -209,6 +211,7 @@ class Lexer:
             (TipoToken.PARA, re.compile(r"\bpara\b")),
             (TipoToken.IMPORT, re.compile(r"\bimport\b")),
             (TipoToken.USAR, re.compile(r"\busar\b")),
+            (TipoToken.EXPORTAR, re.compile(r"\bexportar\b")),
             (TipoToken.OPTION, re.compile(r"\boption\b")),
             (TipoToken.MACRO, re.compile(r"\bmacro\b")),
             (TipoToken.HILO, re.compile(r"\bhilo\b")),
@@ -283,6 +286,7 @@ class Lexer:
             (TipoToken.LBRACKET, re.compile(r"\[")),
             (TipoToken.RBRACKET, re.compile(r"\]")),
             (TipoToken.COMA, re.compile(r",")),
+            (TipoToken.PUNTO, re.compile(r"\.")),
             (TipoToken.DECORADOR, re.compile(r"@")),
             (None, re.compile(r"\s+")),  # Ignorar espacios en blanco
         ]
