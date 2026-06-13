@@ -483,19 +483,30 @@ def usar_modulo(
       misma resolución canónica por ruta y una cache global por archivo.
     """
 
-    if isinstance(nombre, str) and "." in nombre:
-        current = Path(current_file).expanduser() if current_file is not None else None
-        root = (
-            Path(project_root).expanduser().resolve(strict=False)
-            if project_root is not None
-            else descubrir_raiz_proyecto(current, current)
+    if isinstance(nombre, str):
+        nombre_limpio = nombre.strip()
+        es_modulo_oficial = (
+            normalizar_nombre_usar(nombre_limpio) in USAR_COBRA_PUBLIC_MODULES
         )
-        exports = _cargar_exports_modulo_cobra_proyecto(
-            nombre,
-            project_root=root,
-            current_file=current,
-        )
-        return dict(exports.get("simbolos", []))
+        if "." in nombre_limpio or not es_modulo_oficial:
+            current = (
+                Path(current_file).expanduser() if current_file is not None else None
+            )
+            root = (
+                Path(project_root).expanduser().resolve(strict=False)
+                if project_root is not None
+                else descubrir_raiz_proyecto(current, current)
+            )
+            try:
+                exports = _cargar_exports_modulo_cobra_proyecto(
+                    nombre_limpio,
+                    project_root=root,
+                    current_file=current,
+                )
+                return dict(exports.get("simbolos", []))
+            except (FileNotFoundError, ValueError):
+                if "." in nombre_limpio:
+                    raise
 
     modulo = obtener_modulo(nombre)
     mapa_limpio, conflictos = sanitizar_exports_publicos(
