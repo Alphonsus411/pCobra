@@ -134,3 +134,41 @@ def test_interpretador_usar_proyecto_detecta_ciclos_con_rutas_canonicas(monkeypa
     else:
         raise AssertionError("Se esperaba un ImportError por ciclo de módulos")
     assert interp._usar_loading_stack == []
+
+
+def test_interpretador_usar_proyecto_respeta_export_y_detecta_conflicto(monkeypatch, tmp_path):
+    import pytest
+    from pcobra.core.ast_nodes import NodoAsignacion, NodoExport, NodoValor
+
+    proyecto = tmp_path / "app"
+    (proyecto / "utilidades").mkdir(parents=True)
+    (proyecto / "cobra.toml").write_text("[proyecto]\n", encoding="utf-8")
+    principal = proyecto / "main.co"
+    principal.write_text("", encoding="utf-8")
+    modulo = proyecto / "utilidades" / "fechas.co"
+    modulo.write_text("", encoding="utf-8")
+
+    def fake_cargar_ast_modulo(ruta, **kwargs):
+        return [
+            NodoExport("publico"),
+            NodoAsignacion("publico", NodoValor(1), declaracion=True),
+            NodoAsignacion("privado", NodoValor(2), declaracion=True),
+        ]
+
+    monkeypatch.setattr(
+        "pcobra.core.interpreter.cargar_ast_modulo", fake_cargar_ast_modulo
+    )
+
+    interp = InterpretadorCobra(safe_mode=False, main_file=principal)
+    interp.ejecutar_usar(SimpleNamespace(modulo="utilidades.fechas"))
+
+    assert interp.variables["publico"] == 1
+    assert "privado" not in interp.variables
+    assert interp._usar_symbol_metadata["publico"]["module"] == str(modulo.resolve())
+
+    interp.ejecutar_usar(SimpleNamespace(modulo="utilidades.fechas"))
+
+    interp_conflicto = InterpretadorCobra(safe_mode=False, main_file=principal)
+    interp_conflicto.contextos[-1].define("publico", 99)
+    with pytest.raises(NameError, match="conflicto de símbolos"):
+        interp_conflicto.ejecutar_usar(SimpleNamespace(modulo="utilidades.fechas"))

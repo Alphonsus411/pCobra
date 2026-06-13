@@ -2317,8 +2317,18 @@ class InterpretadorCobra:
                 if isinstance(subnodo, NodoExport):
                     continue
                 self.ejecutar_nodo(subnodo)
-            exports = self._extraer_exports_modulo_proyecto(ast, entorno_modulo)
-            self._usar_module_cache[ruta_modulo] = dict(exports)
+            exports = self._extraer_exports_modulo_proyecto(
+                ast,
+                entorno_modulo,
+                ruta_modulo=ruta_modulo,
+            )
+            self._usar_module_cache[ruta_modulo] = {
+                "simbolos": list(exports["simbolos"]),
+                "metadata": {
+                    nombre: dict(metadata)
+                    for nombre, metadata in exports["metadata"].items()
+                },
+            }
         finally:
             memoria_local = self.mem_contextos.pop()
             for idx, tam in memoria_local.values():
@@ -2330,7 +2340,11 @@ class InterpretadorCobra:
         self._inyectar_exports_modulo_proyecto(exports)
 
     def _extraer_exports_modulo_proyecto(
-        self, ast: list[object], entorno_modulo: Environment
+        self,
+        ast: list[object],
+        entorno_modulo: Environment,
+        *,
+        ruta_modulo: Path,
     ) -> dict[str, object]:
         """Obtiene los símbolos públicos de un módulo Cobra ejecutado por ``usar``."""
 
@@ -2342,18 +2356,56 @@ class InterpretadorCobra:
                 nombre for nombre in entorno_modulo.values if not nombre.startswith("_")
             ]
 
-        exports: dict[str, object] = {}
+        simbolos_saneados: list[tuple[str, object]] = []
+        metadata_por_simbolo: dict[str, dict[str, object]] = {}
+        modulo_canonico = str(ruta_modulo.resolve())
         for nombre in nombres_exportados:
             if nombre in entorno_modulo.values:
-                exports[nombre] = entorno_modulo.values[nombre]
-        return exports
+                simbolo = entorno_modulo.values[nombre]
+                simbolos_saneados.append((nombre, simbolo))
+                metadata_por_simbolo[nombre] = build_and_validate_usar_symbol_metadata(
+                    module_name=modulo_canonico,
+                    symbol_name=nombre,
+                    callable_obj=simbolo,
+                )
+                logging.debug(
+                    "USAR_METADATA_PIPELINE route=project-module module=%s symbol=%s",
+                    modulo_canonico,
+                    nombre,
+                )
+
+        return {
+            "simbolos": simbolos_saneados,
+            "metadata": metadata_por_simbolo,
+        }
 
     def _inyectar_exports_modulo_proyecto(self, exports: Mapping[str, object]) -> None:
         """Inyecta en el contexto activo los exports cacheados de un módulo de proyecto."""
 
-        contexto_actual = self.contextos[-1]
-        for nombre, valor in exports.items():
-            contexto_actual.define(nombre, valor)
+        simbolos_saneados = list(exports.get("simbolos", []))
+        metadata_por_simbolo = {
+            nombre: dict(metadata)
+            for nombre, metadata in dict(exports.get("metadata", {})).items()
+        }
+        conflictos = self._detectar_conflictos_usar_en_contexto(
+            simbolos_saneados,
+            metadata_por_simbolo=metadata_por_simbolo,
+        )
+        if conflictos:
+            modulo = str(
+                metadata_por_simbolo.get(conflictos[0], {}).get("module", "módulo Cobra")
+            )
+            raise NameError(
+                formatear_error_usar_usuario(
+                    "conflicto_simbolo",
+                    modulo,
+                    f"Símbolo conflictivo: {conflictos[0]}.",
+                )
+            )
+        self._inyectar_simbolos_usar_en_contexto(
+            simbolos_saneados,
+            metadata_por_simbolo=metadata_por_simbolo,
+        )
 
     def ejecutar_usar(self, nodo):
         """Importa callables públicos al contexto actual usando la política de ``usar``.
