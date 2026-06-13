@@ -218,6 +218,43 @@ def resolver_modulo_cobra_proyecto(
     return ruta_resuelta
 
 
+def _ascender_hasta_cobra_toml(candidato: Path | None) -> Path | None:
+    """Busca ``cobra.toml`` ascendiendo desde un archivo o directorio."""
+
+    if candidato is None:
+        return None
+    ruta = Path(candidato).expanduser().resolve(strict=False)
+    if ruta.suffix or (ruta.exists() and ruta.is_file()):
+        ruta = ruta.parent
+    for directorio in (ruta, *ruta.parents):
+        if (directorio / "cobra.toml").is_file():
+            return directorio.resolve(strict=False)
+    return None
+
+
+def descubrir_raiz_proyecto(start: Path | None, main_file: Path | None = None) -> Path:
+    """Descubre y canonicaliza la raíz efectiva de un proyecto Cobra.
+
+    Prioridad:
+    1. Directorio que contiene un ``cobra.toml`` encontrado ascendiendo desde
+       ``start`` o desde ``main_file``.
+    2. Directorio canonicalizado de ``main_file`` cuando no hay ``cobra.toml``.
+    3. ``Path.cwd().resolve()`` para preservar el comportamiento legacy.
+    """
+
+    for candidato in (start, main_file):
+        raiz_configurada = _ascender_hasta_cobra_toml(candidato)
+        if raiz_configurada is not None:
+            return raiz_configurada
+
+    if main_file is not None:
+        principal = Path(main_file).expanduser().resolve(strict=False)
+        directorio = principal.parent if principal.suffix or principal.is_file() else principal
+        return directorio.resolve(strict=False)
+
+    return Path.cwd().resolve()
+
+
 def _cargar_modulo_local_desde_directorio(nombre: str, directorio: Path):
     """Carga un módulo Python desde un directorio local dado."""
 

@@ -118,10 +118,18 @@ class RunService:
 
         def ejecutar() -> int:
             if sandbox:
-                return self.ejecutar_en_sandbox(codigo, seguro, extra_validators, allow_insecure_fallback=allow_insecure_fallback)
+                return self.ejecutar_en_sandbox(
+                    codigo,
+                    seguro,
+                    extra_validators,
+                    main_file=archivo_resuelto,
+                    allow_insecure_fallback=allow_insecure_fallback,
+                )
             if contenedor:
                 return self.ejecutar_en_contenedor(codigo, contenedor)
-            return self.ejecutar_normal(codigo, seguro, extra_validators)
+            return self.ejecutar_normal(
+                codigo, seguro, extra_validators, main_file=archivo_resuelto
+            )
 
         try:
             return self.limitar_recursos(ejecutar)
@@ -154,6 +162,7 @@ class RunService:
         seguro: bool,
         extra_validators: Any,
         *,
+        main_file: Path | None = None,
         allow_insecure_fallback: bool = False,
     ) -> int:
         try:
@@ -167,6 +176,7 @@ class RunService:
                     interpretador_cls=interpretador_cls,
                     safe_mode=seguro,
                     extra_validators=extra_validators,
+                    main_file=main_file,
                 ),
                 analizar_codigo_fn=lambda _codigo: [],
             )
@@ -182,6 +192,7 @@ class RunService:
             codigo,
             safe_mode=setup.safe_mode,
             extra_validators=setup.validadores_extra,
+            main_file=main_file,
         )
 
         try:
@@ -219,7 +230,14 @@ class RunService:
             mostrar_error(f"Error ejecutando en contenedor Docker: {e}", registrar_log=False)
             return 1
 
-    def ejecutar_normal(self, codigo: str, seguro: bool, extra_validators: Any) -> int:
+    def ejecutar_normal(
+        self,
+        codigo: str,
+        seguro: bool,
+        extra_validators: Any,
+        *,
+        main_file: Path | None = None,
+    ) -> int:
         try:
             ejecutar_pipeline_explicito(
                 PipelineInput(
@@ -227,6 +245,7 @@ class RunService:
                     interpretador_cls=resolver_interpretador_cls(module_name=__name__, default_cls=InterpretadorCobra),
                     safe_mode=seguro,
                     extra_validators=extra_validators,
+                    main_file=main_file,
                 ),
                 construir_cadena_fn=construir_cadena,
                 analizar_codigo_fn=prevalidar_y_parsear_codigo,

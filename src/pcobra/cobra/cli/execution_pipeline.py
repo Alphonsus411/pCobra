@@ -41,6 +41,7 @@ class PipelineInput:
     safe_mode: bool
     extra_validators: Any = None
     interpretador: Any | None = None
+    main_file: Any | None = None
 
 
 @dataclass(frozen=True)
@@ -67,14 +68,16 @@ def construir_script_sandbox_canonico(
     safe_mode: bool | None = None,
     extra_validators: Any = None,
     imprimir_resultado: bool = False,
+    main_file: Any | None = None,
 ) -> str:
     """Genera un script sandbox con imports canónicos del runtime Cobra."""
 
     extra_repr = repr(extra_validators if extra_validators is not None else None)
+    main_file_fragment = "" if main_file is None else f", main_file={str(main_file)!r}"
     kwargs_fragment = (
         ""
         if safe_mode is None
-        else f", safe_mode={safe_mode!r}, extra_validators={extra_repr}"
+        else f", safe_mode={safe_mode!r}, extra_validators={extra_repr}{main_file_fragment}"
     )
     script = (
         "from pcobra.cobra.cli.execution_pipeline import prevalidar_y_parsear_codigo\n"
@@ -225,6 +228,7 @@ def construir_interprete_seguro_canonico(
     interpretador_cls: Any,
     safe_mode: bool,
     extra_validators: Any,
+    main_file: Any | None = None,
 ) -> Any:
     """Factory canónico de runtime para intérprete CLI.
 
@@ -237,6 +241,7 @@ def construir_interprete_seguro_canonico(
     interpretador = interpretador_cls(
         safe_mode=safe_mode,
         extra_validators=extra_validators,
+        main_file=main_file,
     )
     asegurar_estado_runtime = getattr(interpretador, "asegurar_estado_runtime_inicial", None)
     if callable(asegurar_estado_runtime):
@@ -288,6 +293,7 @@ def preparar_interpretador(
     interpretador_cls: Any,
     safe_mode: bool,
     extra_validators: Any,
+    main_file: Any | None = None,
 ) -> InterpreterSetup:
     """Centraliza normalización de validadores, flags de seguridad e intérprete."""
     opciones = normalizar_opciones_pipeline(
@@ -299,6 +305,7 @@ def preparar_interpretador(
         interpretador_cls=interpretador_cls,
         safe_mode=opciones.safe_mode,
         extra_validators=opciones.validadores_extra,
+        main_file=main_file,
     )
     return InterpreterSetup(
         interpretador_cls=interpretador_cls,
@@ -379,12 +386,16 @@ def ejecutar_pipeline_explicito(
         interpretador_cls=pipeline_input.interpretador_cls,
         safe_mode=pipeline_input.safe_mode,
         extra_validators=pipeline_input.extra_validators,
+        main_file=pipeline_input.main_file,
     )
     interpretador = (
         pipeline_input.interpretador
         if pipeline_input.interpretador is not None
         else setup.interpretador
     )
+    configurar_archivo = getattr(interpretador, "configurar_archivo_principal", None)
+    if pipeline_input.main_file is not None and callable(configurar_archivo):
+        configurar_archivo(pipeline_input.main_file)
     resultado = ejecutar_codigo_canonico(
         pipeline_input.codigo,
         interpretador=interpretador,

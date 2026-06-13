@@ -3,6 +3,7 @@
 import logging
 import os
 import hashlib
+from pathlib import Path
 from typing import Mapping, Optional
 
 from .lexer import (
@@ -94,7 +95,12 @@ from .usar_symbol_policy import (
     validate_usar_symbol_metadata,
 )
 from .environment import Environment
-from pcobra.cobra.usar_loader import obtener_modulo, sanitizar_exports_publicos
+from pcobra.cobra.usar_loader import (
+    descubrir_raiz_proyecto,
+    obtener_modulo,
+    resolver_modulo_cobra_proyecto,
+    sanitizar_exports_publicos,
+)
 
 MODULES_PATH = _DEFAULT_MODULES_PATH
 REPL_USAR_EXTERNAL_MODULE_ERROR = (
@@ -481,7 +487,12 @@ class InterpretadorCobra:
         )
         return namespace.get("VALIDADORES_EXTRA", [])
 
-    def __init__(self, safe_mode: bool = True, extra_validators=None):
+    def __init__(
+        self,
+        safe_mode: bool = True,
+        extra_validators=None,
+        main_file: Path | str | None = None,
+    ):
         """Crea un nuevo interpretador.
 
         Parameters
@@ -494,6 +505,9 @@ class InterpretadorCobra:
         extra_validators: list | str, optional
             Lista de instancias adicionales o ruta a un módulo que defina
             ``VALIDADORES_EXTRA``.
+        main_file: Path | str, optional
+            Archivo principal conocido por CLI/runtime para resolver módulos de
+            proyecto con ``usar`` desde la raíz canonicalizada.
         """
         extra = extra_validators
         if isinstance(extra, str):
@@ -527,6 +541,15 @@ class InterpretadorCobra:
         # Metadatos de símbolos inyectados por `usar` para soportar reimport idempotente.
         # nombre_simbolo -> {"module": str, "exported_name": str, "callable_id": int}
         self._usar_symbol_metadata: dict[str, dict[str, object]] = {}
+        self._main_file: Path | None = (
+            Path(main_file).expanduser().resolve(strict=False)
+            if main_file is not None
+            else None
+        )
+        self._project_root: Path = descubrir_raiz_proyecto(
+            self._main_file, self._main_file
+        )
+        self._current_module_stack: list[Path] = []
         # Debe ejecutarse siempre después de crear _validador y _usar_symbol_metadata.
         self.asegurar_estado_runtime_inicial()
 
@@ -1477,6 +1500,21 @@ class InterpretadorCobra:
 
         return build_internal_ir(ast)
 
+    def configurar_archivo_principal(self, main_file: Path | str | None) -> None:
+        """Configura el archivo principal y recalcula la raíz canonicalizada."""
+
+        self._main_file = (
+            Path(main_file).expanduser().resolve(strict=False)
+            if main_file is not None
+            else None
+        )
+        start = (
+            self._current_module_stack[-1]
+            if self._current_module_stack
+            else self._main_file
+        )
+        self._project_root = descubrir_raiz_proyecto(start, self._main_file)
+
     def ejecutar_nodo(self, nodo):
         self._trace_debug(f"[EXEC] node_type={type(nodo).__name__} node_id={id(nodo)}")
         # Contrato de control de flujo:
@@ -2229,6 +2267,42 @@ class InterpretadorCobra:
             finally:
                 self._set_mode(modo_prev)
 
+    def _ejecutar_usar_modulo_proyecto(self, nombre_modulo: str) -> None:
+        """Ejecuta un módulo Cobra de proyecto resuelto desde la raíz canonicalizada."""
+
+        current_file = (
+            self._current_module_stack[-1]
+            if self._current_module_stack
+            else self._main_file
+        )
+        self._project_root = descubrir_raiz_proyecto(
+            current_file or self._project_root, self._main_file
+        )
+        ruta_modulo = resolver_modulo_cobra_proyecto(
+            nombre_modulo,
+            project_root=self._project_root,
+            current_file=current_file,
+        )
+        if ruta_modulo in self._current_module_stack:
+            raise ImportError(f"Importación circular detectada en usar: {nombre_modulo}")
+        try:
+            ast = cargar_ast_modulo(
+                str(ruta_modulo),
+                modules_path=str(self._project_root),
+                whitelist={self._project_root},
+            )
+        except PermissionError as exc:
+            raise PrimitivaPeligrosaError(str(exc)) from exc
+        except FileNotFoundError as exc:
+            raise FileNotFoundError(f"Módulo no encontrado: {nombre_modulo}") from exc
+
+        self._current_module_stack.append(ruta_modulo)
+        try:
+            for subnodo in ast:
+                self.ejecutar_nodo(subnodo)
+        finally:
+            self._current_module_stack.pop()
+
     def ejecutar_usar(self, nodo):
         """Importa callables públicos al contexto actual usando la política de ``usar``.
 
@@ -2289,6 +2363,8 @@ class InterpretadorCobra:
 
         try:
             nombre_modulo = nodo.modulo
+            if isinstance(nombre_modulo, str) and "." in nombre_modulo:
+                return self._ejecutar_usar_modulo_proyecto(nombre_modulo)
             modulo, es_repl_estricto, es_modulo_oficial_cobra = _resolver_carga_modulo_usar(
                 nombre_modulo
             )
