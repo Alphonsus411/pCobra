@@ -2245,12 +2245,20 @@ class InterpretadorCobra:
 
     def ejecutar_import(self, nodo: NodoImport) -> None:
         """Ejecuta una declaración de importación de módulo."""
-        ruta = nodo.ruta
-        # La ruta ya viene canonicalizada desde el parser/transpilador
-        # o es una ruta absoluta de un archivo .co.
-        # No necesitamos resolverla de nuevo aquí.
+        ruta = Path(nodo.ruta).expanduser()
+        if not ruta.is_absolute():
+            base = (
+                self._current_module_stack[-1].parent
+                if self._current_module_stack
+                else (
+                    self._main_file.parent
+                    if self._main_file is not None
+                    else Path.cwd()
+                )
+            )
+            ruta = base / ruta
 
-        ruta_canonica = Path(ruta).expanduser().resolve(strict=False)
+        ruta_canonica = ruta.resolve(strict=False)
         ast_cache = obtener_cache_ast_import_co() # Obtener la caché de ASTs de import .co
 
         if ruta_canonica in ast_cache:
@@ -2258,9 +2266,9 @@ class InterpretadorCobra:
         else:
             # Pasar la pila de carga del intérprete a cargar_ast_modulo
             ast = cargar_ast_modulo(
-                ruta,
-                modules_path=str(MODULES_PATH), # Asegurarse de pasar el modules_path correcto
-                whitelist=IMPORT_WHITELIST,
+                str(ruta_canonica),
+                modules_path=str(self._project_root),
+                whitelist={self._project_root, *IMPORT_WHITELIST},
                 loading_stack=self._usar_loading_stack, # Pasar la pila de carga
             )
             ast_cache[ruta_canonica] = ast
@@ -2303,7 +2311,6 @@ class InterpretadorCobra:
                 str(ruta_modulo),
                 modules_path=str(self._project_root),
                 whitelist={self._project_root},
-                loading_stack=self._usar_loading_stack,
             )
         except PermissionError as exc:
             raise PrimitivaPeligrosaError(str(exc)) from exc

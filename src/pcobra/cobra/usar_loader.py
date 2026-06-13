@@ -606,8 +606,10 @@ def usar_modulo(
                     current_file=current,
                 )
                 return exports
-            except (FileNotFoundError, ValueError) as exc:
-                if "." in nombre_limpio:
+            except ValueError:
+                raise
+            except FileNotFoundError as exc:
+                if "." in nombre_limpio or not es_modulo_oficial:
                     ruta_buscada = root.joinpath(
                         *nombre_limpio.split(".")
                     ).with_suffix(".co")

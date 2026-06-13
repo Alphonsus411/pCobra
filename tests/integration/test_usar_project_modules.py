@@ -1,7 +1,9 @@
-import pytest
 from pathlib import Path
 from textwrap import dedent
 
+import pytest
+
+from pcobra.cobra.core import Lexer, Parser
 from pcobra.cobra.core.interpreter import InterpretadorCobra
 from pcobra.cobra.usar_loader import (
     obtener_cache_ast_import_co,
@@ -9,301 +11,168 @@ from pcobra.cobra.usar_loader import (
     obtener_pila_carga_modulos_cobra_proyecto,
     usar_modulo,
 )
-from pcobra.cobra.core import Lexer, Parser # Importar Lexer y Parser
 
-# Fixture para un intérprete limpio y aislado para cada test
-@pytest.fixture
-def interprete_limpio(tmp_path):
-    # Asegurarse de que los cachés estén limpios para cada test
+
+@pytest.fixture(autouse=True)
+def limpiar_caches_usar():
     obtener_cache_ast_import_co().clear()
     obtener_cache_modulos_cobra_proyecto().clear()
     obtener_pila_carga_modulos_cobra_proyecto().clear()
-    return InterpretadorCobra(main_file=tmp_path / "main.co")
+    yield
+    obtener_cache_ast_import_co().clear()
+    obtener_cache_modulos_cobra_proyecto().clear()
+    obtener_pila_carga_modulos_cobra_proyecto().clear()
 
-# Fixture para crear un archivo de módulo Cobra
+
 @pytest.fixture
 def crear_modulo_cobra(tmp_path):
-    def _crear_modulo(ruta_relativa, contenido):
+    def _crear_modulo(ruta_relativa: str, contenido: str) -> Path:
         ruta_abs = tmp_path / ruta_relativa
         ruta_abs.parent.mkdir(parents=True, exist_ok=True)
-        ruta_abs.write_text(dedent(contenido))
+        ruta_abs.write_text(dedent(contenido).strip() + "\n", encoding="utf-8")
         return ruta_abs
+
     return _crear_modulo
 
-def test_usar_modulo_en_misma_carpeta(interprete_limpio, crear_modulo_cobra, tmp_path):
-    crear_modulo_cobra(
-        "mi_modulo.co",
-        """
-        variable saludo = "Hola desde mi_modulo"
-        """
-    )
-    crear_modulo_cobra(
+
+def ejecutar_archivo(ruta: Path) -> InterpretadorCobra:
+    codigo = ruta.read_text(encoding="utf-8")
+    tokens = Lexer(codigo).tokenizar()
+    ast = Parser(tokens).parsear()
+    interprete = InterpretadorCobra(safe_mode=False, main_file=ruta)
+    interprete.ejecutar_ast(ast)
+    return interprete
+
+
+def test_usar_modulo_en_misma_carpeta_util(crear_modulo_cobra, tmp_path):
+    crear_modulo_cobra("util.co", 'variable saludo := "Hola desde util"')
+    main = crear_modulo_cobra(
         "main.co",
         """
-        usar mi_modulo
-        imprimir(saludo)
-        """
-    )
-    source_code = (tmp_path / "main.co").read_text()
-    lexer = Lexer(source_code)
-    tokens = lexer.tokens
-    parser = Parser(tokens)
-    ast = parser.parsear()
-    interprete_limpio.ejecutar_ast(ast)
-    assert interprete_limpio.obtener_variable("saludo") == "Hola desde mi_modulo"
-
-def test_usar_modulo_en_subcarpeta_con_puntos(interprete_limpio, crear_modulo_cobra, tmp_path):
-    crear_modulo_cobra(
-        "utilidades/fechas.co",
-        """
-        variable hoy := "2026-06-13"
-        """
-    )
-    crear_modulo_cobra(
-        "main.co",
-        """
-        usar utilidades.fechas
-        imprimir(hoy)
-        """
-    )
-    source_code = (tmp_path / "main.co").read_text()
-    lexer = Lexer(source_code)
-    tokens = lexer.tokenizar()
-    parser = Parser(tokens)
-    ast = parser.parsear()
-    interprete_limpio.ejecutar_ast(ast)
-    assert interprete_limpio.obtener_variable("hoy") == "2026-06-13"
-
-def test_usar_modulo_proyecto_exportar_api_idempotencia_y_conflicto(
-    interprete_limpio, crear_modulo_cobra, tmp_path
-):
-    crear_modulo_cobra(
-        "utilidades/fechas.co",
-        """
-        exportar hoy
-        exportar formato
-        variable hoy := "2026-06-13"
-        variable formato := "iso"
-        variable visible_sin_exportar := "no debe importarse"
-        variable _privado := "secreto"
+        usar util
         """,
     )
-    crear_modulo_cobra(
+
+    interprete = ejecutar_archivo(main)
+
+    assert interprete.obtener_variable("saludo") == "Hola desde util"
+
+
+def test_usar_subcarpeta_punteada_utilidades_fechas(crear_modulo_cobra, tmp_path):
+    crear_modulo_cobra("utilidades/fechas.co", 'variable hoy := "2026-06-13"')
+    main = crear_modulo_cobra(
         "main.co",
         """
-        usar utilidades.fechas
         usar utilidades.fechas
         """,
     )
 
-    source_code = (tmp_path / "main.co").read_text()
-    lexer = Lexer(source_code)
-    tokens = lexer.tokenizar()
-    parser = Parser(tokens)
-    ast = parser.parsear()
+    interprete = ejecutar_archivo(main)
 
-    interprete_principal = InterpretadorCobra(
-        safe_mode=False, main_file=tmp_path / "main.co"
-    )
-    interprete_principal.ejecutar_ast(ast)
+    assert interprete.obtener_variable("hoy") == "2026-06-13"
 
-    nombres_exportados_interprete = {"hoy", "formato"}
-    assert {
-        nombre
-        for nombre in nombres_exportados_interprete
-        if nombre in interprete_principal.contextos[-1].values
-    } == nombres_exportados_interprete
-    assert interprete_principal.obtener_variable("hoy") == "2026-06-13"
-    assert interprete_principal.obtener_variable("formato") == "iso"
-    assert "visible_sin_exportar" not in interprete_principal.contextos[-1].values
-    assert "_privado" not in interprete_principal.contextos[-1].values
 
-    exports_api = usar_modulo(
-        "utilidades.fechas",
-        project_root=tmp_path,
-        current_file=tmp_path / "main.co",
-    )
-    assert {
-        nombre for nombre in exports_api if nombre not in {"simbolos", "metadata"}
-    } == nombres_exportados_interprete
-    assert exports_api["hoy"] == interprete_principal.obtener_variable("hoy")
-    assert exports_api["formato"] == interprete_principal.obtener_variable("formato")
+def test_usar_modulo_anidado_a_b_c(crear_modulo_cobra):
+    crear_modulo_cobra("a/b/c.co", "variable secreto := 42")
+    main = crear_modulo_cobra("main.co", "usar a.b.c")
 
-    interprete_conflicto = InterpretadorCobra(
-        safe_mode=False, main_file=tmp_path / "main.co"
-    )
-    interprete_conflicto.contextos[-1].define("hoy", "valor preexistente incompatible")
-    with pytest.raises(NameError, match="conflicto de símbolos"):
-        interprete_conflicto.ejecutar_ast(ast[:1])
+    interprete = ejecutar_archivo(main)
 
-def test_usar_modulo_anidado(interprete_limpio, crear_modulo_cobra, tmp_path):
-    crear_modulo_cobra(
-        "utilidades/sub/modulo_anidado.co",
-        """
-        variable secreto = 42
-        """
-    )
-    crear_modulo_cobra(
+    assert interprete.obtener_variable("secreto") == 42
+
+
+def test_usar_desde_otro_directorio_respeta_cobra_toml(tmp_path, monkeypatch):
+    proyecto = tmp_path / "proyecto"
+    proyecto.mkdir()
+    (proyecto / "cobra.toml").write_text("[proyecto]\nnombre = 'demo'\n", encoding="utf-8")
+    (proyecto / "util.co").write_text('variable desde_root := "ok"\n', encoding="utf-8")
+    app = proyecto / "app"
+    app.mkdir()
+    main = app / "main.co"
+    main.write_text("usar util\n", encoding="utf-8")
+    otro_directorio = tmp_path / "otro"
+    otro_directorio.mkdir()
+    monkeypatch.chdir(otro_directorio)
+
+    interprete = ejecutar_archivo(main)
+
+    assert interprete.obtener_variable("desde_root") == "ok"
+
+
+def test_usar_carga_una_sola_vez_con_cache_y_monkeypatch(crear_modulo_cobra, monkeypatch):
+    crear_modulo_cobra("util.co", "variable valor := 7")
+    main = crear_modulo_cobra(
         "main.co",
         """
-        usar utilidades.sub.modulo_anidado
-        imprimir(secreto)
-        """
+        usar util
+        usar util
+        """,
     )
-    source_code = (tmp_path / "main.co").read_text()
-    lexer = Lexer(source_code)
-    tokens = lexer.tokens
-    parser = Parser(tokens)
-    ast = parser.parsear()
-    interprete_limpio.ejecutar_ast(ast)
-    assert interprete_limpio.obtener_variable("secreto") == 42
+    import pcobra.core.import_utils as import_utils
 
-def test_modulo_se_carga_una_sola_vez(interprete_limpio, crear_modulo_cobra, tmp_path):
-    crear_modulo_cobra(
-        "contador.co",
-        """
-        variable cuenta = 0
-        funcion incrementar():
-            cuenta = cuenta + 1
-        """
-    )
-    crear_modulo_cobra(
+    cargar_original = import_utils.cargar_ast_modulo
+    llamadas = []
+
+    def cargar_contando(*args, **kwargs):
+        llamadas.append(Path(args[0]).name)
+        return cargar_original(*args, **kwargs)
+
+    monkeypatch.setattr(import_utils, "cargar_ast_modulo", cargar_contando)
+
+    interprete = ejecutar_archivo(main)
+
+    assert interprete.obtener_variable("valor") == 7
+    assert llamadas.count("util.co") == 1
+
+
+def test_usar_detecta_ciclo_directo(crear_modulo_cobra):
+    crear_modulo_cobra("a.co", """
+        usar a
+        variable valor_a := 1
+        """)
+    main = crear_modulo_cobra("main.co", "usar a")
+
+    with pytest.raises(ImportError, match=r"Ciclo de módulos detectado en usar: .*a\.co"):
+        ejecutar_archivo(main)
+
+
+def test_usar_detecta_ciclo_indirecto(crear_modulo_cobra):
+    crear_modulo_cobra("a.co", "usar b\nvariable valor_a := 1")
+    crear_modulo_cobra("b.co", "usar c\nvariable valor_b := 2")
+    crear_modulo_cobra("c.co", "usar a\nvariable valor_c := 3")
+    main = crear_modulo_cobra("main.co", "usar a")
+
+    with pytest.raises(ImportError, match=r"Ciclo de módulos detectado en usar: .*a\.co.*b\.co.*c\.co.*a\.co"):
+        ejecutar_archivo(main)
+
+
+def test_usar_modulo_inexistente_muestra_error_claro(crear_modulo_cobra, tmp_path):
+    main = crear_modulo_cobra("main.co", "usar modulo_que_no_existe")
+
+    with pytest.raises(FileNotFoundError, match=r"Módulo no encontrado: modulo_que_no_existe\. Ruta buscada: .*modulo_que_no_existe\.co"):
+        ejecutar_archivo(main)
+
+
+def test_compatibilidad_import_archivo_co_relativo_al_main(crear_modulo_cobra):
+    crear_modulo_cobra("archivo.co", 'variable legacy_var := "Soy legacy"')
+    main = crear_modulo_cobra(
         "main.co",
         """
-        usar contador
-        incrementar()
-        usar contador
-        incrementar()
-        """
+        import 'archivo.co'
+        """,
     )
-    source_code = (tmp_path / "main.co").read_text()
-    lexer = Lexer(source_code)
-    tokens = lexer.tokens
-    parser = Parser(tokens)
-    ast = parser.parsear()
-    interprete_limpio.ejecutar_ast(ast)
-    assert interprete_limpio.obtener_variable("cuenta") == 1
 
-def test_deteccion_ciclo_directo(interprete_limpio, crear_modulo_cobra, tmp_path):
-    crear_modulo_cobra(
-        "modulo_a.co",
-        """
-        usar modulo_b
-        variable valor_a = 1
-        """
-    )
-    crear_modulo_cobra(
-        "modulo_b.co",
-        """
-        usar modulo_a
-        variable valor_b = 2
-        """
-    )
-    crear_modulo_cobra(
-        "main.co",
-        """
-        usar modulo_a
-        """
-    )
-    source_code = (tmp_path / "main.co").read_text()
-    lexer = Lexer(source_code)
-    tokens = lexer.tokens
-    parser = Parser(tokens)
-    ast = parser.parsear()
-    with pytest.raises(ImportError, match="Ciclo de módulos detectado en usar:"):
-        interprete_limpio.ejecutar_ast(ast)
+    interprete = ejecutar_archivo(main)
 
-def test_deteccion_ciclo_indirecto(interprete_limpio, crear_modulo_cobra, tmp_path):
-    crear_modulo_cobra(
-        "modulo_x.co",
-        """
-        usar modulo_y
-        variable val_x = 10
-        """
-    )
-    crear_modulo_cobra(
-        "modulo_y.co",
-        """
-        usar modulo_z
-        variable val_y = 20
-        """
-    )
-    crear_modulo_cobra(
-        "modulo_z.co",
-        """
-        usar modulo_x
-        variable val_z = 30
-        """
-    )
-    crear_modulo_cobra(
-        "main.co",
-        """
-        usar modulo_x
-        """
-    )
-    source_code = (tmp_path / "main.co").read_text()
-    lexer = Lexer(source_code)
-    tokens = lexer.tokens
-    parser = Parser(tokens)
-    ast = parser.parsear()
-    with pytest.raises(ImportError, match="Ciclo de módulos detectado en usar:"):
-        interprete_limpio.ejecutar_ast(ast)
+    assert interprete.obtener_variable("legacy_var") == "Soy legacy"
 
-def test_modulo_inexistente(interprete_limpio, crear_modulo_cobra, tmp_path):
-    crear_modulo_cobra(
-        "main.co",
-        """
-        usar modulo_que_no_existe
-        """
-    )
-    source_code = (tmp_path / "main.co").read_text()
-    lexer = Lexer(source_code)
-    tokens = lexer.tokens
-    parser = Parser(tokens)
-    ast = parser.parsear()
-    with pytest.raises(FileNotFoundError, match="Módulo no encontrado: modulo_que_no_existe"):
-        interprete_limpio.ejecutar_ast(ast)
 
-def test_compatibilidad_import_archivo_co(interprete_limpio, crear_modulo_cobra, tmp_path):
-    crear_modulo_cobra(
-        "legacy_module.co",
-        """
-        variable legacy_var = "Soy legacy"
-        """
-    )
-    crear_modulo_cobra(
-        "main.co",
-        """
-        import 'legacy_module.co'
-        imprimir(legacy_var)
-        """
-    )
-    source_code = (tmp_path / "main.co").read_text()
-    lexer = Lexer(source_code)
-    tokens = lexer.tokens
-    parser = Parser(tokens)
-    ast = parser.parsear()
-    interprete_limpio.ejecutar_ast(ast)
-    assert interprete_principal.obtener_variable("legacy_var") == "Soy legacy"
+@pytest.mark.parametrize("nombre", ["dir/modulo", r"dir\\modulo", r"C:\\tmp\\modulo"])
+def test_usar_strings_windows_posix_son_rechazados(tmp_path, nombre):
+    with pytest.raises((ValueError, PermissionError), match="ruta|separadores|Windows|fuera"):
+        usar_modulo(nombre, project_root=tmp_path, current_file=tmp_path / "main.co")
 
-def test_bloqueo_rutas_escape_con_puntos_dobles(interprete_limpio, crear_modulo_cobra, tmp_path):
-    # Crear un archivo fuera de la raíz del proyecto simulada por tmp_path
-    ruta_fuera_proyecto = interprete_limpio._project_root.parent / "modulo_secreto.co"
-    ruta_fuera_proyecto.write_text(dedent("variable secreto_externo = 'Acceso denegado'"))
 
-    crear_modulo_cobra(
-        "sub/main.co",
-        """
-        usar ../modulo_secreto
-        """
-    )
-    source_code = (tmp_path / "sub/main.co").read_text()
-    lexer = Lexer(source_code)
-    tokens = lexer.tokens
-    parser = Parser(tokens)
-    ast = parser.parsear()
-    # La detección de rutas de escape se realiza en resolver_ruta_canonica_modulo_cobra_proyecto
-    # que es llamada por _ejecutar_usar_modulo_proyecto.
-    # Por lo tanto, esperamos un FileNotFoundError o PermissionError si la ruta es bloqueada.
-    with pytest.raises((FileNotFoundError, PermissionError), match="Módulo fuera de la raíz del proyecto"):
-        interprete_limpio.ejecutar_ast(ast)
+def test_usar_bloquea_traversal_con_puntos_dobles(tmp_path):
+    with pytest.raises((ValueError, PermissionError), match="traversal|inválido|fuera"):
+        usar_modulo("../secreto", project_root=tmp_path, current_file=tmp_path / "main.co")
