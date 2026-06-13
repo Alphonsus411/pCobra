@@ -171,3 +171,57 @@ def test_transpilador_cpp_garantia() -> None:
     texto = codigo if isinstance(codigo, str) else "\n".join(codigo)
     assert "if (!(ok)) {" in texto
     assert "return 0" in texto
+
+
+def test_transpilador_python_usar_proyecto_incluye_contexto_estable(tmp_path, monkeypatch) -> None:
+    proyecto = tmp_path / "proyecto"
+    principal = proyecto / "src" / "main.co"
+    principal.parent.mkdir(parents=True)
+    (proyecto / "cobra.toml").write_text("[project]\nname = 'demo'\n", encoding="utf-8")
+    principal.write_text("usar utilidades.fechas\n", encoding="utf-8")
+
+    codigo = TranspiladorPython(source_file=principal).generate_code(
+        [NodoUsar("utilidades.fechas")]
+    )
+    llamadas = []
+
+    def usar_modulo_falso(nombre, **kwargs):
+        llamadas.append((nombre, kwargs))
+        return {}
+
+    import pcobra.cobra.usar_loader as usar_loader
+
+    monkeypatch.setattr(usar_loader, "usar_modulo", usar_modulo_falso)
+    exec(codigo, {})
+
+    assert "from pcobra.cobra.usar_loader import usar_modulo" in codigo
+    assert (
+        "globals().update(usar_modulo("
+        f"'utilidades.fechas', project_root={str(proyecto.resolve())!r}, "
+        f"current_file={str(principal.resolve())!r}))"
+    ) in codigo
+    assert llamadas == [
+        (
+            "utilidades.fechas",
+            {
+                "project_root": str(proyecto.resolve()),
+                "current_file": str(principal.resolve()),
+            },
+        )
+    ]
+
+
+def test_transpilador_python_usar_oficial_acepta_contexto(tmp_path) -> None:
+    proyecto = tmp_path / "proyecto"
+    principal = proyecto / "main.co"
+    proyecto.mkdir()
+    (proyecto / "cobra.toml").write_text("[project]\nname = 'demo'\n", encoding="utf-8")
+    principal.write_text("usar texto\n", encoding="utf-8")
+
+    codigo = TranspiladorPython(source_file=principal).generate_code([NodoUsar("texto")])
+    entorno: dict[str, object] = {}
+
+    exec(codigo, entorno)
+
+    assert "recortar" in entorno
+    assert callable(entorno["recortar"])

@@ -147,12 +147,27 @@ def resolve_backend_runtime(
     return resolution, runtime_context
 
 
-def transpile(ast: Any, backend: str) -> str:
+def transpile(
+    ast: Any,
+    backend: str,
+    *,
+    source_file: str | Path | None = None,
+    project_root: str | Path | None = None,
+) -> str:
     """Transpila un AST al backend indicado usando el registro oficial."""
     transpilers = _official_transpilers()
     if backend not in transpilers:
         raise ValueError(f"Transpilador no soportado: {backend}")
-    transpiler = transpilers[backend]()
+    transpiler_cls = transpilers[backend]
+    try:
+        transpiler = transpiler_cls(source_file=source_file, project_root=project_root)
+    except TypeError:
+        transpiler = transpiler_cls()
+        if hasattr(transpiler, "set_contexto_compilacion"):
+            transpiler.set_contexto_compilacion(
+                source_file=source_file,
+                project_root=project_root,
+            )
     return transpiler.generate_code(ast)
 
 
@@ -173,7 +188,7 @@ def build(source: str, hints: dict[str, Any] | None = None) -> dict[str, Any]:
 
     resolution, runtime_context = resolve_backend_runtime(source_file, context)
     ast = obtener_ast(codigo)
-    code = transpile(ast, resolution.backend)
+    code = transpile(ast, resolution.backend, source_file=source_file)
     debug = bool(context.get("debug", False))
     if hasattr(resolution, "reason_for"):
         reason = resolution.reason_for(debug=debug)

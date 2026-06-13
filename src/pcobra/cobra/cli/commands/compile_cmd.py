@@ -117,11 +117,16 @@ def _transpile_with_pipeline_or_plugin(
     ast,
     lang: str,
     plugin_snapshot: dict[str, type],
+    *,
+    source_file: str | None = None,
 ) -> str:
     plugin_cls = plugin_snapshot.get(lang)
     if plugin_cls is not None:
-        return plugin_cls().generate_code(ast)
-    return backend_pipeline.transpile(ast, lang)
+        try:
+            return plugin_cls(source_file=source_file).generate_code(ast)
+        except TypeError:
+            return plugin_cls().generate_code(ast)
+    return backend_pipeline.transpile(ast, lang, source_file=source_file)
 
 
 def run_transpiler_pool(languages: list, ast, executor) -> list:
@@ -131,9 +136,15 @@ def run_transpiler_pool(languages: list, ast, executor) -> list:
     with multiprocessing.Pool(processes=min(len(languages), MAX_PROCESSES)) as pool:
         # ``map_async`` no acepta ``timeout`` como argumento, por lo que el límite
         # de ejecución se controla exclusivamente mediante ``AsyncResult.get``.
+        source_file = getattr(executor, "source_file", None)
+        parametros = (
+            [(lang, ast, source_file) for lang in languages]
+            if source_file is not None
+            else [(lang, ast) for lang in languages]
+        )
         return pool.map_async(
             executor,
-            [(lang, ast) for lang in languages],
+            parametros,
         ).get(timeout=PROCESS_TIMEOUT)
 
 class CompileCommand(BaseCommand):
@@ -177,13 +188,23 @@ class CompileCommand(BaseCommand):
 
     def _ejecutar_transpilador(self, parametros: tuple) -> tuple:
         """Ejecuta un transpilador específico."""
-        lang, ast = parametros
-        code = _transpile_with_pipeline_or_plugin(ast, lang, dict(cli_plugin_transpilers()))
+        if len(parametros) == 3:
+            lang, ast, source_file = parametros
+        else:
+            lang, ast = parametros
+            source_file = None
+        code = _transpile_with_pipeline_or_plugin(
+            ast,
+            lang,
+            dict(cli_plugin_transpilers()),
+            source_file=source_file,
+        )
         return lang, code
 
     def run(self, args):
         """Ejecuta la lógica del comando."""
         archivo = args.archivo
+        self.source_file = archivo
 
         try:
             validar_politica_modo(self.name, args, capability=self.capability)
@@ -293,6 +314,7 @@ class CompileCommand(BaseCommand):
                     ast,
                     transpilador,
                     dict(cli_plugin_transpilers()),
+                    source_file=archivo,
                 )
                 mostrar_info(
                     f"Código generado ({_transpiler_class_display(transpilador)}):"
