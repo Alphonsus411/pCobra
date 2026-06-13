@@ -12,6 +12,9 @@ class PythonAdapter(BackendAdapter):
     """Wrapper sobre ``TranspiladorPython`` sin modificar su implementación."""
 
     def compile(self, ast: Any, options: Mapping[str, Any] | None = None) -> str:
-        _ = options or {}
-        transpiler = TranspiladorPython()
+        opts = options or {}
+        transpiler = TranspiladorPython(
+            source_file=opts.get("source_file"),
+            project_root=opts.get("project_root"),
+        )
         return transpiler.generate_code(ast)
