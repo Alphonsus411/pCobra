@@ -13,6 +13,13 @@ from pcobra.cobra.usar_loader import (
     validar_nombre_modulo_cobra_proyecto,
 )
 from pcobra.core.interpreter import InterpretadorCobra
+from pcobra.core.ast_nodes import (
+    NodoAsignacion,
+    NodoExport,
+    NodoImport,
+    NodoUsar,
+    NodoValor,
+)
 
 
 @pytest.fixture(autouse=True)
@@ -610,6 +617,160 @@ def test_import_archivo_co_mantiene_ejecutar_import(monkeypatch, tmp_path):
 
     assert llamadas == [(str(modulo), str(Path.home() / ".cobra" / "modules"))]
 
+
+def test_import_archivo_co_via_nodo_import_usa_flujo_legacy_y_whitelist(
+    monkeypatch, tmp_path
+):
+    """`import 'archivo.co'` conserva el loader legacy de `NodoImport`."""
+
+    proyecto = tmp_path / "app"
+    proyecto.mkdir()
+    principal = proyecto / "main.co"
+    principal.write_text("import 'archivo.co'\n", encoding="utf-8")
+    modulo = proyecto / "archivo.co"
+    modulo.write_text("var valor_importado = 42\n", encoding="utf-8")
+    llamadas = []
+
+    def fake_cargar_ast_modulo(ruta, **kwargs):
+        llamadas.append((ruta, kwargs))
+        return [NodoAsignacion("valor_importado", NodoValor(42), declaracion=True)]
+
+    import pcobra.core.interpreter as interpreter_module
+
+    monkeypatch.setattr(interpreter_module, "MODULES_PATH", proyecto)
+    monkeypatch.setattr(interpreter_module, "IMPORT_WHITELIST", {proyecto})
+    monkeypatch.setattr(
+        "pcobra.core.interpreter.cargar_ast_modulo", fake_cargar_ast_modulo
+    )
+
+    from pcobra.core.lexer import Lexer
+    from pcobra.core.parser import Parser
+
+    ast_principal = Parser(
+        Lexer(principal.read_text(encoding="utf-8")).analizar_token()
+    ).parsear()
+
+    interp = InterpretadorCobra(safe_mode=False, main_file=principal)
+    interp.ejecutar_import(ast_principal[0])
+
+    assert isinstance(ast_principal[0], NodoImport)
+    assert ast_principal[0].ruta == "archivo.co"
+    assert interp.variables["valor_importado"] == 42
+    assert llamadas == [
+        (
+            "archivo.co",
+            {
+                "modules_path": str(proyecto),
+                "whitelist": {proyecto},
+                "loading_stack": interp._usar_loading_stack,
+            },
+        )
+    ]
+
+
+def test_usar_loader_no_altera_semantica_de_nodo_import(monkeypatch, tmp_path):
+    """`NodoImport` no delega en `usar_modulo` ni aplica semántica pública de `usar`."""
+
+    proyecto = tmp_path / "app"
+    proyecto.mkdir()
+    principal = proyecto / "main.co"
+    principal.write_text("", encoding="utf-8")
+    modulo = proyecto / "archivo.co"
+    modulo.write_text("", encoding="utf-8")
+    llamadas = []
+
+    def fake_cargar_ast_modulo(ruta, **kwargs):
+        llamadas.append(Path(ruta))
+        return [
+            NodoAsignacion("publico_import", NodoValor("legacy"), declaracion=True),
+            NodoAsignacion("_privado_import", NodoValor("visible"), declaracion=True),
+        ]
+
+    def fail_usar_modulo(*_args, **_kwargs):
+        raise AssertionError("NodoImport no debe usar usar_modulo")
+
+    import pcobra.core.interpreter as interpreter_module
+
+    monkeypatch.setattr(interpreter_module, "MODULES_PATH", proyecto)
+    monkeypatch.setattr(interpreter_module, "IMPORT_WHITELIST", {proyecto})
+    monkeypatch.setattr(
+        "pcobra.core.interpreter.cargar_ast_modulo", fake_cargar_ast_modulo
+    )
+    monkeypatch.setattr("pcobra.core.interpreter.usar_modulo", fail_usar_modulo)
+
+    interp = InterpretadorCobra(safe_mode=False, main_file=principal)
+    interp.ejecutar_import(NodoImport(str(modulo)))
+
+    assert llamadas == [modulo]
+    assert interp.variables["publico_import"] == "legacy"
+    assert interp.variables["_privado_import"] == "visible"
+    assert "publico_import" not in interp._usar_symbol_metadata
+
+
+def test_import_archivo_co_y_usar_utilidades_fechas_conviven_sin_semantica_publica_compartida(
+    monkeypatch, tmp_path
+):
+    proyecto = tmp_path / "app"
+    utilidades = proyecto / "utilidades"
+    utilidades.mkdir(parents=True)
+    (proyecto / "cobra.toml").write_text("[proyecto]\n", encoding="utf-8")
+    principal = proyecto / "main.co"
+    principal.write_text(
+        "import 'archivo.co'\nusar utilidades.fechas\n", encoding="utf-8"
+    )
+    archivo = proyecto / "archivo.co"
+    fechas = utilidades / "fechas.co"
+    archivo.write_text("", encoding="utf-8")
+    fechas.write_text("", encoding="utf-8")
+    cargas = []
+
+    def fake_cargar_ast_modulo(ruta, **kwargs):
+        ruta_path = Path(ruta).resolve()
+        cargas.append((ruta_path, kwargs["modules_path"], kwargs["whitelist"]))
+        if ruta_path == archivo.resolve():
+            return [
+                NodoAsignacion("import_publico", NodoValor("legacy"), declaracion=True),
+                NodoAsignacion(
+                    "_import_privado", NodoValor("legacy-privado"), declaracion=True
+                ),
+            ]
+        if ruta_path == fechas.resolve():
+            return [
+                NodoExport("fecha_publica"),
+                NodoAsignacion("fecha_publica", NodoValor("usar"), declaracion=True),
+                NodoAsignacion(
+                    "fecha_privada", NodoValor("no-export"), declaracion=True
+                ),
+            ]
+        raise AssertionError(f"Ruta inesperada: {ruta}")
+
+    import pcobra.core.interpreter as interpreter_module
+
+    monkeypatch.setattr(interpreter_module, "MODULES_PATH", proyecto)
+    monkeypatch.setattr(interpreter_module, "IMPORT_WHITELIST", {proyecto})
+    monkeypatch.setattr(
+        "pcobra.core.interpreter.cargar_ast_modulo", fake_cargar_ast_modulo
+    )
+    monkeypatch.setattr(
+        "pcobra.core.import_utils.cargar_ast_modulo", fake_cargar_ast_modulo
+    )
+
+    interp = InterpretadorCobra(safe_mode=False, main_file=principal)
+    interp.ejecutar_import(NodoImport(str(archivo)))
+    interp.ejecutar_usar(NodoUsar("utilidades.fechas"))
+
+    assert interp.variables["import_publico"] == "legacy"
+    assert interp.variables["_import_privado"] == "legacy-privado"
+    assert interp.variables["fecha_publica"] == "usar"
+    assert "fecha_privada" not in interp.variables
+    assert "import_publico" not in interp._usar_symbol_metadata
+    assert interp._usar_symbol_metadata["fecha_publica"]["module"] == str(
+        fechas.resolve()
+    )
+    assert cargas == [
+        (archivo.resolve(), str(proyecto), {proyecto}),
+        (fechas.resolve(), str(proyecto.resolve()), {proyecto.resolve()}),
+    ]
 
 def test_validacion_modulo_proyecto_acepta_puntos():
     assert validar_nombre_modulo_cobra_proyecto("utilidades.fechas") == ("utilidades", "fechas")
