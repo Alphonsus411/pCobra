@@ -1,5 +1,7 @@
 """Transpilador que convierte código Cobra en código Python."""
 
+from pathlib import Path
+
 from pcobra.cobra.core.ast_nodes import (
     NodoAST,
     NodoAsignacion,
@@ -56,6 +58,7 @@ from pcobra.cobra.core.visitor import NodeVisitor
 from pcobra.cobra.transpilers.common.utils import BaseTranspiler
 from pcobra.cobra.core.optimizations import optimize_constants, remove_dead_code, inline_functions
 from pcobra.cobra.macro import expandir_macros
+from pcobra.cobra.usar_loader import descubrir_raiz_proyecto
 from pcobra.cobra.transpilers.common.utils import (
     ast_requires_holobit_runtime,
     get_standard_imports,
@@ -242,7 +245,7 @@ def visit_diccionario_comprehension(self, nodo):
 
 
 class TranspiladorPython(BaseTranspiler):
-    def __init__(self):
+    def __init__(self, *, source_file=None, project_root=None):
         # Incluir los modulos nativos al inicio del codigo generado
         self.codigo = ""
         self.usa_asyncio = False
@@ -251,8 +254,39 @@ class TranspiladorPython(BaseTranspiler):
         self.nivel_indentacion = 0
         self._defer_stack: list[str] = []
         self._defer_counter = 0
+        self.source_file = self._normalizar_ruta_contexto(source_file)
+        self.project_root = self._normalizar_ruta_contexto(project_root)
+        if self.project_root is None and self.source_file is not None:
+            self.project_root = descubrir_raiz_proyecto(self.source_file, self.source_file)
 
-    def generate_code(self, ast):
+    @staticmethod
+    def _normalizar_ruta_contexto(ruta):
+        if ruta in (None, ""):
+            return None
+        return Path(ruta).expanduser().resolve(strict=False)
+
+    def set_contexto_compilacion(self, *, source_file=None, project_root=None):
+        """Actualiza el contexto de archivo usado por nodos dependientes de ruta."""
+
+        if source_file is not None:
+            self.source_file = self._normalizar_ruta_contexto(source_file)
+        if project_root is not None:
+            self.project_root = self._normalizar_ruta_contexto(project_root)
+        if self.project_root is None and self.source_file is not None:
+            self.project_root = descubrir_raiz_proyecto(self.source_file, self.source_file)
+
+    def contexto_usar_kwargs(self):
+        """Devuelve argumentos estables para ``usar_modulo`` cuando hay contexto."""
+
+        kwargs = []
+        if self.project_root is not None:
+            kwargs.append(("project_root", str(self.project_root)))
+        if self.source_file is not None:
+            kwargs.append(("current_file", str(self.source_file)))
+        return kwargs
+
+    def generate_code(self, ast, *, source_file=None, project_root=None):
+        self.set_contexto_compilacion(source_file=source_file, project_root=project_root)
         self.codigo = self.transpilar(ast)
         return self.codigo
 
