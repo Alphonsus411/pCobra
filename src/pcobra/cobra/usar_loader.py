@@ -15,6 +15,7 @@ from pcobra.cobra.usar_policy import (
     USAR_RUNTIME_EXPORT_OVERRIDES,
 )
 from pcobra.cobra.core.usar_symbol_policy import (
+    build_and_validate_usar_symbol_metadata,
     depuracion_saneamiento_usar_habilitada,
     sanear_exportables_para_usar,
 )
@@ -26,6 +27,8 @@ _VALID_NAME_RE = re.compile(r"^[a-z][a-z0-9_]*$")
 # Segmentos seguros para módulos de proyecto: ruta lógica punteada, no ruta del sistema.
 _VALID_PROJECT_MODULE_SEGMENT_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 _PROJECT_MODULE_FORBIDDEN_CHARS = frozenset('/\\@$%*?"\'<>|;`!()[]{}=+,')
+_USAR_PROJECT_MODULE_CACHE: dict[Path, dict[str, Any]] = {}
+_USAR_PROJECT_LOADING_STACK: list[Path] = []
 
 # Patrones que deben bloquearse explícitamente para evitar imports de backend o rutas internas.
 _INTERNAL_HINTS = (
@@ -344,6 +347,157 @@ def obtener_modulo(nombre: str, *, permitir_instalacion: bool = True):
         raise ImportError(
             f"No se pudo resolver el módulo Cobra permitido '{nombre}' en runtime."
         ) from exc
+
+
+def _extraer_exports_modulo_cobra_proyecto(
+    ast: list[object],
+    entorno_modulo: object,
+    *,
+    ruta_modulo: Path,
+) -> dict[str, Any]:
+    """Extrae exports saneados de un módulo ``.co`` ya ejecutado."""
+
+    from pcobra.core.ast_nodes import NodoExport
+
+    valores_entorno = getattr(entorno_modulo, "values", {})
+    nombres_exportados = [
+        nodo.nombre for nodo in ast if isinstance(nodo, NodoExport)
+    ] or [nombre for nombre in valores_entorno if not nombre.startswith("_")]
+
+    simbolos_saneados: list[tuple[str, object]] = []
+    metadata_por_simbolo: dict[str, dict[str, object]] = {}
+    modulo_canonico = str(ruta_modulo.resolve(strict=False))
+    for nombre in nombres_exportados:
+        if nombre not in valores_entorno:
+            continue
+        simbolo = valores_entorno[nombre]
+        simbolos_saneados.append((nombre, simbolo))
+        metadata_por_simbolo[nombre] = build_and_validate_usar_symbol_metadata(
+            module_name=modulo_canonico,
+            symbol_name=nombre,
+            callable_obj=simbolo,
+        )
+
+    return {
+        "simbolos": simbolos_saneados,
+        "metadata": metadata_por_simbolo,
+    }
+
+
+def _cargar_exports_modulo_cobra_proyecto(
+    nombre: str,
+    *,
+    project_root: Path,
+    current_file: Path | None = None,
+) -> dict[str, Any]:
+    """Carga un módulo Cobra de proyecto usando resolución canónica y cache."""
+
+    from pcobra.core.environment import Environment
+    from pcobra.core.import_utils import cargar_ast_modulo
+    from pcobra.core.interpreter import InterpretadorCobra
+    from pcobra.core.ast_nodes import NodoExport
+
+    ruta_modulo = resolver_modulo_cobra_proyecto(
+        nombre,
+        project_root=project_root,
+        current_file=current_file,
+    ).resolve(strict=False)
+
+    if ruta_modulo in _USAR_PROJECT_MODULE_CACHE:
+        return _USAR_PROJECT_MODULE_CACHE[ruta_modulo]
+
+    if ruta_modulo in _USAR_PROJECT_LOADING_STACK:
+        ciclo = [*_USAR_PROJECT_LOADING_STACK, ruta_modulo]
+        cadena = " -> ".join(ruta.name for ruta in ciclo[ciclo.index(ruta_modulo):])
+        raise ImportError(f"Ciclo de módulos detectado en usar: {cadena}")
+
+    try:
+        ast = cargar_ast_modulo(
+            str(ruta_modulo),
+            modules_path=str(project_root),
+            whitelist={project_root},
+        )
+    except FileNotFoundError as exc:
+        raise FileNotFoundError(f"Módulo no encontrado: {nombre}") from exc
+
+    interpretador = InterpretadorCobra()
+    interpretador._project_root = Path(project_root).resolve(strict=False)
+    interpretador._main_file = (
+        Path(current_file).resolve(strict=False) if current_file else ruta_modulo
+    )
+    interpretador._current_module_stack.append(ruta_modulo)
+    interpretador.contextos.append(Environment(parent=interpretador.contextos[-1]))
+    interpretador.mem_contextos.append({})
+    _USAR_PROJECT_LOADING_STACK.append(ruta_modulo)
+    try:
+        for subnodo in ast:
+            if isinstance(subnodo, NodoExport):
+                continue
+            interpretador.ejecutar_nodo(subnodo)
+        exports = _extraer_exports_modulo_cobra_proyecto(
+            ast,
+            interpretador.contextos[-1],
+            ruta_modulo=ruta_modulo,
+        )
+        _USAR_PROJECT_MODULE_CACHE[ruta_modulo] = {
+            "simbolos": list(exports["simbolos"]),
+            "metadata": {
+                nombre: dict(metadata)
+                for nombre, metadata in exports["metadata"].items()
+            },
+        }
+        return _USAR_PROJECT_MODULE_CACHE[ruta_modulo]
+    finally:
+        memoria_local = interpretador.mem_contextos.pop()
+        for idx, tam in memoria_local.values():
+            interpretador.liberar_memoria(idx, tam)
+        interpretador.contextos.pop()
+        interpretador._current_module_stack.pop()
+        _USAR_PROJECT_LOADING_STACK.pop()
+
+
+def usar_modulo(
+    nombre: str,
+    *,
+    project_root: str | Path | None = None,
+    current_file: str | Path | None = None,
+) -> dict[str, Any]:
+    """API única para resolver ``usar`` en runtime y transpilación Python.
+
+    - Los módulos oficiales preservan ``obtener_modulo`` y devuelven sus
+      símbolos públicos saneados.
+    - Los módulos Cobra de proyecto (``foo.bar`` -> ``foo/bar.co``) usan la
+      misma resolución canónica por ruta y una cache global por archivo.
+    """
+
+    if isinstance(nombre, str) and "." in nombre:
+        current = Path(current_file).expanduser() if current_file is not None else None
+        root = (
+            Path(project_root).expanduser().resolve(strict=False)
+            if project_root is not None
+            else descubrir_raiz_proyecto(current, current)
+        )
+        exports = _cargar_exports_modulo_cobra_proyecto(
+            nombre,
+            project_root=root,
+            current_file=current,
+        )
+        return dict(exports.get("simbolos", []))
+
+    modulo = obtener_modulo(nombre)
+    mapa_limpio, conflictos = sanitizar_exports_publicos(
+        modulo,
+        normalizar_nombre_usar(nombre),
+    )
+    if conflictos:
+        logging.debug(
+            "USAR sanitize conflicts en API única module=%s conflicts=%s",
+            nombre,
+            conflictos,
+        )
+    if not mapa_limpio:
+        raise ImportError(f"No se encontraron símbolos exportables para usar '{nombre}'.")
+    return mapa_limpio
 
 
 def sanitizar_exports_publicos(modulo: object, alias_modulo: str) -> tuple[dict[str, Any], list[dict[str, str]]]:

@@ -18,6 +18,8 @@ from pcobra.core.ast_nodes import (
     NodoGarantia,
     NodoRetorno,
     NodoLlamadaFuncion,
+    NodoExport,
+    NodoUsar,
 )
 from pcobra.core.lexer import TipoToken, Token
 import pcobra.cobra.core as cobra_core
@@ -36,6 +38,53 @@ def test_generate_code_asignacion_simple() -> None:
     codigo = transpiler.generate_code([nodo])
     assert "x = 1" in codigo
     assert transpiler.codigo == codigo
+
+
+def test_transpilador_python_usar_invoca_api_canonica() -> None:
+    nodo = NodoUsar("texto")
+    transpiler = TranspiladorPython()
+    codigo = transpiler.generate_code([nodo])
+
+    assert "from pcobra.cobra.usar_loader import usar_modulo" in codigo
+    assert "globals().update(usar_modulo('texto'))" in codigo
+    assert "obtener_modulo" not in codigo
+
+
+def test_usar_modulo_oficial_devuelve_exports_saneados() -> None:
+    from pcobra.cobra.usar_loader import usar_modulo
+
+    simbolos = usar_modulo("texto")
+
+    assert "recortar" in simbolos
+    assert callable(simbolos["recortar"])
+    assert "strip" not in simbolos
+
+
+def test_usar_modulo_proyecto_reusa_resolucion_y_cache(tmp_path, monkeypatch) -> None:
+    from pcobra.cobra.usar_loader import usar_modulo
+    from pcobra.core import import_utils
+
+    modulo = tmp_path / "utilidades" / "saludos.co"
+    modulo.parent.mkdir()
+    modulo.write_text("exportar saludo\n", encoding="utf-8")
+    llamadas = []
+
+    def cargar_ast_falso(ruta, *, modules_path, whitelist):
+        llamadas.append((Path(ruta).resolve(), Path(modules_path).resolve(), whitelist))
+        return [
+            NodoAsignacion("saludo", NodoValor("hola"), declaracion=True),
+            NodoExport("saludo"),
+        ]
+
+    monkeypatch.setattr(import_utils, "cargar_ast_modulo", cargar_ast_falso)
+
+    primera_carga = usar_modulo("utilidades.saludos", project_root=tmp_path)
+    segunda_carga = usar_modulo("utilidades.saludos", project_root=tmp_path)
+
+    assert primera_carga == {"saludo": "hola"}
+    assert segunda_carga == {"saludo": "hola"}
+    assert len(llamadas) == 1
+    assert llamadas[0][0] == modulo.resolve()
 
 
 def test_save_file(tmp_path: pytest.TempPathFactory) -> None:
