@@ -2281,11 +2281,19 @@ class InterpretadorCobra:
         self._project_root = descubrir_raiz_proyecto(
             current_file or self._project_root, self._main_file
         )
-        ruta_modulo = resolver_modulo_cobra_proyecto(
-            nombre_modulo,
-            project_root=self._project_root,
-            current_file=current_file,
-        ).resolve()
+        try:
+            ruta_modulo = resolver_modulo_cobra_proyecto(
+                nombre_modulo,
+                project_root=self._project_root,
+                current_file=current_file,
+            ).resolve()
+        except FileNotFoundError as exc:
+            ruta_buscada = self._project_root.joinpath(
+                *str(nombre_modulo).split(".")
+            ).with_suffix(".co")
+            raise FileNotFoundError(
+                f"Módulo no encontrado: {nombre_modulo}. Ruta buscada: {ruta_buscada}"
+            ) from exc
 
         if ruta_modulo in self._usar_module_cache:
             self._inyectar_exports_modulo_proyecto(self._usar_module_cache[ruta_modulo])
@@ -2305,7 +2313,12 @@ class InterpretadorCobra:
         except PermissionError as exc:
             raise PrimitivaPeligrosaError(str(exc)) from exc
         except FileNotFoundError as exc:
-            raise FileNotFoundError(f"Módulo no encontrado: {nombre_modulo}") from exc
+            ruta_buscada = self._project_root.joinpath(
+                *str(nombre_modulo).split(".")
+            ).with_suffix(".co")
+            raise FileNotFoundError(
+                f"Módulo no encontrado: {nombre_modulo}. Ruta buscada: {ruta_buscada}"
+            ) from exc
 
         self._usar_loading_stack.append(ruta_modulo)
         self._current_module_stack.append(ruta_modulo)
@@ -2467,8 +2480,20 @@ class InterpretadorCobra:
 
         try:
             nombre_modulo = nodo.modulo
-            if isinstance(nombre_modulo, str) and "." in nombre_modulo:
-                return self._ejecutar_usar_modulo_proyecto(nombre_modulo)
+            if isinstance(nombre_modulo, str):
+                nombre_modulo_limpio = nombre_modulo.strip()
+                if (
+                    "." in nombre_modulo_limpio
+                    or nombre_modulo_limpio not in USAR_COBRA_ALLOWLIST
+                ):
+                    try:
+                        return self._ejecutar_usar_modulo_proyecto(nombre_modulo_limpio)
+                    except FileNotFoundError:
+                        if "." in nombre_modulo_limpio:
+                            raise
+                    except ValueError:
+                        if "." in nombre_modulo_limpio:
+                            raise
             modulo, es_repl_estricto, es_modulo_oficial_cobra = _resolver_carga_modulo_usar(
                 nombre_modulo
             )
