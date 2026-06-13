@@ -5,6 +5,7 @@ from __future__ import annotations
 import importlib
 import importlib.util
 import logging
+import os
 import warnings
 from dataclasses import dataclass
 from pathlib import Path
@@ -55,6 +56,7 @@ class ResolutionResult:
     source: str
     resolved_name: str
     import_path: str | None = None
+    file_path: str | None = None
     backend: str | None = None
     backend_adapter: object | None = None
     precedence_reason: str | None = None
@@ -276,6 +278,7 @@ class CobraImportResolver:
             source=candidates[0].source,
             resolved_name=candidates[0].resolved_name,
             import_path=candidates[0].import_path,
+            file_path=candidates[0].file_path,
             backend=candidates[0].backend,
             backend_adapter=candidates[0].backend_adapter,
             precedence_reason=precedence_reason,
@@ -326,6 +329,8 @@ class CobraImportResolver:
             "conflict_candidates": list(resolution.conflict_candidates),
             "audit_debug": self.audit_debug,
         }
+        if resolution.file_path is not None:
+            metadata["file_path"] = resolution.file_path
         setattr(module, "__cobra_resolution_source__", resolution.source)
         setattr(module, "__cobra_backend_injected__", resolution.backend)
         setattr(module, "__cobra_resolution_metadata__", metadata)
@@ -340,6 +345,7 @@ class CobraImportResolver:
             source=resolution.source,
             resolved_name=resolution.resolved_name,
             import_path=resolution.import_path,
+            file_path=resolution.file_path,
             backend=effective_backend,
             backend_adapter=adapter,
             precedence_reason=resolution.precedence_reason,
@@ -378,13 +384,34 @@ class CobraImportResolver:
             relative / "__init__.cobra",
         )
         for pattern in local_patterns:
-            if (self.project_root / pattern).exists():
+            candidate_path = self.project_root / pattern
+            if candidate_path.exists():
+                file_path = candidate_path.resolve()
+                self._verify_path_inside_project_root(file_path)
                 return ResolutionResult(
                     request=name,
                     source="project",
                     resolved_name=name,
+                    import_path=None,
+                    file_path=str(file_path),
                 )
         return None
+
+    def _verify_path_inside_project_root(self, file_path: Path) -> None:
+        if self.project_root is None:
+            return
+        try:
+            common = os.path.commonpath((str(self.project_root), str(file_path)))
+        except ValueError as exc:
+            raise ImportResolutionError(
+                "Ruta de módulo de proyecto fuera de la raíz autorizada.",
+                code="IMP-PROJECT-PATH-001",
+            ) from exc
+        if common != str(self.project_root):
+            raise ImportResolutionError(
+                "Ruta de módulo de proyecto fuera de la raíz autorizada.",
+                code="IMP-PROJECT-PATH-001",
+            )
 
     def _resolve_stdlib_module(self, name: str) -> ResolutionResult | None:
         if name.startswith("cobra."):

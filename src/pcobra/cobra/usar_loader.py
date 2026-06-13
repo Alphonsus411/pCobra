@@ -7,6 +7,7 @@ from pathlib import Path
 import sys
 from typing import Any
 
+from pcobra.cobra.imports.resolver import CobraImportResolver, ImportResolutionError
 from pcobra.cobra.usar_policy import (
     CANONICAL_MODULE_SURFACE_CONTRACTS,
     REPL_COBRA_MODULE_INTERNAL_PATH_MAP,
@@ -207,15 +208,27 @@ def resolver_modulo_cobra_proyecto(
     segundo sistema de imports.
     """
 
-    segmentos = validar_nombre_modulo_cobra_proyecto(nombre)
+    validar_nombre_modulo_cobra_proyecto(nombre)
     root_resuelto = Path(project_root).resolve(strict=False)
 
     if current_file is not None:
         current_resuelto = Path(current_file).resolve(strict=False)
         _verificar_path_dentro_de_root(current_resuelto, root_resuelto)
 
-    ruta_logica = root_resuelto.joinpath(*segmentos[:-1], f"{segmentos[-1]}.co")
-    ruta_resuelta = ruta_logica.resolve(strict=False)
+    try:
+        resolution = CobraImportResolver(
+            project_root=root_resuelto,
+            collision_policy="warn",
+        ).resolve(nombre)
+    except ImportResolutionError as exc:
+        if exc.code == "IMP-PROJECT-PATH-001":
+            raise ValueError("Ruta de módulo de proyecto fuera de la raíz autorizada.") from exc
+        raise FileNotFoundError(f"Módulo no encontrado: {nombre}") from exc
+
+    if resolution.source != "project" or not resolution.file_path:
+        raise FileNotFoundError(f"Módulo no encontrado: {nombre}")
+
+    ruta_resuelta = Path(resolution.file_path)
     _verificar_path_dentro_de_root(ruta_resuelta, root_resuelto)
 
     return ruta_resuelta
