@@ -10,6 +10,7 @@ from pcobra.cobra.usar_loader import (
     obtener_pila_carga_modulos_cobra_proyecto,
     resolver_modulo_cobra_proyecto,
     usar_modulo,
+    validar_nombre_modulo_cobra_proyecto,
 )
 from pcobra.core.interpreter import InterpretadorCobra
 
@@ -610,22 +611,86 @@ def test_import_archivo_co_mantiene_ejecutar_import(monkeypatch, tmp_path):
     assert llamadas == [(str(modulo), str(Path.home() / ".cobra" / "modules"))]
 
 
-def test_validacion_modulo_proyecto_acepta_puntos_y_rechaza_rutas_windows_posix():
-    import pytest
-    from pcobra.cobra.usar_loader import validar_nombre_modulo_cobra_proyecto
-
+def test_validacion_modulo_proyecto_acepta_puntos():
     assert validar_nombre_modulo_cobra_proyecto("utilidades.fechas") == ("utilidades", "fechas")
 
-    for nombre in ("..", "a/../b", "../b", r"C:\\x", "a\\b"):
-        with pytest.raises(ValueError):
-            validar_nombre_modulo_cobra_proyecto(nombre)
+
+@pytest.mark.parametrize(
+    "nombre",
+    [
+        "..",
+        "../externo",
+        "../externo.co",
+        "a/../b",
+        "a..b",
+        "utilidades..fechas",
+        ".oculto",
+        "utilidades.",
+        "/tmp/externo",
+        r"C:\\tmp\\externo",
+        "C:externo",
+        "a\\b",
+        "a/b",
+        "externo-co",
+        "externo@red",
+        "externo$",
+        "externo*",
+        "externo?",
+        "externo<privado>",
+        "externo|privado",
+        "externo;privado",
+        "externo`privado",
+        "externo privado",
+    ],
+)
+def test_validacion_modulo_proyecto_rechaza_traversal_rutas_y_caracteres_prohibidos(nombre):
+    with pytest.raises(ValueError):
+        validar_nombre_modulo_cobra_proyecto(nombre)
 
 
-def test_resolver_modulo_cobra_proyecto_bloquea_traversal_estable(tmp_path):
-    import pytest
+@pytest.mark.parametrize(
+    "nombre",
+    [
+        "..",
+        "../externo",
+        "../externo.co",
+        "a/../b",
+        "utilidades..fechas",
+    ],
+)
+def test_resolver_modulo_cobra_proyecto_rechaza_intentos_posix_de_escape(tmp_path, nombre):
+    proyecto = tmp_path / "app"
+    proyecto.mkdir()
+    externo = tmp_path / "externo.co"
+    externo.write_text("var secreto = 1\n", encoding="utf-8")
 
+    with pytest.raises(ValueError):
+        resolver_modulo_cobra_proyecto(nombre, project_root=proyecto)
+
+
+@pytest.mark.parametrize(
+    "nombre",
+    [
+        r"C:\\tmp\\externo",
+        "C:externo",
+        "a\\b",
+    ],
+)
+def test_resolver_modulo_cobra_proyecto_rechaza_rutas_windows_sin_depender_de_windows(tmp_path, nombre):
     proyecto = tmp_path / "app"
     proyecto.mkdir()
 
-    with pytest.raises(ValueError, match="traversal"):
-        resolver_modulo_cobra_proyecto("..", project_root=proyecto)
+    with pytest.raises(ValueError):
+        resolver_modulo_cobra_proyecto(nombre, project_root=proyecto)
+
+
+def test_resolver_modulo_cobra_proyecto_no_devuelve_symlink_fuera_de_project_root(tmp_path):
+    proyecto = tmp_path / "app"
+    proyecto.mkdir()
+    externo = tmp_path / "externo.co"
+    externo.write_text("var secreto = 1\n", encoding="utf-8")
+    enlace = proyecto / "escape.co"
+    enlace.symlink_to(externo)
+
+    with pytest.raises(ValueError, match="fuera de la raíz autorizada"):
+        resolver_modulo_cobra_proyecto("escape", project_root=proyecto)
