@@ -823,6 +823,12 @@ Cobra incluye módulos de soporte para flujos asíncronos y coordinación.
 | `verificar` | `codegen` | `VerifyCommand` | `src/pcobra/cobra/cli/commands/verify_cmd.py` |
 <!-- END: AUTO-CLI-TABLE -->
 
+### 10.1 IDLE gráfico con gestión de archivos
+
+`cobra gui` abre el IDLE basado en Flet. Además de ejecutar código, mostrar tokens y mostrar AST, la interfaz integra una barra de archivo con **Nuevo**, **Abrir**, **Guardar**, **Guardar como** y **Recargar**. El editor mantiene la ruta activa, el contenido cargado originalmente y una bandera de cambios sin guardar.
+
+El panel lateral funciona como árbol de directorios ligero: muestra carpetas y archivos Cobra con extensiones `.co` y `.cobra`, que son las extensiones documentadas para scripts y paquetes. Seleccionar un archivo carga su texto en el editor sin validar sintaxis. Guardar escribe exactamente el contenido normalizado visible en el editor y evita ejecutar lexer o parser, por lo que también puede persistir borradores incompletos o temporalmente inválidos.
+
 Flujo mínimo sugerido:
 
 ```bash

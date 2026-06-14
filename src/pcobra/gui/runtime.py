@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import io
 import re
+from dataclasses import dataclass
+from pathlib import Path
 from contextlib import redirect_stderr, redirect_stdout
 from functools import lru_cache
 from typing import Any
@@ -71,6 +73,51 @@ def _local_import_action(module_name: str, symbol_name: str) -> str:
     )
 
 
+COBRA_FILE_EXTENSIONS: tuple[str, ...] = (".co", ".cobra")
+"""Extensiones Cobra priorizadas para el explorador del IDLE."""
+
+
+@dataclass(slots=True)
+class GuiFileState:
+    """Estado mínimo del archivo editado en la GUI."""
+
+    ruta: Path | None = None
+    contenido_cargado: str = ""
+    cambios_sin_guardar: bool = False
+
+
+def es_archivo_cobra(path: str | Path) -> bool:
+    """Indica si una ruta parece contener código Cobra editable."""
+
+    return Path(path).suffix.lower() in COBRA_FILE_EXTENSIONS
+
+
+def listar_directorio_cobra(root: str | Path) -> list[Path]:
+    """Lista carpetas y archivos Cobra de un directorio, con orden estable."""
+
+    base = Path(root).expanduser()
+    entradas = list(base.iterdir())
+    visibles = [entry for entry in entradas if entry.is_dir() or es_archivo_cobra(entry)]
+    return sorted(visibles, key=lambda entry: (not entry.is_dir(), entry.name.lower()))
+
+
+def leer_archivo_texto(path: str | Path, *, encoding: str = "utf-8") -> str:
+    """Lee un archivo Cobra como texto UTF-8 sin interpretar su contenido."""
+
+    return Path(path).expanduser().read_text(encoding=encoding)
+
+
+def escribir_archivo_texto(
+    path: str | Path, contenido: str | None, *, encoding: str = "utf-8"
+) -> str:
+    """Escribe exactamente el contenido normalizado del editor y lo devuelve."""
+
+    codigo = normalizar_codigo(contenido)
+    destino = Path(path).expanduser()
+    destino.write_text(codigo, encoding=encoding)
+    return codigo
+
+
 def require_flet() -> Any:
     """Importa Flet de forma diferida para no romper imports de CLI."""
     try:
@@ -125,6 +172,36 @@ def flet_elevated_button(ft: Any, *args: Any, **kwargs: Any) -> Any:
     """Crea ``ft.ElevatedButton`` validando la API desde el runtime central."""
 
     return _flet_attr(ft, "ElevatedButton", "ElevatedButton")(*args, **kwargs)
+
+
+def flet_text_button(ft: Any, *args: Any, **kwargs: Any) -> Any:
+    """Crea ``ft.TextButton`` validando la API desde el runtime central."""
+
+    return _flet_attr(ft, "TextButton", "TextButton")(*args, **kwargs)
+
+
+def flet_row(ft: Any, *args: Any, **kwargs: Any) -> Any:
+    """Crea ``ft.Row`` validando la API desde el runtime central."""
+
+    return _flet_attr(ft, "Row", "Row")(*args, **kwargs)
+
+
+def flet_column(ft: Any, *args: Any, **kwargs: Any) -> Any:
+    """Crea ``ft.Column`` validando la API desde el runtime central."""
+
+    return _flet_attr(ft, "Column", "Column")(*args, **kwargs)
+
+
+def flet_container(ft: Any, *args: Any, **kwargs: Any) -> Any:
+    """Crea ``ft.Container`` validando la API desde el runtime central."""
+
+    return _flet_attr(ft, "Container", "Container")(*args, **kwargs)
+
+
+def flet_list_view(ft: Any, *args: Any, **kwargs: Any) -> Any:
+    """Crea ``ft.ListView`` validando la API desde el runtime central."""
+
+    return _flet_attr(ft, "ListView", "ListView")(*args, **kwargs)
 
 
 def flet_dropdown_option(ft: Any, value: str) -> Any:
