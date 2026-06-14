@@ -2233,7 +2233,14 @@ class InterpretadorCobra:
             self.contextos.pop()
 
     def ejecutar_import(self, nodo: NodoImport) -> None:
-        """Ejecuta una declaración de importación de módulo."""
+        """Ejecuta una declaración de importación de módulo legacy.
+
+        ``NodoImport`` mantiene la semántica histórica de ``import``: carga el
+        AST del archivo con ``cargar_ast_modulo`` y ejecuta todos sus nodos en el
+        contexto actual. La caché de AST sólo evita parseos repetidos; no debe
+        delegar en ``usar_modulo`` ni aplicar la semántica pública/exportada de
+        ``usar``.
+        """
         ruta = Path(nodo.ruta).expanduser()
         ruta_import_legacy = str(ruta)
         if not ruta.is_absolute():
