@@ -10,6 +10,7 @@ from pcobra.cobra.usar_loader import (
     obtener_cache_modulos_cobra_proyecto,
     obtener_pila_carga_modulos_cobra_proyecto,
     resolver_modulo_cobra_proyecto,
+    resolver_ruta_canonica_modulo_cobra_proyecto,
     usar_modulo,
     validar_nombre_modulo_cobra_proyecto,
 )
@@ -535,6 +536,61 @@ def test_interpretador_usar_proyecto_cachea_referencias_equivalentes(monkeypatch
     assert cargas == [modulo.resolve()]
     assert interp.variables["valor"] == 1
 
+
+
+def test_resolver_ruta_canonica_modulo_cobra_proyecto_normaliza_project_root_equivalente(tmp_path):
+    proyecto = tmp_path / "app"
+    subdir = proyecto / "subdir"
+    modulo = proyecto / "utilidades" / "fechas.co"
+    subdir.mkdir(parents=True)
+    modulo.parent.mkdir(parents=True)
+    modulo.write_text("", encoding="utf-8")
+
+    ruta_desde_root = resolver_ruta_canonica_modulo_cobra_proyecto(
+        "utilidades.fechas", project_root=proyecto
+    )
+    ruta_desde_root_equivalente = resolver_ruta_canonica_modulo_cobra_proyecto(
+        "utilidades.fechas", project_root=subdir / ".."
+    )
+
+    assert ruta_desde_root == modulo.resolve()
+    assert ruta_desde_root_equivalente == modulo.resolve()
+    assert ruta_desde_root_equivalente == ruta_desde_root
+
+
+def test_usar_modulo_cachea_referencias_equivalentes_al_mismo_co(monkeypatch, tmp_path):
+    from pcobra.core.ast_nodes import NodoAsignacion, NodoValor
+
+    proyecto = tmp_path / "app"
+    subdir = proyecto / "subdir"
+    modulo = proyecto / "utilidades" / "fechas.co"
+    subdir.mkdir(parents=True)
+    modulo.parent.mkdir(parents=True)
+    (proyecto / "cobra.toml").write_text("[proyecto]\n", encoding="utf-8")
+    principal = proyecto / "main.co"
+    principal.write_text("", encoding="utf-8")
+    modulo.write_text("", encoding="utf-8")
+    cargas = []
+
+    def fake_cargar_ast_modulo(ruta, **kwargs):
+        cargas.append((Path(ruta).resolve(strict=False), kwargs["modules_path"]))
+        return [NodoAsignacion("hoy", NodoValor(len(cargas)), declaracion=True)]
+
+    monkeypatch.setattr(
+        "pcobra.core.import_utils.cargar_ast_modulo", fake_cargar_ast_modulo
+    )
+
+    exports_root = usar_modulo(
+        "utilidades.fechas", project_root=proyecto, current_file=principal
+    )
+    exports_root_equivalente = usar_modulo(
+        "utilidades.fechas", project_root=subdir / "..", current_file=principal
+    )
+
+    assert exports_root["hoy"] == 1
+    assert exports_root_equivalente["hoy"] == 1
+    assert cargas == [(modulo.resolve(), str(proyecto.resolve()))]
+    assert list(obtener_cache_modulos_cobra_proyecto()) == [modulo.resolve()]
 
 def test_api_e_interpretador_comparten_cache_por_ruta_canonica(monkeypatch, tmp_path):
     from pcobra.core.ast_nodes import NodoAsignacion, NodoValor
