@@ -4,7 +4,11 @@ import importlib
 
 import pytest
 
-from pcobra.cobra.usar_loader import validar_nombre_modulo_usar
+from pcobra.cobra.usar_loader import (
+    _verificar_path_dentro_de_root,
+    validar_nombre_modulo_cobra_proyecto,
+    validar_nombre_modulo_usar,
+)
 from pcobra.cobra.usar_policy import REPL_COBRA_MODULE_MAP, USAR_COBRA_FACING_MODULE_FLAGS
 
 
@@ -85,6 +89,12 @@ def test_resolver_modulo_cobra_proyecto_convierte_nombre_punteado_en_co(tmp_path
         ".utilidades",
         "utilidades.",
         "../secreto",
+        "a/../b",
+        "/tmp/x",
+        r"C:\tmp\x",
+        "C:tmp",
+        r"a\b",
+        "a/b",
         "utilidades/fechas",
         r"utilidades\\fechas",
         "C:secreto",
@@ -124,6 +134,24 @@ def test_resolver_modulo_cobra_proyecto_valida_current_file_dentro_de_root(tmp_p
             current_file=externo,
         )
 
+
+
+@pytest.mark.parametrize(
+    "nombre",
+    ["../secreto", "a/../b", "/tmp/x", r"C:\tmp\x", "C:tmp", r"a\b", "a/b"],
+)
+def test_validar_nombre_modulo_cobra_proyecto_rechaza_rutas_manipuladas(nombre):
+    with pytest.raises(ValueError):
+        validar_nombre_modulo_cobra_proyecto(nombre)
+
+
+def test_verificar_path_dentro_de_root_canonicaliza_antes_de_commonpath(tmp_path):
+    proyecto = tmp_path / "app"
+    proyecto.mkdir()
+    ruta_manipulada = proyecto / "subdir" / ".." / ".." / "secreto.co"
+
+    with pytest.raises(ValueError, match="fuera de la raíz autorizada"):
+        _verificar_path_dentro_de_root(ruta_manipulada, proyecto)
 
 def test_validacion_oficial_sigue_rechazando_nombres_punteados():
     with pytest.raises(ValueError):
