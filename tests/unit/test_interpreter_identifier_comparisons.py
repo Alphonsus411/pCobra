@@ -28,7 +28,8 @@ _EJECUTAR_ASIGNACION_ORIGINAL = InterpretadorCobra.ejecutar_asignacion
 def _ejecutar_asignacion_sin_retorno(
     inter: InterpretadorCobra, nodo: NodoAsignacion, visitados: set[str] | None = None
 ) -> None:
-    _EJECUTAR_ASIGNACION_ORIGINAL(inter, nodo, visitados)
+    valor = inter.evaluar_expresion(nodo.valor, visitados)
+    inter.variables[nodo.nombre] = valor
     return None
 
 
@@ -205,7 +206,7 @@ imprimir x == y
 def test_ast_directo_comparacion_identificador_sin_recursionerror() -> None:
     inter = InterpretadorCobra()
     ast = [
-        NodoAsignacion("x", NodoValor(10)),
+        NodoAsignacion("x", NodoValor(10), inferencia=True),
         NodoImprimir(
             NodoOperacionBinaria(
                 NodoIdentificador("x"),
@@ -234,7 +235,7 @@ def test_ast_directo_comparacion_identificador_sin_recursionerror() -> None:
 def test_ast_directo_comparacion_identificador_con_suma_sin_recursionerror() -> None:
     inter = InterpretadorCobra()
     ast = [
-        NodoAsignacion("x", NodoValor(5)),
+        NodoAsignacion("x", NodoValor(5), inferencia=True),
         NodoImprimir(
             NodoOperacionBinaria(
                 NodoOperacionBinaria(
@@ -358,7 +359,7 @@ def test_operacion_and_materializa_identificador_y_alias() -> None:
 
     expresion = NodoOperacionBinaria(
         NodoIdentificador("flag"),
-        Token(TipoToken.AND, "&&"),
+        Token(TipoToken.Y, "&&"),
         NodoValor(True),
     )
 

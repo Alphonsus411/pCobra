@@ -52,7 +52,7 @@ _KEYWORD_PATTERNS: list[tuple[re.Pattern[str], str]] = [
     (re.compile(r"\bverdadero\b"), "True"),
     (re.compile(r"\bfalso\b"), "False"),
     (re.compile(r"\bnull\b"), "None"),
-    (re.compile(r"\bAND\b"), "and"),
+    (re.compile(r"\bY\b"), "and"),
     (re.compile(r"\bOR\b"), "or"),
     (re.compile(r"\bNO\b"), "not"),
 ]

@@ -239,7 +239,7 @@ var resultado = y + 4
 def test_ast_imprimir_comparacion_booleana_sin_recursionerror() -> None:
     inter = InterpretadorCobra()
     ast = [
-        NodoAsignacion("x", NodoValor(10)),
+        NodoAsignacion("x", NodoValor(10), inferencia=True),
         NodoImprimir(
             NodoOperacionBinaria(
                 NodoIdentificador("x"),
@@ -263,7 +263,7 @@ def test_ast_imprimir_comparacion_booleana_sin_recursionerror() -> None:
 def test_ast_condicional_ejecuta_bloque_sin_recursionerror() -> None:
     inter = InterpretadorCobra()
     ast = [
-        NodoAsignacion("x", NodoValor(10)),
+        NodoAsignacion("x", NodoValor(10), inferencia=True),
         NodoCondicional(
             NodoOperacionBinaria(
                 NodoIdentificador("x"),
@@ -316,9 +316,9 @@ def test_expresiones_booleanas_validas_siguen_funcionando_en_condicional() -> No
         ),
     )
     ast = [
-        NodoAsignacion("x", NodoValor(5)),
-        NodoAsignacion("y", NodoValor(0)),
-        NodoCondicional(condicion_compuesta, [NodoAsignacion("ok", NodoValor(1))], []),
+        NodoAsignacion("x", NodoValor(5), inferencia=True),
+        NodoAsignacion("y", NodoValor(0), inferencia=True),
+        NodoCondicional(condicion_compuesta, [NodoAsignacion("ok", NodoValor(1), inferencia=True)], []),
     ]
 
     for nodo in ast:

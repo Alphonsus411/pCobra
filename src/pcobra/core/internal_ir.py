@@ -202,8 +202,8 @@ def _expr_to_text(expr) -> str:
         izq = _expr_to_text(expr.izquierda)
         der = _expr_to_text(expr.derecha)
         op = _token_to_text(expr.operador)
-        if expr.operador.tipo == TipoToken.AND:
-            op = "AND"
+        if expr.operador.tipo == TipoToken.Y:
+            op = "Y"
         elif expr.operador.tipo == TipoToken.O:
             op = "OR"
         return f"{izq} {op} {der}"

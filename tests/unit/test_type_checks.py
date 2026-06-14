@@ -15,9 +15,9 @@ def test_suma_tipos_incompatibles():
         inter.evaluar_expresion(expr)
 
 
-def test_and_tipos_incompatibles():
+def test_y_tipos_incompatibles():
     inter = InterpretadorCobra()
-    expr = NodoOperacionBinaria(NodoValor(1), Token(TipoToken.AND, '&&'), NodoValor(True))
+    expr = NodoOperacionBinaria(NodoValor(1), Token(TipoToken.Y, '&&'), NodoValor(True))
     with pytest.raises(TypeError, match='requiere booleanos'):
         inter.evaluar_expresion(expr)
 

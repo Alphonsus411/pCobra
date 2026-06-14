@@ -49,7 +49,7 @@ def test_parser_precedencia_operadores():
         Token(TipoToken.ENTERO, 7),
         Token(TipoToken.Y, '&&'),
         Token(TipoToken.NO, '!'),
-        Token(TipoToken.ENTERO, 0),
+        Token(TipoToken.BOOLEANO, False),
         Token(TipoToken.EOF, None),
     ]
     parser = Parser(tokens)
@@ -71,9 +71,9 @@ def test_interpreter_operaciones():
         Token(TipoToken.ENTERO, 3),
         Token(TipoToken.IGUAL, '=='),
         Token(TipoToken.ENTERO, 7),
-        Token(TipoToken.AND, '&&'),
+        Token(TipoToken.Y, '&&'),
         Token(TipoToken.NO, '!'),
-        Token(TipoToken.ENTERO, 0),
+        Token(TipoToken.BOOLEANO, False),
         Token(TipoToken.EOF, None),
     ]
     parser = Parser(tokens)
@@ -92,7 +92,7 @@ def test_transpiladores_operaciones():
         Token(TipoToken.ENTERO, 3),
         Token(TipoToken.IGUAL, '=='),
         Token(TipoToken.ENTERO, 7),
-        Token(TipoToken.AND, '&&'),
+        Token(TipoToken.Y, '&&'),
         Token(TipoToken.NO, '!'),
         Token(TipoToken.ENTERO, 0),
         Token(TipoToken.EOF, None),
@@ -104,8 +104,54 @@ def test_transpiladores_operaciones():
     assert py_code == IMPORTS + "True"
     assert js_code == (
         "import * as io from './nativos/io.js';\n"
-        "import * as net from './nativos/io.js';\n"
         "import * as matematicas from './nativos/matematicas.js';\n"
         "import { Pila, Cola } from './nativos/estructuras.js';\n"
-        "True"
+        "import * as archivo from './nativos/archivo.js';\n"
+        "import * as coleccion from './nativos/coleccion.js';\n"
+        "import * as numero from './nativos/numero.js';\n"
+        "import * as red from './nativos/red.js';\n"
+        "import * as seguridad from './nativos/seguridad.js';\n"
+        "import * as sistema from './nativos/sistema.js';\n"
+        "import * as texto from './nativos/texto.js';\n"
+        "import * as tiempo from './nativos/tiempo.js';\n"
+        "import * as interfaz from './nativos/interfaz.js';\n"
+        "\n"
+        "const cobraJsCorelibs = Object.freeze({\n"
+        "    longitud(valor) {\n"
+        "        if (typeof texto.longitud === 'function') {\n"
+        "            return texto.longitud(valor);\n"
+        "        }\n"
+        "        if (typeof coleccion.longitud === 'function') {\n"
+        "            return coleccion.longitud(valor);\n"
+        "        }\n"
+        "        if (valor == null) {\n"
+        "            return 0;\n"
+        "        }\n"
+        "        if (typeof valor === 'string' || Array.isArray(valor)) {\n"
+        "            return valor.length;\n"
+        "        }\n"
+        "        if (typeof valor === 'object') {\n"
+        "            return Object.keys(valor).length;\n"
+        "        }\n"
+        "        return String(valor).length;\n"
+        "    },\n"
+        "});\n"
+        "\n"
+        "const cobraJsStandardLibrary = Object.freeze({\n"
+        "    mostrar(...args) {\n"
+        "        if (typeof io.mostrar === 'function') {\n"
+        "            return io.mostrar(...args);\n"
+        "        }\n"
+        "        if (typeof interfaz.imprimirAviso === 'function' && args.length === 1) {\n"
+        "            interfaz.imprimirAviso(String(args[0]), { nivel: 'info' });\n"
+        "            return args[0];\n"
+        "        }\n"
+        "        console.log(...args);\n"
+        "        return args.length <= 1 ? (args[0] ?? null) : args;\n"
+        "    },\n"
+        "});\n"
+        "\n"
+        "const longitud = (valor) => cobraJsCorelibs.longitud(valor);\n"
+        "const mostrar = (...args) => cobraJsStandardLibrary.mostrar(...args);\n"
+        "true"
     )
