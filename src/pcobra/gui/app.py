@@ -1,5 +1,6 @@
 """Aplicación gráfica básica usando Flet para ejecutar código Cobra."""
 
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from pcobra.gui import runtime
