@@ -1498,19 +1498,20 @@ class InterpretadorCobra:
         return build_internal_ir(ast)
 
     def configurar_archivo_principal(self, main_file: Path | str | None) -> None:
-        """Configura el archivo principal y recalcula la raíz canonicalizada."""
+        """Configura el archivo principal y recalcula la raíz canonicalizada.
+
+        La raíz autorizada de ``usar`` pertenece siempre al programa principal:
+        ``current_file`` y la pila de módulos sólo aportan contexto de carga y
+        detección de ciclos, pero no pueden ampliar ni desplazar ``_project_root``
+        hacia un módulo anidado con su propio ``cobra.toml``.
+        """
 
         self._main_file = (
             Path(main_file).expanduser().resolve(strict=False)
             if main_file is not None
             else None
         )
-        start = (
-            self._current_module_stack[-1]
-            if self._current_module_stack
-            else self._main_file
-        )
-        self._project_root = descubrir_raiz_proyecto(start, self._main_file)
+        self._project_root = descubrir_raiz_proyecto(self._main_file, self._main_file)
 
     def ejecutar_nodo(self, nodo):
         self._trace_debug(f"[EXEC] node_type={type(nodo).__name__} node_id={id(nodo)}")
@@ -2283,9 +2284,6 @@ class InterpretadorCobra:
             self._current_module_stack[-1]
             if self._current_module_stack
             else self._main_file
-        )
-        self._project_root = descubrir_raiz_proyecto(
-            current_file or self._project_root, self._main_file
         )
         exports = usar_modulo(
             nombre_modulo,
