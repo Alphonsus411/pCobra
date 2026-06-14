@@ -742,6 +742,43 @@ def test_resolver_modulo_cobra_proyecto_rechaza_resultado_manipulado_fuera_de_ro
     with pytest.raises(ValueError, match="fuera de la raíz autorizada"):
         resolver_modulo_cobra_proyecto("utilidades.fechas", project_root=proyecto)
 
+
+def test_resolver_modulo_cobra_proyecto_fallback_devuelve_ruta_canonica(
+    monkeypatch, tmp_path
+):
+    from pcobra.cobra import usar_loader
+    from pcobra.cobra.imports.resolver import ResolutionResult
+
+    proyecto = tmp_path / "app"
+    proyecto.mkdir()
+    ruta_modulo = proyecto / "utilidades" / "fechas.co"
+    ruta_modulo.parent.mkdir()
+    ruta_modulo.write_text("", encoding="utf-8")
+
+    class FakeResolver:
+        def __init__(self, **_kwargs):
+            pass
+
+        def resolve(self, nombre):
+            ruta_legacy = (
+                proyecto / "." / "utilidades" / ".." / "utilidades" / "fechas.co"
+            )
+            return ResolutionResult(
+                request=nombre,
+                source="project",
+                resolved_name=nombre,
+                file_path=str(ruta_legacy),
+            )
+
+    ruta_modulo.unlink()
+    monkeypatch.setattr(usar_loader, "CobraImportResolver", FakeResolver)
+
+    assert (
+        resolver_modulo_cobra_proyecto("utilidades.fechas", project_root=proyecto)
+        == ruta_modulo.resolve(strict=False)
+    )
+
+
 def test_import_archivo_co_mantiene_ejecutar_import(monkeypatch, tmp_path):
     principal = tmp_path / "main.co"
     principal.write_text("", encoding="utf-8")
