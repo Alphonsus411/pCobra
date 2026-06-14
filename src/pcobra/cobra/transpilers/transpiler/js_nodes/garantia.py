@@ -2,8 +2,8 @@ from __future__ import annotations
 
 
 def visit_garantia(self, nodo):
-    cuerpo_normal = getattr(nodo, "bloque_continuacion", [])
-    cuerpo_escape = getattr(nodo, "bloque_escape", [])
+    cuerpo_normal = list(getattr(nodo, "bloque_continuacion", []))
+    cuerpo_escape = list(getattr(nodo, "bloque_escape", []))
     if self.usa_indentacion is None:
         self.usa_indentacion = any(
             hasattr(inst, "variable") for inst in cuerpo_normal + cuerpo_escape
