@@ -6,6 +6,7 @@ import pytest
 from pcobra.cobra.cli.execution_pipeline import PipelineInput, ejecutar_pipeline_explicito
 from pcobra.cobra.usar_loader import (
     descubrir_raiz_proyecto,
+    obtener_cache_ast_import_co,
     formatear_ciclo_modulos_cobra_proyecto,
     obtener_cache_modulos_cobra_proyecto,
     obtener_pila_carga_modulos_cobra_proyecto,
@@ -28,9 +29,11 @@ from pcobra.core.ast_nodes import (
 def limpiar_estado_usar_proyecto_compartido():
     """Aísla la caché/pila global compartida entre tests de módulos de proyecto."""
 
+    obtener_cache_ast_import_co().clear()
     obtener_cache_modulos_cobra_proyecto().clear()
     obtener_pila_carga_modulos_cobra_proyecto().clear()
     yield
+    obtener_cache_ast_import_co().clear()
     obtener_cache_modulos_cobra_proyecto().clear()
     obtener_pila_carga_modulos_cobra_proyecto().clear()
 
