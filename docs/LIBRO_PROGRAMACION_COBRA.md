@@ -829,6 +829,21 @@ Cobra incluye módulos de soporte para flujos asíncronos y coordinación.
 
 El panel lateral funciona como árbol de directorios ligero: muestra carpetas y archivos Cobra con extensiones `.co` y `.cobra`, que son las extensiones documentadas para scripts y paquetes. Seleccionar un archivo carga su texto en el editor sin validar sintaxis. Guardar escribe exactamente el contenido normalizado visible en el editor y evita ejecutar lexer o parser, por lo que también puede persistir borradores incompletos o temporalmente inválidos.
 
+#### Flujo recomendado en el IDLE gráfico
+
+Para trabajar desde el entorno gráfico sin mezclar rutas internas, sigue este recorrido principal:
+
+1. **Crear o abrir archivo Cobra**: usa **Nuevo** para empezar un borrador o **Abrir** para cargar un archivo `.cobra`/`.co` desde el árbol lateral.
+2. **Editar código**: modifica el contenido en el editor y mantén visible el indicador de cambios sin guardar antes de ejecutar acciones destructivas o de recarga.
+3. **Validar tokens**: pulsa la acción de tokens para confirmar que el lexer reconoce correctamente palabras clave, literales, operadores e identificadores.
+4. **Revisar AST**: abre la vista de AST para comprobar que el parser interpreta la estructura esperada antes de ejecutar o generar artefactos.
+5. **Ejecutar**: usa la acción de ejecución del IDLE para probar el comportamiento del programa con el intérprete de Cobra.
+6. **Transpilar**: cuando necesites salida para otro entorno, elige únicamente uno de los targets públicos `python`, `javascript` o `rust`; esos son los destinos documentados para el recorrido principal.
+7. **Guardar cambios**: usa **Guardar** si el archivo ya tiene ruta activa o **Guardar como** para definir una nueva ubicación; guarda después de validar el resultado que quieres conservar.
+8. **Solicitar sugerencias AGIX**: pulsa **Sugerencias** solo después de tener tokens y AST válidos; si la dependencia opcional `agix` está disponible, el IDLE pedirá recomendaciones, y si no lo está mostrará el aviso correspondiente sin bloquear el resto del flujo.
+
+El recorrido principal evita mencionar targets internos o históricos. Si necesitas contexto de migración, consulta los [anexos legacy/internal](anexos_legacy_internal/README.md) fuera del onboarding diario.
+
 #### Acción de sugerencias en GUI/IDLE
 
 El botón **Sugerencias** del IDLE toma el texto actual del editor, lo normaliza igual que las acciones de ejecución y lo valida primero con el `Lexer` y el `Parser` oficiales de Cobra. Esta validación conserva la gramática existente: el Libro se usa como referencia pedagógica y documental para explicar buenas prácticas, no como parser alternativo ni como fuente de reglas sintácticas paralelas.

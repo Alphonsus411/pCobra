@@ -173,6 +173,7 @@ El objetivo de pCobra es brindar a la comunidad hispanohablante una alternativa 
 - Licencia
 - **Ruta recomendada de documentación (sin ambigüedad):**
   - [Libro de Programación Cobra — **Principal** (inicio a avanzado)](docs/LIBRO_PROGRAMACION_COBRA.md)
+    - [Flujo recomendado en el IDLE gráfico](docs/LIBRO_PROGRAMACION_COBRA.md#flujo-recomendado-en-el-idle-gráfico)
   - [Manual de Cobra (Markdown) — **Referencia técnica canónica**](docs/MANUAL_COBRA.md)
   - [Guía básica — **Histórico** (resumen rápido)](docs/guia_basica.md)
   - [Contenido histórico complementario](docs/historico/README.md)
