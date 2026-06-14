@@ -17,7 +17,6 @@ Fuente de generación: `scripts/generar_matriz_transpiladores.py`.
 - **Targets con adaptador Holobit mantenido por el proyecto (partial fuera de python)**: `python`, `javascript`, `rust`.
 - **Compatibilidad SDK completa (solo python)**: `python`.
 - **Targets solo de transpilación**: .
-- **Targets legacy/internal (no públicos)**: no aplican en la matriz pública por defecto; ruta interna de compatibilidad.
 <!-- END GENERATED MATRIZ POLICY SUMMARY -->
 
 ## Estado público por backend
@@ -39,7 +38,7 @@ Fuente de generación: `scripts/generar_matriz_transpiladores.py`.
 | `rust` | Rust | Tier 1 | runtime oficial | partial | partial | partial | partial | full | full |
 
 > `runtime_policy` distingue explícitamente entre runtime oficial, best-effort y solo transpilación.
-> `holobit_publico` resume la promesa pública: `SDK full solo python` aplica únicamente a `python`; `rust`, `javascript` y `cpp` se publican como `adaptador mantenido (partial)`; el resto permanece en `partial`.
+> `holobit_publico` resume la promesa pública: `SDK full solo python` aplica únicamente a `python`; `javascript` y `rust` se publican como `adaptador mantenido (partial)` dentro del contrato público de 3 backends.
 
 ## Evidencia técnica automática (derivada de goldens)
 

@@ -10,7 +10,7 @@ from pcobra.cli import build_legacy_cli_shim_main
 main = build_legacy_cli_shim_main("cli.cli")
 
 warnings.warn(
-    "`python -m cli.cli` es una ruta legacy deprecada y no contractual; use `python -m pcobra.cli`.",
+    "`python -m cli.cli` es una ruta legacy histórica deprecada y no contractual; use `python -m pcobra.cli`.",
     DeprecationWarning,
     stacklevel=2,
 )

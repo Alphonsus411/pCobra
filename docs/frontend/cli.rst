@@ -14,6 +14,15 @@ Estos comandos exponen la UX oficial. La selección de backend, adaptación de
 runtime y detalles de transpilación quedan encapsulados dentro de la
 arquitectura interna.
 
+Política pública de backends
+----------------------------
+
+.. include:: ../_generated/target_policy_summary.rst
+
+Ejemplos de backends públicos generados desde el registro canónico:
+
+.. include:: ../_generated/cli_backend_examples.rst
+
 Flujo público recomendado
 -------------------------
 
@@ -54,7 +63,7 @@ Diagrama principal:
         ↓
    BackendPipeline
         ↓
-   Bindings (python/js/rust)
+   Bindings (python/javascript/rust)
 
 - ``Frontend Cobra`` analiza el código y produce AST.
 - ``BackendPipeline`` resuelve backend y normaliza compilación interna.

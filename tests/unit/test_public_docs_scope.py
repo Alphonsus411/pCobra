@@ -129,7 +129,8 @@ def test_validador_documental_ci_no_detecta_divergencias_publicas():
     )
 
 
-def test_docs_publicas_enumeran_exactamente_los_8_backends_oficiales_en_tablas_clave():
+def test_docs_publicas_enumeran_exactamente_los_3_backends_oficiales_en_tablas_clave():
+    assert OFFICIAL_TARGETS == ("python", "javascript", "rust")
     expected = set(OFFICIAL_TARGETS)
     for path in (
         Path("docs/targets_policy.md"),
@@ -137,8 +138,16 @@ def test_docs_publicas_enumeran_exactamente_los_8_backends_oficiales_en_tablas_c
         Path("docs/contrato_runtime_holobit.md"),
     ):
         rows = {line.split("|")[1].strip().strip("`") for line in path.read_text(encoding="utf-8").splitlines() if line.strip().startswith("| `")}
-        assert rows == expected, f"{path} debe documentar exactamente los 8 backends oficiales"
+        assert rows == expected, f"{path} debe documentar exactamente los 3 backends oficiales"
 
+
+
+def test_libro_programacion_cobra_declara_solo_backend_oficial_publico():
+    contenido = Path("docs/LIBRO_PROGRAMACION_COBRA.md").read_text(encoding="utf-8").lower()
+    assert "backend oficial público está compuesto solo por `python`, `javascript` y `rust`" in contenido
+    assert "legacy queda fuera del contrato público" in contenido
+    for forbidden in ("target final es c/asm", "soporte limitado o legacy según política vigente"):
+        assert forbidden not in contenido
 
 def test_docs_publicas_no_promocionan_backends_no_python_a_sdk_full():
     for path in PUBLIC_HOLOBIT_CONTRACT_DOCS:

@@ -191,7 +191,7 @@ def _build_markdown() -> str:
         [
             "",
             "> `runtime_policy` distingue explícitamente entre runtime oficial, best-effort y solo transpilación.",
-            "> `holobit_publico` resume la promesa pública: `SDK full solo python` aplica únicamente a `python`; `rust`, `javascript` y `cpp` se publican como `adaptador mantenido (partial)`; el resto permanece en `partial`.",
+            "> `holobit_publico` resume la promesa pública: `SDK full solo python` aplica únicamente a `python`; `javascript` y `rust` se publican como `adaptador mantenido (partial)` dentro del contrato público de 3 backends.",
             "",
             "## Evidencia técnica automática (derivada de goldens)",
             "",

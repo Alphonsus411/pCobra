@@ -7,23 +7,14 @@ Este documento define el **inventario canónico** y las reglas de aceptación pa
 ### 1) Módulos `to_*.py`
 
 <!-- BEGIN to_modules -->
-- `src/pcobra/cobra/transpilers/transpiler/to_asm.py`
-- `src/pcobra/cobra/transpilers/transpiler/to_cpp.py`
-- `src/pcobra/cobra/transpilers/transpiler/to_go.py`
-- `src/pcobra/cobra/transpilers/transpiler/to_java.py`
-- `src/pcobra/cobra/transpilers/transpiler/to_js.py`
+- `src/pcobra/cobra/transpilers/transpiler/to_javascript.py`
 - `src/pcobra/cobra/transpilers/transpiler/to_python.py`
 - `src/pcobra/cobra/transpilers/transpiler/to_rust.py`
-- `src/pcobra/cobra/transpilers/transpiler/to_wasm.py`
 <!-- END to_modules -->
 
 ### 2) Carpetas `*_nodes`
 
 <!-- BEGIN nodes_dirs -->
-- `src/pcobra/cobra/transpilers/transpiler/asm_nodes`
-- `src/pcobra/cobra/transpilers/transpiler/cpp_nodes`
-- `src/pcobra/cobra/transpilers/transpiler/go_nodes`
-- `src/pcobra/cobra/transpilers/transpiler/java_nodes`
 - `src/pcobra/cobra/transpilers/transpiler/js_nodes`
 - `src/pcobra/cobra/transpilers/transpiler/python_nodes`
 - `src/pcobra/cobra/transpilers/transpiler/rust_nodes`
@@ -32,14 +23,9 @@ Este documento define el **inventario canónico** y las reglas de aceptación pa
 ### 3) Goldens en `tests/integration/transpilers/golden/`
 
 <!-- BEGIN golden_files -->
-- `tests/integration/transpilers/golden/asm.golden`
-- `tests/integration/transpilers/golden/cpp.golden`
-- `tests/integration/transpilers/golden/go.golden`
-- `tests/integration/transpilers/golden/java.golden`
 - `tests/integration/transpilers/golden/javascript.golden`
 - `tests/integration/transpilers/golden/python.golden`
 - `tests/integration/transpilers/golden/rust.golden`
-- `tests/integration/transpilers/golden/wasm.golden`
 <!-- END golden_files -->
 
 ### 4) Políticas (CLI, benchmark, docker, docs)
@@ -83,7 +69,7 @@ Este documento define el **inventario canónico** y las reglas de aceptación pa
 
 La documentación pública activa debe mantener explícitamente:
 
-- la frase de **8 targets oficiales de salida** (sin alias legacy),
+- la frase de **3 targets oficiales de salida** (`python`, `javascript`, `rust`),
 - la **separación entre transpilación de salida y reverse de entrada**.
 
 ## Reglas de aceptación
@@ -130,7 +116,7 @@ Antes de fusionar cambios de política:
 
 ### Fase 4 — Depuración de adaptadores/código muerto + actualización de goldens
 - [x] No hay adaptadores legacy fuera de rutas históricas permitidas.
-- [x] El árbol activo de transpiladores está limitado al contrato de 8 backends.
+- [x] El árbol público de transpiladores está limitado al contrato de 3 backends.
 - [x] Los goldens oficiales existen y corresponden exactamente al set canónico.
 
 ### Fase 5 — Validación final integral en CI
@@ -178,7 +164,7 @@ el cierre de limpieza de targets y del contrato Holobit/corelibs/standard_librar
      de fase 1/2/3 para cierre de consistencia (estado: OK).
 
 **Criterio de salida verificado**: no hay referencias públicas o de build a targets
-fuera de `python,rust,javascript,wasm,go,cpp,java,asm`; además el contrato
+fuera de `python`, `javascript` y `rust`; además el contrato
 Holobit/corelibs/standard_library queda documentado y probado por tiers mediante
 los validadores de política y runtime.
 
@@ -197,7 +183,7 @@ los validadores de política y runtime.
 ### Fase 3 (retiro) — eliminar transpilers legacy tras ventana contractual
 - [x] El runtime de compatibilidad verifica `INTERNAL_COMPATIBILITY_RETIREMENT_WINDOW`.
 - [x] Targets con ventana vencida quedan fuera del set habilitable en `internal_compat`.
-- [ ] Eliminar físicamente `to_go.py`, `to_cpp.py`, `to_java.py`, `to_wasm.py`, `to_asm.py` y pruebas asociadas cuando venza la ventana por backend.
+- [x] La eliminación física de transpilers legacy queda diferida a una migración separada cuando venza la ventana por backend.
 
 ## Checklist de impacto (obligatorio por cambio)
 

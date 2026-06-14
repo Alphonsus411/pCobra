@@ -276,7 +276,7 @@ impuesto = 0.21
 mi variable = 10
 ```
 
-**Compatibilidad por backend:** estable en todos los backends; evita caracteres no ASCII en nombres si el target final es C/ASM.
+**Compatibilidad por backend:** el BackEnd oficial público está compuesto solo por `python`, `javascript` y `rust`; legacy queda fuera del contrato público. Evita depender de detalles de targets no oficiales.
 
 ### 3.2 Expresiones
 
@@ -861,12 +861,12 @@ guía de transición en [`docs/migracion_cli_unificada.md`](migracion_cli_unific
 
 ## 11) Transpilación, targets y compatibilidad
 
-El ecosistema maneja targets canónicos para distintos niveles de soporte.
+El BackEnd oficial público está compuesto solo por `python`, `javascript` y `rust`. Esos tres targets forman el contrato de usuario para `cobra build` y la documentación pública. Los targets legacy (`go`, `cpp`, `java`, `wasm`, `asm`) quedan fuera del contrato público y solo pueden aparecer en rutas internas de compatibilidad/migración.
 
 ### 11.1 Regla práctica
 
-- Para máxima estabilidad operativa: usa targets Tier 1.
-- Para experimentación/controlada: usa targets con soporte limitado o legacy según política vigente.
+- Para máxima estabilidad operativa: usa los targets oficiales `python`, `javascript` y `rust`.
+- No documentes ni presentes targets legacy como opciones públicas de usuario; cualquier migración legacy pertenece a anexos internos.
 
 ### 11.2 Estrategia de release
 

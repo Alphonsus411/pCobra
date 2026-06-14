@@ -101,6 +101,8 @@ REPO_AUDIT_ALLOWED_FILE_PATHS = frozenset(
         "scripts/validate_targets_policy.py",
         "scripts/ci/validate_targets.py",
         "scripts/ci/audit_targets_contract.py",
+        "scripts/audit_retired_targets.py",
+        "scripts/ci/validate_workflow_target_matrix.py",
         "tests/unit/test_cli_target_aliases.py",
         "tests/unit/test_public_docs_scope.py",
         "tests/unit/test_validate_targets_policy_script.py",
@@ -326,6 +328,18 @@ def _extract_targets_policy_tier(path: Path, heading: str) -> tuple[str, ...]:
     )
     match = pattern.search(content)
     if not match:
+        empty_patterns = (
+            re.compile(
+                rf"### {re.escape(heading)}\n(?:\n)?(?=<!-- END GENERATED TARGET TIERS -->)",
+                re.MULTILINE,
+            ),
+            re.compile(
+                rf"### {re.escape(heading)}\n\nSin targets públicos\.\n",
+                re.MULTILINE,
+            ),
+        )
+        if any(empty_pattern.search(content) for empty_pattern in empty_patterns):
+            return ()
         raise RuntimeError(
             f"{path.relative_to(ROOT).as_posix()}: falta la sección '{heading}'"
         )
@@ -574,10 +588,16 @@ def validate_targeted_artifact_roots(
             f"received={tuple(official_targets)}, expected={FINAL_OFFICIAL_TARGETS}"
         )
 
+    ignored_parts = {".git", ".venv", ".venv-release-test", "venv", "site-packages", "__pycache__"}
     found_forward_paths = {
-        path.relative_to(ROOT).as_posix() for path in ROOT.rglob("to_*.py")
+        path.relative_to(ROOT).as_posix()
+        for path in ROOT.rglob("to_*.py")
+        if not (set(path.relative_to(ROOT).parts) & ignored_parts)
+        and "legacy" not in path.relative_to(ROOT).parts
     }
-    expected_forward_paths = set(EXPECTED_TRANSPILER_MODULES)
+    expected_forward_paths = set(EXPECTED_TRANSPILER_MODULES) | {
+        "src/pcobra/cobra/transpilers/transpiler/to_js.py"
+    }
     for missing in sorted(expected_forward_paths - found_forward_paths):
         errors.append(
             f"{missing}: falta módulo oficial to_*.py para un backend canónico"
@@ -588,7 +608,7 @@ def validate_targeted_artifact_roots(
         )
 
     found_forward = {path.name for path in TRANSPILER_DIR.glob("to_*.py")}
-    expected_forward = {Path(path).name for path in EXPECTED_TRANSPILER_MODULES}
+    expected_forward = {Path(path).name for path in EXPECTED_TRANSPILER_MODULES} | {"to_js.py"}
     if found_forward != expected_forward:
         errors.append(
             f"{TRANSPILER_DIR.relative_to(ROOT).as_posix()}: directorio canónico desalineado -> "
@@ -604,7 +624,7 @@ def validate_targeted_artifact_roots(
         module_name.rsplit(".", maxsplit=1)[-1] + ".py"
         for module_name, _ in EXPECTED_TRANSPILER_REGISTRY.values()
     }
-    if expected_registry_modules != expected_forward:
+    if expected_registry_modules != ({Path(path).name for path in EXPECTED_TRANSPILER_MODULES}):
         errors.append(
             "scripts/ci/validate_targets.py: EXPECTED_TRANSPILER_MODULES debe derivar exactamente de EXPECTED_TRANSPILER_REGISTRY -> "
             f"modules={sorted(expected_forward)}, registry={sorted(expected_registry_modules)}"

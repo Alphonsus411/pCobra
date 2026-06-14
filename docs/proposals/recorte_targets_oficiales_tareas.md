@@ -349,7 +349,7 @@ Al cerrar esta batería:
    - Inicio oficial: `v10.0.10`.
    - Eliminación definitiva: `v10.2.0`.
 2. **Avisos en runtime/CLI**
-   - Alias históricos aún aceptados (`c++`, `ensamblador`) emiten `DeprecationWarning` con versión de retirada.
+   - Alias históricos de targets legacy emiten `DeprecationWarning` con versión de retirada.
    - Nombres retirados (aliases legacy de JavaScript/Python/Node, etc.) muestran error con alternativa recomendada.
 3. **Changelog y migración**
    - Se añadió bloque de breaking changes con alternativas canónicas y pasos de migración.

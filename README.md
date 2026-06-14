@@ -56,7 +56,7 @@ No forman parte del contrato público:
 | Contexto técnico detectado por el pipeline | Backend interno preferente | Override permitido |
 |---|---|---|
 | Ejecución estándar y paridad máxima de librerías | `python` | Solo hints internos controlados por Core |
-| Integración runtime web/bridge JS | `javascript` | Solo hints internos controlados por Core |
+| Integración runtime web/bridge JavaScript | `javascript` | Solo hints internos controlados por Core |
 | Integración nativa/FFI y ABI contractual | `rust` | Solo hints internos controlados por Core |
 
 pCobra es un lenguaje de programación escrito en español y pensado para la creación de herramientas, simulaciones y análisis en disciplinas como biología, computación y astrofísica.
@@ -73,7 +73,7 @@ Resumen normativo visible (generado desde la política canónica):
 - **Targets con adaptador Holobit mantenido por el proyecto (partial fuera de python)**: `python`, `javascript`, `rust`.
 - **Compatibilidad SDK completa (solo python)**: `python`.
 - **Targets solo de transpilación**: .
-- **Orígenes de transpilación inversa**: python, javascript, java (java se mantiene como **entrada histórica, no salida oficial**). Este alcance reverse de entrada está separado de los 3 targets oficiales de salida.
+- **Orígenes de transpilación inversa**: python, javascript, java. Este alcance reverse de entrada está separado de los 3 targets oficiales de salida.
 
 Tiers oficiales de soporte de backends:
 
@@ -250,7 +250,7 @@ Frontend Cobra
       ↓
 BackendPipeline
       ↓
-Bindings (python/js/rust)
+Bindings (`python`, `javascript`, `rust`)
 ```
 
 1. `Frontend Cobra` analiza el código fuente y construye el AST.

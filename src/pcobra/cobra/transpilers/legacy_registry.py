@@ -69,7 +69,7 @@ def _validate_internal_legacy_registry_contract() -> tuple[str, ...]:
 
     if configured_keys != internal_backends:
         raise RuntimeError(
-            "[CI CONTRACT] INTERNAL_COMPAT_TRANSPILER_CLASS_PATHS debe preservar el orden de backend_policy.INTERNAL_BACKENDS. "
+            "[CI CONTRACT] INTERNAL_COMPAT_TRANSPILER_CLASS_PATHS debe preservar el orden de internal_compat.legacy_contracts.INTERNAL_BACKENDS. "
             f"current={configured_keys}; expected={internal_backends}"
         )
     return configured_keys
