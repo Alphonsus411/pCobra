@@ -176,9 +176,20 @@ def validar_nombre_modulo_cobra_proyecto(nombre: str) -> tuple[str, ...]:
     if not nombre_raw:
         raise ValueError("Nombre de módulo de proyecto vacío.")
 
+    # `usar` de proyecto acepta únicamente rutas lógicas punteadas, nunca rutas
+    # del sistema. Bloqueamos separadores POSIX/Windows, traversal, rutas
+    # absolutas y cualquier forma de unidad Windows antes de resolver.
     if any(sep in nombre_raw for sep in ("/", "\\")):
         raise ValueError(
             f"Nombre de módulo de proyecto inválido: '{nombre_raw}' no debe contener separadores de ruta."
+        )
+    if ".." in nombre_raw:
+        raise ValueError(
+            f"Nombre de módulo de proyecto inválido: '{nombre_raw}' contiene traversal."
+        )
+    if os.path.isabs(nombre_raw) or re.match(r"^[A-Za-z]:", nombre_raw):
+        raise ValueError(
+            f"Nombre de módulo de proyecto inválido: '{nombre_raw}' parece una ruta absoluta o unidad Windows."
         )
 
     segmentos = nombre_raw.split(".")
@@ -207,12 +218,14 @@ def validar_nombre_modulo_cobra_proyecto(nombre: str) -> tuple[str, ...]:
 def _verificar_path_dentro_de_root(ruta: Path, root: Path) -> None:
     """Verifica con rutas canónicas que ``ruta`` queda dentro de ``root``."""
 
+    root_canonico = canonicalizar_ruta_usar_proyecto(root)
+    ruta_canonica = canonicalizar_ruta_usar_proyecto(ruta)
     try:
-        common = os.path.commonpath((str(root), str(ruta)))
+        common = os.path.commonpath((str(root_canonico), str(ruta_canonica)))
     except ValueError as exc:
         raise ValueError("Ruta de módulo de proyecto fuera de la raíz autorizada.") from exc
 
-    if common != str(root):
+    if common != str(root_canonico):
         raise ValueError("Ruta de módulo de proyecto fuera de la raíz autorizada.")
 
 
