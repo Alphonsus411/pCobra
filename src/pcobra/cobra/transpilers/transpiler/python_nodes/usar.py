@@ -7,5 +7,6 @@ def visit_usar(self, nodo):
     llamada = f"usar_modulo({', '.join(args)})"
     self.codigo += (
         f"{ind}from pcobra.cobra.usar_loader import usar_modulo\n"
-        f"{ind}globals().update({llamada})\n"
+        f"{ind}_usar_exports = {llamada}\n"
+        f"{ind}globals().update(dict(_usar_exports.get('simbolos', [])))\n"
     )
