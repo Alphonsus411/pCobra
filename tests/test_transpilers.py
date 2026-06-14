@@ -212,6 +212,49 @@ def test_transpilador_python_usar_proyecto_incluye_contexto_estable(tmp_path, mo
     ]
 
 
+
+def test_transpilado_python_usar_proyecto_funciona_fuera_del_cwd(tmp_path, monkeypatch) -> None:
+    from pcobra.cobra.usar_loader import obtener_cache_modulos_cobra_proyecto
+    from pcobra.core import import_utils
+
+    proyecto = tmp_path / "proyecto"
+    externo = tmp_path / "externo"
+    principal = proyecto / "src" / "main.co"
+    modulo = proyecto / "utilidades" / "fechas.co"
+    principal.parent.mkdir(parents=True)
+    modulo.parent.mkdir()
+    externo.mkdir()
+    (proyecto / "cobra.toml").write_text("[project]\nname = 'demo'\n", encoding="utf-8")
+    principal.write_text("usar utilidades.fechas\n", encoding="utf-8")
+    modulo.write_text("var hoy = 1\nexportar hoy\n", encoding="utf-8")
+    obtener_cache_modulos_cobra_proyecto().clear()
+
+    rutas_cargadas = []
+
+    def cargar_ast_falso(ruta, *, modules_path, whitelist, **_kwargs):
+        rutas_cargadas.append((Path(ruta).resolve(), Path(modules_path).resolve(), whitelist))
+        assert Path.cwd() == externo
+        return [
+            NodoAsignacion("hoy", NodoValor(1), declaracion=True),
+            NodoExport("hoy"),
+        ]
+
+    monkeypatch.setattr(import_utils, "cargar_ast_modulo", cargar_ast_falso)
+    monkeypatch.chdir(externo)
+
+    codigo = TranspiladorPython(source_file=principal).generate_code(
+        [NodoUsar("utilidades.fechas")]
+    )
+    entorno: dict[str, object] = {}
+    exec(codigo, entorno)
+
+    assert entorno["hoy"] == 1
+    assert rutas_cargadas == [
+        (modulo.resolve(), proyecto.resolve(), {proyecto.resolve()})
+    ]
+    assert f"project_root={str(proyecto.resolve())!r}" in codigo
+    assert f"current_file={str(principal.resolve())!r}" in codigo
+
 def test_python_adapter_usar_proyecto_propaga_contexto_estable(tmp_path) -> None:
     proyecto = tmp_path / "proyecto"
     principal = proyecto / "src" / "main.co"
