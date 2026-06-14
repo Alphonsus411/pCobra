@@ -55,7 +55,12 @@ def main(page: "ft.Page"):
         nonlocal directorio_actual
         try:
             contenido = runtime.leer_archivo_texto(ruta)
-        except (FileNotFoundError, NotADirectoryError, PermissionError, UnicodeError) as exc:
+        except (
+            FileNotFoundError,
+            NotADirectoryError,
+            PermissionError,
+            UnicodeError,
+        ) as exc:
             mostrar_error_archivo(exc)
             page.update()
             return
@@ -72,7 +77,12 @@ def main(page: "ft.Page"):
     def guardar_en(ruta: Path) -> bool:
         try:
             contenido_guardado = runtime.escribir_archivo_texto(ruta, entrada.value)
-        except (FileNotFoundError, NotADirectoryError, PermissionError, UnicodeError) as exc:
+        except (
+            FileNotFoundError,
+            NotADirectoryError,
+            PermissionError,
+            UnicodeError,
+        ) as exc:
             mostrar_error_archivo(exc)
             page.update()
             return False
@@ -87,7 +97,9 @@ def main(page: "ft.Page"):
 
     def reconstruir_arbol() -> None:
         arbol.controls.clear()
-        arbol.controls.append(runtime.flet_text(ft, value=f"Directorio: {directorio_actual}"))
+        arbol.controls.append(
+            runtime.flet_text(ft, value=f"Directorio: {directorio_actual}")
+        )
         if directorio_actual.parent != directorio_actual:
             arbol.controls.append(
                 runtime.flet_text_button(
@@ -136,7 +148,9 @@ def main(page: "ft.Page"):
 
     def abrir_handler(_e):
         if not ruta_input.value:
-            salida.value = "Indica una ruta para abrir o selecciona un archivo del árbol."
+            salida.value = (
+                "Indica una ruta para abrir o selecciona un archivo del árbol."
+            )
             page.update()
             return
         cargar_archivo(Path(ruta_input.value))
@@ -208,6 +222,60 @@ def main(page: "ft.Page"):
         finally:
             page.update()
 
+    def sugerencias_handler(_e):
+        deps = runtime.require_gui_dependencies()
+        codigo = runtime.normalizar_codigo(entrada.value)
+        try:
+            deps["Parser"](deps["Lexer"](codigo).tokenizar()).parsear()
+        except Exception as exc:
+            error = runtime.formatear_error(
+                exc,
+                lexer_error_type=deps.get("LexerError"),
+                parser_error_type=deps.get("ParserError"),
+            )
+            salida.value = (
+                "Errores léxicos/sintácticos:\n"
+                f"- {error}\n\n"
+                "Sugerencias estilísticas:\n"
+                "- Corrige primero los errores anteriores para solicitar sugerencias."
+            )
+            page.update()
+            return
+
+        try:
+            from pcobra.ia.analizador_agix import generar_sugerencias
+
+            sugerencias = generar_sugerencias(codigo)
+        except ImportError as exc:
+            salida.value = (
+                "Errores léxicos/sintácticos:\n"
+                "- No se detectaron errores con el Lexer y Parser de Cobra.\n\n"
+                "Sugerencias estilísticas:\n"
+                f"- No se pudieron generar sugerencias: {exc}. "
+                "Instala la dependencia opcional 'agix' para activar esta acción."
+            )
+        except Exception as exc:
+            salida.value = runtime.formatear_error(
+                exc,
+                lexer_error_type=deps.get("LexerError"),
+                parser_error_type=deps.get("ParserError"),
+            )
+        else:
+            if sugerencias:
+                sugerencias_legibles = "\n".join(
+                    f"- {sugerencia}" for sugerencia in sugerencias
+                )
+            else:
+                sugerencias_legibles = "- No se recibieron sugerencias."
+            salida.value = (
+                "Errores léxicos/sintácticos:\n"
+                "- No se detectaron errores con el Lexer y Parser de Cobra.\n\n"
+                "Sugerencias estilísticas:\n"
+                f"{sugerencias_legibles}"
+            )
+        finally:
+            page.update()
+
     reconstruir_arbol()
     sincronizar_estado_visual()
 
@@ -217,7 +285,9 @@ def main(page: "ft.Page"):
             runtime.flet_elevated_button(ft, "Nuevo", on_click=nuevo_handler),
             runtime.flet_elevated_button(ft, "Abrir", on_click=abrir_handler),
             runtime.flet_elevated_button(ft, "Guardar", on_click=guardar_handler),
-            runtime.flet_elevated_button(ft, "Guardar como", on_click=guardar_como_handler),
+            runtime.flet_elevated_button(
+                ft, "Guardar como", on_click=guardar_como_handler
+            ),
             runtime.flet_elevated_button(ft, "Recargar", on_click=recargar_handler),
         ],
         wrap=True,
@@ -230,12 +300,22 @@ def main(page: "ft.Page"):
             runtime.flet_elevated_button(ft, "Ejecutar", on_click=ejecutar_handler),
             runtime.flet_elevated_button(ft, "Tokens", on_click=tokens_handler),
             runtime.flet_elevated_button(ft, "AST", on_click=ast_handler),
+            runtime.flet_elevated_button(
+                ft, "Sugerencias", on_click=sugerencias_handler
+            ),
         ],
         wrap=True,
     )
     editor = runtime.flet_column(
         ft,
-        controls=[estado_archivo, ruta_input, barra_archivo, entrada, barra_ejecucion, salida],
+        controls=[
+            estado_archivo,
+            ruta_input,
+            barra_archivo,
+            entrada,
+            barra_ejecucion,
+            salida,
+        ],
         expand=True,
     )
     panel_lateral = runtime.flet_container(
