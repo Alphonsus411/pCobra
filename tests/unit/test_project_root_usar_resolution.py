@@ -339,6 +339,32 @@ def test_resolver_modulo_cobra_proyecto_resuelve_modulo_anidado(tmp_path):
     )
 
 
+def test_cobertura_explicita_usar_resuelve_util_subcarpeta_y_anidado(tmp_path):
+    """Documenta los tres casos nominales pedidos para `usar` de proyecto.
+
+    Mantiene la cobertura explícita sin tocar gramática, tokens, Lexer ni Parser:
+    - `usar util` -> `util.co` en la raíz del proyecto;
+    - `usar utilidades.fechas` -> subcarpeta;
+    - `usar a.b.c` -> módulo anidado.
+    """
+
+    proyecto = tmp_path / "app"
+    rutas_esperadas = {
+        "util": proyecto / "util.co",
+        "utilidades.fechas": proyecto / "utilidades" / "fechas.co",
+        "a.b.c": proyecto / "a" / "b" / "c.co",
+    }
+    for ruta in rutas_esperadas.values():
+        ruta.parent.mkdir(parents=True, exist_ok=True)
+        ruta.write_text("", encoding="utf-8")
+
+    for nombre_modulo, ruta_esperada in rutas_esperadas.items():
+        assert (
+            resolver_modulo_cobra_proyecto(nombre_modulo, project_root=proyecto)
+            == ruta_esperada.resolve()
+        )
+
+
 def test_usar_modulo_api_resuelve_util_misma_carpeta(monkeypatch, tmp_path):
     from pcobra.core.ast_nodes import NodoAsignacion, NodoValor
 
