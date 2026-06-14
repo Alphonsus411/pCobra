@@ -530,7 +530,7 @@ def _cargar_exports_modulo_cobra_proyecto(
     from pcobra.core.environment import Environment
     from pcobra.core.import_utils import cargar_ast_modulo
     from pcobra.core.interpreter import InterpretadorCobra
-    from pcobra.core.ast_nodes import NodoExport
+    from pcobra.core.ast_nodes import NodoExport, NodoUsar
 
     ruta_modulo = resolver_ruta_canonica_modulo_cobra_proyecto(
         nombre,
@@ -556,6 +556,7 @@ def _cargar_exports_modulo_cobra_proyecto(
     except FileNotFoundError as exc:
         raise FileNotFoundError(f"Módulo no encontrado: {nombre}") from exc
 
+    _USAR_PROJECT_LOADING_STACK.append(ruta_modulo)
     interpretador = InterpretadorCobra(
         safe_mode=False, main_file=current_file or ruta_modulo
     )
@@ -566,11 +567,22 @@ def _cargar_exports_modulo_cobra_proyecto(
     interpretador._current_module_stack.append(ruta_modulo)
     interpretador.contextos.append(Environment(parent=interpretador.contextos[-1]))
     interpretador.mem_contextos.append({})
-    _USAR_PROJECT_LOADING_STACK.append(ruta_modulo)
     try:
         for subnodo in ast:
             if isinstance(subnodo, NodoExport):
                 continue
+            if isinstance(subnodo, NodoUsar) or subnodo.__class__.__name__ == "NodoUsar":
+                modulo_hijo = str(subnodo.modulo).strip().strip('\"\'')
+                ruta_hijo = resolver_ruta_canonica_modulo_cobra_proyecto(
+                    modulo_hijo,
+                    project_root=project_root,
+                    current_file=ruta_modulo,
+                )
+                if ruta_hijo in _USAR_PROJECT_LOADING_STACK:
+                    cadena = formatear_ciclo_modulos_cobra_proyecto(
+                        ruta_hijo, project_root=project_root
+                    )
+                    raise ImportError(f"Ciclo de módulos detectado en usar: {cadena}")
             interpretador.ejecutar_nodo(subnodo)
         exports = _extraer_exports_modulo_cobra_proyecto(
             ast,
