@@ -70,7 +70,10 @@ from pcobra.cobra.core.ast_nodes import (
     NodoBloque,
 )
 
-from pcobra.cobra.core import NodoYield
+from pcobra.cobra.core.ast_nodes import (
+    NodoYield,
+    NodoBloque,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -82,7 +85,6 @@ ALIAS_DECLARACION_CLASE = (
     TipoToken.REGISTRO,
 )
 ALIAS_DECLARACION_ENUM = (
-    TipoToken.ENUM,
     TipoToken.ENUMERACION,
 )
 
@@ -90,7 +92,6 @@ TOKEN_A_LEXEMA = {
     TipoToken.CLASE: "clase",
     TipoToken.ESTRUCTURA: "estructura",
     TipoToken.REGISTRO: "registro",
-    TipoToken.ENUM: "enum",
     TipoToken.ENUMERACION: "enumeracion",
 }
 
@@ -125,15 +126,14 @@ class ClassicParser:
             TipoToken.IMPORT: self.declaracion_import,
             TipoToken.USAR: self.declaracion_usar,
             TipoToken.EXPORTAR: self.declaracion_exportar,
-            TipoToken.OPTION: self.declaracion_option,
+            TipoToken.OPCION: self.declaracion_option,
             TipoToken.IMPRIMIR: self.declaracion_imprimir,
             TipoToken.HILO: self.declaracion_hilo,
-            TipoToken.TRY: self.declaracion_try_catch,
             TipoToken.INTENTAR: self.declaracion_try_catch,
-            TipoToken.DEFER: self.declaracion_defer,
-            TipoToken.THROW: self.declaracion_throw,
+            TipoToken.APLAZAR: self.declaracion_defer,
             TipoToken.LANZAR: self.declaracion_throw,
-            TipoToken.YIELD: self.declaracion_yield,
+            TipoToken.LANZAR: self.declaracion_throw,
+            TipoToken.GENERAR: self.declaracion_yield,
             TipoToken.ROMPER: self.declaracion_romper,
             TipoToken.CONTINUAR: self.declaracion_continuar,
             TipoToken.PASAR: self.declaracion_pasar,
@@ -141,7 +141,6 @@ class ClassicParser:
             TipoToken.CLASE: self.declaracion_clase,
             TipoToken.ESTRUCTURA: self.declaracion_clase,
             TipoToken.REGISTRO: self.declaracion_clase,
-            TipoToken.ENUM: self.declaracion_enum,
             TipoToken.ENUMERACION: self.declaracion_enum,
             TipoToken.INTERFACE: self.declaracion_interface,
             TipoToken.AFIRMAR: self.declaracion_afirmar,
@@ -149,7 +148,6 @@ class ClassicParser:
             TipoToken.GLOBAL: self.declaracion_global,
             TipoToken.NOLOCAL: self.declaracion_nolocal,
             TipoToken.CON: self.declaracion_con,
-            TipoToken.WITH: self.declaracion_con,
             TipoToken.DESDE: self.declaracion_desde,
             TipoToken.ASINCRONICO: self.declaracion_asincronico,
             TipoToken.ESPERAR: self.declaracion_esperar,
@@ -944,7 +942,7 @@ class ClassicParser:
 
     def declaracion_option(self):
         """Parsea una declaración de valor opcional."""
-        self.comer(TipoToken.OPTION)
+        self.comer(TipoToken.OPCION)
         if self.token_actual().tipo != TipoToken.IDENTIFICADOR:
             self.reportar_error("Se esperaba un identificador después de 'option'")
             nombre = "<error>"
@@ -1504,22 +1502,22 @@ class ClassicParser:
 
     def expresion(self):
         """Entrada principal para evaluar expresiones."""
-        return self.exp_or()
+        return self.exp_o()
 
-    def exp_or(self):
-        """Evalúa expresiones unidas por el operador ``or``."""
-        nodo = self.exp_and()
-        while self.token_actual().tipo == TipoToken.OR:
+    def exp_o(self):
+        """Evalúa expresiones unidas por el operador ``o``."""
+        nodo = self.exp_y()
+        while self.token_actual().tipo == TipoToken.O:
             operador = self.token_actual()
             self.avanzar()
-            derecho = self.exp_and()
+            derecho = self.exp_y()
             nodo = NodoOperacionBinaria(nodo, operador, derecho)
         return nodo
 
-    def exp_and(self):
-        """Evalúa expresiones unidas por el operador ``and``."""
+    def exp_y(self):
+        """Evalúa expresiones unidas por el operador ``y``."""
         nodo = self.exp_equality()
-        while self.token_actual().tipo == TipoToken.AND:
+        while self.token_actual().tipo == TipoToken.Y:
             operador = self.token_actual()
             self.avanzar()
             derecho = self.exp_equality()
@@ -1577,7 +1575,7 @@ class ClassicParser:
 
     def exp_unario(self):
         """Procesa operaciones unarias y espera."""
-        if self.token_actual().tipo == TipoToken.NOT:
+        if self.token_actual().tipo == TipoToken.NO:
             operador = self.token_actual()
             self.avanzar()
             operando = self.exp_unario()

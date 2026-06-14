@@ -305,9 +305,9 @@ def test_expresiones_booleanas_validas_siguen_funcionando_en_condicional() -> No
             Token(TipoToken.IGUAL, "=="),
             NodoValor(5),
         ),
-        Token(TipoToken.AND, "y"),
+        Token(TipoToken.Y, "y"),
         NodoOperacionUnaria(
-            Token(TipoToken.NOT, "!"),
+            Token(TipoToken.NO, "!"),
             NodoOperacionBinaria(
                 NodoIdentificador("y"),
                 Token(TipoToken.IGUAL, "=="),

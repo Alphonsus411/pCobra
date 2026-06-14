@@ -430,12 +430,12 @@ class TranspiladorPython(BaseTranspiler):
         elif isinstance(nodo, NodoOperacionBinaria):
             izq = self.obtener_valor(nodo.izquierda)
             der = self.obtener_valor(nodo.derecha)
-            op_map = {TipoToken.AND: "and", TipoToken.OR: "or"}
+            op_map = {TipoToken.Y: "and", TipoToken.O: "or"}
             op = op_map.get(nodo.operador.tipo, nodo.operador.valor)
             return f"{izq} {op} {der}"
         elif isinstance(nodo, NodoOperacionUnaria):
             val = self.obtener_valor(nodo.operando)
-            if nodo.operador.tipo == TipoToken.NOT:
+            if nodo.operador.tipo == TipoToken.NO:
                 op = "not"
             else:
                 op = nodo.operador.valor

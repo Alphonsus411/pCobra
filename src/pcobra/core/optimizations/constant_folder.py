@@ -136,14 +136,14 @@ class _ConstantFolder(NodeVisitor):
             return izq == der
         if token.tipo == TipoToken.DIFERENTE:
             return izq != der
-        if token.tipo == TipoToken.AND:
+        if token.tipo == TipoToken.Y:
             return bool(izq) and bool(der)
-        if token.tipo == TipoToken.OR:
+        if token.tipo == TipoToken.O:
             return bool(izq) or bool(der)
         raise ValueError("Operador no soportado")
 
     def _evaluar_unaria(self, token: Token, valor: Any):
-        if token.tipo == TipoToken.NOT:
+        if token.tipo == TipoToken.NO:
             return not bool(valor)
         raise ValueError("Operador unario no soportado")
 

@@ -159,7 +159,7 @@ def test_lexer_and_simbolico_se_mantiene():
 
     assert [(t.tipo, t.valor) for t in tokens] == [
         (TipoToken.IDENTIFICADOR, "a"),
-        (TipoToken.AND, "&&"),
+        (TipoToken.Y, "&&"),
         (TipoToken.IDENTIFICADOR, "b"),
         (TipoToken.EOF, None),
     ]

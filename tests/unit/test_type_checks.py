@@ -24,6 +24,6 @@ def test_and_tipos_incompatibles():
 
 def test_not_tipo_incompatible():
     inter = InterpretadorCobra()
-    expr = NodoOperacionUnaria(Token(TipoToken.NOT, '!'), NodoValor(1))
+    expr = NodoOperacionUnaria(Token(TipoToken.NO, '!'), NodoValor(1))
     with pytest.raises(TypeError, match='requiere booleano'):
         inter.evaluar_expresion(expr)

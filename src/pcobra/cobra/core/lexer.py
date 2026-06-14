@@ -22,14 +22,13 @@ class TipoToken(Enum):
     CLASE = "CLASE"
     ESTRUCTURA = "ESTRUCTURA"
     REGISTRO = "REGISTRO"
-    ENUM = "ENUM"
     ENUMERACION = "ENUMERACION"
     INTERFACE = "INTERFACE"
     DICCIONARIO = "DICCIONARIO"
     LISTA = "LISTA"
     RBRACE = "RBRACE"
     DEF = "DEF"
-    IN = "IN"
+    EN = "EN"
     LBRACE = "LBRACE"
     FOR = "FOR"
     DOSPUNTOS = "DOSPUNTOS"
@@ -46,17 +45,14 @@ class TipoToken(Enum):
     IMPORT = "IMPORT"
     USAR = "USAR"
     EXPORTAR = "EXPORTAR"
-    OPTION = "OPTION"
+    OPCION = "OPCION"
     MACRO = "MACRO"
     HOLOBIT = "HOLOBIT"
     PROYECTAR = "PROYECTAR"
     TRANSFORMAR = "TRANSFORMAR"
     GRAFICAR = "GRAFICAR"
-    TRY = "TRY"
-    DEFER = "DEFER"
-    CATCH = "CATCH"
-    THROW = "THROW"
     INTENTAR = "INTENTAR"
+    APLAZAR = "APLAZAR"
     CAPTURAR = "CAPTURAR"
     LANZAR = "LANZAR"
     ENTERO = "ENTERO"
@@ -76,9 +72,9 @@ class TipoToken(Enum):
     MENORIGUAL = "MENORIGUAL"
     IGUAL = "IGUAL"
     DIFERENTE = "DIFERENTE"
-    AND = "AND"
-    OR = "OR"
-    NOT = "NOT"
+    Y = "Y"
+    O = "O"
+    NO = "NO"
     MOD = "MOD"
     LPAREN = "LPAREN"
     RPAREN = "RPAREN"
@@ -93,7 +89,7 @@ class TipoToken(Enum):
     HILO = "HILO"
     ASINCRONICO = "ASINCRONICO"
     DECORADOR = "DECORADOR"
-    YIELD = "YIELD"
+    GENERAR = "GENERAR"
     ESPERAR = "ESPERAR"
     ROMPER = "ROMPER"
     CONTINUAR = "CONTINUAR"
@@ -104,11 +100,9 @@ class TipoToken(Enum):
     NOLOCAL = "NOLOCAL"
     LAMBDA = "LAMBDA"
     CON = "CON"
-    WITH = "WITH"
     FINALMENTE = "FINALMENTE"
     DESDE = "DESDE"
     COMO = "COMO"
-    AS = "AS"
     SWITCH = "SWITCH"
     CASE = "CASE"
     VARIABLE = "VARIABLE"
@@ -212,7 +206,7 @@ class Lexer:
             (TipoToken.IMPORT, re.compile(r"\bimport\b")),
             (TipoToken.USAR, re.compile(r"\busar\b")),
             (TipoToken.EXPORTAR, re.compile(r"\bexportar\b")),
-            (TipoToken.OPTION, re.compile(r"\boption\b")),
+            (TipoToken.OPCION, re.compile(r"\boption\b")),
             (TipoToken.MACRO, re.compile(r"\bmacro\b")),
             (TipoToken.HILO, re.compile(r"\bhilo\b")),
             (TipoToken.ASINCRONICO, re.compile(r"\basincronico\b")),
@@ -221,23 +215,22 @@ class Lexer:
             (TipoToken.CLASE, re.compile(r"\bclase\b")),
             (TipoToken.ESTRUCTURA, re.compile(r"\bestructura\b")),
             (TipoToken.REGISTRO, re.compile(r"\bregistro\b")),
-            (TipoToken.ENUM, re.compile(r"\benum\b")),
             (TipoToken.ENUMERACION, re.compile(r"\benumeracion\b")),
-            (TipoToken.INTERFACE, re.compile(r"\b(interface|trait)\b")),
-            (TipoToken.IN, re.compile(r"\bin\b")),
+            (TipoToken.INTERFACE, re.compile(r"\b(interface|rasgo)\b")),
+            (TipoToken.EN, re.compile(r"\ben\b")),
             (TipoToken.HOLOBIT, re.compile(r"\bholobit\b")),
             (TipoToken.PROYECTAR, re.compile(r"\bproyectar\b")),
             (TipoToken.TRANSFORMAR, re.compile(r"\btransformar\b")),
             (TipoToken.GRAFICAR, re.compile(r"\bgraficar\b")),
-            (TipoToken.TRY, re.compile(r"\btry\b")),
-            (TipoToken.DEFER, re.compile(r"\b(defer|aplazar)\b")),
-            (TipoToken.CATCH, re.compile(r"\bcatch\b")),
-            (TipoToken.THROW, re.compile(r"\bthrow\b")),
+            (TipoToken.INTENTAR, re.compile(r"\btry\b")),
+            (TipoToken.APLAZAR, re.compile(r"\b(defer|aplazar)\b")),
+            (TipoToken.CAPTURAR, re.compile(r"\bcatch\b")),
+            (TipoToken.LANZAR, re.compile(r"\bthrow\b")),
             (TipoToken.INTENTAR, re.compile(r"\bintentar\b")),
             (TipoToken.CAPTURAR, re.compile(r"\bcapturar\b")),
             (TipoToken.LANZAR, re.compile(r"\blanzar\b")),
             (TipoToken.IMPRIMIR, re.compile(r"\bimprimir\b")),
-            (TipoToken.YIELD, re.compile(r"\byield\b")),
+            (TipoToken.GENERAR, re.compile(r"\byield\b")),
             (TipoToken.ESPERAR, re.compile(r"\besperar\b")),
             (TipoToken.ROMPER, re.compile(r"\bromper\b")),
             (TipoToken.CONTINUAR, re.compile(r"\bcontinuar\b")),
@@ -248,18 +241,18 @@ class Lexer:
             (TipoToken.NOLOCAL, re.compile(r"\bnolocal\b")),
             (TipoToken.LAMBDA, re.compile(r"\blambda\b")),
             (TipoToken.CON, re.compile(r"\bcon\b")),
-            (TipoToken.WITH, re.compile(r"\bwith\b")),
+            (TipoToken.CON, re.compile(r"\bcon\b")),
             (TipoToken.FINALMENTE, re.compile(r"\bfinalmente\b")),
             (TipoToken.DESDE, re.compile(r"\bdesde\b")),
             (TipoToken.COMO, re.compile(r"\bcomo\b")),
-            (TipoToken.AS, re.compile(r"\bas\b")),
+            (TipoToken.COMO, re.compile(r"\bcomo\b")),
             (TipoToken.FLOTANTE, re.compile(r"\d+\.\d+")),
             (TipoToken.ENTERO, re.compile(r"\d+")),
             (TipoToken.CADENA, re.compile(r"'(?:\\.|[^'])*'|\"(?:\\.|[^\"])*\"")),
             (TipoToken.BOOLEANO, re.compile(r"\b(verdadero|falso)\b")),
-            (TipoToken.AND, re.compile(r"&&")),
-            (TipoToken.OR, re.compile(r"\|\|")),
-            (TipoToken.NOT, re.compile(r"!(?!=)")),
+            (TipoToken.Y, re.compile(r"&&", re.UNICODE)),
+            (TipoToken.O, re.compile(r"\|\|", re.UNICODE)),
+            (TipoToken.NO, re.compile(r"!(?!=)", re.UNICODE)),
             (TipoToken.ASIGNAR_INFERENCIA, re.compile(r":=")),
             (TipoToken.DOSPUNTOS, re.compile(r":")),
             (TipoToken.FIN, re.compile(r"\bfin\b")),

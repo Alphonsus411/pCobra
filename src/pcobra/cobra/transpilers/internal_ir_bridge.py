@@ -54,7 +54,7 @@ _KEYWORD_PATTERNS: list[tuple[re.Pattern[str], str]] = [
     (re.compile(r"\bnull\b"), "None"),
     (re.compile(r"\bAND\b"), "and"),
     (re.compile(r"\bOR\b"), "or"),
-    (re.compile(r"\bNOT\b"), "not"),
+    (re.compile(r"\bNO\b"), "not"),
 ]
 
 
@@ -289,9 +289,9 @@ def _map_binop(op: pyast.operator) -> Token:
 
 def _map_boolop(op: pyast.boolop) -> callable[[], Token]:
     if isinstance(op, pyast.And):
-        return lambda: Token(TipoToken.AND, "&&")
+        return lambda: Token(TipoToken.Y, "&&")
     if isinstance(op, pyast.Or):
-        return lambda: Token(TipoToken.OR, "||")
+            return lambda: Token(TipoToken.O, "||")
     return lambda: Token(TipoToken.AND, str(type(op).__name__))
 
 
@@ -317,12 +317,12 @@ def _map_compare_op(op: pyast.cmpop) -> Token:
 
 def _map_unary_op(op: pyast.unaryop) -> Token:
     if isinstance(op, pyast.Not):
-        return Token(TipoToken.NOT, "!")
+        return Token(TipoToken.NO, "not")
     if isinstance(op, pyast.USub):
         return Token(TipoToken.RESTA, "-")
     if isinstance(op, pyast.UAdd):
         return Token(TipoToken.SUMA, "+")
-    return Token(TipoToken.NOT, str(type(op).__name__))
+    return Token(TipoToken.NO, str(type(op).__name__))
 
 
 def _safe_unparse(node: pyast.AST) -> str:

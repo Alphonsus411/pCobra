@@ -377,7 +377,7 @@ def test_operacion_or_materializa_identificador_y_alias() -> None:
 
     expresion = NodoOperacionBinaria(
         NodoIdentificador("flag"),
-        Token(TipoToken.OR, "||"),
+        Token(TipoToken.O, "||"),
         NodoValor(True),
     )
 

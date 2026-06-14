@@ -18,8 +18,8 @@ def test_lexer_nuevos_operadores():
     assert tipos == [
         TipoToken.VAR, TipoToken.IDENTIFICADOR, TipoToken.ASIGNAR,
         TipoToken.ENTERO, TipoToken.IGUAL, TipoToken.ENTERO,
-        TipoToken.AND, TipoToken.ENTERO, TipoToken.DIFERENTE, TipoToken.ENTERO,
-        TipoToken.OR, TipoToken.NOT, TipoToken.ENTERO,
+        TipoToken.Y, TipoToken.ENTERO, TipoToken.DIFERENTE, TipoToken.ENTERO,
+        TipoToken.O, TipoToken.NO, TipoToken.ENTERO,
         TipoToken.MAYORIGUAL, TipoToken.ENTERO,
         TipoToken.MENORIGUAL, TipoToken.ENTERO,
         TipoToken.MOD, TipoToken.ENTERO,
@@ -47,8 +47,8 @@ def test_parser_precedencia_operadores():
         Token(TipoToken.ENTERO, 3),
         Token(TipoToken.IGUAL, '=='),
         Token(TipoToken.ENTERO, 7),
-        Token(TipoToken.AND, '&&'),
-        Token(TipoToken.NOT, '!'),
+        Token(TipoToken.Y, '&&'),
+        Token(TipoToken.NO, '!'),
         Token(TipoToken.ENTERO, 0),
         Token(TipoToken.EOF, None),
     ]
@@ -56,7 +56,7 @@ def test_parser_precedencia_operadores():
     ast = parser.parsear()
     expr = ast[0]
     assert isinstance(expr, NodoOperacionBinaria)
-    assert expr.operador.tipo == TipoToken.AND
+    assert expr.operador.tipo == TipoToken.Y
     assert isinstance(expr.izquierda, NodoOperacionBinaria)
     assert isinstance(expr.derecha, NodoOperacionUnaria)
     assert expr.izquierda.operador.tipo == TipoToken.IGUAL
@@ -72,7 +72,7 @@ def test_interpreter_operaciones():
         Token(TipoToken.IGUAL, '=='),
         Token(TipoToken.ENTERO, 7),
         Token(TipoToken.AND, '&&'),
-        Token(TipoToken.NOT, '!'),
+        Token(TipoToken.NO, '!'),
         Token(TipoToken.ENTERO, 0),
         Token(TipoToken.EOF, None),
     ]
@@ -93,7 +93,7 @@ def test_transpiladores_operaciones():
         Token(TipoToken.IGUAL, '=='),
         Token(TipoToken.ENTERO, 7),
         Token(TipoToken.AND, '&&'),
-        Token(TipoToken.NOT, '!'),
+        Token(TipoToken.NO, '!'),
         Token(TipoToken.ENTERO, 0),
         Token(TipoToken.EOF, None),
     ]

@@ -205,12 +205,12 @@ class TranspiladorJava(BaseTranspiler):
         elif isinstance(nodo, NodoOperacionBinaria):
             izq = self.obtener_valor(nodo.izquierda)
             der = self.obtener_valor(nodo.derecha)
-            op_map = {TipoToken.AND: "&&", TipoToken.OR: "||"}
+            op_map = {TipoToken.Y: "&&", TipoToken.O: "||"}
             op = op_map.get(nodo.operador.tipo, nodo.operador.valor)
             return f"{izq} {op} {der}"
         elif isinstance(nodo, NodoOperacionUnaria):
             val = self.obtener_valor(nodo.operando)
-            op = "!" if nodo.operador.tipo == TipoToken.NOT else nodo.operador.valor
+            op = "!" if nodo.operador.tipo == TipoToken.NO else nodo.operador.valor
             return f"{op}{val}" if op != "!" else f"!{val}"
         else:
             return str(getattr(nodo, "valor", nodo))

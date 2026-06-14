@@ -13,6 +13,7 @@ import sys
 from pcobra.cobra.core import ast_nodes as _ast_nodes
 from pcobra.cobra.core.errors import InvalidTokenError, LexerError, UnclosedStringError
 from .lexer import Lexer, TipoToken, Token
+from pcobra.cobra.core.parser import Parser, ParserError
 
 # Reexportar los nodos del AST directamente desde ``pcobra.core``.
 _AST_NODE_NAMES = list(_ast_nodes.__all__)
@@ -31,17 +32,3 @@ __all__ = [
 ]
 
 sys.modules["cobra.core"] = sys.modules[__name__]
-
-
-def __getattr__(name: str):
-    """Importa dinámicamente el analizador cuando se solicita.
-
-    Esto mantiene una importación perezosa del módulo ``parser`` para
-    evitar dependencias circulares y tiempos de carga innecesarios.
-    """
-    if name in {"Parser", "ParserError"}:
-        from pcobra.cobra.core import parser as _parser
-
-        globals().update({"Parser": _parser.Parser, "ParserError": _parser.ParserError})
-        return globals()[name]
-    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

@@ -1880,12 +1880,12 @@ class InterpretadorCobra:
                     result = left % right
                     self._trace_debug(f"[BIN-RESULT] value={result} type={type(result).__name__}")
                     return result
-                elif tipo == TipoToken.AND:
+                elif tipo == TipoToken.Y:
                     verificar_booleanos(left, right, "&&")
                     result = left and right
                     self._trace_debug(f"[BIN-RESULT] value={result} type={type(result).__name__}")
                     return result
-                elif tipo == TipoToken.OR:
+                elif tipo == TipoToken.O:
                     verificar_booleanos(left, right, "||")
                     result = left or right
                     self._trace_debug(f"[BIN-RESULT] value={result} type={type(result).__name__}")
@@ -1901,7 +1901,7 @@ class InterpretadorCobra:
                     operador=f"{expresion.operador.tipo}:operando",
                 )
                 tipo = expresion.operador.tipo
-                if tipo == TipoToken.NOT:
+                if tipo == TipoToken.NO:
                     verificar_booleano(valor, "!")
                     return _retorno_critico(not valor, operador=tipo)
                 else:

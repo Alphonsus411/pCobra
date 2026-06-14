@@ -204,15 +204,15 @@ def _expr_to_text(expr) -> str:
         op = _token_to_text(expr.operador)
         if expr.operador.tipo == TipoToken.AND:
             op = "AND"
-        elif expr.operador.tipo == TipoToken.OR:
+        elif expr.operador.tipo == TipoToken.O:
             op = "OR"
         return f"{izq} {op} {der}"
 
     if isinstance(expr, NodoOperacionUnaria):
         val = _expr_to_text(expr.operando)
         op = _token_to_text(expr.operador)
-        if expr.operador.tipo == TipoToken.NOT:
-            return f"NOT {val}"
+        if expr.operador.tipo == TipoToken.NO:
+            return f"NO {val}"
         return f"{op}{val}"
 
     if isinstance(expr, NodoLista):

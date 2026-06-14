@@ -57,14 +57,14 @@ class ReverseFromPython(BaseReverseTranspiler):
         ast.Gt: Token(TipoToken.MAYORQUE, ">"),
         ast.LtE: Token(TipoToken.MENORIGUAL, "<="),
         ast.GtE: Token(TipoToken.MAYORIGUAL, ">="),
-        ast.And: Token(TipoToken.AND, "and"),
-        ast.Or: Token(TipoToken.OR, "or"),
+        ast.And: Token(TipoToken.Y, "y"),
+        ast.Or: Token(TipoToken.O, "o"),
     }
 
     OPERADORES_UNARIOS = {
         ast.UAdd: Token(TipoToken.SUMA, "+"),
         ast.USub: Token(TipoToken.RESTA, "-"),
-        ast.Not: Token(TipoToken.NOT, "not"),
+        ast.Not: Token(TipoToken.NO, "no"),
     }
 
     def __init__(self) -> None:

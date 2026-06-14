@@ -183,14 +183,14 @@ def test_precedencia_cadena_completa_se_respeta_en_ast_binario():
     # Nivel OR
     nodo_or = ast[0]
     assert isinstance(nodo_or, NodoOperacionBinaria)
-    assert nodo_or.operador.tipo == TipoToken.OR
+    assert nodo_or.operador.tipo == TipoToken.O
     assert isinstance(nodo_or.izquierda, NodoValor)
     assert nodo_or.izquierda.valor == "a"
 
     # Nivel AND
     nodo_and = nodo_or.derecha
     assert isinstance(nodo_and, NodoOperacionBinaria)
-    assert nodo_and.operador.tipo == TipoToken.AND
+    assert nodo_and.operador.tipo == TipoToken.Y
     assert isinstance(nodo_and.izquierda, NodoValor)
     assert nodo_and.izquierda.valor == "b"
 

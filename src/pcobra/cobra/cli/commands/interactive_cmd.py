@@ -233,7 +233,6 @@ class InteractiveCommand(BaseCommand):
             TipoToken.PARA,
             TipoToken.FUNC,
             TipoToken.CLASE,
-            TipoToken.TRY,
             TipoToken.INTENTAR,
             TipoToken.SWITCH,
         }

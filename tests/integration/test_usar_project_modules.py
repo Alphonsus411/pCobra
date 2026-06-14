@@ -3,7 +3,7 @@ from textwrap import dedent
 
 import pytest
 
-from pcobra.cobra.core import Lexer, Parser
+from pcobra.cobra.core import Lexer, Parser, ParserError
 from pcobra.cobra.core.interpreter import InterpretadorCobra
 from pcobra.cobra.usar_loader import (
     obtener_cache_ast_import_co,
@@ -192,3 +192,13 @@ def test_usar_strings_windows_posix_son_rechazados(tmp_path, nombre):
 def test_usar_bloquea_traversal_con_puntos_dobles(tmp_path):
     with pytest.raises((ValueError, PermissionError), match="traversal|inválido|fuera"):
         usar_modulo("../secreto", project_root=tmp_path, current_file=tmp_path / "main.co")
+
+
+def test_usar_bloquea_escape_de_raiz_autorizada(crear_modulo_cobra, tmp_path):
+    # Crear un módulo fuera de la raíz del proyecto
+    (tmp_path.parent / "modulo_secreto.co").write_text("variable secreto := 'valor_secreto'")
+
+    main = crear_modulo_cobra("main.co", "usar ../modulo_secreto")
+
+    with pytest.raises(ParserError, match="Se esperaba una ruta de módulo"):
+        ejecutar_archivo(main)

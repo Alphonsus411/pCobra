@@ -18,6 +18,6 @@ def test_operadores_logicos_simbolicos_siguen_validos() -> None:
     tokens = Lexer("verdadero && falso || !falso").tokenizar()
     tipos = [token.tipo for token in tokens]
 
-    assert TipoToken.AND in tipos
-    assert TipoToken.OR in tipos
-    assert TipoToken.NOT in tipos
+    assert TipoToken.Y in tipos
+    assert TipoToken.O in tipos
+    assert TipoToken.NO in tipos

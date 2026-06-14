@@ -223,7 +223,7 @@ class TranspiladorJavaScript(BaseTranspiler):
             val = self.obtener_valor(nodo.operando)
             return (
                 f"!{val}"
-                if nodo.operador.tipo == TipoToken.NOT
+                if nodo.operador.tipo == TipoToken.NO
                 else f"{nodo.operador.valor}{val}"
             )
         elif isinstance(nodo, NodoEsperar):
