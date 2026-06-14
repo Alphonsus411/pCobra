@@ -693,6 +693,91 @@ def test_interpretador_usar_proyecto_detecta_ciclo_indirecto(monkeypatch, tmp_pa
         interp.ejecutar_usar(SimpleNamespace(modulo="utilidades.internas.a"))
 
 
+
+
+def test_interpretador_usar_proyecto_detecta_ciclo_directo_en_root_con_mensaje_exacto(
+    monkeypatch, tmp_path
+):
+    from pcobra.core.ast_nodes import NodoUsar
+
+    proyecto = tmp_path / "app"
+    proyecto.mkdir()
+    (proyecto / "cobra.toml").write_text("[proyecto]\n", encoding="utf-8")
+    principal = proyecto / "main.co"
+    principal.write_text("", encoding="utf-8")
+    modulo = proyecto / "a.co"
+    modulo.write_text("", encoding="utf-8")
+
+    monkeypatch.setattr(
+        "pcobra.core.import_utils.cargar_ast_modulo",
+        lambda _ruta, **_kwargs: [NodoUsar("a")],
+    )
+
+    interp = InterpretadorCobra(safe_mode=False, main_file=principal)
+    with pytest.raises(ImportError) as excinfo:
+        interp.ejecutar_usar(SimpleNamespace(modulo="a"))
+
+    assert str(excinfo.value) == "Ciclo de módulos detectado en usar: a.co -> a.co"
+    assert obtener_pila_carga_modulos_cobra_proyecto() == []
+
+
+def test_interpretador_usar_proyecto_detecta_ciclo_indirecto_en_root_con_cadena_completa(
+    monkeypatch, tmp_path
+):
+    from pcobra.core.ast_nodes import NodoUsar
+
+    proyecto = tmp_path / "app"
+    proyecto.mkdir()
+    (proyecto / "cobra.toml").write_text("[proyecto]\n", encoding="utf-8")
+    principal = proyecto / "main.co"
+    principal.write_text("", encoding="utf-8")
+    for nombre in ("a", "b", "c"):
+        (proyecto / f"{nombre}.co").write_text("", encoding="utf-8")
+
+    def fake_cargar_ast_modulo(ruta, **_kwargs):
+        siguiente = {
+            "a.co": "b",
+            "b.co": "c",
+            "c.co": "a",
+        }[Path(ruta).name]
+        return [NodoUsar(siguiente)]
+
+    monkeypatch.setattr(
+        "pcobra.core.import_utils.cargar_ast_modulo", fake_cargar_ast_modulo
+    )
+
+    interp = InterpretadorCobra(safe_mode=False, main_file=principal)
+    with pytest.raises(ImportError) as excinfo:
+        interp.ejecutar_usar(SimpleNamespace(modulo="a"))
+
+    assert str(excinfo.value) == (
+        "Ciclo de módulos detectado en usar: a.co -> b.co -> c.co -> a.co"
+    )
+    assert obtener_pila_carga_modulos_cobra_proyecto() == []
+
+
+def test_usar_proyecto_limpia_pila_si_falla_cargar_ast_modulo(monkeypatch, tmp_path):
+    proyecto = tmp_path / "app"
+    proyecto.mkdir()
+    (proyecto / "cobra.toml").write_text("[proyecto]\n", encoding="utf-8")
+    principal = proyecto / "main.co"
+    principal.write_text("", encoding="utf-8")
+    modulo = proyecto / "a.co"
+    modulo.write_text("", encoding="utf-8")
+
+    def fake_cargar_ast_modulo(_ruta, **_kwargs):
+        assert obtener_pila_carga_modulos_cobra_proyecto() == [modulo.resolve()]
+        raise RuntimeError("fallo sintético de carga")
+
+    monkeypatch.setattr(
+        "pcobra.core.import_utils.cargar_ast_modulo", fake_cargar_ast_modulo
+    )
+
+    with pytest.raises(RuntimeError, match="fallo sintético de carga"):
+        usar_modulo("a", project_root=proyecto, current_file=principal)
+
+    assert obtener_pila_carga_modulos_cobra_proyecto() == []
+
 def test_interpretador_usar_proyecto_modulo_inexistente_muestra_nombre_y_ruta(tmp_path):
     import pytest
 

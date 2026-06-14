@@ -560,27 +560,28 @@ def _cargar_exports_modulo_cobra_proyecto(
         )
         raise ImportError(f"Ciclo de módulos detectado en usar: {cadena}")
 
-    try:
-        ast = cargar_ast_modulo(
-            str(ruta_modulo),
-            modules_path=str(root_canonico),
-            whitelist={root_canonico},
-        )
-    except FileNotFoundError as exc:
-        raise FileNotFoundError(f"Módulo no encontrado: {nombre}") from exc
-
     _USAR_PROJECT_LOADING_STACK.append(ruta_modulo)
-    interpretador = InterpretadorCobra(
-        safe_mode=False, main_file=current_canonico or ruta_modulo
-    )
-    interpretador._project_root = root_canonico
-    interpretador._main_file = (
-        current_canonico if current_canonico else ruta_modulo
-    )
-    interpretador._current_module_stack.append(ruta_modulo)
-    interpretador.contextos.append(Environment(parent=interpretador.contextos[-1]))
-    interpretador.mem_contextos.append({})
+    interpretador = None
     try:
+        try:
+            ast = cargar_ast_modulo(
+                str(ruta_modulo),
+                modules_path=str(root_canonico),
+                whitelist={root_canonico},
+            )
+        except FileNotFoundError as exc:
+            raise FileNotFoundError(f"Módulo no encontrado: {nombre}") from exc
+
+        interpretador = InterpretadorCobra(
+            safe_mode=False, main_file=current_canonico or ruta_modulo
+        )
+        interpretador._project_root = root_canonico
+        interpretador._main_file = (
+            current_canonico if current_canonico else ruta_modulo
+        )
+        interpretador._current_module_stack.append(ruta_modulo)
+        interpretador.contextos.append(Environment(parent=interpretador.contextos[-1]))
+        interpretador.mem_contextos.append({})
         for subnodo in ast:
             if isinstance(subnodo, NodoExport):
                 continue
@@ -612,12 +613,16 @@ def _cargar_exports_modulo_cobra_proyecto(
         )
         return _USAR_PROJECT_MODULE_CACHE[ruta_modulo]
     finally:
-        memoria_local = interpretador.mem_contextos.pop()
-        for idx, tam in memoria_local.values():
-            interpretador.liberar_memoria(idx, tam)
-        interpretador.contextos.pop()
-        interpretador._current_module_stack.pop()
-        _USAR_PROJECT_LOADING_STACK.pop()
+        if interpretador is not None:
+            memoria_local = interpretador.mem_contextos.pop()
+            for idx, tam in memoria_local.values():
+                interpretador.liberar_memoria(idx, tam)
+            interpretador.contextos.pop()
+            interpretador._current_module_stack.pop()
+        if _USAR_PROJECT_LOADING_STACK and _USAR_PROJECT_LOADING_STACK[-1] == ruta_modulo:
+            _USAR_PROJECT_LOADING_STACK.pop()
+        elif ruta_modulo in _USAR_PROJECT_LOADING_STACK:
+            _USAR_PROJECT_LOADING_STACK.remove(ruta_modulo)
 
 
 def usar_modulo(
