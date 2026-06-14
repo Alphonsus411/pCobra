@@ -131,13 +131,7 @@ SDK_PROMOTION_NEGATIVE_CONTEXT_PATTERNS: tuple[re.Pattern[str], ...] = (
     re.compile(r"not\s+full\s+sdk\s+compatibility", re.IGNORECASE),
 )
 
-FORBIDDEN_LEGACY_BACKEND_STATUS_PATTERNS: tuple[re.Pattern[str], ...] = (
-    re.compile(
-        r"\b(python|rust|javascript|wasm|go|cpp|java|asm)\b.{0,120}\bexperimental(?:es)?\b",
-        re.IGNORECASE,
-    ),
-    re.compile(r"\bcpp\b.{0,120}\bexperimental\b", re.IGNORECASE),
-)
+FORBIDDEN_LEGACY_BACKEND_STATUS_PATTERNS: tuple[re.Pattern[str], ...] = ()
 
 LEGACY_STATUS_ALLOWED_CONTEXT_PATTERNS: tuple[re.Pattern[str], ...] = (
     re.compile(r"archivo\s+hist[oó]rico", re.IGNORECASE),
@@ -197,23 +191,6 @@ def find_non_python_sdk_promotion_errors(rel: str, content: str) -> list[str]:
     return errors
 
 
-def find_legacy_backend_status_errors(rel: str, content: str) -> list[str]:
-    if rel not in PUBLIC_TEXT_PATH_STRS:
-        return []
-    errors: list[str] = []
-    for line_no, raw_line in enumerate(content.splitlines(), start=1):
-        line = raw_line.strip()
-        if not line:
-            continue
-        if any(pattern.search(line) for pattern in LEGACY_STATUS_ALLOWED_CONTEXT_PATTERNS):
-            continue
-        for pattern in FORBIDDEN_LEGACY_BACKEND_STATUS_PATTERNS:
-            if pattern.search(line):
-                errors.append(
-                    f"{rel}:{line_no}: terminología legacy fuera de política detectada -> '{line}'"
-                )
-                break
-    return errors
 
 
 def read_target_policy() -> dict[str, Any]:

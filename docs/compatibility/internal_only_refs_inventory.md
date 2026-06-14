@@ -1,4 +1,4 @@
-# Inventario de referencias internal-only (go/cpp/java/wasm/asm)
+# Inventario de referencias internal-only (eliminado)
 
 Este reporte se genera con `scripts/ci/generate_internal_only_inventory.py`.
 
@@ -146,8 +146,4 @@ Este reporte se genera con `scripts/ci/generate_internal_only_inventory.py`.
 
 Este inventario es de diagnóstico. La eliminación se ejecuta por fases según `docs/compatibility/internal_only_backend_removal_checklist.md`.
 
-## Clasificación operativa por fase (sin borrado físico anticipado)
 
-- **Fase 1 (ocultar de UX pública):** `asm`.
-- **Fase 2 (bloqueo fuera de profile development):** `go`, `cpp`, `java`, `wasm`.
-- **Fase 3 (eliminar código/tests internos expirados):** aplicar solo al vencer ventana por backend.

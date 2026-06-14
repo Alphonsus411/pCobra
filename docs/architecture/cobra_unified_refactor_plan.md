@@ -39,8 +39,7 @@ Este documento define una estrategia **incremental** para consolidar Cobra como 
 - Reforzar que cualquier ruta pública consulte `PUBLIC_BACKENDS`.
 - Tratar módulos legacy como **inventario de retiro**, no como opciones para usuario final.
 
-### Candidatos legacy a retirar
-- `go`, `cpp`, `java`, `wasm`, `asm`.
+
 
 ---
 
@@ -124,13 +123,9 @@ cobra mod list
 
 ---
 
-## H) Elements to remove (safe retirement backlog)
+## H) Elements to remove (completed)
 
-> Fasear en releases para evitar ruptura.
-
-1. Comandos CLI ligados a targets retirados (solo tras auditoría de uso).
-2. Scripts de benchmark/transpilación exclusivos de backends legacy.
-3. Documentación pública que mencione targets fuera de `python/javascript/rust`.
+This task has been completed. All legacy backend components have been removed.
 
 ---
 

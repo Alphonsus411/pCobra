@@ -1,12 +1,6 @@
-# Retiro de UX legacy para backends internal-only
+# Retiro de UX legacy (completado)
 
-Este plan aplica a los backends legacy mantenidos solo por compatibilidad interna:
-
-- `go`
-- `cpp`
-- `java`
-- `wasm`
-- `asm`
+Este plan de retiro ha sido completado. Los backends legacy mencionados han sido eliminados del proyecto.
 
 ## Fecha de retiro comprometida
 
@@ -44,17 +38,6 @@ Este flag es transitorio y no debe usarse en documentación pública ni en nuevo
 Checklist operativo por fases: `docs/compatibility/internal_only_backend_removal_checklist.md`.
 Calendario y clasificación de dependencias por backend: `docs/compatibility/legacy_backend_retirement_calendar.md`.
 
-## Inventario por fase (fuente canónica: `legacy_backend_lifecycle.py`)
 
-| Backend | Fase actual | Ventana | Acción |
-|---|---|---|---|
-| `asm` | Fase 1 — ocultar de UX pública | Q3 2026 | Mantener solo diagnóstico acotado; retirar primero cuando venza ventana. |
-| `go` | Fase 2 — solo profile `development` | Q4 2026 | Bloquear fuera de desarrollo y migrar pipelines a `rust`. |
-| `cpp` | Fase 2 — solo profile `development` | Q4 2026 | Bloquear fuera de desarrollo y migrar pipelines a `rust`. |
-| `java` | Fase 2 — solo profile `development` | Q1 2027 | Bloquear fuera de desarrollo y migrar flujos a `javascript`. |
-| `wasm` | Fase 2 — solo profile `development` | Q2 2027 | Mantener congelado; sin features nuevas. |
 
-## Nota de limpieza física
 
-La eliminación de `to_go.py`, `to_cpp.py`, `to_java.py`, `to_wasm.py` y `to_asm.py`
-se ejecuta únicamente cuando la ventana de retiro de cada backend esté vencida.

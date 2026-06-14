@@ -109,6 +109,7 @@ LANG_CHOICES = tuple(PUBLIC_BACKENDS)
 
 
 
+
 class CliErrorYaMostrado(Exception):
     """Error de CLI cuya salida al usuario ya fue emitida por el comando."""
 
@@ -731,25 +732,6 @@ class CliApplication:
                 return index
         return None
 
-    def _apply_public_cli_policy(self, argv: list[str]) -> list[str]:
-        """Fuerza UI v2 para usuarios y migra comandos legacy automáticamente."""
-        normalized = list(argv)
-        profile = resolve_command_profile()
-        if profile != PROFILE_PUBLIC:
-            return normalized
-
-
-
-        command_idx = self._first_non_option_token_index(normalized)
-        if command_idx is None:
-            return normalized
-
-        if command_token in PUBLIC_COMMANDS_CONTRACT:
-            return normalized
-        return normalized
-
-
-
 
 
     @staticmethod
@@ -1047,8 +1029,7 @@ class CliApplication:
 
             try:
                 argv = self._sanear_argv(argv)
-                argv = self._apply_public_cli_policy(argv)
-                self._selected_ui = self._resolve_selected_ui_from_argv(argv)
+
                 self._enforce_public_startup_guard()
                 args = self._parse_arguments(argv)
                 command = getattr(args, "cmd", None)

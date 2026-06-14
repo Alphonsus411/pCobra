@@ -11,7 +11,7 @@ La clasificación canónica de backends está definida en:
 En particular:
 
 - `PUBLIC_BACKENDS`: backends públicos soportados.
-- `INTERNAL_BACKENDS`: backends internos/legacy, fuera de contrato público.
+
 
 ## Clasificación normativa
 
@@ -80,8 +80,6 @@ Cualquier cambio que amplíe o reduzca la API pública estable (comandos, backen
 ## Contrato de arranque (startup)
 
 - En rutas de arranque públicas (importación de pcobra y comandos públicos de arranque como repl/run/test) **solo** se pueden inicializar por defecto los backends `python`, `javascript`, `rust`.
-- Cualquier regresión de carga eager de backends legacy en arranque debe fallar por guardas de test/CI.
 
-Los backends retirados no forman parte del árbol operativo público; solo pueden conservarse bajo compatibilidad interna.
 
 Los orígenes reverse pertenecen a una ruta de entrada separada y no amplían los targets de salida oficiales. Este recorrido normativo principal mantiene la lista pública en `python`, `javascript` y `rust`.

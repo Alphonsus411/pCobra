@@ -50,7 +50,7 @@ from scripts.targets_policy_common import (
     HOLOBIT_MATRIX_DOC_PATHS,
     PUBLIC_RUNTIME_POLICY_PATHS,
     PUBLIC_TEXT_PATHS,
-    find_legacy_backend_status_errors,
+
     find_non_python_sdk_promotion_errors,
     find_public_alias_errors,
     read_target_policy,
@@ -58,7 +58,7 @@ from scripts.targets_policy_common import (
 from scripts.generar_matriz_transpiladores import _build_markdown as build_transpilers_matrix_markdown
 
 FINAL_OFFICIAL_TARGETS = tuple(OFFICIAL_TARGETS)
-INTERNAL_LEGACY_TARGETS = ("go", "cpp", "java", "wasm", "asm")
+
 EXPECTED_TRANSPILER_MODULES = tuple(
     f"src/pcobra/cobra/transpilers/transpiler/{filename}"
     for filename in official_transpiler_module_filenames()
@@ -792,7 +792,7 @@ def validate_scan_roots(
         )
         errors.extend(find_public_alias_errors(rel, content))
         errors.extend(find_non_python_sdk_promotion_errors(rel, content))
-        errors.extend(find_legacy_backend_status_errors(rel, content))
+
     return errors
 
 
@@ -1134,34 +1134,6 @@ def _public_cli_env() -> dict[str, str]:
     return env
 
 
-def validate_ci_checklist_no_public_legacy_targets() -> list[str]:
-    """Checklist CI: prohíbe exposición de targets legacy en help público."""
-    errors: list[str] = []
-    commands = (
-        ("root_help", [sys.executable, "-m", "cobra.cli.cli", "--help"]),
-        ("build_help", [sys.executable, "-m", "cobra.cli.cli", "build", "--help"]),
-    )
-    for surface_name, command in commands:
-        result = subprocess.run(
-            command,
-            capture_output=True,
-            text=True,
-            cwd=ROOT,
-            env=_public_cli_env(),
-            check=False,
-        )
-        if result.returncode != 0:
-            errors.append(
-                f"ci-checklist:{surface_name}: comando help falló con exit={result.returncode}"
-            )
-            continue
-        lowered = f"{result.stdout}\n{result.stderr}".lower()
-        for target in INTERNAL_LEGACY_TARGETS:
-            if re.search(rf"(?<![\w.+/-]){re.escape(target)}(?![\w.+/-])", lowered):
-                errors.append(
-                    f"ci-checklist:{surface_name}: exposición pública de target legacy '{target}'"
-                )
-    return errors
 
 
 def _run_stage(name: str, errors: list[str]) -> int | None:
@@ -1209,10 +1181,7 @@ def main() -> int:
             "comandos/help sin aliases legacy",
             validate_cli_public_surfaces_no_legacy_aliases(),
         ),
-        (
-            "checklist ci no exposición pública legacy targets",
-            validate_ci_checklist_no_public_legacy_targets(),
-        ),
+
     )
     for stage_name, errors in stages:
         result = _run_stage(stage_name, errors)

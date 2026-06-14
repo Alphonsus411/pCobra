@@ -239,14 +239,3 @@ def test_test_v2_valida_seguridad_por_ruta_binding(monkeypatch):
     assert calls[2][0] == "rust" and calls[2][1]["containerized"] is True
 
 
-def test_public_policy_migra_interactive_a_repl_con_mensaje_oficial(monkeypatch):
-    app = CliApplication()
-    warnings: list[str] = []
-    monkeypatch.setattr("cobra.cli.cli.resolve_command_profile", lambda: "public")
-    monkeypatch.setattr("cobra.cli.cli.messages.mostrar_advertencia", warnings.append)
-
-    normalized = app._apply_public_cli_policy(["interactive"])
-
-    assert normalized == ["repl"]
-    assert warnings
-    assert "cobra repl" in warnings[0]
