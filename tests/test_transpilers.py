@@ -51,6 +51,17 @@ def test_transpilador_python_usar_invoca_api_canonica() -> None:
     assert "obtener_modulo" not in codigo
 
 
+def test_transpilador_python_usar_punteado_genera_usar_modulo_sin_parser() -> None:
+    """Cubre módulos punteados construyendo el AST directamente."""
+
+    nodo = NodoUsar("utilidades.fechas")
+    codigo = TranspiladorPython().generate_code([nodo])
+
+    assert "from pcobra.cobra.usar_loader import usar_modulo" in codigo
+    assert "globals().update(usar_modulo('utilidades.fechas'))" in codigo
+    assert "obtener_modulo" not in codigo
+
+
 def test_usar_modulo_oficial_devuelve_exports_saneados() -> None:
     from pcobra.cobra.usar_loader import usar_modulo
 

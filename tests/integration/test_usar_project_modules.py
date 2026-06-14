@@ -167,6 +167,22 @@ def test_compatibilidad_import_archivo_co_relativo_al_main(crear_modulo_cobra):
     assert interprete.obtener_variable("legacy_var") == "Soy legacy"
 
 
+def test_import_archivo_co_no_delega_en_usar_modulo(crear_modulo_cobra, monkeypatch):
+    """`import 'archivo.co'` debe conservar el flujo legacy de `NodoImport`."""
+
+    crear_modulo_cobra("archivo.co", 'variable legacy_var := "Soy legacy"')
+    main = crear_modulo_cobra("main.co", "import 'archivo.co'")
+
+    def fail_usar_modulo(*_args, **_kwargs):
+        raise AssertionError("import 'archivo.co' no debe delegar en usar_modulo")
+
+    monkeypatch.setattr("pcobra.core.interpreter.usar_modulo", fail_usar_modulo)
+
+    interprete = ejecutar_archivo(main)
+
+    assert interprete.obtener_variable("legacy_var") == "Soy legacy"
+
+
 @pytest.mark.parametrize("nombre", ["dir/modulo", r"dir\\modulo", r"C:\\tmp\\modulo"])
 def test_usar_strings_windows_posix_son_rechazados(tmp_path, nombre):
     with pytest.raises((ValueError, PermissionError), match="ruta|separadores|Windows|fuera"):

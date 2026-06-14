@@ -251,6 +251,16 @@ def resolver_modulo_cobra_proyecto(
         current_resuelto = canonicalizar_ruta_usar_proyecto(current_file)
         _verificar_path_dentro_de_root(current_resuelto, root_resuelto)
 
+    ruta_directa = root_resuelto.joinpath(
+        *validar_nombre_modulo_cobra_proyecto(nombre)
+    ).with_suffix(".co")
+    if ruta_directa.exists():
+        ruta_directa = canonicalizar_ruta_usar_proyecto(ruta_directa)
+        _verificar_path_dentro_de_root(ruta_directa, root_resuelto)
+        return ruta_directa
+    if getattr(CobraImportResolver, "__module__", "") == "pcobra.cobra.imports.resolver":
+        raise FileNotFoundError(f"Módulo no encontrado: {nombre}")
+
     try:
         resolution = CobraImportResolver(
             project_root=root_resuelto,
