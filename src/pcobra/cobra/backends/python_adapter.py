@@ -13,8 +13,9 @@ class PythonAdapter(BackendAdapter):
 
     def compile(self, ast: Any, options: Mapping[str, Any] | None = None) -> str:
         opts = options or {}
-        transpiler = TranspiladorPython(
+        transpiler = TranspiladorPython()
+        return transpiler.generate_code(
+            ast,
             source_file=opts.get("source_file"),
             project_root=opts.get("project_root"),
         )
-        return transpiler.generate_code(ast)
