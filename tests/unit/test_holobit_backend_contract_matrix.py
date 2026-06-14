@@ -178,10 +178,11 @@ def _parse_backend_matrix_table(doc_path: str) -> dict[str, dict[str, str]]:
 
 
 
-def test_contrato_holobit_y_sdk_no_admiten_un_noveno_backend_ni_promociones_full_fuera_de_python():
-    assert len(OFFICIAL_TARGETS) == 8
+def test_contrato_holobit_y_sdk_no_admite_backends_legacy_ni_promociones_full_fuera_de_python():
+    assert OFFICIAL_TARGETS == ("python", "javascript", "rust")
     assert set(BACKEND_COMPATIBILITY) == set(OFFICIAL_TARGETS)
     assert not validate_python_policy_literals(tuple(OFFICIAL_TARGETS))
+    assert "go" not in BACKEND_COMPATIBILITY
     assert not validate_public_documentation_alignment(tuple(OFFICIAL_TARGETS), ("python", "javascript", "java"))
 
 def test_only_python_is_full_for_sdk_contract_features():
@@ -189,7 +190,8 @@ def test_only_python_is_full_for_sdk_contract_features():
     assert SDK_COMPATIBLE_TARGETS == SDK_FULL_BACKENDS
     assert set(SDK_PARTIAL_BACKENDS) == set(OFFICIAL_TARGETS) - {"python"}
 
-    for feature in CONTRACT_FEATURES:
+    sdk_features = ("holobit", "proyectar", "transformar", "graficar")
+    for feature in sdk_features:
         full_backends = {
             backend
             for backend in OFFICIAL_TARGETS
@@ -203,6 +205,9 @@ def test_only_python_is_full_for_sdk_contract_features():
 
         assert full_backends == {"python"}
         assert partial_backends == set(SDK_PARTIAL_BACKENDS)
+
+    assert BACKEND_COMPATIBILITY["rust"]["corelibs"] == "full"
+    assert BACKEND_COMPATIBILITY["rust"]["standard_library"] == "full"
 
 
 @pytest.mark.parametrize("backend", OFFICIAL_TARGETS)
