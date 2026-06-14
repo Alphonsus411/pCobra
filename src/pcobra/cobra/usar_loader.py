@@ -353,11 +353,22 @@ def formatear_ciclo_modulos_cobra_proyecto(
 
     ruta_canonica = canonicalizar_ruta_usar_proyecto(ruta_modulo)
     pila_origen = loading_stack if loading_stack is not None else _USAR_PROJECT_LOADING_STACK
-    pila = [canonicalizar_ruta_usar_proyecto(ruta) for ruta in pila_origen]
+    pila: list[Path] = []
+    for ruta in pila_origen:
+        ruta_pila = canonicalizar_ruta_usar_proyecto(ruta)
+        if not pila or pila[-1] != ruta_pila:
+            pila.append(ruta_pila)
+
     ciclo = [*pila, ruta_canonica]
-    inicio = ciclo.index(ruta_canonica)
+    try:
+        inicio = ciclo.index(ruta_canonica)
+    except ValueError:
+        inicio = max(0, len(ciclo) - 1)
+    ciclo_detectado = ciclo[inicio:]
+    if len(ciclo_detectado) > 50:
+        ciclo_detectado = [*ciclo_detectado[:49], ruta_canonica]
     return " -> ".join(
-        _formatear_ruta_ciclo_modulo(ruta, project_root) for ruta in ciclo[inicio:]
+        _formatear_ruta_ciclo_modulo(ruta, project_root) for ruta in ciclo_detectado
     )
 
 

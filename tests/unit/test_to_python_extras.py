@@ -42,7 +42,8 @@ def test_transpilar_usar():
     codigo = TranspiladorPython().generate_code([nodo])
     esperado = (
         IMPORTS
-        + "from cobra.usar_loader import obtener_modulo\n"
-        + "math = obtener_modulo('math')\n"
+        + "from pcobra.cobra.usar_loader import usar_modulo\n"
+        + "_usar_exports = usar_modulo('math')\n"
+        + "globals().update(dict(_usar_exports.get('simbolos', [])))\n"
     )
     assert codigo == esperado

@@ -19,7 +19,12 @@ def visit_import(self, nodo):
             ast = ast_cache[ruta_canonica]
         else:
             # cargar_ast_modulo ya maneja la lectura del archivo y el parseo
-            ast = cargar_ast_modulo(str(ruta_canonica), loading_stack=loading_stack)
+            ast = cargar_ast_modulo(
+                str(ruta_canonica),
+                modules_path=str(ruta_canonica.parent),
+                whitelist={ruta_canonica.parent},
+                loading_stack=loading_stack,
+            )
             ast_cache[ruta_canonica] = ast
 
         for subnodo in ast:
