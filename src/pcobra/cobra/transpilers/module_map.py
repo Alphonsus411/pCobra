@@ -14,7 +14,7 @@ from pcobra.cobra.stdlib_contract import get_contract_manifests
 
 logger = logging.getLogger(__name__)
 
-_LEGACY_BACKEND_KEYS = {"go", "java", "cpp", "asm", "wasm"}
+
 
 
 def _build_policy_error(
@@ -240,9 +240,7 @@ def _validate_public_backend_policy(data: Dict[str, Any]) -> None:
                 continue
             canonical = normalize_target_name(key)
             if canonical not in allowed:
-                if key in _LEGACY_BACKEND_KEYS:
-                    invalid_keys.append((key, "legacy_mapped_ok"))
-                elif canonical in allowed and canonical != key:
+                if canonical in allowed and canonical != key:
                     invalid_keys.append((key, "semantic_contradiction"))
                 else:
                     invalid_keys.append((key, "unknown_critical_key"))

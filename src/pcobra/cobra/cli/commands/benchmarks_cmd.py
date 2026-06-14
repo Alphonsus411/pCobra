@@ -10,7 +10,6 @@ from pathlib import Path
 
 from pcobra.cobra.transpilers.target_utils import target_label
 from pcobra.cobra.cli.target_policies import (
-    add_internal_legacy_targets_flag,
     parse_target,
 )
 
@@ -70,7 +69,6 @@ class BenchmarksCommand(BaseCommand):
             default="publico",
             help=_("Perfil de exposición: use 'avanzado' para comparativas multi-backend."),
         )
-        add_internal_legacy_targets_flag(parser)
         parser.set_defaults(cmd=self)
         return parser
 
@@ -85,27 +83,6 @@ class BenchmarksCommand(BaseCommand):
         """
         try:
             enforce_advanced_profile_policy(command=self.name, args=args)
-            legacy_script = Path("scripts/run_benchmarks.py")
-            if legacy_script.exists() and getattr(args, "backend", None) is None:
-                try:
-                    output = subprocess.check_output([sys.executable, str(legacy_script)], text=True)
-                    legacy_results = json.loads(output)
-                except subprocess.CalledProcessError:
-                    mostrar_error(_("Error ejecutando script de benchmarks"))
-                    return 3
-                salida_legacy: Path | None = getattr(args, "output", None)
-                if salida_legacy is not None:
-                    salida_legacy.write_text(json.dumps(legacy_results, indent=2), encoding="utf-8")
-                else:
-                    for res in legacy_results:
-                        mostrar_info(
-                            _("{backend}: tiempo {time}s, memoria {mem}KB").format(
-                                backend=res.get("backend", "?"),
-                                time=res.get("time", "?"),
-                                mem=res.get("memory_kb", "?"),
-                            )
-                        )
-                return 0
 
             results: list[dict[str, Any]] = []
             available_backends = tuple(benchmark_backends(BENCHMARK_BACKEND_METADATA))

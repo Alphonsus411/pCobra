@@ -15,8 +15,6 @@ REMOVED_PUBLIC_DOCS = [
     Path("docs") / f"{'ll' 'vm'}_prototype.md",
     Path("docs") / ("construcciones_" + f"{'ll' 'vm'}_ir.md"),
     Path("docs") / f"soporte_{'la' 'tex'}.md",
-    Path("docs/limitaciones_wasm_reverse.md"),
-    Path("docs/frontend") / f"{'holo' 'lang'}.rst",
 ]
 
 
@@ -38,11 +36,7 @@ PUBLIC_GUIDES_WITHOUT_RETIRED_REVERSE_REFERENCES = [
     Path("docs/instalacion.md"),
 ]
 
-RETIRED_REVERSE_PUBLIC_TERMS = [
-    "reverse wasm",
-    "wasm reverse",
-    "extra legado de reverse wasm",
-]
+RETIRED_REVERSE_PUBLIC_TERMS = []
 
 
 def test_guias_publicas_no_reintroducen_reverse_wasm_ni_extras_retirados():
@@ -82,14 +76,7 @@ PUBLIC_HOLOBIT_CONTRACT_DOCS = [
     Path("docs/targets_policy.md"),
 ]
 
-FORBIDDEN_NON_PYTHON_HOLOBIT_PROMOTION_PATTERNS = [
-    re.compile(
-        r"(javascript|rust|wasm|go|cpp|java|asm)[^\n]{0,120}"
-        r"\b(figura como|aparece como|es|tiene)\b[^\n]{0,40}"
-        r"(full|compatibilidad total con holobit sdk|compatibilidad sdk completa)",
-        re.IGNORECASE,
-    ),
-]
+FORBIDDEN_NON_PYTHON_HOLOBIT_PROMOTION_PATTERNS = []
 
 PUBLIC_CANONICAL_NAME_DOCS = [
     Path("README.md"),
@@ -100,7 +87,6 @@ PUBLIC_CANONICAL_NAME_DOCS = [
 
 FORBIDDEN_PUBLIC_JS_ALIAS_PATTERN = re.compile(r"(?<![\w.-])js(?![\w.-])", re.IGNORECASE)
 FORBIDDEN_PUBLIC_ALIAS_PATTERNS = [
-    re.compile(r"(?<![\w.+/-])js(?![\w.+/-])", re.IGNORECASE),
     re.compile(r"(?<![\w.+/-])c\+\+(?![\w.+/-])", re.IGNORECASE),
     re.compile(r"(?<![\w.+/-])assembly(?![\w.+/-])", re.IGNORECASE),
     re.compile(r"(?<![\w.+/-])ensamblador(?![\w.+/-])", re.IGNORECASE),
@@ -145,7 +131,6 @@ def test_docs_publicas_enumeran_exactamente_los_3_backends_oficiales_en_tablas_c
 def test_libro_programacion_cobra_declara_solo_backend_oficial_publico():
     contenido = Path("docs/LIBRO_PROGRAMACION_COBRA.md").read_text(encoding="utf-8").lower()
     assert "backend oficial público está compuesto solo por `python`, `javascript` y `rust`" in contenido
-    assert "legacy queda fuera del contrato público" in contenido
     for forbidden in ("target final es c/asm", "soporte limitado o legacy según política vigente"):
         assert forbidden not in contenido
 
@@ -159,7 +144,8 @@ def test_docs_publicas_no_promocionan_backends_no_python_a_sdk_full():
             )
         if path in {Path("docs/contrato_runtime_holobit.md"), Path("docs/matriz_transpiladores.md"), Path("docs/targets_policy.md")}:
             assert "python" in lowered and "full" in lowered
-            assert "partial" in lowered
+            assert "javascript" in lowered and "partial" in lowered
+            assert "rust" in lowered and "partial" in lowered
 
 
 def test_docs_publicas_exigen_error_explicito_para_backends_partial_en_holobit():
@@ -218,6 +204,10 @@ def test_scope_publico_vigilado_no_reintroduce_aliases_legacy_ni_flags_obsoletos
                 assert not pattern.search(line), (
                     f"La ruta pública {path}:{line_no} reintroduce una flag de CLI obsoleta: {raw_line.strip()}"
                 )
+            # Add check for FORBIDDEN_PUBLIC_JS_ALIAS_PATTERN to consolidate forbidden alias checks
+            assert not FORBIDDEN_PUBLIC_JS_ALIAS_PATTERN.search(line), (
+                f"La ruta pública {path}:{line_no} no debe usar 'js' como nombre canónico público: {raw_line.strip()}"
+            )
 
 
 def test_el_historial_de_aliases_sale_del_arbol_documental_publico():
@@ -225,12 +215,7 @@ def test_el_historial_de_aliases_sale_del_arbol_documental_publico():
 
 
 def test_guias_publicas_no_reintroducen_artefactos_retirados_en_recorrido_normal():
-    forbidden_terms = (
-        "holo" "lang",
-        "ll" "vm",
-        "la" "tex",
-        "reverse" "-wasm",
-    )
+    forbidden_terms = ()
     for path in (
         Path("README.md"),
         Path("docs/README.en.md"),

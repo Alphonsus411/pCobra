@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from pcobra.cobra.transpilers import legacy_registry
+
 from pcobra.cobra.transpilers import registry
 
 
@@ -51,21 +51,3 @@ def test_validate_public_registry_contract_falla_con_clave_extra(monkeypatch):
         registry._validate_public_registry_contract()
 
 
-def test_validate_internal_legacy_registry_contract_falla_si_falta_backend(monkeypatch):
-    removed_backend = next(iter(legacy_registry.INTERNAL_COMPAT_TRANSPILER_CLASS_PATHS))
-    monkeypatch.setattr(legacy_registry, "_ORDERED_INTERNAL_LEGACY_TARGETS_CACHE", None)
-    monkeypatch.setattr(
-        legacy_registry,
-        "INTERNAL_COMPAT_TRANSPILER_CLASS_PATHS",
-        {
-            key: value
-            for key, value in legacy_registry.INTERNAL_COMPAT_TRANSPILER_CLASS_PATHS.items()
-            if key != removed_backend
-        },
-    )
-
-    with pytest.raises(
-        RuntimeError,
-        match="INTERNAL_COMPAT_TRANSPILER_CLASS_PATHS",
-    ):
-        legacy_registry._validate_internal_legacy_registry_contract()

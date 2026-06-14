@@ -5,8 +5,6 @@ from argparse import ArgumentTypeError
 from pcobra.cobra.build import backend_pipeline
 from pcobra.cobra.cli.target_policies import (
     OFFICIAL_TRANSPILATION_TARGETS,
-    add_internal_legacy_targets_flag,
-    enabled_internal_legacy_targets,
     invalid_target_error,
     parse_target,
     parse_target_list,
@@ -157,7 +155,7 @@ class CompileCommand(BaseCommand):
 
     def register_subparser(self, subparsers):
         """Registra los argumentos del subcomando."""
-        lang_choices = list(get_lang_choices()) + list(enabled_internal_legacy_targets())
+        lang_choices = list(get_lang_choices())
         parser = subparsers.add_parser(
             self.name,
             help=_("Transpila un archivo"),
@@ -182,7 +180,6 @@ class CompileCommand(BaseCommand):
             type=parse_official_target_list,
             help=_("Lista de lenguajes separados por comas ({targets}).").format(targets=TARGETS_HELP),
         )
-        add_internal_legacy_targets_flag(parser)
         parser.set_defaults(cmd=self)
         return parser
 
@@ -331,3 +328,4 @@ class CompileCommand(BaseCommand):
         except Exception as e:
             mostrar_error(str(e))
             return 1
+

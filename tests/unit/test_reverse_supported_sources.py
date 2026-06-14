@@ -1,6 +1,6 @@
 import pytest
 
-from cobra.transpilers.reverse.from_java import ReverseFromJava
+
 from cobra.transpilers.reverse.from_js import ReverseFromJS
 from cobra.transpilers.reverse.from_python import ReverseFromPython
 from core.ast_nodes import (
@@ -53,33 +53,3 @@ def test_reverse_from_js_basic_function():
     assert isinstance(fn.cuerpo[0], NodoAsignacion)
     assert isinstance(fn.cuerpo[1], NodoRetorno)
 
-
-def test_reverse_from_java_basic_class_method():
-    try:
-        transpiler = ReverseFromJava()
-    except NotImplementedError:
-        pytest.skip("tree-sitter Java no disponible")
-
-    codigo = (
-        "class Foo { "
-        "int bar(int x) { "
-        "if (x > 0) { return x; } "
-        "return 0; "
-        "} "
-        "}"
-    )
-    ast = transpiler.generate_ast(codigo)
-
-    assert len(ast) == 1
-    clase = ast[0]
-    assert isinstance(clase, NodoClase)
-    assert clase.nombre == "Foo"
-    assert len(clase.metodos) == 1
-
-    metodo = clase.metodos[0]
-    assert isinstance(metodo, NodoMetodo)
-    assert metodo.nombre == "bar"
-    assert metodo.parametros == ["x"]
-    assert len(metodo.cuerpo) == 2
-    assert isinstance(metodo.cuerpo[0], NodoCondicional)
-    assert isinstance(metodo.cuerpo[1], NodoRetorno)

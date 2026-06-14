@@ -14,7 +14,6 @@ from pathlib import Path
 from typing import Final, Mapping
 
 from pcobra.cobra.architecture.backend_policy import PUBLIC_BACKENDS
-from pcobra.cobra.architecture.legacy_backend_lifecycle import ALL_BACKENDS
 from pcobra.cobra.cli.target_policies import (
     BEST_EFFORT_RUNTIME_TARGETS,
     NO_RUNTIME_TARGETS,
@@ -35,72 +34,15 @@ BENCHMARK_BACKEND_METADATA: Final[dict[str, dict[str, object]]] = {
         "run": ["{tmp}/prog_rs"],
         "runtime_policy": "official",
     },
-    "wasm": {
-        "ext": "wat",
-        "compile": ["wat2wasm", "{file}", "-o", "{tmp}/prog.wasm"],
-        "run": ["wasmtime", "{tmp}/prog.wasm"],
-        "runtime_policy": "transpilation_only",
-    },
-    "go": {
-        "ext": "go",
-        "run": ["go", "run", "{file}"],
-        "runtime_policy": "best_effort_non_public",
-    },
-    "cpp": {
-        "ext": "cpp",
-        "compile": ["g++", "{file}", "-O2", "-o", "{tmp}/prog_cpp"],
-        "run": ["{tmp}/prog_cpp"],
-        "runtime_policy": "official",
-    },
-    "java": {
-        "ext": "java",
-        "compile": ["javac", "{file}"],
-        "run": ["java", "-cp", "{tmp}", "Main"],
-        "runtime_policy": "best_effort_non_public",
-    },
-    "asm": {
-        "ext": "s",
-        "compile": ["gcc", "{file}", "-o", "{tmp}/prog_asm"],
-        "run": ["{tmp}/prog_asm"],
-        "runtime_policy": "transpilation_only",
-    },
 }
 
 BINARY_BENCHMARK_METADATA: Final[dict[str, dict[str, object]]] = {
-    "cpp": {
-        "ext": "cpp",
-        "compile": ["g++", "{file}", "-O2", "-o", "{tmp}/prog_cpp"],
-        "run": ["{tmp}/prog_cpp"],
-        "bin": "{tmp}/prog_cpp",
-        "runtime_policy": "official",
-    },
     "rust": {
         "ext": "rs",
         "compile": ["rustc", "{file}", "-O", "-o", "{tmp}/prog_rs"],
         "run": ["{tmp}/prog_rs"],
         "bin": "{tmp}/prog_rs",
         "runtime_policy": "official",
-    },
-    "java": {
-        "ext": "java",
-        "compile": ["javac", "{file}"],
-        "run": ["java", "-cp", "{tmp}", "Main"],
-        "bin": "{tmp}/Main.class",
-        "runtime_policy": "best_effort_non_public",
-    },
-    "asm": {
-        "ext": "s",
-        "compile": ["gcc", "{file}", "-o", "{tmp}/prog_asm"],
-        "run": ["{tmp}/prog_asm"],
-        "bin": "{tmp}/prog_asm",
-        "runtime_policy": "transpilation_only",
-    },
-    "wasm": {
-        "ext": "wat",
-        "compile": ["wat2wasm", "{file}", "-o", "{tmp}/prog.wasm"],
-        "run": ["wasmtime", "{tmp}/prog.wasm"],
-        "bin": "{tmp}/prog.wasm",
-        "runtime_policy": "transpilation_only",
     },
 }
 
@@ -138,8 +80,8 @@ def validate_local_targets_policy(repo_root: Path) -> None:
 def validate_backend_metadata(backends: Mapping[str, object], *, context: str) -> None:
     """Falla rápido si falta metadata para backends conocidos o sobran claves."""
     configured = tuple(backends.keys())
-    missing = tuple(target for target in ALL_BACKENDS if target not in configured)
-    extras = tuple(target for target in configured if target not in ALL_BACKENDS)
+    missing = tuple(target for target in PUBLIC_BACKENDS if target not in configured)
+    extras = tuple(target for target in configured if target not in PUBLIC_BACKENDS)
     if missing or extras:
         raise RuntimeError(
             "Metadata de benchmarks fuera de contrato en {context}: missing={missing}; extras={extras}; "
@@ -147,7 +89,7 @@ def validate_backend_metadata(backends: Mapping[str, object], *, context: str) -
                 context=context,
                 missing=missing or "∅",
                 extras=extras or "∅",
-                expected=ALL_BACKENDS,
+                expected=PUBLIC_BACKENDS,
                 current=configured,
             )
         )
@@ -183,3 +125,5 @@ def executable_benchmark_backends(
     if include_experimental:
         allowed.extend(BEST_EFFORT_BENCHMARK_RUNTIME_TARGETS)
     return target_cli_choices(tuple(target for target in available_targets if target in allowed))
+
+

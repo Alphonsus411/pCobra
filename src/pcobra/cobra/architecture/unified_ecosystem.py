@@ -16,7 +16,6 @@ from dataclasses import dataclass
 from typing import Final
 
 from pcobra.cobra.architecture.backend_policy import PUBLIC_BACKENDS
-from pcobra.cobra.internal_compat.legacy_contracts import INTERNAL_BACKENDS
 
 
 OFFICIAL_USER_LANGUAGE: Final[str] = "cobra"
@@ -249,16 +248,6 @@ def validate_unified_ecosystem_contract() -> None:
             "El blueprint unificado debe usar exactamente PUBLIC_BACKENDS "
             f"({PUBLIC_BACKENDS}), actual={OFFICIAL_EXECUTION_BACKENDS}."
         )
-
-    # Evita que el inventario de retiro diverja de los legados declarados.
-    missing = tuple(sorted(set(INTERNAL_BACKENDS) - set(LEGACY_BACKEND_REMOVAL_CANDIDATES)))
-    extras = tuple(sorted(set(LEGACY_BACKEND_REMOVAL_CANDIDATES) - set(INTERNAL_BACKENDS)))
-    if missing or extras:
-        raise RuntimeError(
-            "Inventario legacy inconsistente. "
-            f"missing={missing or '∅'} extras={extras or '∅'}"
-        )
-
 
 validate_unified_ecosystem_contract()
 

@@ -21,11 +21,6 @@ En particular:
 - Backends públicos: `python`, `javascript`, `rust`.
 - Módulos stdlib públicos: `cobra.core`, `cobra.datos`, `cobra.web`, `cobra.system`.
 
-### Interno (no contractual)
-
-- Implementación de compilación/transpilación: lexer, parser, AST, IR, adapters y transpiladores internos.
-- Backends internos/legacy definidos en `INTERNAL_BACKENDS`.
-
 
 ## Tiers oficiales de soporte
 
@@ -85,7 +80,6 @@ Cualquier cambio que amplíe o reduzca la API pública estable (comandos, backen
 ## Contrato de arranque (startup)
 
 - En rutas de arranque públicas (importación de pcobra y comandos públicos de arranque como repl/run/test) **solo** se pueden inicializar por defecto los backends `python`, `javascript`, `rust`.
-- Los backends legacy (`go`, `cpp`, `java`, `wasm`, `asm`) quedan restringidos a rutas lazy/opt-in de compatibilidad interna.
 - Cualquier regresión de carga eager de backends legacy en arranque debe fallar por guardas de test/CI.
 
 Los backends retirados no forman parte del árbol operativo público; solo pueden conservarse bajo compatibilidad interna.

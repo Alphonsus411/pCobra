@@ -8,7 +8,10 @@ sys.path.append(str(Path(__file__).resolve().parent.parent / "src"))
 
 from pcobra.cobra.transpilers.transpiler.to_python import TranspiladorPython
 from pcobra.cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
-from pcobra.cobra.transpilers.transpiler.to_cpp import TranspiladorCPP
+try:
+    from pcobra.cobra.transpilers.transpiler.to_cpp import TranspiladorCPP
+except ImportError:
+    TranspiladorCPP = None
 from pcobra.cobra.backends.python_adapter import PythonAdapter
 from pcobra.core.ast_nodes import (
     NodoValor,

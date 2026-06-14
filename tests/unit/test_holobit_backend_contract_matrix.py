@@ -49,36 +49,6 @@ HOOK_CALL_MARKERS = {
         "transformar": 'cobra_runtime_expect(cobra_transformar(&hb, &format!("{}", "rotar"), &[format!("{}", 90)]));',
         "graficar": 'cobra_runtime_expect(cobra_graficar(&hb));',
     },
-    "wasm": {
-        "holobit": "(drop (call $cobra_holobit (i32.const 1)))",
-        "proyectar": "(drop (call $cobra_proyectar (local.get $hb) (i32.const 0)))",
-        "transformar": "(drop (call $cobra_transformar (local.get $hb) (i32.const 0) (i32.const 1)))",
-        "graficar": "(drop (call $cobra_graficar (local.get $hb)))",
-    },
-    "go": {
-        "holobit": "hb := cobra_holobit([]float64{1, 2, 3})",
-        "proyectar": 'cobra_proyectar(hb, "2d")',
-        "transformar": 'cobra_transformar(hb, "rotar", 90)',
-        "graficar": "cobra_graficar(hb)",
-    },
-    "cpp": {
-        "holobit": "auto hb = cobra_holobit({ 1, 2, 3 });",
-        "proyectar": 'cobra_proyectar(hb, "2d");',
-        "transformar": 'cobra_transformar(hb, "rotar", {cobra_runtime_arg(90)});',
-        "graficar": "cobra_graficar(hb);",
-    },
-    "java": {
-        "holobit": "Object hb = cobra_holobit(new double[]{1, 2, 3});",
-        "proyectar": 'cobra_proyectar(hb, "2d");',
-        "transformar": 'cobra_transformar(hb, "rotar", 90);',
-        "graficar": "cobra_graficar(hb);",
-    },
-    "asm": {
-        "holobit": "HOLOBIT hb [1, 2, 3]",
-        "proyectar": "cobra_proyectar:",
-        "transformar": "cobra_transformar:",
-        "graficar": "cobra_graficar:",
-    },
 }
 
 
@@ -182,7 +152,6 @@ def test_contrato_holobit_y_sdk_no_admite_backends_legacy_ni_promociones_full_fu
     assert OFFICIAL_TARGETS == ("python", "javascript", "rust")
     assert set(BACKEND_COMPATIBILITY) == set(OFFICIAL_TARGETS)
     assert not validate_python_policy_literals(tuple(OFFICIAL_TARGETS))
-    assert "go" not in BACKEND_COMPATIBILITY
     assert not validate_public_documentation_alignment(tuple(OFFICIAL_TARGETS), ("python", "javascript", "java"))
 
 def test_only_python_is_full_for_sdk_contract_features():
@@ -221,7 +190,7 @@ def test_matrix_define_niveles_validos_por_target_oficial(backend: str):
 def test_cli_runtime_message_no_promociona_sdk_completo_fuera_de_python():
     message = build_runtime_capability_message(
         capability="ejecución en contenedor",
-        allowed_targets=("python", "javascript", "cpp", "rust"),
+        allowed_targets=("python", "javascript", "rust"),
     ).lower()
     assert "compatibilidad sdk completa: python" in message
     for backend in OFFICIAL_TARGETS:

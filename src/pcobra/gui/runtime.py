@@ -1,14 +1,10 @@
 """Runtime compartido para las interfaces GUI de Cobra."""
 
-from __future__ import annotations
-
-import io
-import re
-from dataclasses import dataclass
-from pathlib import Path
-from contextlib import redirect_stderr, redirect_stdout
-from functools import lru_cache
 from typing import Any
+import flet as ft
+from pathlib import Path
+from functools import lru_cache
+from dataclasses import dataclass
 
 from pcobra.cobra.architecture.backend_policy import PUBLIC_BACKENDS
 
@@ -236,6 +232,36 @@ def crear_salida_seleccionable(ft: Any, **kwargs: Any) -> Any:
     return flet_text(ft, **opciones)
 
 
+def crear_arbol_directorios(ft: Any, *, on_click: Any, root_path: Path | None = None) -> Any:
+    """Crea un componente de árbol de directorios para la GUI."""
+    if root_path is None:
+        root_path = Path(".").resolve()
+
+    def _crear_nodo_directorio(path: Path) -> Any:
+        if path.is_dir():
+            children = []
+            for entry in listar_directorio_cobra(path):
+                children.append(_crear_nodo_directorio(entry))
+            return ft.ExpansionTile(
+                title=ft.Text(path.name),
+                leading=ft.Icon(ft.icons.FOLDER),
+                controls=children,
+            )
+        else:
+            return ft.ListTile(
+                title=ft.Text(path.name),
+                leading=ft.Icon(ft.icons.INSERT_DRIVE_FILE),
+                data=str(path),
+                on_click=on_click,
+            )
+
+    elementos_arbol = []
+    for entrada in listar_directorio_cobra(root_path):
+        elementos_arbol.append(_crear_nodo_directorio(entrada))
+
+    return ft.Column(elementos_arbol, scroll=ft.ScrollMode.ALWAYS)
+
+
 def crear_selector_target(ft: Any, *, lenguajes: list[str] | None = None) -> Any:
     """Crea el selector de target compartido para transpilación en GUI."""
 
@@ -295,6 +321,101 @@ def crear_handler_ejecucion(
             page.update()
 
     return ejecutar_handler
+
+
+def _guardar_archivo(page: Any, entrada: Any, estado_archivo: GuiFileState, ruta: Path) -> None:
+    """Guarda el contenido del editor en la ruta especificada."""
+    try:
+        contenido_guardado = escribir_archivo_texto(ruta, entrada.value)
+        estado_archivo.ruta = ruta
+        estado_archivo.contenido_cargado = contenido_guardado
+        estado_archivo.cambios_sin_guardar = False
+        page.snack_bar.open = True
+        page.snack_bar.content = ft.Text(f"Archivo guardado en {ruta}")
+    except Exception as exc:
+        page.snack_bar.open = True
+        page.snack_bar.content = ft.Text(f"Error al guardar: {exc}")
+    finally:
+        page.update()
+
+
+def crear_handler_guardar(
+    *,
+    entrada: Any,
+    estado_archivo: GuiFileState,
+    page: Any,
+) -> Any:
+    """Crea el handler para guardar el archivo actual."""
+
+    def guardar_handler(_e: Any) -> None:
+        if estado_archivo.ruta:
+            _guardar_archivo(page, entrada, estado_archivo, estado_archivo.ruta)
+        else:
+            # Si no hay ruta, invocar "Guardar como"
+            crear_handler_guardar_como(entrada=entrada, estado_archivo=estado_archivo, page=page)(_e)
+
+    return guardar_handler
+
+
+def crear_handler_guardar_como(
+    *,
+    entrada: Any,
+    estado_archivo: GuiFileState,
+    page: Any,
+) -> Any:
+    """Crea el handler para guardar el archivo con un nuevo nombre/ruta."""
+
+    def guardar_como_handler(_e: Any) -> None:
+        def on_file_dialog_result(e: ft.FilePickerResultEvent):
+            if e.path:
+                _guardar_archivo(page, entrada, estado_archivo, Path(e.path))
+
+        file_picker = ft.FilePicker(on_result=on_file_dialog_result)
+        page.overlay.append(file_picker)
+        page.update()
+        file_picker.save_file(
+            dialog_title="Guardar archivo Cobra",
+            file_name="nuevo_archivo.cobra",
+            allowed_extensions=["cobra", "co"],
+        )
+
+    return guardar_como_handler
+
+
+def crear_handler_sugerencias_agix(
+    *,
+    entrada: Any,
+    salida: Any,
+    page: Any,
+) -> Any:
+    """Crea el handler para generar sugerencias de código con Agix."""
+
+    def sugerencias_agix_handler(_e: Any) -> None:
+        try:
+            from agix.reasoning.basic import Reasoner
+            from agix.models.code_suggestion import CodeSuggestion
+            from agix.models.code_document import CodeDocument
+
+            codigo = normalizar_codigo(entrada.value)
+            documento = CodeDocument(code=codigo, language="cobra")
+            reasoner = Reasoner()
+            sugerencias: list[CodeSuggestion] = reasoner.suggest(documento)
+
+            if sugerencias:
+                salida.value = "Sugerencias de Agix:\n" + "\n".join(
+                    f"- {s.suggestion} (Precisión: {s.precision:.2f}, Interpretabilidad: {s.interpretability:.2f})"
+                    for s in sugerencias
+                )
+            else:
+                salida.value = "Agix no encontró sugerencias para el código actual."
+        except ModuleNotFoundError:
+            salida.value = "Agix no está instalado. Instálalo con 'pip install agix' para usar esta función."
+        except Exception as exc:
+            salida.value = f"Error al generar sugerencias con Agix: {exc}"
+        finally:
+            page.update()
+
+    return sugerencias_agix_handler
 
 
 def normalizar_codigo(codigo: str | None) -> str:

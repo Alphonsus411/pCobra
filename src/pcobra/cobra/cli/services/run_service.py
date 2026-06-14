@@ -11,10 +11,6 @@ from pcobra.cobra.cli.execution_pipeline import (
     resolver_interpretador_cls,
 )
 from pcobra.cobra.cli.i18n import _
-from pcobra.cobra.cli.internal_compat.legacy_core_sandbox import (
-    LEGACY_SANDBOX_COMPAT_FLAG,
-    load_legacy_core_sandbox,
-)
 from pcobra.cobra.cli.mode_policy import validar_politica_modo
 from pcobra.cobra.cli.services.contracts import RunRequest, normalize_run_request
 from pcobra.cobra.cli.services.format_service import format_code_with_black
@@ -31,29 +27,9 @@ from pcobra.cobra.core.runtime import (
 )
 from pcobra.cobra.transpilers import module_map
 
-try:
-    from pcobra.cobra.core import sandbox as sandbox_module
-except ModuleNotFoundError as canon_exc:  # pragma: no cover
-    sandbox_module = load_legacy_core_sandbox(canonical_error=canon_exc)
+from pcobra.cobra.core import sandbox as sandbox_module
 
 RUNTIME_MANAGER = RuntimeManager()
-
-
-def _importar_modulo_sandbox() -> Any:
-    """Compatibilidad para tests/adaptadores legacy; evita import dinámico en run."""
-    return sandbox_module
-
-
-def ejecutar_en_sandbox(*args: Any, **kwargs: Any) -> Any:
-    return sandbox_module.ejecutar_en_sandbox(*args, **kwargs)
-
-
-def ejecutar_en_contenedor(*args: Any, **kwargs: Any) -> Any:
-    return sandbox_module.ejecutar_en_contenedor(*args, **kwargs)
-
-
-def validar_dependencias(*args: Any, **kwargs: Any) -> Any:
-    return sandbox_module.validar_dependencias(*args, **kwargs)
 
 
 def detectar_raiz_proyecto_desde_archivo(archivo: str) -> str:
@@ -100,7 +76,7 @@ class RunService:
             _abi, contrato, _bridge = RUNTIME_MANAGER.validate_command_runtime(
                 "python", command="run", sandbox=sandbox, containerized=False
             )
-            validar_dependencias(contrato.language, module_map.get_toml_map(), base_dir=raiz_proyecto)
+            sandbox_module.validar_dependencias(contrato.language, module_map.get_toml_map(), base_dir=raiz_proyecto)
         except (ValueError, FileNotFoundError) as dep_err:
             mostrar_error(f"Error de dependencias: {dep_err}", registrar_log=False)
             return 1
@@ -118,7 +94,7 @@ class RunService:
 
         def ejecutar() -> int:
             if sandbox:
-                return self.ejecutar_en_sandbox(
+                return sandbox_module.ejecutar_en_sandbox(
                     codigo,
                     seguro,
                     extra_validators,
@@ -196,7 +172,7 @@ class RunService:
         )
 
         try:
-            salida = ejecutar_en_sandbox(script, allow_insecure_fallback=allow_insecure_fallback)
+            salida = sandbox_module.ejecutar_en_sandbox(script, allow_insecure_fallback=allow_insecure_fallback)
             if salida:
                 mostrar_info(str(salida))
             return 0
@@ -208,26 +184,6 @@ class RunService:
             if "RestrictedPython" in str(e):
                 mensaje += "\nSugerencia: instala RestrictedPython para el modo seguro (por ejemplo: pip install RestrictedPython)."
             mostrar_error(mensaje, registrar_log=False)
-            return 1
-
-    def ejecutar_en_contenedor(self, codigo: str, contenedor: str) -> int:
-        try:
-            RUNTIME_MANAGER.validate_command_runtime(
-                contenedor,
-                command="run",
-                sandbox=False,
-                containerized=True,
-            )
-            backend_runtime = resolve_docker_backend(contenedor)
-            salida = ejecutar_en_contenedor(codigo, backend_runtime)
-            if salida:
-                mostrar_info(str(salida))
-            return 0
-        except ValueError as e:
-            mostrar_error(str(e), registrar_log=False)
-            return 1
-        except RuntimeError as e:
-            mostrar_error(f"Error ejecutando en contenedor Docker: {e}", registrar_log=False)
             return 1
 
     def ejecutar_normal(

@@ -1,5 +1,4 @@
 from pcobra.cobra.architecture.backend_policy import PUBLIC_BACKENDS
-from pcobra.cobra.internal_compat.legacy_contracts import INTERNAL_BACKENDS
 from pcobra.cobra.architecture.unified_ecosystem import (
     IMPORT_POLICY_BLUEPRINT,
     LEGACY_BACKEND_REMOVAL_CANDIDATES,

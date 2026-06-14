@@ -19,7 +19,6 @@ except ModuleNotFoundError as exc:  # pragma: no cover - depende de tree-sitter
 else:
     _LANGUAGE_PACKAGES = {
         "javascript": "tree_sitter_javascript",
-        "java": "tree_sitter_java",
     }
 
     class TreeSitterError(Exception):

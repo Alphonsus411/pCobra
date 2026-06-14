@@ -1,6 +1,6 @@
 # Contrato runtime Holobit público
 
-Este documento público define el contrato Holobit únicamente para el BackEnd oficial de Cobra: `python`, `javascript` y `rust`. Los targets legacy (`go`, `cpp`, `java`, `wasm`, `asm`) quedan fuera del contrato público y se mantienen solo en rutas internas de compatibilidad/migración.
+Este documento público define el contrato Holobit únicamente para el BackEnd oficial de Cobra: `python`, `javascript` y `rust`.
 
 ## Reglas públicas
 

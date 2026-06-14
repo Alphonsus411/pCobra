@@ -1,7 +1,6 @@
 import sys
 from types import ModuleType
 
-import cobra.cli.commands.execute_cmd as execute_cmd
 import pcobra.jupyter_kernel as jupyter_kernel
 import pytest
 
@@ -31,68 +30,6 @@ def test_execute_cmd_prioriza_sandbox_canonico(monkeypatch):
 
     assert resolved is canonical
     assert calls == ["pcobra.core.sandbox"]
-
-
-def test_execute_cmd_hace_fallback_legacy_si_falta_canonico(monkeypatch, caplog):
-    calls: list[str] = []
-    legacy = _sandbox_mod()
-    legacy.__name__ = "core.sandbox"
-    monkeypatch.setenv(execute_cmd.LEGACY_SANDBOX_COMPAT_FLAG, "1")
-
-    def fake_import(name: str):
-        calls.append(name)
-        if name == "pcobra.core.sandbox":
-            raise ModuleNotFoundError(name)
-        if name == "core.sandbox":
-            return legacy
-        raise ModuleNotFoundError(name)
-
-    monkeypatch.setattr(execute_cmd.importlib, "import_module", fake_import)
-    with caplog.at_level("WARNING"):
-        resolved = execute_cmd._importar_modulo_sandbox()
-
-    assert resolved is legacy
-    assert calls == ["pcobra.core.sandbox", "core.sandbox"]
-    assert "legacy_core_sandbox_fallback" in caplog.text
-    assert any(
-        getattr(record, "event", "") == "legacy_core_sandbox_fallback"
-        and getattr(record, "compatibility_flag", "")
-        == execute_cmd.LEGACY_SANDBOX_COMPAT_FLAG
-        for record in caplog.records
-    )
-
-
-def test_execute_cmd_bloquea_fallback_legacy_si_flag_inactiva(monkeypatch):
-    def fake_import(name: str):
-        if name == "pcobra.core.sandbox":
-            raise ModuleNotFoundError(name)
-        if name == "core.sandbox":
-            return _sandbox_mod()
-        raise ModuleNotFoundError(name)
-
-    monkeypatch.setattr(execute_cmd.importlib, "import_module", fake_import)
-    monkeypatch.delenv(execute_cmd.LEGACY_SANDBOX_COMPAT_FLAG, raising=False)
-
-    with pytest.raises(ImportError, match="deshabilitado por defecto"):
-        execute_cmd._importar_modulo_sandbox()
-
-
-def test_execute_cmd_rechaza_fallback_legacy_fuera_de_pcobra(monkeypatch):
-    legacy = _sandbox_mod()
-    legacy.__name__ = "core.sandbox"
-    legacy.__file__ = "/tmp/fake/core/sandbox.py"
-    monkeypatch.setenv(execute_cmd.LEGACY_SANDBOX_COMPAT_FLAG, "1")
-
-    def fake_import(name: str):
-        if name == "pcobra.core.sandbox":
-            raise ModuleNotFoundError(name)
-        if name == "core.sandbox":
-            return legacy
-        raise ModuleNotFoundError(name)
-
-    monkeypatch.setattr(execute_cmd.importlib, "import_module", fake_import)
-    with pytest.raises(ImportError, match="no apunta al paquete esperado"):
-        execute_cmd._importar_modulo_sandbox()
 
 
 def test_execute_cmd_no_usa_core_falso_inyectado_en_sys_path(monkeypatch, tmp_path):

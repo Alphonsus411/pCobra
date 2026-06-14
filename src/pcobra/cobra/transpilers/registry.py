@@ -67,40 +67,7 @@ _ORDERED_OFFICIAL_TARGETS: Final[tuple[str, ...]] = _validate_complete_registry_
 _OFFICIAL_TARGETS_SET: Final[frozenset[str]] = frozenset(_ORDERED_OFFICIAL_TARGETS)
 
 
-def _legacy_registry_module():
-    """Import diferido del inventario legacy interno (ruta opcional/no pública)."""
-    return import_module("pcobra.cobra.transpilers.legacy_registry")
 
-
-def ordered_internal_legacy_transpiler_paths() -> tuple[tuple[str, tuple[str, str]], ...]:
-    return _legacy_registry_module().ordered_internal_legacy_transpiler_paths()
-
-
-def ordered_internal_legacy_transpiler_entries() -> tuple[tuple[str, tuple[str, str], str], ...]:
-    return _legacy_registry_module().ordered_internal_legacy_transpiler_entries()
-
-
-def internal_legacy_transpiler_lifecycle_status() -> dict[str, str]:
-    return _legacy_registry_module().internal_legacy_transpiler_lifecycle_status()
-
-
-INTERNAL_LEGACY_TRANSPILER_LIFECYCLE_STATUS = internal_legacy_transpiler_lifecycle_status()
-
-
-def build_internal_legacy_transpilers() -> dict[str, type]:
-    return _legacy_registry_module().build_internal_legacy_transpilers()
-
-
-def _validate_internal_legacy_registry_contract() -> tuple[str, ...]:
-    return _legacy_registry_module()._validate_internal_legacy_registry_contract()
-
-
-def _ordered_internal_legacy_targets() -> tuple[str, ...]:
-    return _legacy_registry_module()._ordered_internal_legacy_targets()
-
-
-def _internal_compat_legacy_contracts():
-    return _legacy_registry_module()._internal_compat_legacy_contracts()
 
 
 _PLUGIN_TRANSPILERS: dict[str, type] = {}
@@ -340,10 +307,4 @@ def official_transpiler_registry_literal() -> dict[str, tuple[str, str]]:
     return {target: value for target, value in ordered_official_transpiler_paths()}
 
 
-def __getattr__(name: str):
-    if name in {
-        "INTERNAL_COMPAT_TRANSPILER_CLASS_PATHS",
-        "INTERNAL_LEGACY_TRANSPILER_CLASS_PATHS",
-    }:
-        return getattr(_legacy_registry_module(), name)
-    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+

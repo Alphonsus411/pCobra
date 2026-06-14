@@ -3,7 +3,6 @@ from cobra.cli.public_command_policy import (
     PROFILE_PUBLIC,
     PUBLIC_COMMANDS_CONTRACT,
     filter_commands_for_profile,
-    filter_legacy_commands_for_profile,
 )
 
 

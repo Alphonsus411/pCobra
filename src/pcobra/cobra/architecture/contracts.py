@@ -15,7 +15,6 @@ from dataclasses import dataclass
 from typing import Final
 
 from pcobra.cobra.architecture.backend_policy import PUBLIC_BACKENDS
-from pcobra.cobra.architecture.legacy_backend_lifecycle import INTERNAL_BACKENDS
 from pcobra.cobra.bindings.contract import BindingRoute
 
 

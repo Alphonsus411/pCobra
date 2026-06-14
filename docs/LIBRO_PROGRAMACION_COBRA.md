@@ -123,7 +123,6 @@ altura = 1.68
 - `desde`
 - `eliminar`
 - `elseif`
-- `enum`
 - `enumeracion`
 - `esperar`
 - `estructura`
@@ -158,14 +157,11 @@ altura = 1.68
 - `sino`
 - `sino si`
 - `switch`
-- `throw`
 - `transformar`
-- `try`
 - `usar`
 - `var`
 - `variable`
 - `y`
-- `yield`
 - `{`
 - `||`
 - `}`
@@ -276,7 +272,7 @@ impuesto = 0.21
 mi variable = 10
 ```
 
-**Compatibilidad por backend:** el BackEnd oficial público está compuesto solo por `python`, `javascript` y `rust`; legacy queda fuera del contrato público. Evita depender de detalles de targets no oficiales.
+**Compatibilidad por backend:** el BackEnd oficial público está compuesto solo por `python`, `javascript` y `rust`. Evita depender de detalles de targets no oficiales.
 
 ### 3.2 Expresiones
 
@@ -436,16 +432,6 @@ usar "numero"
 imprimir(es_finito(10))
 ```
 
-Ejemplo de rechazo de módulo externo en REPL:
-
-```cobra
-usar "numpy"  # módulos externos no soportados en REPL
-```
-
-**Anti-ejemplo frecuente:** dependencia circular entre módulos hermanos.
-
-**Compatibilidad por backend:** estable en runtime principal; rutas de módulo deben ser simples para targets con empaquetado estricto.
-
 ### 3.7 Errores
 
 **Definición corta:** estrategias para reportar y recuperar fallos en tiempo de ejecución.
@@ -453,8 +439,8 @@ usar "numpy"  # módulos externos no soportados en REPL
 **Sintaxis formal simplificada:**
 
 ```text
-try_catch := ("intentar"|"try") ":" bloque ("capturar"|"catch") IDENTIFICADOR ":" bloque
-lanzar := ("lanzar"|"throw") expr
+try_catch := "intentar" ":" bloque "capturar" IDENTIFICADOR ":" bloque
+lanzar := "lanzar" expr
 ```
 
 **Ejemplos:**
@@ -788,67 +774,39 @@ Cobra incluye módulos de soporte para flujos asíncronos y coordinación.
 
 ## 10) CLI de Cobra para desarrollo diario
 
-<!-- BEGIN: AUTO-CLI-TABLE -->
-### Tabla CLI actualizada (autogenerado)
+La CLI de Cobra es la herramienta principal para interactuar con el lenguaje. Ofrece comandos para ejecutar, construir, probar y gestionar módulos.
 
-| Comando | Capacidad | Clase | Archivo |
-|---|---|---|---|
-| `agix` | `-` | `AgixCommand` | `src/pcobra/cobra/cli/commands/agix_cmd.py` |
-| `bench` | `-` | `BenchCommand` | `src/pcobra/cobra/cli/commands/bench_cmd.py` |
-| `benchmarks` | `-` | `BenchmarksCommand` | `src/pcobra/cobra/cli/commands/benchmarks_cmd.py` |
-| `benchmarks2` | `-` | `BenchmarksV2Command` | `src/pcobra/cobra/cli/commands/benchmarks2_cmd.py` |
-| `benchthreads` | `-` | `BenchThreadsCommand` | `src/pcobra/cobra/cli/commands/benchthreads_cmd.py` |
-| `benchtranspilers` | `-` | `BenchTranspilersCommand` | `src/pcobra/cobra/cli/commands/bench_transpilers_cmd.py` |
-| `build` | `codegen` | `BuildCommandV2` | `src/pcobra/cobra/cli/commands_v2/build_cmd.py` |
-| `compilar` | `codegen` | `CompileCommand` | `src/pcobra/cobra/cli/commands/compile_cmd.py` |
-| `contenedor` | `-` | `ContainerCommand` | `src/pcobra/cobra/cli/commands/container_cmd.py` |
-| `crear` | `-` | `CrearCommand` | `src/pcobra/cobra/cli/commands/crear_cmd.py` |
-| `dependencias` | `-` | `DependenciasCommand` | `src/pcobra/cobra/cli/commands/dependencias_cmd.py` |
-| `docs` | `-` | `DocsCommand` | `src/pcobra/cobra/cli/commands/docs_cmd.py` |
-| `ejecutar` | `execute` | `ExecuteCommand` | `src/pcobra/cobra/cli/commands/execute_cmd.py` |
-| `empaquetar` | `-` | `EmpaquetarCommand` | `src/pcobra/cobra/cli/commands/empaquetar_cmd.py` |
-| `gui` | `-` | `FletCommand` | `src/pcobra/cobra/cli/commands/flet_cmd.py` |
-| `init` | `-` | `InitCommand` | `src/pcobra/cobra/cli/commands/init_cmd.py` |
-| `interactive` | `-` | `InteractiveCommand` | `src/pcobra/cobra/cli/commands/interactive_cmd.py` |
-| `jupyter` | `-` | `JupyterCommand` | `src/pcobra/cobra/cli/commands/jupyter_cmd.py` |
-| `legacy` | `-` | `LegacyCommandGroupV2` | `src/pcobra/cobra/cli/commands_v2/legacy_cmd.py` |
-| `mod` | `-` | `ModCommandV2` | `src/pcobra/cobra/cli/commands_v2/mod_cmd.py` |
-| `modulos` | `-` | `ModulesCommand` | `src/pcobra/cobra/cli/commands/modules_cmd.py` |
-| `paquete` | `-` | `PaqueteCommand` | `src/pcobra/cobra/cli/commands/package_cmd.py` |
-| `qa-validar` | `codegen` | `QaValidarCommand` | `src/pcobra/cobra/cli/commands/qa_validar_cmd.py` |
-| `qualia` | `-` | `QualiaCommand` | `src/pcobra/cobra/cli/commands/qualia_cmd.py` |
-| `run` | `execute` | `RunCommandV2` | `src/pcobra/cobra/cli/commands_v2/run_cmd.py` |
-| `test` | `codegen` | `TestCommandV2` | `src/pcobra/cobra/cli/commands_v2/test_cmd.py` |
-| `validar-sintaxis` | `codegen` | `ValidarSintaxisCommand` | `src/pcobra/cobra/cli/commands/validar_sintaxis_cmd.py` |
-| `verificar` | `codegen` | `VerifyCommand` | `src/pcobra/cobra/cli/commands/verify_cmd.py` |
-<!-- END: AUTO-CLI-TABLE -->
+Los comandos públicos disponibles son:
+
+*   ``run``: Ejecuta un archivo Cobra.
+*   ``build``: Compila un proyecto Cobra.
+*   ``test``: Ejecuta las pruebas de un proyecto Cobra.
+*   ``mod``: Gestiona los módulos y dependencias del proyecto.
+*   ``repl``: Inicia una sesión interactiva (Read-Eval-Print Loop).
+
+Para más detalles sobre cada comando, puedes usar ``cobra <comando> --help``.
 
 ### 10.1 IDLE gráfico con gestión de archivos
 
-`cobra gui` abre el IDLE basado en Flet. Además de ejecutar código, mostrar tokens y mostrar AST, la interfaz integra una barra de archivo con **Nuevo**, **Abrir**, **Guardar**, **Guardar como** y **Recargar**. El editor mantiene la ruta activa, el contenido cargado originalmente y una bandera de cambios sin guardar.
+Cobra incluye un entorno de desarrollo integrado (IDLE) gráfico basado en Flet, que permite escribir, ejecutar y transpilar código de forma interactiva. Este IDLE ha sido mejorado con las siguientes funcionalidades:
 
-El panel lateral funciona como árbol de directorios ligero: muestra carpetas y archivos Cobra con extensiones `.co` y `.cobra`, que son las extensiones documentadas para scripts y paquetes. Seleccionar un archivo carga su texto en el editor sin validar sintaxis. Guardar escribe exactamente el contenido normalizado visible en el editor y evita ejecutar lexer o parser, por lo que también puede persistir borradores incompletos o temporalmente inválidos.
+*   **Editor de código:** Un área principal para escribir y editar tu código Cobra.
+*   **Gestión de archivos:**
+    *   **Guardar:** Guarda el archivo actual en su ubicación.
+    *   **Guardar como:** Permite guardar el contenido del editor en una nueva ubicación o con un nuevo nombre.
+    *   **Árbol de directorios:** Una vista lateral que muestra la estructura de archivos y carpetas de tu proyecto. Puedes hacer clic en los archivos `.co` o `.cobra` para cargarlos directamente en el editor.
+*   **Ejecución y transpilación:**
+    *   **Selector de target:** Elige el lenguaje de destino (Python, JavaScript, Rust) para la transpilación.
+    *   **Switch de transpilación:** Alterna entre ejecutar el código directamente o transpilarlo al lenguaje seleccionado.
+    *   **Botón "Ejecutar":** Ejecuta el código Cobra o lo transpila, mostrando la salida o el código generado en el área de resultados.
+*   **Sugerencias de código (Agix):**
+    *   **Botón "Sugerencias (Agix)":** Utiliza la librería `Agix` para analizar tu código y ofrecer sugerencias de mejora o corrección tipográfica, basándose en las mejores prácticas del "Libro de Programación principal". Las sugerencias se muestran en el área de salida.
 
-#### Flujo recomendado en el IDLE gráfico
+Para iniciar el IDLE, usa el comando ``cobra gui``.
 
-Para trabajar desde el entorno gráfico sin mezclar rutas internas, sigue este recorrido principal:
+.. code-block:: bash
 
-1. **Crear o abrir archivo Cobra**: usa **Nuevo** para empezar un borrador o **Abrir** para cargar un archivo `.cobra`/`.co` desde el árbol lateral.
-2. **Editar código**: modifica el contenido en el editor y mantén visible el indicador de cambios sin guardar antes de ejecutar acciones destructivas o de recarga.
-3. **Validar tokens**: pulsa la acción de tokens para confirmar que el lexer reconoce correctamente palabras clave, literales, operadores e identificadores.
-4. **Revisar AST**: abre la vista de AST para comprobar que el parser interpreta la estructura esperada antes de ejecutar o generar artefactos.
-5. **Ejecutar**: usa la acción de ejecución del IDLE para probar el comportamiento del programa con el intérprete de Cobra.
-6. **Transpilar**: cuando necesites salida para otro entorno, elige únicamente uno de los targets públicos `python`, `javascript` o `rust`; esos son los destinos documentados para el recorrido principal.
-7. **Guardar cambios**: usa **Guardar** si el archivo ya tiene ruta activa o **Guardar como** para definir una nueva ubicación; guarda después de validar el resultado que quieres conservar.
-8. **Solicitar sugerencias AGIX**: pulsa **Sugerencias** solo después de tener tokens y AST válidos; si la dependencia opcional `agix` está disponible, el IDLE pedirá recomendaciones, y si no lo está mostrará el aviso correspondiente sin bloquear el resto del flujo.
-
-El recorrido principal evita mencionar targets internos o históricos. Si necesitas contexto de migración, consulta los [anexos legacy/internal](anexos_legacy_internal/README.md) fuera del onboarding diario.
-
-#### Acción de sugerencias en GUI/IDLE
-
-El botón **Sugerencias** del IDLE toma el texto actual del editor, lo normaliza igual que las acciones de ejecución y lo valida primero con el `Lexer` y el `Parser` oficiales de Cobra. Esta validación conserva la gramática existente: el Libro se usa como referencia pedagógica y documental para explicar buenas prácticas, no como parser alternativo ni como fuente de reglas sintácticas paralelas.
-
-Si el código contiene errores léxicos o sintácticos, la salida separa esos errores de las sugerencias estilísticas y pide corregirlos antes de consultar recomendaciones. Si la validación pasa, el IDLE llama a `pcobra.ia.analizador_agix.generar_sugerencias`, que depende de forma opcional del paquete `agix`. Cuando `agix` no está instalado, la interfaz muestra un mensaje claro indicando que la acción de sugerencias requiere instalar esa dependencia opcional; no se introduce ni se asume una librería `agi-core` sin una tarea previa de descubrimiento para confirmar el paquete o API canónicos.
+   cobra gui
 
 Flujo mínimo sugerido:
 
@@ -868,20 +826,18 @@ Comandos útiles adicionales (según el setup del proyecto):
 
 ### Comandos legacy y migración
 
-Si vienes de comandos legacy como `cobra validar-sintaxis`, `cobra ejecutar` o
-`cobra compilar`, migra al contrato público `run/build/test/mod` y revisa la
+Si vienes de comandos legacy, migra al contrato público `run/build/test/mod` y revisa la
 guía de transición en [`docs/migracion_cli_unificada.md`](migracion_cli_unificada.md).
 
 ---
 
 ## 11) Transpilación, targets y compatibilidad
 
-El BackEnd oficial público está compuesto solo por `python`, `javascript` y `rust`. Esos tres targets forman el contrato de usuario para `cobra build` y la documentación pública. Los targets legacy (`go`, `cpp`, `java`, `wasm`, `asm`) quedan fuera del contrato público y solo pueden aparecer en rutas internas de compatibilidad/migración.
+El BackEnd oficial público está compuesto solo por `python`, `javascript` y `rust`. Esos tres targets forman el contrato de usuario para `cobra build` y la documentación pública.
 
 ### 11.1 Regla práctica
 
 - Para máxima estabilidad operativa: usa los targets oficiales `python`, `javascript` y `rust`.
-- No documentes ni presentes targets legacy como opciones públicas de usuario; cualquier migración legacy pertenece a anexos internos.
 
 ### 11.2 Estrategia de release
 

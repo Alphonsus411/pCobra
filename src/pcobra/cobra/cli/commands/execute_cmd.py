@@ -6,13 +6,8 @@ from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.services.contracts import RunRequest
 from pcobra.cobra.cli.services.run_service import (
-    LEGACY_SANDBOX_COMPAT_FLAG,
     RunService,
     detectar_raiz_proyecto_desde_archivo as _detectar_raiz_proyecto_desde_archivo,
-    ejecutar_en_contenedor,
-    ejecutar_en_sandbox,
-    sandbox_module,
-    validar_dependencias,
 )
 from pcobra.cobra.cli.target_policies import (
     DOCKER_EXECUTABLE_TARGETS,

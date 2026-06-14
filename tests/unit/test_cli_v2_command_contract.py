@@ -6,8 +6,7 @@ from cobra.cli.commands_v2.run_cmd import RunCommandV2
 from cobra.cli.commands_v2.build_cmd import BuildCommandV2
 from cobra.cli.commands_v2.test_cmd import TestCommandV2
 from cobra.cli.commands_v2.repl_cmd import ReplCommandV2
-from cobra.cli.commands_v2.legacy_cmd import LegacyCommandGroupV2
-from cobra.cli.cli import AppConfig, CliApplication, LEGACY_COMMAND_MIGRATION_MAP
+from cobra.cli.cli import AppConfig, CliApplication
 from cobra.cli.target_policies import VERIFICATION_EXECUTABLE_TARGETS
 
 
@@ -240,22 +239,6 @@ def test_test_v2_valida_seguridad_por_ruta_binding(monkeypatch):
     assert calls[2][0] == "rust" and calls[2][1]["containerized"] is True
 
 
-def test_legacy_command_migration_map_cubre_comandos_legacy_principales():
-    assert set(LEGACY_COMMAND_MIGRATION_MAP) == {"interactive", "ejecutar", "compilar", "verificar", "modulos"}
-    assert LEGACY_COMMAND_MIGRATION_MAP["interactive"]["target"] == "repl"
-    assert LEGACY_COMMAND_MIGRATION_MAP["interactive"]["hint"] == "cobra repl"
-    assert LEGACY_COMMAND_MIGRATION_MAP["ejecutar"]["target"] == "run"
-    assert LEGACY_COMMAND_MIGRATION_MAP["compilar"]["target"] == "build"
-    assert LEGACY_COMMAND_MIGRATION_MAP["verificar"]["target"] == "test"
-    assert LEGACY_COMMAND_MIGRATION_MAP["modulos"]["target"] == "mod"
-    assert LEGACY_COMMAND_MIGRATION_MAP["modulos"]["hint"].startswith("cobra mod ")
-
-
-def test_cli_v2_contract_no_expone_interactive_en_rutas_publicas():
-    exposed_names = {route.class_name for route in AppConfig.V2_COMMAND_ROUTES}
-    assert "InteractiveCommand" not in exposed_names
-
-
 def test_public_policy_migra_interactive_a_repl_con_mensaje_oficial(monkeypatch):
     app = CliApplication()
     warnings: list[str] = []
@@ -267,16 +250,3 @@ def test_public_policy_migra_interactive_a_repl_con_mensaje_oficial(monkeypatch)
     assert normalized == ["repl"]
     assert warnings
     assert "cobra repl" in warnings[0]
-
-
-def test_legacy_group_muestra_mensaje_corto_de_migracion(monkeypatch):
-    command = LegacyCommandGroupV2()
-    warnings: list[str] = []
-    monkeypatch.setattr("cobra.cli.commands_v2.legacy_cmd.messages.mostrar_advertencia", warnings.append)
-    monkeypatch.setattr(command._execute, "run", lambda _args: 0)
-
-    status = command.run(argparse.Namespace(legacy_command="ejecutar", archivo="app.co"))
-
-    assert status == 0
-    assert warnings
-    assert "cobra run <archivo.co>" in warnings[0]

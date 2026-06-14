@@ -18,14 +18,10 @@ from __future__ import annotations
 
 from typing import Final
 
-from pcobra.cobra.transpilers.target_utils import normalize_target_name
 from pcobra.cobra.architecture.backend_policy import PUBLIC_BACKENDS
 from pcobra.cobra.transpilers.runtime_api_matrix import build_runtime_api_matrix
-from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS, TIER1_TARGETS
-from pcobra.cobra.architecture.legacy_backend_lifecycle import ALL_BACKENDS
-
-
-LEGACY_INTERNAL_TARGETS: tuple[str, ...] = tuple(backend for backend in ALL_BACKENDS if backend not in OFFICIAL_TARGETS)
+from pcobra.cobra.transpilers.target_utils import normalize_target_name
+from pcobra.cobra.config.transpile_targets import TIER1_TARGETS
 CONTRACT_FEATURES: Final[tuple[str, ...]] = (
     "holobit",
     "proyectar",
@@ -49,7 +45,7 @@ OFFICIAL_RUNTIME_BACKENDS: Final[tuple[str, ...]] = PUBLIC_BACKENDS
 BEST_EFFORT_RUNTIME_BACKENDS: Final[tuple[str, ...]] = ()
 TRANSPILATION_ONLY_BACKENDS: Final[tuple[str, ...]] = ()
 _PUBLIC_BACKEND_KEYS: Final[tuple[str, ...]] = PUBLIC_BACKENDS
-_LEGACY_BACKEND_KEYS: Final[tuple[str, ...]] = ("go", "cpp", "java", "wasm", "asm")
+
 
 _BACKEND_COMPATIBILITY_MODEL: Final[dict[str, dict[str, str]]] = {
     "python": {
@@ -79,61 +75,12 @@ _BACKEND_COMPATIBILITY_MODEL: Final[dict[str, dict[str, str]]] = {
         "corelibs": "full",
         "standard_library": "full",
     },
-    "wasm": {
-        "tier": "tier1",
-        "holobit": "partial",
-        "proyectar": "partial",
-        "transformar": "partial",
-        "graficar": "partial",
-        "corelibs": "partial",
-        "standard_library": "partial",
-    },
-    "go": {
-        "tier": "tier2",
-        "holobit": "partial",
-        "proyectar": "partial",
-        "transformar": "partial",
-        "graficar": "partial",
-        "corelibs": "full",
-        "standard_library": "full",
-    },
-    "cpp": {
-        "tier": "tier2",
-        "holobit": "partial",
-        "proyectar": "partial",
-        "transformar": "partial",
-        "graficar": "partial",
-        "corelibs": "partial",
-        "standard_library": "partial",
-    },
-    "java": {
-        "tier": "tier2",
-        "holobit": "partial",
-        "proyectar": "partial",
-        "transformar": "partial",
-        "graficar": "partial",
-        "corelibs": "partial",
-        "standard_library": "partial",
-    },
-    "asm": {
-        "tier": "tier2",
-        "holobit": "partial",
-        "proyectar": "partial",
-        "transformar": "partial",
-        "graficar": "partial",
-        "corelibs": "partial",
-        "standard_library": "partial",
-    },
 }
 
 PUBLIC_BACKEND_COMPATIBILITY: Final[dict[str, dict[str, str]]] = {
     backend: _BACKEND_COMPATIBILITY_MODEL[backend] for backend in _PUBLIC_BACKEND_KEYS
 }
-# internal-only: inventario legacy para compatibilidad interna/documentación técnica;
-# no exponer en superficies públicas (CLI/docs de usuarios).
-LEGACY_BACKEND_INVENTORY: Final[dict[str, dict[str, str]]] = {
-    backend: _BACKEND_COMPATIBILITY_MODEL[backend] for backend in _LEGACY_BACKEND_KEYS
-}
+
 # Alias temporal para no romper consumidores existentes.
 BACKEND_COMPATIBILITY: Final[dict[str, dict[str, str]]] = PUBLIC_BACKEND_COMPATIBILITY
 
@@ -173,51 +120,6 @@ _MIN_REQUIRED_BACKEND_COMPATIBILITY_MODEL: Final[dict[str, dict[str, str]]] = {
         "graficar": "partial",
         "corelibs": "full",
         "standard_library": "full",
-    },
-    "wasm": {
-        "tier": "tier1",
-        "holobit": "partial",
-        "proyectar": "partial",
-        "transformar": "partial",
-        "graficar": "partial",
-        "corelibs": "partial",
-        "standard_library": "partial",
-    },
-    "go": {
-        "tier": "tier2",
-        "holobit": "partial",
-        "proyectar": "partial",
-        "transformar": "partial",
-        "graficar": "partial",
-        "corelibs": "full",
-        "standard_library": "full",
-    },
-    "cpp": {
-        "tier": "tier2",
-        "holobit": "partial",
-        "proyectar": "partial",
-        "transformar": "partial",
-        "graficar": "partial",
-        "corelibs": "partial",
-        "standard_library": "partial",
-    },
-    "java": {
-        "tier": "tier2",
-        "holobit": "partial",
-        "proyectar": "partial",
-        "transformar": "partial",
-        "graficar": "partial",
-        "corelibs": "partial",
-        "standard_library": "partial",
-    },
-    "asm": {
-        "tier": "tier2",
-        "holobit": "partial",
-        "proyectar": "partial",
-        "transformar": "partial",
-        "graficar": "partial",
-        "corelibs": "partial",
-        "standard_library": "partial",
     },
 }
 
@@ -268,41 +170,6 @@ _BACKEND_FEATURE_NODE_SUPPORT_MODEL: Final[dict[str, dict[str, tuple[str, ...]]]
         "async": ("visit_funcion", "visit_esperar"),
         "tipos_compuestos": ("visit_lista", "visit_diccionario"),
     },
-    "go": {
-        "decoradores": ("visit_decorador", "visit_funcion"),
-        "imports_corelibs": ("visit_usar", "visit_import", "visit_llamada_funcion"),
-        "manejo_errores": ("visit_try_catch", "visit_throw"),
-        "async": ("visit_funcion", "visit_esperar"),
-        "tipos_compuestos": (),
-    },
-    "cpp": {
-        "decoradores": ("visit_decorador", "visit_funcion"),
-        "imports_corelibs": ("visit_usar", "visit_import", "visit_llamada_funcion"),
-        "manejo_errores": ("visit_try_catch", "visit_throw"),
-        "async": (),
-        "tipos_compuestos": ("visit_lista", "visit_diccionario", "visit_lista_tipo", "visit_diccionario_tipo"),
-    },
-    "java": {
-        "decoradores": ("visit_decorador", "visit_funcion"),
-        "imports_corelibs": ("visit_usar", "visit_import", "visit_llamada_funcion"),
-        "manejo_errores": ("visit_try_catch", "visit_throw"),
-        "async": (),
-        "tipos_compuestos": (),
-    },
-    "wasm": {
-        "decoradores": ("visit_decorador", "visit_funcion"),
-        "imports_corelibs": ("visit_usar", "visit_import", "visit_llamada_funcion"),
-        "manejo_errores": ("visit_try_catch", "visit_throw"),
-        "async": (),
-        "tipos_compuestos": (),
-    },
-    "asm": {
-        "decoradores": ("ir:function.decorators",),
-        "imports_corelibs": ("ir:call.longitud", "ir:call.mostrar"),
-        "manejo_errores": ("ir:unknown.try_catch", "ir:unknown.throw"),
-        "async": ("ir:function.async_flag",),
-        "tipos_compuestos": (),
-    },
 }
 
 BACKEND_FEATURE_NODE_SUPPORT: Final[dict[str, dict[str, tuple[str, ...]]]] = {
@@ -340,51 +207,6 @@ _AST_FEATURE_MINIMUM_CONTRACT_MODEL: Final[dict[str, dict[str, str]]] = {
         "async": "full",
         "holobit": "partial",
     },
-    "wasm": {
-        "funciones": "partial",
-        "clases": "none",
-        "decoradores": "partial",
-        "control_flujo": "partial",
-        "colecciones": "partial",
-        "async": "none",
-        "holobit": "partial",
-    },
-    "go": {
-        "funciones": "partial",
-        "clases": "partial",
-        "decoradores": "full",
-        "control_flujo": "partial",
-        "colecciones": "partial",
-        "async": "full",
-        "holobit": "partial",
-    },
-    "cpp": {
-        "funciones": "full",
-        "clases": "partial",
-        "decoradores": "partial",
-        "control_flujo": "partial",
-        "colecciones": "partial",
-        "async": "none",
-        "holobit": "partial",
-    },
-    "java": {
-        "funciones": "partial",
-        "clases": "partial",
-        "decoradores": "partial",
-        "control_flujo": "partial",
-        "colecciones": "partial",
-        "async": "none",
-        "holobit": "partial",
-    },
-    "asm": {
-        "funciones": "partial",
-        "clases": "partial",
-        "decoradores": "partial",
-        "control_flujo": "partial",
-        "colecciones": "partial",
-        "async": "partial",
-        "holobit": "partial",
-    },
 }
 
 AST_FEATURE_MINIMUM_CONTRACT: Final[dict[str, dict[str, str]]] = {
@@ -415,26 +237,6 @@ _BACKEND_COMPATIBILITY_NOTES_MODEL: Final[dict[str, dict[str, str]]] = {
     "rust": {
         "contract": "partial",
         "evidence": "Compatibilidad con `corelibs`/`standard_library` significa imports base más una capa adaptadora Rust mantenida por el proyecto (`longitud`, `mostrar`) generada inline. Holobit usa hooks `cobra_*` canónicos sobre `CobraHolobit`: `cobra_holobit` crea el valor runtime; `cobra_proyectar` devuelve `Result<Vec<f64>, CobraRuntimeError>` para `1d`/`2d`/`3d`/`vector`; `cobra_transformar` devuelve `Result<CobraHolobit, CobraRuntimeError>` con operaciones base (`escalar`, `normalizar`, `mover`, `rotar` planar); `cobra_graficar` devuelve `Result<String, CobraRuntimeError>` y reutiliza `mostrar`. El backend no depende de `holobit_sdk`; cuando la operación no cabe en el adaptador, devuelve `CobraRuntimeError` explícito de contrato `partial` y sin fallback silencioso. El contrato permanece `partial` porque no existe paridad completa con `holobit_sdk`.",
-    },
-    "wasm": {
-        "contract": "partial",
-        "evidence": "Compatibilidad con `corelibs`/`standard_library` significa emitir wrappers WAT e imports explícitos hacia un runtime host-managed (`pcobra:corelibs`, `pcobra:standard_library`) y exponer wrappers mínimos (`$longitud`, `$mostrar`) que delegan al host. Holobit usa hooks `cobra_*` canónicos que delegan en imports `pcobra:holobit`: `cobra_holobit`, `cobra_proyectar`, `cobra_transformar` y `cobra_graficar` no implementan semántica local sino un puente contractual. El backend no usa `holobit_sdk` dentro del módulo generado; la disponibilidad real depende del host y del protocolo de handles/param buffers. Sigue en `partial` porque la semántica completa depende del host externo.",
-    },
-    "go": {
-        "contract": "partial",
-        "evidence": "Compatibilidad con `corelibs`/`standard_library` significa imports Go verificables y adaptadores mínimos mantenidos por el proyecto (`longitud`, `mostrar`) sobre un runtime best-effort no público. Holobit usa hooks canónicos `cobra_*` sobre `CobraHolobit`: `cobra_holobit` crea la estructura runtime; `cobra_proyectar` soporta `1d`/`2d`/`3d`/`vector`; `cobra_transformar` cubre `escalar`, `normalizar`, `mover`/`trasladar` y rotación planar sobre eje `z`; `cobra_graficar` produce una vista textual. El backend no depende de `holobit_sdk`; cuando recibe datos u operaciones fuera del adaptador, hace `panic` explícito con mensaje contractual verificable y sin fallback silencioso. Sigue en `partial` porque el backend no promete runtime oficial fuerte ni paridad de SDK.",
-    },
-    "cpp": {
-        "contract": "partial",
-        "evidence": "Compatibilidad con `corelibs`/`standard_library` significa includes verificables (`pcobra/corelibs.hpp`, `pcobra/standard_library.hpp`) y adaptadores mínimos mantenidos por el proyecto (`longitud`, `mostrar`). Holobit usa hooks inline `cobra_*` sobre `CobraHolobit`: `cobra_holobit` crea la estructura runtime; `cobra_proyectar` soporta `1d`/`2d`/`3d`/`vector`; `cobra_transformar` cubre `escalar`, `normalizar`, `mover`/`trasladar` y rotación planar sobre eje `z`; `cobra_graficar` produce una vista textual. El backend no depende de `holobit_sdk`; cuando una operación no está soportada, lanza `std::runtime_error` explícito de contrato `partial` y sin fallback silencioso. `cpp` sigue en `partial` porque mantiene runtime oficial fuerte del proyecto, pero sin equivaler al SDK Python completo.",
-    },
-    "java": {
-        "contract": "partial",
-        "evidence": "Compatibilidad con `corelibs`/`standard_library` significa imports verificables (`cobra.corelibs.*`, `cobra.standard_library.*`) y adaptadores mínimos mantenidos por el proyecto (`longitud`, `mostrar`) sobre un runtime best-effort no público. Holobit usa hooks estáticos canónicos `cobra_*` sobre `CobraHolobit`: `cobra_holobit` crea la estructura runtime; `cobra_proyectar` soporta `1d`/`2d`/`3d`/`vector`; `cobra_transformar` cubre `escalar`, `normalizar`, `mover`/`trasladar` y rotación planar sobre eje `z`; `cobra_graficar` produce una vista textual. El backend no depende de `holobit_sdk`; cuando una operación no está soportada, lanza `UnsupportedOperationException` explícita de contrato `partial` y sin fallback silencioso. Sigue en `partial` porque no promete runtime oficial fuerte ni paridad de SDK.",
-    },
-    "asm": {
-        "contract": "partial",
-        "evidence": "Compatibilidad con `corelibs`/`standard_library` significa conservar puntos de llamada `CALL` (`CALL longitud`, `CALL mostrar`) y declarar explícitamente que el runtime externo se administra fuera del backend. Holobit inyecta hooks `cobra_*` solo como capa de inspección/diagnóstico: `cobra_holobit` conserva la representación IR simbólica y `cobra_proyectar`/`cobra_transformar`/`cobra_graficar` exigen runtime externo con `TRAP` explícito y sin fallback silencioso. El backend no depende de `holobit_sdk` ni lo sustituye. No debe documentarse como backend con paridad SDK equivalente.",
     },
 }
 
@@ -467,46 +269,6 @@ _BACKEND_FEATURE_GAPS_MODEL: Final[dict[str, dict[str, tuple[str, ...]]]] = {
         "graficar": ("Solo vista textual via `mostrar`.",),
         "corelibs": (),
         "standard_library": (),
-    },
-    "wasm": {
-        "holobit": ("Depende de runtime host-managed externo.",),
-        "proyectar": ("Semántica final delegada al host `pcobra:holobit`.",),
-        "transformar": ("Semántica final delegada al host `pcobra:holobit`.",),
-        "graficar": ("Semántica final delegada al host `pcobra:holobit`.",),
-        "corelibs": ("Depende de imports host-managed `pcobra:corelibs`.",),
-        "standard_library": ("Depende de imports host-managed `pcobra:standard_library`.",),
-    },
-    "go": {
-        "holobit": ("No replica paridad SDK Python completa.",),
-        "proyectar": ("Limitado a modos 1d/2d/3d/vector del adaptador oficial.",),
-        "transformar": ("Rotación soportada solo sobre eje z.",),
-        "graficar": ("Solo vista textual via `mostrar`.",),
-        "corelibs": (),
-        "standard_library": (),
-    },
-    "cpp": {
-        "holobit": ("No replica paridad SDK Python completa.",),
-        "proyectar": ("Limitado a modos 1d/2d/3d/vector del adaptador oficial.",),
-        "transformar": ("Rotación soportada solo sobre eje z.",),
-        "graficar": ("Solo vista textual via `mostrar`.",),
-        "corelibs": ("Cobertura parcial mediante adaptadores mínimos mantenidos por el proyecto.",),
-        "standard_library": ("Cobertura parcial mediante adaptadores mínimos mantenidos por el proyecto.",),
-    },
-    "java": {
-        "holobit": ("No replica paridad SDK Python completa.",),
-        "proyectar": ("Limitado a modos 1d/2d/3d/vector del adaptador oficial.",),
-        "transformar": ("Rotación soportada solo sobre eje z.",),
-        "graficar": ("Solo vista textual via `mostrar`.",),
-        "corelibs": ("Cobertura parcial mediante adaptadores mínimos best-effort.",),
-        "standard_library": ("Cobertura parcial mediante adaptadores mínimos best-effort.",),
-    },
-    "asm": {
-        "holobit": ("Representación simbólica de inspección/diagnóstico.",),
-        "proyectar": ("Requiere runtime externo y señaliza TRAP.",),
-        "transformar": ("Requiere runtime externo y señaliza TRAP.",),
-        "graficar": ("Requiere runtime externo y señaliza TRAP.",),
-        "corelibs": ("Puntos de llamada `CALL` gestionados externamente.",),
-        "standard_library": ("Puntos de llamada `CALL` gestionados externamente.",),
     },
 }
 
@@ -558,41 +320,6 @@ _BACKEND_HOLOBIT_SDK_CAPABILITIES_MODEL: Final[dict[str, dict[str, str]]] = {
         "modulos_nativos": "partial",
         "import_hooks": "full",
     },
-    "wasm": {
-        "runtime": "partial",
-        "serializacion": "partial",
-        "ipc": "partial",
-        "modulos_nativos": "none",
-        "import_hooks": "full",
-    },
-    "go": {
-        "runtime": "partial",
-        "serializacion": "partial",
-        "ipc": "none",
-        "modulos_nativos": "partial",
-        "import_hooks": "full",
-    },
-    "cpp": {
-        "runtime": "partial",
-        "serializacion": "partial",
-        "ipc": "none",
-        "modulos_nativos": "partial",
-        "import_hooks": "full",
-    },
-    "java": {
-        "runtime": "partial",
-        "serializacion": "partial",
-        "ipc": "none",
-        "modulos_nativos": "partial",
-        "import_hooks": "full",
-    },
-    "asm": {
-        "runtime": "partial",
-        "serializacion": "none",
-        "ipc": "none",
-        "modulos_nativos": "none",
-        "import_hooks": "full",
-    },
 }
 
 BACKEND_HOLOBIT_SDK_CAPABILITIES: Final[dict[str, dict[str, str]]] = {
@@ -611,10 +338,6 @@ MIN_REQUIRED_TIER1_HOLOBIT_CAPABILITIES: Final[dict[str, dict[str, str]]] = {
         "import_hooks": "full",
     },
     "rust": {
-        "runtime": "partial",
-        "import_hooks": "full",
-    },
-    "wasm": {
         "runtime": "partial",
         "import_hooks": "full",
     },
@@ -642,41 +365,6 @@ _HOLOBIT_CAPABILITY_FALLBACKS_MODEL: Final[dict[str, dict[str, str]]] = {
         "modulos_nativos": "Fallback oficial: helpers inline del backend (`longitud`, `mostrar`).",
         "import_hooks": "Hooks `cobra_*` obligatorios en codegen; sin fallback silencioso.",
     },
-    "wasm": {
-        "runtime": "Fallback oficial: runtime host-managed vía imports `pcobra:holobit`.",
-        "serializacion": "Fallback oficial: protocolo host de handles/buffers.",
-        "ipc": "Fallback oficial: integración host↔módulo (import/export) definida por embedding.",
-        "modulos_nativos": "No soportado dentro del módulo; delegar al host.",
-        "import_hooks": "Hooks `cobra_*` obligatorios; delegación explícita al host.",
-    },
-    "go": {
-        "runtime": "Fallback oficial: adaptador best-effort Go con `panic` contractual explícito.",
-        "serializacion": "Fallback oficial: slices/estructuras del adaptador Go.",
-        "ipc": "No soportado: usar capa externa de integración.",
-        "modulos_nativos": "Fallback oficial: helpers mínimos `longitud`/`mostrar`.",
-        "import_hooks": "Hooks `cobra_*` obligatorios en codegen; sin fallback silencioso.",
-    },
-    "cpp": {
-        "runtime": "Fallback oficial: adaptador C++ con `std::runtime_error` contractual explícito.",
-        "serializacion": "Fallback oficial: `std::vector<double>` y utilidades runtime inline.",
-        "ipc": "No soportado: integración por capa externa.",
-        "modulos_nativos": "Fallback oficial: includes/runtime mínimo mantenido por el proyecto.",
-        "import_hooks": "Hooks `cobra_*` obligatorios en codegen; sin fallback silencioso.",
-    },
-    "java": {
-        "runtime": "Fallback oficial: adaptador Java con `UnsupportedOperationException` explícita.",
-        "serializacion": "Fallback oficial: arrays/listas de doubles del adaptador Java.",
-        "ipc": "No soportado: integrar IPC fuera del adaptador oficial.",
-        "modulos_nativos": "Fallback oficial: helpers mínimos runtime Java best-effort.",
-        "import_hooks": "Hooks `cobra_*` obligatorios en codegen; sin fallback silencioso.",
-    },
-    "asm": {
-        "runtime": "Fallback oficial: modo inspección/diagnóstico con `TRAP` en operaciones avanzadas.",
-        "serializacion": "No soportado: usar representación simbólica y resolver fuera del backend.",
-        "ipc": "No soportado: delegación total a runtime externo.",
-        "modulos_nativos": "No soportado: solo puntos de llamada `CALL` externos.",
-        "import_hooks": "Hooks `cobra_*` obligatorios como contratos de inspección.",
-    },
 }
 
 HOLOBIT_CAPABILITY_FALLBACKS: Final[dict[str, dict[str, str]]] = {
@@ -686,15 +374,13 @@ HOLOBIT_CAPABILITY_FALLBACKS: Final[dict[str, dict[str, str]]] = {
 
 
 def _validate_contract_shape(name: str, matrix: dict[str, dict[str, str]]) -> None:
-    missing_backends = [backend for backend in OFFICIAL_TARGETS if backend not in matrix]
+    missing_backends = [backend for backend in PUBLIC_BACKENDS if backend not in matrix]
     if missing_backends:
         raise RuntimeError(
             f"{name} no define compatibilidad para backends oficiales: {missing_backends}"
         )
 
-    extra_backends = sorted(
-        set(matrix) - set(OFFICIAL_TARGETS) - set(LEGACY_INTERNAL_TARGETS)
-    )
+    extra_backends = sorted(set(matrix) - set(PUBLIC_BACKENDS))
     if extra_backends:
         raise RuntimeError(
             f"{name} contiene backends no oficiales, legacy o sin registrar: {extra_backends}"
@@ -738,7 +424,7 @@ def validate_backend_compatibility_contract() -> None:
         MIN_REQUIRED_BACKEND_COMPATIBILITY,
     )
 
-    for backend in OFFICIAL_TARGETS:
+    for backend in PUBLIC_BACKENDS:
         actual = BACKEND_COMPATIBILITY[backend]
         required = MIN_REQUIRED_BACKEND_COMPATIBILITY[backend]
         if actual["tier"] != required["tier"]:
@@ -762,7 +448,7 @@ def validate_backend_compatibility_contract() -> None:
     for feature in CONTRACT_FEATURES:
         full_backends = {
             backend
-            for backend in OFFICIAL_TARGETS
+            for backend in PUBLIC_BACKENDS
             if BACKEND_COMPATIBILITY[backend][feature] == "full"
         }
         expected_full_backends = set(FEATURE_FULL_BACKENDS[feature])
@@ -775,7 +461,7 @@ def validate_backend_compatibility_contract() -> None:
 
     full_set = set(SDK_FULL_BACKENDS)
     partial_set = set(SDK_PARTIAL_BACKENDS)
-    official_set = set(OFFICIAL_TARGETS)
+    official_set = set(PUBLIC_BACKENDS)
     if full_set & partial_set:
         raise RuntimeError(
             "SDK_FULL_BACKENDS y SDK_PARTIAL_BACKENDS no deben solaparse: "
@@ -783,7 +469,7 @@ def validate_backend_compatibility_contract() -> None:
         )
     if full_set | partial_set != official_set:
         raise RuntimeError(
-            "SDK_FULL_BACKENDS + SDK_PARTIAL_BACKENDS deben cubrir exactamente OFFICIAL_TARGETS: "
+            "SDK_FULL_BACKENDS + SDK_PARTIAL_BACKENDS deben cubrir exactamente PUBLIC_BACKENDS: "
             f"faltan={tuple(sorted(official_set - (full_set | partial_set)))} "
             f"extras={tuple(sorted((full_set | partial_set) - official_set))}"
         )
@@ -807,22 +493,22 @@ def validate_backend_compatibility_contract() -> None:
         )
     if runtime_set | best_effort_set | transpilation_only_set != official_set:
         raise RuntimeError(
-            "Las categorías de runtime deben particionar OFFICIAL_TARGETS exactamente: "
+            "Las categorías de runtime deben particionar PUBLIC_BACKENDS exactamente: "
             f"runtime={OFFICIAL_RUNTIME_BACKENDS}; best_effort={BEST_EFFORT_RUNTIME_BACKENDS}; "
-            f"transpilation_only={TRANSPILATION_ONLY_BACKENDS}; official={OFFICIAL_TARGETS}"
+            f"transpilation_only={TRANSPILATION_ONLY_BACKENDS}; official={PUBLIC_BACKENDS}"
         )
 
-    missing_notes_backends = [backend for backend in OFFICIAL_TARGETS if backend not in BACKEND_COMPATIBILITY_NOTES]
+    missing_notes_backends = [backend for backend in PUBLIC_BACKENDS if backend not in BACKEND_COMPATIBILITY_NOTES]
     if missing_notes_backends:
         raise RuntimeError(
             f"BACKEND_COMPATIBILITY_NOTES no define backends oficiales: {missing_notes_backends}"
         )
-    extra_notes_backends = sorted(set(BACKEND_COMPATIBILITY_NOTES) - set(OFFICIAL_TARGETS) - set(LEGACY_INTERNAL_TARGETS))
+    extra_notes_backends = sorted(set(BACKEND_COMPATIBILITY_NOTES) - set(PUBLIC_BACKENDS))
     if extra_notes_backends:
         raise RuntimeError(
             f"BACKEND_COMPATIBILITY_NOTES contiene backends no oficiales: {extra_notes_backends}"
         )
-    for backend in OFFICIAL_TARGETS:
+    for backend in PUBLIC_BACKENDS:
         notes = BACKEND_COMPATIBILITY_NOTES[backend]
         if notes.get("contract") not in VALID_COMPATIBILITY_LEVELS:
             raise RuntimeError(
@@ -842,17 +528,17 @@ def validate_backend_compatibility_contract() -> None:
                 f"BACKEND_COMPATIBILITY_NOTES[{backend}] debe declarar evidence no vacío"
             )
 
-    missing_gaps_backends = [backend for backend in OFFICIAL_TARGETS if backend not in BACKEND_FEATURE_GAPS]
+    missing_gaps_backends = [backend for backend in PUBLIC_BACKENDS if backend not in BACKEND_FEATURE_GAPS]
     if missing_gaps_backends:
         raise RuntimeError(
             f"BACKEND_FEATURE_GAPS no define backends oficiales: {missing_gaps_backends}"
         )
-    extra_gaps_backends = sorted(set(BACKEND_FEATURE_GAPS) - set(OFFICIAL_TARGETS) - set(LEGACY_INTERNAL_TARGETS))
+    extra_gaps_backends = sorted(set(BACKEND_FEATURE_GAPS) - set(PUBLIC_BACKENDS))
     if extra_gaps_backends:
         raise RuntimeError(
             f"BACKEND_FEATURE_GAPS contiene backends no oficiales: {extra_gaps_backends}"
         )
-    for backend in OFFICIAL_TARGETS:
+    for backend in PUBLIC_BACKENDS:
         missing_features = [
             feature for feature in CONTRACT_FEATURES if feature not in BACKEND_FEATURE_GAPS[backend]
         ]
@@ -877,7 +563,7 @@ def validate_backend_compatibility_contract() -> None:
                 )
 
     missing_capability_backends = [
-        backend for backend in OFFICIAL_TARGETS if backend not in BACKEND_HOLOBIT_SDK_CAPABILITIES
+        backend for backend in PUBLIC_BACKENDS if backend not in BACKEND_HOLOBIT_SDK_CAPABILITIES
     ]
     if missing_capability_backends:
         raise RuntimeError(
@@ -885,7 +571,7 @@ def validate_backend_compatibility_contract() -> None:
             f"{missing_capability_backends}"
         )
     extra_capability_backends = sorted(
-        set(BACKEND_HOLOBIT_SDK_CAPABILITIES) - set(OFFICIAL_TARGETS) - set(LEGACY_INTERNAL_TARGETS)
+        set(BACKEND_HOLOBIT_SDK_CAPABILITIES) - set(PUBLIC_BACKENDS)
     )
     if extra_capability_backends:
         raise RuntimeError(
@@ -893,7 +579,7 @@ def validate_backend_compatibility_contract() -> None:
             f"{extra_capability_backends}"
         )
 
-    for backend in OFFICIAL_TARGETS:
+    for backend in PUBLIC_BACKENDS:
         capabilities = BACKEND_HOLOBIT_SDK_CAPABILITIES[backend]
         missing_capabilities = [
             capability
@@ -921,13 +607,13 @@ def validate_backend_compatibility_contract() -> None:
     validate_tier1_holobit_release_gate(BACKEND_HOLOBIT_SDK_CAPABILITIES)
 
     missing_fallback_backends = [
-        backend for backend in OFFICIAL_TARGETS if backend not in HOLOBIT_CAPABILITY_FALLBACKS
+        backend for backend in PUBLIC_BACKENDS if backend not in HOLOBIT_CAPABILITY_FALLBACKS
     ]
     if missing_fallback_backends:
         raise RuntimeError(
             f"HOLOBIT_CAPABILITY_FALLBACKS no define backends oficiales: {missing_fallback_backends}"
         )
-    for backend in OFFICIAL_TARGETS:
+    for backend in PUBLIC_BACKENDS:
         fallback_map = HOLOBIT_CAPABILITY_FALLBACKS[backend]
         for capability in HOLOBIT_SDK_CAPABILITIES:
             fallback = fallback_map.get(capability, "")
@@ -973,7 +659,7 @@ def validate_ast_feature_parity_release_gate(
     evidence_by_backend: dict[str, dict[str, str]],
 ) -> None:
     """Bloquea release si la evidencia baja bajo el mínimo contractual AST."""
-    for backend in OFFICIAL_TARGETS:
+    for backend in PUBLIC_BACKENDS:
         if backend not in AST_FEATURE_MINIMUM_CONTRACT:
             raise RuntimeError(
                 f"AST_FEATURE_MINIMUM_CONTRACT no define backend oficial: {backend}"
@@ -1028,7 +714,7 @@ def build_feature_gap_report(
     reference_backend = "python"
     report: dict[str, list[dict[str, object]]] = {}
 
-    for backend in OFFICIAL_TARGETS:
+    for backend in PUBLIC_BACKENDS:
         backend_expected = expected.get(backend, {})
         backend_actual = evidence.get(backend, {})
         backend_rows: list[dict[str, object]] = []
@@ -1083,7 +769,6 @@ def get_backend_feature_gaps(backend: str) -> dict[str, tuple[str, ...]] | None:
 
 __all__ = [
     "PUBLIC_BACKEND_COMPATIBILITY",
-    "LEGACY_BACKEND_INVENTORY",
     "BACKEND_COMPATIBILITY",
     "MIN_REQUIRED_BACKEND_COMPATIBILITY",
     "COMPATIBILITY_LEVEL_ORDER",
@@ -1119,3 +804,8 @@ def get_live_runtime_api_matrix() -> dict[str, object]:
     """Devuelve una copia ligera de la matriz viva de API runtime por backend."""
 
     return LIVE_RUNTIME_API_MATRIX
+
+
+
+
+

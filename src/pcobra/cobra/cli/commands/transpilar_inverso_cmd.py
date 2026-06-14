@@ -41,7 +41,6 @@ from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
 from pcobra.cobra.cli.target_policies import (
     OFFICIAL_TRANSPILATION_TARGETS,
-    add_internal_legacy_targets_flag,
     parse_target,
 )
 from pcobra.cobra.transpilers.import_helper import get_standard_imports
@@ -265,7 +264,7 @@ class TranspilarInversoCommand(BaseCommand):
             type=parse_target,
             choices=_runtime_destino_choices(),
         )
-        add_internal_legacy_targets_flag(parser)
+
         parser.add_argument(
             "--perfil",
             choices=("publico", "avanzado"),

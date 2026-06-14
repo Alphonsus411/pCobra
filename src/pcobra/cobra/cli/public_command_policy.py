@@ -18,36 +18,16 @@ INTERNAL_COMMANDS: tuple[str, ...] = (
     "debug",
     "devops",
 )
-LEGACY_PUBLIC_COMMANDS: tuple[str, ...] = ()
-LEGACY_INTERNAL_COMMANDS: tuple[str, ...] = (
-    "compilar",
-    "cache",
-    "contenedor",
-    "gui",
-    "jupyter",
-    "qualia",
-    "agix",
-)
-LEGACY_OBSOLETE_COMMANDS: tuple[str, ...] = (
-    "dependencias",
-    "empaquetar",
-    "bench",
-    "benchmarks",
-    "benchmarks2",
-    "benchtranspilers",
-    "benchthreads",
-    "profile",
-    "transpilar-inverso",
-    "validar-sintaxis",
-    "qa-validar",
-)
+
+
+
 COMMAND_VISIBILITY_MATRIX_MARKDOWN = """| Clase | Comandos |
 |---|---|
 | Públicos (UI v2) | run, build, test, mod, repl |
 | Internos (UI v2 / development) | legacy, debug, devops |
 | Legacy públicos (UI v1) | *(ninguno; reservado a `development`)* |
-| Legacy internos (UI v1) | compilar, cache, contenedor, gui, jupyter, qualia, agix |
-| Legacy obsoletos (UI v1) | dependencias, empaquetar, bench, benchmarks, benchmarks2, benchtranspilers, benchthreads, profile, transpilar-inverso, validar-sintaxis, qa-validar |
+| Legacy internos (UI v1) | *(ninguno)* |
+| Legacy obsoletos (UI v1) | *(ninguno)* |
 |"""
 
 PROFILE_PUBLIC = "public"
@@ -87,36 +67,17 @@ def filter_commands_for_profile(command_names: Iterable[str], profile: str) -> s
     return names.intersection(allowed)
 
 
-def filter_legacy_commands_for_profile(command_names: Iterable[str], profile: str) -> set[str]:
-    """Filtra comandos de CLI legacy (v1) según perfil de exposición.
 
-    Perfil `public`: bloquea todos los comandos legacy (UI v1).
-    Perfil `development`: permite toda la superficie incluida la obsoleta para
-    migración interna y pruebas de regresión.
-    """
-
-    normalized_profile = str(profile).strip().lower() or PROFILE_PUBLIC
-    names = {name.strip().lower() for name in command_names}
-
-    if normalized_profile == PROFILE_DEVELOPMENT:
-        return names
-
-    allowed = set(LEGACY_PUBLIC_COMMANDS)
-    return names.intersection(allowed)
 
 
 __all__ = [
     "PUBLIC_COMMANDS_CONTRACT",
     "PUBLIC_COMMANDS",
     "INTERNAL_COMMANDS",
-    "LEGACY_PUBLIC_COMMANDS",
-    "LEGACY_INTERNAL_COMMANDS",
-    "LEGACY_OBSOLETE_COMMANDS",
     "COMMAND_VISIBILITY_MATRIX_MARKDOWN",
     "PROFILE_PUBLIC",
     "PROFILE_DEVELOPMENT",
     "COMMAND_PROFILES",
     "resolve_command_profile",
     "filter_commands_for_profile",
-    "filter_legacy_commands_for_profile",
 ]

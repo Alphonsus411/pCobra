@@ -28,15 +28,7 @@ from pcobra.cobra.cli.execution_pipeline import construir_interprete_seguro_cano
 from pcobra.cobra.cli.i18n import _, format_traceback, setup_gettext
 
 
-def _internal_legacy_targets_runtime_flags() -> tuple[str, bool]:
-    """Carga diferida de flags legacy internas para evitar imports eager en startup."""
 
-    from pcobra.cobra.cli.internal_compat.legacy_targets import (
-        LEGACY_BACKENDS_FEATURE_FLAG,
-        is_internal_legacy_targets_enabled,
-    )
-
-    return LEGACY_BACKENDS_FEATURE_FLAG, is_internal_legacy_targets_enabled()
 
 from pcobra.cobra.cli.mode_policy import (
     CLI_MODOS_PERMITIDOS,
@@ -45,13 +37,10 @@ from pcobra.cobra.cli.mode_policy import (
 )
 from pcobra.cobra.cli.public_command_policy import (
     COMMAND_VISIBILITY_MATRIX_MARKDOWN,
-    LEGACY_INTERNAL_COMMANDS,
-    LEGACY_OBSOLETE_COMMANDS,
     PROFILE_DEVELOPMENT,
     PROFILE_PUBLIC,
     PUBLIC_COMMANDS_CONTRACT,
     filter_commands_for_profile,
-    filter_legacy_commands_for_profile,
     resolve_command_profile,
 )
 from pcobra.cobra.architecture.overview import USER_ROUTE_BACKEND_ENTRYPOINT
@@ -114,33 +103,10 @@ def _format_cli_version() -> str:
 
 
 CLI_VERSION = _resolve_cli_version()
-CLI_COMMIT = _resolve_cli_commit()
-COBRA_INTERNAL_ENABLE_CLI_V1_ENV = "COBRA_INTERNAL_ENABLE_CLI_V1"
-COBRA_ENABLE_LEGACY_CLI_ENV = "COBRA_INTERNAL_ENABLE_LEGACY_CLI"
+
 assert_public_targets_contract(tuple(PUBLIC_BACKENDS), source="cobra cli bootstrap")
 LANG_CHOICES = tuple(PUBLIC_BACKENDS)
-LEGACY_COMMAND_MIGRATION_MAP: dict[str, dict[str, str]] = {
-    "interactive": {
-        "target": "repl",
-        "hint": "cobra repl",
-    },
-    "ejecutar": {
-        "target": "run",
-        "hint": "cobra run <archivo.co>",
-    },
-    "compilar": {
-        "target": "build",
-        "hint": "cobra build <archivo.co>",
-    },
-    "verificar": {
-        "target": "test",
-        "hint": "cobra test <archivo.co>",
-    },
-    "modulos": {
-        "target": "mod",
-        "hint": "cobra mod <list|install|remove|publish|search>",
-    },
-}
+
 
 
 class CliErrorYaMostrado(Exception):
@@ -205,9 +171,7 @@ class CommandRegistry:
         self.commands: Dict[str, BaseCommand] = {}
         self.interpreter = interpreter
 
-    @staticmethod
-    def _is_legacy_cli_enabled() -> bool:
-        return environ.get(COBRA_ENABLE_LEGACY_CLI_ENV, "").strip() == "1"
+
 
     def create_command(self, command_class: Type[BaseCommand]) -> BaseCommand:
         try:
@@ -228,12 +192,6 @@ class CommandRegistry:
             ]
         else:
             routes = list(AppConfig.V2_COMMAND_ROUTES)
-        if profile == PROFILE_DEVELOPMENT and self._is_legacy_cli_enabled():
-            routes.append(CommandClassRoute("pcobra.cobra.cli.commands_v2.legacy_cmd", "LegacyCommandGroupV2"))
-            logging.getLogger(__name__).debug(
-                "Compatibilidad legacy v2 habilitada por flag interno %s=1.",
-                COBRA_ENABLE_LEGACY_CLI_ENV,
-            )
         return routes
 
     def _resolve_v1_command_routes(self) -> List[CommandClassRoute]:
@@ -413,15 +371,12 @@ class CliApplication:
             return
 
         command_profile = resolve_command_profile()
-        if getattr(self, "_explicit_legacy_command_compat", False):
-            command_profile = PROFILE_DEVELOPMENT
         selected_ui = getattr(self, "_selected_ui", "v2")
         self.command_registry.register_base_commands(
             self._subparsers,
             ui=selected_ui,
             profile=command_profile,
         )
-        command_profile = resolve_command_profile()
         if command_profile != PROFILE_PUBLIC:
             menu_parser = self._subparsers.add_parser("menu", help=_("Modo interactivo"))
             menu_parser.set_defaults(cmd="menu")
@@ -442,11 +397,7 @@ class CliApplication:
     def _is_enabled_env_flag(self, env_name: str) -> bool:
         return env_flag_activado(env_name)
 
-    def _is_internal_v1_ui_enabled(self) -> bool:
-        return (
-            resolve_command_profile() == PROFILE_DEVELOPMENT
-            and self._is_enabled_env_flag(COBRA_INTERNAL_ENABLE_CLI_V1_ENV)
-        )
+
 
     def _ensure_sqlite_db_key(self, args: argparse.Namespace) -> None:
         command = getattr(args, "cmd", None)
@@ -521,8 +472,7 @@ class CliApplication:
                 "Cobra sin rutas de codegen."
             ),
         )
-        ui_choices = ("v1", "v2") if self._is_internal_v1_ui_enabled() else ("v2",)
-        parser.add_argument("--ui", choices=ui_choices, default="v2", help=argparse.SUPPRESS)
+
         parser.add_argument("--lang",
                           default=environ.get(COBRA_LANG_ENV, AppConfig.DEFAULT_LANGUAGE),
                           help=_("Interface language code"))
@@ -725,7 +675,7 @@ class CliApplication:
         if not self.parser or not self.command_registry:
             raise RuntimeError("Application not properly initialized")
 
-        self._selected_ui = self._resolve_selected_ui_from_argv(argv)
+        self._selected_ui = "v2"
         if any(token in {"-h", "--help", "--ayuda"} for token in argv):
             configure_plugin_policy(safe_mode=True, allowlist="")
             self._ensure_command_structure()
@@ -756,18 +706,11 @@ class CliApplication:
     def _enforce_public_startup_guard(self) -> None:
         """Bloquea exposición accidental de rutas legacy en perfil público."""
         command_profile = resolve_command_profile()
-        if getattr(self, "_explicit_legacy_command_compat", False):
-            command_profile = PROFILE_DEVELOPMENT
         selected_ui = getattr(self, "_selected_ui", "v2")
         if command_profile != PROFILE_PUBLIC:
             return
 
         blocked_routes: list[str] = []
-        if self.command_registry and self.command_registry._is_legacy_cli_enabled():
-            blocked_routes.append(f"legacy command group ({COBRA_ENABLE_LEGACY_CLI_ENV}=1)")
-        legacy_flag_name, legacy_enabled = _internal_legacy_targets_runtime_flags()
-        if legacy_enabled:
-            blocked_routes.append(f"legacy targets ({legacy_flag_name}=1)")
 
         if not blocked_routes:
             return
@@ -795,84 +738,19 @@ class CliApplication:
         if profile != PROFILE_PUBLIC:
             return normalized
 
-        if self._resolve_selected_ui_from_argv(normalized) == "v1":
-            for index, token in enumerate(normalized):
-                if token == "--ui" and index + 1 < len(normalized):
-                    normalized[index + 1] = "v2"
-            messages.mostrar_advertencia(
-                _(
-                    "CLI v1 está reservada para desarrollo interno. "
-                    "Se aplicó migración automática a UI v2 pública."
-                )
-            )
+
 
         command_idx = self._first_non_option_token_index(normalized)
         if command_idx is None:
             return normalized
 
-        command_token = normalized[command_idx].strip().lower()
         if command_token in PUBLIC_COMMANDS_CONTRACT:
             return normalized
-        if command_token in (set(LEGACY_INTERNAL_COMMANDS) | set(LEGACY_OBSOLETE_COMMANDS)):
-            self._explicit_legacy_command_compat = True
-            environ.setdefault("COBRA_INTERNAL_LEGACY_TARGETS", "1")
-            environ.setdefault("PCOBRA_ENABLE_LEGACY_TRANSPILERS", "1")
-            environ.setdefault("PCOBRA_ENABLE_INTERNAL_LEGACY_BACKENDS", "1")
-            return normalized
-
-        migration = LEGACY_COMMAND_MIGRATION_MAP.get(command_token)
-        if not migration:
-            return normalized
-
-        migrated_to = migration["target"]
-        normalized[command_idx] = migrated_to
-        messages.mostrar_advertencia(
-            _(
-                "Comando legacy '{legacy}' detectado fuera de entorno interno. "
-                "Migración automática aplicada: use '{current}'. "
-                "Sugerencia: {hint}. "
-                "Flujo interactivo oficial: cobra repl."
-            ).format(
-                legacy=command_token,
-                current=migrated_to,
-                hint=migration["hint"],
-            )
-        )
-        logging.getLogger(__name__).warning(
-            "legacy_command_auto_migrated legacy=%s target=%s profile=%s matrix=%s",
-            command_token,
-            migrated_to,
-            profile,
-            COMMAND_VISIBILITY_MATRIX_MARKDOWN.replace("\n", " | "),
-        )
         return normalized
 
-    @staticmethod
-    def _resolve_ui_token_from_argv(argv: list[str]) -> str:
-        for index, token in enumerate(argv):
-            if token == "--ui" and index + 1 < len(argv):
-                return argv[index + 1].strip().lower()
-        return "v2"
 
-    def _resolve_selected_ui_from_argv(self, argv: list[str]) -> str:
-        requested_ui = self._resolve_ui_token_from_argv(argv)
-        if requested_ui != "v1":
-            command_idx = self._first_non_option_token_index(argv)
-            legacy_names = set(LEGACY_INTERNAL_COMMANDS) | set(LEGACY_OBSOLETE_COMMANDS)
-            if command_idx is not None and argv[command_idx].strip().lower() in legacy_names:
-                self._explicit_legacy_command_compat = True
-                return "v1"
-            self._explicit_legacy_command_compat = False
-            return "v2"
-        if self._is_internal_v1_ui_enabled():
-            return "v1"
-        messages.mostrar_advertencia(
-            _(
-                "UI v1 está deshabilitada para uso público. "
-                "Se mantiene UI v2 (cobra run/build/test/mod/repl)."
-            )
-        )
-        return "v2"
+
+
 
     @staticmethod
     def _resolve_reverse_transpile_choices() -> tuple[tuple[str, ...], tuple[str, ...]]:

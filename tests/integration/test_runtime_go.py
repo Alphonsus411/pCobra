@@ -13,10 +13,15 @@ for name in node_names:
     setattr(cobra_core, name, getattr(core_ast_nodes, name))
 
 from cobra.core import Lexer, Parser  # noqa: E402
-from cobra.transpilers.transpiler.to_go import TranspiladorGo  # noqa: E402
+
+try:
+    from cobra.transpilers.transpiler.to_go import TranspiladorGo  # noqa: E402
+except ImportError:
+    TranspiladorGo = None
 
 
 @pytest.mark.experimental
+@pytest.mark.skipif(TranspiladorGo is None, reason="TranspiladorGo module not found")
 @pytest.mark.skipif(shutil.which("go") is None, reason="requiere Go")
 @pytest.mark.parametrize(
     "codigo_cobra_fixture", ["codigo_imprimir", "codigo_bucle_simple"]

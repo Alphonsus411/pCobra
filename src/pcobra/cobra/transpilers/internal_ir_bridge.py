@@ -53,7 +53,7 @@ _KEYWORD_PATTERNS: list[tuple[re.Pattern[str], str]] = [
     (re.compile(r"\bfalso\b"), "False"),
     (re.compile(r"\bnull\b"), "None"),
     (re.compile(r"\bY\b"), "and"),
-    (re.compile(r"\bOR\b"), "or"),
+    (re.compile(r"\bO\b"), "or"),
     (re.compile(r"\bNO\b"), "not"),
 ]
 
@@ -292,7 +292,7 @@ def _map_boolop(op: pyast.boolop) -> callable[[], Token]:
         return lambda: Token(TipoToken.Y, "&&")
     if isinstance(op, pyast.Or):
             return lambda: Token(TipoToken.O, "||")
-    return lambda: Token(TipoToken.AND, str(type(op).__name__))
+    raise TypeError(f"Operador booleano no soportado: {type(op).__name__}")
 
 
 def _map_compare_op(op: pyast.cmpop) -> Token:

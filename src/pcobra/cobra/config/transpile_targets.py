@@ -8,10 +8,6 @@ from pcobra.cobra.architecture.backend_policy import (
     PUBLIC_BACKENDS,
     assert_public_targets_contract,
 )
-from pcobra.cobra.internal_compat.legacy_contracts import (
-    INTERNAL_BACKENDS,
-    INTERNAL_COMPATIBILITY_RETIREMENT_WINDOW,
-)
 
 
 class TargetMetadata(TypedDict):
@@ -28,9 +24,7 @@ class TargetMetadata(TypedDict):
 ALLOWED_TARGETS: Final[tuple[str, ...]] = PUBLIC_BACKENDS
 
 # Targets conservados solo por compatibilidad interna/legacy.
-LEGACY_INTERNAL_TARGETS: Final[tuple[str, ...]] = (
-    *INTERNAL_BACKENDS,
-)
+LEGACY_INTERNAL_TARGETS: Final[tuple[str, ...]] = ()
 
 TARGETS_BY_TIER: Final[dict[str, tuple[str, ...]]] = {
     "tier_1": ALLOWED_TARGETS,
@@ -100,15 +94,7 @@ def _validate_target_config() -> None:
         )
 
 
-    lifecycle_keys = set(INTERNAL_COMPATIBILITY_RETIREMENT_WINDOW)
-    internal_keys = set(INTERNAL_BACKENDS)
-    if lifecycle_keys != internal_keys:
-        extras = tuple(sorted(lifecycle_keys - internal_keys))
-        missing = tuple(sorted(internal_keys - lifecycle_keys))
-        raise RuntimeError(
-            "INTERNAL_COMPATIBILITY_RETIREMENT_WINDOW debe cubrir exactamente INTERNAL_BACKENDS. "
-            f"missing={missing or '∅'}; extras={extras or '∅'}"
-        )
+    # No need to validate internal_compat as it's being removed
 
     legacy_collisions = tuple(sorted(set(LEGACY_INTERNAL_TARGETS) & allowed))
     if legacy_collisions:

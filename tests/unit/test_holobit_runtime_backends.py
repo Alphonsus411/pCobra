@@ -11,35 +11,20 @@ from pcobra.core.ast_nodes import (
 )
 from pcobra.cobra.transpilers.compatibility_matrix import BACKEND_COMPATIBILITY
 from pcobra.cobra.transpilers.common.utils import get_runtime_hooks, get_standard_imports
-from pcobra.cobra.transpilers.transpiler.to_asm import TranspiladorASM
-from pcobra.cobra.transpilers.transpiler.to_cpp import TranspiladorCPP
-from pcobra.cobra.transpilers.transpiler.to_go import TranspiladorGo
-from pcobra.cobra.transpilers.transpiler.to_java import TranspiladorJava
 from pcobra.cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
 from pcobra.cobra.transpilers.transpiler.to_python import TranspiladorPython
 from pcobra.cobra.transpilers.transpiler.to_rust import TranspiladorRust
-from pcobra.cobra.transpilers.transpiler.to_wasm import TranspiladorWasm
 
 BACKENDS = [
     ("python", TranspiladorPython),
     ("javascript", TranspiladorJavaScript),
     ("rust", TranspiladorRust),
-    ("wasm", TranspiladorWasm),
-    ("go", TranspiladorGo),
-    ("cpp", TranspiladorCPP),
-    ("java", TranspiladorJava),
-    ("asm", TranspiladorASM),
 ]
 
 HOOK_SYMBOLS = {
     "python": ["cobra_holobit(", "cobra_proyectar(", "cobra_transformar(", "cobra_graficar("],
     "javascript": ["cobra_holobit(", "cobra_proyectar(", "cobra_transformar(", "cobra_graficar("],
     "rust": ["cobra_holobit(", "cobra_proyectar(", "cobra_transformar(", "cobra_graficar("],
-    "wasm": ["$cobra_holobit", "$cobra_proyectar", "$cobra_transformar", "$cobra_graficar"],
-    "go": ["cobra_holobit(", "cobra_proyectar(", "cobra_transformar(", "cobra_graficar("],
-    "cpp": ["cobra_holobit(", "cobra_proyectar(", "cobra_transformar(", "cobra_graficar("],
-    "java": ["cobra_holobit(", "cobra_proyectar(", "cobra_transformar(", "cobra_graficar("],
-    "asm": ["cobra_holobit:", "cobra_proyectar:", "cobra_transformar:", "cobra_graficar:"],
 }
 
 ADAPTER_MARKERS = {
@@ -65,26 +50,6 @@ FULL_OR_PARTIAL_MARKERS = {
     "rust": {
         "full": [],
         "partial": ["Runtime Holobit Rust:", "contrato partial", "backend sin holobit_sdk"],
-    },
-    "wasm": {
-        "full": [],
-        "partial": ["Runtime Holobit Wasm:", "host-managed", "contrato partial"],
-    },
-    "go": {
-        "full": [],
-        "partial": ["Runtime Holobit Go:", "contrato partial", "backend sin holobit_sdk"],
-    },
-    "cpp": {
-        "full": [],
-        "partial": ["Runtime Holobit C++:", "contrato partial", "backend sin holobit_sdk"],
-    },
-    "java": {
-        "full": [],
-        "partial": ["Runtime Holobit Java:", "contrato partial", "backend sin holobit_sdk"],
-    },
-    "asm": {
-        "full": [],
-        "partial": ["contrato partial", "inspección/diagnóstico", "TRAP"],
     },
 }
 

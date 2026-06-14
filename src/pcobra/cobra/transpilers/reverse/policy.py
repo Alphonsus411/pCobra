@@ -14,18 +14,16 @@ Recorte activo:
 from argparse import ArgumentTypeError
 from typing import Dict, Final, Tuple
 
-REVERSE_SCOPE_LANGUAGES: Final[Tuple[str, ...]] = ("python", "javascript", "java")
+REVERSE_SCOPE_LANGUAGES: Final[Tuple[str, ...]] = ("python", "javascript")
 
 REVERSE_SCOPE_MODULES: Final[Dict[str, str]] = {
     "python": "pcobra.cobra.transpilers.reverse.from_python",
     "javascript": "pcobra.cobra.transpilers.reverse.from_js",
-    "java": "pcobra.cobra.transpilers.reverse.from_java",
 }
 
 REVERSE_SCOPE_CLASS_NAMES: Final[Dict[str, str]] = {
     "python": "ReverseFromPython",
     "javascript": "ReverseFromJS",
-    "java": "ReverseFromJava",
 }
 
 
