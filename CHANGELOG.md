@@ -11,6 +11,7 @@
 - Incorporación del generador de ensamblador basado en el IR de Hololang y documentación asociada.
 
 ## v10.0.10 - Pendiente de liberación
+- Saneamiento interno del Lexer/Parser: se eliminaron entradas duplicadas exactas en especificaciones y factories, sin introducir gramática nueva ni alterar precedencias.
 - Refactor de `src/pcobra/__init__.py` para exponer submódulos con carga perezosa (`__getattr__`) y evitar imports ansiosos en `import pcobra`, manteniendo `activar_aliases_legacy()` para compatibilidad con rutas legacy (`cobra`, `core`) bajo activación explícita.
 - Nuevas pruebas de import liviano para garantizar que `import pcobra` no requiere dependencias opcionales (como Flet) ni carga submódulos pesados de forma anticipada.
 - **Breaking changes (política de targets retirados)**

@@ -132,7 +132,6 @@ class ClassicParser:
             TipoToken.INTENTAR: self.declaracion_try_catch,
             TipoToken.APLAZAR: self.declaracion_defer,
             TipoToken.LANZAR: self.declaracion_throw,
-            TipoToken.LANZAR: self.declaracion_throw,
             TipoToken.GENERAR: self.declaracion_yield,
             TipoToken.ROMPER: self.declaracion_romper,
             TipoToken.CONTINUAR: self.declaracion_continuar,
