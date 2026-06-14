@@ -2332,17 +2332,14 @@ class InterpretadorCobra:
         """
 
         try:
-            nombre_modulo = nodo.modulo
+            nombre_modulo_limpio = str(nodo.modulo).strip().strip('\"\'')
             current_file = (
                 self._current_module_stack[-1]
                 if self._current_module_stack
                 else self._main_file
             )
-            self._project_root = descubrir_raiz_proyecto(
-                current_file or self._project_root, self._main_file
-            )
             exports = usar_modulo(
-                nombre_modulo,
+                nombre_modulo_limpio,
                 project_root=self._project_root,
                 current_file=current_file,
             )

@@ -914,3 +914,70 @@ def test_resolver_modulo_cobra_proyecto_no_devuelve_symlink_fuera_de_project_roo
 
     with pytest.raises(ValueError, match="fuera de la raíz autorizada"):
         resolver_modulo_cobra_proyecto("escape", project_root=proyecto)
+
+
+def test_usar_anidado_mantiene_raiz_autorizada_estable_con_current_file(
+    monkeypatch, tmp_path
+):
+    proyecto = tmp_path / "app"
+    externo = tmp_path / "externo"
+    modulo_dir = proyecto / "a"
+    modulo_dir.mkdir(parents=True)
+    externo.mkdir()
+    (proyecto / "cobra.toml").write_text("[proyecto]\n", encoding="utf-8")
+    # Este cobra.toml anidado detecta regresiones: la raíz autorizada debe seguir
+    # siendo la descubierta desde main.co, no la del módulo actualmente cargado.
+    (modulo_dir / "cobra.toml").write_text("[proyecto]\n", encoding="utf-8")
+    principal = proyecto / "main.co"
+    principal.write_text("usar a.b\n", encoding="utf-8")
+    (modulo_dir / "b.co").write_text(
+        "usar a.c\nvar desde_b = 2\n",
+        encoding="utf-8",
+    )
+    (modulo_dir / "c.co").write_text("var desde_c = 3\n", encoding="utf-8")
+
+    rutas_cargadas = []
+    roots_usados = []
+    current_files_usados = []
+    original_usar_modulo = usar_modulo
+
+    def spy_usar_modulo(nombre, *, project_root=None, current_file=None):
+        roots_usados.append(Path(project_root).resolve())
+        current_files_usados.append(
+            Path(current_file).resolve() if current_file is not None else None
+        )
+        exports = original_usar_modulo(
+            nombre,
+            project_root=project_root,
+            current_file=current_file,
+        )
+        rutas_cargadas.extend(
+            Path(metadata["module"]).resolve()
+            for metadata in exports.get("metadata", {}).values()
+        )
+        return exports
+
+    import pcobra.core.interpreter as interpreter_module
+
+    monkeypatch.setattr(interpreter_module, "usar_modulo", spy_usar_modulo)
+    monkeypatch.chdir(externo)
+
+    setup, _resultado = ejecutar_pipeline_explicito(
+        PipelineInput(
+            codigo=principal.read_text(encoding="utf-8"),
+            interpretador_cls=InterpretadorCobra,
+            safe_mode=False,
+            main_file=principal,
+        )
+    )
+
+    assert setup.interpretador.variables["desde_b"] == 2
+    assert setup.interpretador._project_root == proyecto.resolve()
+    assert roots_usados == [proyecto.resolve(), proyecto.resolve()]
+    assert current_files_usados == [
+        principal.resolve(),
+        (modulo_dir / "b.co").resolve(),
+    ]
+    assert (modulo_dir / "b.co").resolve() in rutas_cargadas
+    assert (modulo_dir / "c.co").resolve() in rutas_cargadas
+    assert all(ruta.is_relative_to(proyecto.resolve()) for ruta in rutas_cargadas)
