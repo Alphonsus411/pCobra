@@ -258,6 +258,11 @@ def resolver_modulo_cobra_proyecto(
         ruta_directa = canonicalizar_ruta_usar_proyecto(ruta_directa)
         _verificar_path_dentro_de_root(ruta_directa, root_resuelto)
         return ruta_directa
+
+    # Compatibilidad legacy: el resolver histórico sólo puede actuar como
+    # fallback cuando haya sido sustituido explícitamente por un caller/test.
+    # La ruta principal y estable para `usar utilidades.fechas` es siempre:
+    # `project_root / "utilidades" / "fechas.co"`.
     if getattr(CobraImportResolver, "__module__", "") == "pcobra.cobra.imports.resolver":
         raise FileNotFoundError(f"Módulo no encontrado: {nombre}")
 
@@ -274,7 +279,7 @@ def resolver_modulo_cobra_proyecto(
     if resolution.source != "project" or not resolution.file_path:
         raise FileNotFoundError(f"Módulo no encontrado: {nombre}")
 
-    ruta_resuelta = Path(resolution.file_path)
+    ruta_resuelta = canonicalizar_ruta_usar_proyecto(resolution.file_path)
     _verificar_path_dentro_de_root(ruta_resuelta, root_resuelto)
 
     return ruta_resuelta
@@ -532,37 +537,45 @@ def _cargar_exports_modulo_cobra_proyecto(
     from pcobra.core.interpreter import InterpretadorCobra
     from pcobra.core.ast_nodes import NodoExport, NodoUsar
 
+    root_canonico = canonicalizar_ruta_usar_proyecto(project_root)
+    current_canonico = (
+        canonicalizar_ruta_usar_proyecto(current_file) if current_file else None
+    )
+    if current_canonico is not None:
+        _verificar_path_dentro_de_root(current_canonico, root_canonico)
+
     ruta_modulo = resolver_ruta_canonica_modulo_cobra_proyecto(
         nombre,
-        project_root=project_root,
-        current_file=current_file,
+        project_root=root_canonico,
+        current_file=current_canonico,
     )
+    _verificar_path_dentro_de_root(ruta_modulo, root_canonico)
 
     if ruta_modulo in _USAR_PROJECT_MODULE_CACHE:
         return _USAR_PROJECT_MODULE_CACHE[ruta_modulo]
 
     if ruta_modulo in _USAR_PROJECT_LOADING_STACK:
         cadena = formatear_ciclo_modulos_cobra_proyecto(
-            ruta_modulo, project_root=project_root
+            ruta_modulo, project_root=root_canonico
         )
         raise ImportError(f"Ciclo de módulos detectado en usar: {cadena}")
 
     try:
         ast = cargar_ast_modulo(
             str(ruta_modulo),
-            modules_path=str(project_root),
-            whitelist={project_root},
+            modules_path=str(root_canonico),
+            whitelist={root_canonico},
         )
     except FileNotFoundError as exc:
         raise FileNotFoundError(f"Módulo no encontrado: {nombre}") from exc
 
     _USAR_PROJECT_LOADING_STACK.append(ruta_modulo)
     interpretador = InterpretadorCobra(
-        safe_mode=False, main_file=current_file or ruta_modulo
+        safe_mode=False, main_file=current_canonico or ruta_modulo
     )
-    interpretador._project_root = canonicalizar_ruta_usar_proyecto(project_root)
+    interpretador._project_root = root_canonico
     interpretador._main_file = (
-        canonicalizar_ruta_usar_proyecto(current_file) if current_file else ruta_modulo
+        current_canonico if current_canonico else ruta_modulo
     )
     interpretador._current_module_stack.append(ruta_modulo)
     interpretador.contextos.append(Environment(parent=interpretador.contextos[-1]))
@@ -575,12 +588,13 @@ def _cargar_exports_modulo_cobra_proyecto(
                 modulo_hijo = str(subnodo.modulo).strip().strip('\"\'')
                 ruta_hijo = resolver_ruta_canonica_modulo_cobra_proyecto(
                     modulo_hijo,
-                    project_root=project_root,
+                    project_root=root_canonico,
                     current_file=ruta_modulo,
                 )
+                _verificar_path_dentro_de_root(ruta_hijo, root_canonico)
                 if ruta_hijo in _USAR_PROJECT_LOADING_STACK:
                     cadena = formatear_ciclo_modulos_cobra_proyecto(
-                        ruta_hijo, project_root=project_root
+                        ruta_hijo, project_root=root_canonico
                     )
                     raise ImportError(f"Ciclo de módulos detectado en usar: {cadena}")
             interpretador.ejecutar_nodo(subnodo)
