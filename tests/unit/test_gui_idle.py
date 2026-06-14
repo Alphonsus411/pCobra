@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from types import SimpleNamespace
+import sys
+from types import ModuleType, SimpleNamespace
 from unittest.mock import MagicMock
 
 from pcobra.gui import idle
@@ -11,10 +12,12 @@ from pcobra.gui import idle
 def _fake_flet():
     class TextField:
         def __init__(self, **_kwargs):
+            self.kwargs = _kwargs
             self.value = ""
 
     class Text:
         def __init__(self, value="", **_kwargs):
+            self.kwargs = _kwargs
             self.value = value
 
     class Dropdown:
@@ -32,13 +35,33 @@ def _fake_flet():
             self.text = text
             self.on_click = on_click
 
+    class TextButton(ElevatedButton):
+        pass
+
+    class Layout:
+        def __init__(self, controls=None, **_kwargs):
+            self.controls = controls or []
+
+    class Container:
+        def __init__(self, content=None, **_kwargs):
+            self.content = content
+
     class Page:
         def __init__(self):
             self.controls = []
             self.update = MagicMock()
 
         def add(self, *args):
-            self.controls.extend(args)
+            def _flatten(control):
+                self.controls.append(control)
+                for child in getattr(control, "controls", []) or []:
+                    _flatten(child)
+                content = getattr(control, "content", None)
+                if content is not None:
+                    _flatten(content)
+
+            for arg in args:
+                _flatten(arg)
 
     return SimpleNamespace(
         TextField=TextField,
@@ -46,6 +69,11 @@ def _fake_flet():
         Dropdown=Dropdown,
         Switch=Switch,
         ElevatedButton=ElevatedButton,
+        TextButton=TextButton,
+        Row=Layout,
+        Column=Layout,
+        Container=Container,
+        ListView=Layout,
         Page=Page,
         dropdown=SimpleNamespace(Option=lambda v: v),
     )
@@ -62,20 +90,34 @@ def test_main_renderiza_botones_esperados(monkeypatch):
             "TRANSPILERS": {"python": object},
             "LexerError": RuntimeError,
             "ParserError": ValueError,
+            "Lexer": lambda _codigo: SimpleNamespace(tokenizar=lambda: []),
+            "Parser": lambda _tokens: SimpleNamespace(parsear=lambda: []),
         },
     )
     monkeypatch.setattr(idle.runtime, "normalizar_codigo", lambda value: value or "")
     monkeypatch.setattr(idle.runtime, "ejecutar_codigo", lambda _codigo: "ok")
-    monkeypatch.setattr(idle.runtime, "transpilar_codigo", lambda _codigo, _lang: "transpilado")
+    monkeypatch.setattr(
+        idle.runtime, "transpilar_codigo", lambda _codigo, _lang: "transpilado"
+    )
     monkeypatch.setattr(idle.runtime, "mostrar_tokens", lambda _codigo: "Token(X)")
     monkeypatch.setattr(idle.runtime, "mostrar_ast", lambda _codigo: "[Nodo]")
-    monkeypatch.setattr(idle.runtime, "formatear_error", lambda exc, **_kwargs: f"error: {exc}")
-
+    monkeypatch.setattr(
+        idle.runtime, "formatear_error", lambda exc, **_kwargs: f"error: {exc}"
+    )
     page = ft.Page()
     idle.main(page)
 
     botones = [c for c in page.controls if isinstance(c, ft.ElevatedButton)]
-    assert [b.text for b in botones] == ["Ejecutar", "Tokens", "AST"]
+    assert [
+        b.text
+        for b in botones
+        if b.text in {"Ejecutar", "Tokens", "AST", "Sugerencias"}
+    ] == [
+        "Ejecutar",
+        "Tokens",
+        "AST",
+        "Sugerencias",
+    ]
 
 
 def test_main_handlers_smoke(monkeypatch):
@@ -91,6 +133,8 @@ def test_main_handlers_smoke(monkeypatch):
             "TRANSPILERS": {"python": object},
             "LexerError": RuntimeError,
             "ParserError": ValueError,
+            "Lexer": lambda _codigo: SimpleNamespace(tokenizar=lambda: []),
+            "Parser": lambda _tokens: SimpleNamespace(parsear=lambda: []),
         },
     )
     monkeypatch.setattr(idle.runtime, "normalizar_codigo", lambda value: value or "")
@@ -98,17 +142,38 @@ def test_main_handlers_smoke(monkeypatch):
     monkeypatch.setattr(idle.runtime, "transpilar_codigo", transpilar_mock)
     monkeypatch.setattr(idle.runtime, "mostrar_tokens", lambda _codigo: "Token(X)")
     monkeypatch.setattr(idle.runtime, "mostrar_ast", lambda _codigo: "[Nodo]")
-    monkeypatch.setattr(idle.runtime, "formatear_error", lambda exc, **_kwargs: f"error: {exc}")
+    monkeypatch.setattr(
+        idle.runtime, "formatear_error", lambda exc, **_kwargs: f"error: {exc}"
+    )
+    analizador = ModuleType("pcobra.ia.analizador_agix")
+    analizador.generar_sugerencias = lambda _codigo: ["Usa nombres descriptivos"]
+    monkeypatch.setitem(sys.modules, "pcobra.ia.analizador_agix", analizador)
 
     page = ft.Page()
     idle.main(page)
 
-    entrada = next(c for c in page.controls if isinstance(c, ft.TextField))
+    entrada = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.TextField) and c.kwargs.get("multiline")
+    )
     selector = next(c for c in page.controls if isinstance(c, ft.Dropdown))
     activar = next(c for c in page.controls if isinstance(c, ft.Switch))
-    salida = next(c for c in page.controls if isinstance(c, ft.Text))
-    botones = [c for c in page.controls if isinstance(c, ft.ElevatedButton)]
-    ejecutar_btn, tokens_btn, ast_btn = botones
+    salida = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.Text) and c.kwargs.get("selectable")
+    )
+    botones = {
+        c.text: c
+        for c in page.controls
+        if isinstance(c, ft.ElevatedButton)
+        and c.text in {"Ejecutar", "Tokens", "AST", "Sugerencias"}
+    }
+    ejecutar_btn = botones["Ejecutar"]
+    tokens_btn = botones["Tokens"]
+    ast_btn = botones["AST"]
+    sugerencias_btn = botones["Sugerencias"]
 
     entrada.value = "imprimir('x')"
     ejecutar_btn.on_click(None)
@@ -128,9 +193,14 @@ def test_main_handlers_smoke(monkeypatch):
 
     ast_btn.on_click(None)
     assert salida.value == "[Nodo]"
+
+    sugerencias_btn.on_click(None)
+    assert "Errores léxicos/sintácticos" in salida.value
+    assert "- No se detectaron errores" in salida.value
+    assert "- Usa nombres descriptivos" in salida.value
     ejecutar_mock.assert_called_once_with("imprimir('x')")
     transpilar_mock.assert_called_once_with("imprimir('x')", "python")
-    assert page.update.call_count == 5
+    assert page.update.call_count == 6
 
 
 def test_main_selector_y_switch_sin_targets(monkeypatch):
@@ -148,10 +218,14 @@ def test_main_selector_y_switch_sin_targets(monkeypatch):
     )
     monkeypatch.setattr(idle.runtime, "normalizar_codigo", lambda value: value or "")
     monkeypatch.setattr(idle.runtime, "ejecutar_codigo", lambda _codigo: "ejecutado")
-    monkeypatch.setattr(idle.runtime, "transpilar_codigo", lambda _codigo, _lang: "transpilado")
+    monkeypatch.setattr(
+        idle.runtime, "transpilar_codigo", lambda _codigo, _lang: "transpilado"
+    )
     monkeypatch.setattr(idle.runtime, "mostrar_tokens", lambda _codigo: "Token(X)")
     monkeypatch.setattr(idle.runtime, "mostrar_ast", lambda _codigo: "[Nodo]")
-    monkeypatch.setattr(idle.runtime, "formatear_error", lambda exc, **_kwargs: f"error: {exc}")
+    monkeypatch.setattr(
+        idle.runtime, "formatear_error", lambda exc, **_kwargs: f"error: {exc}"
+    )
 
     page = ft.Page()
     idle.main(page)

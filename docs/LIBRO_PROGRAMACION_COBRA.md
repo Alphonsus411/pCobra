@@ -829,6 +829,12 @@ Cobra incluye módulos de soporte para flujos asíncronos y coordinación.
 
 El panel lateral funciona como árbol de directorios ligero: muestra carpetas y archivos Cobra con extensiones `.co` y `.cobra`, que son las extensiones documentadas para scripts y paquetes. Seleccionar un archivo carga su texto en el editor sin validar sintaxis. Guardar escribe exactamente el contenido normalizado visible en el editor y evita ejecutar lexer o parser, por lo que también puede persistir borradores incompletos o temporalmente inválidos.
 
+#### Acción de sugerencias en GUI/IDLE
+
+El botón **Sugerencias** del IDLE toma el texto actual del editor, lo normaliza igual que las acciones de ejecución y lo valida primero con el `Lexer` y el `Parser` oficiales de Cobra. Esta validación conserva la gramática existente: el Libro se usa como referencia pedagógica y documental para explicar buenas prácticas, no como parser alternativo ni como fuente de reglas sintácticas paralelas.
+
+Si el código contiene errores léxicos o sintácticos, la salida separa esos errores de las sugerencias estilísticas y pide corregirlos antes de consultar recomendaciones. Si la validación pasa, el IDLE llama a `pcobra.ia.analizador_agix.generar_sugerencias`, que depende de forma opcional del paquete `agix`. Cuando `agix` no está instalado, la interfaz muestra un mensaje claro indicando que la acción de sugerencias requiere instalar esa dependencia opcional; no se introduce ni se asume una librería `agi-core` sin una tarea previa de descubrimiento para confirmar el paquete o API canónicos.
+
 Flujo mínimo sugerido:
 
 ```bash
