@@ -9,38 +9,21 @@ if TYPE_CHECKING:
 
 
 def main(page: "ft.Page"):
-    """Función principal para Flet."""
+    """Interfaz mínima de Flet basada en componentes compartidos."""
     ft = runtime.require_flet()
 
-    entrada = runtime.flet_text_field(ft, multiline=True, expand=True)
-    salida = runtime.flet_text(ft, value="", selectable=True)
     lenguajes = list(runtime.gui_target_choices())
-    selector = runtime.flet_dropdown(
-        ft, options=[runtime.flet_dropdown_option(ft, lang) for lang in lenguajes]
+    entrada = runtime.crear_editor_codigo(ft)
+    salida = runtime.crear_salida_seleccionable(ft)
+    selector = runtime.crear_selector_target(ft, lenguajes=lenguajes)
+    activar = runtime.crear_switch_transpilacion(ft, lenguajes=lenguajes)
+    ejecutar_handler = runtime.crear_handler_ejecucion(
+        entrada=entrada,
+        salida=salida,
+        selector=selector,
+        activar=activar,
+        page=page,
     )
-    if lenguajes:
-        selector.value = lenguajes[0]
-
-    activar = runtime.flet_switch(ft, label="Transpilar", disabled=not lenguajes)
-
-    def ejecutar_handler(_e):
-        deps = runtime.require_gui_dependencies()
-        codigo = runtime.normalizar_codigo(entrada.value)
-        try:
-            if activar.value and selector.value not in deps["TRANSPILERS"]:
-                salida.value = "Selecciona un lenguaje destino para transpilar"
-            elif activar.value and selector.value in deps["TRANSPILERS"]:
-                salida.value = runtime.transpilar_codigo(codigo, selector.value)
-            else:
-                salida.value = runtime.ejecutar_codigo(codigo)
-        except Exception as exc:
-            salida.value = runtime.formatear_error(
-                exc,
-                lexer_error_type=deps.get("LexerError"),
-                parser_error_type=deps.get("ParserError"),
-            )
-        finally:
-            page.update()
 
     page.add(
         entrada,

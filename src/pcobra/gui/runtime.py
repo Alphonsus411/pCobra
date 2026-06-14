@@ -220,6 +220,83 @@ def flet_dropdown_option(ft: Any, value: str) -> Any:
     return option_factory(value)
 
 
+def crear_editor_codigo(ft: Any, **kwargs: Any) -> Any:
+    """Crea el editor de código compartido por la app mínima y el IDLE."""
+
+    opciones = {"multiline": True, "expand": True}
+    opciones.update(kwargs)
+    return flet_text_field(ft, **opciones)
+
+
+def crear_salida_seleccionable(ft: Any, **kwargs: Any) -> Any:
+    """Crea la salida seleccionable compartida por la app mínima y el IDLE."""
+
+    opciones = {"value": "", "selectable": True}
+    opciones.update(kwargs)
+    return flet_text(ft, **opciones)
+
+
+def crear_selector_target(ft: Any, *, lenguajes: list[str] | None = None) -> Any:
+    """Crea el selector de target compartido para transpilación en GUI."""
+
+    targets = list(gui_target_choices()) if lenguajes is None else lenguajes
+    selector = flet_dropdown(
+        ft, options=[flet_dropdown_option(ft, lang) for lang in targets]
+    )
+    if targets:
+        selector.value = targets[0]
+    return selector
+
+
+def crear_switch_transpilacion(ft: Any, *, lenguajes: list[str] | None = None) -> Any:
+    """Crea el switch compartido que alterna ejecución y transpilación."""
+
+    targets = list(gui_target_choices()) if lenguajes is None else lenguajes
+    return flet_switch(ft, label="Transpilar", disabled=not targets)
+
+
+def ejecutar_o_transpilar(codigo: str, *, transpilacion_activa: bool, target: str) -> str:
+    """Ejecuta o transpila código Cobra; lógica compartida por ambas GUIs."""
+
+    deps = require_gui_dependencies()
+    if transpilacion_activa and target not in deps["TRANSPILERS"]:
+        return "Selecciona un lenguaje destino para transpilar"
+    if transpilacion_activa:
+        return transpilar_codigo(codigo, target)
+    return ejecutar_codigo(codigo)
+
+
+def crear_handler_ejecucion(
+    *,
+    entrada: Any,
+    salida: Any,
+    selector: Any,
+    activar: Any,
+    page: Any,
+) -> Any:
+    """Crea el handler compartido de ejecutar/transpilar para app mínima e IDLE."""
+
+    def ejecutar_handler(_e: Any) -> None:
+        deps = require_gui_dependencies()
+        codigo = normalizar_codigo(entrada.value)
+        try:
+            salida.value = ejecutar_o_transpilar(
+                codigo,
+                transpilacion_activa=bool(activar.value),
+                target=str(selector.value or ""),
+            )
+        except Exception as exc:
+            salida.value = formatear_error(
+                exc,
+                lexer_error_type=deps.get("LexerError"),
+                parser_error_type=deps.get("ParserError"),
+            )
+        finally:
+            page.update()
+
+    return ejecutar_handler
+
+
 def normalizar_codigo(codigo: str | None) -> str:
     """Normaliza la entrada para evitar valores ``None``."""
     return codigo or ""
