@@ -492,7 +492,26 @@ asincronico funcion main():
 
 **Compatibilidad por backend:** soporte async completo en backend Python; en otros targets revisar disponibilidad de event loop.
 
-### 3.9 Decorators
+### 3.9 Contrato para sugerencias automáticas en GUI/IA
+
+Las herramientas de GUI, asistentes de IA o acciones de corrección automática pueden sugerir cambios sobre código Cobra, pero **no pueden ampliar la sintaxis del lenguaje por su cuenta**. Toda recomendación debe cumplir este contrato antes de mostrarse como corrección aplicable:
+
+1. **Validación de entrada:** el código original se tokeniza con `Lexer` y se parsea con `Parser`. Si el fragmento de entrada no puede validarse, la herramienta debe informar el error en vez de inventar una corrección sintáctica.
+2. **Sintaxis existente:** la sugerencia no debe introducir tokens, palabras reservadas, operadores o construcciones ausentes del parser vigente. Si una forma no aparece en el índice de sintaxis ni es aceptada por `Parser`, queda fuera de las recomendaciones automáticas.
+3. **Trazabilidad al Libro:** cada recomendación debe mapearse a una regla concreta de este Libro, citando la sección aplicable (por ejemplo, `§3.3 Sentencias`, `§3.4 Funciones` o `§3.6 Módulos`).
+4. **Regresión obligatoria:** por cada recomendación nueva se añade un caso válido y uno inválido en `tests/gui/` o `tests/integration/`; además, el fragmento sugerido debe tener una prueba que confirme que `Parser` lo acepta.
+
+Recomendaciones autorizadas actualmente:
+
+| Recomendación | Regla del Libro | Fragmento sugerido que debe aceptar `Parser` | Forma inválida cubierta por regresión |
+|---|---|---|---|
+| Usar `retorno` dentro de funciones. | `§3.3 Sentencias` y `§3.4 Funciones`. | `func saludar(nombre): retorno nombre fin` | `retornar nombre` |
+| Usar `usar` sin alias `como` y con importación plana. | `§3.6 Módulos`. | `usar "numero"` seguido de `es_finito(10)` | `usar "numero" como numero` |
+| Declarar funciones con `func` o `definir`. | `§3.4 Funciones`. | `func calcular_total(a, b): retorno a + b fin` | `funcion calcular_total(a, b): ...` |
+
+> Nota editorial: si en el futuro el parser incorpora una construcción nueva, primero debe actualizarse el índice de sintaxis y la regla correspondiente del Libro; solo después puede añadirse una recomendación automática para esa construcción.
+
+### 3.10 Decorators
 
 **Definición corta:** anotaciones (`@`) para extender funciones/clases sin modificar su cuerpo.
 
@@ -523,7 +542,7 @@ funcion descargar(url):
 
 **Compatibilidad por backend:** decorators dependen de capacidades de metaprogramación del target; validar en `build` por backend.
 
-### 3.10 Macros
+### 3.11 Macros
 
 **Definición corta:** transformación de código antes o durante fases de compilación/transpilación.
 
@@ -548,7 +567,7 @@ traza(usuario_id)
 
 **Compatibilidad por backend:** comportamiento depende del pipeline de transpiler; mantener macros pequeñas y deterministas.
 
-### 3.11 Patrones avanzados
+### 3.12 Patrones avanzados
 
 **Definición corta:** combinaciones de constructos para resolver problemas complejos de forma mantenible.
 
