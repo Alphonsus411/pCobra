@@ -2,7 +2,7 @@
 
 import io
 import re
-from contextlib import redirect_stderr, redirect_stdout
+from contextlib import redirect_stdout, redirect_stderr
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
