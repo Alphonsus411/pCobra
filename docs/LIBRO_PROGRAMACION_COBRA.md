@@ -819,7 +819,7 @@ Cobra incluye un entorno de desarrollo integrado (IDLE) gráfico basado en Flet,
     *   **Switch de transpilación:** Alterna entre ejecutar el código directamente o transpilarlo al lenguaje seleccionado.
     *   **Botón "Ejecutar":** Ejecuta el código Cobra o lo transpila, mostrando la salida o el código generado en el área de resultados.
 *   **Sugerencias de código (Agix):**
-    *   **Botón "Sugerencias (Agix)":** Utiliza la librería `Agix` para analizar tu código y ofrecer sugerencias de mejora o corrección tipográfica, basándose en las mejores prácticas del "Libro de Programación principal". Las sugerencias se muestran en el área de salida.
+    *   **Botón "Sugerencias (Agix)":** Utiliza la librería opcional `agix` para analizar tu código y ofrecer sugerencias de mejora o corrección tipográfica, basándose en las mejores prácticas del "Libro de Programación principal". Las sugerencias se muestran en el área de salida.
 
 Para iniciar el IDLE, usa el comando ``cobra gui``.
 

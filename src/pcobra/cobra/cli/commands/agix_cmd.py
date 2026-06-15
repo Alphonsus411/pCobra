@@ -9,7 +9,7 @@ from pcobra.cobra.cli.utils.validators import validar_archivo_existente
 from pcobra.ia.analizador_agix import generar_sugerencias
 
 class AgixCommand(BaseCommand):
-    """Genera sugerencias para código Cobra usando agix."""
+    """Genera sugerencias para código Cobra usando la dependencia opcional agix."""
     name = "agix"
 
     def register_subparser(self, subparsers: Any) -> CustomArgumentParser:

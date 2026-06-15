@@ -31,8 +31,32 @@ def test_generar_sugerencias_modulacion_emocional():
 
 def test_generar_sugerencias_sin_agix():
     with patch.object(analizador_agix, "Reasoner", None):
-        with pytest.raises(ImportError, match="Instala el paquete agix"):
+        with pytest.raises(ImportError, match="dependencia opcional 'agix'.*pip install agix"):
             analizador_agix.generar_sugerencias("var x = 5")
+
+
+def test_import_opcional_sin_agix_muestra_mensaje_claro(monkeypatch):
+    """Verifica que importar el analizador sin agix no rompa y falle con ayuda clara."""
+    import builtins
+    import importlib
+
+    import_original = builtins.__import__
+
+    def bloquear_agix(nombre, *args, **kwargs):
+        if nombre == "agix" or nombre.startswith("agix."):
+            raise ImportError("agix bloqueado para la prueba")
+        return import_original(nombre, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", bloquear_agix)
+    recargado = importlib.reload(analizador_agix)
+
+    try:
+        assert recargado.Reasoner is None
+        with pytest.raises(ImportError, match="dependencia opcional 'agix'.*pip install agix"):
+            recargado.generar_sugerencias("var x = 5")
+    finally:
+        monkeypatch.setattr(builtins, "__import__", import_original)
+        importlib.reload(analizador_agix)
 
 
 @pytest.mark.parametrize("param, valor", [

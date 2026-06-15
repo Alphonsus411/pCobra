@@ -37,6 +37,11 @@ from typing import List
 
 from pcobra.cobra.core import Lexer, Parser
 
+MENSAJE_DEPENDENCIA_AGIX = (
+    "La dependencia opcional 'agix' no está instalada o no se pudo importar. "
+    "Instálala con 'pip install agix' para activar las sugerencias de IA."
+)
+
 
 def generar_sugerencias(
     codigo: str,
@@ -55,7 +60,7 @@ def generar_sugerencias(
     proporcionan, usando valores en el rango ``[-1.0, 1.0]``.
     """
     if Reasoner is None:
-        raise ImportError("Instala el paquete agix")
+        raise ImportError(MENSAJE_DEPENDENCIA_AGIX)
 
     # Validar el código utilizando las herramientas de Cobra
     tokens = Lexer(codigo).tokenizar()

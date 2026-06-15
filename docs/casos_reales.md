@@ -41,7 +41,7 @@ cobra run ia.co
 También puedes ejecutar el cuaderno `notebooks/casos_reales/inteligencia_artificial.ipynb` para una versión interactiva.
 
 
-Necesitarás `scikit-learn` y opcionalmente `analizador_agix`.
+Necesitarás `scikit-learn`; para las sugerencias del plugin `analizador_agix`, instala también la dependencia opcional `agix`.
 
 El plugin `analizador_agix` soporta modulación emocional mediante los
 parámetros `placer`, `activacion` y `dominancia`, cada uno en el rango
