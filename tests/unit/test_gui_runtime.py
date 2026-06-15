@@ -227,3 +227,91 @@ def test_formatear_error_lexico_y_sintactico_sin_recargar_dependencias(monkeypat
         parser_error_type=FakeParserError,
     ) == "Error de sintaxis: faltó ')'"
     assert llamadas["count"] == 0
+
+
+def test_crear_handler_sugerencias_agix_exitosas(monkeypatch: pytest.MonkeyPatch) -> None:
+    entrada = SimpleNamespace(value="imprimir('Hola')")
+    salida = SimpleNamespace(value="")
+    page = SimpleNamespace(update=lambda: setattr(page, "updated", True))
+
+    monkeypatch.setattr(
+        runtime,
+        "require_gui_dependencies",
+        lambda: {"LexerError": Exception, "ParserError": Exception},
+    )
+    monkeypatch.setattr(
+        runtime,
+        "generar_sugerencias",
+        lambda codigo: [f"Sugerencia para {codigo}"],
+    )
+
+    handler = runtime.crear_handler_sugerencias_agix(
+        entrada=entrada, salida=salida, page=page
+    )
+    handler(None)
+
+    assert salida.value == "Sugerencias de Agix:\n- Sugerencia para imprimir('Hola')"
+    assert page.updated is True
+
+
+def test_crear_handler_sugerencias_agix_dependencia_ausente(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    entrada = SimpleNamespace(value="imprimir('Hola')")
+    salida = SimpleNamespace(value="")
+    page = SimpleNamespace(update=lambda: setattr(page, "updated", True))
+
+    monkeypatch.setattr(
+        runtime,
+        "require_gui_dependencies",
+        lambda: {"LexerError": Exception, "ParserError": Exception},
+    )
+
+    def _generar_sugerencias(_codigo: str) -> list[str]:
+        raise ImportError("Instala el paquete agix")
+
+    monkeypatch.setattr(runtime, "generar_sugerencias", _generar_sugerencias)
+
+    handler = runtime.crear_handler_sugerencias_agix(
+        entrada=entrada, salida=salida, page=page
+    )
+    handler(None)
+
+    assert "Agix no está instalado o no está disponible" in salida.value
+    assert "pip install agix" in salida.value
+    assert "Instala el paquete agix" in salida.value
+    assert page.updated is True
+
+
+def test_crear_handler_sugerencias_agix_error_lexico_sintactico_claro(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class FakeLexerError(Exception):
+        linea = 3
+        columna = 9
+
+    class FakeParserError(Exception):
+        pass
+
+    entrada = SimpleNamespace(value="@")
+    salida = SimpleNamespace(value="")
+    page = SimpleNamespace(update=lambda: setattr(page, "updated", True))
+
+    monkeypatch.setattr(
+        runtime,
+        "require_gui_dependencies",
+        lambda: {"LexerError": FakeLexerError, "ParserError": FakeParserError},
+    )
+
+    def _generar_sugerencias(_codigo: str) -> list[str]:
+        raise FakeLexerError("carácter inválido")
+
+    monkeypatch.setattr(runtime, "generar_sugerencias", _generar_sugerencias)
+
+    handler = runtime.crear_handler_sugerencias_agix(
+        entrada=entrada, salida=salida, page=page
+    )
+    handler(None)
+
+    assert salida.value == "Error léxico (línea 3, columna 9): carácter inválido"
+    assert page.updated is True
