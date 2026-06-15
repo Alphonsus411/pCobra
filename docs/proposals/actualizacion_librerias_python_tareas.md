@@ -283,6 +283,15 @@ Antes de implementar cualquier ticket, leer y respetar estos puntos:
 
 **Trabajo esperado**
 
+- Mantener `agix` como paquete requerido para la integración de producto: el
+  proyecto declara `agix>=1.9.0,<2`, el módulo
+  `src/pcobra/ia/analizador_agix.py` importa la API pública de `agix` y no hay
+  una decisión técnica aprobada para migrar a `agi-core`.
+- No sustituir referencias nuevas de tareas o issues por `agi-core`; si aparece
+  esa mención, corregirla a `agix` salvo que antes se documente una propuesta
+  formal en `docs/proposals/` con el nombre exacto del paquete, la API pública
+  usada, su relación con `analizador_agix.py` y el plan de compatibilidad o
+  reemplazo.
 - Revisar rutas públicas de AGIX actuales frente a imports existentes.
 - Validar llamadas y tipos usados por `analizador_agix.py`.
 - Revisar API actual de `smooth-criminal` usada por `performance.py`.
