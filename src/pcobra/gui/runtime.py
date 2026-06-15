@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from pcobra.cobra.architecture.backend_policy import PUBLIC_BACKENDS
+from pcobra.ia.analizador_agix import generar_sugerencias
 
 
 @lru_cache(maxsize=1)
@@ -401,27 +402,31 @@ def crear_handler_sugerencias_agix(
     """Crea el handler para generar sugerencias de código con Agix."""
 
     def sugerencias_agix_handler(_e: Any) -> None:
+        deps = require_gui_dependencies()
+        codigo = normalizar_codigo(entrada.value)
         try:
-            from agix.reasoning.basic import Reasoner
-            from agix.models.code_suggestion import CodeSuggestion
-            from agix.models.code_document import CodeDocument
-
-            codigo = normalizar_codigo(entrada.value)
-            documento = CodeDocument(code=codigo, language="cobra")
-            reasoner = Reasoner()
-            sugerencias: list[CodeSuggestion] = reasoner.suggest(documento)
-
+            # ``generar_sugerencias`` centraliza la validación con Lexer/Parser
+            # y evita depender de modelos internos de ``agix.models.*``.
+            sugerencias = generar_sugerencias(codigo)
+        except ImportError as exc:
+            salida.value = (
+                "Agix no está instalado o no está disponible. "
+                "Instálalo con 'pip install agix' para usar esta función. "
+                f"Detalle: {exc}"
+            )
+        except Exception as exc:
+            salida.value = formatear_error(
+                exc,
+                lexer_error_type=deps.get("LexerError"),
+                parser_error_type=deps.get("ParserError"),
+            )
+        else:
             if sugerencias:
                 salida.value = "Sugerencias de Agix:\n" + "\n".join(
-                    f"- {s.suggestion} (Precisión: {s.precision:.2f}, Interpretabilidad: {s.interpretability:.2f})"
-                    for s in sugerencias
+                    f"- {sugerencia}" for sugerencia in sugerencias
                 )
             else:
                 salida.value = "Agix no encontró sugerencias para el código actual."
-        except ModuleNotFoundError:
-            salida.value = "Agix no está instalado. Instálalo con 'pip install agix' para usar esta función."
-        except Exception as exc:
-            salida.value = f"Error al generar sugerencias con Agix: {exc}"
         finally:
             page.update()
 
