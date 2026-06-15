@@ -6,7 +6,7 @@ Para ver ejemplos completos de compilación y transpilación, consulta la carpet
 
 ## Targets oficiales de transpilación
 
-En runtime oficial y para soporte de producción, Cobra define **únicamente** los targets de transpilación publicados por la política canónica. Esa lista se deriva de `src/pcobra/cobra/config/transpile_targets.py` (`OFFICIAL_TARGETS`) y del registro canónico en `src/pcobra/cobra/transpilers/registry.py`.
+En runtime oficial y para soporte de producción, Cobra define **únicamente** los targets de transpilación publicados por la política canónica. Esa lista se deriva de `src/pcobra/cobra/architecture/backend_policy.py` (`PUBLIC_BACKENDS`).
 
 Cualquier backend o flujo de implementación fuera de esa lista debe considerarse experimental y no forma
 parte del paquete instalable de producción.
@@ -14,7 +14,7 @@ parte del paquete instalable de producción.
 ## Matriz técnica de compatibilidad de librerías
 
 La matriz vigente de compatibilidad por librería (runtime, parser, serialización y red)
-para los 8 targets oficiales se publica en:
+para los 3 targets públicos oficiales (`python`, `javascript`, `rust`) se publica en:
 
 - [`docs/library_compatibility_matrix.md`](./library_compatibility_matrix.md)
 

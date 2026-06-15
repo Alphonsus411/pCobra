@@ -4,10 +4,10 @@ Este documento describe cómo migrar proyectos que dependían de targets elimina
 
 ## Estado actual (canónico + deprecaciones activas)
 
-Los targets canónicos de salida registrados son:
+Los targets canónicos públicos de salida registrados por `PUBLIC_BACKENDS` son:
 
-- **Tier 1**: `python`, `rust`, `javascript`, `wasm` *(con `wasm` deprecado para superficie pública)*.
-- **Tier 2**: `go`, `cpp`, `java`, `asm` *(deprecados para superficie pública)*.
+- **Tier 1 público**: `python`, `javascript`, `rust`.
+- **Legacy interno/histórico**: `wasm`, `go`, `cpp`, `java`, `asm` quedan fuera de la superficie pública.
 
 ### Deprecación pública (2 fases)
 
@@ -20,18 +20,16 @@ Plan aplicado:
 1. **Fase 1 (actual por defecto)**: warning en CLI + telemetría de uso.
 2. **Fase 2**: ocultos del help público y disponibles solo en modo legacy (`--legacy-targets` o `COBRA_LEGACY_TARGETS_MODE=1`).
 
-Si tu flujo usa un target retirado, debes moverlo a uno de estos 8.
+Si tu flujo usa un target retirado, debes moverlo a uno de los 3 targets públicos: `python`, `javascript` o `rust`.
 
 ## Selección de destino recomendada
 
 Elige el target según objetivo de tu pipeline:
 
-1. **Necesitas runtime oficial verificable en CLI/sandbox/contenedor**  
-   Migra a: `python`, `rust`, `javascript` o `cpp`.
-2. **Necesitas salida oficial pero aceptas runtime best-effort**  
-   Migra a: `go` o `java`.
-3. **Solo necesitas artefacto de transpilación/inspección**  
-   Migra a: `wasm` o `asm`.
+1. **Necesitas runtime oficial verificable en CLI/sandbox/contenedor**
+   Migra a: `python`, `javascript` o `rust`.
+2. **Necesitas salida legacy o artefactos de inspección**
+   Mantén ese uso fuera de la CLI/documentación pública y trátalo como migración interna temporal.
 
 ## Migración de comandos CLI
 
@@ -44,15 +42,14 @@ Elige el target según objetivo de tu pipeline:
 ## Compatibilidad Holobit SDK y librerías tras migrar
 
 - **Compatibilidad SDK full**: solo `python`.
-- **Resto de targets oficiales**: compatibilidad `partial`.
-- **Soporte oficial de runtime para `corelibs`/`standard_library`**: `python`, `rust`, `javascript`, `cpp`.
-- `go`/`java`: runtime best-effort.
-- `wasm`/`asm`: solo transpilación.
+- **Resto de targets públicos oficiales**: `javascript` y `rust` mantienen compatibilidad `partial`.
+- **Soporte oficial de runtime para `corelibs`/`standard_library`**: `python`, `javascript`, `rust`.
+- `wasm`, `go`, `cpp`, `java` y `asm`: rutas legacy internas/históricas, sin contrato público.
 
 ## Checklist de salida
 
 - [ ] No quedan referencias a targets retirados en `README`, `docs/`, `examples/`, `scripts/`.
-- [ ] Todos los comandos y snippets usan únicamente los 8 targets canónicos.
+- [ ] Todos los comandos y snippets públicos usan únicamente `python`, `javascript` y `rust`.
 - [ ] Se validó documentación y política con:
 
 ```bash

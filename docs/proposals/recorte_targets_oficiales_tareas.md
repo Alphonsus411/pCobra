@@ -6,10 +6,7 @@ Este documento es el **documento madre de implementación** para cerrar el traba
 
 > **Aclaración de alcance**
 >
-> El objetivo de esta propuesta **no es cambiar el set de 8 targets oficiales**. Ese recorte ya está resuelto y la fuente de verdad vigente ya fija estos destinos:
->
-> - Tier 1: `python`, `rust`, `javascript`, `wasm`
-> - Tier 2: `go`, `cpp`, `java`, `asm`
+> Esta propuesta queda como **nota histórica**: el alcance oficial público vigente ya no es el set de 8 targets citado originalmente, sino `python`, `javascript` y `rust` según `PUBLIC_BACKENDS` en `src/pcobra/cobra/architecture/backend_policy.py`. Las menciones a `wasm`, `go`, `cpp`, `java` y `asm` deben leerse como contexto legacy/interno de migración, no como superficie pública.
 >
 > El trabajo pendiente consiste en:
 >
@@ -93,7 +90,7 @@ Antes de tocar cualquier bloque, el implementador debe asumir esta trazabilidad 
 **Notas de implementación**
 
 - Este ticket se rige por `docs/targets_policy.md` para nombres canónicos y por la separación pública entre targets oficiales y aliases legacy solo internos.
-- No cambiar el set de 8 targets: solo blindar la fuente de verdad y sus consumidores.
+- No cambiar el set público de 3 targets: solo blindar la fuente de verdad y sus consumidores.
 
 ### Ticket A2 — Blindar el registro de backends oficiales
 
@@ -130,7 +127,7 @@ Antes de tocar cualquier bloque, el implementador debe asumir esta trazabilidad 
 | Archivos a revisar | `README.md`, `docs/lenguajes.rst`, `docs/lenguajes_soportados.rst`, `docs/targets_policy.md` |
 | Archivos normativos a vincular | `docs/matriz_transpiladores.md`, `docs/contrato_runtime_holobit.md` |
 | Validaciones reales | `python -m pytest tests/unit/test_public_docs_scope.py`; `python scripts/validate_targets_policy.py` |
-| Criterio de cierre verificable | La documentación principal solo enumera como destinos oficiales los 8 targets ya recortados, distingue transpilación vs runtime y no promociona targets retirados, aliases legacy ni compatibilidad Holobit inflada. |
+| Criterio de cierre verificable | La documentación principal solo enumera como destinos oficiales `python`, `javascript` y `rust`, distingue transpilación vs runtime y no promociona targets retirados, aliases legacy ni compatibilidad Holobit inflada. |
 
 **Trabajo esperado**
 
@@ -226,12 +223,12 @@ Antes de tocar cualquier bloque, el implementador debe asumir esta trazabilidad 
 | Archivos a revisar | `src/pcobra/cobra/cli/target_policies.py`, `src/pcobra/core/sandbox.py` |
 | Archivos relacionados | `docs/targets_policy.md`, `docs/matriz_transpiladores.md`, `docs/contrato_runtime_holobit.md` |
 | Validaciones reales | `python -m pytest tests/unit/test_official_targets_consistency.py`; `python -m pytest tests/unit/test_target_execution_policy.py`; `python scripts/validate_targets_policy.py` |
-| Criterio de cierre verificable | La política pública y la implementación distinguen con claridad targets oficiales de transpilación, runtime oficial, runtime best-effort y targets solo de generación; no se vende equivalencia de ejecución para los 8 backends. |
+| Criterio de cierre verificable | La política pública y la implementación distinguen con claridad targets oficiales de transpilación, runtime oficial, runtime best-effort y targets solo de generación; no se vende equivalencia de ejecución para backends legacy fuera de `python`, `javascript` y `rust`. |
 
 **Trabajo esperado**
 
 - Revisar las listas `OFFICIAL_TRANSPILATION_TARGETS`, `OFFICIAL_RUNTIME_TARGETS`, `TRANSPILATION_ONLY_TARGETS` y `VERIFICATION_EXECUTABLE_TARGETS`.
-- Confirmar que sandbox, CLI y documentación no presentan `wasm`, `asm`, `go` o `java` como si tuvieran el mismo runtime oficial que `python`, `rust`, `javascript` y `cpp`.
+- Confirmar que sandbox, CLI y documentación no presentan `wasm`, `asm`, `go`, `java` o `cpp` como si tuvieran el mismo contrato público que `python`, `javascript` y `rust`.
 - Alinear wording técnico con la separación ya definida en `docs/targets_policy.md`.
 
 **Notas de implementación**
@@ -332,13 +329,13 @@ Un ticket de esta propuesta solo debe marcarse como **cerrado** cuando se cumpla
 1. el diff toca los archivos concretos asociados al ticket o confirma explícitamente que no requieren cambios;
 2. los documentos normativos vinculados (`docs/targets_policy.md`, `docs/matriz_transpiladores.md`, `docs/contrato_runtime_holobit.md`) siguen alineados;
 3. las validaciones reales indicadas en el ticket se ejecutan y quedan en verde;
-4. no se altera el set oficial de 8 targets, salvo una decisión de producto separada y documentada fuera de esta propuesta.
+4. no se altera el set público oficial de 3 targets, salvo una decisión de producto separada y documentada fuera de esta propuesta.
 
 ## Resultado esperado
 
 Al cerrar esta batería:
 
-- pCobra mantiene formalmente el alcance ya recortado a **8 targets oficiales de salida**;
+- pCobra mantiene formalmente el alcance público recortado a **3 targets oficiales de salida**;
 - desaparecen restos productivos/documentales que puedan reabrir targets legacy o aliases públicos;
 - la CI blinda la reintroducción de divergencias entre código, CLI, tests y documentación;
 - el contrato Holobit/`corelibs`/`standard_library` queda mantenido sin sobredimensionar compatibilidad real ni runtime oficial.

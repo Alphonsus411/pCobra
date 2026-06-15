@@ -11,7 +11,7 @@ Se encarga de leer el texto fuente y convertirlo en una secuencia de *tokens*. C
 Consume los tokens generados por el lexer y construye el \u00c1rbol de Sintaxis Abstracta (**AST**). El parser valida la estructura del programa y crea los nodos que representar\u00e1n instrucciones, expresiones y declaraciones.
 
 ### `transpilers`
-Una vez disponible el AST, los transpiladores recorren cada nodo mediante el patr\u00f3n *Visitor* para generar c\u00f3digo en otros lenguajes. Cobra expone como destinos oficiales los 8 nombres can\u00f3nicos `python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java` y `asm`.
+Una vez disponible el AST, los transpiladores recorren cada nodo mediante el patr\u00f3n *Visitor* para generar c\u00f3digo en otros lenguajes. Cobra expone como destinos oficiales públicos únicamente `python`, `javascript` y `rust`, en el mismo orden contractual de `PUBLIC_BACKENDS` (`src/pcobra/cobra/architecture/backend_policy.py`). Los transpilers históricos `wasm`, `go`, `cpp`, `java` y `asm` quedan fuera de la superficie pública y solo pueden tratarse como rutas internas de migración o regresión.
 
 ## Interacci\u00f3n general
 El proceso habitual comienza con el lexer, sigue con el parser y finaliza en el int\u00e9rprete o en alguno de los transpiladores. La siguiente gr\u00e1fica resume dicho flujo.
@@ -33,7 +33,6 @@ AST --> "Interprete"
 AST --> Transpiladores
 Transpiladores --> python
 Transpiladores --> javascript
-Transpiladores --> asm
 Transpiladores --> rust
 @enduml
 ```
