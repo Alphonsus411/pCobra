@@ -9,7 +9,7 @@ La fuente estructurada se mantiene en `data/language_equivalence.yml` y se valid
 Cada feature documenta:
 - Sintaxis Cobra.
 - Equivalente Python.
-- Equivalentes por backend: `javascript`, `rust`, `go`, `cpp`, `java`, `wasm`, `asm`.
+- Equivalentes por backend público: `python`, `javascript`, `rust`. Las columnas históricas para `go`, `cpp`, `java`, `wasm` y `asm` se retiraron de la superficie pública.
 - Estado por backend (`full`, `partial`, `none`) y limitaciones.
 
 ## Features cubiertas
@@ -32,14 +32,14 @@ El orden anterior se refleja en `LANGUAGE_EQUIVALENCE_PRIORITY_PHASES` dentro de
 
 ## Resumen de estado por feature/backend
 
-| Feature | python | javascript | rust | go | cpp | java | wasm | asm |
-|---|---|---|---|---|---|---|---|---|
-| decoradores | full | full | partial | partial | partial | none | partial | partial |
-| imports_corelibs | full | partial | partial | partial | partial | partial | partial | partial |
-| manejo_errores | full | partial | partial | partial | partial | partial | partial | partial |
-| async | full | full | none | partial | none | none | none | partial |
-| tipos_compuestos | full | full | partial | partial | partial | partial | partial | partial |
-| hooks_runtime | full | full | full | full | full | full | full | full |
+| Feature | python | javascript | rust |
+|---|---|---|---|
+| decoradores | full | full | partial |
+| imports_corelibs | full | partial | partial |
+| manejo_errores | full | partial | partial |
+| async | full | full | none |
+| tipos_compuestos | full | full | partial |
+| hooks_runtime | full | full | full |
 
 ## Sincronización y backlog técnico
 

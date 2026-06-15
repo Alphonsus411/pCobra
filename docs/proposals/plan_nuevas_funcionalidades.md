@@ -10,7 +10,7 @@
 
 - **Biblioteca estándar**: ampliar textos, colecciones, números y booleanos con APIs inspiradas en Python y compatibles con la arquitectura actual.
 - **Modelo de ejecución**: introducir asincronía idiomática, decoradores utilitarios y utilidades concurrentes sin cambiar la política pública de targets.
-- **Interoperabilidad multilenguaje**: priorizar mejoras que mantengan paridad semántica dentro de los 8 targets oficiales (`python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java`, `asm`).
+- **Interoperabilidad multilenguaje**: priorizar mejoras que mantengan paridad semántica dentro de los 3 targets públicos oficiales (`python`, `javascript`, `rust`). Las referencias a `wasm`, `go`, `cpp`, `java` o `asm` quedan como investigación histórica/interna y no amplían la superficie pública.
 - **Documentación y adopción**: acompañar cada fase con manuales, notebooks, automatización de pruebas y seguimiento de indicadores.
 
 ## Objetivos generales
@@ -27,13 +27,8 @@
 Los únicos targets públicos de salida contemplados por esta propuesta son:
 
 - `python`
-- `rust`
 - `javascript`
-- `wasm`
-- `go`
-- `cpp`
-- `java`
-- `asm`
+- `rust`
 
 ### Referencias explícitamente fuera de alcance
 
@@ -231,4 +226,4 @@ El siguiente backlog descompone cada tarea macro en actividades implementables c
 | --- | --- | --- | --- | --- | --- |
 | F4.1.a | Actualizar manuales con nuevas APIs | Revisar `docs/MANUAL_COBRA.md`, `docs/guia_basica.md`, `docs/README.en.md` | Validación con la pipeline de docs y revisión ortográfica | Plantillas de snippets en `docs/standard_library/` | Depende de fases 1-3 |
 | F4.1.b | Crear tutorial guiado paso a paso | Notebook y ejemplo principal de novedades | Ejecución manual en CI y smoke tests | Entrada de blog o guía interna | Depende de F4.1.a |
-| F4.2.a | Añadir suites diferenciales en CI | Extender scripts/CI para verificar semántica en los 8 targets oficiales | Ejecución automatizada por matriz | Documentar criterios de cobertura | Depende de fases 1-3 |
+| F4.2.a | Añadir suites diferenciales en CI | Extender scripts/CI para verificar semántica en los 3 targets públicos oficiales | Ejecución automatizada por matriz | Documentar criterios de cobertura | Depende de fases 1-3 |

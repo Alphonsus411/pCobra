@@ -32,5 +32,5 @@ clase Archivo(Printable, Comprimible):
 fin
 ```
 
-En los transpilers a `python`, `javascript`, `cpp` y `rust` se generan las construcciones equivalentes
-(`class` abstracta, clase vacía, `struct` con métodos virtuales y `trait`).
+En los transpilers oficiales públicos a `python`, `javascript` y `rust` se generan las construcciones equivalentes
+(`class` abstracta, clase vacía y `trait`). Los ejemplos de `cpp` pertenecen a rutas históricas internas y no forman parte de la superficie pública.

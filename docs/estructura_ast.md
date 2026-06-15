@@ -61,17 +61,12 @@ Parser --> AST
 AST --> Transpiladores
 Transpiladores --> Python
 Transpiladores --> javascript
-Transpiladores --> asm
 Transpiladores --> Rust
-Transpiladores --> cpp
-Transpiladores --> Go
-Transpiladores --> Java
-Transpiladores --> wasm
 @enduml
 ```
 
 
 ## Archivo histórico (no soportado)
 
-Las referencias históricas a targets retirados se eliminaron de esta guía para
-mantenerla alineada con los 8 destinos oficiales actuales.
+Las referencias históricas a `wasm`, `go`, `cpp`, `java` y `asm` se eliminaron de esta guía para
+mantenerla alineada con los 3 destinos oficiales públicos actuales: `python`, `javascript` y `rust`.
