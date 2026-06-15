@@ -268,7 +268,7 @@ def test_crear_handler_sugerencias_agix_dependencia_ausente(
     )
 
     def _generar_sugerencias(_codigo: str) -> list[str]:
-        raise ImportError("Instala el paquete agix")
+        raise ImportError("La dependencia opcional 'agix' no está instalada")
 
     monkeypatch.setattr(runtime, "generar_sugerencias", _generar_sugerencias)
 
@@ -277,9 +277,9 @@ def test_crear_handler_sugerencias_agix_dependencia_ausente(
     )
     handler(None)
 
-    assert "Agix no está instalado o no está disponible" in salida.value
+    assert "dependencia opcional agix no está instalada" in salida.value
     assert "pip install agix" in salida.value
-    assert "Instala el paquete agix" in salida.value
+    assert "dependencia opcional 'agix'" in salida.value
     assert page.updated is True
 
 

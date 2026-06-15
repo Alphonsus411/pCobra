@@ -487,8 +487,8 @@ def crear_handler_sugerencias_agix(
             sugerencias = generar_sugerencias(codigo)
         except ImportError as exc:
             salida.value = (
-                "Agix no está instalado o no está disponible. "
-                "Instálalo con 'pip install agix' para usar esta función. "
+                "La dependencia opcional agix no está instalada o no está disponible. "
+                "Instálala con 'pip install agix' para usar esta función. "
                 f"Detalle: {exc}"
             )
         except Exception as exc:
