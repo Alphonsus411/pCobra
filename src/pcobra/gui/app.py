@@ -44,8 +44,8 @@ def main(page: "ft.Page"):
     )
 
     def cargar_archivo_handler(e):
-        if e.control.data and runtime.es_archivo_cobra(e.control.data):
-            entrada.value = runtime.cargar_archivo_en_estado(
+        if e.control.data:
+            entrada.value, _mensaje = runtime.cargar_archivo_desde_arbol(
                 e.control.data, estado_archivo
             )
             page.update()

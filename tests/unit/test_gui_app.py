@@ -32,13 +32,47 @@ def _fake_flet():
             self.text = text
             self.on_click = on_click
 
+    class Layout:
+        def __init__(self, controls=None, *args, **_kwargs):
+            if controls is None and args:
+                controls = args[0]
+            self.controls = controls or []
+
+    class ExpansionTile:
+        def __init__(self, title=None, leading=None, controls=None):
+            self.title = title
+            self.leading = leading
+            self.controls = controls or []
+
+    class ListTile:
+        def __init__(self, title=None, leading=None, data=None, on_click=None):
+            self.title = title
+            self.leading = leading
+            self.data = data
+            self.on_click = on_click
+
+    class Icon:
+        def __init__(self, name):
+            self.name = name
+
     class Page:
         def __init__(self):
             self.controls = []
             self.update = MagicMock()
+            self.overlay = []
+            self.snack_bar = SimpleNamespace(open=False, content=None)
 
         def add(self, *args):
-            self.controls.extend(args)
+            def _flatten(control):
+                self.controls.append(control)
+                for child in getattr(control, "controls", []) or []:
+                    _flatten(child)
+                content = getattr(control, "content", None)
+                if content is not None:
+                    _flatten(content)
+
+            for arg in args:
+                _flatten(arg)
 
     return SimpleNamespace(
         TextField=TextField,
@@ -46,6 +80,13 @@ def _fake_flet():
         Dropdown=Dropdown,
         Switch=Switch,
         ElevatedButton=ElevatedButton,
+        Row=Layout,
+        Column=Layout,
+        ExpansionTile=ExpansionTile,
+        ListTile=ListTile,
+        Icon=Icon,
+        icons=SimpleNamespace(FOLDER="folder", INSERT_DRIVE_FILE="file"),
+        ScrollMode=SimpleNamespace(ALWAYS="always"),
         Page=Page,
         dropdown=SimpleNamespace(Option=lambda v: v),
     )
@@ -54,6 +95,9 @@ def _fake_flet():
 def test_main_renderiza_componentes_minimos(monkeypatch):
     ft = _fake_flet()
     monkeypatch.setattr(app.runtime, "require_flet", lambda: ft)
+    monkeypatch.setattr(
+        app.runtime, "crear_arbol_directorios", lambda _ft, on_click: _ft.Column([])
+    )
     monkeypatch.setattr(app.runtime, "gui_target_choices", lambda: ("python",))
     monkeypatch.setattr(
         app.runtime,
@@ -73,12 +117,20 @@ def test_main_renderiza_componentes_minimos(monkeypatch):
     app.main(page)
 
     botones = [c for c in page.controls if isinstance(c, ft.ElevatedButton)]
-    assert [b.text for b in botones] == ["Ejecutar"]
+    assert [b.text for b in botones] == [
+        "Guardar",
+        "Guardar como",
+        "Ejecutar",
+        "Sugerencias",
+    ]
 
 
 def test_main_handler_actualiza_salida(monkeypatch):
     ft = _fake_flet()
     monkeypatch.setattr(app.runtime, "require_flet", lambda: ft)
+    monkeypatch.setattr(
+        app.runtime, "crear_arbol_directorios", lambda _ft, on_click: _ft.Column([])
+    )
     monkeypatch.setattr(app.runtime, "gui_target_choices", lambda: ("python",))
     ejecutar_mock = MagicMock(return_value="ejecutado")
     transpilar_mock = MagicMock(return_value="transpilado")
@@ -127,6 +179,9 @@ def test_main_handler_actualiza_salida(monkeypatch):
 def test_main_configura_selector_por_defecto_y_switch_deshabilitado_si_no_hay_targets(monkeypatch):
     ft = _fake_flet()
     monkeypatch.setattr(app.runtime, "require_flet", lambda: ft)
+    monkeypatch.setattr(
+        app.runtime, "crear_arbol_directorios", lambda _ft, on_click: _ft.Column([])
+    )
     monkeypatch.setattr(app.runtime, "gui_target_choices", lambda: ())
     monkeypatch.setattr(
         app.runtime,

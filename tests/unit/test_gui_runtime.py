@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
@@ -105,6 +106,103 @@ def test_gui_target_choices_filtra_targets_no_oficiales(monkeypatch: pytest.Monk
     )
 
     assert runtime.gui_target_choices() == ("python", "rust")
+
+
+def test_accion_nuevo_archivo_reinicia_estado() -> None:
+    estado = runtime.GuiFileState(
+        ruta=Path("programa.cobra"),
+        contenido_cargado="imprimir('x')",
+        cambios_sin_guardar=True,
+    )
+
+    contenido, mensaje = runtime.crear_archivo_nuevo_en_editor(estado)
+
+    assert contenido == ""
+    assert mensaje == "Archivo nuevo creado en memoria."
+    assert estado == runtime.GuiFileState()
+
+
+def test_accion_abrir_archivo_desde_ruta(tmp_path: Path) -> None:
+    archivo = tmp_path / "programa.cobra"
+    archivo.write_text("imprimir('hola')", encoding="utf-8")
+    estado = runtime.GuiFileState()
+
+    contenido, mensaje = runtime.abrir_archivo_desde_ruta(archivo, estado)
+
+    assert contenido == "imprimir('hola')"
+    assert estado.ruta == archivo.resolve()
+    assert estado.contenido_cargado == "imprimir('hola')"
+    assert estado.cambios_sin_guardar is False
+    assert mensaje == f"Archivo cargado: {archivo.resolve()}"
+
+
+def test_accion_guardar_archivo_activo(tmp_path: Path) -> None:
+    archivo = tmp_path / "programa.cobra"
+    archivo.write_text("imprimir('antes')", encoding="utf-8")
+    estado = runtime.GuiFileState(
+        ruta=archivo.resolve(),
+        contenido_cargado="imprimir('antes')",
+        cambios_sin_guardar=True,
+    )
+
+    contenido, mensaje = runtime.guardar_archivo_activo("imprimir('despues')", estado)
+
+    assert contenido == "imprimir('despues')"
+    assert archivo.read_text(encoding="utf-8") == "imprimir('despues')"
+    assert estado.contenido_cargado == "imprimir('despues')"
+    assert estado.cambios_sin_guardar is False
+    assert mensaje == f"Archivo guardado: {archivo.resolve()}"
+
+
+def test_accion_guardar_archivo_activo_sin_ruta_falla() -> None:
+    with pytest.raises(ValueError, match="No hay archivo activo"):
+        runtime.guardar_archivo_activo("imprimir('x')", runtime.GuiFileState())
+
+
+def test_accion_guardar_archivo_como(tmp_path: Path) -> None:
+    destino = tmp_path / "nuevo.cobra"
+    estado = runtime.GuiFileState()
+
+    contenido, mensaje = runtime.guardar_archivo_como(
+        destino, "imprimir('nuevo')", estado
+    )
+
+    assert contenido == "imprimir('nuevo')"
+    assert destino.read_text(encoding="utf-8") == "imprimir('nuevo')"
+    assert estado.ruta == destino.resolve()
+    assert estado.contenido_cargado == "imprimir('nuevo')"
+    assert estado.cambios_sin_guardar is False
+    assert mensaje == f"Archivo guardado: {destino.resolve()}"
+
+
+def test_accion_recargar_archivo_activo(tmp_path: Path) -> None:
+    archivo = tmp_path / "programa.cobra"
+    archivo.write_text("imprimir('disco')", encoding="utf-8")
+    estado = runtime.GuiFileState(
+        ruta=archivo.resolve(),
+        contenido_cargado="imprimir('memoria')",
+        cambios_sin_guardar=True,
+    )
+
+    contenido, mensaje = runtime.recargar_archivo_activo(estado)
+
+    assert contenido == "imprimir('disco')"
+    assert estado.contenido_cargado == "imprimir('disco')"
+    assert estado.cambios_sin_guardar is False
+    assert mensaje == f"Archivo cargado: {archivo.resolve()}"
+
+
+def test_accion_cargar_archivo_desde_arbol_filtra_extensiones(tmp_path: Path) -> None:
+    archivo = tmp_path / "arbol.co"
+    archivo.write_text("imprimir('arbol')", encoding="utf-8")
+    estado = runtime.GuiFileState()
+
+    contenido, mensaje = runtime.cargar_archivo_desde_arbol(archivo, estado)
+
+    assert contenido == "imprimir('arbol')"
+    assert mensaje == f"Archivo cargado: {archivo.resolve()}"
+    with pytest.raises(ValueError, match="archivo Cobra"):
+        runtime.cargar_archivo_desde_arbol(tmp_path / "notas.txt", estado)
 
 
 def test_require_flet_error_accionable(monkeypatch: pytest.MonkeyPatch) -> None:
