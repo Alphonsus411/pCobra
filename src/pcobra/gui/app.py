@@ -1,6 +1,5 @@
 """Aplicación gráfica básica usando Flet para ejecutar código Cobra."""
 
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 from pcobra.gui import runtime
@@ -38,7 +37,7 @@ def main(page: "ft.Page"):
         activar=activar,
         page=page,
     )
-    sugerencias_agix_handler = runtime.crear_handler_sugerencias_agix(
+    sugerencias_handler = runtime.crear_handler_sugerencias(
         entrada=entrada,
         salida=salida,
         page=page,
@@ -46,26 +45,30 @@ def main(page: "ft.Page"):
 
     def cargar_archivo_handler(e):
         if e.control.data and runtime.es_archivo_cobra(e.control.data):
-            ruta_archivo = e.control.data
-            entrada.value = runtime.leer_archivo_texto(ruta_archivo)
-            estado_archivo.ruta = ruta_archivo
-            estado_archivo.contenido_cargado = entrada.value
-            estado_archivo.cambios_sin_guardar = False
+            entrada.value = runtime.cargar_archivo_en_estado(
+                e.control.data, estado_archivo
+            )
             page.update()
 
-    arbol_directorios = runtime.crear_arbol_directorios(ft, on_click=cargar_archivo_handler, root_path=Path(".").resolve())
+    arbol_directorios = runtime.crear_arbol_directorios(
+        ft, on_click=cargar_archivo_handler
+    )
 
     page.add(
         runtime.flet_row(
             ft,
             [
                 runtime.flet_elevated_button(ft, "Guardar", on_click=guardar_handler),
-                runtime.flet_elevated_button(ft, "Guardar como", on_click=guardar_como_handler),
+                runtime.flet_elevated_button(
+                    ft, "Guardar como", on_click=guardar_como_handler
+                ),
                 selector,
                 activar,
                 runtime.flet_elevated_button(ft, "Ejecutar", on_click=ejecutar_handler),
-                runtime.flet_elevated_button(ft, "Sugerencias (Agix)", on_click=sugerencias_agix_handler),
-            ]
+                runtime.flet_elevated_button(
+                    ft, "Sugerencias", on_click=sugerencias_handler
+                ),
+            ],
         ),
         runtime.flet_row(
             ft,
@@ -76,6 +79,7 @@ def main(page: "ft.Page"):
             expand=True,
         ),
     )
+
 
 if __name__ == "__main__":
     runtime.flet_app(main)

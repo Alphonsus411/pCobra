@@ -17,7 +17,10 @@ def require_gui_dependencies() -> dict[str, Any]:
     """Importa dependencias de núcleo/transpiladores de forma diferida."""
     try:
         from pcobra.cobra.gui import deps as gui_deps
-    except (ImportError, ModuleNotFoundError) as exc:  # pragma: no cover - validado desde CLI
+    except (
+        ImportError,
+        ModuleNotFoundError,
+    ) as exc:  # pragma: no cover - validado desde CLI
         missing_target, action = _parse_missing_target(exc)
         detail = str(exc) or repr(exc)
         raise RuntimeError(
@@ -46,7 +49,9 @@ def _parse_missing_target(exc: ImportError) -> tuple[str, str]:
         missing_module = getattr(exc, "name", None) or "desconocido"
         return missing_module, _dependency_action(missing_module)
 
-    cannot_import_match = re.search(r"cannot import name '([^']+)' from '([^']+)'", detail)
+    cannot_import_match = re.search(
+        r"cannot import name '([^']+)' from '([^']+)'", detail
+    )
     if cannot_import_match:
         symbol_name, module_name = cannot_import_match.groups()
         target = f"{module_name}.{symbol_name}"
@@ -96,7 +101,9 @@ def listar_directorio_cobra(root: str | Path) -> list[Path]:
 
     base = Path(root).expanduser()
     entradas = list(base.iterdir())
-    visibles = [entry for entry in entradas if entry.is_dir() or es_archivo_cobra(entry)]
+    visibles = [
+        entry for entry in entradas if entry.is_dir() or es_archivo_cobra(entry)
+    ]
     return sorted(visibles, key=lambda entry: (not entry.is_dir(), entry.name.lower()))
 
 
@@ -117,12 +124,79 @@ def escribir_archivo_texto(
     return codigo
 
 
+def crear_titulo_archivo(estado: GuiFileState) -> str:
+    """Devuelve la etiqueta común del archivo activo en la GUI."""
+
+    nombre = (
+        str(estado.ruta) if estado.ruta is not None else "Archivo nuevo (sin guardar)"
+    )
+    return f"{nombre}{' *' if estado.cambios_sin_guardar else ''}"
+
+
+def marcar_cambios_editor(estado: GuiFileState, contenido: str | None) -> bool:
+    """Actualiza el estado sucio comparando editor y contenido cargado."""
+
+    estado.cambios_sin_guardar = (
+        normalizar_codigo(contenido) != estado.contenido_cargado
+    )
+    return estado.cambios_sin_guardar
+
+
+def nuevo_archivo(estado: GuiFileState) -> str:
+    """Reinicia el estado de archivo y devuelve contenido vacío para el editor."""
+
+    estado.ruta = None
+    estado.contenido_cargado = ""
+    estado.cambios_sin_guardar = False
+    return ""
+
+
+def cargar_archivo_en_estado(ruta: str | Path, estado: GuiFileState) -> str:
+    """Carga un archivo de texto, actualiza estado y devuelve su contenido."""
+
+    ruta_resuelta = Path(ruta).expanduser().resolve()
+    contenido = leer_archivo_texto(ruta_resuelta)
+    estado.ruta = ruta_resuelta
+    estado.contenido_cargado = contenido
+    estado.cambios_sin_guardar = False
+    return contenido
+
+
+def guardar_archivo_en_estado(
+    ruta: str | Path, contenido: str | None, estado: GuiFileState
+) -> str:
+    """Guarda contenido del editor, actualiza estado y devuelve el texto guardado."""
+
+    ruta_resuelta = Path(ruta).expanduser().resolve()
+    contenido_guardado = escribir_archivo_texto(ruta_resuelta, contenido)
+    estado.ruta = ruta_resuelta
+    estado.contenido_cargado = contenido_guardado
+    estado.cambios_sin_guardar = False
+    return contenido_guardado
+
+
+def construir_entradas_directorio(
+    directorio: str | Path,
+) -> tuple[Path | None, list[tuple[str, Path]]]:
+    """Devuelve padre opcional y entradas visibles para renderizar árboles GUI."""
+
+    actual = Path(directorio).expanduser().resolve()
+    padre = actual.parent if actual.parent != actual else None
+    entradas = [
+        ("dir" if ruta.is_dir() else "file", ruta)
+        for ruta in listar_directorio_cobra(actual)
+    ]
+    return padre, entradas
+
+
 def require_flet() -> Any:
     """Importa Flet de forma diferida para no romper imports de CLI."""
     try:
         import flet as ft
     except ModuleNotFoundError as exc:  # pragma: no cover - validado desde CLI
-        raise RuntimeError("Falta la dependencia 'flet'. Ejecuta: pip install flet.") from exc
+        raise RuntimeError(
+            "Falta la dependencia 'flet'. Ejecuta: pip install flet."
+        ) from exc
     return ft
 
 
@@ -235,7 +309,9 @@ def crear_salida_seleccionable(ft: Any, **kwargs: Any) -> Any:
     return flet_text(ft, **opciones)
 
 
-def crear_arbol_directorios(ft: Any, *, on_click: Any, root_path: Path | None = None) -> Any:
+def crear_arbol_directorios(
+    ft: Any, *, on_click: Any, root_path: Path | None = None
+) -> Any:
     """Crea un componente de árbol de directorios para la GUI."""
     if root_path is None:
         root_path = Path(".").resolve()
@@ -284,7 +360,9 @@ def crear_switch_transpilacion(ft: Any, *, lenguajes: list[str] | None = None) -
     return flet_switch(ft, label="Transpilar", disabled=not targets)
 
 
-def ejecutar_o_transpilar(codigo: str, *, transpilacion_activa: bool, target: str) -> str:
+def ejecutar_o_transpilar(
+    codigo: str, *, transpilacion_activa: bool, target: str
+) -> str:
     """Ejecuta o transpila código Cobra; lógica compartida por ambas GUIs."""
 
     deps = require_gui_dependencies()
@@ -326,22 +404,19 @@ def crear_handler_ejecucion(
     return ejecutar_handler
 
 
-def _guardar_archivo(page: Any, entrada: Any, estado_archivo: GuiFileState, ruta: Path) -> None:
+def _guardar_archivo(
+    page: Any, entrada: Any, estado_archivo: GuiFileState, ruta: Path
+) -> None:
     """Guarda el contenido del editor en la ruta especificada."""
     try:
-        contenido_guardado = escribir_archivo_texto(ruta, entrada.value)
-        estado_archivo.ruta = ruta
-        estado_archivo.contenido_cargado = contenido_guardado
-        estado_archivo.cambios_sin_guardar = False
+        guardar_archivo_en_estado(ruta, entrada.value, estado_archivo)
         page.snack_bar.open = True
         page.snack_bar.content = flet_text(
             require_flet(), f"Archivo guardado en {ruta}"
         )
     except Exception as exc:
         page.snack_bar.open = True
-        page.snack_bar.content = flet_text(
-            require_flet(), f"Error al guardar: {exc}"
-        )
+        page.snack_bar.content = flet_text(require_flet(), f"Error al guardar: {exc}")
     finally:
         page.update()
 
@@ -359,7 +434,9 @@ def crear_handler_guardar(
             _guardar_archivo(page, entrada, estado_archivo, estado_archivo.ruta)
         else:
             # Si no hay ruta, invocar "Guardar como"
-            crear_handler_guardar_como(entrada=entrada, estado_archivo=estado_archivo, page=page)(_e)
+            crear_handler_guardar_como(
+                entrada=entrada, estado_archivo=estado_archivo, page=page
+            )(_e)
 
     return guardar_handler
 
@@ -433,6 +510,116 @@ def crear_handler_sugerencias_agix(
     return sugerencias_agix_handler
 
 
+def analizar_codigo(codigo: str) -> tuple[list[Any], Any]:
+    """Ejecuta Lexer y Parser una vez y devuelve tokens y AST."""
+
+    deps = require_gui_dependencies()
+    tokens = deps["Lexer"](codigo).tokenizar()
+    ast = deps["Parser"](tokens).parsear()
+    return tokens, ast
+
+
+def generar_reporte_sugerencias(codigo: str) -> str:
+    """Valida código y genera reporte común de sugerencias estilísticas."""
+
+    deps = require_gui_dependencies()
+    try:
+        analizar_codigo(codigo)
+    except Exception as exc:
+        error = formatear_error(
+            exc,
+            lexer_error_type=deps.get("LexerError"),
+            parser_error_type=deps.get("ParserError"),
+        )
+        return (
+            "Errores léxicos/sintácticos:\n"
+            f"- {error}\n\n"
+            "Sugerencias estilísticas:\n"
+            "- Corrige primero los errores anteriores para solicitar sugerencias."
+        )
+
+    try:
+        sugerencias = generar_sugerencias(codigo)
+    except ImportError as exc:
+        return (
+            "Errores léxicos/sintácticos:\n"
+            "- No se detectaron errores con el Lexer y Parser de Cobra.\n\n"
+            "Sugerencias estilísticas:\n"
+            f"- No se pudieron generar sugerencias: {exc}. "
+            "Instala la dependencia opcional 'agix' para activar esta acción."
+        )
+
+    if sugerencias:
+        sugerencias_legibles = "\n".join(
+            f"- {sugerencia}" for sugerencia in sugerencias
+        )
+    else:
+        sugerencias_legibles = "- No se recibieron sugerencias."
+    return (
+        "Errores léxicos/sintácticos:\n"
+        "- No se detectaron errores con el Lexer y Parser de Cobra.\n\n"
+        "Sugerencias estilísticas:\n"
+        f"{sugerencias_legibles}"
+    )
+
+
+def crear_handler_tokens(*, entrada: Any, salida: Any, page: Any) -> Any:
+    """Crea handler compartido para mostrar tokens Cobra."""
+
+    def tokens_handler(_e: Any) -> None:
+        deps = require_gui_dependencies()
+        try:
+            salida.value = mostrar_tokens(normalizar_codigo(entrada.value))
+        except Exception as exc:
+            salida.value = formatear_error(
+                exc,
+                lexer_error_type=deps.get("LexerError"),
+                parser_error_type=deps.get("ParserError"),
+            )
+        finally:
+            page.update()
+
+    return tokens_handler
+
+
+def crear_handler_ast(*, entrada: Any, salida: Any, page: Any) -> Any:
+    """Crea handler compartido para mostrar el AST Cobra."""
+
+    def ast_handler(_e: Any) -> None:
+        deps = require_gui_dependencies()
+        try:
+            salida.value = mostrar_ast(normalizar_codigo(entrada.value))
+        except Exception as exc:
+            salida.value = formatear_error(
+                exc,
+                lexer_error_type=deps.get("LexerError"),
+                parser_error_type=deps.get("ParserError"),
+            )
+        finally:
+            page.update()
+
+    return ast_handler
+
+
+def crear_handler_sugerencias(*, entrada: Any, salida: Any, page: Any) -> Any:
+    """Crea handler compartido para sugerencias con validación léxica/sintáctica."""
+
+    def sugerencias_handler(_e: Any) -> None:
+        deps = require_gui_dependencies()
+        try:
+            salida.value = generar_reporte_sugerencias(normalizar_codigo(entrada.value))
+        except Exception as exc:
+            salida.value = formatear_error(
+                exc,
+                lexer_error_type=deps.get("LexerError"),
+                parser_error_type=deps.get("ParserError"),
+            )
+        finally:
+            page.update()
+
+    return sugerencias_handler
+
+
 def normalizar_codigo(codigo: str | None) -> str:
     """Normaliza la entrada para evitar valores ``None``."""
     return codigo or ""
@@ -443,8 +630,7 @@ def ejecutar_codigo(codigo: str) -> str:
     deps = require_gui_dependencies()
     buffer = io.StringIO()
     with redirect_stdout(buffer), redirect_stderr(buffer):
-        tokens = deps["Lexer"](codigo).tokenizar()
-        ast = deps["Parser"](tokens).parsear()
+        _tokens, ast = analizar_codigo(codigo)
         deps["InterpretadorCobra"]().ejecutar_ast(ast)
     return buffer.getvalue()
 
@@ -452,8 +638,7 @@ def ejecutar_codigo(codigo: str) -> str:
 def transpilar_codigo(codigo: str, lang: str) -> str:
     """Transpila código Cobra al lenguaje especificado."""
     deps = require_gui_dependencies()
-    tokens = deps["Lexer"](codigo).tokenizar()
-    ast = deps["Parser"](tokens).parsear()
+    _tokens, ast = analizar_codigo(codigo)
     transp = deps["TRANSPILERS"][lang]()
     return transp.generate_code(ast)
 
@@ -461,15 +646,14 @@ def transpilar_codigo(codigo: str, lang: str) -> str:
 def mostrar_tokens(codigo: str) -> str:
     """Tokeniza código Cobra y devuelve una representación por línea."""
     deps = require_gui_dependencies()
-    tokens = deps["Lexer"](codigo).tokenizar()
+    tokens, _ast = analizar_codigo(codigo)
     return "\n".join(str(token) for token in tokens)
 
 
 def mostrar_ast(codigo: str) -> str:
     """Parsea código Cobra y devuelve una representación serializada del AST."""
     deps = require_gui_dependencies()
-    tokens = deps["Lexer"](codigo).tokenizar()
-    ast = deps["Parser"](tokens).parsear()
+    _tokens, ast = analizar_codigo(codigo)
     return str(ast)
 
 
@@ -503,6 +687,4 @@ def gui_target_choices() -> tuple[str, ...]:
             "Contrato público inválido en GUI: OFFICIAL_TARGETS debe coincidir con PUBLIC_BACKENDS. "
             f"official={official_targets}; public={PUBLIC_BACKENDS}"
         )
-    return deps["target_cli_choices"](
-        set(PUBLIC_BACKENDS) & set(deps["TRANSPILERS"])
-    )
+    return deps["target_cli_choices"](set(PUBLIC_BACKENDS) & set(deps["TRANSPILERS"]))
