@@ -45,34 +45,38 @@ def main(page: "ft.Page"):
     def cargar_archivo(ruta: Path) -> None:
         nonlocal directorio_actual
         try:
-            entrada.value = runtime.cargar_archivo_en_estado(ruta, estado)
+            entrada.value, salida.value = runtime.abrir_archivo_desde_ruta(
+                ruta, estado
+            )
         except (
             FileNotFoundError,
             NotADirectoryError,
             PermissionError,
             UnicodeError,
+            ValueError,
         ) as exc:
             mostrar_error_archivo(exc)
             page.update()
             return
         directorio_actual = estado.ruta.parent if estado.ruta else directorio_actual
-        salida.value = f"Archivo cargado: {estado.ruta}"
         reconstruir_arbol()
         actualizar_pagina()
 
     def guardar_en(ruta: Path) -> bool:
         try:
-            runtime.guardar_archivo_en_estado(ruta, entrada.value, estado)
+            _contenido, salida.value = runtime.guardar_archivo_como(
+                ruta, entrada.value, estado
+            )
         except (
             FileNotFoundError,
             NotADirectoryError,
             PermissionError,
             UnicodeError,
+            ValueError,
         ) as exc:
             mostrar_error_archivo(exc)
             page.update()
             return False
-        salida.value = f"Archivo guardado: {estado.ruta}"
         reconstruir_arbol()
         actualizar_pagina()
         return True
@@ -119,8 +123,7 @@ def main(page: "ft.Page"):
         page.update()
 
     def nuevo_handler(_e):
-        entrada.value = runtime.nuevo_archivo(estado)
-        salida.value = "Archivo nuevo creado en memoria."
+        entrada.value, salida.value = runtime.crear_archivo_nuevo_en_editor(estado)
         actualizar_pagina()
 
     def abrir_handler(_e):
@@ -136,7 +139,22 @@ def main(page: "ft.Page"):
         if estado.ruta is None:
             guardar_como_handler(_e)
             return
-        guardar_en(estado.ruta)
+        try:
+            _contenido, salida.value = runtime.guardar_archivo_activo(
+                entrada.value, estado
+            )
+        except (
+            FileNotFoundError,
+            NotADirectoryError,
+            PermissionError,
+            UnicodeError,
+            ValueError,
+        ) as exc:
+            mostrar_error_archivo(exc)
+            page.update()
+            return
+        reconstruir_arbol()
+        actualizar_pagina()
 
     def guardar_como_handler(_e):
         if not ruta_input.value:
@@ -150,7 +168,20 @@ def main(page: "ft.Page"):
             salida.value = "No hay archivo activo que recargar."
             page.update()
             return
-        cargar_archivo(estado.ruta)
+        try:
+            entrada.value, salida.value = runtime.recargar_archivo_activo(estado)
+        except (
+            FileNotFoundError,
+            NotADirectoryError,
+            PermissionError,
+            UnicodeError,
+            ValueError,
+        ) as exc:
+            mostrar_error_archivo(exc)
+            page.update()
+            return
+        reconstruir_arbol()
+        actualizar_pagina()
 
     ejecutar_handler = runtime.crear_handler_ejecucion(
         entrada=entrada, salida=salida, selector=selector, activar=activar, page=page

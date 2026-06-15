@@ -13,7 +13,7 @@ def _fake_flet():
     class TextField:
         def __init__(self, **_kwargs):
             self.kwargs = _kwargs
-            self.value = ""
+            self.value = _kwargs.get("value", "")
 
     class Text:
         def __init__(self, value="", **_kwargs):
@@ -102,6 +102,9 @@ def test_main_renderiza_botones_esperados(monkeypatch):
     monkeypatch.setattr(idle.runtime, "mostrar_tokens", lambda _codigo: "Token(X)")
     monkeypatch.setattr(idle.runtime, "mostrar_ast", lambda _codigo: "[Nodo]")
     monkeypatch.setattr(
+        idle.runtime, "generar_sugerencias", lambda _codigo: ["Usa nombres descriptivos"]
+    )
+    monkeypatch.setattr(
         idle.runtime, "formatear_error", lambda exc, **_kwargs: f"error: {exc}"
     )
     page = ft.Page()
@@ -142,6 +145,9 @@ def test_main_handlers_smoke(monkeypatch):
     monkeypatch.setattr(idle.runtime, "transpilar_codigo", transpilar_mock)
     monkeypatch.setattr(idle.runtime, "mostrar_tokens", lambda _codigo: "Token(X)")
     monkeypatch.setattr(idle.runtime, "mostrar_ast", lambda _codigo: "[Nodo]")
+    monkeypatch.setattr(
+        idle.runtime, "generar_sugerencias", lambda _codigo: ["Usa nombres descriptivos"]
+    )
     monkeypatch.setattr(
         idle.runtime, "formatear_error", lambda exc, **_kwargs: f"error: {exc}"
     )
@@ -224,6 +230,9 @@ def test_main_selector_y_switch_sin_targets(monkeypatch):
     monkeypatch.setattr(idle.runtime, "mostrar_tokens", lambda _codigo: "Token(X)")
     monkeypatch.setattr(idle.runtime, "mostrar_ast", lambda _codigo: "[Nodo]")
     monkeypatch.setattr(
+        idle.runtime, "generar_sugerencias", lambda _codigo: ["Usa nombres descriptivos"]
+    )
+    monkeypatch.setattr(
         idle.runtime, "formatear_error", lambda exc, **_kwargs: f"error: {exc}"
     )
 
@@ -235,3 +244,102 @@ def test_main_selector_y_switch_sin_targets(monkeypatch):
 
     assert selector.value is None
     assert activar.disabled is True
+
+
+def test_main_acciones_publicas_de_archivo(monkeypatch, tmp_path):
+    ft = _fake_flet()
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(idle.runtime, "require_flet", lambda: ft)
+    monkeypatch.setattr(idle.runtime, "gui_target_choices", lambda: ("python",))
+    monkeypatch.setattr(
+        idle.runtime,
+        "require_gui_dependencies",
+        lambda: {
+            "TRANSPILERS": {"python": object},
+            "LexerError": RuntimeError,
+            "ParserError": ValueError,
+            "Lexer": lambda _codigo: SimpleNamespace(tokenizar=lambda: []),
+            "Parser": lambda _tokens: SimpleNamespace(parsear=lambda: []),
+        },
+    )
+    monkeypatch.setattr(idle.runtime, "normalizar_codigo", lambda value: value or "")
+    monkeypatch.setattr(idle.runtime, "ejecutar_codigo", lambda _codigo: "ok")
+    monkeypatch.setattr(
+        idle.runtime, "transpilar_codigo", lambda _codigo, _lang: "transpilado"
+    )
+    monkeypatch.setattr(idle.runtime, "mostrar_tokens", lambda _codigo: "Token(X)")
+    monkeypatch.setattr(idle.runtime, "mostrar_ast", lambda _codigo: "[Nodo]")
+    monkeypatch.setattr(
+        idle.runtime, "formatear_error", lambda exc, **_kwargs: f"error: {exc}"
+    )
+
+    archivo_abrir = tmp_path / "abrir.cobra"
+    archivo_abrir.write_text("imprimir('abrir')", encoding="utf-8")
+    archivo_arbol = tmp_path / "arbol.co"
+    archivo_arbol.write_text("imprimir('arbol')", encoding="utf-8")
+    destino_guardar_como = tmp_path / "guardar_como.cobra"
+
+    page = ft.Page()
+    idle.main(page)
+
+    entrada = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.TextField) and c.kwargs.get("multiline")
+    )
+    ruta_input = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.TextField) and c.kwargs.get("label") == "Ruta"
+    )
+    salida = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.Text) and c.kwargs.get("selectable")
+    )
+    estado_archivo = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.Text) and not c.kwargs.get("selectable")
+        and "Archivo nuevo" in c.value
+    )
+    botones = {
+        c.text: c for c in page.controls if isinstance(c, ft.ElevatedButton)
+    }
+
+    botones["Nuevo"].on_click(None)
+    assert entrada.value == ""
+    assert salida.value == "Archivo nuevo creado en memoria."
+    assert "Archivo nuevo (sin guardar)" in estado_archivo.value
+
+    ruta_input.value = str(archivo_abrir)
+    botones["Abrir"].on_click(None)
+    assert entrada.value == "imprimir('abrir')"
+    assert salida.value == f"Archivo cargado: {archivo_abrir.resolve()}"
+    assert estado_archivo.value == str(archivo_abrir.resolve())
+
+    entrada.value = "imprimir('guardado')"
+    botones["Guardar"].on_click(None)
+    assert archivo_abrir.read_text(encoding="utf-8") == "imprimir('guardado')"
+    assert salida.value == f"Archivo guardado: {archivo_abrir.resolve()}"
+
+    ruta_input.value = str(destino_guardar_como)
+    entrada.value = "imprimir('como')"
+    botones["Guardar como"].on_click(None)
+    assert destino_guardar_como.read_text(encoding="utf-8") == "imprimir('como')"
+    assert salida.value == f"Archivo guardado: {destino_guardar_como.resolve()}"
+
+    destino_guardar_como.write_text("imprimir('recargado')", encoding="utf-8")
+    entrada.value = "imprimir('memoria')"
+    botones["Recargar"].on_click(None)
+    assert entrada.value == "imprimir('recargado')"
+    assert salida.value == f"Archivo cargado: {destino_guardar_como.resolve()}"
+
+    boton_arbol = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.TextButton) and c.text == f"📄 {archivo_arbol.name}"
+    )
+    boton_arbol.on_click(None)
+    assert entrada.value == "imprimir('arbol')"
+    assert salida.value == f"Archivo cargado: {archivo_arbol.resolve()}"

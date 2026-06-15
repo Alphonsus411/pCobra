@@ -189,6 +189,57 @@ def construir_entradas_directorio(
     return padre, entradas
 
 
+def crear_archivo_nuevo_en_editor(estado: GuiFileState) -> tuple[str, str]:
+    """Prepara un archivo nuevo y devuelve contenido/mensaje para la GUI."""
+
+    return nuevo_archivo(estado), "Archivo nuevo creado en memoria."
+
+
+def abrir_archivo_desde_ruta(ruta: str | Path, estado: GuiFileState) -> tuple[str, str]:
+    """Abre una ruta de archivo, actualiza estado y devuelve contenido/mensaje."""
+
+    contenido = cargar_archivo_en_estado(ruta, estado)
+    return contenido, f"Archivo cargado: {estado.ruta}"
+
+
+def guardar_archivo_activo(
+    contenido: str | None, estado: GuiFileState
+) -> tuple[str, str]:
+    """Guarda el archivo activo y devuelve contenido normalizado/mensaje."""
+
+    if estado.ruta is None:
+        raise ValueError("No hay archivo activo que guardar.")
+    contenido_guardado = guardar_archivo_en_estado(estado.ruta, contenido, estado)
+    return contenido_guardado, f"Archivo guardado: {estado.ruta}"
+
+
+def guardar_archivo_como(
+    ruta: str | Path, contenido: str | None, estado: GuiFileState
+) -> tuple[str, str]:
+    """Guarda el editor en una ruta nueva y devuelve contenido/mensaje."""
+
+    contenido_guardado = guardar_archivo_en_estado(ruta, contenido, estado)
+    return contenido_guardado, f"Archivo guardado: {estado.ruta}"
+
+
+def recargar_archivo_activo(estado: GuiFileState) -> tuple[str, str]:
+    """Recarga el archivo activo desde disco y devuelve contenido/mensaje."""
+
+    if estado.ruta is None:
+        raise ValueError("No hay archivo activo que recargar.")
+    return abrir_archivo_desde_ruta(estado.ruta, estado)
+
+
+def cargar_archivo_desde_arbol(
+    ruta: str | Path, estado: GuiFileState
+) -> tuple[str, str]:
+    """Carga una entrada de árbol si es archivo Cobra y devuelve contenido/mensaje."""
+
+    if not es_archivo_cobra(ruta):
+        raise ValueError("Selecciona un archivo Cobra (.co o .cobra).")
+    return abrir_archivo_desde_ruta(ruta, estado)
+
+
 def require_flet() -> Any:
     """Importa Flet de forma diferida para no romper imports de CLI."""
     try:
