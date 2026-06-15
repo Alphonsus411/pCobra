@@ -1,10 +1,12 @@
 """Runtime compartido para las interfaces GUI de Cobra."""
 
-from typing import Any
-import flet as ft
-from pathlib import Path
-from functools import lru_cache
+import io
+import re
+from contextlib import redirect_stderr, redirect_stdout
 from dataclasses import dataclass
+from functools import lru_cache
+from pathlib import Path
+from typing import Any
 
 from pcobra.cobra.architecture.backend_policy import PUBLIC_BACKENDS
 
@@ -331,10 +333,14 @@ def _guardar_archivo(page: Any, entrada: Any, estado_archivo: GuiFileState, ruta
         estado_archivo.contenido_cargado = contenido_guardado
         estado_archivo.cambios_sin_guardar = False
         page.snack_bar.open = True
-        page.snack_bar.content = ft.Text(f"Archivo guardado en {ruta}")
+        page.snack_bar.content = flet_text(
+            require_flet(), f"Archivo guardado en {ruta}"
+        )
     except Exception as exc:
         page.snack_bar.open = True
-        page.snack_bar.content = ft.Text(f"Error al guardar: {exc}")
+        page.snack_bar.content = flet_text(
+            require_flet(), f"Error al guardar: {exc}"
+        )
     finally:
         page.update()
 
@@ -366,11 +372,15 @@ def crear_handler_guardar_como(
     """Crea el handler para guardar el archivo con un nuevo nombre/ruta."""
 
     def guardar_como_handler(_e: Any) -> None:
-        def on_file_dialog_result(e: ft.FilePickerResultEvent):
+        flet_runtime = require_flet()
+
+        def on_file_dialog_result(e: Any) -> None:
             if e.path:
                 _guardar_archivo(page, entrada, estado_archivo, Path(e.path))
 
-        file_picker = ft.FilePicker(on_result=on_file_dialog_result)
+        file_picker = _flet_attr(flet_runtime, "FilePicker", "FilePicker")(
+            on_result=on_file_dialog_result
+        )
         page.overlay.append(file_picker)
         page.update()
         file_picker.save_file(
