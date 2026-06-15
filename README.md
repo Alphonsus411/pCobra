@@ -1111,9 +1111,11 @@ cobra -v run programa.co
 Los archivos con extensión ``.cobra`` representan paquetes completos, mientras que los scripts individuales se guardan como ``.co``.
 
 El subcomando `docs` ejecuta `sphinx-apidoc` para generar la documentación de la API antes de compilar el HTML.
-El subcomando `gui` abre el iddle integrado y requiere tener instalado Flet.
+El subcomando `gui` abre el IDLE gráfico principal y requiere tener instalado Flet.
 
 ### IDLE gráfico
+
+La entrada recomendada para el entorno gráfico interactivo es `cobra gui`, que carga `src/pcobra/gui/idle.py`. Esa interfaz es la GUI principal: compone los componentes compartidos de `src/pcobra/gui/runtime.py` y ofrece edición de archivos, árbol de directorios, ejecución/transpilación, tokens, AST y sugerencias. `src/pcobra/gui/app.py` se conserva como versión mínima para usos embebidos o pruebas rápidas, pero debe reutilizar los mismos helpers de runtime y no mantener rutas alternativas de lógica.
 
 El IDLE gráfico (`cobra gui`) incluye un editor con estado de archivo activo: muestra la ruta seleccionada, detecta cambios sin guardar con un asterisco y conserva el contenido cargado para comparar modificaciones. La barra de archivo expone las acciones **Nuevo**, **Abrir**, **Guardar**, **Guardar como** y **Recargar**.
 
