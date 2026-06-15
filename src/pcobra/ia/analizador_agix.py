@@ -26,6 +26,7 @@ try:
         pass
 
     from agix.emotion.emotion_simulator import PADState
+
     # Alias similar para los módulos de simulación emocional.
     sys.modules["src.agix.emotion.emotion_simulator"] = agix.emotion.emotion_simulator
 
@@ -35,7 +36,7 @@ except ImportError:  # pragma: no cover - depende de agix instalado
     PADState = None
 from typing import List
 
-from pcobra.cobra.core import Lexer, Parser
+from pcobra.ia.reglas_libro_programacion import construir_candidatos_desde_reglas
 
 MENSAJE_DEPENDENCIA_AGIX = (
     "La dependencia opcional 'agix' no está instalada o no se pudo importar. "
@@ -62,29 +63,9 @@ def generar_sugerencias(
     if Reasoner is None:
         raise ImportError(MENSAJE_DEPENDENCIA_AGIX)
 
-    # Validar el código utilizando las herramientas de Cobra
-    tokens = Lexer(codigo).tokenizar()
-    Parser(tokens).parsear()
-
-    evaluaciones = []
-    if "imprimir(" not in codigo:
-        evaluaciones.append({
-            "name": "Agregar imprimir para depurar",
-            "accuracy": 0.9,
-            "interpretability": 0.8,
-        })
-    if "var " in codigo:
-        evaluaciones.append({
-            "name": "Usar nombres descriptivos para variables",
-            "accuracy": 0.8,
-            "interpretability": 0.7,
-        })
-    if not evaluaciones:
-        evaluaciones.append({
-            "name": "Código correcto",
-            "accuracy": 0.5,
-            "interpretability": 1.0,
-        })
+    # Las reglas internas validan primero la entrada con Lexer/Parser y solo
+    # producen candidatos respaldados por fragmentos que el Parser acepta.
+    evaluaciones = construir_candidatos_desde_reglas(codigo)
 
     if peso_precision is not None:
         for ev in evaluaciones:
