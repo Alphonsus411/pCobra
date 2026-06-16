@@ -14,7 +14,7 @@ Lectura correcta de la política pública:
 
 - Los backends públicos de salida son únicamente ``python``, ``javascript`` y ``rust``.
 - El runtime oficial verificable para la superficie pública cubre esos tres targets.
-- Los backends legacy (`go`, `cpp`, `java`, `wasm`, `asm`) quedan en ruta de compatibilidad interna y no forman parte de la operación pública normal.
+- Los targets legacy (`go`, `cpp`, `java`, `wasm`, `asm`) quedan solo como histórico/no-backend y no forman parte de la operación pública normal.
 - La compatibilidad SDK completa solo puede prometerse para ``python``.
 - El soporte Holobit debe leerse siempre junto con la matriz contractual pública: ``python`` es ``full``; ``javascript`` y ``rust`` permanecen en ``partial``.
 

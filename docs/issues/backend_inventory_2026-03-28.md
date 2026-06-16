@@ -12,7 +12,7 @@ Este inventario consolida el estado real del árbol activo para cumplir el cierr
 ## Matriz oficial vigente
 
 - **Tier 1**: `python`, `rust`, `javascript`, `wasm`.
-- **Tier 2**: `go`, `cpp`, `java`, `asm`.
+- **Tier 2 histórico (retirado; no BackEnd vigente)**: `go`, `cpp`, `java`, `asm`.
 - **Únicos targets oficiales**: exactamente 8 (`OFFICIAL_TARGETS = Tier1 + Tier2`).
 
 ## 1) Inventario de backends activos por categoría

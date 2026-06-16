@@ -205,7 +205,7 @@ PYTHONPATH=$PWD/src pytest
 
 Antes de abrir un PR que toque transpilación, ejemplos, extensiones o imágenes Docker, verifica:
 
-- [ ] No se añadieron referencias a targets fuera de la política oficial (`python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java`, `asm`).
+- [ ] No se añadieron referencias a targets fuera de la política oficial (`python`, `javascript`, `rust`).
 - [ ] No se añadieron referencias de `transpilar-inverso` fuera de los orígenes oficiales (`python`, `javascript`, `java`).
 - [ ] `examples/`, `extensions/`, `scripts/benchmarks/` y `docker/` no contienen archivos huérfanos de lenguajes fuera de alcance.
 - [ ] Se ejecutó un barrido de cadenas/rutas para detectar menciones residuales antes de enviar cambios.
@@ -225,8 +225,8 @@ El conjunto oficial actual de backends públicos es:
 
 Lista oficial por tiers:
 
-- **Tier 1**: `python`, `rust`, `javascript`, `wasm`.
-- **Tier 2**: `go`, `cpp`, `java`, `asm`.
+- **Tier 1**: `python`, `javascript`, `rust`.
+- **Tier 2**: vacío; reservado para histórico/no público.
 
 Y el alcance reverse oficial actual es:
 
@@ -284,7 +284,7 @@ En ambos casos, el cambio exige RFC aprobada, plan de migración y comunicación
 La CI ejecuta además `python scripts/ci/audit_targets_contract.py` como paso
 bloqueante. Este gate valida automáticamente:
 
-1. Set canónico de targets oficiales (`python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java`, `asm`).
+1. Set canónico de targets oficiales (`python`, `javascript`, `rust`).
 2. Coherencia entre `targets.py`, `registry.py` y `target_policies.py`.
 3. Consistencia documental mínima, con barrido de términos no permitidos en documentación/workflows.
 4. Regla de mantenimiento de matriz: si cambia

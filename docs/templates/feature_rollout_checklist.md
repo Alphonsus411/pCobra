@@ -14,7 +14,7 @@ Usa esta plantilla para cualquier feature nueva (`<feature_id>`).
 - [ ] intérprete
   - Archivos tocados:
 - [ ] transpilers oficiales
-  - Targets cubiertos: `python`, `javascript`, `rust`, `go`, `cpp`, `java`, `wasm`, `asm`
+  - Targets cubiertos: `python`, `javascript`, `rust`
 - [ ] compat matrices
   - Matrices/documentos actualizados:
 - [ ] tests unit/integration

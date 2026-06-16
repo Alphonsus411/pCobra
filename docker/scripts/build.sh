@@ -29,6 +29,6 @@ for img in $IMAGENES; do
     docker image ls "$img"
 done
 
-echo "ℹ️ Política actual: los 8 targets oficiales de Cobra son python, rust, javascript, wasm, go, cpp, java y asm."
-echo "ℹ️ Runtime Docker oficial solo para: python, javascript, cpp y rust."
-echo "ℹ️ Targets solo transpilación (sin runtime Docker oficial): wasm, go, java y asm."
+echo "ℹ️ Política actual: los 3 targets oficiales de Cobra son python, javascript y rust."
+echo "ℹ️ Runtime Docker oficial solo para: python, javascript y rust."
+echo "ℹ️ Targets legacy retirados no se construyen como BackEnd público."

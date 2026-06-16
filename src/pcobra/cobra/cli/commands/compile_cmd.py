@@ -102,11 +102,6 @@ def _transpiler_class_display(target: str) -> str:
         "python": "TranspiladorPython",
         "javascript": "TranspiladorJavaScript",
         "rust": "TranspiladorRust",
-        "cpp": "TranspiladorCPP",
-        "go": "TranspiladorGo",
-        "java": "TranspiladorJava",
-        "wasm": "TranspiladorWasm",
-        "asm": "TranspiladorASM",
     }
     return names.get(target, f"Transpilador{_target_label(target).replace(' ', '')}")
 

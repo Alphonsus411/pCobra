@@ -21,8 +21,8 @@ from pcobra.cobra.architecture.backend_policy import PUBLIC_BACKENDS
 OFFICIAL_USER_LANGUAGE: Final[str] = "cobra"
 OFFICIAL_EXECUTION_BACKENDS: Final[tuple[str, ...]] = PUBLIC_BACKENDS
 
-# Inventario de legados que se conservan solo para compatibilidad interna.
-LEGACY_BACKEND_REMOVAL_CANDIDATES: Final[dict[str, str]] = {
+# Inventario histórico de targets retirados; no son BackEnd público ni interno vigente.
+RETIRED_TARGET_REMOVAL_CANDIDATES: Final[dict[str, str]] = {
     "go": "Desalineado del contrato oficial (python/javascript/rust)",
     "cpp": "Fuera del ecosistema oficial de runtime y stdlib",
     "java": "Solo aplica para reverse transpile histórico, no para salida oficial",
@@ -255,7 +255,7 @@ validate_unified_ecosystem_contract()
 __all__ = [
     "OFFICIAL_USER_LANGUAGE",
     "OFFICIAL_EXECUTION_BACKENDS",
-    "LEGACY_BACKEND_REMOVAL_CANDIDATES",
+    "RETIRED_TARGET_REMOVAL_CANDIDATES",
     "STDLIB_BLUEPRINTS",
     "IMPORT_POLICY_BLUEPRINT",
     "BINDING_BLUEPRINTS",

@@ -1,7 +1,7 @@
 Soporte de backends
 ===================
 
-La documentación pública de pCobra describe una sola familia de salida: **3 backends oficiales** (`python`, `javascript`, `rust`). Los targets legacy (`go`, `cpp`, `java`, `wasm`, `asm`) quedan fuera del contrato público y solo se conservan en rutas internas de compatibilidad/migración.
+La documentación pública de pCobra describe una sola familia de salida: **3 backends oficiales** (`python`, `javascript`, `rust`). Los targets legacy (`go`, `cpp`, `java`, `wasm`, `asm`) quedan fuera del contrato público y no se conservan como BackEnd.
 
 .. include:: ../_generated/target_policy_summary.rst
 

@@ -1,29 +1,26 @@
-# FAQ de impacto — deprecación de targets/aliases (coordinación Holobit)
+# FAQ de impacto — retirada de targets legacy (coordinación Holobit)
 
 ## ¿Qué cambia exactamente?
 
-Se mantiene el set oficial de 8 targets canónicos:
-`python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java`, `asm`.
+El set oficial público de BackEnds queda limitado a:
 
-Lo que cambia es la política de nombres legacy en CLI/scripts:
+`python`, `javascript`, `rust`.
 
-- **Ventana de deprecación:** inicia en `v10.0.10`.
-- **Eliminación definitiva:** `v10.2.0`.
+Los targets históricos `wasm`, `go`, `cpp`, `java` y `asm` se retiran de la documentación de usuario, configuración pública, selectores GUI y comandos públicos. Si se mencionan en documentación histórica, debe ser explícitamente como material no-backend y no como soporte vigente.
 
 ## ¿Qué nombres debo dejar de usar ya?
 
-- Alias en deprecación: `c++`, `ensamblador`.
+- Alias retirados: `c++`, `ensamblador`.
 - Nombres legacy retirados: `js`, `py`, `python3`, `node`, `nodejs`, `golang`, `jvm`,
   `assembler`, `assembly`, `asm64`, `cpp11`, `cpp17`, `c`, `cxx`.
+- Targets legacy retirados de salida pública: `wasm`, `go`, `cpp`, `java`, `asm`.
 
 ## ¿Cuáles son los reemplazos recomendados?
 
-- `c++`, `c`, `cxx`, `cpp11`, `cpp17` -> `cpp`
-- `ensamblador`, `assembler`, `assembly`, `asm64` -> `asm`
-- `js`, `node`, `nodejs` -> `javascript`
-- `py`, `python3` -> `python`
-- `golang` -> `go`
-- `jvm` -> `java`
+- Para salida pública, migra a `python`, `javascript` o `rust`.
+- `js`, `node`, `nodejs` -> `javascript`.
+- `py`, `python3` -> `python`.
+- No hay reemplazo público directo para `go`, `cpp`, `java`, `wasm` ni `asm`; elige el backend público que mejor cubra tu caso.
 
 ## ¿Cómo audito rápidamente mis repositorios?
 
@@ -35,5 +32,4 @@ El script reporta archivo/línea y la recomendación canónica por cada hallazgo
 
 ## ¿Afecta al contrato Holobit?
 
-No cambia el contrato funcional por backend. El objetivo es reducir ambigüedad
-de naming y mejorar trazabilidad de migraciones en CLI/CI/docs.
+Sí reduce el alcance público: la matriz Holobit de usuario cubre solo `python`, `javascript` y `rust`.

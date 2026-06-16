@@ -73,7 +73,7 @@ Resumen normativo visible (generado desde la política canónica):
 - **Targets con adaptador Holobit mantenido por el proyecto (partial fuera de python)**: `python`, `javascript`, `rust`.
 - **Compatibilidad SDK completa (solo python)**: `python`.
 - **Targets solo de transpilación**: .
-- **Orígenes de transpilación inversa**: python, javascript y java histórico. Este alcance reverse de entrada está separado de los 3 targets oficiales de salida; java no es target oficial de salida.
+- **Orígenes de transpilación inversa**: python, javascript. Este alcance reverse de entrada está separado de los 3 targets oficiales de salida.
 
 Tiers oficiales de soporte de backends:
 
