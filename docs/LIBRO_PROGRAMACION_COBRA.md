@@ -809,25 +809,36 @@ Para más detalles sobre cada comando, puedes usar ``cobra <comando> --help``.
 
 ### 10.1 IDLE gráfico con gestión de archivos
 
-Cobra incluye un entorno de desarrollo integrado (IDLE) gráfico basado en Flet, que permite escribir, ejecutar y transpilar código de forma interactiva. Este IDLE ha sido mejorado con las siguientes funcionalidades:
+Cobra incluye un entorno de desarrollo integrado (IDLE) gráfico basado en Flet, que permite escribir, ejecutar, inspeccionar y transpilar código de forma interactiva. La entrada pública recomendada es ``cobra gui``, que carga la implementación canónica ``pcobra.gui.idle.main``. El módulo ``pcobra.gui.app`` se mantiene como alias de compatibilidad y delega en el mismo IDLE para evitar layouts, botones o handlers duplicados.
 
-*   **Editor de código:** Un área principal para escribir y editar tu código Cobra.
+Funciones disponibles en la GUI:
+
+*   **Editor de código:** Un área principal para escribir y editar código Cobra.
+*   **Salida seleccionable:** Un panel de resultados para copiar mensajes, salida de ejecución, tokens, AST, código transpilado o sugerencias.
 *   **Gestión de archivos:**
-    *   **Guardar:** Guarda el archivo actual en su ubicación.
-    *   **Guardar como:** Permite guardar el contenido del editor en una nueva ubicación o con un nuevo nombre.
-    *   **Árbol de directorios:** Una vista lateral que muestra la estructura de archivos y carpetas de tu proyecto. Puedes hacer clic en los archivos `.co` o `.cobra` para cargarlos directamente en el editor.
+    *   **Nuevo:** Limpia el editor y crea un archivo en memoria sin ruta activa.
+    *   **Abrir:** Carga la ruta indicada en el campo `Ruta`.
+    *   **Guardar:** Guarda el archivo activo en su ubicación actual.
+    *   **Guardar como:** Guarda el contenido del editor en la ruta indicada.
+    *   **Recargar:** Vuelve a leer desde disco el archivo activo.
+    *   **Árbol de directorios:** Muestra carpetas y archivos `.co`/`.cobra`; al seleccionar un archivo Cobra, lo carga directamente en el editor.
 *   **Ejecución y transpilación:**
-    *   **Selector de target:** Elige el lenguaje de destino (Python, JavaScript, Rust) para la transpilación.
-    *   **Switch de transpilación:** Alterna entre ejecutar el código directamente o transpilarlo al lenguaje seleccionado.
-    *   **Botón "Ejecutar":** Ejecuta el código Cobra o lo transpila, mostrando la salida o el código generado en el área de resultados.
-*   **Sugerencias de código (Agix):**
-    *   **Botón "Sugerencias (Agix)":** Utiliza la librería opcional `agix` para analizar tu código y ofrecer sugerencias de mejora o corrección tipográfica, basándose en las mejores prácticas del "Libro de Programación principal". Las sugerencias se muestran en el área de salida.
+    *   **Selector de target:** Elige el lenguaje de destino disponible para transpilación.
+    *   **Switch de transpilación:** Alterna entre ejecutar el código directamente o transpilarlo al target seleccionado.
+    *   **Ejecutar:** Ejecuta el código Cobra o muestra el código generado por el transpilador.
+*   **Inspección del lenguaje:**
+    *   **Tokens:** Tokeniza el contenido actual del editor y muestra un token por línea.
+    *   **AST:** Parsea el contenido actual del editor y muestra la representación del árbol sintáctico.
+*   **Sugerencias de código:**
+    *   **Sugerencias:** Valida primero errores léxicos/sintácticos y, si el código es válido, solicita sugerencias estilísticas mediante la integración opcional de Agix.
 
-Para iniciar el IDLE, usa el comando ``cobra gui``.
+Para iniciar el IDLE recomendado, usa:
 
 .. code-block:: bash
 
    cobra gui
+
+También se puede invocar desde Python usando ``pcobra.gui.idle.main`` como destino Flet. Las integraciones antiguas que importan ``pcobra.gui.app.main`` siguen funcionando porque esa entrada delega en ``pcobra.gui.idle.main``.
 
 Flujo mínimo sugerido:
 
