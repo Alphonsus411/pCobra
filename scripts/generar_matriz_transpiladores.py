@@ -3,7 +3,7 @@
 
 Este script ya no intenta inferir una cobertura amplia/exploratoria del AST.
 Su objetivo es regenerar la tabla pública alineada con:
-- los 8 targets oficiales de transpilación;
+- los 3 targets oficiales de transpilación;
 - el subconjunto con runtime oficial;
 - el subconjunto conservado como runtime best-effort no público.
 """

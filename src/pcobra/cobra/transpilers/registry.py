@@ -3,9 +3,8 @@
 Activos oficiales (política pública y startup normal): ``python``,
 ``javascript`` y ``rust``.
 
-Backends legacy opcionales: viven en ``legacy_registry`` y se cargan solo
-bajo rutas internas explícitas de compatibilidad (import lazy, nunca eager en
-el path público por defecto).
+Los backends legacy fueron retirados del registro: no se cargan como
+BackEnd ni por rutas públicas ni internas de runtime normal.
 """
 
 from __future__ import annotations

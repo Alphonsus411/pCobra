@@ -7,19 +7,20 @@ import sys
 
 import pytest
 
-LEGACY_TRANSPILER_MODULES = (
-    "pcobra.cobra.transpilers.transpiler.legacy.to_go",
-    "pcobra.cobra.transpilers.transpiler.legacy.to_java",
-    "pcobra.cobra.transpilers.transpiler.legacy.to_cpp",
-    "pcobra.cobra.transpilers.transpiler.legacy.to_asm",
-    "pcobra.cobra.transpilers.transpiler.legacy.to_wasm",
+RETIRED_TRANSPILER_MODULE_PREFIX = "pcobra.cobra.transpilers.transpiler.legacy"
+RETIRED_TRANSPILER_MODULES = (
+    f"{RETIRED_TRANSPILER_MODULE_PREFIX}.to_go",
+    f"{RETIRED_TRANSPILER_MODULE_PREFIX}.to_java",
+    f"{RETIRED_TRANSPILER_MODULE_PREFIX}.to_cpp",
+    f"{RETIRED_TRANSPILER_MODULE_PREFIX}.to_asm",
+    f"{RETIRED_TRANSPILER_MODULE_PREFIX}.to_wasm",
 )
 
 EXPECTED_PUBLIC_TARGETS = ("python", "javascript", "rust")
 
 
 @pytest.mark.parity_contract
-@pytest.mark.parametrize("module_name", LEGACY_TRANSPILER_MODULES)
+@pytest.mark.parametrize("module_name", RETIRED_TRANSPILER_MODULES)
 def test_runtime_startup_policy_does_not_import_legacy_transpilers(module_name: str) -> None:
     before = set(sys.modules)
 
@@ -37,7 +38,7 @@ def test_runtime_startup_policy_does_not_import_legacy_transpilers(module_name: 
 
 
 @pytest.mark.parity_contract
-@pytest.mark.parametrize("module_name", LEGACY_TRANSPILER_MODULES)
+@pytest.mark.parametrize("module_name", RETIRED_TRANSPILER_MODULES)
 def test_normal_boot_paths_do_not_import_legacy_transpilers(module_name: str) -> None:
     before = set(sys.modules)
 
@@ -71,7 +72,7 @@ def test_import_pcobra_exposes_lazy_public_api_without_legacy_transpiler_modules
     assert "compiler" in package.__all__
 
     loaded_during_import = after - before
-    for module_name in LEGACY_TRANSPILER_MODULES:
+    for module_name in RETIRED_TRANSPILER_MODULES:
         assert module_name not in after
         assert module_name not in loaded_during_import
 
@@ -88,7 +89,7 @@ def test_base_command_import_paths_do_not_load_legacy_transpilers(base_module: s
 
     after = set(sys.modules)
     loaded_during_import = after - before
-    for module_name in LEGACY_TRANSPILER_MODULES:
+    for module_name in RETIRED_TRANSPILER_MODULES:
         assert module_name not in after
         assert module_name not in loaded_during_import
 

@@ -42,13 +42,7 @@ OFFICIAL_TRANSPILERS: dict[str, tuple[str, str]] = {
     "rust": ("pcobra.cobra.transpilers.transpiler.to_rust", "TranspiladorRust"),
 }
 
-LEGACY_OPTIONAL_TRANSPILERS: dict[str, tuple[str, str]] = {
-    "wasm": ("pcobra.cobra.transpilers.transpiler.legacy.to_wasm", "TranspiladorWasm"),
-    "go": ("pcobra.cobra.transpilers.transpiler.legacy.to_go", "TranspiladorGo"),
-    "cpp": ("pcobra.cobra.transpilers.transpiler.legacy.to_cpp", "TranspiladorCPP"),
-    "java": ("pcobra.cobra.transpilers.transpiler.legacy.to_java", "TranspiladorJava"),
-    "asm": ("pcobra.cobra.transpilers.transpiler.legacy.to_asm", "TranspiladorASM"),
-}
+# Los transpiladores legacy retirados no forman parte de esta matriz.
 
 TRANSPILERS: dict[str, tuple[str, str]] = dict(OFFICIAL_TRANSPILERS)
 

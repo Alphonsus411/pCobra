@@ -32,7 +32,7 @@ Este documento define una estrategia **incremental** para consolidar Cobra como 
 
 ### Estado contractual
 - Fuente pública de verdad de backends: `PUBLIC_BACKENDS = (python, javascript, rust)`.
-- Backends legacy se mantienen solo en modo compatibilidad interna.
+- Targets legacy quedan como material histórico/no-backend; no se mantienen en modo compatibilidad interna.
 
 ### Alineación propuesta
 - Mantener front-end intacto.

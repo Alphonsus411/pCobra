@@ -10,6 +10,3 @@
    * - JavaScript
      - ``javascript``
      - Experimental controlado
-   * - Java
-     - ``java``
-     - Experimental controlado

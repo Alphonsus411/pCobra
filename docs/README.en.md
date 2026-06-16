@@ -24,7 +24,7 @@ Policy snapshot (generated from the canonical target policy):
 - **Targets with project-maintained Holobit adapter**: `python`, `javascript`, `rust`.
 - **Full SDK compatibility**: `python`.
 - **Transpilation-only targets**: .
-- **Reverse transpilation input origins**: `python`, `javascript`, `java`.
+- **Reverse transpilation input origins**: `python`, `javascript`.
 
 Official backend support tiers:
 

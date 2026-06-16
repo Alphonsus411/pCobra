@@ -43,7 +43,7 @@ Cobertura:
 
 - **SDK full**: `python`.
 - **Runtime oficial verificable público**: `python`, `javascript`, `rust`.
-- **Backends legacy**: fuera de la matriz pública; disponibles solo en compatibilidad interna.
+- **Targets legacy**: fuera de la matriz pública; conservados únicamente como histórico/no-backend si se citan.
 
 Estas categorías son ortogonales al detalle por feature (`runtime`, `parser`, `serialización`, `red`): un backend puede tener runtime oficial y seguir en contrato `partial` para Holobit/SDK.
 

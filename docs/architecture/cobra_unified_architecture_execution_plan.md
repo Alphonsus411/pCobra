@@ -40,7 +40,7 @@ Flujo canónico:
 
 ### Componentes obsoletos para retirada gradual (sin ruptura inmediata)
 
-- Backends legacy internos:
+- Targets legacy históricos/no-backend:
   - `go`
   - `cpp`
   - `java`
