@@ -48,7 +48,7 @@ Elige el target según objetivo de tu pipeline:
 
 ## Checklist de salida
 
-- [ ] No quedan referencias a targets retirados en `README`, `docs/`, `examples/`, `scripts/`.
+- [ ] No quedan referencias a targets retirados en documentación pública principal, salvo enlaces explícitos a anexos internos, migración o histórico.
 - [ ] Todos los comandos y snippets públicos usan únicamente `python`, `javascript` y `rust`.
 - [ ] Se validó documentación y política con:
 
@@ -64,4 +64,4 @@ Para consultar cronologías antiguas de aliases, ejemplos legacy o notas de tran
 
 - `docs/historico/migracion_targets_retirados_archivo.md`
 
-Ese material se conserva solo como referencia histórica y no forma parte del flujo operativo activo.
+Ese material se conserva solo como referencia histórica y no forma parte del flujo operativo activo ni del BackEnd oficial público.
