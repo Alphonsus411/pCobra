@@ -11,10 +11,12 @@ from pcobra.gui import app
 def _fake_flet():
     class TextField:
         def __init__(self, **_kwargs):
-            self.value = ""
+            self.kwargs = _kwargs
+            self.value = _kwargs.get("value", "")
 
     class Text:
         def __init__(self, value="", **_kwargs):
+            self.kwargs = _kwargs
             self.value = value
 
     class Dropdown:
@@ -32,11 +34,18 @@ def _fake_flet():
             self.text = text
             self.on_click = on_click
 
+    class TextButton(ElevatedButton):
+        pass
+
     class Layout:
         def __init__(self, controls=None, *args, **_kwargs):
             if controls is None and args:
                 controls = args[0]
             self.controls = controls or []
+
+    class Container:
+        def __init__(self, content=None, **_kwargs):
+            self.content = content
 
     class ExpansionTile:
         def __init__(self, title=None, leading=None, controls=None):
@@ -80,8 +89,11 @@ def _fake_flet():
         Dropdown=Dropdown,
         Switch=Switch,
         ElevatedButton=ElevatedButton,
+        TextButton=TextButton,
         Row=Layout,
         Column=Layout,
+        Container=Container,
+        ListView=Layout,
         ExpansionTile=ExpansionTile,
         ListTile=ListTile,
         Icon=Icon,
@@ -120,11 +132,32 @@ def test_main_renderiza_componentes_minimos(monkeypatch):
     page = ft.Page()
     app.main(page)
 
-    botones = [c for c in page.controls if isinstance(c, ft.ElevatedButton)]
+    botones = [
+        c
+        for c in page.controls
+        if isinstance(c, ft.ElevatedButton)
+        and c.text
+        in {
+            "Nuevo",
+            "Abrir",
+            "Guardar",
+            "Guardar como",
+            "Recargar",
+            "Ejecutar",
+            "Tokens",
+            "AST",
+            "Sugerencias",
+        }
+    ]
     assert [b.text for b in botones] == [
+        "Nuevo",
+        "Abrir",
         "Guardar",
         "Guardar como",
+        "Recargar",
         "Ejecutar",
+        "Tokens",
+        "AST",
         "Sugerencias",
     ]
 
@@ -157,10 +190,18 @@ def test_main_handler_actualiza_salida(monkeypatch):
     page = ft.Page()
     app.main(page)
 
-    entrada = next(c for c in page.controls if isinstance(c, ft.TextField))
+    entrada = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.TextField) and c.kwargs.get("multiline")
+    )
     selector = next(c for c in page.controls if isinstance(c, ft.Dropdown))
     activar = next(c for c in page.controls if isinstance(c, ft.Switch))
-    salida = next(c for c in page.controls if isinstance(c, ft.Text))
+    salida = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.Text) and c.kwargs.get("selectable")
+    )
     ejecutar_btn = next(
         c
         for c in page.controls

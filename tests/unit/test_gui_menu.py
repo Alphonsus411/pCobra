@@ -6,7 +6,7 @@ from unittest.mock import MagicMock
 class FakeTextField:
     def __init__(self, **kwargs):
         self.kwargs = kwargs
-        self.value = ""
+        self.value = kwargs.get("value", "")
 
 
 class FakeText:
@@ -34,13 +34,40 @@ class FakeElevatedButton:
         self.on_click = on_click
 
 
+class FakeTextButton(FakeElevatedButton):
+    pass
+
+
+class FakeLayout:
+    def __init__(self, controls=None, *args, **kwargs):
+        if controls is None and args:
+            controls = args[0]
+        self.controls = controls or []
+        self.kwargs = kwargs
+
+
+class FakeContainer:
+    def __init__(self, content=None, **kwargs):
+        self.content = content
+        self.kwargs = kwargs
+
+
 class FakePage:
     def __init__(self):
         self.controls = []
         self.updated = 0
 
     def add(self, *args):
-        self.controls.extend(args)
+        def _flatten(control):
+            self.controls.append(control)
+            for child in getattr(control, "controls", []) or []:
+                _flatten(child)
+            content = getattr(control, "content", None)
+            if content is not None:
+                _flatten(content)
+
+        for arg in args:
+            _flatten(arg)
 
     def update(self):
         self.updated += 1
@@ -53,6 +80,11 @@ def _fake_flet(*, root_option=None, dropdown_option=None, app=None):
         "Dropdown": FakeDropdown,
         "Switch": FakeSwitch,
         "ElevatedButton": FakeElevatedButton,
+        "TextButton": FakeTextButton,
+        "Row": FakeLayout,
+        "Column": FakeLayout,
+        "Container": FakeContainer,
+        "ListView": FakeLayout,
         "Page": FakePage,
         "dropdown": SimpleNamespace(Option=dropdown_option or (lambda value: f"dropdown:{value}")),
         "app": app or (lambda **kwargs: kwargs),
@@ -77,7 +109,11 @@ def _prepare_module(monkeypatch, module_name):
 
 
 def _run_handler(ft, page, text):
-    entrada = next(c for c in page.controls if isinstance(c, ft.TextField))
+    entrada = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.TextField) and c.kwargs.get("multiline")
+    )
     selector = next(c for c in page.controls if isinstance(c, ft.Dropdown))
     switch = next(c for c in page.controls if isinstance(c, ft.Switch))
     boton = next(
@@ -101,7 +137,14 @@ def test_app_transpiler_invocado(monkeypatch):
     _run_handler(ft, page, "print(1)")
 
     transpilar.assert_called_once_with("print(1)", "py")
-    assert next(c for c in page.controls if isinstance(c, ft.Text)).value == "codigo python"
+    assert (
+        next(
+            c
+            for c in page.controls
+            if isinstance(c, ft.Text) and c.kwargs.get("selectable")
+        ).value
+        == "codigo python"
+    )
     assert page.updated == 1
 
 
@@ -115,7 +158,14 @@ def test_idle_transpiler_invocado(monkeypatch):
     _run_handler(ft, page, "print(1)")
 
     transpilar.assert_called_once_with("print(1)", "py")
-    assert next(c for c in page.controls if isinstance(c, ft.Text)).value == "codigo python"
+    assert (
+        next(
+            c
+            for c in page.controls
+            if isinstance(c, ft.Text) and c.kwargs.get("selectable")
+        ).value
+        == "codigo python"
+    )
     assert page.updated == 1
 
 
