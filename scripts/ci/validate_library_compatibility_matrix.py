@@ -11,7 +11,11 @@ SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from pcobra.cobra.transpilers.library_compatibility import LIBRARY_AREAS, LIBRARY_COMPATIBILITY
+from pcobra.cobra.transpilers.library_compatibility import (
+    LIBRARY_AREAS,
+    LIBRARY_COMPATIBILITY,
+    validate_public_library_compatibility_keys,
+)
 from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
 
 DOC_PATH = Path("docs/library_compatibility_matrix.md")
@@ -20,6 +24,8 @@ DOC_PATH = Path("docs/library_compatibility_matrix.md")
 def main() -> int:
     if not DOC_PATH.exists():
         raise SystemExit(f"Falta documento requerido: {DOC_PATH}")
+
+    validate_public_library_compatibility_keys()
 
     content = DOC_PATH.read_text(encoding="utf-8")
 
