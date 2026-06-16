@@ -66,7 +66,7 @@ def main(page: "ft.Page"):
                 activar,
                 runtime.flet_elevated_button(ft, "Ejecutar", on_click=ejecutar_handler),
                 runtime.flet_elevated_button(
-                    ft, "Sugerencias", on_click=sugerencias_handler
+                    ft, runtime.SUGERENCIAS_BUTTON_TEXT, on_click=sugerencias_handler
                 ),
             ],
         ),

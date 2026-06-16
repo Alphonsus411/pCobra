@@ -219,7 +219,7 @@ def main(page: "ft.Page"):
             runtime.flet_elevated_button(ft, "Tokens", on_click=tokens_handler),
             runtime.flet_elevated_button(ft, "AST", on_click=ast_handler),
             runtime.flet_elevated_button(
-                ft, "Sugerencias", on_click=sugerencias_handler
+                ft, runtime.SUGERENCIAS_BUTTON_TEXT, on_click=sugerencias_handler
             ),
         ],
         wrap=True,

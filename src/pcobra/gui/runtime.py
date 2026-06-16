@@ -80,6 +80,9 @@ def _local_import_action(module_name: str, symbol_name: str) -> str:
 COBRA_FILE_EXTENSIONS: tuple[str, ...] = (".co", ".cobra")
 """Extensiones Cobra priorizadas para el explorador del IDLE."""
 
+SUGERENCIAS_BUTTON_TEXT = "Sugerencias"
+"""Etiqueta homogénea para la acción de sugerencias en las GUIs."""
+
 
 @dataclass(slots=True)
 class GuiFileState:
@@ -527,38 +530,9 @@ def crear_handler_sugerencias_agix(
     salida: Any,
     page: Any,
 ) -> Any:
-    """Crea el handler para generar sugerencias de código con Agix."""
+    """Wrapper legacy interno para sugerencias; delega en el handler común."""
 
-    def sugerencias_agix_handler(_e: Any) -> None:
-        deps = require_gui_dependencies()
-        codigo = normalizar_codigo(entrada.value)
-        try:
-            # ``generar_sugerencias`` centraliza la validación con Lexer/Parser
-            # y evita depender de modelos internos de ``agix.models.*``.
-            sugerencias = generar_sugerencias(codigo)
-        except ImportError as exc:
-            salida.value = (
-                "La dependencia opcional agix no está instalada o no está disponible. "
-                "Instálala con 'pip install agix' para usar esta función. "
-                f"Detalle: {exc}"
-            )
-        except Exception as exc:
-            salida.value = formatear_error(
-                exc,
-                lexer_error_type=deps.get("LexerError"),
-                parser_error_type=deps.get("ParserError"),
-            )
-        else:
-            if sugerencias:
-                salida.value = "Sugerencias de Agix:\n" + "\n".join(
-                    f"- {sugerencia}" for sugerencia in sugerencias
-                )
-            else:
-                salida.value = "Agix no encontró sugerencias para el código actual."
-        finally:
-            page.update()
-
-    return sugerencias_agix_handler
+    return crear_handler_sugerencias(entrada=entrada, salida=salida, page=page)
 
 
 def analizar_codigo(codigo: str) -> tuple[list[Any], Any]:
