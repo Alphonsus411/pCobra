@@ -6,6 +6,7 @@ from abc import ABC, abstractmethod
 import re
 from typing import List, Tuple, Union
 
+from pcobra.cobra.architecture.backend_policy import PUBLIC_BACKENDS
 from pcobra.cobra.core.visitor import NodeVisitor
 from pcobra.cobra.transpilers.compatibility_matrix import CONTRACT_FEATURES
 from pcobra.cobra.transpilers.module_map import get_mapped_path
@@ -176,7 +177,7 @@ MINIMAL_RUNTIME_ROUTE_MARKERS = {
 }
 
 
-ACTIVE_RUNTIME_BACKENDS = ("python", "javascript", "rust")
+ACTIVE_RUNTIME_BACKENDS = PUBLIC_BACKENDS
 
 
 def validate_runtime_contracts() -> None:

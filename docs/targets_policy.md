@@ -82,4 +82,4 @@ Cualquier cambio que amplíe o reduzca la API pública estable (comandos, backen
 - En rutas de arranque públicas (importación de pcobra y comandos públicos de arranque como repl/run/test) **solo** se pueden inicializar por defecto los backends `python`, `javascript`, `rust`.
 
 
-Los orígenes reverse pertenecen a una ruta de entrada separada y no amplían los targets de salida oficiales. Este recorrido normativo principal mantiene la lista pública en `python`, `javascript` y `rust`.
+Los orígenes reverse pertenecen a una ruta de entrada separada y no amplían los targets de salida oficiales. Si un origen histórico aparece en documentación de reverse transpilation, debe leerse solo como entrada heredada y no como BackEnd oficial. Este recorrido normativo principal mantiene la lista pública en `python`, `javascript` y `rust`.
