@@ -464,7 +464,7 @@ cobra validar-sintaxis --report-json reporte_sintaxis.json
 cobra validar-sintaxis --report-json
 ```
 
-El comando respeta el `--modo` global de la CLI y puede combinarse con `--modo mixto`, `--modo cobra` o `--modo transpilar`.
+El comando respeta el `--modo` global de la CLI y puede combinarse con `--modo mixto`, `--modo cobra` o `--modo transpilar`. La ruta pública de `validar-sintaxis` solo acepta los backends oficiales `python`, `javascript` y `rust`; los validadores históricos `go`, `cpp`, `java`, `wasm` y `asm` se conservan únicamente en `pcobra.cobra.qa.legacy_syntax_validation.LEGACY_INTERNAL_VALIDATORS` para regresión interna o migraciones documentadas, y no deben consumirse desde comandos públicos.
 
 **Contrato JSON versionado (`--report-json`)**
 
@@ -1507,7 +1507,7 @@ Las contribuciones son bienvenidas. Si deseas contribuir, sigue estos pasos:
 - Ejecuta primero el smoke de sintaxis con `python scripts/smoke_syntax.py`
   (delegación a `pcobra.cobra.qa.syntax_validation` con perfil `solo-cobra`).
 - Ejecuta `python scripts/smoke_transpilers_syntax.py` para transpilación + validación
-  sintáctica cruzada de los 8 targets oficiales; este script también delega en la misma API
+  sintáctica cruzada de los 3 targets oficiales públicos (`python`, `javascript`, `rust`); este script también delega en la misma API
   unificada (`pcobra.cobra.qa.syntax_validation`, perfil `transpiladores`).
 - Ejecuta `make secrets` para buscar credenciales expuestas usando *gitleaks*.
 - Para lanzar todas las validaciones en un solo paso ejecuta `python scripts/check.py`.

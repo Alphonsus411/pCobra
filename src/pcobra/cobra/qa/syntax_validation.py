@@ -16,6 +16,7 @@ from typing import Any, Callable
 
 from pcobra.cobra.transpilers.registry import official_transpiler_targets
 
+
 @dataclass
 class ValidationResult:
     status: str
@@ -39,7 +40,11 @@ class SyntaxReport:
 
 
 SUPPORTED_VALIDATOR_TARGETS: tuple[str, ...] = official_transpiler_targets()
-SUPPORTED_VALIDATION_PROFILES: tuple[str, ...] = ("solo-cobra", "transpiladores", "completo")
+SUPPORTED_VALIDATION_PROFILES: tuple[str, ...] = (
+    "solo-cobra",
+    "transpiladores",
+    "completo",
+)
 SYNTAX_REPORT_SCHEMA_VERSION = "1.0.0"
 # Tiempo máximo (en segundos) para herramientas externas de validación de sintaxis.
 # Ajustar este valor si el entorno de CI o la máquina local son más lentos.
@@ -55,8 +60,16 @@ def _resolve_project_root() -> Path | None:
 
 
 PROJECT_ROOT = _resolve_project_root()
-SRC_DIR = (PROJECT_ROOT / "src") if PROJECT_ROOT else Path(__file__).resolve().parents[5] / "src"
-TESTS_DIR = (PROJECT_ROOT / "tests") if PROJECT_ROOT else Path(__file__).resolve().parents[5] / "tests"
+SRC_DIR = (
+    (PROJECT_ROOT / "src")
+    if PROJECT_ROOT
+    else Path(__file__).resolve().parents[5] / "src"
+)
+TESTS_DIR = (
+    (PROJECT_ROOT / "tests")
+    if PROJECT_ROOT
+    else Path(__file__).resolve().parents[5] / "tests"
+)
 COBRA_FIXTURES = [
     SRC_DIR.parent / "scripts" / "benchmarks" / "programs" / "small.co",
     SRC_DIR.parent / "scripts" / "benchmarks" / "programs" / "factorial.co",
@@ -115,7 +128,9 @@ def load_ast_for_fixture(fixture: Path):
 
 
 def run_external_command(
-    command: list[str], cwd: Path | None = None, timeout_seconds: int | float | None = None
+    command: list[str],
+    cwd: Path | None = None,
+    timeout_seconds: int | float | None = None,
 ) -> tuple[bool, str]:
     result = subprocess.run(
         command,
@@ -131,11 +146,21 @@ def run_external_command(
 
 def validate_python_syntax() -> ValidationResult:
     src_ok = compileall.compile_dir(str(SRC_DIR), quiet=1, force=False)
-    excluded_dirs = {".venv", "__pycache__", ".pytest_cache", ".mypy_cache", ".ruff_cache", "tmp", "temp"}
+    excluded_dirs = {
+        ".venv",
+        "__pycache__",
+        ".pytest_cache",
+        ".mypy_cache",
+        ".ruff_cache",
+        "tmp",
+        "temp",
+    }
     test_candidates = [
         file_path
         for file_path in TESTS_DIR.rglob("*.py")
-        if all(part not in excluded_dirs for part in file_path.relative_to(TESTS_DIR).parts)
+        if all(
+            part not in excluded_dirs for part in file_path.relative_to(TESTS_DIR).parts
+        )
     ]
 
     tests_ok = True
@@ -239,7 +264,11 @@ def _validate_javascript(code: str) -> ValidationResult:
                 "fail",
                 f"node --check excedió el timeout de {SYNTAX_TOOL_TIMEOUT_SECONDS}s para target javascript",
             )
-    return ValidationResult("ok", "node --check correcto") if ok else ValidationResult("fail", output)
+    return (
+        ValidationResult("ok", "node --check correcto")
+        if ok
+        else ValidationResult("fail", output)
+    )
 
 
 def _validate_rust(code: str) -> ValidationResult:
@@ -249,10 +278,13 @@ def _validate_rust(code: str) -> ValidationResult:
     normalized = "\n".join(
         line
         for line in code.splitlines()
-        if line.strip() not in {"use crate::corelibs::*;", "use crate::standard_library::*;"}
+        if line.strip()
+        not in {"use crate::corelibs::*;", "use crate::standard_library::*;"}
     )
     if "fn main(" not in normalized:
-        body = "\n".join(f"    {line}" for line in normalized.splitlines() if line.strip())
+        body = "\n".join(
+            f"    {line}" for line in normalized.splitlines() if line.strip()
+        )
         normalized = f"fn main() {{\n{body}\n}}"
     with tempfile.TemporaryDirectory(prefix="pcobra_rust_") as tmp:
         file_path = Path(tmp) / "main.rs"
@@ -260,7 +292,14 @@ def _validate_rust(code: str) -> ValidationResult:
         file_path.write_text(normalized, encoding="utf-8")
         try:
             ok, output = run_external_command(
-                [rustc, "--emit=metadata", "--edition=2021", str(file_path), "-o", str(output_file)],
+                [
+                    rustc,
+                    "--emit=metadata",
+                    "--edition=2021",
+                    str(file_path),
+                    "-o",
+                    str(output_file),
+                ],
                 timeout_seconds=SYNTAX_TOOL_TIMEOUT_SECONDS,
             )
         except subprocess.TimeoutExpired:
@@ -268,136 +307,25 @@ def _validate_rust(code: str) -> ValidationResult:
                 "fail",
                 f"rustc excedió el timeout de {SYNTAX_TOOL_TIMEOUT_SECONDS}s para target rust",
             )
-    return ValidationResult("ok", "rustc --emit=metadata correcto") if ok else ValidationResult("fail", output)
-
-
-def _validate_go(code: str) -> ValidationResult:
-    go = shutil.which("go")
-    if not go:
-        return ValidationResult("skipped", "go no está disponible")
-    gofmt = shutil.which("gofmt")
-    with tempfile.TemporaryDirectory(prefix="pcobra_go_") as tmp:
-        file_path = Path(tmp) / "main.go"
-        output_file = Path(tmp) / "main.bin"
-        file_path.write_text(code, encoding="utf-8")
-        try:
-            ok, output = run_external_command(
-                [go, "build", "-o", str(output_file), str(file_path)],
-                timeout_seconds=SYNTAX_TOOL_TIMEOUT_SECONDS,
-            )
-        except subprocess.TimeoutExpired:
-            return ValidationResult(
-                "fail",
-                f"go build excedió el timeout de {SYNTAX_TOOL_TIMEOUT_SECONDS}s para target go",
-            )
-        if not ok:
-            return ValidationResult("fail", output)
-
-        if not gofmt:
-            return ValidationResult("ok", "go build correcto (sin diagnóstico de gofmt)")
-
-        gofmt_result = subprocess.run(
-            [gofmt, "-l", str(file_path)],
-            text=True,
-            capture_output=True,
-        )
-        if gofmt_result.returncode != 0:
-            message = (gofmt_result.stderr or gofmt_result.stdout).strip()
-            return ValidationResult("fail", message or "gofmt -l falló")
-
-        style_output = gofmt_result.stdout.strip()
-        if style_output:
-            return ValidationResult("ok", "go build correcto; gofmt -l detectó diferencias de formato")
-
-    return ValidationResult("ok", "go build correcto; gofmt -l correcto")
-
-
-def _validate_cpp(code: str) -> ValidationResult:
-    clangpp = shutil.which("clang++")
-    if not clangpp:
-        return ValidationResult("skipped", "clang++ no está disponible")
-    normalized = "\n".join(
-        line for line in code.splitlines() if not line.strip().startswith("#include <pcobra/")
+    return (
+        ValidationResult("ok", "rustc --emit=metadata correcto")
+        if ok
+        else ValidationResult("fail", output)
     )
-    with tempfile.TemporaryDirectory(prefix="pcobra_cpp_") as tmp:
-        file_path = Path(tmp) / "main.cpp"
-        file_path.write_text(normalized, encoding="utf-8")
-        try:
-            ok, output = run_external_command(
-                [clangpp, "-fsyntax-only", str(file_path)],
-                timeout_seconds=SYNTAX_TOOL_TIMEOUT_SECONDS,
-            )
-        except subprocess.TimeoutExpired:
-            return ValidationResult(
-                "fail",
-                f"clang++ excedió el timeout de {SYNTAX_TOOL_TIMEOUT_SECONDS}s para target cpp",
-            )
-    return ValidationResult("ok", "clang++ -fsyntax-only correcto") if ok else ValidationResult("fail", output)
-
-
-def _validate_java(code: str) -> ValidationResult:
-    javac = shutil.which("javac")
-    if not javac:
-        return ValidationResult("skipped", "javac no está disponible")
-    normalized = "\n".join(line for line in code.splitlines() if not line.strip().startswith("import pcobra."))
-    with tempfile.TemporaryDirectory(prefix="pcobra_java_") as tmp:
-        file_path = Path(tmp) / "Main.java"
-        file_path.write_text(normalized, encoding="utf-8")
-        try:
-            ok, output = run_external_command(
-                [javac, str(file_path)],
-                cwd=Path(tmp),
-                timeout_seconds=SYNTAX_TOOL_TIMEOUT_SECONDS,
-            )
-        except subprocess.TimeoutExpired:
-            return ValidationResult(
-                "fail",
-                f"javac excedió el timeout de {SYNTAX_TOOL_TIMEOUT_SECONDS}s para target java",
-            )
-    return ValidationResult("ok", "javac correcto") if ok else ValidationResult("fail", output)
-
-
-def _validate_wasm(code: str) -> ValidationResult:
-    wat2wasm = shutil.which("wat2wasm")
-    if not wat2wasm:
-        return ValidationResult("skipped", "wat2wasm no está disponible")
-    with tempfile.TemporaryDirectory(prefix="pcobra_wasm_") as tmp:
-        file_path = Path(tmp) / "main.wat"
-        output_file = Path(tmp) / "main.wasm"
-        file_path.write_text(code, encoding="utf-8")
-        try:
-            ok, output = run_external_command(
-                [wat2wasm, str(file_path), "-o", str(output_file)],
-                timeout_seconds=SYNTAX_TOOL_TIMEOUT_SECONDS,
-            )
-        except subprocess.TimeoutExpired:
-            return ValidationResult(
-                "fail",
-                f"wat2wasm excedió el timeout de {SYNTAX_TOOL_TIMEOUT_SECONDS}s para target wasm",
-            )
-    return ValidationResult("ok", "wat2wasm correcto") if ok else ValidationResult("fail", output)
-
-
-def _validate_asm(code: str) -> ValidationResult:
-    lines = [line.strip() for line in code.splitlines() if line.strip()]
-    if not lines:
-        return ValidationResult("fail", "salida ASM vacía")
-    unresolved = [line for line in lines if line.startswith("<") and line.endswith(">")]
-    if unresolved:
-        return ValidationResult("fail", f"tokens ASM no resueltos: {unresolved[:3]}")
-    return ValidationResult("ok", "validador interno ASM correcto")
 
 
 VALIDATORS: dict[str, Callable[[str], ValidationResult]] = {
     "python": _validate_python,
     "javascript": _validate_javascript,
     "rust": _validate_rust,
-    "go": _validate_go,
-    "cpp": _validate_cpp,
-    "java": _validate_java,
-    "wasm": _validate_wasm,
-    "asm": _validate_asm,
 }
+
+
+def legacy_internal_validators() -> dict[str, Callable[[str], ValidationResult]]:
+    """Devuelve validadores legacy solo para rutas internas/de migración documentadas."""
+    from pcobra.cobra.qa.legacy_syntax_validation import LEGACY_INTERNAL_VALIDATORS
+
+    return dict(LEGACY_INTERNAL_VALIDATORS)
 
 
 def run_transpiler_syntax_validation(
@@ -407,7 +335,9 @@ def run_transpiler_syntax_validation(
     transpilers: dict[str, type],
     strict: bool = False,
 ) -> tuple[SyntaxReport, list[dict[str, str]], bool]:
-    summaries: dict[str, TargetSummary] = {target: TargetSummary() for target in targets}
+    summaries: dict[str, TargetSummary] = {
+        target: TargetSummary() for target in targets
+    }
     errors_by_target: dict[str, list[str]] = {target: [] for target in targets}
     events: list[dict[str, str]] = []
     has_failures = False
@@ -418,7 +348,9 @@ def run_transpiler_syntax_validation(
         except Exception as exc:  # noqa: BLE001
             for target in targets:
                 summaries[target].fail += 1
-                message = f"parse/transpilación previa falló: {type(exc).__name__}: {exc}"
+                message = (
+                    f"parse/transpilación previa falló: {type(exc).__name__}: {exc}"
+                )
                 events.append(
                     {
                         "fixture": str(fixture),
@@ -488,7 +420,9 @@ def run_transpiler_syntax_validation(
         cobra=ValidationResult("skipped", "Validación Cobra no ejecutada"),
         targets=summaries,
         strict=strict,
-        errors_by_target={target: msgs for target, msgs in errors_by_target.items() if msgs},
+        errors_by_target={
+            target: msgs for target, msgs in errors_by_target.items() if msgs
+        },
     )
     return report, events, has_failures
 
@@ -510,7 +444,9 @@ def execute_syntax_validation(
     py_result = (
         validate_python_syntax()
         if run_python_cobra
-        else ValidationResult("skipped", "Perfil transpiladores: validación Python omitida")
+        else ValidationResult(
+            "skipped", "Perfil transpiladores: validación Python omitida"
+        )
     )
     cobra_result = (
         validate_cobra_parse()
@@ -518,9 +454,8 @@ def execute_syntax_validation(
         else ValidationResult("skipped", "Perfil transpiladores: parse Cobra omitido")
     )
 
-    has_failures = (
-        (run_python_cobra and py_result.status != "ok")
-        or (run_python_cobra and cobra_result.status != "ok")
+    has_failures = (run_python_cobra and py_result.status != "ok") or (
+        run_python_cobra and cobra_result.status != "ok"
     )
 
     targets_requested: list[str] = []
@@ -531,7 +466,9 @@ def execute_syntax_validation(
         targets_requested = _parse_targets_csv(targets_raw)
         fixtures = [fixture for fixture in TRANSPILER_FIXTURES if fixture.exists()]
         if not fixtures:
-            raise FileNotFoundError("No hay fixtures disponibles para validar transpiladores.")
+            raise FileNotFoundError(
+                "No hay fixtures disponibles para validar transpiladores."
+            )
 
         transpilers_report, _, transpilers_failed = run_transpiler_syntax_validation(
             fixtures=fixtures,
