@@ -110,8 +110,12 @@ def test_main_renderiza_componentes_minimos(monkeypatch):
     )
     monkeypatch.setattr(app.runtime, "normalizar_codigo", lambda value: value or "")
     monkeypatch.setattr(app.runtime, "ejecutar_codigo", lambda _codigo: "ok")
-    monkeypatch.setattr(app.runtime, "transpilar_codigo", lambda _codigo, _lang: "transpilado")
-    monkeypatch.setattr(app.runtime, "formatear_error", lambda exc, **_kwargs: f"error: {exc}")
+    monkeypatch.setattr(
+        app.runtime, "transpilar_codigo", lambda _codigo, _lang: "transpilado"
+    )
+    monkeypatch.setattr(
+        app.runtime, "formatear_error", lambda exc, **_kwargs: f"error: {exc}"
+    )
 
     page = ft.Page()
     app.main(page)
@@ -146,7 +150,9 @@ def test_main_handler_actualiza_salida(monkeypatch):
     monkeypatch.setattr(app.runtime, "normalizar_codigo", lambda value: value or "")
     monkeypatch.setattr(app.runtime, "ejecutar_codigo", ejecutar_mock)
     monkeypatch.setattr(app.runtime, "transpilar_codigo", transpilar_mock)
-    monkeypatch.setattr(app.runtime, "formatear_error", lambda exc, **_kwargs: f"error: {exc}")
+    monkeypatch.setattr(
+        app.runtime, "formatear_error", lambda exc, **_kwargs: f"error: {exc}"
+    )
 
     page = ft.Page()
     app.main(page)
@@ -156,7 +162,9 @@ def test_main_handler_actualiza_salida(monkeypatch):
     activar = next(c for c in page.controls if isinstance(c, ft.Switch))
     salida = next(c for c in page.controls if isinstance(c, ft.Text))
     ejecutar_btn = next(
-        c for c in page.controls if isinstance(c, ft.ElevatedButton) and c.text == "Ejecutar"
+        c
+        for c in page.controls
+        if isinstance(c, ft.ElevatedButton) and c.text == "Ejecutar"
     )
 
     entrada.value = "imprimir('x')"
@@ -176,7 +184,9 @@ def test_main_handler_actualiza_salida(monkeypatch):
     assert page.update.call_count == 3
 
 
-def test_main_configura_selector_por_defecto_y_switch_deshabilitado_si_no_hay_targets(monkeypatch):
+def test_main_configura_selector_por_defecto_y_switch_deshabilitado_si_no_hay_targets(
+    monkeypatch,
+):
     ft = _fake_flet()
     monkeypatch.setattr(app.runtime, "require_flet", lambda: ft)
     monkeypatch.setattr(
@@ -194,8 +204,12 @@ def test_main_configura_selector_por_defecto_y_switch_deshabilitado_si_no_hay_ta
     )
     monkeypatch.setattr(app.runtime, "normalizar_codigo", lambda value: value or "")
     monkeypatch.setattr(app.runtime, "ejecutar_codigo", lambda _codigo: "ejecutado")
-    monkeypatch.setattr(app.runtime, "transpilar_codigo", lambda _codigo, _lang: "transpilado")
-    monkeypatch.setattr(app.runtime, "formatear_error", lambda exc, **_kwargs: f"error: {exc}")
+    monkeypatch.setattr(
+        app.runtime, "transpilar_codigo", lambda _codigo, _lang: "transpilado"
+    )
+    monkeypatch.setattr(
+        app.runtime, "formatear_error", lambda exc, **_kwargs: f"error: {exc}"
+    )
 
     page = ft.Page()
     app.main(page)
@@ -205,3 +219,53 @@ def test_main_configura_selector_por_defecto_y_switch_deshabilitado_si_no_hay_ta
 
     assert selector.value is None
     assert activar.disabled is True
+
+
+def _text_value(control):
+    return getattr(getattr(control, "title", None), "value", None)
+
+
+def test_crear_arbol_directorios_lista_solo_nivel_inicial(tmp_path):
+    from pcobra.gui import runtime
+
+    ft = _fake_flet()
+    (tmp_path / "subdir").mkdir()
+    (tmp_path / "subdir" / "anidado.cobra").write_text("imprimir('anidado')")
+    (tmp_path / "programa.co").write_text("imprimir('co')")
+    (tmp_path / "programa.cobra").write_text("imprimir('cobra')")
+    (tmp_path / "ignorado.txt").write_text("no cobra")
+
+    arbol = runtime.crear_arbol_directorios(
+        ft, on_click=lambda _e: None, root_path=tmp_path
+    )
+
+    nombres = [_text_value(control) for control in arbol.controls]
+    assert nombres == ["subdir", "programa.co", "programa.cobra"]
+    subdir = arbol.controls[0]
+    assert isinstance(subdir, ft.ExpansionTile)
+    assert subdir.controls == []
+
+
+def test_crear_arbol_directorios_carga_hijos_bajo_demanda_y_filtra(tmp_path):
+    from pcobra.gui import runtime
+
+    ft = _fake_flet()
+    (tmp_path / "subdir").mkdir()
+    (tmp_path / "subdir" / "hijo").mkdir()
+    (tmp_path / "subdir" / "codigo.co").write_text("imprimir('co')")
+    (tmp_path / "subdir" / "codigo.cobra").write_text("imprimir('cobra')")
+    (tmp_path / "subdir" / "notas.txt").write_text("no cobra")
+    (tmp_path / "raiz.cobra").write_text("imprimir('raiz')")
+
+    arbol = runtime.crear_arbol_directorios(
+        ft, on_click=lambda _e: None, root_path=tmp_path
+    )
+    subdir = arbol.controls[0]
+
+    subdir.on_change(SimpleNamespace(control=subdir))
+
+    nombres = [_text_value(control) for control in subdir.controls]
+    assert nombres == ["hijo", "codigo.co", "codigo.cobra"]
+    hijo = subdir.controls[0]
+    assert isinstance(hijo, ft.ExpansionTile)
+    assert hijo.controls == []

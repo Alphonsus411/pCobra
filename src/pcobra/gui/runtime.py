@@ -366,31 +366,50 @@ def crear_salida_seleccionable(ft: Any, **kwargs: Any) -> Any:
 def crear_arbol_directorios(
     ft: Any, *, on_click: Any, root_path: Path | None = None
 ) -> Any:
-    """Crea un componente de árbol de directorios para la GUI."""
+    """Crea un árbol de directorios con carga diferida de subcarpetas."""
     if root_path is None:
         root_path = Path(".").resolve()
 
-    def _crear_nodo_directorio(path: Path) -> Any:
-        if path.is_dir():
-            children = []
-            for entry in listar_directorio_cobra(path):
-                children.append(_crear_nodo_directorio(entry))
-            return ft.ExpansionTile(
-                title=ft.Text(path.name),
-                leading=ft.Icon(ft.icons.FOLDER),
-                controls=children,
-            )
-        else:
-            return ft.ListTile(
-                title=ft.Text(path.name),
-                leading=ft.Icon(ft.icons.INSERT_DRIVE_FILE),
-                data=str(path),
-                on_click=on_click,
-            )
+    def _crear_nodo_archivo(path: Path) -> Any:
+        return ft.ListTile(
+            title=ft.Text(path.name),
+            leading=ft.Icon(ft.icons.INSERT_DRIVE_FILE),
+            data=str(path),
+            on_click=on_click,
+        )
 
-    elementos_arbol = []
-    for entrada in listar_directorio_cobra(root_path):
-        elementos_arbol.append(_crear_nodo_directorio(entrada))
+    def _crear_nodo_directorio(path: Path) -> Any:
+        tile = ft.ExpansionTile(
+            title=ft.Text(path.name),
+            leading=ft.Icon(ft.icons.FOLDER),
+            controls=[],
+        )
+        tile.data = {"path": path, "children_loaded": False}
+
+        def _cargar_hijos_al_expandir(_e: Any) -> None:
+            data = getattr(tile, "data", {})
+            if data.get("children_loaded"):
+                return
+            tile.controls = [
+                _crear_nodo(entrada) for entrada in listar_directorio_cobra(path)
+            ]
+            data["children_loaded"] = True
+            tile.data = data
+            update = getattr(tile, "update", None)
+            if callable(update):
+                update()
+
+        tile.on_change = _cargar_hijos_al_expandir
+        return tile
+
+    def _crear_nodo(path: Path) -> Any:
+        if path.is_dir():
+            return _crear_nodo_directorio(path)
+        return _crear_nodo_archivo(path)
+
+    elementos_arbol = [
+        _crear_nodo(entrada) for entrada in listar_directorio_cobra(root_path)
+    ]
 
     return ft.Column(elementos_arbol, scroll=ft.ScrollMode.ALWAYS)
 
