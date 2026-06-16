@@ -14,9 +14,9 @@ from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
 
 
 @pytest.mark.parametrize("backend", OFFICIAL_TARGETS)
-def test_library_compatibility_matrix_covers_exactly_8_official_backends(backend: str):
+def test_library_compatibility_matrix_covers_exactly_3_official_backends(backend: str):
     assert set(LIBRARY_COMPATIBILITY) == set(OFFICIAL_TARGETS)
-    assert len(LIBRARY_COMPATIBILITY) == 8
+    assert len(LIBRARY_COMPATIBILITY) == 3
     assert backend in LIBRARY_COMPATIBILITY
 
 
