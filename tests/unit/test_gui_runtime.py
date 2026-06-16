@@ -12,9 +12,13 @@ from pcobra.gui import runtime
 
 @pytest.fixture(autouse=True)
 def _reset_cache():
-    runtime.require_gui_dependencies.cache_clear()
+    cache_clear = getattr(runtime.require_gui_dependencies, "cache_clear", None)
+    if cache_clear is not None:
+        cache_clear()
     yield
-    runtime.require_gui_dependencies.cache_clear()
+    cache_clear = getattr(runtime.require_gui_dependencies, "cache_clear", None)
+    if cache_clear is not None:
+        cache_clear()
 
 
 def test_normalizar_codigo_admite_none_y_texto() -> None:
@@ -73,6 +77,136 @@ def test_transpilar_codigo_usa_transpilador_python_registrado(
         == "codigo python registrado"
     )
     assert llamadas == {"transpiler_inits": 1, "ast": ["AST"]}
+
+
+def test_generar_reporte_sugerencias_valida_antes_de_sugerir(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """La ruta común de sugerencias debe ejecutar Lexer/Parser antes de Agix."""
+
+    llamadas: list[str] = []
+
+    def analizar_primero(codigo: str):
+        llamadas.append(f"analizar:{codigo}")
+        return ["TOKEN"], ["AST"]
+
+    def sugerir_despues(codigo: str):
+        llamadas.append(f"sugerir:{codigo}")
+        return ["Usar nombres descriptivos para variables"]
+
+    monkeypatch.setattr(
+        runtime,
+        "require_gui_dependencies",
+        lambda: {"LexerError": Exception, "ParserError": Exception},
+    )
+    monkeypatch.setattr(runtime, "analizar_codigo", analizar_primero)
+    monkeypatch.setattr(runtime, "generar_sugerencias", sugerir_despues)
+
+    reporte = runtime.generar_reporte_sugerencias("var x = 5")
+
+    assert llamadas == ["analizar:var x = 5", "sugerir:var x = 5"]
+    assert "No se detectaron errores" in reporte
+    assert "- Usar nombres descriptivos para variables" in reporte
+
+
+def test_generar_reporte_sugerencias_devuelve_error_parser_sin_correcciones(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Si Parser falla, no se consulta Agix ni se proponen correcciones aplicables."""
+
+    class FakeLexerError(Exception):
+        pass
+
+    class FakeParserError(Exception):
+        pass
+
+    def analizar_con_error_parser(_codigo: str):
+        raise FakeParserError("Token inesperado en término: EOF")
+
+    def no_debe_llamarse(_codigo: str):
+        raise AssertionError("generar_sugerencias no debe ejecutarse tras ParserError")
+
+    monkeypatch.setattr(
+        runtime,
+        "require_gui_dependencies",
+        lambda: {"LexerError": FakeLexerError, "ParserError": FakeParserError},
+    )
+    monkeypatch.setattr(runtime, "analizar_codigo", analizar_con_error_parser)
+    monkeypatch.setattr(runtime, "generar_sugerencias", no_debe_llamarse)
+
+    reporte = runtime.generar_reporte_sugerencias("var x =")
+
+    assert reporte.startswith("Errores léxicos/sintácticos:")
+    assert "Error de sintaxis" in reporte
+    assert "Sugerencias estilísticas:" in reporte
+    assert "Corrige primero los errores anteriores" in reporte
+    assert "Usar nombres descriptivos" not in reporte
+
+
+def test_generar_reporte_sugerencias_devuelve_error_lexer_sin_correcciones(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Si Lexer falla, el reporte prioriza el error léxico y bloquea sugerencias."""
+
+    class FakeLexerError(Exception):
+        linea = 1
+        columna = 11
+
+    class FakeParserError(Exception):
+        pass
+
+    def analizar_con_error_lexer(_codigo: str):
+        raise FakeLexerError("Token no reconocido: '¿'")
+
+    def no_debe_llamarse(_codigo: str):
+        raise AssertionError("generar_sugerencias no debe ejecutarse tras LexerError")
+
+    monkeypatch.setattr(
+        runtime,
+        "require_gui_dependencies",
+        lambda: {"LexerError": FakeLexerError, "ParserError": FakeParserError},
+    )
+    monkeypatch.setattr(runtime, "analizar_codigo", analizar_con_error_lexer)
+    monkeypatch.setattr(runtime, "generar_sugerencias", no_debe_llamarse)
+
+    reporte = runtime.generar_reporte_sugerencias("var x = 5 ¿")
+
+    assert reporte.startswith("Errores léxicos/sintácticos:")
+    assert "Error léxico" in reporte
+    assert "Sugerencias estilísticas:" in reporte
+    assert "Corrige primero los errores anteriores" in reporte
+    assert "Usar nombres descriptivos" not in reporte
+
+
+def test_generar_reporte_sugerencias_codigo_cobra_valido_con_fixture_minimo(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Fixture mínimo con tokens y declaración soportados por Lexer/Parser."""
+
+    llamadas: list[str] = []
+
+    def analizar_fixture_minimo(codigo: str):
+        llamadas.append(codigo)
+        return ["VAR", "IDENTIFICADOR", "ASIGNAR", "ENTERO"], ["NodoAsignacion"]
+
+    monkeypatch.setattr(
+        runtime,
+        "require_gui_dependencies",
+        lambda: {"LexerError": Exception, "ParserError": Exception},
+    )
+    monkeypatch.setattr(runtime, "analizar_codigo", analizar_fixture_minimo)
+    monkeypatch.setattr(
+        runtime,
+        "generar_sugerencias",
+        lambda _codigo: ["Usar nombres descriptivos para variables"],
+    )
+
+    reporte = runtime.generar_reporte_sugerencias("var x = 5")
+
+    assert "No se detectaron errores con el Lexer y Parser de Cobra" in reporte
+    assert "- Usar nombres descriptivos para variables" in reporte
+    assert llamadas == ["var x = 5"]
+
 
 def test_formatear_error_lexico_y_sintaxis() -> None:
     class FakeLexerError(Exception):

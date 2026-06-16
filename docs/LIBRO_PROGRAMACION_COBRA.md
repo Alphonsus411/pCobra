@@ -511,6 +511,8 @@ Recomendaciones autorizadas actualmente:
 
 > Nota editorial: si en el futuro el parser incorpora una construcción nueva, primero debe actualizarse el índice de sintaxis y la regla correspondiente del Libro; solo después puede añadirse una recomendación automática para esa construcción.
 
+> Nota de contrato para nuevas palabras clave: cualquier tarea que añada una palabra clave al `Lexer` debe incluir en el mismo cambio la actualización coherente de `Parser`, nodos de AST si corresponde, transpiladores oficiales (`python`, `javascript` y `rust`), documentación del Libro y pruebas de contrato Lexer/Parser con un caso válido y uno inválido.
+
 ### 3.10 Decorators
 
 **Definición corta:** anotaciones (`@`) para extender funciones/clases sin modificar su cuerpo.
