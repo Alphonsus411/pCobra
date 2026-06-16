@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from pcobra.cobra.architecture.backend_policy import PUBLIC_BACKENDS
-from pcobra.ia.analizador_agix import generar_sugerencias
+from pcobra.ia.analizador_sugerencias import generar_sugerencias
 
 
 @lru_cache(maxsize=1)
@@ -590,7 +590,7 @@ def generar_reporte_sugerencias(codigo: str) -> str:
             "- No se detectaron errores con el Lexer y Parser de Cobra.\n\n"
             "Sugerencias estilísticas:\n"
             f"- No se pudieron generar sugerencias: {exc}. "
-            "Instala la dependencia opcional 'agix' para activar esta acción."
+            "Instala la dependencia opcional real 'agix' para activar esta acción; 'agi-core' no está declarado en este proyecto."
         )
 
     if sugerencias:
