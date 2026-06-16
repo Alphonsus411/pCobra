@@ -3,6 +3,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from pcobra.ia import analizador_agix
+from pcobra.ia.reglas_libro_programacion import construir_candidatos_desde_reglas
 
 
 def test_generar_sugerencias_variable_descriptiva():
@@ -88,6 +89,57 @@ def test_error_lexico_o_sintactico_impide_sugerencias_aplicables():
             )
     razonador_cls.assert_not_called()
     razonador.select_best_model.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    "codigo_invalido",
+    [
+        "var x = 5 ¿",
+        "var x =",
+    ],
+)
+def test_generar_sugerencias_rechaza_codigo_invalido_antes_de_agix(codigo_invalido):
+    """Lexer/Parser deben bloquear Agix tanto para errores léxicos como sintácticos."""
+
+    razonador = MagicMock()
+    with patch.object(
+        analizador_agix, "Reasoner", return_value=razonador
+    ) as razonador_cls:
+        with pytest.raises(Exception):
+            analizador_agix.generar_sugerencias(codigo_invalido)
+
+    razonador_cls.assert_not_called()
+    razonador.select_best_model.assert_not_called()
+
+
+def test_generar_sugerencias_codigo_valido_expone_regla_nombres_descriptivos():
+    """Un programa Cobra válido puede activar LP-3.1 tras pasar Lexer/Parser."""
+
+    instancia = MagicMock()
+    instancia.select_best_model.side_effect = lambda evaluaciones: next(
+        ev
+        for ev in evaluaciones
+        if ev["rule_id"] == "LP-3.1-NOMBRES-DESCRIPTIVOS"
+    )
+
+    with patch.object(analizador_agix, "Reasoner", return_value=instancia):
+        sugerencias = analizador_agix.generar_sugerencias("var x = 5")
+
+    assert sugerencias == [
+        "Usar nombres descriptivos para variables "
+        "[regla: LP-3.1-NOMBRES-DESCRIPTIVOS; §3.1 Léxico]"
+    ]
+    evaluaciones = instancia.select_best_model.call_args.args[0]
+    assert any(
+        ev["rule_id"] == "LP-3.1-NOMBRES-DESCRIPTIVOS" for ev in evaluaciones
+    )
+
+
+def test_reglas_libro_programacion_validan_entrada_antes_de_candidatos():
+    """Las reglas internas no producen candidatos si falla el Parser."""
+
+    with pytest.raises(Exception):
+        construir_candidatos_desde_reglas("var x =")
 
 
 def test_sugerencias_no_inventan_construcciones_fuera_del_parser():
