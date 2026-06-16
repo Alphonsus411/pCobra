@@ -3,6 +3,7 @@ from pathlib import Path
 import pytest
 
 from pcobra.cobra.qa import syntax_validation as sv
+from pcobra.cobra.qa import legacy_syntax_validation as legacy_sv
 
 
 class _LexerTokenizar:
@@ -13,6 +14,22 @@ class _LexerTokenizar:
 class _LexerAnalizar:
     def analizar_token(self):
         return ["ok2"]
+
+
+def test_validators_publicos_solo_incluyen_backends_oficiales():
+    assert tuple(sv.VALIDATORS) == ("python", "javascript", "rust")
+    assert set(legacy_sv.LEGACY_INTERNAL_VALIDATORS) == {
+        "go",
+        "cpp",
+        "java",
+        "wasm",
+        "asm",
+    }
+
+
+def test_parse_targets_csv_rechaza_legacy_en_ruta_publica():
+    with pytest.raises(ValueError, match="Targets no soportados"):
+        sv._parse_targets_csv("python,go")
 
 
 def test_tokenize_usa_tokenizar_si_esta_disponible():
@@ -35,7 +52,9 @@ def test_run_external_command_ok():
 
 
 def test_run_external_command_fail():
-    ok, output = sv.run_external_command(["python", "-c", "import sys; sys.stderr.write('boom'); sys.exit(2)"])
+    ok, output = sv.run_external_command(
+        ["python", "-c", "import sys; sys.stderr.write('boom'); sys.exit(2)"]
+    )
     assert ok is False
     assert "boom" in output
 
@@ -67,19 +86,49 @@ def test_run_external_command_pasa_timeout_a_subprocess(monkeypatch):
     [
         (sv._validate_javascript, "node", "console.log('ok')\n", "javascript"),
         (sv._validate_rust, "rustc", "fn main() {}\n", "rust"),
-        (sv._validate_go, "go", "package main\nfunc main(){}\n", "go"),
-        (sv._validate_cpp, "clang++", "int main() { return 0; }\n", "cpp"),
-        (sv._validate_java, "javac", "class Main { public static void main(String[] args) {} }\n", "java"),
-        (sv._validate_wasm, "wat2wasm", "(module)\n", "wasm"),
+        (
+            legacy_sv.LEGACY_INTERNAL_VALIDATORS["go"],
+            "go",
+            "package main\nfunc main(){}\n",
+            "go",
+        ),
+        (
+            legacy_sv.LEGACY_INTERNAL_VALIDATORS["cpp"],
+            "clang++",
+            "int main() { return 0; }\n",
+            "cpp",
+        ),
+        (
+            legacy_sv.LEGACY_INTERNAL_VALIDATORS["java"],
+            "javac",
+            "class Main { public static void main(String[] args) {} }\n",
+            "java",
+        ),
+        (
+            legacy_sv.LEGACY_INTERNAL_VALIDATORS["wasm"],
+            "wat2wasm",
+            "(module)\n",
+            "wasm",
+        ),
     ],
 )
-def test_validadores_externos_retornan_fail_en_timeout(monkeypatch, validator, tool_name, code, expected_target):
-    monkeypatch.setattr(sv.shutil, "which", lambda cmd: f"/usr/bin/{cmd}" if cmd == tool_name else None)
+def test_validadores_externos_retornan_fail_en_timeout(
+    monkeypatch, validator, tool_name, code, expected_target
+):
+    monkeypatch.setattr(
+        sv.shutil, "which", lambda cmd: f"/usr/bin/{cmd}" if cmd == tool_name else None
+    )
+    monkeypatch.setattr(
+        legacy_sv.shutil,
+        "which",
+        lambda cmd: f"/usr/bin/{cmd}" if cmd == tool_name else None,
+    )
 
     def fake_run_external_command(_command, cwd=None, timeout_seconds=None):
         raise sv.subprocess.TimeoutExpired(cmd=_command, timeout=timeout_seconds or 1)
 
     monkeypatch.setattr(sv, "run_external_command", fake_run_external_command)
+    monkeypatch.setattr(legacy_sv, "run_external_command", fake_run_external_command)
 
     result = validator(code)
 
@@ -89,13 +138,17 @@ def test_validadores_externos_retornan_fail_en_timeout(monkeypatch, validator, t
 
 
 def test_validator_asm_detecta_tokens_no_resueltos():
-    result = sv.VALIDATORS["asm"]("<pendiente>\nMOV R1, 3")
+    result = legacy_sv.LEGACY_INTERNAL_VALIDATORS["asm"]("<pendiente>\nMOV R1, 3")
     assert result.status == "fail"
     assert "no resueltos" in result.message
 
 
 def test_validate_go_falla_si_build_falla_aunque_gofmt_exista(monkeypatch):
-    monkeypatch.setattr(sv.shutil, "which", lambda cmd: f"/usr/bin/{cmd}" if cmd in {"go", "gofmt"} else None)
+    monkeypatch.setattr(
+        legacy_sv.shutil,
+        "which",
+        lambda cmd: f"/usr/bin/{cmd}" if cmd in {"go", "gofmt"} else None,
+    )
 
     def fake_run_external_command(command, cwd=None, timeout_seconds=None):
         if command[0].endswith("go") and command[1] == "build":
@@ -103,34 +156,53 @@ def test_validate_go_falla_si_build_falla_aunque_gofmt_exista(monkeypatch):
         raise AssertionError(f"comando inesperado: {command}")
 
     monkeypatch.setattr(sv, "run_external_command", fake_run_external_command)
+    monkeypatch.setattr(legacy_sv, "run_external_command", fake_run_external_command)
 
-    result = sv._validate_go("package main\nfunc main(){ variableInexistente() }\n")
+    result = legacy_sv.LEGACY_INTERNAL_VALIDATORS["go"](
+        "package main\nfunc main(){ variableInexistente() }\n"
+    )
     assert result.status == "fail"
     assert "undefined" in result.message
 
 
 def test_validate_go_ok_con_build_y_gofmt_opcional(monkeypatch):
-    monkeypatch.setattr(sv.shutil, "which", lambda cmd: "/usr/bin/go" if cmd == "go" else None)
-    monkeypatch.setattr(sv, "run_external_command", lambda _command, cwd=None, timeout_seconds=None: (True, ""))
+    monkeypatch.setattr(
+        legacy_sv.shutil, "which", lambda cmd: "/usr/bin/go" if cmd == "go" else None
+    )
+    monkeypatch.setattr(
+        legacy_sv,
+        "run_external_command",
+        lambda _command, cwd=None, timeout_seconds=None: (True, ""),
+    )
 
-    result = sv._validate_go("package main\nfunc main(){}\n")
+    result = legacy_sv.LEGACY_INTERNAL_VALIDATORS["go"]("package main\nfunc main(){}\n")
     assert result.status == "ok"
     assert "go build correcto" in result.message
     assert "sin diagnóstico de gofmt" in result.message
 
 
 def test_validate_go_ok_con_estilo_pendiente_en_gofmt(monkeypatch):
-    monkeypatch.setattr(sv.shutil, "which", lambda cmd: f"/usr/bin/{cmd}" if cmd in {"go", "gofmt"} else None)
-    monkeypatch.setattr(sv, "run_external_command", lambda _command, cwd=None, timeout_seconds=None: (True, ""))
+    monkeypatch.setattr(
+        legacy_sv.shutil,
+        "which",
+        lambda cmd: f"/usr/bin/{cmd}" if cmd in {"go", "gofmt"} else None,
+    )
+    monkeypatch.setattr(
+        legacy_sv,
+        "run_external_command",
+        lambda _command, cwd=None, timeout_seconds=None: (True, ""),
+    )
 
     class _CompletedProcess:
         returncode = 0
         stdout = "main.go\n"
         stderr = ""
 
-    monkeypatch.setattr(sv.subprocess, "run", lambda *args, **kwargs: _CompletedProcess())
+    monkeypatch.setattr(
+        legacy_sv.subprocess, "run", lambda *args, **kwargs: _CompletedProcess()
+    )
 
-    result = sv._validate_go("package main\nfunc main(){}\n")
+    result = legacy_sv.LEGACY_INTERNAL_VALIDATORS["go"]("package main\nfunc main(){}\n")
     assert result.status == "ok"
     assert "detectó diferencias de formato" in result.message
 
@@ -200,27 +272,33 @@ def test_run_transpiler_syntax_validation_resumen_ok_y_fail(monkeypatch):
 
     transpilers = {
         "python": OkTranspiler,
-        "asm": OkTranspiler,
+        "javascript": OkTranspiler,
         "rust": FailTranspiler,
     }
 
     report, events, has_failures = sv.run_transpiler_syntax_validation(
         fixtures=[Path("fixture.co")],
-        targets=["python", "asm", "rust"],
+        targets=["python", "javascript", "rust"],
         transpilers=transpilers,
         strict=False,
     )
 
     assert report.targets["python"].ok == 1
-    assert report.targets["asm"].ok == 1
+    assert report.targets["javascript"].ok == 1
     assert report.targets["rust"].fail == 1
     assert has_failures is True
-    assert any(event["target"] == "rust" and event["status"] == "fail" for event in events)
+    assert any(
+        event["target"] == "rust" and event["status"] == "fail" for event in events
+    )
 
 
 def test_run_transpiler_syntax_validation_strict_con_skipped(monkeypatch):
     monkeypatch.setattr(sv, "load_ast_for_fixture", lambda _fixture: ["ast"])
-    monkeypatch.setitem(sv.VALIDATORS, "custom", lambda _code: sv.ValidationResult("skipped", "tool ausente"))
+    monkeypatch.setitem(
+        sv.VALIDATORS,
+        "custom",
+        lambda _code: sv.ValidationResult("skipped", "tool ausente"),
+    )
 
     class CustomTranspiler:
         def generate_code(self, _ast):

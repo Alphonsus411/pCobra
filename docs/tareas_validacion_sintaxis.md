@@ -159,7 +159,7 @@ Para separar pipelines rápidos y completos, `validar-sintaxis` y `scripts/check
 quedan alineados en tres perfiles:
 
 - `solo-cobra`: validación rápida (Python + parse Cobra).
-- `transpiladores`: valida exclusivamente sintaxis de backends.
+- `transpiladores`: valida exclusivamente sintaxis de los backends oficiales públicos (`python`, `javascript`, `rust`).
 - `completo`: ejecuta todo.
 
 Ejemplos recomendados:
@@ -180,6 +180,7 @@ python scripts/check.py --perfil completo
 
 Compatibilidad:
 - `--solo-cobra` se mantiene como alias deprecado de `--perfil solo-cobra`.
+- Los validadores `go`, `cpp`, `java`, `wasm` y `asm` quedan fuera de la ruta pública. Si se necesitan para regresión histórica, deben invocarse solo desde rutas internas/de migración usando `pcobra.cobra.qa.legacy_syntax_validation.LEGACY_INTERNAL_VALIDATORS`.
 
 
 ## 7) Contrato JSON de `validar-sintaxis --report-json` (versionado)
