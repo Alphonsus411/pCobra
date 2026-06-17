@@ -7,7 +7,17 @@ from types import SimpleNamespace
 
 import pytest
 
+from pcobra.cobra.core import Lexer, LexerError, Parser, ParserError
 from pcobra.gui import runtime
+
+
+def _deps_lexer_parser_reales() -> dict[str, object]:
+    return {
+        "Lexer": Lexer,
+        "LexerError": LexerError,
+        "Parser": Parser,
+        "ParserError": ParserError,
+    }
 
 
 @pytest.fixture(autouse=True)
@@ -213,6 +223,7 @@ def test_generar_reporte_sugerencias_codigo_valido_usa_lexer_parser_reales(
 ) -> None:
     """Con código Cobra válido, la GUI solo sugiere después del Lexer/Parser real."""
 
+    monkeypatch.setattr(runtime, "require_gui_dependencies", _deps_lexer_parser_reales)
     llamadas: list[str] = []
 
     def sugerir_tras_validacion(codigo: str) -> list[str]:
@@ -244,6 +255,8 @@ def test_generar_reporte_sugerencias_codigo_invalido_real_bloquea_estilo(
 ) -> None:
     """La GUI muestra el error real y no genera sugerencias estilísticas aplicables."""
 
+    monkeypatch.setattr(runtime, "require_gui_dependencies", _deps_lexer_parser_reales)
+
     def no_debe_sugerir(_codigo: str) -> list[str]:
         raise AssertionError("No se deben sugerir estilos con código inválido")
 
@@ -251,6 +264,72 @@ def test_generar_reporte_sugerencias_codigo_invalido_real_bloquea_estilo(
 
     reporte = runtime.generar_reporte_sugerencias(codigo_invalido)
 
+    assert reporte.startswith("Errores léxicos/sintácticos:")
+    assert tipo_error in reporte
+    assert "Corrige primero los errores anteriores" in reporte
+    assert "LP-3.1-NOMBRES-DESCRIPTIVOS" not in reporte
+    assert "Usar nombres descriptivos para variables" not in reporte
+
+
+def test_generar_reporte_sugerencias_no_ejecuta_ia_hasta_lexer_y_parser_reales(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Código válido: la GUI obtiene sugerencias solo después del Lexer/Parser reales."""
+
+    monkeypatch.setattr(runtime, "require_gui_dependencies", _deps_lexer_parser_reales)
+    eventos: list[str] = []
+    analizar_real = runtime.analizar_codigo
+
+    def analizar_con_traza(codigo: str):
+        eventos.append("lexer_parser")
+        tokens, ast = analizar_real(codigo)
+        assert tokens
+        assert ast
+        return tokens, ast
+
+    def sugerir_con_traza(codigo: str) -> list[str]:
+        eventos.append("sugerencias")
+        assert eventos == ["lexer_parser", "sugerencias"]
+        return [
+            "Usar nombres descriptivos para variables "
+            "[regla: LP-3.1-NOMBRES-DESCRIPTIVOS; §3.1 Léxico]"
+        ]
+
+    monkeypatch.setattr(runtime, "analizar_codigo", analizar_con_traza)
+    monkeypatch.setattr(runtime, "generar_sugerencias", sugerir_con_traza)
+
+    reporte = runtime.generar_reporte_sugerencias("var x = 5")
+
+    assert eventos == ["lexer_parser", "sugerencias"]
+    assert "No se detectaron errores con el Lexer y Parser de Cobra" in reporte
+    assert "LP-3.1-NOMBRES-DESCRIPTIVOS" in reporte
+
+
+@pytest.mark.parametrize(
+    ("codigo_invalido", "tipo_error"),
+    [
+        ("var x = 5 ¿", "Error léxico"),
+        ("var x =", "Error de sintaxis"),
+    ],
+)
+def test_generar_reporte_sugerencias_gui_rechaza_invalidos_reales_sin_estilo_aplicable(
+    monkeypatch: pytest.MonkeyPatch, codigo_invalido: str, tipo_error: str
+) -> None:
+    """Errores reales del Lexer/Parser se muestran en GUI y bloquean reglas de estilo."""
+
+    monkeypatch.setattr(runtime, "require_gui_dependencies", _deps_lexer_parser_reales)
+    llamadas_sugerencias = 0
+
+    def no_sugerir(_codigo: str) -> list[str]:
+        nonlocal llamadas_sugerencias
+        llamadas_sugerencias += 1
+        raise AssertionError("No debe generar sugerencias estilísticas aplicables")
+
+    monkeypatch.setattr(runtime, "generar_sugerencias", no_sugerir)
+
+    reporte = runtime.generar_reporte_sugerencias(codigo_invalido)
+
+    assert llamadas_sugerencias == 0
     assert reporte.startswith("Errores léxicos/sintácticos:")
     assert tipo_error in reporte
     assert "Corrige primero los errores anteriores" in reporte
