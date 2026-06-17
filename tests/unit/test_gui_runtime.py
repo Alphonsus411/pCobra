@@ -208,6 +208,56 @@ def test_generar_reporte_sugerencias_codigo_cobra_valido_con_fixture_minimo(
     assert llamadas == ["var x = 5"]
 
 
+def test_generar_reporte_sugerencias_codigo_valido_usa_lexer_parser_reales(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Con código Cobra válido, la GUI solo sugiere después del Lexer/Parser real."""
+
+    llamadas: list[str] = []
+
+    def sugerir_tras_validacion(codigo: str) -> list[str]:
+        llamadas.append(codigo)
+        return [
+            "Usar nombres descriptivos para variables "
+            "[regla: LP-3.1-NOMBRES-DESCRIPTIVOS; §3.1 Léxico]"
+        ]
+
+    monkeypatch.setattr(runtime, "generar_sugerencias", sugerir_tras_validacion)
+
+    reporte = runtime.generar_reporte_sugerencias("var x = 5")
+
+    assert llamadas == ["var x = 5"]
+    assert "No se detectaron errores con el Lexer y Parser de Cobra" in reporte
+    assert "LP-3.1-NOMBRES-DESCRIPTIVOS" in reporte
+    assert "- Usar nombres descriptivos para variables" in reporte
+
+
+@pytest.mark.parametrize(
+    "codigo_invalido, tipo_error",
+    [
+        ("var x = 5 ¿", "Error léxico"),
+        ("var x =", "Error de sintaxis"),
+    ],
+)
+def test_generar_reporte_sugerencias_codigo_invalido_real_bloquea_estilo(
+    monkeypatch: pytest.MonkeyPatch, codigo_invalido: str, tipo_error: str
+) -> None:
+    """La GUI muestra el error real y no genera sugerencias estilísticas aplicables."""
+
+    def no_debe_sugerir(_codigo: str) -> list[str]:
+        raise AssertionError("No se deben sugerir estilos con código inválido")
+
+    monkeypatch.setattr(runtime, "generar_sugerencias", no_debe_sugerir)
+
+    reporte = runtime.generar_reporte_sugerencias(codigo_invalido)
+
+    assert reporte.startswith("Errores léxicos/sintácticos:")
+    assert tipo_error in reporte
+    assert "Corrige primero los errores anteriores" in reporte
+    assert "LP-3.1-NOMBRES-DESCRIPTIVOS" not in reporte
+    assert "Usar nombres descriptivos para variables" not in reporte
+
+
 def test_formatear_error_lexico_y_sintaxis() -> None:
     class FakeLexerError(Exception):
         linea = 2
