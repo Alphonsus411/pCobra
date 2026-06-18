@@ -1,9 +1,8 @@
 """Fachada estable para sugerencias automáticas de código Cobra.
 
-La dependencia AGI real declarada por el proyecto es ``agix``. No hay un
-paquete ``agi-core``/``agi_core`` declarado ni local en este repositorio, así
-que esta fachada delega en ``analizador_agix`` y mantiene un único punto de
-entrada público para GUI y otros consumidores.
+La dependencia AGI real declarada por el proyecto es ``agix``. Esta fachada
+delega en ``analizador_agix`` y mantiene un único punto de entrada público
+para GUI y otros consumidores.
 """
 
 from __future__ import annotations

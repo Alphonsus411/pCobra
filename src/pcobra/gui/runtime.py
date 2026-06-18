@@ -590,7 +590,7 @@ def generar_reporte_sugerencias(codigo: str) -> str:
             "- No se detectaron errores con el Lexer y Parser de Cobra.\n\n"
             "Sugerencias del Libro:\n"
             f"- No se pudieron generar sugerencias: {exc}. "
-            "Instala la dependencia opcional real 'agix' para activar esta acción; 'agi-core' no está declarado en este proyecto."
+            "Instala la dependencia opcional real 'agix' para activar esta acción."
         )
 
     if sugerencias:
