@@ -139,3 +139,109 @@ def test_humo_lexer_parser_acepta_ejemplos_del_libro_programacion() -> None:
         tokens = Lexer(codigo).tokenizar()
         ast_resultado = ClassicParser(tokens).parsear()
         assert ast_resultado
+
+
+def test_nueva_palabra_clave_del_lexer_exige_actualizaciones_de_contrato() -> None:
+    """Toda palabra clave nueva debe aterrizar en Parser y en el checklist público."""
+
+    tokens_declaracion_con_handler = set(ClassicParser([])._factories)
+    tokens_contextuales_soportados = {
+        TipoToken.CAPTURAR,
+        TipoToken.CASE,
+        TipoToken.COMO,
+        TipoToken.EN,
+        TipoToken.FIN,
+        TipoToken.FINALMENTE,
+        TipoToken.METODO,
+        TipoToken.ATRIBUTO,
+        TipoToken.RETORNO,
+        TipoToken.SINO,
+        TipoToken.SINO_SI,
+    }
+    tokens_expresion_soportados = {TipoToken.LAMBDA}
+    tokens_reservados_sin_declaracion_propia = (
+        tokens_declaracion_con_handler
+        | tokens_contextuales_soportados
+        | tokens_expresion_soportados
+    )
+
+    palabras_reservadas = {
+        token.tipo
+        for palabra in [
+            "var",
+            "variable",
+            "func",
+            "definir",
+            "metodo",
+            "atributo",
+            "si",
+            "sino",
+            "elseif",
+            "garantia",
+            "guard",
+            "mientras",
+            "para",
+            "import",
+            "usar",
+            "exportar",
+            "option",
+            "macro",
+            "hilo",
+            "asincronico",
+            "switch",
+            "segun",
+            "case",
+            "caso",
+            "clase",
+            "estructura",
+            "registro",
+            "enumeracion",
+            "interface",
+            "rasgo",
+            "en",
+            "holobit",
+            "proyectar",
+            "transformar",
+            "graficar",
+            "try",
+            "intentar",
+            "defer",
+            "aplazar",
+            "catch",
+            "capturar",
+            "throw",
+            "lanzar",
+            "imprimir",
+            "yield",
+            "esperar",
+            "romper",
+            "continuar",
+            "pasar",
+            "afirmar",
+            "eliminar",
+            "global",
+            "nolocal",
+            "lambda",
+            "con",
+            "finalmente",
+            "desde",
+            "como",
+            "fin",
+            "retorno",
+        ]
+        for token in [Lexer(palabra).tokenizar()[0]]
+    }
+
+    faltantes = palabras_reservadas - tokens_reservados_sin_declaracion_propia
+    assert {token.name for token in faltantes} == set()
+    checklist = (ROOT / "docs/tareas_implementacion_libro_cobra.md").read_text(
+        encoding="utf-8"
+    )
+    for requisito in [
+        "Parser",
+        "AST",
+        "transpiladores oficiales",
+        "documentación del Libro",
+        "pruebas de contrato Lexer/Parser",
+    ]:
+        assert requisito in checklist

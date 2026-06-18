@@ -17,6 +17,20 @@ Implementar de forma incremental, verificable y mantenible la adopción del nuev
 
 ---
 
+## Contrato obligatorio para nuevas palabras clave del Lexer
+
+Cuando una tarea añada una nueva palabra clave al Lexer de Cobra, esa misma tarea debe cerrar el cambio de lenguaje de extremo a extremo. No se acepta incorporar solo el token léxico.
+
+Checklist obligatorio de la misma tarea:
+
+- [ ] Actualizar el Parser para aceptar o rechazar explícitamente la nueva palabra clave en su contexto sintáctico.
+- [ ] Actualizar el AST si corresponde representar un nodo nuevo o ampliar uno existente.
+- [ ] Actualizar los transpiladores oficiales (`python`, `javascript`, `rust`) o documentar una incompatibilidad explícita si la característica no aplica.
+- [ ] Actualizar la documentación del Libro con la sintaxis, ejemplos válidos y contraejemplos inválidos.
+- [ ] Añadir o actualizar pruebas de contrato Lexer/Parser que cubran tokenización, parseo y errores esperados.
+
+---
+
 ## A) Tickets de creación/actualización del libro
 
 ### Ticket F0-T1 · Inventario documental base
