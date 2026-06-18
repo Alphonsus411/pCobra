@@ -26,14 +26,12 @@ Política de ejecución Docker vs transpilación oficial
 
 Cobra distingue explícitamente entre dos alcances:
 
-- **Targets oficiales de transpilación**: ``python``, ``rust``, ``javascript``, ``wasm``, ``go``, ``cpp``, ``java`` y ``asm``.
-- **Targets oficiales con runtime Docker**: ``python``, ``javascript``, ``cpp`` y ``rust``.
+- **Targets oficiales de transpilación**: ``python``, ``javascript`` y ``rust``.
+- **Targets oficiales con runtime Docker**: ``python``, ``javascript`` y ``rust``.
 
-Los targets ``go``, ``java``, ``wasm`` y ``asm`` se mantienen como destinos de
-**transpilación oficial** y no se publican como runtimes Docker oficiales.
-En consecuencia, no hay Dockerfiles dedicados para su ejecución directa en contenedor.
-Tampoco deben presentarse como equivalentes al soporte de librerías en
-ejecución que sí existe para ``python``, ``javascript``, ``cpp`` y ``rust``.
+Cualquier destino que no sea parte del contrato público queda fuera de la
+superficie de ejecución Docker oficial. En consecuencia, no hay Dockerfiles
+dedicados para rutas retiradas o no públicas.
 
 Ejecutar programas en contenedores
 ----------------------------------
@@ -46,6 +44,5 @@ contenedor temporal usando ``--contenedor``:
    cobra ejecutar hola.co --contenedor=python
 
 La opción ``--contenedor`` solo acepta los runtimes Docker oficiales anteriores;
-no debe interpretarse como paridad automática con todos los targets de
-generación ni como promesa de runtime oficial para ``go``, ``java``, ``wasm``
-o ``asm``.
+no debe interpretarse como paridad automática con destinos de generación no
+públicos ni como promesa de runtime oficial fuera del contrato vigente.

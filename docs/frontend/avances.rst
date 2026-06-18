@@ -9,7 +9,7 @@ Avances del lenguaje Cobra
 - **Pruebas unitarias**: Se han creado pruebas para validar el correcto funcionamiento del lexer y el parser.
 - **Menú interactivo en la CLI**: ``cobra menu`` guía paso a paso la transpilación entre lenguajes.
 - **Aplicación Flet**: ``cobra gui`` abre una interfaz gráfica ligera para escribir y ejecutar programas.
-- **Política oficial de targets**: La documentación y la CLI públicas utilizan los nombres canónicos ``python``, ``rust``, ``javascript``, ``wasm``, ``go``, ``cpp``, ``java`` y ``asm``, con tiers definidos en ``src/pcobra/cobra/transpilers/targets.py``.
+- **Política oficial de targets**: La documentación y la CLI públicas utilizan los nombres canónicos ``python``, ``javascript`` y ``rust``, con tiers definidos en ``src/pcobra/cobra/transpilers/targets.py``.
 
  - **Versión 10.0.6**: Actualización de la documentación y configuración del proyecto.
  - **Versión 10.0.6**: Se incorpora ``cobra.toml`` para definir el mapeo de módulos.
@@ -74,8 +74,8 @@ Ejemplo del asistente de consola:
 .. code-block:: text
 
    $ cobra menu
-   Lenguajes destino disponibles: python, rust, javascript, wasm, go, cpp, java, asm
-   Lenguajes de origen disponibles: python, javascript, java
+   Lenguajes destino disponibles: python, javascript, rust
+   Lenguajes de origen disponibles: python, javascript, rust
    ¿Desea transpilar? (s/n): s
    ¿Transpilar desde Cobra a otro lenguaje? (s/n): n
    Ruta al archivo origen: ejemplo.py

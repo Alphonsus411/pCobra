@@ -4,9 +4,9 @@ Caracteristicas principales de Cobra
 - **Sintaxis en espanol**: Todas las palabras clave y estructuras del lenguaje estan en español, para facilitar su uso por hablantes nativos.
 - **Gestion de memoria automatica**: Cobra incorpora un sistema de manejo de memoria basado en algoritmos genéticos que optimiza el uso de los recursos durante la ejecución.
 - **Soporte para holobits**: Un tipo de dato multidimensional que permite trabajar con datos de alta complejidad.
-- **Transpilación oficial a 8 backends**: Los programas escritos en Cobra pueden transpilarse a ``python``, ``rust``, ``javascript``, ``wasm``, ``go``, ``cpp``, ``java`` y ``asm``.
-- **Clasificación por tiers**: ``python``, ``rust``, ``javascript`` y ``wasm`` son Tier 1; ``go``, ``cpp``, ``java`` y ``asm`` son Tier 2.
-- **Separación explícita de runtime**: el runtime oficial verificable cubre ``python``, ``rust``, ``javascript`` y ``cpp``; ``go`` y ``java`` permanecen en best-effort no público; ``wasm`` y ``asm`` son de solo transpilación.
+- **Transpilación oficial a 3 backends**: Los programas escritos en Cobra pueden transpilarse a ``python``, ``javascript`` y ``rust``.
+- **Clasificación por tiers**: ``python``, ``javascript`` y ``rust`` son los únicos backends oficiales públicos.
+- **Separación explícita de runtime**: el runtime oficial verificable cubre ``python``, ``javascript`` y ``rust``.
 - **Nombres Unicode**: Los identificadores aceptan caracteres como `á`, `ñ` o `Ω`.
 
 **Ejemplo basico**

@@ -54,7 +54,7 @@ Lista oficial por tiers y política de soporte
 
 Cuando documentes o modifiques comandos de transpilación, usa siempre esta lista canónica:
 
-- **Tier 1**: ``python``, ``rust``, ``javascript``, ``wasm``.
+- **Tier 1**: ``python``, ``javascript`` y ``rust``.
 - **Tier 2**: vacío; histórico/no público.
 
 Política operativa de soporte:
