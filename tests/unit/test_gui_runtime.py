@@ -25,7 +25,9 @@ def _reset_cache(monkeypatch: pytest.MonkeyPatch):
     cache_clear = getattr(runtime.require_gui_dependencies, "cache_clear", None)
     if cache_clear is not None:
         cache_clear()
-    motor_cache_clear = getattr(runtime.detectar_motor_ia_sugerencias, "cache_clear", None)
+    motor_cache_clear = getattr(
+        runtime.detectar_motor_ia_sugerencias, "cache_clear", None
+    )
     if motor_cache_clear is not None:
         motor_cache_clear()
     monkeypatch.setattr(
@@ -37,7 +39,9 @@ def _reset_cache(monkeypatch: pytest.MonkeyPatch):
     cache_clear = getattr(runtime.require_gui_dependencies, "cache_clear", None)
     if cache_clear is not None:
         cache_clear()
-    motor_cache_clear = getattr(runtime.detectar_motor_ia_sugerencias, "cache_clear", None)
+    motor_cache_clear = getattr(
+        runtime.detectar_motor_ia_sugerencias, "cache_clear", None
+    )
     if motor_cache_clear is not None:
         motor_cache_clear()
 
@@ -128,6 +132,11 @@ def test_generar_reporte_sugerencias_valida_antes_de_sugerir(
     assert llamadas == ["analizar:var x = 5", "sugerir:var x = 5"]
     assert "No se detectaron errores" in reporte
     assert "- Usar nombres descriptivos para variables" in reporte
+    assert "- Léxico/sintaxis:" in reporte
+    assert "- Estilo:" in reporte
+    assert "- Nombres:" in reporte
+    assert "- Forma canónica:" in reporte
+    assert "- Observabilidad:" in reporte
 
 
 def test_generar_reporte_sugerencias_sin_motor_no_importa_ia(
@@ -291,6 +300,7 @@ def test_generar_reporte_sugerencias_codigo_valido_usa_lexer_parser_reales(
     assert "LP-3.1-NOMBRES-DESCRIPTIVOS" in reporte
     assert "- Usar nombres descriptivos para variables" in reporte
 
+
 @pytest.mark.parametrize(
     "codigo_invalido, tipo_error",
     [
@@ -351,6 +361,7 @@ def test_generar_reporte_sugerencias_no_ejecuta_ia_hasta_lexer_y_parser_reales(
     assert eventos == ["lexer_parser", "sugerencias"]
     assert "No se detectaron errores con el Lexer y Parser de Cobra" in reporte
     assert "LP-3.1-NOMBRES-DESCRIPTIVOS" in reporte
+
 
 @pytest.mark.parametrize(
     ("codigo_invalido", "tipo_error"),
@@ -439,6 +450,7 @@ def test_ruta_sugerencias_parser_fallido_no_expone_correccion_aplicable_real(
     assert "Sugerencias del Libro:" in reporte
     assert "Usar nombres descriptivos" not in reporte
 
+
 def test_formatear_error_lexico_y_sintaxis() -> None:
     class FakeLexerError(Exception):
         linea = 2
@@ -459,7 +471,9 @@ def test_formatear_error_lexico_y_sintaxis() -> None:
     ).startswith("Error de sintaxis")
 
 
-def test_gui_target_choices_filtra_targets_no_oficiales(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_gui_target_choices_filtra_targets_no_oficiales(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     monkeypatch.setattr(
         runtime,
         "require_gui_dependencies",
@@ -684,13 +698,16 @@ def test_require_gui_dependencies_error_accionable_modulo_ausente(
     def _import_fail_core(name, globals=None, locals=None, fromlist=(), level=0):
         if name == "pcobra.cobra.gui" and fromlist:
             raise ModuleNotFoundError(
-                "No module named 'pcobra.core.interpreter'", name="pcobra.core.interpreter"
+                "No module named 'pcobra.core.interpreter'",
+                name="pcobra.core.interpreter",
             )
         return real_import(name, globals, locals, fromlist, level)
 
     monkeypatch.setattr("builtins.__import__", _import_fail_core)
 
-    with pytest.raises(RuntimeError, match="faltante detectado 'pcobra.core.interpreter'") as excinfo:
+    with pytest.raises(
+        RuntimeError, match="faltante detectado 'pcobra.core.interpreter'"
+    ) as excinfo:
         runtime.require_gui_dependencies()
     assert "Acción sugerida" in str(excinfo.value)
 
@@ -707,12 +724,16 @@ def test_require_gui_dependencies_error_accionable_simbolo_ausente(
 
     monkeypatch.setattr("builtins.__import__", _import_fail_symbol)
 
-    with pytest.raises(RuntimeError, match="faltante detectado 'pcobra.cobra.core.Lexer'") as excinfo:
+    with pytest.raises(
+        RuntimeError, match="faltante detectado 'pcobra.cobra.core.Lexer'"
+    ) as excinfo:
         runtime.require_gui_dependencies()
     assert "corrige el import local de 'pcobra.cobra.core.Lexer'" in str(excinfo.value)
 
 
-def test_require_gui_dependencies_cachea_resultado(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_require_gui_dependencies_cachea_resultado(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     llamadas = {"count": 0}
     fake_deps = SimpleNamespace(
         Lexer=object,
@@ -753,7 +774,9 @@ def test_formatear_error_no_masking_si_fallan_dependencias() -> None:
     )
 
 
-def test_formatear_error_lexico_y_sintactico_sin_recargar_dependencias(monkeypatch) -> None:
+def test_formatear_error_lexico_y_sintactico_sin_recargar_dependencias(
+    monkeypatch,
+) -> None:
     class FakeLexerError(Exception):
         def __init__(self):
             self.linea = 7
@@ -776,11 +799,14 @@ def test_formatear_error_lexico_y_sintactico_sin_recargar_dependencias(monkeypat
         lexer_error_type=FakeLexerError,
         parser_error_type=FakeParserError,
     ).startswith("Error léxico (línea 7, columna 3)")
-    assert runtime.formatear_error(
-        FakeParserError("faltó ')'"),
-        lexer_error_type=FakeLexerError,
-        parser_error_type=FakeParserError,
-    ) == "Error de sintaxis: faltó ')'"
+    assert (
+        runtime.formatear_error(
+            FakeParserError("faltó ')'"),
+            lexer_error_type=FakeLexerError,
+            parser_error_type=FakeParserError,
+        )
+        == "Error de sintaxis: faltó ')'"
+    )
     assert llamadas["count"] == 0
 
 

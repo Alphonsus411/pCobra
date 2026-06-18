@@ -645,6 +645,50 @@ def analizar_codigo(codigo: str) -> tuple[list[Any], Any]:
     return tokens, ast
 
 
+_CATEGORIAS_SUGERENCIAS = (
+    ("léxico/sintaxis", "Léxico/sintaxis"),
+    ("estilo", "Estilo"),
+    ("nombres", "Nombres"),
+    ("forma canónica", "Forma canónica"),
+    ("observabilidad", "Observabilidad"),
+)
+
+
+def _categoria_sugerencia(sugerencia: str) -> str:
+    """Clasifica una sugerencia del Libro para mostrarla agrupada en GUI."""
+
+    texto = sugerencia.lower()
+    if "lp-3.1-nombres" in texto or "nombres descriptivos" in texto:
+        return "nombres"
+    if "lp-3.3-impresion" in texto or "imprimir" in texto:
+        return "observabilidad"
+    if "lp-3.3-retorno" in texto or "retorno" in texto or "retornar" in texto:
+        return "forma canónica"
+    if "lp-3.9-funciones" in texto or "funcion" in texto:
+        return "léxico/sintaxis"
+    if "lp-3.6-usar" in texto or "usar" in texto or "alias" in texto:
+        return "estilo"
+    return "estilo"
+
+
+def _formatear_sugerencias_agrupadas(sugerencias: list[str]) -> str:
+    """Devuelve sugerencias visibles agrupadas por tipo pedagógico."""
+
+    agrupadas = {clave: [] for clave, _titulo in _CATEGORIAS_SUGERENCIAS}
+    for sugerencia in sugerencias:
+        agrupadas[_categoria_sugerencia(sugerencia)].append(sugerencia)
+
+    bloques: list[str] = []
+    for clave, titulo in _CATEGORIAS_SUGERENCIAS:
+        items = agrupadas[clave]
+        if items:
+            cuerpo = "\n".join(f"  - {item}" for item in items)
+        else:
+            cuerpo = "  - Sin sugerencias."
+        bloques.append(f"- {titulo}:\n{cuerpo}")
+    return "\n".join(bloques)
+
+
 def generar_reporte_sugerencias(codigo: str) -> str:
     """Valida código y genera reporte común de sugerencias estilísticas."""
 
@@ -685,9 +729,7 @@ def generar_reporte_sugerencias(codigo: str) -> str:
         )
 
     if sugerencias:
-        sugerencias_legibles = "\n".join(
-            f"- {sugerencia}" for sugerencia in sugerencias
-        )
+        sugerencias_legibles = _formatear_sugerencias_agrupadas(sugerencias)
     else:
         sugerencias_legibles = "- No se recibieron sugerencias."
     return (
