@@ -830,7 +830,7 @@ Funciones disponibles en la GUI:
     *   **Tokens:** Tokeniza el contenido actual del editor y muestra un token por línea.
     *   **AST:** Parsea el contenido actual del editor y muestra la representación del árbol sintáctico.
 *   **Sugerencias de código:**
-    *   **Sugerencias:** Valida primero errores léxicos/sintácticos y, si el código es válido, solicita sugerencias estilísticas mediante la integración opcional de Agix. Antes de mostrarlas en la GUI, las sugerencias automáticas se construyen desde las reglas de `src/pcobra/ia/reglas_libro_programacion.py` y cada fragmento propuesto se valida con `Lexer(codigo).tokenizar()` y `Parser(tokens).parsear()`; si el Lexer o el Parser rechazan el código, no se presentan sugerencias.
+    *   **Sugerencias del Libro:** Herramienta de corrección tipográfica/estilística que valida primero el contenido del editor con `Lexer(codigo).tokenizar()` y `Parser(tokens).parsear()`. Si el código no supera esa validación léxica/sintáctica, informa el error y no inventa correcciones. Si el código es válido, solicita sugerencias mediante la integración opcional de Agix, pero los candidatos se construyen desde las reglas trazables del Libro definidas en `src/pcobra/ia/reglas_libro_programacion.py`; por eso cada detalle conserva metadatos como `rule_id` y `rule_section`, y cada fragmento propuesto vuelve a validarse con Lexer/Parser antes de mostrarse en la GUI.
 
 Para iniciar el IDLE recomendado, usa:
 
