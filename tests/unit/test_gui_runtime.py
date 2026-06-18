@@ -242,7 +242,6 @@ def test_generar_reporte_sugerencias_codigo_valido_usa_lexer_parser_reales(
     assert "LP-3.1-NOMBRES-DESCRIPTIVOS" in reporte
     assert "- Usar nombres descriptivos para variables" in reporte
 
-
 @pytest.mark.parametrize(
     "codigo_invalido, tipo_error",
     [
@@ -304,7 +303,6 @@ def test_generar_reporte_sugerencias_no_ejecuta_ia_hasta_lexer_y_parser_reales(
     assert "No se detectaron errores con el Lexer y Parser de Cobra" in reporte
     assert "LP-3.1-NOMBRES-DESCRIPTIVOS" in reporte
 
-
 @pytest.mark.parametrize(
     ("codigo_invalido", "tipo_error"),
     [
@@ -336,6 +334,61 @@ def test_generar_reporte_sugerencias_gui_rechaza_invalidos_reales_sin_estilo_apl
     assert "LP-3.1-NOMBRES-DESCRIPTIVOS" not in reporte
     assert "Usar nombres descriptivos para variables" not in reporte
 
+
+@pytest.mark.parametrize(
+    ("codigo", "esperado"),
+    [
+        ("var x = 5", "Sugerencias estilísticas:"),
+        ("var x =", "Error de sintaxis"),
+        ("var x = 5 ¿", "Error léxico"),
+    ],
+)
+def test_ruta_sugerencias_cubre_fixtures_minimos_reales_de_cobra(
+    monkeypatch: pytest.MonkeyPatch, codigo: str, esperado: str
+) -> None:
+    """Fixtures mínimos reales: declaración válida y errores Lexer/Parser."""
+
+    monkeypatch.setattr(runtime, "require_gui_dependencies", _deps_lexer_parser_reales)
+    llamadas_sugerencias: list[str] = []
+
+    def sugerir_solo_si_parsea(codigo_validado: str) -> list[str]:
+        llamadas_sugerencias.append(codigo_validado)
+        return ["Usar nombres descriptivos para variables"]
+
+    monkeypatch.setattr(runtime, "generar_sugerencias", sugerir_solo_si_parsea)
+
+    reporte = runtime.generar_reporte_sugerencias(codigo)
+
+    assert esperado in reporte
+    if codigo == "var x = 5":
+        assert llamadas_sugerencias == [codigo]
+        assert "No se detectaron errores con el Lexer y Parser de Cobra" in reporte
+        assert "- Usar nombres descriptivos para variables" in reporte
+    else:
+        assert llamadas_sugerencias == []
+        assert "Corrige primero los errores anteriores" in reporte
+        assert "- Usar nombres descriptivos para variables" not in reporte
+
+
+def test_ruta_sugerencias_parser_fallido_no_expone_correccion_aplicable_real(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Un ParserError real corta la ruta antes de Agix y de reglas aplicables."""
+
+    monkeypatch.setattr(runtime, "require_gui_dependencies", _deps_lexer_parser_reales)
+
+    def no_sugerir(_codigo: str) -> list[str]:
+        raise AssertionError("No debe proponer correcciones si Parser falla")
+
+    monkeypatch.setattr(runtime, "generar_sugerencias", no_sugerir)
+
+    reporte = runtime.generar_reporte_sugerencias("var x =")
+
+    assert reporte.startswith("Errores léxicos/sintácticos:")
+    assert "Error de sintaxis" in reporte
+    assert "Corrige primero los errores anteriores" in reporte
+    assert "Sugerencias estilísticas:" in reporte
+    assert "Usar nombres descriptivos" not in reporte
 
 def test_formatear_error_lexico_y_sintaxis() -> None:
     class FakeLexerError(Exception):
