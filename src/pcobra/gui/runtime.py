@@ -1,6 +1,7 @@
 """Runtime compartido para las interfaces GUI de Cobra."""
 
 import io
+import importlib.util
 import re
 from contextlib import redirect_stdout, redirect_stderr
 from dataclasses import dataclass
@@ -9,7 +10,6 @@ from pathlib import Path
 from typing import Any
 
 from pcobra.cobra.architecture.backend_policy import PUBLIC_BACKENDS
-from pcobra.ia.analizador_sugerencias import generar_sugerencias
 
 
 @lru_cache(maxsize=1)
@@ -84,6 +84,29 @@ SUGERENCIAS_BUTTON_TEXT = "Sugerencias del Libro"
 """Etiqueta homogénea para la acción de sugerencias trazables en las GUIs."""
 
 
+@dataclass(frozen=True, slots=True)
+class MotorIASugerencias:
+    """Resultado liviano de disponibilidad del motor IA para sugerencias."""
+
+    disponible: bool
+    nombre: str = "agix"
+    detalle: str = ""
+
+    @property
+    def tooltip(self) -> str:
+        """Mensaje breve para explicar el estado en la GUI."""
+
+        if self.disponible:
+            return (
+                "Motor IA opcional 'agix' disponible. "
+                "Las sugerencias validarán primero el código Cobra."
+            )
+        return self.detalle or (
+            "Sugerencias deshabilitadas: instala la dependencia opcional "
+            "'agix' para activar esta acción."
+        )
+
+
 @dataclass(slots=True)
 class GuiFileState:
     """Estado mínimo del archivo editado en la GUI."""
@@ -91,6 +114,45 @@ class GuiFileState:
     ruta: Path | None = None
     contenido_cargado: str = ""
     cambios_sin_guardar: bool = False
+
+
+@lru_cache(maxsize=1)
+def detectar_motor_ia_sugerencias() -> MotorIASugerencias:
+    """Detecta de forma liviana si el motor IA opcional está instalado.
+
+    La comprobación usa metadatos de importación y no importa ``agix`` ni la
+    fachada de sugerencias, evitando cargar dependencias pesadas al abrir la
+    GUI.
+    """
+
+    try:
+        spec = importlib.util.find_spec("agix")
+    except (ImportError, ModuleNotFoundError, ValueError) as exc:
+        return MotorIASugerencias(
+            disponible=False,
+            detalle=(
+                "Sugerencias deshabilitadas: no se pudo comprobar la "
+                f"dependencia opcional 'agix' ({exc})."
+            ),
+        )
+
+    if spec is None:
+        return MotorIASugerencias(
+            disponible=False,
+            detalle=(
+                "Sugerencias deshabilitadas: instala la dependencia opcional "
+                "'agix' para activar esta acción."
+            ),
+        )
+    return MotorIASugerencias(disponible=True)
+
+
+def generar_sugerencias(codigo: str) -> list[str]:
+    """Importa bajo demanda la fachada IA y genera sugerencias."""
+
+    from pcobra.ia.analizador_sugerencias import generar_sugerencias as _generar
+
+    return _generar(codigo)
 
 
 def es_archivo_cobra(path: str | Path) -> bool:
@@ -299,6 +361,19 @@ def flet_elevated_button(ft: Any, *args: Any, **kwargs: Any) -> Any:
     """Crea ``ft.ElevatedButton`` validando la API desde el runtime central."""
 
     return _flet_attr(ft, "ElevatedButton", "ElevatedButton")(*args, **kwargs)
+
+
+def crear_boton_sugerencias_libro(ft: Any, *, on_click: Any) -> Any:
+    """Crea el botón de sugerencias con estado visual según motor IA."""
+
+    motor = detectar_motor_ia_sugerencias()
+    return flet_elevated_button(
+        ft,
+        SUGERENCIAS_BUTTON_TEXT,
+        on_click=on_click if motor.disponible else None,
+        disabled=not motor.disponible,
+        tooltip=motor.tooltip,
+    )
 
 
 def flet_text_button(ft: Any, *args: Any, **kwargs: Any) -> Any:
@@ -580,6 +655,15 @@ def generar_reporte_sugerencias(codigo: str) -> str:
             f"- {error}\n\n"
             "Sugerencias del Libro:\n"
             "- Corrige primero los errores anteriores para solicitar sugerencias."
+        )
+
+    motor = detectar_motor_ia_sugerencias()
+    if not motor.disponible:
+        return (
+            "Errores léxicos/sintácticos:\n"
+            "- No se detectaron errores con el Lexer y Parser de Cobra.\n\n"
+            "Sugerencias del Libro:\n"
+            f"- {motor.tooltip}"
         )
 
     try:
