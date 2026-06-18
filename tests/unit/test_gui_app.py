@@ -146,7 +146,7 @@ def test_main_renderiza_componentes_minimos(monkeypatch):
             "Ejecutar",
             "Tokens",
             "AST",
-            "Sugerencias",
+            "Sugerencias del Libro",
         }
     ]
     assert [b.text for b in botones] == [
@@ -158,7 +158,7 @@ def test_main_renderiza_componentes_minimos(monkeypatch):
         "Ejecutar",
         "Tokens",
         "AST",
-        "Sugerencias",
+        "Sugerencias del Libro",
     ]
 
 

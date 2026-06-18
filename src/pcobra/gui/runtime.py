@@ -80,8 +80,8 @@ def _local_import_action(module_name: str, symbol_name: str) -> str:
 COBRA_FILE_EXTENSIONS: tuple[str, ...] = (".co", ".cobra")
 """Extensiones Cobra priorizadas para el explorador del IDLE."""
 
-SUGERENCIAS_BUTTON_TEXT = "Sugerencias"
-"""Etiqueta homogénea para la acción de sugerencias en las GUIs."""
+SUGERENCIAS_BUTTON_TEXT = "Sugerencias del Libro"
+"""Etiqueta homogénea para la acción de sugerencias trazables en las GUIs."""
 
 
 @dataclass(slots=True)
@@ -578,7 +578,7 @@ def generar_reporte_sugerencias(codigo: str) -> str:
         return (
             "Errores léxicos/sintácticos:\n"
             f"- {error}\n\n"
-            "Sugerencias estilísticas:\n"
+            "Sugerencias del Libro:\n"
             "- Corrige primero los errores anteriores para solicitar sugerencias."
         )
 
@@ -588,7 +588,7 @@ def generar_reporte_sugerencias(codigo: str) -> str:
         return (
             "Errores léxicos/sintácticos:\n"
             "- No se detectaron errores con el Lexer y Parser de Cobra.\n\n"
-            "Sugerencias estilísticas:\n"
+            "Sugerencias del Libro:\n"
             f"- No se pudieron generar sugerencias: {exc}. "
             "Instala la dependencia opcional real 'agix' para activar esta acción; 'agi-core' no está declarado en este proyecto."
         )
@@ -602,7 +602,7 @@ def generar_reporte_sugerencias(codigo: str) -> str:
     return (
         "Errores léxicos/sintácticos:\n"
         "- No se detectaron errores con el Lexer y Parser de Cobra.\n\n"
-        "Sugerencias estilísticas:\n"
+        "Sugerencias del Libro:\n"
         f"{sugerencias_legibles}"
     )
 

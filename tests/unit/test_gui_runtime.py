@@ -148,7 +148,7 @@ def test_generar_reporte_sugerencias_devuelve_error_parser_sin_correcciones(
 
     assert reporte.startswith("Errores léxicos/sintácticos:")
     assert "Error de sintaxis" in reporte
-    assert "Sugerencias estilísticas:" in reporte
+    assert "Sugerencias del Libro:" in reporte
     assert "Corrige primero los errores anteriores" in reporte
     assert "Usar nombres descriptivos" not in reporte
 
@@ -183,7 +183,7 @@ def test_generar_reporte_sugerencias_devuelve_error_lexer_sin_correcciones(
 
     assert reporte.startswith("Errores léxicos/sintácticos:")
     assert "Error léxico" in reporte
-    assert "Sugerencias estilísticas:" in reporte
+    assert "Sugerencias del Libro:" in reporte
     assert "Corrige primero los errores anteriores" in reporte
     assert "Usar nombres descriptivos" not in reporte
 
@@ -338,7 +338,7 @@ def test_generar_reporte_sugerencias_gui_rechaza_invalidos_reales_sin_estilo_apl
 @pytest.mark.parametrize(
     ("codigo", "esperado"),
     [
-        ("var x = 5", "Sugerencias estilísticas:"),
+        ("var x = 5", "Sugerencias del Libro:"),
         ("var x =", "Error de sintaxis"),
         ("var x = 5 ¿", "Error léxico"),
     ],
@@ -387,7 +387,7 @@ def test_ruta_sugerencias_parser_fallido_no_expone_correccion_aplicable_real(
     assert reporte.startswith("Errores léxicos/sintácticos:")
     assert "Error de sintaxis" in reporte
     assert "Corrige primero los errores anteriores" in reporte
-    assert "Sugerencias estilísticas:" in reporte
+    assert "Sugerencias del Libro:" in reporte
     assert "Usar nombres descriptivos" not in reporte
 
 def test_formatear_error_lexico_y_sintaxis() -> None:

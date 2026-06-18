@@ -114,12 +114,12 @@ def test_main_renderiza_botones_esperados(monkeypatch):
     assert [
         b.text
         for b in botones
-        if b.text in {"Ejecutar", "Tokens", "AST", "Sugerencias"}
+        if b.text in {"Ejecutar", "Tokens", "AST", "Sugerencias del Libro"}
     ] == [
         "Ejecutar",
         "Tokens",
         "AST",
-        "Sugerencias",
+        "Sugerencias del Libro",
     ]
 
 
@@ -174,12 +174,12 @@ def test_main_handlers_smoke(monkeypatch):
         c.text: c
         for c in page.controls
         if isinstance(c, ft.ElevatedButton)
-        and c.text in {"Ejecutar", "Tokens", "AST", "Sugerencias"}
+        and c.text in {"Ejecutar", "Tokens", "AST", "Sugerencias del Libro"}
     }
     ejecutar_btn = botones["Ejecutar"]
     tokens_btn = botones["Tokens"]
     ast_btn = botones["AST"]
-    sugerencias_btn = botones["Sugerencias"]
+    sugerencias_btn = botones["Sugerencias del Libro"]
 
     entrada.value = "imprimir('x')"
     ejecutar_btn.on_click(None)
