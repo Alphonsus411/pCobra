@@ -9,6 +9,10 @@ from unittest.mock import MagicMock
 from pcobra.gui import idle
 
 
+def _motor_disponible():
+    return idle.runtime.MotorIASugerencias(disponible=True)
+
+
 def _fake_flet():
     class TextField:
         def __init__(self, **_kwargs):
@@ -31,9 +35,11 @@ def _fake_flet():
             self.disabled = kwargs.get("disabled", False)
 
     class ElevatedButton:
-        def __init__(self, text, on_click=None):
+        def __init__(self, text, on_click=None, **kwargs):
             self.text = text
             self.on_click = on_click
+            self.disabled = kwargs.get("disabled", False)
+            self.tooltip = kwargs.get("tooltip")
 
     class TextButton(ElevatedButton):
         pass
@@ -41,10 +47,32 @@ def _fake_flet():
     class Layout:
         def __init__(self, controls=None, **_kwargs):
             self.controls = controls or []
+            self.data = _kwargs.get("data")
+            self.on_click = _kwargs.get("on_click")
+            self.on_change = _kwargs.get("on_change")
 
     class Container:
         def __init__(self, content=None, **_kwargs):
             self.content = content
+
+    class ListTile(TextButton):
+        def __init__(self, title=None, leading=None, data=None, on_click=None, **_kwargs):
+            texto = getattr(title, "value", "")
+            def _click(_e=None):
+                if on_click is not None:
+                    on_click(SimpleNamespace(control=self))
+
+            super().__init__(f"📄 {texto}", on_click=_click)
+            self.title = title
+            self.leading = leading
+            self.data = data
+
+    class ExpansionTile(Layout):
+        pass
+
+    class Icon:
+        def __init__(self, name):
+            self.name = name
 
     class Page:
         def __init__(self):
@@ -74,6 +102,11 @@ def _fake_flet():
         Column=Layout,
         Container=Container,
         ListView=Layout,
+        ListTile=ListTile,
+        ExpansionTile=ExpansionTile,
+        Icon=Icon,
+        icons=SimpleNamespace(INSERT_DRIVE_FILE="file", FOLDER="folder"),
+        ScrollMode=SimpleNamespace(ALWAYS="always"),
         Page=Page,
         dropdown=SimpleNamespace(Option=lambda v: v),
     )
@@ -82,6 +115,7 @@ def _fake_flet():
 def test_main_renderiza_botones_esperados(monkeypatch):
     ft = _fake_flet()
     monkeypatch.setattr(idle.runtime, "require_flet", lambda: ft)
+    monkeypatch.setattr(idle.runtime, "detectar_motor_ia_sugerencias", _motor_disponible)
     monkeypatch.setattr(idle.runtime, "gui_target_choices", lambda: ("python",))
     monkeypatch.setattr(
         idle.runtime,
@@ -123,9 +157,46 @@ def test_main_renderiza_botones_esperados(monkeypatch):
     ]
 
 
+def test_main_muestra_sugerencias_deshabilitadas_sin_motor(monkeypatch):
+    ft = _fake_flet()
+    monkeypatch.setattr(idle.runtime, "require_flet", lambda: ft)
+    monkeypatch.setattr(idle.runtime, "gui_target_choices", lambda: ("python",))
+    monkeypatch.setattr(
+        idle.runtime,
+        "detectar_motor_ia_sugerencias",
+        lambda: idle.runtime.MotorIASugerencias(
+            disponible=False,
+            detalle="Sugerencias deshabilitadas: falta 'agix'.",
+        ),
+    )
+    monkeypatch.setattr(
+        idle.runtime,
+        "require_gui_dependencies",
+        lambda: {
+            "TRANSPILERS": {"python": object},
+            "LexerError": RuntimeError,
+            "ParserError": ValueError,
+        },
+    )
+
+    page = ft.Page()
+    idle.main(page)
+
+    sugerencias_btn = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.ElevatedButton) and c.text == "Sugerencias del Libro"
+    )
+
+    assert sugerencias_btn.disabled is True
+    assert sugerencias_btn.on_click is None
+    assert "falta 'agix'" in sugerencias_btn.tooltip
+
+
 def test_main_handlers_smoke(monkeypatch):
     ft = _fake_flet()
     monkeypatch.setattr(idle.runtime, "require_flet", lambda: ft)
+    monkeypatch.setattr(idle.runtime, "detectar_motor_ia_sugerencias", _motor_disponible)
     monkeypatch.setattr(idle.runtime, "gui_target_choices", lambda: ("python",))
     ejecutar_mock = MagicMock(return_value="ejecutado")
     transpilar_mock = MagicMock(return_value="transpilado")
@@ -212,6 +283,7 @@ def test_main_handlers_smoke(monkeypatch):
 def test_main_selector_y_switch_sin_targets(monkeypatch):
     ft = _fake_flet()
     monkeypatch.setattr(idle.runtime, "require_flet", lambda: ft)
+    monkeypatch.setattr(idle.runtime, "detectar_motor_ia_sugerencias", _motor_disponible)
     monkeypatch.setattr(idle.runtime, "gui_target_choices", lambda: ())
     monkeypatch.setattr(
         idle.runtime,
@@ -250,6 +322,7 @@ def test_main_acciones_publicas_de_archivo(monkeypatch, tmp_path):
     ft = _fake_flet()
     monkeypatch.chdir(tmp_path)
     monkeypatch.setattr(idle.runtime, "require_flet", lambda: ft)
+    monkeypatch.setattr(idle.runtime, "detectar_motor_ia_sugerencias", _motor_disponible)
     monkeypatch.setattr(idle.runtime, "gui_target_choices", lambda: ("python",))
     monkeypatch.setattr(
         idle.runtime,

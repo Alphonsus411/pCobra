@@ -21,14 +21,25 @@ def _deps_lexer_parser_reales() -> dict[str, object]:
 
 
 @pytest.fixture(autouse=True)
-def _reset_cache():
+def _reset_cache(monkeypatch: pytest.MonkeyPatch):
     cache_clear = getattr(runtime.require_gui_dependencies, "cache_clear", None)
     if cache_clear is not None:
         cache_clear()
+    motor_cache_clear = getattr(runtime.detectar_motor_ia_sugerencias, "cache_clear", None)
+    if motor_cache_clear is not None:
+        motor_cache_clear()
+    monkeypatch.setattr(
+        runtime,
+        "detectar_motor_ia_sugerencias",
+        lambda: runtime.MotorIASugerencias(disponible=True),
+    )
     yield
     cache_clear = getattr(runtime.require_gui_dependencies, "cache_clear", None)
     if cache_clear is not None:
         cache_clear()
+    motor_cache_clear = getattr(runtime.detectar_motor_ia_sugerencias, "cache_clear", None)
+    if motor_cache_clear is not None:
+        motor_cache_clear()
 
 
 def test_normalizar_codigo_admite_none_y_texto() -> None:
@@ -117,6 +128,44 @@ def test_generar_reporte_sugerencias_valida_antes_de_sugerir(
     assert llamadas == ["analizar:var x = 5", "sugerir:var x = 5"]
     assert "No se detectaron errores" in reporte
     assert "- Usar nombres descriptivos para variables" in reporte
+
+
+def test_generar_reporte_sugerencias_sin_motor_no_importa_ia(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Sin motor IA instalado, la GUI conserva validación y muestra aviso seguro."""
+
+    llamadas: list[str] = []
+
+    def analizar_primero(codigo: str):
+        llamadas.append(f"analizar:{codigo}")
+        return ["TOKEN"], ["AST"]
+
+    def no_debe_importar_ia(_codigo: str):
+        raise AssertionError("No debe cargar la integración IA si el motor falta")
+
+    monkeypatch.setattr(
+        runtime,
+        "require_gui_dependencies",
+        lambda: {"LexerError": Exception, "ParserError": Exception},
+    )
+    monkeypatch.setattr(runtime, "analizar_codigo", analizar_primero)
+    monkeypatch.setattr(runtime, "generar_sugerencias", no_debe_importar_ia)
+    monkeypatch.setattr(
+        runtime,
+        "detectar_motor_ia_sugerencias",
+        lambda: runtime.MotorIASugerencias(
+            disponible=False,
+            detalle="Sugerencias deshabilitadas: falta 'agix'.",
+        ),
+    )
+
+    reporte = runtime.generar_reporte_sugerencias("var x = 5")
+
+    assert llamadas == ["analizar:var x = 5"]
+    assert "No se detectaron errores" in reporte
+    assert "Sugerencias deshabilitadas" in reporte
+    assert "falta 'agix'" in reporte
 
 
 def test_generar_reporte_sugerencias_devuelve_error_parser_sin_correcciones(

@@ -207,8 +207,8 @@ def main(page: "ft.Page"):
             runtime.flet_elevated_button(ft, "Ejecutar", on_click=ejecutar_handler),
             runtime.flet_elevated_button(ft, "Tokens", on_click=tokens_handler),
             runtime.flet_elevated_button(ft, "AST", on_click=ast_handler),
-            runtime.flet_elevated_button(
-                ft, runtime.SUGERENCIAS_BUTTON_TEXT, on_click=sugerencias_handler
+            runtime.crear_boton_sugerencias_libro(
+                ft, on_click=sugerencias_handler
             ),
         ],
         wrap=True,
