@@ -25,22 +25,28 @@ def _es_ruta_absoluta_o_sensible_windows(ruta: PathLike) -> bool:
     return False
 
 
-def _resolver_ruta(ruta: PathLike) -> Path:
+def _resolver_ruta(
+    ruta: PathLike, *, permitir_absoluta_dentro_base: bool = False
+) -> Path:
     """Normaliza ``ruta`` dentro de un directorio permitido.
 
     Se utiliza ``COBRA_IO_BASE_DIR`` como directorio base si está definido;
     en caso contrario se emplea el directorio de trabajo actual. Si la ruta
     resultante se sale de este directorio controlado, se genera un
-    ``ValueError``.
+    ``ValueError``. Por defecto rechaza rutas absolutas para mantener la
+    política histórica de las corelibs; los clientes GUI pueden activar
+    ``permitir_absoluta_dentro_base`` para aceptar rutas absolutas que ya
+    resuelven dentro del mismo sandbox.
     """
 
     base = Path(os.environ.get("COBRA_IO_BASE_DIR") or Path.cwd()).resolve()
-    objetivo = Path(ruta)
-    if objetivo.is_absolute() or _es_ruta_absoluta_o_sensible_windows(ruta):
+    objetivo = Path(ruta).expanduser()
+    es_absoluta = objetivo.is_absolute() or _es_ruta_absoluta_o_sensible_windows(ruta)
+    if es_absoluta and not permitir_absoluta_dentro_base:
         raise ValueError("Las rutas absolutas no están permitidas")
     if ".." in objetivo.parts:
         raise ValueError("La ruta no puede contener '..'")
-    destino = (base / objetivo).resolve()
+    destino = objetivo.resolve() if es_absoluta else (base / objetivo).resolve()
     try:
         destino.relative_to(base)
     except ValueError as exc:

@@ -818,10 +818,11 @@ Funciones disponibles en la GUI:
 *   **Editor de código:** Un área principal para escribir y editar código Cobra.
 *   **Salida seleccionable:** Un panel de resultados para copiar mensajes, salida de ejecución, tokens, AST, código transpilado o sugerencias.
 *   **Gestión de archivos:**
+    *   **Política de rutas:** El IDLE respeta la misma política de sandbox que la librería `archivo`: todas las operaciones de abrir, guardar y guardar como se normalizan con la resolución centralizada de `pcobra.corelibs.archivo` y quedan restringidas a `COBRA_IO_BASE_DIR` si está definida, o al directorio de trabajo actual en caso contrario. A diferencia de las primitivas Cobra de programa, la GUI acepta rutas absolutas devueltas por selectores de archivos solo cuando resuelven dentro de ese directorio permitido; cualquier ruta que escape del sandbox se rechaza antes de leer o escribir.
     *   **Nuevo:** Limpia el editor y crea un archivo en memoria sin ruta activa.
-    *   **Abrir:** Carga la ruta indicada en el campo `Ruta`.
-    *   **Guardar:** Guarda el archivo activo en su ubicación actual.
-    *   **Guardar como:** Guarda el contenido del editor en la ruta indicada.
+    *   **Abrir:** Carga la ruta indicada en el campo `Ruta` si permanece dentro del sandbox configurado.
+    *   **Guardar:** Guarda el archivo activo en su ubicación actual, volviendo a validar la ruta activa contra la política de sandbox.
+    *   **Guardar como:** Guarda el contenido del editor en la ruta indicada si la normalización no sale de `COBRA_IO_BASE_DIR` o del directorio de trabajo.
     *   **Recargar:** Vuelve a leer desde disco el archivo activo.
     *   **Árbol de directorios:** Usa la API canónica `pcobra.gui.runtime.crear_arbol_directorios`. El panel parte del directorio de trabajo actual, muestra primero las carpetas y después los archivos Cobra (`.co`/`.cobra`) en orden estable, y carga las subcarpetas bajo demanda al expandirlas. Solo los archivos Cobra visibles disparan la carga en el editor; el IDLE conecta el evento `on_click` con `cargar_archivo_desde_arbol`, que valida la extensión antes de leer el contenido y actualiza el estado del archivo activo.
 *   **Ejecución y transpilación:**
