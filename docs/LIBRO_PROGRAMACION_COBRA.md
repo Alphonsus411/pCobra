@@ -813,6 +813,8 @@ Para más detalles sobre cada comando, puedes usar ``cobra <comando> --help``.
 
 Cobra incluye un entorno de desarrollo integrado (IDLE) gráfico basado en Flet, que permite escribir, ejecutar, inspeccionar y transpilar código de forma interactiva. La entrada pública recomendada es ``cobra gui``, que carga la implementación canónica ``pcobra.gui.idle.main``. El módulo ``pcobra.gui.app`` se mantiene como alias de compatibilidad y delega en el mismo IDLE para evitar layouts, botones o handlers duplicados.
 
+La trazabilidad técnica de las acciones visibles, sus handlers y su dependencia de Lexer/Parser se mantiene en [`docs/gui_idle_trazabilidad.md`](gui_idle_trazabilidad.md).
+
 Funciones disponibles en la GUI:
 
 *   **Editor de código:** Un área principal para escribir y editar código Cobra.
