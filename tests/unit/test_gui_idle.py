@@ -56,8 +56,11 @@ def _fake_flet():
             self.content = content
 
     class ListTile(TextButton):
-        def __init__(self, title=None, leading=None, data=None, on_click=None, **_kwargs):
+        def __init__(
+            self, title=None, leading=None, data=None, on_click=None, **_kwargs
+        ):
             texto = getattr(title, "value", "")
+
             def _click(_e=None):
                 if on_click is not None:
                     on_click(SimpleNamespace(control=self))
@@ -115,7 +118,9 @@ def _fake_flet():
 def test_main_renderiza_botones_esperados(monkeypatch):
     ft = _fake_flet()
     monkeypatch.setattr(idle.runtime, "require_flet", lambda: ft)
-    monkeypatch.setattr(idle.runtime, "detectar_motor_ia_sugerencias", _motor_disponible)
+    monkeypatch.setattr(
+        idle.runtime, "detectar_motor_ia_sugerencias", _motor_disponible
+    )
     monkeypatch.setattr(idle.runtime, "gui_target_choices", lambda: ("python",))
     monkeypatch.setattr(
         idle.runtime,
@@ -136,7 +141,9 @@ def test_main_renderiza_botones_esperados(monkeypatch):
     monkeypatch.setattr(idle.runtime, "mostrar_tokens", lambda _codigo: "Token(X)")
     monkeypatch.setattr(idle.runtime, "mostrar_ast", lambda _codigo: "[Nodo]")
     monkeypatch.setattr(
-        idle.runtime, "generar_sugerencias", lambda _codigo: ["Usa nombres descriptivos"]
+        idle.runtime,
+        "generar_sugerencias",
+        lambda _codigo: ["Usa nombres descriptivos"],
     )
     monkeypatch.setattr(
         idle.runtime, "formatear_error", lambda exc, **_kwargs: f"error: {exc}"
@@ -196,7 +203,9 @@ def test_main_muestra_sugerencias_deshabilitadas_sin_motor(monkeypatch):
 def test_main_handlers_smoke(monkeypatch):
     ft = _fake_flet()
     monkeypatch.setattr(idle.runtime, "require_flet", lambda: ft)
-    monkeypatch.setattr(idle.runtime, "detectar_motor_ia_sugerencias", _motor_disponible)
+    monkeypatch.setattr(
+        idle.runtime, "detectar_motor_ia_sugerencias", _motor_disponible
+    )
     monkeypatch.setattr(idle.runtime, "gui_target_choices", lambda: ("python",))
     ejecutar_mock = MagicMock(return_value="ejecutado")
     transpilar_mock = MagicMock(return_value="transpilado")
@@ -217,7 +226,9 @@ def test_main_handlers_smoke(monkeypatch):
     monkeypatch.setattr(idle.runtime, "mostrar_tokens", lambda _codigo: "Token(X)")
     monkeypatch.setattr(idle.runtime, "mostrar_ast", lambda _codigo: "[Nodo]")
     monkeypatch.setattr(
-        idle.runtime, "generar_sugerencias", lambda _codigo: ["Usa nombres descriptivos"]
+        idle.runtime,
+        "generar_sugerencias",
+        lambda _codigo: ["Usa nombres descriptivos"],
     )
     monkeypatch.setattr(
         idle.runtime, "formatear_error", lambda exc, **_kwargs: f"error: {exc}"
@@ -283,7 +294,9 @@ def test_main_handlers_smoke(monkeypatch):
 def test_main_selector_y_switch_sin_targets(monkeypatch):
     ft = _fake_flet()
     monkeypatch.setattr(idle.runtime, "require_flet", lambda: ft)
-    monkeypatch.setattr(idle.runtime, "detectar_motor_ia_sugerencias", _motor_disponible)
+    monkeypatch.setattr(
+        idle.runtime, "detectar_motor_ia_sugerencias", _motor_disponible
+    )
     monkeypatch.setattr(idle.runtime, "gui_target_choices", lambda: ())
     monkeypatch.setattr(
         idle.runtime,
@@ -302,7 +315,9 @@ def test_main_selector_y_switch_sin_targets(monkeypatch):
     monkeypatch.setattr(idle.runtime, "mostrar_tokens", lambda _codigo: "Token(X)")
     monkeypatch.setattr(idle.runtime, "mostrar_ast", lambda _codigo: "[Nodo]")
     monkeypatch.setattr(
-        idle.runtime, "generar_sugerencias", lambda _codigo: ["Usa nombres descriptivos"]
+        idle.runtime,
+        "generar_sugerencias",
+        lambda _codigo: ["Usa nombres descriptivos"],
     )
     monkeypatch.setattr(
         idle.runtime, "formatear_error", lambda exc, **_kwargs: f"error: {exc}"
@@ -322,7 +337,9 @@ def test_main_acciones_publicas_de_archivo(monkeypatch, tmp_path):
     ft = _fake_flet()
     monkeypatch.chdir(tmp_path)
     monkeypatch.setattr(idle.runtime, "require_flet", lambda: ft)
-    monkeypatch.setattr(idle.runtime, "detectar_motor_ia_sugerencias", _motor_disponible)
+    monkeypatch.setattr(
+        idle.runtime, "detectar_motor_ia_sugerencias", _motor_disponible
+    )
     monkeypatch.setattr(idle.runtime, "gui_target_choices", lambda: ("python",))
     monkeypatch.setattr(
         idle.runtime,
@@ -373,12 +390,11 @@ def test_main_acciones_publicas_de_archivo(monkeypatch, tmp_path):
     estado_archivo = next(
         c
         for c in page.controls
-        if isinstance(c, ft.Text) and not c.kwargs.get("selectable")
+        if isinstance(c, ft.Text)
+        and not c.kwargs.get("selectable")
         and "Archivo nuevo" in c.value
     )
-    botones = {
-        c.text: c for c in page.controls if isinstance(c, ft.ElevatedButton)
-    }
+    botones = {c.text: c for c in page.controls if isinstance(c, ft.ElevatedButton)}
 
     botones["Nuevo"].on_click(None)
     assert entrada.value == ""
@@ -416,3 +432,78 @@ def test_main_acciones_publicas_de_archivo(monkeypatch, tmp_path):
     boton_arbol.on_click(None)
     assert entrada.value == "imprimir('arbol')"
     assert salida.value == f"Archivo cargado: {archivo_arbol.resolve()}"
+
+
+def test_main_establecer_raiz_arbol_valida_directorios(monkeypatch, tmp_path):
+    ft = _fake_flet()
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(idle.runtime, "require_flet", lambda: ft)
+    monkeypatch.setattr(
+        idle.runtime, "detectar_motor_ia_sugerencias", _motor_disponible
+    )
+    monkeypatch.setattr(idle.runtime, "gui_target_choices", lambda: ("python",))
+    monkeypatch.setattr(
+        idle.runtime,
+        "require_gui_dependencies",
+        lambda: {
+            "TRANSPILERS": {"python": object},
+            "LexerError": RuntimeError,
+            "ParserError": ValueError,
+            "Lexer": lambda _codigo: SimpleNamespace(tokenizar=lambda: []),
+            "Parser": lambda _tokens: SimpleNamespace(parsear=lambda: []),
+        },
+    )
+    monkeypatch.setattr(idle.runtime, "normalizar_codigo", lambda value: value or "")
+    monkeypatch.setattr(idle.runtime, "ejecutar_codigo", lambda _codigo: "ok")
+    monkeypatch.setattr(
+        idle.runtime, "transpilar_codigo", lambda _codigo, _lang: "transpilado"
+    )
+    monkeypatch.setattr(idle.runtime, "mostrar_tokens", lambda _codigo: "Token(X)")
+    monkeypatch.setattr(idle.runtime, "mostrar_ast", lambda _codigo: "[Nodo]")
+    monkeypatch.setattr(
+        idle.runtime, "formatear_error", lambda exc, **_kwargs: f"error: {exc}"
+    )
+
+    subdir = tmp_path / "subdir"
+    subdir.mkdir()
+    archivo = tmp_path / "archivo.cobra"
+    archivo.write_text("imprimir('x')", encoding="utf-8")
+
+    page = ft.Page()
+    idle.main(page)
+
+    boton_raiz = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.ElevatedButton) and c.text == "Establecer raíz"
+    )
+    raiz_input = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.TextField) and c.kwargs.get("label") == "Raíz del árbol"
+    )
+    salida = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.Text) and c.kwargs.get("selectable")
+    )
+    arbol = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.ListView)
+        and getattr(getattr(c, "controls", [None])[0], "value", "").startswith(
+            "Directorio raíz:"
+        )
+    )
+
+    raiz_input.value = str(archivo)
+    boton_raiz.on_click(None)
+    assert (
+        salida.value == f"La raíz del árbol debe ser un directorio: {archivo.resolve()}"
+    )
+
+    raiz_input.value = str(subdir)
+    boton_raiz.on_click(None)
+    assert salida.value == f"Raíz del árbol actualizada: {subdir.resolve()}"
+    assert raiz_input.value == str(subdir.resolve())
+    assert arbol.controls[0].value == f"Directorio raíz: {subdir.resolve()}"
