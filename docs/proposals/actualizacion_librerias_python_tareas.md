@@ -283,9 +283,12 @@ Antes de implementar cualquier ticket, leer y respetar estos puntos:
 
 **Trabajo esperado**
 
-- Mantener `agix` como paquete requerido para la integración de producto: el
-  proyecto declara `agix>=1.9.0,<2` y el módulo
+- Mantener `agix` como paquete requerido y único nombre canónico para la
+  integración de producto: el proyecto declara `agix>=1.9.0,<2` y el módulo
   `src/pcobra/ia/analizador_agix.py` importa la API pública de `agix`.
+- Usar `agix` en tickets, issues y documentación nueva: la revisión actual de
+  dependencias (`pyproject.toml`, `requirements*.txt` y `docs/requirements.txt`)
+  solo declara ese paquete para el motor IA.
 - Normalizar referencias nuevas de tareas o issues al motor oficial `agix` y
   exigir una propuesta formal en `docs/proposals/` antes de cambiar el nombre
   exacto del paquete, la API pública usada, su relación con

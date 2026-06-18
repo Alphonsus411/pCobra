@@ -2,7 +2,7 @@
 
 La dependencia AGI real declarada por el proyecto es ``agix``. Esta fachada
 delega en ``analizador_agix`` y mantiene un único punto de entrada público
-para GUI y otros consumidores.
+para GUI y otros consumidores sin exponer nombres alternativos de motor.
 """
 
 from __future__ import annotations
@@ -12,6 +12,9 @@ from typing import List
 from pcobra.ia.analizador_agix import generar_sugerencias as _generar_con_agix
 
 MOTOR_SUGERENCIAS = "agix"
+"""Nombre canónico del motor IA opcional usado por sugerencias Cobra."""
+
+__all__ = ["MOTOR_SUGERENCIAS", "generar_sugerencias"]
 
 
 def generar_sugerencias(
