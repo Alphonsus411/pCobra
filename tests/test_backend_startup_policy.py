@@ -130,3 +130,53 @@ def test_non_official_target_fails_with_clear_policy_error(invalid_target: str) 
     assert "PUBLIC CONTRACT" in message
     assert "fuera de contrato" in message
     assert "allowed=('python', 'javascript', 'rust')" in message
+
+
+@pytest.mark.parity_contract
+def test_legacy_internal_targets_remain_empty_without_architecture_decision() -> None:
+    legacy_targets = importlib.import_module(
+        "pcobra.cobra.config.transpile_targets"
+    ).LEGACY_INTERNAL_TARGETS
+
+    assert legacy_targets == ()
+
+
+@pytest.mark.parity_contract
+def test_public_cli_and_gui_target_surfaces_expose_only_public_backends() -> None:
+    public_backends = importlib.import_module(
+        "pcobra.cobra.architecture.backend_policy"
+    ).PUBLIC_BACKENDS
+    cli_registry = importlib.import_module("pcobra.cobra.cli.transpiler_registry")
+    target_policies = importlib.import_module("pcobra.cobra.cli.target_policies")
+    gui_runtime = importlib.import_module("pcobra.gui.runtime")
+
+    assert cli_registry.cli_transpiler_targets() == public_backends
+    assert target_policies.OFFICIAL_TRANSPILATION_TARGETS == public_backends
+    assert target_policies.OFFICIAL_RUNTIME_TARGETS == public_backends
+    assert target_policies.DOCKER_EXECUTABLE_TARGETS == public_backends
+    assert target_policies.VERIFICATION_EXECUTABLE_TARGETS == public_backends
+
+    gui_runtime.require_gui_dependencies.cache_clear()
+    try:
+        gui_runtime.require_gui_dependencies = lambda: {
+            "OFFICIAL_TARGETS": public_backends,
+            "TRANSPILERS": {target: object() for target in public_backends},
+            "target_cli_choices": lambda targets: tuple(
+                target for target in public_backends if target in targets
+            ),
+        }
+        assert gui_runtime.gui_target_choices() == public_backends
+    finally:
+        importlib.reload(gui_runtime)
+
+
+@pytest.mark.parity_contract
+def test_legacy_syntax_validators_are_not_imported_by_public_runtime_routes() -> None:
+    legacy_module = "pcobra.cobra.qa.legacy_syntax_validation"
+    sys.modules.pop(legacy_module, None)
+
+    importlib.import_module("pcobra.cobra.qa.syntax_validation")
+    importlib.import_module("pcobra.cobra.cli.commands.validar_sintaxis_cmd")
+    importlib.import_module("pcobra.cobra.cli.commands.qa_validar_cmd")
+
+    assert legacy_module not in sys.modules

@@ -73,7 +73,7 @@ Resumen normativo visible (generado desde la política canónica):
 - **Targets con adaptador Holobit mantenido por el proyecto (partial fuera de python)**: `python`, `javascript`, `rust`.
 - **Compatibilidad SDK completa (solo python)**: `python`.
 - **Targets solo de transpilación**: .
-- **Orígenes de transpilación inversa**: python, javascript. Este alcance reverse de entrada está separado de los 3 targets oficiales de salida.
+- **Orígenes de transpilación inversa**: capacidad separada documentada por política; no amplía los 3 targets oficiales de salida.
 
 Tiers oficiales de soporte de backends:
 
@@ -464,7 +464,7 @@ cobra validar-sintaxis --report-json reporte_sintaxis.json
 cobra validar-sintaxis --report-json
 ```
 
-El comando respeta el `--modo` global de la CLI y puede combinarse con `--modo mixto`, `--modo cobra` o `--modo transpilar`. La ruta pública de `validar-sintaxis` solo acepta los backends oficiales `python`, `javascript` y `rust`; los validadores históricos retirados se conservan únicamente en `pcobra.cobra.qa.legacy_syntax_validation.LEGACY_INTERNAL_VALIDATORS` para regresión interna o migraciones documentadas, y no deben consumirse desde comandos públicos.
+El comando respeta el `--modo` global de la CLI y puede combinarse con `--modo mixto`, `--modo cobra` o `--modo transpilar`. La ruta pública de `validar-sintaxis` solo acepta los backends oficiales `python`, `javascript` y `rust`; los validadores históricos retirados se conservan únicamente para QA/regresión interna y no deben importarse ni consumirse desde comandos públicos.
 
 **Contrato JSON versionado (`--report-json`)**
 
@@ -980,7 +980,7 @@ editar `cobra.mod` y volver a ejecutar las pruebas.
 ## Invocar el transpilador
 
 La carpeta [`src/pcobra/cobra/transpilers/transpiler`](src/pcobra/cobra/transpilers/transpiler)
-contiene la implementación de los transpiladores públicos a Python, JavaScript y Rust (más rutas internas legacy para migración/regresión). Una vez
+contiene la implementación de los transpiladores públicos a Python, JavaScript y Rust. Las rutas históricas de migración/regresión se documentan fuera de esta guía principal. Una vez
 instaladas las dependencias, puedes llamar al transpilador desde tu propio
 script de la siguiente manera:
 
@@ -1126,9 +1126,9 @@ El panel lateral lista carpetas y archivos Cobra (`.co` para scripts y `.cobra` 
 `cobra transpilar-inverso` documenta una capacidad distinta de la transpilación de salida normal. Aquí conviene separar dos listas para evitar ambigüedades:
 
 - **Targets oficiales de salida**: consultar el resumen normativo generado al inicio de este README.
-- **Orígenes reverse de entrada**: `python`, `javascript`, `java` (**java** como *entrada histórica, no salida oficial*).
+- **Orígenes reverse de entrada**: alcance separado de los targets oficiales de salida; consulta los anexos internos/históricos para entradas históricas.
 
-`python` y `javascript` pueden aparecer como origen reverse y como destino oficial de salida; `java` solo se conserva como **origen reverse histórico**. En `--origen` estos nombres describen entradas aceptadas por la ruta reverse; en `--destino` solo son válidos los targets oficiales de salida (`python`, `javascript`, `rust`). La capacidad reverse no añade targets nuevos ni amplía la lista oficial de salida.
+En `--origen`, los nombres describen entradas aceptadas por la ruta reverse; en `--destino` solo son válidos los targets oficiales de salida (`python`, `javascript`, `rust`). La capacidad reverse no añade targets nuevos ni amplía la lista oficial de salida.
 
 ```bash
 cobra transpilar-inverso script.py --origen=python --destino=python
