@@ -20,6 +20,9 @@ def main(page: "ft.Page"):
     salida = runtime.crear_salida_seleccionable(ft)
     estado_archivo = runtime.flet_text(ft, value=runtime.crear_titulo_archivo(estado))
     ruta_input = runtime.flet_text_field(ft, label="Ruta", value="", expand=True)
+    raiz_input = runtime.flet_text_field(
+        ft, label="Raíz del árbol", value=str(directorio_actual), expand=True
+    )
     arbol = runtime.flet_list_view(ft, expand=True, spacing=2, auto_scroll=False)
     lenguajes = list(runtime.gui_target_choices())
     selector = runtime.crear_selector_target(ft, lenguajes=lenguajes)
@@ -96,6 +99,7 @@ def main(page: "ft.Page"):
         cargar_archivo(Path(ruta), desde_arbol=True)
 
     def reconstruir_arbol() -> None:
+        raiz_input.value = str(directorio_actual)
         arbol.controls.clear()
         arbol.controls.append(
             runtime.flet_text(ft, value=f"Directorio raíz: {directorio_actual}")
@@ -110,6 +114,32 @@ def main(page: "ft.Page"):
             mostrar_error_archivo(exc)
             return
         arbol.controls.extend(getattr(arbol_canonico, "controls", [arbol_canonico]))
+
+    def establecer_raiz_arbol_handler(_e):
+        nonlocal directorio_actual
+        if not raiz_input.value:
+            salida.value = "Indica un directorio para usar como raíz del árbol."
+            page.update()
+            return
+        try:
+            nueva_raiz = runtime.normalizar_ruta_archivo_gui(raiz_input.value)
+        except (
+            FileNotFoundError,
+            NotADirectoryError,
+            PermissionError,
+            ValueError,
+        ) as exc:
+            mostrar_error_archivo(exc)
+            page.update()
+            return
+        if not nueva_raiz.is_dir():
+            salida.value = f"La raíz del árbol debe ser un directorio: {nueva_raiz}"
+            page.update()
+            return
+        directorio_actual = nueva_raiz
+        reconstruir_arbol()
+        salida.value = f"Raíz del árbol actualizada: {directorio_actual}"
+        actualizar_pagina()
 
     def nuevo_handler(_e):
         entrada.value, salida.value = runtime.crear_archivo_nuevo_en_editor(estado)
@@ -186,6 +216,17 @@ def main(page: "ft.Page"):
     reconstruir_arbol()
     sincronizar_estado_visual()
 
+    barra_raiz_arbol = runtime.flet_row(
+        ft,
+        controls=[
+            raiz_input,
+            runtime.flet_elevated_button(
+                ft, "Establecer raíz", on_click=establecer_raiz_arbol_handler
+            ),
+        ],
+        wrap=True,
+    )
+
     barra_archivo = runtime.flet_row(
         ft,
         controls=[
@@ -207,9 +248,7 @@ def main(page: "ft.Page"):
             runtime.flet_elevated_button(ft, "Ejecutar", on_click=ejecutar_handler),
             runtime.flet_elevated_button(ft, "Tokens", on_click=tokens_handler),
             runtime.flet_elevated_button(ft, "AST", on_click=ast_handler),
-            runtime.crear_boton_sugerencias_libro(
-                ft, on_click=sugerencias_handler
-            ),
+            runtime.crear_boton_sugerencias_libro(ft, on_click=sugerencias_handler),
         ],
         wrap=True,
     )
@@ -229,7 +268,11 @@ def main(page: "ft.Page"):
         ft,
         content=runtime.flet_column(
             ft,
-            controls=[runtime.flet_text(ft, value="Archivos Cobra"), arbol],
+            controls=[
+                runtime.flet_text(ft, value="Archivos Cobra"),
+                barra_raiz_arbol,
+                arbol,
+            ],
             expand=True,
         ),
         width=280,
