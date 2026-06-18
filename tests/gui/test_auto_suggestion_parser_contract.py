@@ -94,3 +94,61 @@ def test_recomendaciones_gui_cubren_ejemplos_invalidos_sin_ampliar_parser(
     assert regla_libro
     with pytest.raises(ParserError):
         _parsear(fragmento_invalido)
+
+
+def test_reglas_libro_programacion_declaran_fragmentos_soportados_por_parser() -> None:
+    """Cada regla interna debe exponer un fragmento canónico parseable."""
+    from pcobra.ia.reglas_libro_programacion import REGLAS_LIBRO_PROGRAMACION
+
+    ids = {regla.id for regla in REGLAS_LIBRO_PROGRAMACION}
+    assert "LP-3.3-RETORNO-CANONICO" in ids
+    assert "LP-3.9-FUNCIONES-CON-FUNC" in ids
+
+    for regla in REGLAS_LIBRO_PROGRAMACION:
+        ast = _parsear(regla.fragmento_valido)
+        assert ast, regla.id
+
+
+@pytest.mark.parametrize(
+    ("rule_id", "fragmento_valido", "fragmento_invalido"),
+    [
+        pytest.param(
+            "LP-3.3-RETORNO-CANONICO",
+            """
+func saludar(nombre):
+    retorno nombre
+fin
+""",
+            """
+func saludar(nombre):
+    retornar nombre
+fin
+""",
+            id="regla-retorno-no-retornar",
+        ),
+        pytest.param(
+            "LP-3.9-FUNCIONES-CON-FUNC",
+            """
+func calcular_total(subtotal, impuesto):
+    retorno subtotal + impuesto
+fin
+""",
+            """
+funcion calcular_total(subtotal, impuesto):
+    retorno subtotal + impuesto
+fin
+""",
+            id="regla-func-no-funcion",
+        ),
+    ],
+)
+def test_reglas_libro_programacion_nuevas_cubren_casos_validos_e_invalidos(
+    rule_id: str, fragmento_valido: str, fragmento_invalido: str
+) -> None:
+    from pcobra.ia.reglas_libro_programacion import REGLAS_LIBRO_PROGRAMACION
+
+    regla = next(regla for regla in REGLAS_LIBRO_PROGRAMACION if regla.id == rule_id)
+    assert regla.fragmento_valido.strip() == fragmento_valido.strip()
+    assert _parsear(fragmento_valido)
+    with pytest.raises(ParserError):
+        _parsear(fragmento_invalido)
