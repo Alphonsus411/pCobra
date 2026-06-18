@@ -487,7 +487,10 @@ def test_accion_nuevo_archivo_reinicia_estado() -> None:
     assert estado == runtime.GuiFileState()
 
 
-def test_accion_abrir_archivo_desde_ruta(tmp_path: Path) -> None:
+def test_accion_abrir_archivo_desde_ruta(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("COBRA_IO_BASE_DIR", str(tmp_path))
     archivo = tmp_path / "programa.cobra"
     archivo.write_text("imprimir('hola')", encoding="utf-8")
     estado = runtime.GuiFileState()
@@ -501,7 +504,10 @@ def test_accion_abrir_archivo_desde_ruta(tmp_path: Path) -> None:
     assert mensaje == f"Archivo cargado: {archivo.resolve()}"
 
 
-def test_accion_guardar_archivo_activo(tmp_path: Path) -> None:
+def test_accion_guardar_archivo_activo(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("COBRA_IO_BASE_DIR", str(tmp_path))
     archivo = tmp_path / "programa.cobra"
     archivo.write_text("imprimir('antes')", encoding="utf-8")
     estado = runtime.GuiFileState(
@@ -524,7 +530,10 @@ def test_accion_guardar_archivo_activo_sin_ruta_falla() -> None:
         runtime.guardar_archivo_activo("imprimir('x')", runtime.GuiFileState())
 
 
-def test_accion_guardar_archivo_como(tmp_path: Path) -> None:
+def test_accion_guardar_archivo_como(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("COBRA_IO_BASE_DIR", str(tmp_path))
     destino = tmp_path / "nuevo.cobra"
     estado = runtime.GuiFileState()
 
@@ -540,7 +549,87 @@ def test_accion_guardar_archivo_como(tmp_path: Path) -> None:
     assert mensaje == f"Archivo guardado: {destino.resolve()}"
 
 
-def test_accion_recargar_archivo_activo(tmp_path: Path) -> None:
+def test_accion_abrir_archivo_respeta_sandbox_con_ruta_absoluta(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("COBRA_IO_BASE_DIR", str(tmp_path))
+    archivo = tmp_path / "programa.cobra"
+    archivo.write_text("imprimir('sandbox')", encoding="utf-8")
+    estado = runtime.GuiFileState()
+
+    contenido, mensaje = runtime.abrir_archivo_desde_ruta(archivo.resolve(), estado)
+
+    assert contenido == "imprimir('sandbox')"
+    assert estado.ruta == archivo.resolve()
+    assert mensaje == f"Archivo cargado: {archivo.resolve()}"
+
+
+def test_accion_guardar_archivo_activo_respeta_sandbox(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("COBRA_IO_BASE_DIR", str(tmp_path))
+    archivo = tmp_path / "programa.cobra"
+    archivo.write_text("imprimir('antes')", encoding="utf-8")
+    estado = runtime.GuiFileState(ruta=archivo.resolve(), cambios_sin_guardar=True)
+
+    contenido, mensaje = runtime.guardar_archivo_activo("imprimir('despues')", estado)
+
+    assert contenido == "imprimir('despues')"
+    assert archivo.read_text(encoding="utf-8") == "imprimir('despues')"
+    assert estado.ruta == archivo.resolve()
+    assert estado.cambios_sin_guardar is False
+    assert mensaje == f"Archivo guardado: {archivo.resolve()}"
+
+
+def test_accion_guardar_archivo_como_respeta_sandbox_con_ruta_relativa(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("COBRA_IO_BASE_DIR", str(tmp_path))
+    estado = runtime.GuiFileState()
+
+    contenido, mensaje = runtime.guardar_archivo_como(
+        "nuevo.cobra", "imprimir('nuevo')", estado
+    )
+
+    destino = tmp_path / "nuevo.cobra"
+    assert contenido == "imprimir('nuevo')"
+    assert destino.read_text(encoding="utf-8") == "imprimir('nuevo')"
+    assert estado.ruta == destino.resolve()
+    assert mensaje == f"Archivo guardado: {destino.resolve()}"
+
+
+@pytest.mark.parametrize(
+    ("accion", "argumentos"),
+    [
+        ("abrir", lambda fuera: (fuera,)),
+        ("guardar", lambda fuera: (fuera, "imprimir('x')")),
+        ("guardar_como", lambda fuera: (fuera, "imprimir('x')")),
+    ],
+)
+def test_acciones_archivo_rechazan_rutas_fuera_del_sandbox(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    accion: str,
+    argumentos,
+) -> None:
+    monkeypatch.setenv("COBRA_IO_BASE_DIR", str(tmp_path))
+    fuera = tmp_path.parent / "fuera.cobra"
+    fuera.write_text("imprimir('fuera')", encoding="utf-8")
+    estado = runtime.GuiFileState(ruta=fuera if accion == "guardar" else None)
+
+    with pytest.raises(ValueError, match="fuera del directorio permitido"):
+        if accion == "abrir":
+            runtime.abrir_archivo_desde_ruta(*argumentos(fuera), estado)
+        elif accion == "guardar":
+            runtime.guardar_archivo_activo(argumentos(fuera)[1], estado)
+        else:
+            runtime.guardar_archivo_como(*argumentos(fuera), estado)
+
+
+def test_accion_recargar_archivo_activo(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("COBRA_IO_BASE_DIR", str(tmp_path))
     archivo = tmp_path / "programa.cobra"
     archivo.write_text("imprimir('disco')", encoding="utf-8")
     estado = runtime.GuiFileState(
@@ -557,7 +646,10 @@ def test_accion_recargar_archivo_activo(tmp_path: Path) -> None:
     assert mensaje == f"Archivo cargado: {archivo.resolve()}"
 
 
-def test_accion_cargar_archivo_desde_arbol_filtra_extensiones(tmp_path: Path) -> None:
+def test_accion_cargar_archivo_desde_arbol_filtra_extensiones(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("COBRA_IO_BASE_DIR", str(tmp_path))
     archivo = tmp_path / "arbol.co"
     archivo.write_text("imprimir('arbol')", encoding="utf-8")
     estado = runtime.GuiFileState()

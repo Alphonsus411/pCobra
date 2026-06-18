@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from pcobra.cobra.architecture.backend_policy import PUBLIC_BACKENDS
+from pcobra.corelibs.archivo import _resolver_ruta as resolver_ruta_sandbox
 
 
 @lru_cache(maxsize=1)
@@ -172,10 +173,16 @@ def listar_directorio_cobra(root: str | Path) -> list[Path]:
     return sorted(visibles, key=lambda entry: (not entry.is_dir(), entry.name.lower()))
 
 
-def leer_archivo_texto(path: str | Path, *, encoding: str = "utf-8") -> str:
-    """Lee un archivo Cobra como texto UTF-8 sin interpretar su contenido."""
+def normalizar_ruta_archivo_gui(path: str | Path) -> Path:
+    """Normaliza rutas de la GUI según el sandbox Cobra compartido."""
 
-    return Path(path).expanduser().read_text(encoding=encoding)
+    return resolver_ruta_sandbox(path, permitir_absoluta_dentro_base=True)
+
+
+def leer_archivo_texto(path: str | Path, *, encoding: str = "utf-8") -> str:
+    """Lee un archivo Cobra como texto UTF-8 dentro del sandbox configurado."""
+
+    return normalizar_ruta_archivo_gui(path).read_text(encoding=encoding)
 
 
 def escribir_archivo_texto(
@@ -184,7 +191,7 @@ def escribir_archivo_texto(
     """Escribe exactamente el contenido normalizado del editor y lo devuelve."""
 
     codigo = normalizar_codigo(contenido)
-    destino = Path(path).expanduser()
+    destino = normalizar_ruta_archivo_gui(path)
     destino.write_text(codigo, encoding=encoding)
     return codigo
 
@@ -219,7 +226,7 @@ def nuevo_archivo(estado: GuiFileState) -> str:
 def cargar_archivo_en_estado(ruta: str | Path, estado: GuiFileState) -> str:
     """Carga un archivo de texto, actualiza estado y devuelve su contenido."""
 
-    ruta_resuelta = Path(ruta).expanduser().resolve()
+    ruta_resuelta = normalizar_ruta_archivo_gui(ruta)
     contenido = leer_archivo_texto(ruta_resuelta)
     estado.ruta = ruta_resuelta
     estado.contenido_cargado = contenido
@@ -232,7 +239,7 @@ def guardar_archivo_en_estado(
 ) -> str:
     """Guarda contenido del editor, actualiza estado y devuelve el texto guardado."""
 
-    ruta_resuelta = Path(ruta).expanduser().resolve()
+    ruta_resuelta = normalizar_ruta_archivo_gui(ruta)
     contenido_guardado = escribir_archivo_texto(ruta_resuelta, contenido)
     estado.ruta = ruta_resuelta
     estado.contenido_cargado = contenido_guardado
