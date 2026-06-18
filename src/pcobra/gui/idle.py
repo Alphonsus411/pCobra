@@ -42,12 +42,17 @@ def main(page: "ft.Page"):
     def mostrar_error_archivo(exc: Exception) -> None:
         salida.value = runtime.formatear_error(exc)
 
-    def cargar_archivo(ruta: Path) -> None:
+    def cargar_archivo(ruta: Path, *, desde_arbol: bool = False) -> None:
         nonlocal directorio_actual
         try:
-            entrada.value, salida.value = runtime.abrir_archivo_desde_ruta(
-                ruta, estado
-            )
+            if desde_arbol:
+                entrada.value, salida.value = runtime.cargar_archivo_desde_arbol(
+                    ruta, estado
+                )
+            else:
+                entrada.value, salida.value = runtime.abrir_archivo_desde_ruta(
+                    ruta, estado
+                )
         except (
             FileNotFoundError,
             NotADirectoryError,
@@ -81,46 +86,30 @@ def main(page: "ft.Page"):
         actualizar_pagina()
         return True
 
+    def cargar_archivo_desde_evento_arbol(e) -> None:
+        control = getattr(e, "control", None)
+        ruta = getattr(control, "data", None)
+        if ruta is None:
+            salida.value = "No se pudo determinar la ruta seleccionada en el árbol."
+            page.update()
+            return
+        cargar_archivo(Path(ruta), desde_arbol=True)
+
     def reconstruir_arbol() -> None:
         arbol.controls.clear()
         arbol.controls.append(
-            runtime.flet_text(ft, value=f"Directorio: {directorio_actual}")
+            runtime.flet_text(ft, value=f"Directorio raíz: {directorio_actual}")
         )
         try:
-            padre, entradas = runtime.construir_entradas_directorio(directorio_actual)
+            arbol_canonico = runtime.crear_arbol_directorios(
+                ft,
+                on_click=cargar_archivo_desde_evento_arbol,
+                root_path=directorio_actual,
+            )
         except (FileNotFoundError, NotADirectoryError, PermissionError) as exc:
             mostrar_error_archivo(exc)
-            entradas = []
-            padre = None
-        if padre is not None:
-            arbol.controls.append(
-                runtime.flet_text_button(
-                    ft, "📁 ..", on_click=lambda _e: cambiar_directorio(padre)
-                )
-            )
-        for tipo, ruta in entradas:
-            if tipo == "dir":
-                arbol.controls.append(
-                    runtime.flet_text_button(
-                        ft,
-                        f"📁 {ruta.name}",
-                        on_click=lambda _e, r=ruta: cambiar_directorio(r),
-                    )
-                )
-            else:
-                arbol.controls.append(
-                    runtime.flet_text_button(
-                        ft,
-                        f"📄 {ruta.name}",
-                        on_click=lambda _e, r=ruta: cargar_archivo(r),
-                    )
-                )
-
-    def cambiar_directorio(ruta: Path) -> None:
-        nonlocal directorio_actual
-        directorio_actual = ruta.expanduser().resolve()
-        reconstruir_arbol()
-        page.update()
+            return
+        arbol.controls.extend(getattr(arbol_canonico, "controls", [arbol_canonico]))
 
     def nuevo_handler(_e):
         entrada.value, salida.value = runtime.crear_archivo_nuevo_en_editor(estado)
