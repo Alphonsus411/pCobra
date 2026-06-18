@@ -39,7 +39,7 @@ Antes de implementar cualquier ticket, leer y respetar estos puntos:
 - `src/pcobra/standard_library/datos.py`: integración de datos, Excel y
   formatos columnares.
 - `src/pcobra/gui/`: integración GUI basada en Flet.
-- `src/pcobra/ia/analizador_agix.py`: integración con AGIX.
+- `src/pcobra/ia/analizador_agix.py`: integración con agix.
 - `src/pcobra/core/interpreter.py`: uso de `RestrictedPython`.
 - `src/pcobra/core/pybind_bridge.py`: uso de `pybind11`.
 - `src/pcobra/cobra/transpilers/reverse/`: integración con `tree-sitter` en
@@ -270,7 +270,7 @@ Antes de implementar cualquier ticket, leer y respetar estos puntos:
 - Si hay cambios visuales perceptibles en una app runnable, capturar evidencia
   visual cuando el entorno lo permita.
 
-### Ticket C3 — Validar integraciones AGIX, Holobit y Smooth Criminal
+### Ticket C3 — Validar integraciones agix, Holobit y Smooth Criminal
 
 | Campo | Detalle |
 |---|---|
@@ -284,15 +284,13 @@ Antes de implementar cualquier ticket, leer y respetar estos puntos:
 **Trabajo esperado**
 
 - Mantener `agix` como paquete requerido para la integración de producto: el
-  proyecto declara `agix>=1.9.0,<2`, el módulo
-  `src/pcobra/ia/analizador_agix.py` importa la API pública de `agix` y no hay
-  una decisión técnica aprobada para migrar a `agi-core`.
-- No sustituir referencias nuevas de tareas o issues por `agi-core`; si aparece
-  esa mención, corregirla a `agix` salvo que antes se documente una propuesta
-  formal en `docs/proposals/` con el nombre exacto del paquete, la API pública
-  usada, su relación con `analizador_agix.py` y el plan de compatibilidad o
-  reemplazo.
-- Revisar rutas públicas de AGIX actuales frente a imports existentes.
+  proyecto declara `agix>=1.9.0,<2` y el módulo
+  `src/pcobra/ia/analizador_agix.py` importa la API pública de `agix`.
+- Normalizar referencias nuevas de tareas o issues al motor oficial `agix` y
+  exigir una propuesta formal en `docs/proposals/` antes de cambiar el nombre
+  exacto del paquete, la API pública usada, su relación con
+  `analizador_agix.py` y el plan de compatibilidad o reemplazo.
+- Revisar rutas públicas de agix actuales frente a imports existentes.
 - Validar llamadas y tipos usados por `analizador_agix.py`.
 - Revisar API actual de `smooth-criminal` usada por `performance.py`.
 - Confirmar mensajes de error si la dependencia no está instalada.
