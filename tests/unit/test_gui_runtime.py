@@ -815,25 +815,27 @@ def test_crear_handler_sugerencias_agix_delega_en_handler_comun(
 ) -> None:
     entrada = SimpleNamespace(value="imprimir('Hola')")
     salida = SimpleNamespace(value="")
-    page = SimpleNamespace(update=lambda: setattr(page, "updated", True))
+    page = SimpleNamespace(updated=False)
     llamadas = []
 
-    def _reporte(codigo: str) -> str:
-        llamadas.append(codigo)
-        return "reporte común"
+    def _handler(evento: object) -> None:
+        llamadas.append((entrada, salida, page, evento))
+        salida.value = "reporte común"
+        page.updated = True
+
+    def _crear_handler_sugerencias(**kwargs: object) -> object:
+        assert kwargs == {"entrada": entrada, "salida": salida, "page": page}
+        return _handler
 
     monkeypatch.setattr(
-        runtime,
-        "require_gui_dependencies",
-        lambda: {"LexerError": Exception, "ParserError": Exception},
+        runtime, "crear_handler_sugerencias", _crear_handler_sugerencias
     )
-    monkeypatch.setattr(runtime, "generar_reporte_sugerencias", _reporte)
 
     handler = runtime.crear_handler_sugerencias_agix(
         entrada=entrada, salida=salida, page=page
     )
     handler(None)
 
-    assert llamadas == ["imprimir('Hola')"]
+    assert llamadas == [(entrada, salida, page, None)]
     assert salida.value == "reporte común"
     assert page.updated is True
