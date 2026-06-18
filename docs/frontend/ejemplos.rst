@@ -60,7 +60,7 @@ y ``java``. Puedes probar el flujo con:
 
 .. code-block:: bash
 
-   cobra transpilar-inverso examples/hello_world/python.py --origen python --destino java
+   cobra transpilar-inverso examples/hello_world/python.py --origen python --destino rust
 
 Este comando demuestra una conversión entre lenguajes admitidos por política,
 sin depender de targets fuera del alcance oficial.

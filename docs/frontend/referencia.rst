@@ -25,7 +25,7 @@ Funciones integradas
 Backends oficiales documentados públicamente
 --------------------------------------------
 
-pCobra transpila únicamente a ``python``, ``rust``, ``javascript``, ``wasm``, ``go``, ``cpp``, ``java`` y ``asm``. Esa lista no se amplía con aliases, nombres alternativos ni artefactos internos.
+pCobra transpila únicamente a ``python``, ``javascript`` y ``rust``. Esa lista no se amplía con aliases, nombres alternativos ni artefactos internos.
 
 Contrato Holobit transversal
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -38,9 +38,7 @@ el nivel exacto de soporte por backend.
 Lectura correcta del soporte:
 
 - ``python``: ``full`` y compatibilidad SDK completa.
-- ``rust``, ``javascript`` y ``cpp``: adaptador mantenido por el proyecto, con estado contractual ``partial``.
-- ``go`` y ``java``: adaptadores/hook ``partial`` sobre runtime best-effort no público.
-- ``wasm`` y ``asm``: hooks/puentes contractuales ``partial`` orientados a transpilación.
+- ``javascript`` y ``rust``: adaptador mantenido por el proyecto, con estado contractual ``partial``.
 
 Helpers adicionales del runtime Python
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -60,9 +58,9 @@ El comando ``cobra`` cuenta con varias subopciones:
 .. code-block:: bash
 
    cobra compilar archivo.co --tipo python
-   cobra compilar archivo.co --tipo asm
+   cobra compilar archivo.co --tipo rust
    cobra compilar archivo.co --tipo javascript
-   cobra compilar archivo.co --tipo wasm
+   cobra compilar archivo.co --tipo javascript
    cobra ejecutar archivo.co --depurar
    cobra modulos listar
    cobra docs
@@ -80,6 +78,6 @@ Política de targets oficial
 Los ejemplos de esta referencia usan exclusivamente targets canónicos. La lista
 oficial y sus tiers se definen en ``src/pcobra/cobra/transpilers/targets.py``.
 
-Los nombres ``python``, ``javascript`` y ``java`` también pueden aparecer en la
+Los nombres ``python``, ``javascript`` y ``rust`` también pueden aparecer en la
 CLI como **orígenes reverse de entrada** para ``cobra transpilar-inverso``. Esa
 capacidad no amplía la lista de destinos oficiales de salida.

@@ -93,7 +93,7 @@ un error con el nombre del entry point y la causa concreta para facilitar el
 diagnóstico.
 
 Cada transpilador hereda de ``NodeVisitor`` e inyecta las funciones de
-visita desde módulos específicos. Por ejemplo, en el backend de Go se
+visita desde módulos específicos. Por ejemplo, en el backend oficial se
 asignan dinámicamente las funciones ``visit_<nodo>``:
 
 .. code-block:: python
@@ -103,7 +103,7 @@ asignan dinámicamente las funciones ``visit_<nodo>``:
    for nombre, funcion in go_nodes.items():
        setattr(TranspiladorGo, f"visit_{nombre}", funcion)
 
-Otros lenguajes como ``cpp`` realizan asignaciones equivalentes de forma
+Otros lenguajes como otro backend oficial realizan asignaciones equivalentes de forma
 explícita para mantener separada la lógica de cada nodo.
 
 Patr\u00f3n Command

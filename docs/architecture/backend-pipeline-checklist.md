@@ -25,5 +25,7 @@ Usar esta checklist antes de mergear nuevas features que afecten compile/transpi
 ## Validación y CI
 
 - [ ] Se ejecutó el auditor `scripts/ci/audit_backend_pipeline_entrypoint.py`.
+- [ ] Se ejecutó el auditor `scripts/ci/audit_public_backend_exposure_terms.py` para impedir exposiciones públicas de alias/backends retirados (`go`, `cpp`, `java`, `wasm`, `asm`, `py`, `js`, `node`, `golang`, `jvm`) en registros de transpiladores, choices de CLI/GUI y documentación de usuario no histórica.
+- [ ] Cualquier mención a alias/backends retirados vive únicamente en documentos históricos explícitos, pruebas de rechazo o shims legacy autorizados.
 - [ ] La documentación de arquitectura (`docs/architecture/overview.md`) sigue reflejando el flujo oficial.
 - [ ] Si hubo excepciones temporales por migración, están justificadas y acotadas en ADR/ticket.
