@@ -75,6 +75,27 @@ REGLAS_LIBRO_PROGRAMACION: tuple[ReglaLibroProgramacion, ...] = (
         accuracy=0.55,
         interpretability=0.75,
     ),
+
+    ReglaLibroProgramacion(
+        id="LP-3.3-RETORNO-CANONICO",
+        seccion="§3.3 Sentencias",
+        descripcion="Usar la sentencia de retorno implementada por el parser vigente: retorno.",
+        fragmento_valido='func saludar(nombre):\n    retorno nombre\nfin',
+        construir_mensaje=lambda _codigo: "Usar `retorno` como sentencia de salida en funciones",
+        aplica=lambda codigo: "retornar" in codigo,
+        accuracy=0.7,
+        interpretability=0.9,
+    ),
+    ReglaLibroProgramacion(
+        id="LP-3.9-FUNCIONES-CON-FUNC",
+        seccion="§3.9 Contrato para sugerencias automáticas en GUI/IA",
+        descripcion="Declarar funciones con las formas aceptadas por el parser y autorizadas por el contrato de sugerencias: func o definir.",
+        fragmento_valido='func calcular_total(subtotal, impuesto):\n    retorno subtotal + impuesto\nfin',
+        construir_mensaje=lambda _codigo: "Declarar funciones con `func` o `definir`, no con `funcion`",
+        aplica=lambda codigo: "funcion " in codigo,
+        accuracy=0.75,
+        interpretability=0.9,
+    ),
     ReglaLibroProgramacion(
         id="LP-3.6-USAR-SIN-ALIAS",
         seccion="§3.6 Módulos",
