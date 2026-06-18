@@ -823,7 +823,7 @@ Funciones disponibles en la GUI:
     *   **Guardar:** Guarda el archivo activo en su ubicación actual.
     *   **Guardar como:** Guarda el contenido del editor en la ruta indicada.
     *   **Recargar:** Vuelve a leer desde disco el archivo activo.
-    *   **Árbol de directorios:** Muestra carpetas y archivos `.co`/`.cobra`; al seleccionar un archivo Cobra, lo carga directamente en el editor.
+    *   **Árbol de directorios:** Usa la API canónica `pcobra.gui.runtime.crear_arbol_directorios`. El panel parte del directorio de trabajo actual, muestra primero las carpetas y después los archivos Cobra (`.co`/`.cobra`) en orden estable, y carga las subcarpetas bajo demanda al expandirlas. Solo los archivos Cobra visibles disparan la carga en el editor; el IDLE conecta el evento `on_click` con `cargar_archivo_desde_arbol`, que valida la extensión antes de leer el contenido y actualiza el estado del archivo activo.
 *   **Ejecución y transpilación:**
     *   **Selector de target:** Elige el lenguaje de destino disponible para transpilación.
     *   **Switch de transpilación:** Alterna entre ejecutar el código directamente o transpilarlo al target seleccionado.
