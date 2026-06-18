@@ -631,7 +631,7 @@ def crear_handler_sugerencias_agix(
     salida: Any,
     page: Any,
 ) -> Any:
-    """Wrapper legacy interno para sugerencias; delega en el handler común."""
+    """Alias legacy interno pendiente de retirada; usar ``crear_handler_sugerencias``."""
 
     return crear_handler_sugerencias(entrada=entrada, salida=salida, page=page)
 

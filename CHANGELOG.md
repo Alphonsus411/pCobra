@@ -1,3 +1,6 @@
+## Pendiente
+- Planificada la retirada del alias legacy interno `crear_handler_sugerencias_agix` tras confirmar que no tiene consumidores externos en el repositorio; la entrada canónica y recomendada del IDLE gráfico es `crear_handler_sugerencias`.
+
 ## v10.0.13 - 2026-03-29
 - Fix: la CLI ya no depende de `scripts.benchmarks` en tiempo de ejecución.
 - RuntimeManager ahora centraliza la validación de seguridad+ABI para `run`, `test` y `build` en CLI v2 mediante `validate_command_runtime`, evitando atajos directos fuera del manager.
