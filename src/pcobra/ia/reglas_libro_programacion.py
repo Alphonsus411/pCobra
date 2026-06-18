@@ -20,6 +20,7 @@ class ReglaLibroProgramacion:
     seccion: str
     descripcion: str
     fragmento_valido: str
+    fragmento_no_recomendado: str | None
     categoria: str
     severidad: str
     aplicable_automaticamente: bool
@@ -63,6 +64,7 @@ REGLAS_LIBRO_PROGRAMACION: tuple[ReglaLibroProgramacion, ...] = (
         seccion="§3.1 Léxico",
         descripcion="Usar identificadores válidos y legibles para variables, funciones, clases y módulos.",
         fragmento_valido="total = 10\nimprimir(total)",
+        fragmento_no_recomendado="x = 10\nimprimir(x)",
         categoria="nombres",
         severidad="baja",
         aplicable_automaticamente=True,
@@ -76,6 +78,7 @@ REGLAS_LIBRO_PROGRAMACION: tuple[ReglaLibroProgramacion, ...] = (
         seccion="§3.3 Sentencias",
         descripcion="Preferir sentencias canónicas verificadas por el parser para acciones con efecto.",
         fragmento_valido='imprimir("Hola, Cobra")',
+        fragmento_no_recomendado=None,
         categoria="observabilidad",
         severidad="informativa",
         aplicable_automaticamente=False,
@@ -89,6 +92,7 @@ REGLAS_LIBRO_PROGRAMACION: tuple[ReglaLibroProgramacion, ...] = (
         seccion="§3.3 Sentencias",
         descripcion="Usar la sentencia de retorno implementada por el parser vigente: retorno.",
         fragmento_valido="func saludar(nombre):\n    retorno nombre\nfin",
+        fragmento_no_recomendado="func saludar(nombre):\n    retornar nombre\nfin",
         categoria="forma canónica",
         severidad="media",
         aplicable_automaticamente=True,
@@ -102,6 +106,7 @@ REGLAS_LIBRO_PROGRAMACION: tuple[ReglaLibroProgramacion, ...] = (
         seccion="§3.9 Contrato para sugerencias automáticas en GUI/IA",
         descripcion="Declarar funciones con las formas aceptadas por el parser y autorizadas por el contrato de sugerencias: func o definir.",
         fragmento_valido="func calcular_total(subtotal, impuesto):\n    retorno subtotal + impuesto\nfin",
+        fragmento_no_recomendado="funcion calcular_total(subtotal, impuesto):\n    retorno subtotal + impuesto\nfin",
         categoria="léxico/sintaxis",
         severidad="alta",
         aplicable_automaticamente=True,
@@ -115,6 +120,7 @@ REGLAS_LIBRO_PROGRAMACION: tuple[ReglaLibroProgramacion, ...] = (
         seccion="§3.6 Módulos",
         descripcion='Usar módulos con la forma aceptada por el parser: usar "modulo", sin alias como.',
         fragmento_valido='usar "numero"\nes_finito(10)',
+        fragmento_no_recomendado='usar "numero" como numero\nnumero.es_finito(10)',
         categoria="estilo",
         severidad="media",
         aplicable_automaticamente=True,

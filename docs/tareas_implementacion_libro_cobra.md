@@ -29,6 +29,18 @@ Checklist obligatorio de la misma tarea:
 - [ ] Actualizar la documentación del Libro con la sintaxis, ejemplos válidos y contraejemplos inválidos.
 - [ ] Añadir o actualizar pruebas de contrato Lexer/Parser que cubran tokenización, parseo y errores esperados.
 
+
+## Contrato obligatorio para nuevas reglas de sugerencias del Libro
+
+Toda regla nueva derivada del Libro y registrada en `REGLAS_LIBRO_PROGRAMACION` debe añadirse con prueba de contrato en `tests/gui/test_auto_suggestion_parser_contract.py` o `tests/unit/test_parser_sugerencias.py`. La regla debe declarar `id`, `seccion`, `descripcion` y `fragmento_valido`; además, cuando aplique, debe declarar `fragmento_no_recomendado` con un ejemplo no recomendado o inválido. El `fragmento_valido` tiene que pasar siempre por `Lexer(fragmento).tokenizar()` y `Parser(tokens).parsear()` para evitar sugerencias que amplíen la sintaxis sin soporte real del parser.
+
+Checklist obligatorio de la misma tarea:
+
+- [ ] Añadir o actualizar la entrada en `REGLAS_LIBRO_PROGRAMACION` con metadatos trazables al Libro.
+- [ ] Incluir `fragmento_valido` parseable por `Lexer` y `Parser`.
+- [ ] Incluir `fragmento_no_recomendado` cuando exista una forma desaconsejada o inválida relacionada.
+- [ ] Añadir o ampliar una prueba de contrato que itere todas las reglas y falle si faltan metadatos obligatorios o si el fragmento válido deja de parsear.
+
 ---
 
 ## A) Tickets de creación/actualización del libro
