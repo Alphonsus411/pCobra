@@ -96,16 +96,27 @@ def test_recomendaciones_gui_cubren_ejemplos_invalidos_sin_ampliar_parser(
 
 
 def test_reglas_libro_programacion_declaran_fragmentos_soportados_por_parser() -> None:
-    """Cada regla interna debe exponer un fragmento canónico parseable."""
+    """Cada regla interna debe exponer metadatos mínimos y un fragmento parseable."""
     from pcobra.ia.reglas_libro_programacion import REGLAS_LIBRO_PROGRAMACION
 
     ids = {regla.id for regla in REGLAS_LIBRO_PROGRAMACION}
     assert "LP-3.3-RETORNO-CANONICO" in ids
     assert "LP-3.9-FUNCIONES-CON-FUNC" in ids
 
+    campos_obligatorios = ("id", "seccion", "descripcion", "fragmento_valido")
+
     for regla in REGLAS_LIBRO_PROGRAMACION:
+        for campo in campos_obligatorios:
+            valor = getattr(regla, campo, None)
+            assert isinstance(valor, str) and valor.strip(), (regla, campo)
+
         ast = _parsear(regla.fragmento_valido)
         assert ast, regla.id
+
+        if regla.fragmento_no_recomendado is not None:
+            assert regla.fragmento_no_recomendado.strip(), regla.id
+            assert regla.fragmento_no_recomendado.strip() != regla.fragmento_valido.strip()
+
         assert regla.categoria in {
             "léxico/sintaxis",
             "estilo",
@@ -157,6 +168,8 @@ def test_reglas_libro_programacion_nuevas_cubren_casos_validos_e_invalidos(
 
     regla = next(regla for regla in REGLAS_LIBRO_PROGRAMACION if regla.id == rule_id)
     assert regla.fragmento_valido.strip() == fragmento_valido.strip()
+    assert regla.fragmento_no_recomendado is not None
+    assert regla.fragmento_no_recomendado.strip() == fragmento_invalido.strip()
     assert _parsear(fragmento_valido)
     with pytest.raises(ParserError):
-        _parsear(fragmento_invalido)
+        _parsear(regla.fragmento_no_recomendado)
