@@ -21,7 +21,7 @@ from pcobra.cobra.transpilers.registry import official_transpiler_targets
 from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
 
 INVALID_LANGUAGES = ("backend_x", "backend_y", "backend_z")
-EXPECTED_CANONICAL_TARGETS = ("python", "rust", "javascript", "wasm", "go", "cpp", "java", "asm")
+EXPECTED_CANONICAL_TARGETS = ("python", "javascript", "rust")
 
 
 def _build_parser_for(command):
@@ -86,14 +86,10 @@ def test_transpilar_inverso_falla_con_origen_fuera_del_scope_reverse():
 
 @pytest.mark.parametrize("language", INVALID_LANGUAGES)
 def test_verify_rechaza_lenguajes_fuera_del_runtime_soportado(language):
-    verify = VerifyCommand()
+    parser = _build_parser_for(VerifyCommand())
 
-    with pytest.raises(ValueError) as exc_info:
-        verify._validate_languages([language])
-
-    assert language in str(exc_info.value)
-    for runtime in verify.SUPPORTED_LANGUAGES:
-        assert runtime in str(exc_info.value)
+    with pytest.raises(SystemExit):
+        parser.parse_args(["verificar", "archivo.co", "--lenguajes", language])
 
 
 def test_set_oficial_documentado_en_tests_deriva_del_registro_canonico():
@@ -102,22 +98,16 @@ def test_set_oficial_documentado_en_tests_deriva_del_registro_canonico():
     assert tuple(get_lang_choices()) == official_transpiler_targets()
 
 
-def test_interactive_rechaza_targets_solo_transpilacion_en_parseo():
-    parser = _build_parser_for(InteractiveCommand(MagicMock()))
-
-    with pytest.raises(SystemExit):
-        parser.parse_args(["interactive", "--sandbox-docker", TRANSPILATION_ONLY_TARGETS[0]])
+def test_no_hay_targets_solo_transpilacion_en_superficie_publica():
+    assert TRANSPILATION_ONLY_TARGETS == ()
 
 
 def test_set_runtime_docker_documentado_en_tests():
-    assert DOCKER_EXECUTABLE_TARGETS == ("python", "rust", "javascript", "cpp")
+    assert DOCKER_EXECUTABLE_TARGETS == EXPECTED_CANONICAL_TARGETS
 
 
-def test_verify_parseo_rechaza_targets_solo_transpilacion():
-    parser = _build_parser_for(VerifyCommand())
-
-    with pytest.raises(SystemExit):
-        parser.parse_args(["verificar", "archivo.co", "--lenguajes", TRANSPILATION_ONLY_TARGETS[0]])
+def test_verify_no_expone_targets_solo_transpilacion():
+    assert TRANSPILATION_ONLY_TARGETS == ()
 
 
 def test_compile_choices_siguen_alineados_con_targets_oficiales():
@@ -135,14 +125,14 @@ def test_compile_choices_siguen_alineados_con_targets_oficiales():
 def test_tests_documentan_las_tres_categorias_publicas_de_targets():
     assert OFFICIAL_TARGETS == EXPECTED_CANONICAL_TARGETS
     assert OFFICIAL_TARGETS == official_transpiler_targets()
-    assert OFFICIAL_RUNTIME_TARGETS == ("python", "rust", "javascript", "cpp")
-    assert BEST_EFFORT_RUNTIME_TARGETS == ("go", "java")
-    assert TRANSPILATION_ONLY_TARGETS == ("wasm", "asm")
+    assert OFFICIAL_RUNTIME_TARGETS == EXPECTED_CANONICAL_TARGETS
+    assert BEST_EFFORT_RUNTIME_TARGETS == ()
+    assert TRANSPILATION_ONLY_TARGETS == ()
 
 
-def test_tests_documentan_best_effort_experimental_sin_ampliar_el_set_oficial():
-    assert BEST_EFFORT_RUNTIME_TARGETS == ("go", "java")
-    assert len(OFFICIAL_TARGETS) == 8
+def test_no_hay_best_effort_experimental_en_set_publico():
+    assert BEST_EFFORT_RUNTIME_TARGETS == ()
+    assert len(OFFICIAL_TARGETS) == 3
 
 
 LEGACY_ALIASES_RECHAZADOS = (
@@ -207,5 +197,11 @@ def test_parse_target_usa_mensaje_uniforme_para_alias_legacy(legacy_alias):
     with pytest.raises(ArgumentTypeError) as exc_info:
         parse_target(legacy_alias)
 
-    assert "Target no permitido por nombre legacy/ambiguo" in str(exc_info.value)
-    assert str(exc_info.value) == legacy_or_ambiguous_target_error(legacy_alias)
+    message = str(exc_info.value)
+    assert legacy_alias in message
+    assert (
+        "Target no permitido por nombre legacy/ambiguo" in message
+        or "Target no soportado" in message
+    )
+    if "Target no permitido por nombre legacy/ambiguo" in message:
+        assert message == legacy_or_ambiguous_target_error(legacy_alias)

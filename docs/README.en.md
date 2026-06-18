@@ -32,7 +32,7 @@ Official backend support tiers:
 - **Tier 2**: .
 <!-- END GENERATED TARGET POLICY SUMMARY EN -->
 
-Public wording rule: keep **official output targets** separate from **reverse transpilation input origins**. Reverse input currently accepts only `python`, `javascript`, and `java`, and that controlled scope does **not** expand the official output list above.
+Public wording rule: keep **official output targets** separate from **reverse transpilation input origins**. Historical reverse inputs, when documented, belong in internal/historical appendices and do **not** expand the official output list above.
 
 ## Table of Contents
 
@@ -344,7 +344,7 @@ The project officially supports:
 # Main Features
 
 - Lexer and Parser: Implementation of a lexer to tokenize the source code and a parser to build an abstract syntax tree (AST).
-- Public transpilers to `python`, `rust`, and `javascript`: Cobra converts code to the officially supported public UX targets. Legacy transpilers remain internal-only for migration/regression workflows.
+- Public transpilers to `python`, `rust`, and `javascript`: Cobra converts code to the officially supported public UX targets. Historical transpiler notes belong only in internal/historical appendices.
 - Support for advanced structures: declaration of variables, functions, classes, lists and dictionaries, as well as loops and conditionals.
 - Native modules with I/O functions, math utilities and data structures ready to use from Cobra.
 - Text helpers mirror Python's `textwrap`: `indentar_texto`, `desindentar_texto`, `envolver_texto` and `acortar_texto` expose consistent indentation, wrapping and shortening utilities from both the core libraries and the Spanish standard library.
@@ -604,7 +604,7 @@ If auto-install is enabled by policy/configuration (for example `COBRA_USAR_INST
 
 ## Module mapping file
 
-Transpilers resolve imports from `cobra.toml` using the canonical `[modulos."..."]` table. Public documentation accepts only the official backend names `python`, `javascript`, and `rust`. Internal/legacy backend routes remain outside the public contract. Legacy aliases and root-level mappings are rejected.
+Transpilers resolve imports from `cobra.toml` using the canonical `[modulos."..."]` table. Public documentation accepts only the official backend names `python`, `javascript`, and `rust`. Internal/historical backend routes remain outside the public contract. Legacy aliases and root-level mappings are rejected.
 
 Example format:
 
@@ -618,7 +618,7 @@ If an entry is not found, the transpiler will load the file indicated in the `im
 
 ## Calling the transpiler
 
-The folder [`src/pcobra/cobra/transpilers/transpiler`](../src/pcobra/cobra/transpilers/transpiler) contains the transpiler implementation used by the public backends `python`, `javascript`, and `rust` (plus internal compatibility routes). Once the dependencies are installed you can call the transpiler from your own script like this:
+The folder [`src/pcobra/cobra/transpilers/transpiler`](../src/pcobra/cobra/transpilers/transpiler) contains the transpiler implementation used by the public backends `python`, `javascript`, and `rust`. Once the dependencies are installed you can call the transpiler from your own script like this:
 
 ```python
 from cobra.transpilers.transpiler.to_python import TranspiladorPython

@@ -22,7 +22,7 @@ Resumen por tier
 ----------------
 
 - **Tier 1 público**: ``python``, ``javascript`` y ``rust``.
-- **Legacy interno/histórico**: ``wasm``, ``go``, ``cpp``, ``java`` y ``asm`` no forman parte de la superficie pública.
+- **Legacy interno/histórico**: cualquier target retirado se documenta solo en anexos internos/históricos y no forma parte de la superficie pública.
 
 Capacidades públicas por backend
 --------------------------------
@@ -33,12 +33,12 @@ Interpretación oficial:
 
 - ``python`` es el único backend con compatibilidad SDK completa y estado Holobit ``full``.
 - ``rust`` y ``javascript`` tienen runtime oficial verificable y adaptador Holobit mantenido por el proyecto, pero siguen en estado contractual ``partial``.
-- ``wasm``, ``go``, ``cpp``, ``java`` y ``asm`` permanecen como referencias históricas o rutas internas de migración/regresión, sin runtime Docker oficial público ni contrato de salida público.
+- Las referencias históricas o rutas internas de migración/regresión no tienen runtime Docker oficial público ni contrato de salida público.
 
 Transpilación inversa (feature independiente)
 ---------------------------------------------
 
-La transpilación inversa es una capacidad separada de los backends de salida. Los orígenes soportados hoy son ``python``, ``javascript`` y ``java``; el destino final público debe ser uno de ``python``, ``javascript`` o ``rust``.
+La transpilación inversa es una capacidad separada de los backends de salida. El destino final público debe ser uno de ``python``, ``javascript`` o ``rust``; cualquier origen histórico adicional se documenta solo en anexos internos/históricos.
 
 .. code-block:: bash
 
