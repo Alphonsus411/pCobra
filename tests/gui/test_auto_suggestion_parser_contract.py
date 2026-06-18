@@ -10,7 +10,6 @@ import pytest
 
 from pcobra.cobra.core import Lexer, Parser, ParserError
 
-
 RECOMENDACIONES_GUI = [
     pytest.param(
         "retorno_en_funciones",
@@ -107,6 +106,15 @@ def test_reglas_libro_programacion_declaran_fragmentos_soportados_por_parser() -
     for regla in REGLAS_LIBRO_PROGRAMACION:
         ast = _parsear(regla.fragmento_valido)
         assert ast, regla.id
+        assert regla.categoria in {
+            "léxico/sintaxis",
+            "estilo",
+            "nombres",
+            "forma canónica",
+            "observabilidad",
+        }
+        assert regla.severidad in {"informativa", "baja", "media", "alta"}
+        assert isinstance(regla.aplicable_automaticamente, bool)
 
 
 @pytest.mark.parametrize(
