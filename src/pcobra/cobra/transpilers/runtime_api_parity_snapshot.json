@@ -571,7 +571,9 @@
       "standard_library": [
         "preguntar_texto"
       ]
-    },
+    }
+  },
+  "historical_backend_runtime_api": {
     "wasm": {
       "corelibs": [
         "mapear_aplanado"

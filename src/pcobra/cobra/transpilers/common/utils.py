@@ -67,10 +67,6 @@ STANDARD_IMPORTS = {
         *build_javascript_standard_runtime_lines(),
     ],
     "rust": build_rust_standard_runtime_lines(),
-    "cpp": [
-        "#include <iostream>",
-        "#include <stdexcept>",
-    ],
 }
 
 HOOK_SIGNATURE_MARKERS = {

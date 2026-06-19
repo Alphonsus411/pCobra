@@ -8,6 +8,7 @@ contextos explícitamente históricos, pruebas de rechazo o shims legacy.
 
 from __future__ import annotations
 
+import json
 import re
 import sys
 from dataclasses import dataclass
@@ -15,6 +16,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 FORBIDDEN_PUBLIC_TERMS = ("go", "cpp", "java", "wasm", "asm", "py", "js", "node", "golang", "jvm")
+OFFICIAL_PUBLIC_BACKENDS = ("python", "javascript", "rust")
 _TERM_RE = re.compile(r"(?<![\w.+/-])(" + "|".join(map(re.escape, FORBIDDEN_PUBLIC_TERMS)) + r")(?![\w.+/-])", re.IGNORECASE)
 
 PUBLIC_REGISTRY_FILES = (
@@ -22,6 +24,7 @@ PUBLIC_REGISTRY_FILES = (
     Path("src/pcobra/cobra/transpilers/targets.py"),
     Path("src/pcobra/cobra/config/transpile_targets.py"),
 )
+ACTIVE_RUNTIME_SNAPSHOT = Path("src/pcobra/cobra/transpilers/runtime_api_parity_snapshot.json")
 CHOICE_ROOTS = (
     Path("src/pcobra/cobra/cli"),
     Path("src/pcobra/gui"),
@@ -133,8 +136,45 @@ def find_violations(root: Path = ROOT) -> list[Violation]:
     return violations
 
 
+def _audit_active_runtime_snapshot(root: Path = ROOT) -> list[Violation]:
+    """Verifica que el snapshot activo no publique backends retirados."""
+    path = root / ACTIVE_RUNTIME_SNAPSHOT
+    if not path.exists():
+        return []
+    data = json.loads(path.read_text(encoding="utf-8"))
+    backend_runtime_api = data.get("backend_runtime_api")
+    if not isinstance(backend_runtime_api, dict):
+        return [
+            Violation(
+                ACTIVE_RUNTIME_SNAPSHOT,
+                1,
+                "backend_runtime_api",
+                "snapshot activo de runtime",
+                "backend_runtime_api debe ser un objeto JSON",
+            )
+        ]
+
+    violations: list[Violation] = []
+    active_keys = tuple(backend_runtime_api)
+    if active_keys != OFFICIAL_PUBLIC_BACKENDS:
+        legacy_keys = [key for key in active_keys if key in FORBIDDEN_PUBLIC_TERMS]
+        term = ",".join(legacy_keys) if legacy_keys else ",".join(active_keys)
+        violations.append(
+            Violation(
+                ACTIVE_RUNTIME_SNAPSHOT,
+                1,
+                term,
+                "snapshot activo de runtime",
+                "backend_runtime_api debe exponer exactamente python, javascript y rust; "
+                "las entradas legacy deben vivir en historical_backend_runtime_api",
+            )
+        )
+    return violations
+
+
 def main() -> int:
     violations = find_violations(ROOT)
+    violations.extend(_audit_active_runtime_snapshot(ROOT))
     if violations:
         print("❌ Auditor de exposiciones públicas de backends/alias retirados: FALLÓ", file=sys.stderr)
         for violation in violations:
