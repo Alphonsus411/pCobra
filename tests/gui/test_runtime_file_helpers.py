@@ -1,6 +1,15 @@
 from pathlib import Path
 
+import pytest
+
 from pcobra.gui import runtime
+
+
+@pytest.fixture(autouse=True)
+def _ejecutar_en_tmp_path(monkeypatch, tmp_path: Path):
+    """Alinea los helpers GUI con la política de sandbox de rutas Cobra."""
+
+    monkeypatch.chdir(tmp_path)
 
 
 def test_es_archivo_cobra_prioriza_extensiones_documentadas():
@@ -117,3 +126,73 @@ def test_ejecutar_codigo_usa_dependencias_gui_y_captura_stdout_stderr(monkeypatc
     assert "salida desde lexer" in salida
     assert "stdout ast=AST" in salida
     assert "stderr capturado" in salida
+
+
+def test_helpers_archivo_cubren_nuevo_abrir_guardar_como_guardar_y_recargar(
+    tmp_path: Path,
+):
+    estado = runtime.GuiFileState()
+    origen = tmp_path / "origen.co"
+    destino = tmp_path / "destino.cobra"
+    origen.write_text("imprimir('origen')", encoding="utf-8")
+
+    contenido, mensaje = runtime.crear_archivo_nuevo_en_editor(estado)
+    assert contenido == ""
+    assert mensaje == "Archivo nuevo creado en memoria."
+    assert estado.ruta is None
+    assert estado.contenido_cargado == ""
+    assert estado.cambios_sin_guardar is False
+
+    contenido, mensaje = runtime.abrir_archivo_desde_ruta(origen, estado)
+    assert contenido == "imprimir('origen')"
+    assert mensaje == f"Archivo cargado: {origen.resolve()}"
+    assert estado.ruta == origen.resolve()
+    assert estado.contenido_cargado == "imprimir('origen')"
+    assert estado.cambios_sin_guardar is False
+
+    contenido, mensaje = runtime.guardar_archivo_como(
+        destino, "imprimir('guardar como')", estado
+    )
+    assert contenido == "imprimir('guardar como')"
+    assert mensaje == f"Archivo guardado: {destino.resolve()}"
+    assert destino.read_text(encoding="utf-8") == "imprimir('guardar como')"
+    assert estado.ruta == destino.resolve()
+    assert estado.contenido_cargado == "imprimir('guardar como')"
+    assert estado.cambios_sin_guardar is False
+
+    contenido, mensaje = runtime.guardar_archivo_activo(
+        "imprimir('guardar activo')", estado
+    )
+    assert contenido == "imprimir('guardar activo')"
+    assert mensaje == f"Archivo guardado: {destino.resolve()}"
+    assert destino.read_text(encoding="utf-8") == "imprimir('guardar activo')"
+    assert estado.contenido_cargado == "imprimir('guardar activo')"
+
+    destino.write_text("imprimir('recargado')", encoding="utf-8")
+    contenido, mensaje = runtime.recargar_archivo_activo(estado)
+    assert contenido == "imprimir('recargado')"
+    assert mensaje == f"Archivo cargado: {destino.resolve()}"
+    assert estado.contenido_cargado == "imprimir('recargado')"
+    assert estado.cambios_sin_guardar is False
+
+
+def test_cargar_archivo_desde_arbol_reusa_apertura_y_valida_extension(tmp_path: Path):
+    estado = runtime.GuiFileState()
+    archivo_cobra = tmp_path / "desde_arbol.cobra"
+    archivo_cobra.write_text("imprimir('arbol')", encoding="utf-8")
+    archivo_no_cobra = tmp_path / "nota.txt"
+    archivo_no_cobra.write_text("texto", encoding="utf-8")
+
+    contenido, mensaje = runtime.cargar_archivo_desde_arbol(archivo_cobra, estado)
+
+    assert contenido == "imprimir('arbol')"
+    assert mensaje == f"Archivo cargado: {archivo_cobra.resolve()}"
+    assert estado.ruta == archivo_cobra.resolve()
+    assert estado.contenido_cargado == "imprimir('arbol')"
+
+    try:
+        runtime.cargar_archivo_desde_arbol(archivo_no_cobra, estado)
+    except ValueError as exc:
+        assert "Selecciona un archivo Cobra" in str(exc)
+    else:
+        raise AssertionError("El árbol solo debe cargar archivos .co/.cobra")
