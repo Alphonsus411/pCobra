@@ -93,13 +93,16 @@ el equipo decide exponer todos los archivos en el árbol.
 SUGERENCIAS_BUTTON_TEXT = "Sugerencias del Libro"
 """Etiqueta homogénea para la acción de sugerencias trazables en las GUIs."""
 
+CANONICAL_SUGGESTION_ENGINE = "agix"
+"""Motor opcional canónico para sugerencias; ``agi-core`` no está declarado."""
+
 
 @dataclass(frozen=True, slots=True)
 class MotorIASugerencias:
     """Resultado liviano de disponibilidad del motor IA para sugerencias."""
 
     disponible: bool
-    nombre: str = "agix"
+    nombre: str = CANONICAL_SUGGESTION_ENGINE
     detalle: str = ""
 
     @property
@@ -113,7 +116,7 @@ class MotorIASugerencias:
             )
         return self.detalle or (
             "Sugerencias deshabilitadas: instala la dependencia opcional "
-            "de sugerencias para activar esta acción."
+            f"de sugerencias {CANONICAL_SUGGESTION_ENGINE!r} para activar esta acción."
         )
 
 
@@ -136,13 +139,13 @@ def detectar_motor_ia_sugerencias() -> MotorIASugerencias:
     """
 
     try:
-        spec = importlib.util.find_spec("agix")
+        spec = importlib.util.find_spec(CANONICAL_SUGGESTION_ENGINE)
     except (ImportError, ModuleNotFoundError, ValueError) as exc:
         return MotorIASugerencias(
             disponible=False,
             detalle=(
                 "Sugerencias deshabilitadas: no se pudo comprobar la "
-                f"dependencia opcional 'agix' ({exc})."
+                f"dependencia opcional {CANONICAL_SUGGESTION_ENGINE!r} ({exc})."
             ),
         )
 
@@ -151,7 +154,7 @@ def detectar_motor_ia_sugerencias() -> MotorIASugerencias:
             disponible=False,
             detalle=(
                 "Sugerencias deshabilitadas: instala la dependencia opcional "
-                "'agix' para activar esta acción."
+                f"{CANONICAL_SUGGESTION_ENGINE!r} para activar esta acción."
             ),
         )
     return MotorIASugerencias(disponible=True)
