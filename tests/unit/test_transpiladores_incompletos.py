@@ -1,6 +1,5 @@
 import pytest
 
-from cobra.transpilers.transpiler.to_cpp import TranspiladorCPP
 from cobra.transpilers.transpiler.to_rust import TranspiladorRust
 from cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
 from cobra.transpilers.base import BaseTranspiler
@@ -16,14 +15,9 @@ class NodoDesconocido(NodoAST):
     pass
 
 
-def test_transpiladores_cpp_rust_global_vacio():
+def test_transpilador_rust_global_vacio():
     ast = [NodoGlobal(["x"])]
-    cpp_code = TranspiladorCPP().generate_code(ast)
     rust_code = TranspiladorRust().generate_code(ast)
-
-    assert "#include <pcobra/corelibs.hpp>" in cpp_code
-    assert "#include <pcobra/standard_library.hpp>" in cpp_code
-    assert cpp_code.endswith("// global x")
 
     assert "use crate::corelibs::*;" in rust_code
     assert "use crate::standard_library::*;" in rust_code

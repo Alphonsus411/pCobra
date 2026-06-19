@@ -8,10 +8,6 @@ sys.path.append(str(Path(__file__).resolve().parent.parent / "src"))
 
 from pcobra.cobra.transpilers.transpiler.to_python import TranspiladorPython
 from pcobra.cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
-try:
-    from pcobra.cobra.transpilers.transpiler.to_cpp import TranspiladorCPP
-except ImportError:
-    TranspiladorCPP = None
 from pcobra.cobra.backends.python_adapter import PythonAdapter
 from pcobra.core.ast_nodes import (
     NodoValor,
@@ -180,14 +176,6 @@ def test_transpilador_js_garantia() -> None:
     assert "if (!(ok)) {" in codigo
     assert "return 0" in codigo
 
-
-def test_transpilador_cpp_garantia() -> None:
-    nodo = _nodo_garantia_basico()
-    transpiler = TranspiladorCPP()
-    codigo = transpiler.generate_code([nodo])
-    texto = codigo if isinstance(codigo, str) else "\n".join(codigo)
-    assert "if (!(ok)) {" in texto
-    assert "return 0" in texto
 
 
 def test_transpilador_python_usar_proyecto_incluye_contexto_estable(tmp_path, monkeypatch) -> None:

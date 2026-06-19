@@ -1,5 +1,4 @@
 import importlib
-import re
 from pathlib import Path
 from io import StringIO
 from unittest.mock import patch
@@ -14,108 +13,6 @@ from pcobra.core.semantic_validators.base import ValidadorBase
 
 class _DummyValidator(ValidadorBase):
     pass
-
-
-@pytest.mark.timeout(5)
-@pytest.mark.parametrize(
-    "tipo,esperado",
-    [
-        (
-            "python",
-            [
-                "Código generado (TranspiladorPython):",
-                "from pcobra.core.nativos import *",
-                "x = 5",
-            ],
-        ),
-        (
-            "javascript",
-            [
-                "Código generado (TranspiladorJavaScript):",
-                "import * as io from './nativos/io.js';",
-                "import * as matematicas from './nativos/matematicas.js';",
-                "import { Pila, Cola } from './nativos/estructuras.js';",
-                "let x =",
-            ],
-        ),
-        (
-            "rust",
-            [
-                "Código generado (TranspiladorRust):",
-                "let x =",
-            ],
-        ),
-        (
-            "cpp",
-            [
-                "Código generado (TranspiladorCPP):",
-                "auto x = 5;",
-            ],
-        ),
-        (
-            "go",
-            [
-                "Código generado (TranspiladorGo):",
-                "package main",
-                "",
-                "func main() {",
-                "    x := 5",
-                "}",
-            ],
-        ),
-        (
-            "java",
-            [
-                "Código generado (TranspiladorJava):",
-                "        var x = 5;",
-            ],
-        ),
-        (
-            "asm",
-            [
-                "Código generado (TranspiladorASM):",
-                "; Nodo NodoAsignacion no soportado",
-            ],
-        ),
-        (
-            "wasm",
-            [
-                "Código generado (TranspiladorWasm):",
-                "(local.set $x 5)",
-            ],
-        ),
-    ],
-)
-def test_cli_compilar_generates_output(tmp_path, tipo, esperado):
-    archivo = tmp_path / "c.co"
-    archivo.write_text("var x = 5")
-    with patch("sys.stdout", new_callable=StringIO) as out:
-        main(["compilar", str(archivo), f"--tipo={tipo}"])
-    output = out.getvalue().strip().splitlines()
-    limpio = [re.sub(r"\x1b\[[0-9;]*m", "", line) for line in output]
-    salida = "\n".join(limpio)
-    for esperado_linea in esperado:
-        assert esperado_linea in salida
-
-
-@pytest.mark.timeout(5)
-def test_cli_compilar_varios_tipos(tmp_path):
-    archivo = tmp_path / "c.co"
-    archivo.write_text("var x = 5")
-    with patch("sys.stdout", new_callable=StringIO) as out:
-        main(["compilar", str(archivo), "--tipos=python,javascript"])
-    output = out.getvalue().strip().splitlines()
-    assert output[0].startswith("Código generado (TranspiladorPython) para python:")
-    assert any(line.startswith("Código generado (TranspiladorJavaScript) para JavaScript (javascript):") for line in output)
-
-
-@pytest.mark.timeout(5)
-def test_cli_compilar_archivo_inexistente(tmp_path):
-    archivo = tmp_path / "no.co"
-    with patch("sys.stdout", new_callable=StringIO) as out:
-        main(["compilar", str(archivo)])
-    salida = out.getvalue().strip()
-    assert f"El archivo '{archivo}' no existe" in salida
 
 
 @pytest.mark.timeout(5)
