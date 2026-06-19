@@ -22,7 +22,7 @@ Esta especificación describe las acciones visibles soportadas por `src/pcobra/g
 | Transpilar desde Ejecutar | Selector + switch `activar` + `ejecutar_handler` | `ejecutar_o_transpilar()` → `transpilar_codigo()` | Obligatorio. | Cuando el switch de transpilación está activo, valida que el target seleccionado exista en `TRANSPILERS`, analiza con `Lexer`/`Parser` y genera código desde el AST. El selector solo puede contener `python`, `javascript` y `rust`. |
 | Tokens | `tokens_handler`, creado por `crear_handler_tokens()` | `mostrar_tokens()` → `analizar_codigo()` | Obligatorio. | Ejecuta `Lexer` y `Parser` mediante `analizar_codigo()` y muestra una línea por token. Los errores se formatean como errores léxicos o sintácticos. |
 | AST | `ast_handler`, creado por `crear_handler_ast()` | `mostrar_ast()` → `analizar_codigo()` | Obligatorio. | Ejecuta `Lexer` y `Parser` mediante `analizar_codigo()` y muestra la representación serializada del AST. |
-| Sugerencias del Libro | `sugerencias_handler`, creado por `crear_handler_sugerencias()`; botón creado por `crear_boton_sugerencias_libro()` | `generar_reporte_sugerencias()` → `analizar_codigo()` → `generar_sugerencias()` | Obligatorio y previo al motor de sugerencias. | Valida primero con `Lexer` y `Parser`. Si hay errores, informa que deben corregirse antes de solicitar sugerencias. Si no hay errores, comprueba el motor opcional `agix` y agrupa las sugerencias por categorías pedagógicas. |
+| Sugerencias del Libro | `sugerencias_handler`, creado por `crear_handler_sugerencias()`; botón creado por `crear_boton_sugerencias_libro()` | `generar_reporte_sugerencias()` → `analizar_codigo()` → `generar_sugerencias()` | Obligatorio y previo al motor de sugerencias. | Valida primero con `Lexer` y `Parser`. Si hay errores, informa que deben corregirse antes de solicitar sugerencias. Si no hay errores, comprueba el motor opcional de sugerencias y agrupa las sugerencias por categorías pedagógicas. |
 | Árbol de directorios | `reconstruir_arbol()`, `establecer_raiz_arbol_handler()` y `cargar_archivo_desde_evento_arbol()` | `normalizar_ruta_archivo_gui()`, `crear_arbol_directorios()`, `listar_directorio_cobra()` y `cargar_archivo_desde_arbol()` | No aplica. | Permite fijar la raíz del árbol, lista carpetas y archivos Cobra `.co`/`.cobra`, carga archivos seleccionados y rechaza entradas que no sean archivos Cobra. |
 
 ## Restricción del selector de transpilación
@@ -43,7 +43,7 @@ El flujo de **Sugerencias del Libro** es deliberadamente conservador:
 2. Ejecutar `analizar_codigo()`.
 3. Dentro de `analizar_codigo()`, ejecutar `Lexer(codigo).tokenizar()`.
 4. Con esos tokens, ejecutar `Parser(tokens).parsear()`.
-5. Solo si los pasos anteriores terminan sin excepción, consultar disponibilidad del motor opcional `agix`.
+5. Solo si los pasos anteriores terminan sin excepción, consultar disponibilidad del motor opcional de sugerencias.
 6. Solo con validación léxica y sintáctica exitosa, llamar a `generar_sugerencias(codigo)`.
 
 Este orden evita generar recomendaciones sobre código que el compilador Cobra no puede tokenizar o parsear correctamente.
