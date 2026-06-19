@@ -18,7 +18,6 @@ El script ``docker/scripts/build.sh`` construye estas imágenes de ejecución en
 - ``cobra``
 - ``cobra-python``
 - ``cobra-javascript``
-- ``cobra-cpp``
 - ``cobra-rust``
 
 Política de ejecución Docker vs transpilación oficial

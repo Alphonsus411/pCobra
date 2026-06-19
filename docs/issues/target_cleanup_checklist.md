@@ -48,7 +48,6 @@ Este documento define el **inventario canónico** y las reglas de aceptación pa
 <!-- BEGIN policy_docker -->
 - `docker/backends/python.Dockerfile`
 - `docker/backends/javascript.Dockerfile`
-- `docker/backends/cpp.Dockerfile`
 - `docker/backends/rust.Dockerfile`
 - `docs/frontend/contenedores.rst`
 <!-- END policy_docker -->

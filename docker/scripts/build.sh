@@ -3,25 +3,22 @@
 set -eu
 
 # Imágenes Docker oficiales con runtime ejecutable en contenedor/sandbox
-IMAGENES="cobra cobra-cpp cobra-javascript cobra-python cobra-rust"
+IMAGENES="cobra cobra-python cobra-javascript cobra-rust"
 
 # Build principal Cobra CLI
 
-echo "[1/5] Construyendo cobra (docker/Dockerfile)"
+echo "[1/4] Construyendo cobra (docker/Dockerfile)"
 docker build -t cobra -f docker/Dockerfile .
 
 # Build por backend con runtime Docker oficial
 
-echo "[2/5] Construyendo cobra-cpp (docker/backends/cpp.Dockerfile)"
-docker build -t cobra-cpp -f docker/backends/cpp.Dockerfile .
-
-echo "[3/5] Construyendo cobra-javascript (docker/backends/javascript.Dockerfile)"
+echo "[2/4] Construyendo cobra-javascript (docker/backends/javascript.Dockerfile)"
 docker build -t cobra-javascript -f docker/backends/javascript.Dockerfile .
 
-echo "[4/5] Construyendo cobra-python (docker/backends/python.Dockerfile)"
+echo "[3/4] Construyendo cobra-python (docker/backends/python.Dockerfile)"
 docker build -t cobra-python -f docker/backends/python.Dockerfile .
 
-echo "[5/5] Construyendo cobra-rust (docker/backends/rust.Dockerfile)"
+echo "[4/4] Construyendo cobra-rust (docker/backends/rust.Dockerfile)"
 docker build -t cobra-rust -f docker/backends/rust.Dockerfile .
 
 echo "✅ Imágenes Docker construidas (ejecución en contenedor):"

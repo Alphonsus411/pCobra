@@ -2,9 +2,9 @@ name: tests
 
 on:
   push:
-    paths: ['**/*.py', 'src/tests/**', '.github/workflows/test.yml']
+    paths: ['**/*.py', 'src/tests/**', 'docker/scripts/build.sh', '.github/workflows/test.yml']
   pull_request:
-    paths: ['**/*.py', 'src/tests/**', '.github/workflows/test.yml']
+    paths: ['**/*.py', 'src/tests/**', 'docker/scripts/build.sh', '.github/workflows/test.yml']
   schedule:
     - cron: '30 3 * * *'
   workflow_dispatch:
@@ -86,6 +86,10 @@ jobs:
         if: runner.os != 'Windows'
         shell: bash
         run: python scripts/ci/validate_targets.py
+      - name: Validate official Docker backend builds
+        if: runner.os != 'Windows'
+        shell: bash
+        run: python scripts/ci/validate_docker_backends.py
       - name: Validate public documentation targets policy
         if: runner.os != 'Windows'
         shell: bash
@@ -133,6 +137,10 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: python scripts/ci/validate_targets.py
+      - name: Validate official Docker backend builds (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: python scripts/ci/validate_docker_backends.py
       - name: Validate public documentation targets policy (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
