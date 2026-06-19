@@ -144,6 +144,7 @@ El objetivo de pCobra es brindar a la comunidad hispanohablante una alternativa 
 - Descripción del Proyecto
 - Arquitectura del compilador
 - Architecture Overview
+- [Especificación del IDLE gráfico](docs/gui_idle_especificacion.md)
 - Ecosistema unificado Cobra
 - Anexos internos (NO PÚBLICO)
 - Instalación
