@@ -8,7 +8,7 @@ Fecha: 2026-06-19
 - No se reintroducen targets legacy como `go`, `cpp`, `java`, `wasm` o `asm` en la GUI ni en la política pública de backend.
 - La GUI debe consumir la lista canónica desde `PUBLIC_BACKENDS`/`OFFICIAL_TARGETS`, nunca una lista local duplicada.
 - No se cambia el contrato Lexer/Parser para estas tareas. Toda sugerencia automática debe validar primero el código de entrada y después validar los fragmentos sugeridos con `Lexer(codigo).tokenizar()` y `Parser(tokens).parsear()`.
-- La librería presente y documentada para sugerencias es `agix`. La mención `agi-core` se considera incoherencia nominal si aparece en requisitos externos: no existe como dependencia declarada del proyecto, por lo que no debe inventarse una integración paralela.
+- La librería presente y documentada para sugerencias es `agix`. La mención `agi-core` se considera incoherencia nominal si aparece en requisitos externos: no existe como dependencia declarada del proyecto, por lo que no debe inventarse una integración paralela sin ADR aprobada.
 
 ## Tarea GUI-01 — Guardado de archivos en el IDLE
 
@@ -53,7 +53,7 @@ Fecha: 2026-06-19
 
 - Usar la fachada `pcobra.ia.analizador_sugerencias`.
 - Mantener `agix` como nombre canónico del motor opcional.
-- Rechazar `agi-core` como nombre de dependencia si no existe en el proyecto.
+- Rechazar `agi-core` como nombre de dependencia si no existe en el proyecto y exigir una ADR aprobada antes de cualquier integración paralela.
 - Agrupar sugerencias por categorías: léxico/sintaxis, estilo, nombres, forma canónica y observabilidad.
 - Validar entrada y fragmentos sugeridos con Lexer/Parser.
 
@@ -97,7 +97,7 @@ Fecha: 2026-06-19
 ## Incoherencias detectadas y tareas de mejora
 
 1. **Nombre `agi-core` vs `agix`:** el proyecto declara y documenta `agix`; no se encontró una dependencia canónica `agi-core`.  
-   **Mejora propuesta:** normalizar nuevas historias de usuario y documentación a `agix`, o abrir una ADR separada si se decide migrar realmente a otra librería.
+   **Mejora propuesta:** normalizar nuevas historias de usuario y documentación a `agix`, o abrir y aprobar una ADR separada si se decide migrar realmente a otra librería o añadir una integración paralela.
 2. **Shims legacy internos:** existen menciones históricas y rutas de compatibilidad.  
    **Mejora propuesta:** mantenerlas fuera de la UX pública y revisar su eliminación según el calendario de compatibilidad.
 3. **Validadores legacy:** cualquier validador fuera de Python/JavaScript/Rust debe permanecer en rutas internas de regresión histórica.  
