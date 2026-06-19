@@ -1,5 +1,12 @@
 from __future__ import annotations
 
+"""Snapshot histórico del runtime WASM retirado.
+
+Este módulo queda fuera del registro activo y del runtime normal. Se conserva
+solo como referencia de migración/regresión para contratos host-managed
+retirados; no es una API pública ni un backend soportado.
+"""
+
 
 def build_standard_runtime_lines() -> list[str]:
     return [

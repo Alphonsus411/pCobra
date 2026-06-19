@@ -71,7 +71,7 @@ Fecha: 2026-06-19
 
 - Mantener `PUBLIC_BACKENDS = ("python", "javascript", "rust")` como fuente normativa.
 - Mantener `ALLOWED_TARGETS`, `OFFICIAL_TARGETS`, GUI y CLI alineados con esa tupla.
-- No incluir aliases (`py`, `js`, `rs`) en superficies públicas, aunque puedan existir shims internos documentados.
+- No incluir alias cortos retirados en superficies públicas, aunque puedan existir shims internos documentados.
 
 **Criterios de aceptación:**
 

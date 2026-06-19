@@ -20,6 +20,8 @@ from typing import Final
 
 from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
 
+RETIRED_BACKENDS: Final[frozenset[str]] = frozenset({"wasm", "go", "cpp", "java", "asm"})
+
 STANDARD_LIBRARY_INIT: Final[Path] = Path(str(files("pcobra.standard_library").joinpath("__init__.py")))
 CORELIBS_INIT: Final[Path] = Path(str(files("pcobra.corelibs").joinpath("__init__.py")))
 SNAPSHOT_PATH: Final[Path] = Path(str(files("pcobra.cobra.transpilers").joinpath("runtime_api_parity_snapshot.json")))
@@ -72,9 +74,34 @@ def _load_snapshot() -> dict[str, object]:
     return json.loads(SNAPSHOT_PATH.read_text(encoding="utf-8"))
 
 
+def _validate_snapshot_backend_sections(snapshot: dict[str, object]) -> None:
+    """Asegura que la sección activa del snapshot no mezcle backends retirados."""
+    backend_runtime_api = snapshot.get("backend_runtime_api")
+    if not isinstance(backend_runtime_api, dict):
+        raise RuntimeError("runtime_api_parity_snapshot.json: backend_runtime_api inválido")
+
+    active_backends = set(backend_runtime_api)
+    legacy_in_active = sorted(active_backends & RETIRED_BACKENDS)
+    if legacy_in_active:
+        raise RuntimeError(
+            "runtime_api_parity_snapshot.json: backends retirados en sección activa "
+            f"backend_runtime_api: {legacy_in_active}. "
+            "Moverlos a historical_backend_runtime_api."
+        )
+
+    expected = set(OFFICIAL_TARGETS)
+    if active_backends != expected:
+        raise RuntimeError(
+            "runtime_api_parity_snapshot.json: backend_runtime_api debe exponer "
+            f"exactamente OFFICIAL_TARGETS. current={sorted(active_backends)}; "
+            f"expected={list(OFFICIAL_TARGETS)}"
+        )
+
+
 def build_runtime_api_matrix() -> dict[str, object]:
     exports = extract_runtime_export_sets()
     snapshot = _load_snapshot()
+    _validate_snapshot_backend_sections(snapshot)
 
     backend_runtime_api = snapshot["backend_runtime_api"]
     if not isinstance(backend_runtime_api, dict):
@@ -181,6 +208,7 @@ def render_runtime_api_matrix_markdown(matrix: dict[str, object]) -> str:
 def validate_runtime_api_parity_snapshot() -> None:
     exports = extract_runtime_export_sets()
     snapshot = _load_snapshot()
+    _validate_snapshot_backend_sections(snapshot)
 
     python_global_snapshot = set(snapshot["python_global_api_snapshot"])
     python_global_current = set(exports.global_api)
