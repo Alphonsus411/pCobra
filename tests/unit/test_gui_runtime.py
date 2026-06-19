@@ -107,7 +107,7 @@ def test_transpilar_codigo_usa_transpilador_python_registrado(
 def test_generar_reporte_sugerencias_valida_antes_de_sugerir(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """La ruta común de sugerencias debe ejecutar Lexer/Parser antes de Agix."""
+    """La ruta común de sugerencias debe ejecutar Lexer/Parser antes del motor opcional."""
 
     llamadas: list[str] = []
 
@@ -180,7 +180,7 @@ def test_generar_reporte_sugerencias_sin_motor_no_importa_ia(
 def test_generar_reporte_sugerencias_devuelve_error_parser_sin_correcciones(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Si Parser falla, no se consulta Agix ni se proponen correcciones aplicables."""
+    """Si Parser falla, no se consulta el motor opcional ni se proponen correcciones aplicables."""
 
     class FakeLexerError(Exception):
         pass
@@ -433,7 +433,7 @@ def test_ruta_sugerencias_cubre_fixtures_minimos_reales_de_cobra(
 def test_ruta_sugerencias_parser_fallido_no_expone_correccion_aplicable_real(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Un ParserError real corta la ruta antes de Agix y de reglas aplicables."""
+    """Un ParserError real corta la ruta antes del motor opcional y de reglas aplicables."""
 
     monkeypatch.setattr(runtime, "require_gui_dependencies", _deps_lexer_parser_reales)
 
@@ -810,7 +810,36 @@ def test_formatear_error_lexico_y_sintactico_sin_recargar_dependencias(
     assert llamadas["count"] == 0
 
 
-def test_crear_handler_sugerencias_agix_delega_en_handler_comun(
+def test_crear_handler_sugerencias_usa_ruta_canonica(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    entrada = SimpleNamespace(value="imprimir('Hola')")
+    salida = SimpleNamespace(value="")
+    page = SimpleNamespace(updated=False, update=lambda: setattr(page, "updated", True))
+    llamadas: list[str] = []
+
+    def _generar_reporte(codigo: str) -> str:
+        llamadas.append(codigo)
+        return "reporte común"
+
+    monkeypatch.setattr(
+        runtime,
+        "require_gui_dependencies",
+        lambda: {"LexerError": Exception, "ParserError": Exception},
+    )
+    monkeypatch.setattr(runtime, "generar_reporte_sugerencias", _generar_reporte)
+
+    handler = runtime.crear_handler_sugerencias(
+        entrada=entrada, salida=salida, page=page
+    )
+    handler(None)
+
+    assert llamadas == ["imprimir('Hola')"]
+    assert salida.value == "reporte común"
+    assert page.updated is True
+
+
+def test_crear_handler_sugerencias_agix_es_alias_deprecado_interno(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     entrada = SimpleNamespace(value="imprimir('Hola')")
@@ -831,9 +860,10 @@ def test_crear_handler_sugerencias_agix_delega_en_handler_comun(
         runtime, "crear_handler_sugerencias", _crear_handler_sugerencias
     )
 
-    handler = runtime.crear_handler_sugerencias_agix(
-        entrada=entrada, salida=salida, page=page
-    )
+    with pytest.warns(DeprecationWarning, match="crear_handler_sugerencias"):
+        handler = runtime.crear_handler_sugerencias_agix(
+            entrada=entrada, salida=salida, page=page
+        )
     handler(None)
 
     assert llamadas == [(entrada, salida, page, None)]

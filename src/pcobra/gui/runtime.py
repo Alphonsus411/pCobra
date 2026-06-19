@@ -3,6 +3,7 @@
 import io
 import importlib.util
 import re
+import warnings
 from contextlib import redirect_stdout, redirect_stderr
 from dataclasses import dataclass
 from functools import lru_cache
@@ -99,12 +100,12 @@ class MotorIASugerencias:
 
         if self.disponible:
             return (
-                "Motor IA opcional 'agix' disponible. "
+                "Motor IA opcional disponible. "
                 "Las sugerencias validarán primero el código Cobra."
             )
         return self.detalle or (
             "Sugerencias deshabilitadas: instala la dependencia opcional "
-            "'agix' para activar esta acción."
+            "de sugerencias para activar esta acción."
         )
 
 
@@ -121,9 +122,9 @@ class GuiFileState:
 def detectar_motor_ia_sugerencias() -> MotorIASugerencias:
     """Detecta de forma liviana si el motor IA opcional está instalado.
 
-    La comprobación usa metadatos de importación y no importa ``agix`` ni la
-    fachada de sugerencias, evitando cargar dependencias pesadas al abrir la
-    GUI.
+    La comprobación usa metadatos de importación y no importa la dependencia
+    opcional ni la fachada de sugerencias, evitando cargar dependencias pesadas
+    al abrir la GUI.
     """
 
     try:
@@ -625,17 +626,6 @@ def crear_handler_guardar_como(
     return guardar_como_handler
 
 
-def crear_handler_sugerencias_agix(
-    *,
-    entrada: Any,
-    salida: Any,
-    page: Any,
-) -> Any:
-    """Alias legacy interno pendiente de retirada; usar ``crear_handler_sugerencias``."""
-
-    return crear_handler_sugerencias(entrada=entrada, salida=salida, page=page)
-
-
 def analizar_codigo(codigo: str) -> tuple[list[Any], Any]:
     """Ejecuta Lexer y Parser una vez y devuelve tokens y AST."""
 
@@ -725,7 +715,7 @@ def generar_reporte_sugerencias(codigo: str) -> str:
             "- No se detectaron errores con el Lexer y Parser de Cobra.\n\n"
             "Sugerencias del Libro:\n"
             f"- No se pudieron generar sugerencias: {exc}. "
-            "Instala la dependencia opcional real 'agix' para activar esta acción."
+            "Instala la dependencia opcional de sugerencias para activar esta acción."
         )
 
     if sugerencias:
@@ -795,6 +785,25 @@ def crear_handler_sugerencias(*, entrada: Any, salida: Any, page: Any) -> Any:
             page.update()
 
     return sugerencias_handler
+
+
+# Compatibilidad interna: conservar temporalmente el nombre antiguo sin
+# recomendarlo como API de GUI. La ruta canónica es crear_handler_sugerencias.
+def crear_handler_sugerencias_agix(
+    *,
+    entrada: Any,
+    salida: Any,
+    page: Any,
+) -> Any:
+    """Alias interno de compatibilidad; usar ``crear_handler_sugerencias``."""
+
+    warnings.warn(
+        "crear_handler_sugerencias_agix está deprecado; "
+        "usa crear_handler_sugerencias.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return crear_handler_sugerencias(entrada=entrada, salida=salida, page=page)
 
 
 def normalizar_codigo(codigo: str | None) -> str:
