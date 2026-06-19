@@ -13575,12 +13575,10 @@ data\language_equivalence_downgrades.yml
 docker\backends
 docker\scripts
 docker\Dockerfile
-docker\backends\cpp.Dockerfile
 docker\backends\javascript.Dockerfile
 docker\backends\python.Dockerfile
 docker\backends\rust.Dockerfile
 docker\scripts\build.sh
-docker\scripts\compile_cpp.sh
 docker\scripts\compile_rust.sh
 docs\ADR
 docs\anexos_legacy_internal

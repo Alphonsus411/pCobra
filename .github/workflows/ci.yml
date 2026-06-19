@@ -67,6 +67,7 @@ jobs:
           python scripts/ci/lint_public_no_direct_transpiler_imports.py
           python scripts/ci/check_public_import_boundaries.py
           python scripts/ci/validate_public_backend_literals.py
+          python scripts/ci/validate_docker_backends.py
           python scripts/ci/lint_no_legacy_bindings_imports.py
           python scripts/ci/lint_no_legacy_cobra_core_imports.py
           python scripts/ci/lint_legacy_cobra_shims.py
@@ -211,6 +212,9 @@ jobs:
       - name: Validate targets anti-regression policy
         shell: bash
         run: python scripts/ci/validate_targets.py
+      - name: Validate official Docker backend builds
+        shell: bash
+        run: python scripts/ci/validate_docker_backends.py
       - name: Run target contract audit gate
         shell: bash
         env:

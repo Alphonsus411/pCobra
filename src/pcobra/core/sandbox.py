@@ -877,8 +877,8 @@ process.stdout.write(output);
 def compilar_en_sandbox_cpp(codigo: str) -> str:
     """Compila y ejecuta código C++ de forma segura utilizando Docker.
 
-    Si el contenedor ``cobra-cpp-sandbox`` no está disponible o Docker no está
-    instalado se lanza ``RuntimeError`` con un mensaje descriptivo.
+    Como C++ no forma parte de los runtimes Docker oficiales, esta ruta delega
+    en la política común y devuelve un error descriptivo si se solicita.
     """
     try:
         return ejecutar_en_contenedor(codigo, "cpp")
