@@ -46,6 +46,53 @@ def _reset_cache(monkeypatch: pytest.MonkeyPatch):
         motor_cache_clear()
 
 
+def _fake_flet_buttons():
+    class ElevatedButton:
+        def __init__(self, text, on_click=None, **kwargs):
+            self.text = text
+            self.on_click = on_click
+            self.disabled = kwargs.get("disabled", False)
+            self.tooltip = kwargs.get("tooltip", "")
+
+    return SimpleNamespace(ElevatedButton=ElevatedButton)
+
+
+def test_boton_sugerencias_se_habilita_si_motor_canonico_disponible(monkeypatch):
+    handler = object()
+    monkeypatch.setattr(
+        runtime,
+        "detectar_motor_ia_sugerencias",
+        lambda: runtime.MotorIASugerencias(disponible=True),
+    )
+
+    boton = runtime.crear_boton_sugerencias_libro(
+        _fake_flet_buttons(), on_click=handler
+    )
+
+    assert boton.text == runtime.SUGERENCIAS_BUTTON_TEXT
+    assert boton.disabled is False
+    assert boton.on_click is handler
+    assert runtime.CANONICAL_SUGGESTION_ENGINE == "agix"
+    assert "agi-core" not in boton.tooltip
+
+
+def test_boton_sugerencias_se_deshabilita_y_menciona_paquete_correcto(monkeypatch):
+    monkeypatch.setattr(
+        runtime,
+        "detectar_motor_ia_sugerencias",
+        lambda: runtime.MotorIASugerencias(disponible=False),
+    )
+
+    boton = runtime.crear_boton_sugerencias_libro(
+        _fake_flet_buttons(), on_click=object()
+    )
+
+    assert boton.disabled is True
+    assert boton.on_click is None
+    assert "agix" in boton.tooltip
+    assert "agi-core" not in boton.tooltip
+
+
 def test_es_archivo_cobra_reconoce_extensiones_seguras_documentadas() -> None:
     assert runtime.COBRA_FILE_EXTENSIONS == (".co", ".cobra")
     assert runtime.es_archivo_cobra("programa.co")

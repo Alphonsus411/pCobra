@@ -192,4 +192,5 @@ def test_motor_canonico_es_agix_y_no_agi_core():
     assert "agix==" in requirements_docs
     assert "agi-core" not in requirements_docs
     assert analizador_sugerencias.MOTOR_SUGERENCIAS == "agix"
-    assert "agi-core` no es una dependencia declarada" in libro
+    assert "Motor real de sugerencias: Cobra mantiene `agix`" in libro
+    assert "agi-core" not in libro

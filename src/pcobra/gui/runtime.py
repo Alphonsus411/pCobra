@@ -94,7 +94,7 @@ SUGERENCIAS_BUTTON_TEXT = "Sugerencias del Libro"
 """Etiqueta homogénea para la acción de sugerencias trazables en las GUIs."""
 
 CANONICAL_SUGGESTION_ENGINE = "agix"
-"""Motor opcional canónico para sugerencias; ``agi-core`` no está declarado."""
+"""Motor opcional canónico para sugerencias de Cobra."""
 
 
 @dataclass(frozen=True, slots=True)
