@@ -9,6 +9,8 @@ from __future__ import annotations
 import pytest
 
 from pcobra.cobra.core import Lexer, Parser, ParserError
+from pcobra.gui import runtime
+
 
 RECOMENDACIONES_GUI = [
     pytest.param(
@@ -93,6 +95,71 @@ def test_recomendaciones_gui_cubren_ejemplos_invalidos_sin_ampliar_parser(
     assert regla_libro
     with pytest.raises(ParserError):
         _parsear(fragmento_invalido)
+
+
+def test_reporte_sugerencias_no_invoca_fachada_si_codigo_no_parsea(monkeypatch) -> None:
+    """La GUI debe cortar antes de llamar a la fachada IA si Parser falla."""
+
+    monkeypatch.setattr(
+        runtime,
+        "detectar_motor_ia_sugerencias",
+        lambda: runtime.MotorIASugerencias(disponible=True),
+    )
+
+    codigo_invalido = """
+funcion calcular_total(subtotal, impuesto):
+    retorno subtotal + impuesto
+fin
+"""
+
+    from pcobra.ia import analizador_sugerencias
+
+    with pytest.MonkeyPatch.context() as contexto:
+        llamada_fachada = contexto.setattr(
+            analizador_sugerencias,
+            "generar_sugerencias",
+            pytest.fail,
+        )
+        assert llamada_fachada is None
+        reporte = runtime.generar_reporte_sugerencias(codigo_invalido)
+
+    assert "Errores léxicos/sintácticos:" in reporte
+    assert "Corrige primero los errores anteriores" in reporte
+
+
+def test_reporte_sugerencias_codigo_valido_agrupa_por_categorias_del_libro(
+    monkeypatch,
+) -> None:
+    """Las sugerencias válidas se muestran agrupadas por categorías del Libro."""
+
+    monkeypatch.setattr(
+        runtime,
+        "detectar_motor_ia_sugerencias",
+        lambda: runtime.MotorIASugerencias(disponible=True),
+    )
+
+    sugerencias_libro = [
+        "Usar nombres descriptivos para variables [regla: LP-3.1-NOMBRES-DESCRIPTIVOS; §3.1 Léxico]",
+        "Usar `retorno` como sentencia de salida en funciones [regla: LP-3.3-RETORNO-CANONICO; §3.3 Sentencias]",
+        "Agregar una sentencia imprimir solo si aporta observabilidad [regla: LP-3.3-IMPRESION-CANONICA; §3.3 Sentencias]",
+        "Declarar funciones con `func` o `definir`, no con `funcion` [regla: LP-3.9-FUNCIONES-CON-FUNC; §3.9 Contrato]",
+        "Usar módulos con `usar \"modulo\"` y llamadas planas, sin alias `como` [regla: LP-3.6-USAR-SIN-ALIAS; §3.6 Módulos]",
+    ]
+    monkeypatch.setattr(runtime, "generar_sugerencias", lambda _codigo: sugerencias_libro)
+
+    reporte = runtime.generar_reporte_sugerencias("total = 10\nimprimir(total)")
+
+    assert "- No se detectaron errores con el Lexer y Parser de Cobra." in reporte
+    for titulo in (
+        "- Léxico/sintaxis:",
+        "- Estilo:",
+        "- Nombres:",
+        "- Forma canónica:",
+        "- Observabilidad:",
+    ):
+        assert titulo in reporte
+    for sugerencia in sugerencias_libro:
+        assert f"  - {sugerencia}" in reporte
 
 
 def test_reglas_libro_programacion_declaran_fragmentos_soportados_por_parser() -> None:
