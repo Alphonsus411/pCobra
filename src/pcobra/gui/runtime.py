@@ -82,6 +82,14 @@ def _local_import_action(module_name: str, symbol_name: str) -> str:
 COBRA_FILE_EXTENSIONS: tuple[str, ...] = (".co", ".cobra")
 """Extensiones Cobra priorizadas para el explorador del IDLE."""
 
+MOSTRAR_TODOS_LOS_ARCHIVOS_IDLE = False
+"""Bandera interna para una futura configuración de visibilidad completa.
+
+El valor por defecto mantiene el modo seguro del IDLE: mostrar directorios y
+solo archivos Cobra. Puede activarse desde código o una configuración futura si
+el equipo decide exponer todos los archivos en el árbol.
+"""
+
 SUGERENCIAS_BUTTON_TEXT = "Sugerencias del Libro"
 """Etiqueta homogénea para la acción de sugerencias trazables en las GUIs."""
 
@@ -163,13 +171,23 @@ def es_archivo_cobra(path: str | Path) -> bool:
     return Path(path).suffix.lower() in COBRA_FILE_EXTENSIONS
 
 
-def listar_directorio_cobra(root: str | Path) -> list[Path]:
-    """Lista carpetas y archivos Cobra de un directorio, con orden estable."""
+def listar_directorio_cobra(
+    root: str | Path, *, mostrar_todos: bool = MOSTRAR_TODOS_LOS_ARCHIVOS_IDLE
+) -> list[Path]:
+    """Lista carpetas y archivos visibles del IDLE, con orden estable.
+
+    Por defecto conserva el modo seguro centrado en Cobra: siempre muestra
+    directorios y solo archivos con extensiones documentadas ``.co``/``.cobra``.
+    ``mostrar_todos`` queda como opción interna para una configuración futura si
+    el equipo decide exponer todos los archivos del directorio.
+    """
 
     base = Path(root).expanduser()
     entradas = list(base.iterdir())
     visibles = [
-        entry for entry in entradas if entry.is_dir() or es_archivo_cobra(entry)
+        entry
+        for entry in entradas
+        if entry.is_dir() or mostrar_todos or es_archivo_cobra(entry)
     ]
     return sorted(visibles, key=lambda entry: (not entry.is_dir(), entry.name.lower()))
 
