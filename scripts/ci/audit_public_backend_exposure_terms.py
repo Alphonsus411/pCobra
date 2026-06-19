@@ -15,9 +15,16 @@ from dataclasses import dataclass
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-FORBIDDEN_PUBLIC_TERMS = ("go", "cpp", "java", "wasm", "asm", "py", "js", "node", "golang", "jvm")
+BLOCKED_PUBLIC_BACKENDS = ("go", "cpp", "java", "wasm", "asm")
+BLOCKED_LEGACY_ALIASES = ("py", "js", "node", "nodejs", "python3", "golang", "jvm")
+FORBIDDEN_PUBLIC_TERMS = BLOCKED_PUBLIC_BACKENDS + BLOCKED_LEGACY_ALIASES
 OFFICIAL_PUBLIC_BACKENDS = ("python", "javascript", "rust")
-_TERM_RE = re.compile(r"(?<![\w.+/-])(" + "|".join(map(re.escape, FORBIDDEN_PUBLIC_TERMS)) + r")(?![\w.+/-])", re.IGNORECASE)
+_TERM_RE = re.compile(
+    r"(?<![\w.+/-])("
+    + "|".join(map(re.escape, FORBIDDEN_PUBLIC_TERMS))
+    + r")(?![\w.+/-])",
+    re.IGNORECASE,
+)
 
 PUBLIC_REGISTRY_FILES = (
     Path("src/pcobra/cobra/transpilers/registry.py"),
@@ -180,7 +187,8 @@ def main() -> int:
         for violation in violations:
             print(f"  - {violation.format()}", file=sys.stderr)
         print(
-            "Regla: go/cpp/java/wasm/asm/py/js/node/golang/jvm solo pueden aparecer "
+            "Regla: go/cpp/java/wasm/asm y aliases legacy "
+            "py/js/node/nodejs/python3/golang/jvm solo pueden aparecer "
             "en documentos históricos explícitos, pruebas de rechazo o shims legacy autorizados.",
             file=sys.stderr,
         )
