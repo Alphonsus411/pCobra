@@ -1,8 +1,11 @@
 import pcobra  # garantiza rutas para submódulos
+from pathlib import Path
 from unittest.mock import MagicMock, patch
+import tomllib
+
 import pytest
 
-from pcobra.ia import analizador_agix
+from pcobra.ia import analizador_agix, analizador_sugerencias
 from pcobra.ia.reglas_libro_programacion import construir_candidatos_desde_reglas
 
 
@@ -174,3 +177,19 @@ def test_sugerencia_principal_referencia_regla_interna_trazable():
     assert len(sugerencias) == 1
     assert "[regla: LP-" in sugerencias[0]
     assert "§3." in sugerencias[0]
+
+
+def test_motor_canonico_es_agix_y_no_agi_core():
+    """El contrato público mantiene agix como dependencia oficial y fachada GUI."""
+
+    pyproject = tomllib.loads(Path("pyproject.toml").read_text())
+    dependencias = pyproject["project"]["dependencies"]
+    requirements_docs = Path("docs/requirements.txt").read_text()
+    libro = Path("docs/LIBRO_PROGRAMACION_COBRA.md").read_text()
+
+    assert any(dep.startswith("agix") for dep in dependencias)
+    assert not any(dep.startswith("agi-core") for dep in dependencias)
+    assert "agix==" in requirements_docs
+    assert "agi-core" not in requirements_docs
+    assert analizador_sugerencias.MOTOR_SUGERENCIAS == "agix"
+    assert "agi-core` no es una dependencia declarada" in libro
