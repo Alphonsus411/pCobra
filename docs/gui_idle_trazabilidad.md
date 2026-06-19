@@ -20,3 +20,30 @@ Esta matriz documenta únicamente comportamiento existente en el IDLE gráfico c
 ## Especificación normativa
 
 La especificación consolidada de acciones soportadas, funciones runtime, validación previa con `Lexer`/`Parser` y restricción del selector de transpilación a `python`, `javascript` y `rust` está en [`docs/gui_idle_especificacion.md`](gui_idle_especificacion.md).
+
+## Auditoría CI de reglas derivadas del Libro
+
+El flujo de trazabilidad de **Sugerencias del Libro** se protege con el script
+`scripts/ci/audit_reglas_libro_programacion.py`. Este script lee de forma
+estática `src/pcobra/ia/reglas_libro_programacion.py`, extrae los campos `id`,
+`seccion` y `fragmento_valido` de cada entrada de `REGLAS_LIBRO_PROGRAMACION` y
+falla si detecta cualquiera de estas condiciones:
+
+1. Una regla no declara un `id`, una `seccion` o un `fragmento_valido` literal y
+   no vacío.
+2. La `seccion` no usa el formato trazable `§N[.N] Título`.
+3. La sección referenciada no existe como encabezado en
+   `docs/LIBRO_PROGRAMACION_COBRA.md`, lo que evita reglas huérfanas respecto al
+   Libro.
+4. El `fragmento_valido` deja de parsear con el `Lexer` y el `Parser` oficiales
+   de Cobra.
+
+Para ejecutar la auditoría de forma aislada:
+
+```bash
+python scripts/ci/audit_reglas_libro_programacion.py
+```
+
+La prueba `tests/unit/test_audit_reglas_libro_programacion.py` invoca la misma
+función de auditoría para que el contrato también forme parte de la suite de
+`pytest`.
