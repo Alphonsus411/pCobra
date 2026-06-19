@@ -46,6 +46,50 @@ def _reset_cache(monkeypatch: pytest.MonkeyPatch):
         motor_cache_clear()
 
 
+def test_es_archivo_cobra_reconoce_extensiones_seguras_documentadas() -> None:
+    assert runtime.COBRA_FILE_EXTENSIONS == (".co", ".cobra")
+    assert runtime.es_archivo_cobra("programa.co")
+    assert runtime.es_archivo_cobra("modulo.COBRA")
+    assert not runtime.es_archivo_cobra("notas.txt")
+
+
+def test_listar_directorio_cobra_modo_seguro_filtra_archivos_no_cobra(
+    tmp_path: Path,
+) -> None:
+    (tmp_path / "zeta").mkdir()
+    (tmp_path / "beta.co").write_text("", encoding="utf-8")
+    (tmp_path / "alfa.cobra").write_text("", encoding="utf-8")
+    (tmp_path / "ignorado.py").write_text("", encoding="utf-8")
+    (tmp_path / "README.md").write_text("", encoding="utf-8")
+
+    assert runtime.MOSTRAR_TODOS_LOS_ARCHIVOS_IDLE is False
+    assert [path.name for path in runtime.listar_directorio_cobra(tmp_path)] == [
+        "zeta",
+        "alfa.cobra",
+        "beta.co",
+    ]
+
+
+def test_listar_directorio_cobra_opcion_interna_muestra_todos_los_archivos(
+    tmp_path: Path,
+) -> None:
+    (tmp_path / "zeta").mkdir()
+    (tmp_path / "beta.co").write_text("", encoding="utf-8")
+    (tmp_path / "alfa.cobra").write_text("", encoding="utf-8")
+    (tmp_path / "README.md").write_text("", encoding="utf-8")
+    (tmp_path / "script.py").write_text("", encoding="utf-8")
+
+    assert [
+        path.name
+        for path in runtime.listar_directorio_cobra(tmp_path, mostrar_todos=True)
+    ] == [
+        "zeta",
+        "alfa.cobra",
+        "beta.co",
+        "README.md",
+        "script.py",
+    ]
+
 def test_normalizar_codigo_admite_none_y_texto() -> None:
     assert runtime.normalizar_codigo(None) == ""
     assert runtime.normalizar_codigo("imprimir('x')") == "imprimir('x')"
