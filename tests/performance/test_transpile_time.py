@@ -22,14 +22,9 @@ def __getattr__(name):  # pragma: no cover - se usa solo en tests
 ast_nodes.__getattr__ = __getattr__
 
 dummy_transpilers = {
-    "asm": "TranspiladorASM",
-    "cpp": "TranspiladorCPP",
-    "go": "TranspiladorGo",
-    "java": "TranspiladorJava",
     "javascript": "TranspiladorJavaScript",
     "python": "TranspiladorPython",
     "rust": "TranspiladorRust",
-    "wasm": "TranspiladorWasm",
 }
 
 _MODULE_SUFFIX_BY_TARGET = {
@@ -44,6 +39,7 @@ for target, class_name in dummy_transpilers.items():
         setattr(module, class_name, type(class_name, (), {"generate_code": lambda self, ast: ""}))
         sys.modules[mod_name] = module
 
+from cobra.cli.commands import compile_cmd
 from cobra.cli.commands.compile_cmd import CompileCommand
 from core.cobra_config import tiempo_max_transpilacion
 
@@ -53,9 +49,7 @@ from core.cobra_config import tiempo_max_transpilacion
 def test_transpile_time(tmp_path, monkeypatch):
     """Verifica que la transpilación de múltiples archivos se realiza rápidamente."""
     # Evita cargas de dependencias externas en la transpilación
-    monkeypatch.setattr(
-        "cobra.cli.commands.compile_cmd.cli_toml_map", lambda: {}
-    )
+    monkeypatch.setattr(compile_cmd, "cli_toml_map", lambda: {})
 
     num_archivos = 5
     archivos = []

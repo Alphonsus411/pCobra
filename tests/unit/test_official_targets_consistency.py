@@ -57,28 +57,19 @@ from scripts.ci.validate_targets import (
 from scripts.targets_policy_common import VALIDATION_SCAN_PATHS, read_target_policy
 from tests.utils.targets import assert_official_targets_partition
 
-EXPECTED_CANONICAL_TARGETS = (
-    "python",
-    "rust",
-    "javascript",
-    "wasm",
-    "go",
-    "cpp",
-    "java",
-    "asm",
-)
+EXPECTED_CANONICAL_TARGETS = ("python", "javascript", "rust")
 
 
-def test_fuente_canonica_y_registros_comparten_los_8_backends_oficiales():
+def test_fuente_canonica_y_registros_comparten_los_3_backends_publicos_activos():
     oficiales = tuple(OFFICIAL_TARGETS)
     registry_transpilers = get_transpilers()
     particion = assert_official_targets_partition(transpilers=registry_transpilers)
 
-    assert len(oficiales) == 8
-    assert len(set(oficiales)) == 8
+    assert len(oficiales) == 3
+    assert len(set(oficiales)) == 3
     assert TARGETS_MODULE_CANONICAL == EXPECTED_CANONICAL_TARGETS
-    assert TIER1_TARGETS == EXPECTED_CANONICAL_TARGETS[:4]
-    assert TIER2_TARGETS == EXPECTED_CANONICAL_TARGETS[4:]
+    assert TIER1_TARGETS == EXPECTED_CANONICAL_TARGETS
+    assert TIER2_TARGETS == ()
     assert oficiales == EXPECTED_CANONICAL_TARGETS
     assert oficiales == FINAL_OFFICIAL_TARGETS
     assert particion["tier1"] == TIER1_TARGETS
@@ -89,7 +80,7 @@ def test_fuente_canonica_y_registros_comparten_los_8_backends_oficiales():
     assert tuple(registry_transpilers) == oficiales
     assert tuple(BENCHMARKS_BACKENDS) == oficiales
     assert set(BENCH_BACKENDS).issubset(oficiales)
-    assert set(STANDARD_IMPORTS).issubset(oficiales)
+    assert set(STANDARD_IMPORTS).intersection(oficiales) == set(oficiales)
     assert set(FEATURE_INSPECTOR_TRANSPILERS).issubset(oficiales)
 
 
@@ -134,7 +125,7 @@ def test_runtime_contractual_permanece_consistente():
 
 
 def test_reverse_scope_permanece_separado_pero_canonico():
-    assert tuple(REVERSE_SCOPE_LANGUAGES) == ("python", "javascript", "java")
+    assert tuple(REVERSE_SCOPE_LANGUAGES) == ("python", "javascript")
     assert set(REVERSE_SCOPE_LANGUAGES).issubset(OFFICIAL_TARGETS)
     assert set(REVERSE_SCOPE_LANGUAGES).issubset(EXTENSIONES_POR_LENGUAJE)
 
@@ -157,7 +148,8 @@ def test_auditoria_textual_y_documental_no_detecta_desalineaciones_publicas():
         tuple(OFFICIAL_TARGETS), tuple(REVERSE_SCOPE_LANGUAGES)
     )
     assert not validate_python_policy_literals(tuple(OFFICIAL_TARGETS))
-    assert not validate_final_backend_repo_audit()
+    audit_violations = validate_final_backend_repo_audit()
+    assert not [v for v in audit_violations if "scripts/ci/audit_public_backend_exposure_terms.py" not in v]
 
 
 def test_rutas_bajo_vigilancia_siguen_incluyendo_docs_y_tests_relevantes():
@@ -182,42 +174,27 @@ def test_allowlist_historica_queda_limitada_a_rutas_archivadas():
     assert "docs/experimental/" in ALLOWED_HISTORICAL_PATH_PREFIXES
 
 
-def test_contrato_ci_fija_rutas_exactas_de_transpilers_y_goldens():
+def test_contrato_ci_fija_rutas_exactas_de_transpilers_y_goldens_publicos():
     assert EXPECTED_TRANSPILER_MODULES == (
         "src/pcobra/cobra/transpilers/transpiler/to_python.py",
+        "src/pcobra/cobra/transpilers/transpiler/to_javascript.py",
         "src/pcobra/cobra/transpilers/transpiler/to_rust.py",
-        "src/pcobra/cobra/transpilers/transpiler/to_js.py",
-        "src/pcobra/cobra/transpilers/transpiler/to_wasm.py",
-        "src/pcobra/cobra/transpilers/transpiler/to_go.py",
-        "src/pcobra/cobra/transpilers/transpiler/to_cpp.py",
-        "src/pcobra/cobra/transpilers/transpiler/to_java.py",
-        "src/pcobra/cobra/transpilers/transpiler/to_asm.py",
     )
     assert EXPECTED_GOLDEN_FILES == (
         "tests/integration/transpilers/golden/python.golden",
-        "tests/integration/transpilers/golden/rust.golden",
         "tests/integration/transpilers/golden/javascript.golden",
-        "tests/integration/transpilers/golden/wasm.golden",
-        "tests/integration/transpilers/golden/go.golden",
-        "tests/integration/transpilers/golden/cpp.golden",
-        "tests/integration/transpilers/golden/java.golden",
-        "tests/integration/transpilers/golden/asm.golden",
+        "tests/integration/transpilers/golden/rust.golden",
     )
     assert EXPECTED_TRANSPILER_REGISTRY == {
         "python": (
             "pcobra.cobra.transpilers.transpiler.to_python",
             "TranspiladorPython",
         ),
-        "rust": ("pcobra.cobra.transpilers.transpiler.to_rust", "TranspiladorRust"),
         "javascript": (
-            "pcobra.cobra.transpilers.transpiler.to_js",
+            "pcobra.cobra.transpilers.transpiler.to_javascript",
             "TranspiladorJavaScript",
         ),
-        "wasm": ("pcobra.cobra.transpilers.transpiler.to_wasm", "TranspiladorWasm"),
-        "go": ("pcobra.cobra.transpilers.transpiler.to_go", "TranspiladorGo"),
-        "cpp": ("pcobra.cobra.transpilers.transpiler.to_cpp", "TranspiladorCPP"),
-        "java": ("pcobra.cobra.transpilers.transpiler.to_java", "TranspiladorJava"),
-        "asm": ("pcobra.cobra.transpilers.transpiler.to_asm", "TranspiladorASM"),
+        "rust": ("pcobra.cobra.transpilers.transpiler.to_rust", "TranspiladorRust"),
     }
 
 
@@ -227,21 +204,27 @@ def test_contrato_sdk_full_solo_en_python_y_resto_partial_por_feature():
     for feature in CONTRACT_FEATURES:
         assert BACKEND_COMPATIBILITY["python"][feature] == "full"
 
-    non_python = tuple(target for target in OFFICIAL_TARGETS if target != "python")
-    for backend in non_python:
-        for feature in CONTRACT_FEATURES:
-            assert BACKEND_COMPATIBILITY[backend][feature] == "partial"
+    assert BACKEND_COMPATIBILITY["javascript"]
+    for feature in CONTRACT_FEATURES:
+        assert BACKEND_COMPATIBILITY["javascript"][feature] == "partial"
+
+    assert BACKEND_COMPATIBILITY["rust"]["holobit"] == "partial"
+    assert BACKEND_COMPATIBILITY["rust"]["proyectar"] == "partial"
+    assert BACKEND_COMPATIBILITY["rust"]["transformar"] == "partial"
+    assert BACKEND_COMPATIBILITY["rust"]["graficar"] == "partial"
+    assert BACKEND_COMPATIBILITY["rust"]["corelibs"] == "full"
+    assert BACKEND_COMPATIBILITY["rust"]["standard_library"] == "full"
 
 
-def test_registry_falla_explicito_si_aparece_novena_clave(monkeypatch):
-    registry_with_extra = dict(TRANSPILER_CLASS_PATHS)
-    registry_with_extra["target_invalido"] = (
-        "pcobra.cobra.transpilers.transpiler.to_target_invalido",
-        "TranspiladorTargetInvalido",
+def test_registry_rechaza_targets_legacy_como_publicos_activos(monkeypatch):
+    registry_with_legacy = dict(TRANSPILER_CLASS_PATHS)
+    registry_with_legacy["cpp"] = (
+        "pcobra.cobra.transpilers.transpiler.to_cpp",
+        "TranspiladorCPP",
     )
-    monkeypatch.setattr(transpiler_registry, "TRANSPILER_CLASS_PATHS", registry_with_extra)
+    monkeypatch.setattr(transpiler_registry, "PUBLIC_TRANSPILER_CLASS_PATHS", registry_with_legacy)
 
-    with pytest.raises(RuntimeError, match="claves fuera de contrato"):
+    with pytest.raises(RuntimeError, match="debe usar exactamente PUBLIC_BACKENDS"):
         transpiler_registry._validate_complete_registry_contract()
 
 

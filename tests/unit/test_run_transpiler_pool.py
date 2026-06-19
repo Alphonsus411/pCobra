@@ -20,14 +20,9 @@ def _stub(mod_name: str, cls_name: str) -> None:
     sys.modules[f"cobra.transpilers.transpiler.{mod_name}"] = mod
 
 for name, cls in [
-    ("to_asm", "TranspiladorASM"),
-    ("to_cpp", "TranspiladorCPP"),
-    ("to_go", "TranspiladorGo"),
-    ("to_java", "TranspiladorJava"),
     ("to_js", "TranspiladorJavaScript"),
     ("to_python", "TranspiladorPython"),
     ("to_rust", "TranspiladorRust"),
-    ("to_wasm", "TranspiladorWasm"),
 ]:
     _stub(name, cls)
 
