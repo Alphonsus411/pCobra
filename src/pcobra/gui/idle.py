@@ -115,6 +115,12 @@ def main(page: "ft.Page"):
             )
         except (FileNotFoundError, NotADirectoryError, PermissionError) as exc:
             mostrar_error_archivo(exc)
+            arbol.controls.append(
+                runtime.flet_text(
+                    ft,
+                    value=f"No se pudo listar la ruta: {runtime.formatear_error(exc)}",
+                )
+            )
             return
         arbol.controls.extend(getattr(arbol_canonico, "controls", [arbol_canonico]))
 
