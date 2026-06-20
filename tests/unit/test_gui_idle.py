@@ -918,10 +918,11 @@ def test_crear_arbol_directorios_muestra_estado_vacio_en_carpeta_sin_cobras(tmp_
     assert arbol.controls[0].value == "No hay archivos Cobra en esta carpeta"
 
 
-def _preparar_idle_archivos(monkeypatch, tmp_path):
+def _preparar_idle_archivos(monkeypatch, tmp_path, workspace_root=None):
     ft = _fake_flet()
+    workspace_root = tmp_path if workspace_root is None else workspace_root
     monkeypatch.chdir(tmp_path)
-    monkeypatch.setenv("COBRA_PROJECTS_DIR", str(tmp_path))
+    monkeypatch.setenv("COBRA_PROJECTS_DIR", str(workspace_root))
     monkeypatch.setattr(idle.runtime, "require_flet", lambda: ft)
     monkeypatch.setattr(
         idle.runtime,
@@ -1161,7 +1162,9 @@ def test_crear_proyectos_separados_con_src_y_readme(monkeypatch, tmp_path):
         salida,
         _abrir,
         _guardar_como,
-    ) = _preparar_idle_archivos(monkeypatch, tmp_path)
+    ) = _preparar_idle_archivos(
+        monkeypatch, tmp_path, workspace_root=tmp_path / "CobraProjects"
+    )
     page = _page
     proyecto_input = next(
         c
@@ -1185,7 +1188,7 @@ def test_crear_proyectos_separados_con_src_y_readme(monkeypatch, tmp_path):
     for nombre in ("proyecto_uno", "proyecto_dos"):
         proyecto_input.value = nombre
         crear_proyecto.on_click(None)
-        proyecto = (tmp_path / nombre).resolve()
+        proyecto = (tmp_path / "CobraProjects" / nombre).resolve()
 
         assert proyecto.is_dir()
         assert (proyecto / "src").is_dir()
