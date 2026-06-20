@@ -592,9 +592,14 @@ def crear_salida_seleccionable(ft: Any, **kwargs: Any) -> Any:
 def crear_arbol_directorios(
     ft: Any, *, on_click: Any, root_path: str | Path | None = None
 ) -> Any:
-    """Crea un árbol de directorios con carga diferida de subcarpetas."""
+    """Crea un árbol de directorios con carga diferida de subcarpetas.
+
+    Si no se proporciona ``root_path``, usa la raíz de trabajo canónica del
+    IDLE como fallback explícito en lugar de depender del directorio actual del
+    proceso.
+    """
     if root_path is None:
-        root_path = Path(".").resolve()
+        root_path = resolver_workspace_root_idle()
 
     def _crear_nodo_archivo(path: Path) -> Any:
         return ft.ListTile(
