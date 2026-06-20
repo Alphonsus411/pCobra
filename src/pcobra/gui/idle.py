@@ -212,6 +212,9 @@ def main(page: "ft.Page"):
     sugerencias_handler = runtime.crear_handler_sugerencias(
         entrada=entrada, salida=salida, page=page
     )
+    correccion_handler = runtime.crear_handler_correccion_tipografica(
+        entrada=entrada, salida=salida, page=page
+    )
 
     reconstruir_arbol()
     sincronizar_estado_visual()
@@ -249,6 +252,7 @@ def main(page: "ft.Page"):
             runtime.flet_elevated_button(ft, "Tokens", on_click=tokens_handler),
             runtime.flet_elevated_button(ft, "AST", on_click=ast_handler),
             runtime.crear_boton_sugerencias_libro(ft, on_click=sugerencias_handler),
+            runtime.crear_boton_correccion(ft, on_click=correccion_handler),
         ],
         wrap=True,
     )

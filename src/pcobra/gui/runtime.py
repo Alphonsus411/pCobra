@@ -93,6 +93,9 @@ el equipo decide exponer todos los archivos en el árbol.
 SUGERENCIAS_BUTTON_TEXT = "Sugerencias del Libro"
 """Etiqueta homogénea para la acción de sugerencias trazables en las GUIs."""
 
+CORRECCION_BUTTON_TEXT = "Corrección"
+"""Etiqueta para solicitar un reporte de corrección tipográfica sin modificar el editor."""
+
 CANONICAL_SUGGESTION_ENGINE = "agix"
 """Motor opcional canónico para sugerencias de Cobra."""
 
@@ -392,17 +395,29 @@ def flet_elevated_button(ft: Any, *args: Any, **kwargs: Any) -> Any:
     return _flet_attr(ft, "ElevatedButton", "ElevatedButton")(*args, **kwargs)
 
 
-def crear_boton_sugerencias_libro(ft: Any, *, on_click: Any) -> Any:
-    """Crea el botón de sugerencias con estado visual según motor IA."""
+def _crear_boton_motor_ia(ft: Any, texto: str, *, on_click: Any) -> Any:
+    """Crea un botón dependiente del motor IA opcional de sugerencias."""
 
     motor = detectar_motor_ia_sugerencias()
     return flet_elevated_button(
         ft,
-        SUGERENCIAS_BUTTON_TEXT,
+        texto,
         on_click=on_click if motor.disponible else None,
         disabled=not motor.disponible,
         tooltip=motor.tooltip,
     )
+
+
+def crear_boton_sugerencias_libro(ft: Any, *, on_click: Any) -> Any:
+    """Crea el botón de sugerencias con estado visual según motor IA."""
+
+    return _crear_boton_motor_ia(ft, SUGERENCIAS_BUTTON_TEXT, on_click=on_click)
+
+
+def crear_boton_correccion(ft: Any, *, on_click: Any) -> Any:
+    """Crea el botón visible de corrección sin modificar automáticamente el editor."""
+
+    return _crear_boton_motor_ia(ft, CORRECCION_BUTTON_TEXT, on_click=on_click)
 
 
 def flet_text_button(ft: Any, *args: Any, **kwargs: Any) -> Any:
@@ -700,6 +715,123 @@ def _formatear_sugerencias_agrupadas(sugerencias: list[str]) -> str:
     return "\n".join(bloques)
 
 
+
+def _extraer_metadatos_sugerencia(sugerencia: str) -> tuple[str, str]:
+    """Extrae regla y sección del Libro si el motor las incluye en el texto."""
+
+    regla = "regla no especificada"
+    seccion = "sección no especificada"
+    match = re.search(r"\[regla:\s*([^;\]]+)(?:;\s*([^\]]+))?\]", sugerencia)
+    if match:
+        regla = match.group(1).strip()
+        if match.group(2):
+            seccion = match.group(2).strip()
+    else:
+        seccion_match = re.search(r"(§\s*\d+(?:\.\d+)?[^:;\]]*)", sugerencia)
+        if seccion_match:
+            seccion = seccion_match.group(1).strip()
+    return regla, seccion
+
+
+def _ubicacion_aproximada_sugerencia(codigo: str, sugerencia: str) -> str:
+    """Calcula una ubicación aproximada sin alterar el editor."""
+
+    texto = sugerencia.lower()
+    pistas = (
+        ("retorno", ("retornar", "retorno")),
+        ("función", ("funcion ", "func ", "definir ")),
+        ("módulo", ("usar ",)),
+        ("impresión", ("imprimir",)),
+        ("nombre", ("var ", "=",)),
+    )
+    for _nombre, patrones in pistas:
+        if any(patron.strip() in texto for patron in patrones):
+            for numero, linea in enumerate(codigo.splitlines(), start=1):
+                linea_normalizada = linea.lower()
+                if any(patron in linea_normalizada for patron in patrones):
+                    return f"línea {numero}"
+    return "ubicación no disponible"
+
+
+def _limpiar_explicacion_sugerencia(sugerencia: str) -> str:
+    """Elimina metadatos compactos para dejar una explicación legible."""
+
+    return re.sub(r"\s*\[regla:[^\]]+\]\s*$", "", sugerencia).strip() or sugerencia
+
+
+def _formatear_sugerencias_detalladas(codigo: str, sugerencias: list[str]) -> str:
+    """Devuelve una lista agrupada con regla, sección, ubicación y explicación."""
+
+    agrupadas = {clave: [] for clave, _titulo in _CATEGORIAS_SUGERENCIAS}
+    for sugerencia in sugerencias:
+        regla, seccion = _extraer_metadatos_sugerencia(sugerencia)
+        ubicacion = _ubicacion_aproximada_sugerencia(codigo, sugerencia)
+        explicacion = _limpiar_explicacion_sugerencia(sugerencia)
+        item = (
+            f"  - Regla: {regla} | Sección: {seccion} | "
+            f"Ubicación: {ubicacion} | Explicación: {explicacion}"
+        )
+        agrupadas[_categoria_sugerencia(sugerencia)].append(item)
+
+    bloques: list[str] = []
+    for clave, titulo in _CATEGORIAS_SUGERENCIAS:
+        items = agrupadas[clave]
+        cuerpo = "\n".join(items) if items else "  - Sin sugerencias."
+        bloques.append(f"- {titulo}:\n{cuerpo}")
+    return "\n".join(bloques)
+
+def generar_reporte_correccion_tipografica(codigo: str) -> str:
+    """Valida código y genera un reporte de corrección sin editar automáticamente."""
+
+    deps = require_gui_dependencies()
+    try:
+        analizar_codigo(codigo)
+    except Exception as exc:
+        error = formatear_error(
+            exc,
+            lexer_error_type=deps.get("LexerError"),
+            parser_error_type=deps.get("ParserError"),
+        )
+        return (
+            "Errores léxicos/sintácticos:\n"
+            f"- {error}\n\n"
+            "Corrección tipográfica del Libro:\n"
+            "- Corrige primero los errores anteriores para solicitar sugerencias."
+        )
+
+    motor = detectar_motor_ia_sugerencias()
+    if not motor.disponible:
+        return (
+            "Errores léxicos/sintácticos:\n"
+            "- No se detectaron errores con el Lexer y Parser de Cobra.\n\n"
+            "Corrección tipográfica del Libro:\n"
+            f"- {motor.tooltip}"
+        )
+
+    try:
+        sugerencias = generar_sugerencias(codigo)
+    except ImportError as exc:
+        return (
+            "Errores léxicos/sintácticos:\n"
+            "- No se detectaron errores con el Lexer y Parser de Cobra.\n\n"
+            "Corrección tipográfica del Libro:\n"
+            f"- No se pudieron generar sugerencias: {exc}. "
+            "Instala la dependencia opcional de sugerencias para activar esta acción."
+        )
+
+    if sugerencias:
+        sugerencias_legibles = _formatear_sugerencias_detalladas(codigo, sugerencias)
+    else:
+        sugerencias_legibles = "- No se recibieron sugerencias."
+    return (
+        "Errores léxicos/sintácticos:\n"
+        "- No se detectaron errores con el Lexer y Parser de Cobra.\n\n"
+        "Corrección tipográfica del Libro:\n"
+        f"{sugerencias_legibles}\n\n"
+        "Nota: el editor no se modifica automáticamente."
+    )
+
+
 def generar_reporte_sugerencias(codigo: str) -> str:
     """Valida código y genera reporte común de sugerencias estilísticas."""
 
@@ -787,6 +919,27 @@ def crear_handler_ast(*, entrada: Any, salida: Any, page: Any) -> Any:
             page.update()
 
     return ast_handler
+
+
+def crear_handler_correccion_tipografica(*, entrada: Any, salida: Any, page: Any) -> Any:
+    """Crea handler para corrección tipográfica validada y no destructiva."""
+
+    def correccion_handler(_e: Any) -> None:
+        deps = require_gui_dependencies()
+        try:
+            salida.value = generar_reporte_correccion_tipografica(
+                normalizar_codigo(entrada.value)
+            )
+        except Exception as exc:
+            salida.value = formatear_error(
+                exc,
+                lexer_error_type=deps.get("LexerError"),
+                parser_error_type=deps.get("ParserError"),
+            )
+        finally:
+            page.update()
+
+    return correccion_handler
 
 
 def crear_handler_sugerencias(*, entrada: Any, salida: Any, page: Any) -> Any:
