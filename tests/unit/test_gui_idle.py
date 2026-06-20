@@ -1053,6 +1053,27 @@ def test_abrir_valida_ruta_relativa_visible_dentro_del_proyecto(monkeypatch, tmp
     assert ruta_input.value == str(archivo)
 
 
+def test_abrir_ruta_sin_extension_normaliza_input_con_ruta_final(monkeypatch, tmp_path):
+    (
+        _ft,
+        _page,
+        entrada,
+        ruta_input,
+        salida,
+        abrir,
+        _guardar_como,
+    ) = _preparar_idle_archivos(monkeypatch, tmp_path)
+    archivo = (tmp_path / "main.cobra").resolve()
+    archivo.write_text("imprimir('main')", encoding="utf-8")
+
+    ruta_input.value = "main"
+    abrir.on_click(None)
+
+    assert entrada.value == "imprimir('main')"
+    assert salida.value == f"Archivo cargado: {archivo}"
+    assert ruta_input.value == str(archivo)
+
+
 def test_abrir_archivo_en_subdirectorio_reconstruye_arbol_con_project_root(
     monkeypatch, tmp_path
 ):
