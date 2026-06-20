@@ -7,6 +7,7 @@ Esta especificación describe las acciones visibles soportadas por `src/pcobra/g
 - La interfaz principal se construye en `pcobra.gui.idle.main` y delega la lógica reusable en `pcobra.gui.runtime`.
 - Las acciones que analizan código Cobra deben ejecutar primero el flujo canónico `Lexer(codigo).tokenizar()` y después `Parser(tokens).parsear()` mediante `analizar_codigo()` antes de interpretar, transpilar, mostrar tokens, mostrar AST o solicitar sugerencias.
 - La acción **Sugerencias del Libro** debe pasar siempre primero por `Lexer` y `Parser`. Si alguno falla, el IDLE debe mostrar los errores léxicos/sintácticos y no debe invocar el motor opcional de sugerencias.
+- El motor IA canónico para sugerencias es `agix`; `agi-core` no debe usarse como sustituto ni dependencia paralela sin una ADR nueva. La decisión vigente está documentada en [`docs/ADR/002-motor-ia-sugerencias-agix.md`](ADR/002-motor-ia-sugerencias-agix.md).
 - El selector de transpilación del IDLE solo puede mostrar los targets públicos canónicos: `python`, `javascript` y `rust`. No debe exponer aliases, targets legacy ni backends experimentales.
 
 ## Acciones soportadas y funciones runtime
