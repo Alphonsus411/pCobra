@@ -348,9 +348,12 @@ def test_main_selector_y_switch_sin_targets(monkeypatch):
     assert activar.disabled is True
 
 
-def test_main_inicializa_ruta_y_raiz_arbol_con_cwd(monkeypatch, tmp_path):
+def test_main_inicializa_workspace_root_desde_env_y_ruta_visible_vacia(
+    monkeypatch, tmp_path
+):
     ft = _fake_flet()
     monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("COBRA_PROJECTS_DIR", str(tmp_path))
     monkeypatch.setattr(idle.runtime, "require_flet", lambda: ft)
     monkeypatch.setattr(
         idle.runtime, "detectar_motor_ia_sugerencias", _motor_disponible
@@ -397,7 +400,7 @@ def test_main_inicializa_ruta_y_raiz_arbol_con_cwd(monkeypatch, tmp_path):
         if isinstance(c, ft.TextField) and c.kwargs.get("label") == "Raíz del árbol"
     )
 
-    assert ruta_input.value == str(tmp_path.resolve())
+    assert ruta_input.value == ""
     assert raiz_input.value == str(tmp_path.resolve())
 
 
@@ -413,6 +416,7 @@ def test_main_arbol_inicial_muestra_subdirectorios_y_archivos_cobra(
     subdirectorio.mkdir()
 
     monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("COBRA_PROJECTS_DIR", str(tmp_path))
     monkeypatch.setattr(idle.runtime, "require_flet", lambda: ft)
     monkeypatch.setattr(
         idle.runtime, "detectar_motor_ia_sugerencias", _motor_disponible
@@ -473,6 +477,7 @@ def test_main_arbol_inicial_muestra_estado_vacio_en_tmp_path_vacio(
 ):
     ft = _fake_flet()
     monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("COBRA_PROJECTS_DIR", str(tmp_path))
     monkeypatch.setattr(idle.runtime, "require_flet", lambda: ft)
     monkeypatch.setattr(
         idle.runtime, "detectar_motor_ia_sugerencias", _motor_disponible
@@ -534,6 +539,7 @@ def test_main_panel_lateral_conserva_ancho_contenido_y_arbol(monkeypatch, tmp_pa
     subdirectorio.mkdir()
 
     monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("COBRA_PROJECTS_DIR", str(tmp_path))
     monkeypatch.setattr(idle.runtime, "require_flet", lambda: ft)
     monkeypatch.setattr(
         idle.runtime, "detectar_motor_ia_sugerencias", _motor_disponible
@@ -580,6 +586,7 @@ def test_main_panel_lateral_conserva_ancho_contenido_y_arbol(monkeypatch, tmp_pa
 def test_main_muestra_error_visible_si_falla_arbol_directorios(monkeypatch, tmp_path):
     ft = _fake_flet()
     monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("COBRA_PROJECTS_DIR", str(tmp_path))
     monkeypatch.setattr(idle.runtime, "require_flet", lambda: ft)
     monkeypatch.setattr(
         idle.runtime, "detectar_motor_ia_sugerencias", _motor_disponible
@@ -633,6 +640,7 @@ def test_main_establecer_raiz_arbol_muestra_error_si_listado_falla(
 ):
     ft = _fake_flet()
     monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("COBRA_PROJECTS_DIR", str(tmp_path))
     monkeypatch.setattr(idle.runtime, "require_flet", lambda: ft)
     monkeypatch.setattr(
         idle.runtime, "detectar_motor_ia_sugerencias", _motor_disponible
@@ -709,6 +717,7 @@ def test_main_establecer_raiz_arbol_muestra_error_si_listado_falla(
 def test_main_acciones_publicas_de_archivo(monkeypatch, tmp_path):
     ft = _fake_flet()
     monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("COBRA_PROJECTS_DIR", str(tmp_path))
     monkeypatch.setattr(idle.runtime, "require_flet", lambda: ft)
     monkeypatch.setattr(
         idle.runtime, "detectar_motor_ia_sugerencias", _motor_disponible
@@ -736,7 +745,9 @@ def test_main_acciones_publicas_de_archivo(monkeypatch, tmp_path):
         idle.runtime, "formatear_error", lambda exc, **_kwargs: f"error: {exc}"
     )
 
-    archivo_abrir = tmp_path / "abrir.cobra"
+    subdir_abrir = tmp_path / "subdir_abrir"
+    subdir_abrir.mkdir()
+    archivo_abrir = subdir_abrir / "abrir.cobra"
     archivo_abrir.write_text("imprimir('abrir')", encoding="utf-8")
     archivo_arbol = tmp_path / "arbol.co"
     archivo_arbol.write_text("imprimir('arbol')", encoding="utf-8")
@@ -755,11 +766,19 @@ def test_main_acciones_publicas_de_archivo(monkeypatch, tmp_path):
         for c in page.controls
         if isinstance(c, ft.TextField) and c.kwargs.get("label") == "Ruta"
     )
-    assert ruta_input.value == str(tmp_path.resolve())
+    assert ruta_input.value == ""
     salida = next(
         c
         for c in page.controls
         if isinstance(c, ft.Text) and c.kwargs.get("selectable")
+    )
+    arbol = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.ListView)
+        and getattr(getattr(c, "controls", [None])[0], "value", "").startswith(
+            "Directorio raíz:"
+        )
     )
     estado_archivo = next(
         c
@@ -780,6 +799,8 @@ def test_main_acciones_publicas_de_archivo(monkeypatch, tmp_path):
     assert entrada.value == "imprimir('abrir')"
     assert salida.value == f"Archivo cargado: {archivo_abrir.resolve()}"
     assert estado_archivo.value == str(archivo_abrir.resolve())
+    assert ruta_input.value == str(archivo_abrir.resolve())
+    assert arbol.controls[0].value == f"Directorio raíz: {tmp_path.resolve()}"
 
     entrada.value = "imprimir('guardado')"
     botones["Guardar"].on_click(None)
@@ -811,6 +832,7 @@ def test_main_acciones_publicas_de_archivo(monkeypatch, tmp_path):
 def test_main_establecer_raiz_arbol_valida_directorios(monkeypatch, tmp_path):
     ft = _fake_flet()
     monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("COBRA_PROJECTS_DIR", str(tmp_path))
     monkeypatch.setattr(idle.runtime, "require_flet", lambda: ft)
     monkeypatch.setattr(
         idle.runtime, "detectar_motor_ia_sugerencias", _motor_disponible
