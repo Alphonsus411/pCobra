@@ -52,6 +52,31 @@ def test_listar_directorio_cobra_filtra_y_ordena(tmp_path: Path):
     ]
 
 
+@pytest.mark.parametrize(
+    ("ruta", "esperado"),
+    [
+        ("src/programa", "src/programa.cobra"),
+        ("src/programa.cobra", "src/programa.cobra"),
+        ("src/programa.co", "src/programa.co"),
+    ],
+)
+def test_resolver_ruta_archivo_en_project_root_acepta_cobra_co_y_normaliza_sin_extension(
+    tmp_path: Path, ruta: str, esperado: str
+):
+    (tmp_path / "src").mkdir()
+
+    assert runtime.resolver_ruta_archivo_en_project_root(ruta, tmp_path) == (
+        tmp_path / esperado
+    ).resolve()
+
+
+def test_resolver_ruta_archivo_en_project_root_rechaza_extension_ajena_txt(
+    tmp_path: Path,
+):
+    with pytest.raises(ValueError, match="extensión .cobra o .co"):
+        runtime.resolver_ruta_archivo_en_project_root("src/programa.txt", tmp_path)
+
+
 def test_escribir_archivo_texto_no_parsea_ni_modifica_contenido(tmp_path: Path):
     (tmp_path / "sub").mkdir()
     destino = tmp_path / "sub" / "codigo.co"
