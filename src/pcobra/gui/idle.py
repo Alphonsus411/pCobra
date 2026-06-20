@@ -33,7 +33,9 @@ def main(page: "ft.Page"):
 
     def sincronizar_estado_visual() -> None:
         estado_archivo.value = runtime.crear_titulo_archivo(estado)
-        ruta_input.value = str(estado.ruta or directorio_actual)
+
+        if estado.ruta is not None:
+            ruta_input.value = str(estado.ruta)
 
     def actualizar_pagina() -> None:
         sincronizar_estado_visual()
@@ -47,6 +49,31 @@ def main(page: "ft.Page"):
 
     def mostrar_error_archivo(exc: Exception) -> None:
         salida.value = runtime.formatear_error(exc)
+
+    def obtener_ruta_archivo_desde_input() -> Path | None:
+        texto = (ruta_input.value or "").strip()
+
+        if not texto:
+            salida.value = "Indica la ruta completa de un archivo Cobra."
+            page.update()
+            return None
+
+        ruta = Path(texto).expanduser()
+
+        if ruta.exists() and ruta.is_dir():
+            salida.value = (
+                "La ruta indicada corresponde a un directorio. "
+                "Escribe también el nombre del archivo, por ejemplo: programa.cobra"
+            )
+            page.update()
+            return None
+
+        if ruta.suffix.lower() not in {".cobra", ".co"}:
+            salida.value = "El archivo debe usar la extensión .cobra o .co."
+            page.update()
+            return None
+
+        return ruta
 
     def cargar_archivo(ruta: Path, *, desde_arbol: bool = False) -> None:
         nonlocal directorio_actual
@@ -158,13 +185,11 @@ def main(page: "ft.Page"):
         actualizar_pagina()
 
     def abrir_handler(_e):
-        if not ruta_input.value:
-            salida.value = (
-                "Indica una ruta para abrir o selecciona un archivo del árbol."
-            )
-            page.update()
+        ruta = obtener_ruta_archivo_desde_input()
+        if ruta is None:
             return
-        cargar_archivo(Path(ruta_input.value))
+
+        cargar_archivo(ruta)
 
     def guardar_handler(_e):
         if estado.ruta is None:
@@ -189,11 +214,11 @@ def main(page: "ft.Page"):
 
     def guardar_como_handler(_e):
         """Guarda usando el campo Ruta, flujo canónico del IDLE principal."""
-        if not ruta_input.value:
-            salida.value = "Indica una ruta de destino en el campo Ruta."
-            page.update()
+        ruta = obtener_ruta_archivo_desde_input()
+        if ruta is None:
             return
-        guardar_en(Path(ruta_input.value))
+
+        guardar_en(ruta)
 
     def recargar_handler(_e):
         if estado.ruta is None:
@@ -298,6 +323,7 @@ def main(page: "ft.Page"):
     )
 
     page.add(runtime.flet_row(ft, controls=[panel_lateral, editor], expand=True))
+
 
 
 if __name__ == "__main__":
