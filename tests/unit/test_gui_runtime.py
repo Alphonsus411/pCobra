@@ -138,6 +138,69 @@ def test_listar_directorio_cobra_opcion_interna_muestra_todos_los_archivos(
     ]
 
 
+def test_crear_arbol_directorios_acepta_root_path_path_y_str_con_entradas_reales(
+    tmp_path: Path,
+) -> None:
+    class Text:
+        def __init__(self, value="", **_kwargs):
+            self.value = value
+
+    class Icon:
+        def __init__(self, name):
+            self.name = name
+
+    class ListTile:
+        def __init__(self, title=None, leading=None, data=None, on_click=None):
+            self.title = title
+            self.leading = leading
+            self.data = data
+            self.on_click = on_click
+
+    class ExpansionTile:
+        def __init__(self, title=None, leading=None, controls=None):
+            self.title = title
+            self.leading = leading
+            self.controls = controls or []
+
+    class Column:
+        def __init__(self, controls=None, **kwargs):
+            self.controls = controls or []
+            self.scroll = kwargs.get("scroll")
+
+    ft = SimpleNamespace(
+        Text=Text,
+        Icon=Icon,
+        ListTile=ListTile,
+        ExpansionTile=ExpansionTile,
+        Column=Column,
+        Icons=SimpleNamespace(INSERT_DRIVE_FILE="file", FOLDER="folder"),
+        ScrollMode=SimpleNamespace(ALWAYS="always"),
+    )
+    (tmp_path / "programa.cobra").write_text("imprimir('cobra')", encoding="utf-8")
+    (tmp_path / "modulo.co").write_text("imprimir('co')", encoding="utf-8")
+
+    arbol_desde_path = runtime.crear_arbol_directorios(
+        ft, on_click=lambda _e: None, root_path=tmp_path
+    )
+    arbol_desde_str = runtime.crear_arbol_directorios(
+        ft, on_click=lambda _e: None, root_path=str(tmp_path)
+    )
+
+    assert [control.title.value for control in arbol_desde_path.controls] == [
+        "modulo.co",
+        "programa.cobra",
+    ]
+    assert [control.title.value for control in arbol_desde_str.controls] == [
+        "modulo.co",
+        "programa.cobra",
+    ]
+    assert all(
+        Path(control.data).exists()
+        for arbol in (arbol_desde_path, arbol_desde_str)
+        for control in arbol.controls
+    )
+
+
 def test_normalizar_codigo_admite_none_y_texto() -> None:
     assert runtime.normalizar_codigo(None) == ""
     assert runtime.normalizar_codigo("imprimir('x')") == "imprimir('x')"
