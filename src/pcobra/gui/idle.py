@@ -33,7 +33,7 @@ def main(page: "ft.Page"):
 
     def sincronizar_estado_visual() -> None:
         estado_archivo.value = runtime.crear_titulo_archivo(estado)
-        ruta_input.value = str(estado.ruta or "")
+        ruta_input.value = str(estado.ruta or directorio_actual)
 
     def actualizar_pagina() -> None:
         sincronizar_estado_visual()

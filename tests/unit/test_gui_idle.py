@@ -109,6 +109,7 @@ def _fake_flet():
         ExpansionTile=ExpansionTile,
         Icon=Icon,
         icons=SimpleNamespace(INSERT_DRIVE_FILE="file", FOLDER="folder"),
+        Icons=SimpleNamespace(INSERT_DRIVE_FILE="file", FOLDER="folder"),
         ScrollMode=SimpleNamespace(ALWAYS="always"),
         Page=Page,
         dropdown=SimpleNamespace(Option=lambda v: v),
@@ -382,6 +383,7 @@ def test_main_acciones_publicas_de_archivo(monkeypatch, tmp_path):
         for c in page.controls
         if isinstance(c, ft.TextField) and c.kwargs.get("label") == "Ruta"
     )
+    assert ruta_input.value == str(tmp_path.resolve())
     salida = next(
         c
         for c in page.controls
