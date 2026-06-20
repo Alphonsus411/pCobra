@@ -33,6 +33,16 @@ class ReglaLibroProgramacion:
         """Devuelve una sugerencia trazable a esta regla interna."""
         return f"{self.construir_mensaje(codigo)} [regla: {self.id}; {self.seccion}]"
 
+    def metadatos(self) -> dict[str, object]:
+        """Devuelve los metadatos públicos que trazan la regla en IA/GUI."""
+        return {
+            "rule_id": self.id,
+            "rule_section": self.seccion,
+            "category": self.categoria,
+            "severity": self.severidad,
+            "automatic": self.aplicable_automaticamente,
+        }
+
 
 def validar_con_parser(codigo: str) -> None:
     """Valida ``codigo`` con el lexer y parser oficiales de Cobra."""
@@ -149,11 +159,7 @@ def construir_candidatos_desde_reglas(codigo: str) -> list[dict[str, object]]:
                     "reason": regla.mensaje(codigo),
                     "accuracy": regla.accuracy,
                     "interpretability": regla.interpretability,
-                    "rule_id": regla.id,
-                    "rule_section": regla.seccion,
-                    "category": regla.categoria,
-                    "severity": regla.severidad,
-                    "automatic": regla.aplicable_automaticamente,
+                    **regla.metadatos(),
                 }
             )
     if not candidatos:

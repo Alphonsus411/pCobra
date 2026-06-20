@@ -9,6 +9,7 @@ from __future__ import annotations
 import pytest
 
 from pcobra.cobra.core import Lexer, Parser, ParserError
+from pcobra.core.errors import LexerError
 from pcobra.gui import runtime
 
 
@@ -182,6 +183,13 @@ def test_reglas_libro_programacion_declaran_fragmentos_soportados_por_parser() -
     assert "LP-3.9-FUNCIONES-CON-FUNC" in ids
 
     campos_obligatorios = ("id", "seccion", "descripcion", "fragmento_valido")
+    claves_metadatos = {
+        "rule_id",
+        "rule_section",
+        "category",
+        "severity",
+        "automatic",
+    }
 
     for regla in REGLAS_LIBRO_PROGRAMACION:
         for campo in campos_obligatorios:
@@ -190,10 +198,24 @@ def test_reglas_libro_programacion_declaran_fragmentos_soportados_por_parser() -
 
         ast = _parsear(regla.fragmento_valido)
         assert ast, regla.id
+        assert regla.metadatos() == {
+            "rule_id": regla.id,
+            "rule_section": regla.seccion,
+            "category": regla.categoria,
+            "severity": regla.severidad,
+            "automatic": regla.aplicable_automaticamente,
+        }
+        assert set(regla.metadatos()) == claves_metadatos
 
         if regla.fragmento_no_recomendado is not None:
             assert regla.fragmento_no_recomendado.strip(), regla.id
             assert regla.fragmento_no_recomendado.strip() != regla.fragmento_valido.strip()
+            try:
+                ast_no_recomendado = _parsear(regla.fragmento_no_recomendado)
+            except (LexerError, ParserError) as exc:
+                assert str(exc), regla.id
+            else:
+                assert ast_no_recomendado, regla.id
 
         assert regla.categoria in {
             "léxico/sintaxis",
