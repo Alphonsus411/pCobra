@@ -54,9 +54,9 @@ La barra de ejecución permite:
 - **Transpilar:** al activar el switch `Transpilar`, genera código para el target seleccionado en el desplegable.
 - **Tokens:** muestra la tokenización del código actual.
 - **AST:** muestra la representación del árbol sintáctico.
-- **Sugerencias del Libro:** valida primero errores léxicos/sintácticos y, si el motor IA opcional está disponible, añade sugerencias.
+- **Sugerencias del Libro:** valida primero errores léxicos/sintácticos con `runtime.analizar_codigo`, que ejecuta `Lexer` y `Parser` como punto único de tokenización/parseo para la GUI. Solo si ambos pasos terminan sin errores, `runtime.generar_reporte_sugerencias` consulta el motor IA opcional y muestra sugerencias.
 
-Estos flujos se crean desde helpers de `runtime.py`: `crear_handler_ejecucion`, `crear_handler_tokens`, `crear_handler_ast` y `crear_handler_sugerencias`.
+Estos flujos se crean desde helpers de `runtime.py`: `crear_handler_ejecucion`, `crear_handler_tokens`, `crear_handler_ast` y `crear_handler_sugerencias`. Las acciones nuevas que quieran proponer correcciones tipográficas o sugerencias automáticas deben reutilizar `generar_reporte_sugerencias` —o una fachada equivalente que conserve el mismo prechequeo con `Lexer` y `Parser`— en lugar de llamar directamente al motor IA.
 
 ## Limitaciones actuales
 
