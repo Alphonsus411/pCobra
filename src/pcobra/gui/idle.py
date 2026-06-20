@@ -184,7 +184,7 @@ def main(page: "ft.Page"):
             and workspace_canonico not in candidata.parents
         ):
             raise ValueError(f"El proyecto debe estar dentro de: {workspace_canonico}")
-        return candidata
+        return runtime.validar_project_root_idle(candidata)
 
     def crear_proyecto_handler(_e):
         nonlocal project_root

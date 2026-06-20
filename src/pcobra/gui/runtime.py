@@ -110,6 +110,51 @@ def resolver_workspace_root_idle() -> Path:
     return (Path.home() / "CobraProjects").expanduser().resolve()
 
 
+def resolver_repo_root_gui() -> Path:
+    """Resuelve la raíz del repositorio de Cobra relativa a este módulo GUI."""
+
+    return Path(__file__).resolve().parents[3]
+
+
+def _es_misma_ruta(candidata: Path, prohibida: Path) -> bool:
+    """Compara rutas canónicas usando ``Path.relative_to()`` de forma portable."""
+
+    try:
+        relativa = candidata.relative_to(prohibida)
+    except ValueError:
+        return False
+    return relativa == Path(".")
+
+
+def validar_project_root_idle(project_root: str | Path) -> Path:
+    """Valida que la raíz de proyecto del IDLE no sea una ruta interna del repo.
+
+    El IDLE debe abrir proyectos de usuario, no la raíz del repositorio ni las
+    carpetas de código fuente de la propia aplicación. La comparación usa rutas
+    resueltas y ``Path.relative_to()`` para conservar compatibilidad con Windows.
+    """
+
+    candidata = Path(project_root).expanduser().resolve()
+    repo_root = resolver_repo_root_gui()
+    rutas_prohibidas = {
+        repo_root: "la raíz del repositorio",
+        repo_root / "src": "src/",
+        repo_root / "src" / "pcobra": "src/pcobra/",
+        repo_root / "src" / "pcobra" / "gui": "src/pcobra/gui/",
+    }
+
+    for ruta_prohibida, descripcion in rutas_prohibidas.items():
+        ruta_prohibida_resuelta = ruta_prohibida.resolve()
+        if _es_misma_ruta(candidata, ruta_prohibida_resuelta):
+            raise ValueError(
+                "No se puede abrir como proyecto del IDLE "
+                f"{descripcion}: {ruta_prohibida_resuelta}. "
+                "Elige una carpeta de proyecto fuera del código fuente de Cobra."
+            )
+
+    return candidata
+
+
 @dataclass(frozen=True, slots=True)
 class MotorIASugerencias:
     """Resultado liviano de disponibilidad del motor IA para sugerencias."""
@@ -1052,8 +1097,7 @@ def crear_handler_sugerencias_agix(
     """Alias interno de compatibilidad; usar ``crear_handler_sugerencias``."""
 
     warnings.warn(
-        "crear_handler_sugerencias_agix está deprecado; "
-        "usa crear_handler_sugerencias.",
+        "crear_handler_sugerencias_agix está deprecado; usa crear_handler_sugerencias.",
         DeprecationWarning,
         stacklevel=2,
     )
