@@ -116,7 +116,6 @@ def _fake_flet():
         ListTile=ListTile,
         ExpansionTile=ExpansionTile,
         Icon=Icon,
-        icons=SimpleNamespace(INSERT_DRIVE_FILE="file", FOLDER="folder"),
         Icons=SimpleNamespace(INSERT_DRIVE_FILE="file", FOLDER="folder"),
         ScrollMode=SimpleNamespace(ALWAYS="always"),
         Page=Page,
@@ -124,13 +123,11 @@ def _fake_flet():
     )
 
 
-def test_fake_flet_expone_icons_moderno_y_legacy():
+def test_fake_flet_expone_icons_moderno():
     ft = _fake_flet()
 
     assert ft.Icons.INSERT_DRIVE_FILE == "file"
     assert ft.Icons.FOLDER == "folder"
-    assert ft.icons.INSERT_DRIVE_FILE == "file"
-    assert ft.icons.FOLDER == "folder"
 
 
 def test_main_renderiza_botones_esperados(monkeypatch):
