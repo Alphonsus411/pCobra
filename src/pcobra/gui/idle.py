@@ -1,6 +1,5 @@
 """IDLE gráfico principal para editar, ejecutar e inspeccionar código Cobra."""
 
-import os
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -15,11 +14,7 @@ def main(page: "ft.Page"):
     ft = runtime.require_flet()
 
     estado = runtime.GuiFileState()
-    workspace_root = (
-        Path(os.environ.get("COBRA_PROJECTS_DIR") or Path.home() / "CobraProjects")
-        .expanduser()
-        .resolve(strict=False)
-    )
+    workspace_root = runtime.resolver_workspace_root_idle()
     project_root = workspace_root
 
     entrada = runtime.crear_editor_codigo(ft)

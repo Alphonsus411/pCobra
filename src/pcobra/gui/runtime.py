@@ -2,6 +2,7 @@
 
 import io
 import importlib.util
+import os
 import re
 import warnings
 from contextlib import redirect_stdout, redirect_stderr
@@ -98,6 +99,15 @@ CORRECCION_BUTTON_TEXT = "Corrección"
 
 CANONICAL_SUGGESTION_ENGINE = "agix"
 """Motor opcional canónico para sugerencias de Cobra."""
+
+
+def resolver_workspace_root_idle() -> Path:
+    """Resuelve la raíz de trabajo inicial del IDLE sin depender de ``Path.cwd()``."""
+
+    configured_root = os.environ.get("COBRA_PROJECTS_DIR")
+    if configured_root:
+        return Path(configured_root).expanduser().resolve()
+    return (Path.home() / "CobraProjects").expanduser().resolve()
 
 
 @dataclass(frozen=True, slots=True)
