@@ -1161,3 +1161,54 @@ def test_guardar_como_filepicker_usa_mensaje_de_exito_compartido(
     assert estado.ruta == destino.resolve()
     assert estado.contenido_cargado == "imprimir('ok')"
     assert estado.cambios_sin_guardar is False
+
+
+def test_resolver_ruta_archivo_en_project_root_relativa_y_extension_por_defecto(
+    tmp_path: Path,
+) -> None:
+    destino = runtime.resolver_ruta_archivo_en_project_root("src/programa", tmp_path)
+
+    assert destino == (tmp_path / "src" / "programa.cobra").resolve()
+
+
+def test_resolver_ruta_archivo_en_project_root_acepta_absoluta_interna(
+    tmp_path: Path,
+) -> None:
+    archivo = tmp_path / "programa.co"
+
+    destino = runtime.resolver_ruta_archivo_en_project_root(archivo, tmp_path)
+
+    assert destino == archivo.resolve()
+
+
+@pytest.mark.parametrize("ruta", ["../escape.cobra", "programa.txt"])
+def test_resolver_ruta_archivo_en_project_root_rechaza_rutas_invalidas(
+    tmp_path: Path, ruta: str
+) -> None:
+    with pytest.raises(ValueError):
+        runtime.resolver_ruta_archivo_en_project_root(ruta, tmp_path)
+
+
+def test_resolver_ruta_archivo_en_project_root_rechaza_directorios(
+    tmp_path: Path,
+) -> None:
+    directorio = tmp_path / "directorio.cobra"
+    directorio.mkdir()
+
+    with pytest.raises(NotADirectoryError):
+        runtime.resolver_ruta_archivo_en_project_root(directorio, tmp_path)
+
+
+def test_resolver_ruta_archivo_en_project_root_rechaza_symlink_externo(
+    tmp_path: Path,
+) -> None:
+    externo = tmp_path.parent / "externo_idle_helper.cobra"
+    externo.write_text("imprimir('externo')", encoding="utf-8")
+    enlace = tmp_path / "enlace.cobra"
+    enlace.symlink_to(externo)
+
+    try:
+        with pytest.raises(ValueError, match="dentro de la raíz del proyecto"):
+            runtime.resolver_ruta_archivo_en_project_root(enlace, tmp_path)
+    finally:
+        externo.unlink(missing_ok=True)

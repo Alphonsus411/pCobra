@@ -51,30 +51,28 @@ def main(page: "ft.Page"):
     def mostrar_error_archivo(exc: Exception) -> None:
         salida.value = runtime.formatear_error(exc)
 
+    def resolver_ruta_archivo_idle(ruta: str | Path) -> Path | None:
+        try:
+            return runtime.resolver_ruta_archivo_en_project_root(ruta, project_root)
+        except (
+            FileNotFoundError,
+            NotADirectoryError,
+            PermissionError,
+            ValueError,
+        ) as exc:
+            mostrar_error_archivo(exc)
+            page.update()
+            return None
+
     def obtener_ruta_archivo_desde_input() -> Path | None:
         texto = (ruta_input.value or "").strip()
 
         if not texto:
-            salida.value = "Indica la ruta completa de un archivo Cobra."
+            salida.value = "Indica la ruta de un archivo Cobra."
             page.update()
             return None
 
-        ruta = Path(texto).expanduser()
-
-        if ruta.exists() and ruta.is_dir():
-            salida.value = (
-                "La ruta indicada corresponde a un directorio. "
-                "Escribe también el nombre del archivo, por ejemplo: programa.cobra"
-            )
-            page.update()
-            return None
-
-        if ruta.suffix.lower() not in {".cobra", ".co"}:
-            salida.value = "El archivo debe usar la extensión .cobra o .co."
-            page.update()
-            return None
-
-        return ruta
+        return resolver_ruta_archivo_idle(texto)
 
     def cargar_archivo(ruta: Path, *, desde_arbol: bool = False) -> None:
         try:
@@ -125,7 +123,10 @@ def main(page: "ft.Page"):
             salida.value = "No se pudo determinar la ruta seleccionada en el árbol."
             page.update()
             return
-        cargar_archivo(Path(ruta), desde_arbol=True)
+        ruta_resuelta = resolver_ruta_archivo_idle(Path(ruta))
+        if ruta_resuelta is None:
+            return
+        cargar_archivo(ruta_resuelta, desde_arbol=True)
 
     def reconstruir_arbol() -> bool:
         raiz_input.value = str(project_root)
@@ -194,6 +195,10 @@ def main(page: "ft.Page"):
         if estado.ruta is None:
             guardar_como_handler(_e)
             return
+        ruta_resuelta = resolver_ruta_archivo_idle(estado.ruta)
+        if ruta_resuelta is None:
+            return
+        estado.ruta = ruta_resuelta
         try:
             _contenido, salida.value = runtime.guardar_archivo_activo(
                 entrada.value, estado
@@ -224,6 +229,10 @@ def main(page: "ft.Page"):
             salida.value = "No hay archivo activo que recargar."
             page.update()
             return
+        ruta_resuelta = resolver_ruta_archivo_idle(estado.ruta)
+        if ruta_resuelta is None:
+            return
+        estado.ruta = ruta_resuelta
         try:
             entrada.value, salida.value = runtime.recargar_archivo_activo(estado)
         except (
