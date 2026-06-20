@@ -201,6 +201,18 @@ def test_crear_arbol_directorios_acepta_root_path_path_y_str_con_entradas_reales
     )
 
 
+def test_crear_arbol_directorios_propaga_file_not_found_en_ruta_inexistente(
+    tmp_path: Path,
+) -> None:
+    ft = SimpleNamespace()
+    ruta_inexistente = tmp_path / "no_existe"
+
+    with pytest.raises(FileNotFoundError):
+        runtime.crear_arbol_directorios(
+            ft, on_click=lambda _e: None, root_path=ruta_inexistente
+        )
+
+
 def test_normalizar_codigo_admite_none_y_texto() -> None:
     assert runtime.normalizar_codigo(None) == ""
     assert runtime.normalizar_codigo("imprimir('x')") == "imprimir('x')"

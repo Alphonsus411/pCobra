@@ -101,7 +101,7 @@ def main(page: "ft.Page"):
             return
         cargar_archivo(Path(ruta), desde_arbol=True)
 
-    def reconstruir_arbol() -> None:
+    def reconstruir_arbol() -> bool:
         raiz_input.value = str(directorio_actual)
         arbol.controls.clear()
         arbol.controls.append(
@@ -121,8 +121,9 @@ def main(page: "ft.Page"):
                     value=f"No se pudo listar la ruta: {runtime.formatear_error(exc)}",
                 )
             )
-            return
+            return False
         arbol.controls.extend(getattr(arbol_canonico, "controls", [arbol_canonico]))
+        return True
 
     def establecer_raiz_arbol_handler(_e):
         nonlocal directorio_actual
@@ -146,7 +147,9 @@ def main(page: "ft.Page"):
             page.update()
             return
         directorio_actual = nueva_raiz
-        reconstruir_arbol()
+        if not reconstruir_arbol():
+            page.update()
+            return
         salida.value = f"Raíz del árbol actualizada: {directorio_actual}"
         actualizar_pagina()
 
