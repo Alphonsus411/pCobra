@@ -468,6 +468,62 @@ def test_main_arbol_inicial_muestra_subdirectorios_y_archivos_cobra(
     )
 
 
+def test_main_arbol_inicial_muestra_estado_vacio_en_tmp_path_vacio(
+    monkeypatch, tmp_path
+):
+    ft = _fake_flet()
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(idle.runtime, "require_flet", lambda: ft)
+    monkeypatch.setattr(
+        idle.runtime, "detectar_motor_ia_sugerencias", _motor_disponible
+    )
+    monkeypatch.setattr(idle.runtime, "gui_target_choices", lambda: ("python",))
+    monkeypatch.setattr(
+        idle.runtime,
+        "require_gui_dependencies",
+        lambda: {
+            "TRANSPILERS": {"python": object},
+            "LexerError": RuntimeError,
+            "ParserError": ValueError,
+            "Lexer": lambda _codigo: SimpleNamespace(tokenizar=lambda: []),
+            "Parser": lambda _tokens: SimpleNamespace(parsear=lambda: []),
+        },
+    )
+    monkeypatch.setattr(idle.runtime, "normalizar_codigo", lambda value: value or "")
+    monkeypatch.setattr(idle.runtime, "ejecutar_codigo", lambda _codigo: "ok")
+    monkeypatch.setattr(
+        idle.runtime, "transpilar_codigo", lambda _codigo, _lang: "transpilado"
+    )
+    monkeypatch.setattr(idle.runtime, "mostrar_tokens", lambda _codigo: "Token(X)")
+    monkeypatch.setattr(idle.runtime, "mostrar_ast", lambda _codigo: "[Nodo]")
+    monkeypatch.setattr(
+        idle.runtime,
+        "generar_sugerencias",
+        lambda _codigo: ["Usa nombres descriptivos"],
+    )
+    monkeypatch.setattr(
+        idle.runtime, "formatear_error", lambda exc, **_kwargs: f"error: {exc}"
+    )
+
+    page = ft.Page()
+    idle.main(page)
+
+    arbol = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.ListView)
+        and getattr(getattr(c, "controls", [None])[0], "value", "").startswith(
+            "Directorio raíz:"
+        )
+    )
+
+    assert any(
+        getattr(control, "value", "") == "No hay archivos Cobra en esta carpeta"
+        for control in arbol.controls[1:]
+    )
+    assert len(arbol.controls) > 1
+
+
 def test_main_panel_lateral_conserva_ancho_contenido_y_arbol(monkeypatch, tmp_path):
     ft = _fake_flet()
     programa_cobra = tmp_path / "programa.cobra"
