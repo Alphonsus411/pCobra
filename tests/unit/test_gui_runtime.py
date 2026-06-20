@@ -213,6 +213,22 @@ def test_crear_arbol_directorios_propaga_file_not_found_en_ruta_inexistente(
         )
 
 
+def test_crear_arbol_directorios_propaga_permission_error_sin_tocar_permisos(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    ft = SimpleNamespace()
+
+    def fake(_root_path):
+        raise PermissionError("sin permiso portable")
+
+    monkeypatch.setattr(runtime, "listar_directorio_cobra", fake)
+
+    with pytest.raises(PermissionError, match="sin permiso portable"):
+        runtime.crear_arbol_directorios(
+            ft, on_click=lambda _e: None, root_path=tmp_path
+        )
+
+
 def test_normalizar_codigo_admite_none_y_texto() -> None:
     assert runtime.normalizar_codigo(None) == ""
     assert runtime.normalizar_codigo("imprimir('x')") == "imprimir('x')"
