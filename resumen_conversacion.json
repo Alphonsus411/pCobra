@@ -1,297 +1,252 @@
 {
   "asistente": "Bella",
   "proyecto": "pCobra / Cobra",
-  "fecha_contexto": "2026-06-07",
-  "release_objetivo": "10.1.1",
-  "estado_general": {
-    "decision_actual": "Release casi lista, con un bug localizado en la transpilación Python de funciones antes de distribución final.",
-    "bloqueantes_originales": [
-      {
-        "id": "BUG-BUILD-001",
-        "descripcion": "cobra build fallaba con archivos UTF-8 BOM.",
-        "estado": "descartado / corregido / no reproducible",
-        "evidencia": [
-          "cobra build .\\poc_build_sin_bom.cobra genera artefacto correctamente",
-          "cobra build .\\poc_build_con_bom.cobra genera artefacto correctamente"
-        ]
-      }
-    ],
-    "bloqueantes_actuales": [
-      {
-        "id": "BUG-TRANSPILE-PY-FUNC-001",
-        "descripcion": "Transpilar a Python desde GUI falla con funciones Cobra simples.",
-        "estado": "localizado, pendiente de parche",
-        "error": "maximum recursion depth exceeded",
-        "severidad": "media",
-        "bloquea_release": "recomendado corregir antes de publicar nueva distribución si se quiere dejar GUI/transpilación saneada"
-      }
-    ],
-    "deudas_no_bloqueantes": [
-      {
-        "id": "GUI-UX-ENC-001",
-        "descripcion": "Salida Unicode con acentos aparece mojibakeada en GUI/Flet.",
-        "ejemplo": "programaciÃ³n en espaÃ±ol",
-        "severidad": "baja-media",
-        "bloquea_release": false
-      },
-      {
-        "id": "UX-ERR-001",
-        "descripcion": "Mensajes duplicados al rechazar módulos fuera del catálogo público.",
-        "severidad": "baja",
-        "bloquea_release": false
-      }
-    ]
-  },
-  "validaciones_cli": {
-    "cobra_version": {
-      "comando": "cobra --version",
-      "resultado": "cobra 10.1.1",
-      "estado": "verde"
-    },
-    "cobra_help": {
-      "comando": "cobra --help",
-      "resultado": "Muestra comandos públicos run, build, test, mod, repl.",
-      "estado": "verde"
-    },
-    "contrato_publico": {
-      "comandos": ["run", "build", "test", "mod", "repl"],
-      "nota": "cobra build no expone --target como argumento público; esto se considera correcto."
-    }
-  },
-  "validaciones_build": {
-    "utf8_sin_bom": {
-      "archivo": "poc_build_sin_bom.cobra",
-      "comando": "cobra build .\\poc_build_sin_bom.cobra",
-      "estado": "verde",
-      "salida_clave": [
-        "Artefacto Cobra generado.",
-        "print('build sin bom')",
-        "x = 3",
-        "print(x)"
-      ]
-    },
-    "utf8_con_bom": {
-      "archivo": "poc_build_con_bom.cobra",
-      "comando": "cobra build .\\poc_build_con_bom.cobra",
-      "estado": "verde",
-      "salida_clave": [
-        "Artefacto Cobra generado.",
-        "print('build con bom')",
-        "x = 3",
-        "print(x)"
-      ]
-    }
-  },
-  "validaciones_gui_flet": {
-    "diagnostico_inicial": {
-      "problema": "python -m pcobra.gui.app y python -m pcobra.gui.idle terminaban sin error pero no abrían ventana.",
-      "causa": "app.py e idle.py tenían def main(page), pero no tenían bloque ejecutable para lanzar Flet.",
-      "parche": "Añadir if __name__ == '__main__': runtime.flet_app(main) al final de ambos archivos."
-    },
-    "app_py": {
-      "archivo": "src/pcobra/gui/app.py",
-      "estado": "verde",
-      "validaciones": [
-        "Arranca ventana Flet",
-        "Ejecuta código Cobra simple",
-        "Ejecuta asignación e imprimir",
-        "Transpila a Python"
-      ]
-    },
-    "idle_py": {
-      "archivo": "src/pcobra/gui/idle.py",
-      "estado": "verde",
-      "validaciones": [
-        "Arranca ventana Flet",
-        "Botón Ejecutar funciona",
-        "Botón Tokens funciona",
-        "Botón AST funciona",
-        "Selector de target funciona",
-        "Switch Transpilar funciona"
-      ]
-    },
-    "script_complejo_ejecucion": {
-      "estado": "verde",
-      "caracteristicas_validadas": [
-        "usar \"numero\"",
-        "usar \"texto\"",
-        "usar \"datos\"",
-        "funciones",
-        "retorno",
-        "condicionales si/sino",
-        "listas",
-        "longitud(datos)",
-        "elemento(datos, 2)",
-        "salida acumulada en UI"
-      ],
-      "resultado_observado": [
-        "=== Prueba compleja de GUI Cobra ===",
-        "COBRA GUI",
-        "programaciÃ³n en espaÃ±ol",
-        "es impar",
-        "es primo",
-        "14",
-        "49",
-        "4",
-        "30",
-        "10",
-        "y mayor que 8",
-        "=== Fin prueba GUI ==="
-      ]
-    }
-  },
-  "validaciones_transpilacion_gui": {
-    "python_simple": {
-      "estado": "verde",
-      "script": "imprimir(\"=== Prueba transpilar ===\")\n\nvar titulo = \"cobra gui\"\nimprimir(titulo)",
-      "resultado": "Genera código Python con preámbulo runtime, asignación e imprimir."
-    },
-    "python_con_usar_texto": {
-      "estado": "verde",
-      "script": "usar \"texto\"\n\nvar titulo = \"cobra gui\"\nimprimir(mayusculas(titulo))\nimprimir(quitar_acentos(\"programación en español\"))",
-      "resultado": "Genera código Python con obtener_modulo('texto') y llamadas a mayusculas/quitar_acentos."
-    },
-    "python_con_funcion": {
-      "estado": "rojo_localizado",
-      "script": "func doble(n):\nretorno n * 2\nfin\n\nvar x = doble(5)\nimprimir(x)",
-      "error": "maximum recursion depth exceeded",
-      "diagnostico": "El fallo aparece al introducir una declaración de función Cobra."
-    },
-    "javascript": {
-      "estado": "verde_smoke",
-      "resultado": "Genera código JavaScript con imports/runtime y código transpilado."
-    },
-    "rust_simple": {
-      "estado": "verde_tras_parche",
-      "script": "var x = 3\nimprimir(x)",
-      "resultado": "Genera let x = 3; y println!(\"{}\", x);"
-    }
-  },
-  "parches_realizados_o_recomendados": {
-    "gui_entrypoints": {
-      "archivos": [
-        "src/pcobra/gui/app.py",
-        "src/pcobra/gui/idle.py"
-      ],
-      "codigo": "if __name__ == \"__main__\":\n    runtime.flet_app(main)",
-      "estado": "aplicado y validado"
-    },
-    "rust_nodo_imprimir": {
-      "archivo_nuevo": "src/pcobra/cobra/transpilers/transpiler/rust_nodes/imprimir.py",
-      "codigo": "\"\"\"Transpilación de NodoImprimir a Rust.\"\"\"\n\n\ndef visit_imprimir(self, nodo):\n    expresion = self.obtener_valor(nodo.expresion)\n    self.agregar_linea(f'println!(\"{{}}\", {expresion});')",
-      "archivo_modificado": "src/pcobra/cobra/transpilers/transpiler/to_rust.py",
-      "imports_a_anadir": [
-        "from pcobra.cobra.transpilers.transpiler.rust_nodes.imprimir import visit_imprimir as _visit_imprimir"
-      ],
-      "asignaciones_a_anadir": [
-        "TranspiladorRust.visit_imprimir = _visit_imprimir",
-        "TranspiladorRust.visit_NodoImprimir = _visit_imprimir"
-      ],
-      "estado": "aplicado y validado por prueba directa"
-    },
-    "python_funcion_recursion": {
-      "archivo_sospechoso": "src/pcobra/cobra/transpilers/transpiler/python_nodes/funcion.py",
-      "hallazgo": "visit_funcion envuelve siempre el cuerpo de toda función en contextlib.ExitStack(), incluso si no hay defer.",
-      "hipotesis": "La recursión puede venir de la interacción entre visit_funcion, defer stack, retorno o dispatch del visitor.",
-      "estado": "pendiente de reparación",
-      "restriccion": "No tocar Lexer ni Parser."
-    }
-  },
-  "prompt_codex_generado": {
-    "objetivo": "Pedir a Codex una reparación quirúrgica del bug de transpilación Python de funciones.",
-    "restricciones_clave": [
-      "NO modificar Lexer",
-      "NO modificar Parser",
-      "NO modificar gramática",
-      "NO cambiar sintaxis Cobra",
-      "NO romper ejecución normal/intérprete",
-      "Mantener arquitectura actual de visitors externos",
-      "Hacer patch mínimo y localizado"
-    ],
-    "archivos_relevantes": [
-      "src/pcobra/cobra/transpilers/transpiler/python_nodes/funcion.py",
-      "src/pcobra/cobra/transpilers/transpiler/python_nodes/retorno.py",
-      "src/pcobra/cobra/transpilers/transpiler/to_python.py",
-      "src/pcobra/cobra/transpilers/common/utils.py"
-    ],
-    "casos_minimos": [
-      "función simple con retorno",
-      "función vacía",
-      "función llamada desde asignación",
-      "script complejo GUI con usar/funciones/condicionales/listas"
-    ]
-  },
-  "dependencias_pyproject": {
-    "problema_detectado": {
-      "descripcion": "Conflicto entre pcobra==10.1.1 y agix==1.9.0 por rango de numpy.",
-      "pcobra_actual": "numpy>=2.4.6,<2.5",
-      "agix_1_9_0": "numpy>=1.24,<2.2",
-      "resultado": "ResolutionImpossible"
-    },
-    "correccion_recomendada": {
-      "numpy": "numpy>=1.26,<2.2",
-      "scipy": "scipy>=1.13,<1.14",
-      "pandas": "pandas>=2.3,<3",
-      "chardet": "chardet>=5.2,<6",
-      "holobit-sdk": "holobit-sdk>=1.0.8,<2",
-      "packaging": "packaging>=24,<26",
-      "pybind11": "pybind11>=2.13,<3",
-      "RestrictedPython": "RestrictedPython>=8.0,<9"
-    },
-    "estado": "pendiente de aplicar en distribución final si se reconstruye release"
-  },
-  "estado_release_actualizado": {
-    "puede_publicarse_inmediatamente": false,
-    "motivo": "Aunque CLI/build/run/GUI ejecución están verdes, se detectó bug de transpilación Python con funciones desde GUI. Recomendado corregir antes de subir nueva distribución.",
-    "publicable_tras_fix": true,
-    "riesgo_actual": "medio-bajo",
-    "bloqueantes_para_release_cuidada": [
-      "BUG-TRANSPILE-PY-FUNC-001",
-      "conflicto de dependencias numpy/agix en pyproject si no se corrige"
-    ],
-    "no_bloqueantes": [
-      "GUI-UX-ENC-001",
-      "UX-ERR-001",
-      "paridad parcial Rust en scripts complejos"
-    ]
-  },
-  "comandos_usados_o_recomendados": {
-    "build_final": [
-      "python -m pip install --upgrade build twine",
-      "Remove-Item -Recurse -Force dist, build -ErrorAction SilentlyContinue",
-      "python -m build",
-      "twine check dist/*"
-    ],
-    "subida_pypi": [
-      "twine upload dist/*"
-    ],
-    "gui": [
-      "python -m pcobra.gui.app",
-      "python -m pcobra.gui.idle"
-    ],
-    "prueba_rust_directa": [
-      "python -c \"from pcobra.cobra.core.lexer import Lexer; from pcobra.cobra.core.parser import Parser; from pcobra.cobra.transpilers.transpiler.to_rust import TranspiladorRust; code='var x = 3\\nimprimir(x)'; ast=Parser(Lexer(code).analizar_token()).parsear(); print(TranspiladorRust().generate_code(ast))\""
-    ],
-    "validacion_post_fix_sugerida": [
-      "cobra --version",
-      "cobra --help",
-      "cobra build .\\poc_build_con_bom.cobra",
-      "python -m pcobra.gui.idle",
-      "python -m pytest tests -k \"python and funcion\""
-    ]
-  },
-  "commits_sugeridos": [
-    "fix(gui): add executable Flet entrypoints for app and idle",
-    "fix(rust): add NodoImprimir visitor",
-    "fix(transpiler-python): repair function transpilation recursion",
-    "fix(deps): align numpy range with agix compatibility"
+  "fecha_contexto": "2026-06-20",
+  "version_objetivo": "10.1.1",
+  "objetivo_actual": "Consolidar el IDLE gráfico de Cobra con gestión segura de archivos, proyectos independientes y árbol lateral funcional.",
+  "restricciones_permanentes": [
+    "No modificar Lexer.",
+    "No modificar Parser.",
+    "No modificar gramática.",
+    "No modificar tokens.",
+    "No modificar nodos AST.",
+    "No modificar transpiladores salvo una tarea específica autorizada.",
+    "No cambiar la sintaxis Cobra.",
+    "No inventar APIs ni comportamientos sin inspeccionar el código real.",
+    "Aplicar parches mínimos, localizados y acompañados de pruebas.",
+    "No guardar proyectos de usuario dentro del repositorio pCobra ni bajo src/."
   ],
-  "siguiente_paso_recomendado": {
-    "prioridad_1": "Pedir a Codex o aplicar manualmente patch mínimo para BUG-TRANSPILE-PY-FUNC-001 sin tocar Lexer/Parser.",
-    "prioridad_2": "Añadir tests de regresión para transpilación Python de funciones.",
-    "prioridad_3": "Corregir pyproject.toml para evitar conflicto numpy/agix.",
-    "prioridad_4": "Reconstruir wheel/sdist y ejecutar twine check.",
-    "prioridad_5": "Instalar en entorno limpio y repetir smoke CLI + GUI.",
-    "prioridad_6": "Publicar en PyPI con twine upload dist/*."
+  "estado_previo_release": {
+    "cli": "verde",
+    "build_utf8_bom": "verde",
+    "gui_flet_arranque": "verde",
+    "ejecucion_cobra_desde_gui": "verde",
+    "transpilacion_javascript_smoke": "verde",
+    "transpilacion_rust_simple": "verde",
+    "deuda_previa": [
+      "Bug de transpilación Python con funciones: maximum recursion depth exceeded.",
+      "Posible conflicto de dependencias numpy/agix.",
+      "Mojibake Unicode en algunos textos de GUI."
+    ]
+  },
+  "problemas_detectados_en_esta_sesion": [
+    {
+      "id": "GUI-FLET-ICONS-001",
+      "descripcion": "Flet ya no exponía ft.icons en la versión instalada.",
+      "error": "AttributeError: module 'flet' has no attribute 'icons'",
+      "archivos": [
+        "src/pcobra/gui/runtime.py"
+      ],
+      "correccion": [
+        "ft.icons.INSERT_DRIVE_FILE -> ft.Icons.INSERT_DRIVE_FILE",
+        "ft.icons.FOLDER -> ft.Icons.FOLDER"
+      ],
+      "estado": "corregido y validado"
+    },
+    {
+      "id": "GUI-PATH-STATE-001",
+      "descripcion": "El campo Ruta recibía el directorio actual cuando no existía archivo activo.",
+      "consecuencia": "Abrir o guardar intentaba tratar un directorio como archivo.",
+      "error_observado": "[Errno 13] Permission denied sobre src/pcobra/gui",
+      "causa": "ruta_input mezclaba la raíz del árbol con la ruta del archivo activo.",
+      "correccion": [
+        "Mantener ruta_input vacío cuando estado.ruta es None.",
+        "Separar directorio_actual, estado.ruta y ruta_input.",
+        "Añadir validación defensiva de rutas de archivo."
+      ],
+      "estado": "corregido y validado"
+    },
+    {
+      "id": "GUI-WORKSPACE-001",
+      "descripcion": "resolver_workspace_root_idle calcula ~/CobraProjects pero no crea físicamente la carpeta.",
+      "error_observado": "[WinError 3] El sistema no puede encontrar la ruta especificada: C:\\Users\\Adolfo\\CobraProjects",
+      "causa": "El árbol se construye antes de crear el primer proyecto.",
+      "correccion_pendiente": "Crear workspace_root con mkdir(parents=True, exist_ok=True) antes de construir el árbol.",
+      "estado": "pendiente"
+    },
+    {
+      "id": "GUI-LAYOUT-PROJECTS-001",
+      "descripcion": "Los controles nuevos de gestión de proyectos existen en idle.py, pero no aparecen en la GUI.",
+      "controles_esperados": [
+        "Proyecto activo",
+        "Crear proyecto",
+        "Abrir proyecto",
+        "Campo de proyecto o raíz"
+      ],
+      "hipotesis_actual": "Problema de layout, dimensiones, expand, scroll o composición del panel lateral.",
+      "estado": "pendiente de diagnóstico exacto"
+    }
+  ],
+  "cambios_validados": {
+    "guardar_como": {
+      "estado": "verde",
+      "evidencia": "Archivo guardado correctamente en src/pcobra/gui/poc_idle.cobra durante la prueba anterior."
+    },
+    "guardar": {
+      "estado": "verde",
+      "evidencia": "El archivo activo se actualizó correctamente."
+    },
+    "recargar": {
+      "estado": "verde",
+      "evidencia": "Un cambio no guardado fue descartado y se restauró el contenido persistido."
+    },
+    "abrir": {
+      "estado": "verde",
+      "evidencia": "El archivo se cargó correctamente usando su ruta completa."
+    },
+    "validacion_directorio_como_archivo": {
+      "estado": "verde",
+      "mensaje": "La ruta indicada corresponde a un directorio. Escribe también el nombre del archivo."
+    },
+    "ejecucion_basica": {
+      "estado": "verde",
+      "caso": "imprimir(\"Hola desde el IDLE de Cobra\")"
+    },
+    "variables_y_operaciones": {
+      "estado": "verde",
+      "resultado": [
+        "15",
+        "50"
+      ]
+    }
+  },
+  "arquitectura_de_proyectos_implementada": {
+    "workspace_root": {
+      "origen": "COBRA_PROJECTS_DIR si existe; de lo contrario Path.home() / \"CobraProjects\"",
+      "implementacion": "runtime.resolver_workspace_root_idle()"
+    },
+    "project_root": {
+      "descripcion": "Carpeta del proyecto activo.",
+      "estado_inicial_actual": "Se inicializa temporalmente con workspace_root."
+    },
+    "estado_ruta": {
+      "descripcion": "Archivo Cobra actualmente abierto."
+    },
+    "ruta_input": {
+      "descripcion": "Ruta visible del archivo activo o destino de guardado."
+    },
+    "estructura_por_proyecto": [
+      "CobraProjects/<nombre>/",
+      "CobraProjects/<nombre>/src/",
+      "CobraProjects/<nombre>/README.md"
+    ],
+    "regla_central": "Cada proyecto debe vivir en una carpeta propia, independiente y aislada del resto."
+  },
+  "codigo_confirmado": {
+    "runtime_resolver_workspace": [
+      "Lee COBRA_PROJECTS_DIR.",
+      "Si no existe, devuelve Path.home() / CobraProjects.",
+      "Actualmente no ejecuta mkdir."
+    ],
+    "crear_proyecto_handler": [
+      "Valida el nombre del proyecto.",
+      "Construye workspace_root / nombre.",
+      "Crea la carpeta del proyecto.",
+      "Crea src/.",
+      "Crea README.md si no existe.",
+      "Actualiza project_root.",
+      "Reconstruye el árbol."
+    ],
+    "seguridad": [
+      "Existe validar_project_root_idle().",
+      "Rechaza la raíz del repositorio.",
+      "Rechaza src/.",
+      "Rechaza src/pcobra/.",
+      "Rechaza src/pcobra/gui/.",
+      "Los proyectos deben permanecer dentro de workspace_root."
+    ]
+  },
+  "archivos_principales": [
+    "src/pcobra/gui/idle.py",
+    "src/pcobra/gui/runtime.py"
+  ],
+  "pruebas_realizadas": [
+    {
+      "id": "POC-EXEC-001",
+      "resultado": "verde",
+      "descripcion": "Ejecución mínima desde el editor."
+    },
+    {
+      "id": "POC-EXEC-002",
+      "resultado": "verde",
+      "descripcion": "Variables, suma y multiplicación."
+    },
+    {
+      "id": "POC-FILE-001",
+      "resultado": "verde",
+      "descripcion": "Guardar como."
+    },
+    {
+      "id": "POC-FILE-002",
+      "resultado": "verde",
+      "descripcion": "Guardar archivo activo."
+    },
+    {
+      "id": "POC-FILE-003",
+      "resultado": "verde",
+      "descripcion": "Recargar archivo activo."
+    },
+    {
+      "id": "POC-FILE-004",
+      "resultado": "verde",
+      "descripcion": "Abrir mediante ruta."
+    },
+    {
+      "id": "POC-FILE-005",
+      "resultado": "verde",
+      "descripcion": "Rechazar un directorio usado como archivo."
+    },
+    {
+      "id": "POC-WORKSPACE-001",
+      "resultado": "rojo",
+      "descripcion": "El workspace no existe antes de crear el primer proyecto y el árbol falla con WinError 3."
+    },
+    {
+      "id": "POC-LAYOUT-001",
+      "resultado": "rojo",
+      "descripcion": "Los controles de proyecto no son visibles en la GUI renderizada."
+    }
+  ],
+  "siguiente_parche_recomendado": {
+    "objetivo": "Corregir únicamente workspace inexistente y controles de proyecto invisibles.",
+    "cambio_1": {
+      "archivo": "src/pcobra/gui/runtime.py",
+      "funcion": "resolver_workspace_root_idle",
+      "accion": "Crear la ruta resuelta mediante mkdir(parents=True, exist_ok=True) antes de devolverla."
+    },
+    "cambio_2": {
+      "archivo": "src/pcobra/gui/idle.py",
+      "accion": "Inspeccionar el layout real y determinar por qué los controles de proyecto no reciben espacio o no se renderizan."
+    },
+    "restriccion": "No reescribir el IDLE ni tocar el frontend del lenguaje."
+  },
+  "proximas_pruebas": [
+    "Arrancar el IDLE y confirmar que C:\\Users\\Adolfo\\CobraProjects existe.",
+    "Confirmar que aparecen los controles Crear proyecto y Abrir proyecto.",
+    "Crear proyecto_alpha.",
+    "Verificar proyecto_alpha/src y proyecto_alpha/README.md.",
+    "Crear proyecto_beta y confirmar aislamiento entre carpetas.",
+    "Comprobar que el árbol solo muestra el proyecto activo.",
+    "Guardar src/principal.cobra dentro de proyecto_alpha.",
+    "Rechazar ../escape.cobra.",
+    "Rechazar rutas absolutas fuera de project_root.",
+    "Verificar Abrir, Guardar, Guardar como y Recargar dentro del proyecto activo.",
+    "Repetir Ejecutar, Tokens, AST, Sugerencias del Libro y Corrección."
+  ],
+  "comandos_utiles": {
+    "arrancar_idle": ".\\.venv\\Scripts\\python.exe -m pcobra.gui.idle",
+    "comprobar_workspace": "Test-Path \"$HOME\\CobraProjects\"",
+    "listar_workspace": "Get-ChildItem \"$HOME\\CobraProjects\" -Recurse -Force | Select-Object FullName",
+    "buscar_codigo_sin_ripgrep": "Get-ChildItem .\\src\\pcobra\\gui -Recurse -Filter *.py | Select-String -Pattern \"COBRA_PROJECTS_DIR|CobraProjects|workspace_root|project_root|crear_proyecto\"",
+    "comprobar_modulo_ejecutado": ".\\.venv\\Scripts\\python.exe -c \"import pcobra.gui.idle as m; print(m.__file__)\""
+  },
+  "estado_final_de_la_sesion": {
+    "valoracion": "El núcleo de edición, ejecución y persistencia básica está operativo.",
+    "riesgo_actual": "medio-bajo",
+    "bloqueantes_actuales": [
+      "Crear workspace antes de construir el árbol.",
+      "Hacer visibles y utilizables los controles de proyecto."
+    ],
+    "nota": "No continuar consumiendo Codex hasta disponer de una nueva sesión o presupuesto de tokens."
   }
 }
