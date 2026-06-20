@@ -483,7 +483,7 @@ def crear_salida_seleccionable(ft: Any, **kwargs: Any) -> Any:
 
 
 def crear_arbol_directorios(
-    ft: Any, *, on_click: Any, root_path: Path | None = None
+    ft: Any, *, on_click: Any, root_path: str | Path | None = None
 ) -> Any:
     """Crea un árbol de directorios con carga diferida de subcarpetas."""
     if root_path is None:
