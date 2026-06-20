@@ -335,6 +335,57 @@ def test_main_selector_y_switch_sin_targets(monkeypatch):
     assert activar.disabled is True
 
 
+def test_main_muestra_error_visible_si_falla_arbol_directorios(monkeypatch, tmp_path):
+    ft = _fake_flet()
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(idle.runtime, "require_flet", lambda: ft)
+    monkeypatch.setattr(
+        idle.runtime, "detectar_motor_ia_sugerencias", _motor_disponible
+    )
+    monkeypatch.setattr(idle.runtime, "gui_target_choices", lambda: ("python",))
+    monkeypatch.setattr(
+        idle.runtime,
+        "require_gui_dependencies",
+        lambda: {
+            "TRANSPILERS": {"python": object},
+            "LexerError": RuntimeError,
+            "ParserError": ValueError,
+        },
+    )
+    monkeypatch.setattr(
+        idle.runtime, "formatear_error", lambda exc, **_kwargs: f"error: {exc}"
+    )
+
+    def _crear_arbol_falla(*_args, **_kwargs):
+        raise FileNotFoundError("directorio inaccesible")
+
+    monkeypatch.setattr(idle.runtime, "crear_arbol_directorios", _crear_arbol_falla)
+
+    page = ft.Page()
+    idle.main(page)
+
+    salida = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.Text) and c.kwargs.get("selectable")
+    )
+    arbol = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.ListView)
+        and getattr(getattr(c, "controls", [None])[0], "value", "").startswith(
+            "Directorio raíz:"
+        )
+    )
+
+    assert salida.value == "error: directorio inaccesible"
+    assert any(
+        getattr(control, "value", "")
+        == "No se pudo listar la ruta: error: directorio inaccesible"
+        for control in arbol.controls
+    )
+
+
 def test_main_acciones_publicas_de_archivo(monkeypatch, tmp_path):
     ft = _fake_flet()
     monkeypatch.chdir(tmp_path)
