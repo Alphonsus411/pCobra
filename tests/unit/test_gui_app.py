@@ -101,7 +101,6 @@ def _fake_flet():
         ExpansionTile=ExpansionTile,
         ListTile=ListTile,
         Icon=Icon,
-        icons=SimpleNamespace(INSERT_DRIVE_FILE="file", FOLDER="folder"),
         Icons=SimpleNamespace(INSERT_DRIVE_FILE="file", FOLDER="folder"),
         ScrollMode=SimpleNamespace(ALWAYS="always"),
         Page=Page,
@@ -273,13 +272,11 @@ def test_main_configura_selector_por_defecto_y_switch_deshabilitado_si_no_hay_ta
     assert activar.disabled is True
 
 
-def test_fake_flet_expone_icons_moderno_y_legacy():
+def test_fake_flet_expone_icons_moderno():
     ft = _fake_flet()
 
     assert ft.Icons.INSERT_DRIVE_FILE == "file"
     assert ft.Icons.FOLDER == "folder"
-    assert ft.icons.INSERT_DRIVE_FILE == "file"
-    assert ft.icons.FOLDER == "folder"
 
 
 def _text_value(control):
