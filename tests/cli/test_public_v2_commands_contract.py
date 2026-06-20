@@ -5,14 +5,12 @@ import argparse
 from pcobra.cobra.architecture.backend_policy import PUBLIC_BACKENDS
 from pcobra.cobra.cli.cli import AppConfig, CommandRegistry
 
-
 EXPECTED_PUBLIC_V2_COMMANDS = {"run", "build", "test", "mod", "repl"}
 
 
 def test_app_config_v2_routes_include_repl_command_v2() -> None:
     routes = {
-        (route.module_path, route.class_name)
-        for route in AppConfig.V2_COMMAND_ROUTES
+        (route.module_path, route.class_name) for route in AppConfig.V2_COMMAND_ROUTES
     }
 
     assert (
@@ -45,3 +43,24 @@ def test_public_v2_subcommands_match_contract_exactly() -> None:
 
 def test_cli_public_backend_policy_is_exact() -> None:
     assert PUBLIC_BACKENDS == ("python", "javascript", "rust")
+
+
+def test_public_backend_policy_excludes_retired_targets() -> None:
+    retired_targets = {"go", "java", "cpp", "asm", "wasm", "brainfuck"}
+
+    assert set(PUBLIC_BACKENDS).isdisjoint(retired_targets)
+
+
+def test_public_v2_commands_do_not_register_retired_backend_names() -> None:
+    registry = CommandRegistry()
+    parser = argparse.ArgumentParser()
+    subparsers = parser.add_subparsers(dest="command")
+
+    commands = registry.register_base_commands(
+        subparsers,
+        ui="v2",
+        profile="public",
+    )
+
+    retired_targets = {"go", "java", "cpp", "asm", "wasm", "brainfuck"}
+    assert retired_targets.isdisjoint(commands)

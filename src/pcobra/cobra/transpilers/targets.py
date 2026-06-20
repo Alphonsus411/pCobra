@@ -36,3 +36,10 @@ if PUBLIC_BACKENDS != EXPECTED_CANONICAL_TARGETS:
         "PUBLIC_BACKENDS debe mantener exactamente los nombres públicos canónicos en orden. "
         + _canonical_diff_report(current=PUBLIC_BACKENDS)
     )
+
+
+if tuple(OFFICIAL_TARGETS) != PUBLIC_BACKENDS:
+    raise RuntimeError(
+        "OFFICIAL_TARGETS debe coincidir exactamente con PUBLIC_BACKENDS. "
+        + _canonical_diff_report(current=tuple(OFFICIAL_TARGETS))
+    )
