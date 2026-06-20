@@ -1017,7 +1017,6 @@ def transpilar_codigo(codigo: str, lang: str) -> str:
 
 
 def mostrar_tokens(codigo: str) -> str:
-    """Tokeniza código Cobra y devuelve una representación por línea."""
     deps = require_gui_dependencies()
     tokens, _ast = analizar_codigo(codigo)
     return "\n".join(str(token) for token in tokens)
