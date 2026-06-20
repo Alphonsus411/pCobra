@@ -19,6 +19,9 @@ def main(page: "ft.Page"):
     entrada = runtime.crear_editor_codigo(ft)
     salida = runtime.crear_salida_seleccionable(ft)
     estado_archivo = runtime.flet_text(ft, value=runtime.crear_titulo_archivo(estado))
+    # Flujo canónico del IDLE: el campo Ruta es la fuente visible para abrir y
+    # para Guardar como. ``runtime.crear_handler_guardar_como`` queda reservado
+    # como helper FilePicker para integraciones alternativas de Flet.
     ruta_input = runtime.flet_text_field(ft, label="Ruta", value="", expand=True)
     raiz_input = runtime.flet_text_field(
         ft, label="Raíz del árbol", value=str(directorio_actual), expand=True
@@ -176,6 +179,7 @@ def main(page: "ft.Page"):
         actualizar_pagina()
 
     def guardar_como_handler(_e):
+        """Guarda usando el campo Ruta, flujo canónico del IDLE principal."""
         if not ruta_input.value:
             salida.value = "Indica una ruta de destino en el campo Ruta."
             page.update()

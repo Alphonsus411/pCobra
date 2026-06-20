@@ -599,16 +599,15 @@ def crear_handler_ejecucion(
 def _guardar_archivo(
     page: Any, entrada: Any, estado_archivo: GuiFileState, ruta: Path
 ) -> None:
-    """Guarda el contenido del editor en la ruta especificada."""
+    """Guarda el editor usando la misma lógica y mensajes de ``Guardar como``."""
+    flet_runtime = require_flet()
     try:
-        guardar_archivo_en_estado(ruta, entrada.value, estado_archivo)
+        _contenido, mensaje = guardar_archivo_como(ruta, entrada.value, estado_archivo)
         page.snack_bar.open = True
-        page.snack_bar.content = flet_text(
-            require_flet(), f"Archivo guardado en {ruta}"
-        )
+        page.snack_bar.content = flet_text(flet_runtime, mensaje)
     except Exception as exc:
         page.snack_bar.open = True
-        page.snack_bar.content = flet_text(require_flet(), f"Error al guardar: {exc}")
+        page.snack_bar.content = flet_text(flet_runtime, f"Error al guardar: {exc}")
     finally:
         page.update()
 
@@ -639,7 +638,13 @@ def crear_handler_guardar_como(
     estado_archivo: GuiFileState,
     page: Any,
 ) -> Any:
-    """Crea el handler para guardar el archivo con un nuevo nombre/ruta."""
+    """Crea un helper de ``Guardar como`` basado en ``FilePicker``.
+
+    El flujo canónico del IDLE principal conserva el campo ``Ruta`` para que
+    abrir, guardar como y la ruta activa compartan una única entrada visible.
+    Este helper queda disponible para integraciones GUI alternativas que
+    prefieran delegar la selección de destino al diálogo nativo de Flet.
+    """
 
     def guardar_como_handler(_e: Any) -> None:
         flet_runtime = require_flet()
@@ -715,7 +720,6 @@ def _formatear_sugerencias_agrupadas(sugerencias: list[str]) -> str:
     return "\n".join(bloques)
 
 
-
 def _extraer_metadatos_sugerencia(sugerencia: str) -> tuple[str, str]:
     """Extrae regla y sección del Libro si el motor las incluye en el texto."""
 
@@ -742,7 +746,13 @@ def _ubicacion_aproximada_sugerencia(codigo: str, sugerencia: str) -> str:
         ("función", ("funcion ", "func ", "definir ")),
         ("módulo", ("usar ",)),
         ("impresión", ("imprimir",)),
-        ("nombre", ("var ", "=",)),
+        (
+            "nombre",
+            (
+                "var ",
+                "=",
+            ),
+        ),
     )
     for _nombre, patrones in pistas:
         if any(patron.strip() in texto for patron in patrones):
@@ -779,6 +789,7 @@ def _formatear_sugerencias_detalladas(codigo: str, sugerencias: list[str]) -> st
         cuerpo = "\n".join(items) if items else "  - Sin sugerencias."
         bloques.append(f"- {titulo}:\n{cuerpo}")
     return "\n".join(bloques)
+
 
 def generar_reporte_correccion_tipografica(codigo: str) -> str:
     """Valida código y genera un reporte de corrección sin editar automáticamente."""
@@ -921,7 +932,9 @@ def crear_handler_ast(*, entrada: Any, salida: Any, page: Any) -> Any:
     return ast_handler
 
 
-def crear_handler_correccion_tipografica(*, entrada: Any, salida: Any, page: Any) -> Any:
+def crear_handler_correccion_tipografica(
+    *, entrada: Any, salida: Any, page: Any
+) -> Any:
     """Crea handler para corrección tipográfica validada y no destructiva."""
 
     def correccion_handler(_e: Any) -> None:

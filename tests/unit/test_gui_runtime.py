@@ -137,6 +137,7 @@ def test_listar_directorio_cobra_opcion_interna_muestra_todos_los_archivos(
         "script.py",
     ]
 
+
 def test_normalizar_codigo_admite_none_y_texto() -> None:
     assert runtime.normalizar_codigo(None) == ""
     assert runtime.normalizar_codigo("imprimir('x')") == "imprimir('x')"
@@ -960,3 +961,112 @@ def test_crear_handler_sugerencias_agix_es_alias_deprecado_interno(
     assert llamadas == [(entrada, salida, page, None)]
     assert salida.value == "reporte común"
     assert page.updated is True
+
+
+def test_guardar_como_por_ruta_y_filepicker_actualizan_estado_igual(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("COBRA_IO_BASE_DIR", str(tmp_path))
+    destino_ruta = tmp_path / "desde_ruta.cobra"
+    destino_picker = tmp_path / "desde_picker.cobra"
+    codigo = "imprimir('mismo')"
+
+    estado_ruta = runtime.GuiFileState(cambios_sin_guardar=True)
+    contenido, mensaje = runtime.guardar_archivo_como(destino_ruta, codigo, estado_ruta)
+
+    picker_creados = []
+
+    class Text:
+        def __init__(self, value="", **_kwargs):
+            self.value = value
+
+    class FilePicker:
+        def __init__(self, on_result=None):
+            self.on_result = on_result
+            self.save_file_args = None
+            picker_creados.append(self)
+
+        def save_file(self, **kwargs):
+            self.save_file_args = kwargs
+
+    flet_runtime = SimpleNamespace(Text=Text, FilePicker=FilePicker)
+    monkeypatch.setattr(runtime, "require_flet", lambda: flet_runtime)
+
+    estado_picker = runtime.GuiFileState(cambios_sin_guardar=True)
+    entrada = SimpleNamespace(value=codigo)
+    page = SimpleNamespace(
+        overlay=[],
+        snack_bar=SimpleNamespace(open=False, content=None),
+        update=lambda: None,
+    )
+
+    handler = runtime.crear_handler_guardar_como(
+        entrada=entrada, estado_archivo=estado_picker, page=page
+    )
+    handler(None)
+    assert page.overlay == picker_creados
+    picker_creados[0].on_result(SimpleNamespace(path=str(destino_picker)))
+
+    assert contenido == codigo
+    assert destino_ruta.read_text(encoding="utf-8") == codigo
+    assert destino_picker.read_text(encoding="utf-8") == codigo
+    assert estado_ruta.ruta == destino_ruta.resolve()
+    assert estado_picker.ruta == destino_picker.resolve()
+    assert estado_ruta.contenido_cargado == estado_picker.contenido_cargado == codigo
+    assert estado_ruta.cambios_sin_guardar is estado_picker.cambios_sin_guardar is False
+    assert mensaje == f"Archivo guardado: {destino_ruta.resolve()}"
+    assert page.snack_bar.open is True
+    assert (
+        page.snack_bar.content.value == f"Archivo guardado: {destino_picker.resolve()}"
+    )
+
+
+def test_guardar_como_filepicker_usa_mensaje_de_exito_compartido(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("COBRA_IO_BASE_DIR", str(tmp_path))
+    destino = tmp_path / "mensaje.cobra"
+
+    class Text:
+        def __init__(self, value="", **_kwargs):
+            self.value = value
+
+    class FilePicker:
+        def __init__(self, on_result=None):
+            self.on_result = on_result
+
+        def save_file(self, **_kwargs):
+            pass
+
+    picker = None
+
+    class CapturingFilePicker(FilePicker):
+        def __init__(self, on_result=None):
+            nonlocal picker
+            super().__init__(on_result=on_result)
+            picker = self
+
+    monkeypatch.setattr(
+        runtime,
+        "require_flet",
+        lambda: SimpleNamespace(Text=Text, FilePicker=CapturingFilePicker),
+    )
+    page = SimpleNamespace(
+        overlay=[],
+        snack_bar=SimpleNamespace(open=False, content=None),
+        update=lambda: None,
+    )
+    estado = runtime.GuiFileState()
+    handler = runtime.crear_handler_guardar_como(
+        entrada=SimpleNamespace(value="imprimir('ok')"),
+        estado_archivo=estado,
+        page=page,
+    )
+
+    handler(None)
+    picker.on_result(SimpleNamespace(path=str(destino)))
+
+    assert page.snack_bar.content.value == f"Archivo guardado: {destino.resolve()}"
+    assert estado.ruta == destino.resolve()
+    assert estado.contenido_cargado == "imprimir('ok')"
+    assert estado.cambios_sin_guardar is False
