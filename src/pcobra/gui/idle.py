@@ -1,5 +1,6 @@
 """IDLE gráfico principal para editar, ejecutar e inspeccionar código Cobra."""
 
+import re
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -25,7 +26,7 @@ def main(page: "ft.Page"):
     # como helper FilePicker para integraciones alternativas de Flet.
     ruta_input = runtime.flet_text_field(ft, label="Ruta", value="", expand=True)
     raiz_input = runtime.flet_text_field(
-        ft, label="Raíz del árbol", value=str(project_root), expand=True
+        ft, label="Proyecto activo", value=str(project_root), expand=True
     )
     arbol = runtime.flet_list_view(ft, expand=True, spacing=2, auto_scroll=False)
     lenguajes = list(runtime.gui_target_choices())
@@ -144,7 +145,7 @@ def main(page: "ft.Page"):
         raiz_input.value = str(project_root)
         arbol.controls.clear()
         arbol.controls.append(
-            runtime.flet_text(ft, value=f"Directorio raíz: {project_root}")
+            runtime.flet_text(ft, value=f"Proyecto activo: {project_root}")
         )
         try:
             arbol_canonico = runtime.crear_arbol_directorios(
@@ -164,32 +165,65 @@ def main(page: "ft.Page"):
         arbol.controls.extend(getattr(arbol_canonico, "controls", [arbol_canonico]))
         return True
 
-    def establecer_raiz_arbol_handler(_e):
+    def nombre_proyecto_seguro(texto: str) -> str:
+        nombre = re.sub(r"[^A-Za-z0-9._-]+", "_", texto.strip()).strip("._-")
+        if not nombre:
+            raise ValueError("Indica un nombre de proyecto válido.")
+        return nombre
+
+    def resolver_directorio_proyecto(texto: str | Path) -> Path:
+        ruta_texto = str(texto).strip()
+        if not ruta_texto:
+            raise ValueError("Indica un directorio de proyecto.")
+        ruta = Path(ruta_texto)
+        candidata = ruta if ruta.is_absolute() else workspace_root / ruta
+        candidata = candidata.resolve()
+        workspace_canonico = workspace_root.resolve()
+        if (
+            candidata != workspace_canonico
+            and workspace_canonico not in candidata.parents
+        ):
+            raise ValueError(f"El proyecto debe estar dentro de: {workspace_canonico}")
+        return candidata
+
+    def crear_proyecto_handler(_e):
         nonlocal project_root
-        if not raiz_input.value:
-            salida.value = "Indica un directorio para usar como raíz del árbol."
+        try:
+            nombre = nombre_proyecto_seguro(raiz_input.value or "")
+            nuevo_proyecto = (workspace_root / nombre).resolve()
+            nuevo_proyecto.mkdir(parents=True, exist_ok=True)
+            (nuevo_proyecto / "src").mkdir(exist_ok=True)
+            readme = nuevo_proyecto / "README.md"
+            if not readme.exists():
+                readme.write_text(f"# {nombre}\n", encoding="utf-8")
+        except (OSError, ValueError) as exc:
+            mostrar_error_archivo(exc)
             page.update()
             return
+        project_root = nuevo_proyecto
+        if not reconstruir_arbol():
+            page.update()
+            return
+        salida.value = f"Proyecto creado: {project_root}"
+        actualizar_pagina()
+
+    def establecer_raiz_arbol_handler(_e):
+        nonlocal project_root
         try:
-            nueva_raiz = runtime.normalizar_ruta_archivo_gui(raiz_input.value)
-        except (
-            FileNotFoundError,
-            NotADirectoryError,
-            PermissionError,
-            ValueError,
-        ) as exc:
+            nueva_raiz = resolver_directorio_proyecto(raiz_input.value or "")
+        except (OSError, ValueError) as exc:
             mostrar_error_archivo(exc)
             page.update()
             return
         if not nueva_raiz.is_dir():
-            salida.value = f"La raíz del árbol debe ser un directorio: {nueva_raiz}"
+            salida.value = f"El proyecto activo debe ser un directorio: {nueva_raiz}"
             page.update()
             return
         project_root = nueva_raiz
         if not reconstruir_arbol():
             page.update()
             return
-        salida.value = f"Raíz del árbol actualizada: {project_root}"
+        salida.value = f"Proyecto abierto: {project_root}"
         actualizar_pagina()
 
     def nuevo_handler(_e):
@@ -291,7 +325,10 @@ def main(page: "ft.Page"):
         controls=[
             raiz_input,
             runtime.flet_elevated_button(
-                ft, "Establecer raíz", on_click=establecer_raiz_arbol_handler
+                ft, "Crear proyecto", on_click=crear_proyecto_handler
+            ),
+            runtime.flet_elevated_button(
+                ft, "Abrir proyecto", on_click=establecer_raiz_arbol_handler
             ),
         ],
         wrap=True,

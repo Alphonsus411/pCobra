@@ -397,7 +397,7 @@ def test_main_inicializa_workspace_root_desde_env_y_ruta_visible_vacia(
     raiz_input = next(
         c
         for c in page.controls
-        if isinstance(c, ft.TextField) and c.kwargs.get("label") == "Raíz del árbol"
+        if isinstance(c, ft.TextField) and c.kwargs.get("label") == "Proyecto activo"
     )
 
     assert ruta_input.value == ""
@@ -440,13 +440,13 @@ def test_main_arbol_inicial_muestra_subdirectorios_y_archivos_cobra(
         for c in page.controls
         if isinstance(c, ft.ListView)
         and getattr(getattr(c, "controls", [None])[0], "value", "").startswith(
-            "Directorio raíz:"
+            "Proyecto activo:"
         )
     )
     entradas = arbol.controls[1:]
     titulos = [getattr(control.title, "value", "") for control in entradas]
 
-    assert arbol.controls[0].value == f"Directorio raíz: {tmp_path.resolve()}"
+    assert arbol.controls[0].value == f"Proyecto activo: {tmp_path.resolve()}"
     assert "subdirectorio" in titulos
     assert "programa.cobra" in titulos
     assert "programa.co" in titulos
@@ -518,7 +518,7 @@ def test_main_arbol_inicial_muestra_estado_vacio_en_tmp_path_vacio(
         for c in page.controls
         if isinstance(c, ft.ListView)
         and getattr(getattr(c, "controls", [None])[0], "value", "").startswith(
-            "Directorio raíz:"
+            "Proyecto activo:"
         )
     )
 
@@ -578,7 +578,7 @@ def test_main_panel_lateral_conserva_ancho_contenido_y_arbol(monkeypatch, tmp_pa
     assert arbol.expand is True
     assert columna.controls[0].value == "Archivos Cobra"
     assert columna.controls[-1] is arbol
-    assert arbol.controls[0].value == f"Directorio raíz: {tmp_path.resolve()}"
+    assert arbol.controls[0].value == f"Proyecto activo: {tmp_path.resolve()}"
     assert {"subdirectorio", "programa.cobra", "programa.co"}.issubset(titulos)
     assert entradas
 
@@ -623,7 +623,7 @@ def test_main_muestra_error_visible_si_falla_arbol_directorios(monkeypatch, tmp_
         for c in page.controls
         if isinstance(c, ft.ListView)
         and getattr(getattr(c, "controls", [None])[0], "value", "").startswith(
-            "Directorio raíz:"
+            "Proyecto activo:"
         )
     )
 
@@ -680,12 +680,12 @@ def test_main_establecer_raiz_arbol_muestra_error_si_listado_falla(
     raiz_input = next(
         c
         for c in page.controls
-        if isinstance(c, ft.TextField) and c.kwargs.get("label") == "Raíz del árbol"
+        if isinstance(c, ft.TextField) and c.kwargs.get("label") == "Proyecto activo"
     )
     boton_raiz = next(
         c
         for c in page.controls
-        if isinstance(c, ft.ElevatedButton) and c.text == "Establecer raíz"
+        if isinstance(c, ft.ElevatedButton) and c.text == "Abrir proyecto"
     )
     salida = next(
         c
@@ -697,7 +697,7 @@ def test_main_establecer_raiz_arbol_muestra_error_si_listado_falla(
         for c in page.controls
         if isinstance(c, ft.ListView)
         and getattr(getattr(c, "controls", [None])[0], "value", "").startswith(
-            "Directorio raíz:"
+            "Proyecto activo:"
         )
     )
 
@@ -777,7 +777,7 @@ def test_main_acciones_publicas_de_archivo(monkeypatch, tmp_path):
         for c in page.controls
         if isinstance(c, ft.ListView)
         and getattr(getattr(c, "controls", [None])[0], "value", "").startswith(
-            "Directorio raíz:"
+            "Proyecto activo:"
         )
     )
     estado_archivo = next(
@@ -800,7 +800,7 @@ def test_main_acciones_publicas_de_archivo(monkeypatch, tmp_path):
     assert salida.value == f"Archivo cargado: {archivo_abrir.resolve()}"
     assert estado_archivo.value == str(archivo_abrir.resolve())
     assert ruta_input.value == str(archivo_abrir.resolve())
-    assert arbol.controls[0].value == f"Directorio raíz: {tmp_path.resolve()}"
+    assert arbol.controls[0].value == f"Proyecto activo: {tmp_path.resolve()}"
 
     entrada.value = "imprimir('guardado')"
     botones["Guardar"].on_click(None)
@@ -871,12 +871,12 @@ def test_main_establecer_raiz_arbol_valida_directorios(monkeypatch, tmp_path):
     boton_raiz = next(
         c
         for c in page.controls
-        if isinstance(c, ft.ElevatedButton) and c.text == "Establecer raíz"
+        if isinstance(c, ft.ElevatedButton) and c.text == "Abrir proyecto"
     )
     raiz_input = next(
         c
         for c in page.controls
-        if isinstance(c, ft.TextField) and c.kwargs.get("label") == "Raíz del árbol"
+        if isinstance(c, ft.TextField) and c.kwargs.get("label") == "Proyecto activo"
     )
     salida = next(
         c
@@ -888,21 +888,22 @@ def test_main_establecer_raiz_arbol_valida_directorios(monkeypatch, tmp_path):
         for c in page.controls
         if isinstance(c, ft.ListView)
         and getattr(getattr(c, "controls", [None])[0], "value", "").startswith(
-            "Directorio raíz:"
+            "Proyecto activo:"
         )
     )
 
     raiz_input.value = str(archivo)
     boton_raiz.on_click(None)
     assert (
-        salida.value == f"La raíz del árbol debe ser un directorio: {archivo.resolve()}"
+        salida.value
+        == f"El proyecto activo debe ser un directorio: {archivo.resolve()}"
     )
 
     raiz_input.value = str(subdir)
     boton_raiz.on_click(None)
-    assert salida.value == f"Raíz del árbol actualizada: {subdir.resolve()}"
+    assert salida.value == f"Proyecto abierto: {subdir.resolve()}"
     assert raiz_input.value == str(subdir.resolve())
-    assert arbol.controls[0].value == f"Directorio raíz: {subdir.resolve()}"
+    assert arbol.controls[0].value == f"Proyecto activo: {subdir.resolve()}"
 
 
 def test_crear_arbol_directorios_muestra_estado_vacio_en_carpeta_sin_cobras(tmp_path):
@@ -1030,9 +1031,7 @@ def test_guardar_como_rechaza_escape_relativo_absoluto_externo_y_directorio(
     assert directorio.is_dir()
 
 
-def test_abrir_valida_ruta_relativa_visible_dentro_del_proyecto(
-    monkeypatch, tmp_path
-):
+def test_abrir_valida_ruta_relativa_visible_dentro_del_proyecto(monkeypatch, tmp_path):
     (
         _ft,
         _page,
@@ -1123,3 +1122,79 @@ def test_abrir_rechaza_ruta_visible_fuera_del_proyecto_antes_del_runtime(
         assert "raíz del proyecto" in salida.value
     finally:
         externo.unlink(missing_ok=True)
+
+
+def test_crear_proyectos_separados_con_src_y_readme(monkeypatch, tmp_path):
+    (
+        ft,
+        _page,
+        _entrada,
+        _ruta_input,
+        salida,
+        _abrir,
+        _guardar_como,
+    ) = _preparar_idle_archivos(monkeypatch, tmp_path)
+    page = _page
+    proyecto_input = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.TextField) and c.kwargs.get("label") == "Proyecto activo"
+    )
+    crear_proyecto = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.ElevatedButton) and c.text == "Crear proyecto"
+    )
+    arbol = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.ListView)
+        and getattr(getattr(c, "controls", [None])[0], "value", "").startswith(
+            "Proyecto activo:"
+        )
+    )
+
+    for nombre in ("proyecto_uno", "proyecto_dos"):
+        proyecto_input.value = nombre
+        crear_proyecto.on_click(None)
+        proyecto = (tmp_path / nombre).resolve()
+
+        assert proyecto.is_dir()
+        assert (proyecto / "src").is_dir()
+        assert (proyecto / "README.md").read_text(encoding="utf-8") == f"# {nombre}\n"
+        assert salida.value == f"Proyecto creado: {proyecto}"
+        assert proyecto_input.value == str(proyecto)
+        assert arbol.controls[0].value == f"Proyecto activo: {proyecto}"
+
+    assert (tmp_path / "proyecto_uno") != (tmp_path / "proyecto_dos")
+
+
+def test_crear_proyecto_normaliza_nombre_seguro(monkeypatch, tmp_path):
+    (
+        ft,
+        page,
+        _entrada,
+        _ruta_input,
+        salida,
+        _abrir,
+        _guardar_como,
+    ) = _preparar_idle_archivos(monkeypatch, tmp_path)
+    proyecto_input = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.TextField) and c.kwargs.get("label") == "Proyecto activo"
+    )
+    crear_proyecto = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.ElevatedButton) and c.text == "Crear proyecto"
+    )
+
+    proyecto_input.value = " proyecto uno! "
+    crear_proyecto.on_click(None)
+
+    proyecto = (tmp_path / "proyecto_uno").resolve()
+    assert proyecto.is_dir()
+    assert (proyecto / "src").is_dir()
+    assert (proyecto / "README.md").is_file()
+    assert salida.value == f"Proyecto creado: {proyecto}"
