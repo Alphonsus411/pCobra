@@ -72,7 +72,10 @@ def _fake_flet():
             self.data = data
 
     class ExpansionTile(Layout):
-        pass
+        def __init__(self, title=None, leading=None, controls=None, **_kwargs):
+            super().__init__(controls=controls, **_kwargs)
+            self.title = title
+            self.leading = leading
 
     class Icon:
         def __init__(self, name):
@@ -342,6 +345,62 @@ def test_main_selector_y_switch_sin_targets(monkeypatch):
 
     assert selector.value is None
     assert activar.disabled is True
+
+
+def test_main_arbol_inicial_muestra_subdirectorios_y_archivos_cobra(monkeypatch, tmp_path):
+    ft = _fake_flet()
+    programa_cobra = tmp_path / "programa.cobra"
+    programa_cobra.write_text("imprimir('cobra')", encoding="utf-8")
+    programa_co = tmp_path / "programa.co"
+    programa_co.write_text("imprimir('co')", encoding="utf-8")
+    subdirectorio = tmp_path / "subdirectorio"
+    subdirectorio.mkdir()
+
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(idle.runtime, "require_flet", lambda: ft)
+    monkeypatch.setattr(
+        idle.runtime, "detectar_motor_ia_sugerencias", _motor_disponible
+    )
+    monkeypatch.setattr(idle.runtime, "gui_target_choices", lambda: ("python",))
+    monkeypatch.setattr(
+        idle.runtime,
+        "require_gui_dependencies",
+        lambda: {
+            "TRANSPILERS": {"python": object},
+            "LexerError": RuntimeError,
+            "ParserError": ValueError,
+        },
+    )
+
+    page = ft.Page()
+    idle.main(page)
+
+    arbol = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.ListView)
+        and getattr(getattr(c, "controls", [None])[0], "value", "").startswith(
+            "Directorio raíz:"
+        )
+    )
+    entradas = arbol.controls[1:]
+    titulos = [getattr(control.title, "value", "") for control in entradas]
+
+    assert arbol.controls[0].value == f"Directorio raíz: {tmp_path.resolve()}"
+    assert "subdirectorio" in titulos
+    assert "programa.cobra" in titulos
+    assert "programa.co" in titulos
+    assert len(entradas) == 3
+    assert entradas
+    assert next(
+        control for control in entradas if control.title.value == "subdirectorio"
+    ).leading.name == ft.Icons.FOLDER
+    assert next(
+        control for control in entradas if control.title.value == "programa.cobra"
+    ).leading.name == ft.Icons.INSERT_DRIVE_FILE
+    assert next(
+        control for control in entradas if control.title.value == "programa.co"
+    ).leading.name == ft.Icons.INSERT_DRIVE_FILE
 
 
 def test_main_muestra_error_visible_si_falla_arbol_directorios(monkeypatch, tmp_path):
