@@ -526,9 +526,14 @@ def crear_arbol_directorios(
             return _crear_nodo_directorio(path)
         return _crear_nodo_archivo(path)
 
-    elementos_arbol = [
-        _crear_nodo(entrada) for entrada in listar_directorio_cobra(root_path)
-    ]
+    entradas = listar_directorio_cobra(root_path)
+    if not entradas:
+        return ft.Column(
+            [flet_text(ft, value="No hay archivos Cobra en esta carpeta")],
+            scroll=ft.ScrollMode.ALWAYS,
+        )
+
+    elementos_arbol = [_crear_nodo(entrada) for entrada in entradas]
 
     return ft.Column(elementos_arbol, scroll=ft.ScrollMode.ALWAYS)
 

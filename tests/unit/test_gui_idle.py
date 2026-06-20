@@ -50,6 +50,7 @@ def _fake_flet():
             self.data = _kwargs.get("data")
             self.on_click = _kwargs.get("on_click")
             self.on_change = _kwargs.get("on_change")
+            self.scroll = _kwargs.get("scroll")
 
     class Container:
         def __init__(self, content=None, **_kwargs):
@@ -509,3 +510,15 @@ def test_main_establecer_raiz_arbol_valida_directorios(monkeypatch, tmp_path):
     assert salida.value == f"Raíz del árbol actualizada: {subdir.resolve()}"
     assert raiz_input.value == str(subdir.resolve())
     assert arbol.controls[0].value == f"Directorio raíz: {subdir.resolve()}"
+
+
+def test_crear_arbol_directorios_muestra_estado_vacio_en_carpeta_sin_cobras(tmp_path):
+    ft = _fake_flet()
+
+    arbol = idle.runtime.crear_arbol_directorios(
+        ft, on_click=lambda _e: None, root_path=tmp_path
+    )
+
+    assert arbol.scroll == ft.ScrollMode.ALWAYS
+    assert len(arbol.controls) == 1
+    assert arbol.controls[0].value == "No hay archivos Cobra en esta carpeta"

@@ -44,6 +44,7 @@ def _fake_flet():
             if controls is None and args:
                 controls = args[0]
             self.controls = controls or []
+            self.scroll = _kwargs.get("scroll")
 
     class Container:
         def __init__(self, content=None, **_kwargs):
@@ -100,6 +101,7 @@ def _fake_flet():
         ListTile=ListTile,
         Icon=Icon,
         icons=SimpleNamespace(FOLDER="folder", INSERT_DRIVE_FILE="file"),
+        Icons=SimpleNamespace(FOLDER="folder", INSERT_DRIVE_FILE="file"),
         ScrollMode=SimpleNamespace(ALWAYS="always"),
         Page=Page,
         dropdown=SimpleNamespace(Option=lambda v: v),
