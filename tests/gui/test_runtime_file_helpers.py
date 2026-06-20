@@ -13,6 +13,26 @@ def _ejecutar_en_tmp_path(monkeypatch, tmp_path: Path):
     monkeypatch.chdir(tmp_path)
 
 
+def test_resolver_workspace_root_idle_usa_cobra_projects_dir(
+    monkeypatch, tmp_path: Path
+):
+    workspace = tmp_path / "workspace personalizado"
+    monkeypatch.setenv("COBRA_PROJECTS_DIR", str(workspace))
+
+    assert runtime.resolver_workspace_root_idle() == workspace.resolve()
+
+
+def test_resolver_workspace_root_idle_usa_cobraprojects_en_home_sin_env(
+    monkeypatch, tmp_path: Path
+):
+    monkeypatch.delenv("COBRA_PROJECTS_DIR", raising=False)
+    monkeypatch.setattr(Path, "home", lambda: tmp_path)
+
+    assert (
+        runtime.resolver_workspace_root_idle() == (tmp_path / "CobraProjects").resolve()
+    )
+
+
 def test_es_archivo_cobra_prioriza_extensiones_documentadas():
     assert runtime.es_archivo_cobra("programa.co")
     assert runtime.es_archivo_cobra("paquete.COBRA")
