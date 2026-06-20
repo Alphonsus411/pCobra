@@ -108,13 +108,16 @@ def _fake_flet():
     )
 
 
+def _fake_crear_arbol_directorios(ft, on_click, root_path=None):
+    assert root_path is not None
+    return ft.Column([])
+
+
 def test_main_renderiza_componentes_minimos(monkeypatch):
     ft = _fake_flet()
     monkeypatch.setattr(app.runtime, "require_flet", lambda: ft)
     monkeypatch.setattr(
-        app.runtime,
-        "crear_arbol_directorios",
-        lambda _ft, on_click, root_path=None: _ft.Column([]),
+        app.runtime, "crear_arbol_directorios", _fake_crear_arbol_directorios
     )
     monkeypatch.setattr(app.runtime, "gui_target_choices", lambda: ("python",))
     monkeypatch.setattr(
@@ -172,9 +175,7 @@ def test_main_handler_actualiza_salida(monkeypatch):
     ft = _fake_flet()
     monkeypatch.setattr(app.runtime, "require_flet", lambda: ft)
     monkeypatch.setattr(
-        app.runtime,
-        "crear_arbol_directorios",
-        lambda _ft, on_click, root_path=None: _ft.Column([]),
+        app.runtime, "crear_arbol_directorios", _fake_crear_arbol_directorios
     )
     monkeypatch.setattr(app.runtime, "gui_target_choices", lambda: ("python",))
     ejecutar_mock = MagicMock(return_value="ejecutado")
@@ -239,9 +240,7 @@ def test_main_configura_selector_por_defecto_y_switch_deshabilitado_si_no_hay_ta
     ft = _fake_flet()
     monkeypatch.setattr(app.runtime, "require_flet", lambda: ft)
     monkeypatch.setattr(
-        app.runtime,
-        "crear_arbol_directorios",
-        lambda _ft, on_click, root_path=None: _ft.Column([]),
+        app.runtime, "crear_arbol_directorios", _fake_crear_arbol_directorios
     )
     monkeypatch.setattr(app.runtime, "gui_target_choices", lambda: ())
     monkeypatch.setattr(

@@ -201,6 +201,41 @@ def test_crear_arbol_directorios_acepta_root_path_path_y_str_con_entradas_reales
     )
 
 
+def test_crear_arbol_directorios_sin_root_path_usa_workspace_idle(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    class Text:
+        def __init__(self, value=None, **_kwargs):
+            self.value = value
+
+    class Column:
+        def __init__(self, controls=None, **kwargs):
+            self.controls = controls or []
+            self.scroll = kwargs.get("scroll")
+
+    ft = SimpleNamespace(
+        Text=Text,
+        Column=Column,
+        ScrollMode=SimpleNamespace(ALWAYS="always"),
+    )
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    llamadas = []
+
+    def fake_resolver_workspace_root_idle() -> Path:
+        llamadas.append("resolver")
+        return workspace
+
+    monkeypatch.setattr(
+        runtime, "resolver_workspace_root_idle", fake_resolver_workspace_root_idle
+    )
+
+    arbol = runtime.crear_arbol_directorios(ft, on_click=lambda _e: None)
+
+    assert llamadas == ["resolver"]
+    assert arbol.scroll == ft.ScrollMode.ALWAYS
+    assert arbol.controls[0].value == "No hay archivos Cobra en esta carpeta"
+
 def test_crear_arbol_directorios_propaga_file_not_found_en_ruta_inexistente(
     tmp_path: Path,
 ) -> None:
