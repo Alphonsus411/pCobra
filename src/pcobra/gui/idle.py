@@ -64,7 +64,16 @@ def main(page: "ft.Page"):
             page.update()
             return None
 
-    def obtener_ruta_archivo_desde_input() -> Path | None:
+    def validar_ruta_visible_para_abrir() -> Path | None:
+        """Valida la ruta visible antes de abrirla desde el IDLE.
+
+        El campo ``ruta_input`` es la fuente canónica de la acción Abrir. Por
+        eso se resuelve siempre contra ``project_root`` antes de delegar en el
+        runtime de archivos: rutas relativas quedan ancladas al proyecto, rutas
+        absolutas deben pertenecer a él y la resolución canónica bloquea
+        ``..`` o symlinks externos.
+        """
+
         texto = (ruta_input.value or "").strip()
 
         if not texto:
@@ -185,7 +194,7 @@ def main(page: "ft.Page"):
         actualizar_pagina()
 
     def abrir_handler(_e):
-        ruta = obtener_ruta_archivo_desde_input()
+        ruta = validar_ruta_visible_para_abrir()
         if ruta is None:
             return
 
