@@ -1054,6 +1054,42 @@ def test_abrir_valida_ruta_relativa_visible_dentro_del_proyecto(
     assert ruta_input.value == str(archivo)
 
 
+def test_abrir_archivo_en_subdirectorio_reconstruye_arbol_con_project_root(
+    monkeypatch, tmp_path
+):
+    llamadas_root_path = []
+    crear_arbol_real = idle.runtime.crear_arbol_directorios
+
+    def _crear_arbol_spy(*args, **kwargs):
+        llamadas_root_path.append(kwargs["root_path"])
+        return crear_arbol_real(*args, **kwargs)
+
+    monkeypatch.setattr(idle.runtime, "crear_arbol_directorios", _crear_arbol_spy)
+    (
+        _ft,
+        _page,
+        entrada,
+        ruta_input,
+        salida,
+        abrir,
+        _guardar_como,
+    ) = _preparar_idle_archivos(monkeypatch, tmp_path)
+    project_root = tmp_path.resolve()
+    src = tmp_path / "src"
+    src.mkdir()
+    archivo = (src / "main.cobra").resolve()
+    archivo.write_text("imprimir('main')", encoding="utf-8")
+
+    ruta_input.value = "src/main.cobra"
+    abrir.on_click(None)
+
+    assert entrada.value == "imprimir('main')"
+    assert salida.value == f"Archivo cargado: {archivo}"
+    assert ruta_input.value == str(archivo)
+    assert llamadas_root_path[-1] == project_root
+    assert project_root / "src" not in llamadas_root_path
+
+
 def test_abrir_rechaza_ruta_visible_fuera_del_proyecto_antes_del_runtime(
     monkeypatch, tmp_path
 ):

@@ -103,6 +103,9 @@ def main(page: "ft.Page"):
             mostrar_error_archivo(exc)
             page.update()
             return
+        # Abrir un archivo solo cambia el archivo activo (estado.ruta). La raíz
+        # visible del árbol permanece anclada a project_root para no contraer el
+        # explorador al directorio padre del archivo abierto.
         reconstruir_arbol()
         actualizar_pagina()
 
