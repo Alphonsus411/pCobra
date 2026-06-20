@@ -492,7 +492,7 @@ def crear_arbol_directorios(
     def _crear_nodo_archivo(path: Path) -> Any:
         return ft.ListTile(
             title=ft.Text(path.name),
-            leading=ft.Icon(ft.icons.INSERT_DRIVE_FILE),
+            leading=ft.Icon(ft.Icons.INSERT_DRIVE_FILE),
             data=str(path),
             on_click=on_click,
         )
@@ -500,7 +500,7 @@ def crear_arbol_directorios(
     def _crear_nodo_directorio(path: Path) -> Any:
         tile = ft.ExpansionTile(
             title=ft.Text(path.name),
-            leading=ft.Icon(ft.icons.FOLDER),
+            leading=ft.Icon(ft.Icons.FOLDER),
             controls=[],
         )
         tile.data = {"path": path, "children_loaded": False}
