@@ -1,5 +1,6 @@
 """IDLE gráfico principal para editar, ejecutar e inspeccionar código Cobra."""
 
+import os
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -14,7 +15,12 @@ def main(page: "ft.Page"):
     ft = runtime.require_flet()
 
     estado = runtime.GuiFileState()
-    directorio_actual = Path.cwd().resolve()
+    workspace_root = (
+        Path(os.environ.get("COBRA_PROJECTS_DIR") or Path.home() / "CobraProjects")
+        .expanduser()
+        .resolve(strict=False)
+    )
+    project_root = workspace_root
 
     entrada = runtime.crear_editor_codigo(ft)
     salida = runtime.crear_salida_seleccionable(ft)
@@ -24,7 +30,7 @@ def main(page: "ft.Page"):
     # como helper FilePicker para integraciones alternativas de Flet.
     ruta_input = runtime.flet_text_field(ft, label="Ruta", value="", expand=True)
     raiz_input = runtime.flet_text_field(
-        ft, label="Raíz del árbol", value=str(directorio_actual), expand=True
+        ft, label="Raíz del árbol", value=str(project_root), expand=True
     )
     arbol = runtime.flet_list_view(ft, expand=True, spacing=2, auto_scroll=False)
     lenguajes = list(runtime.gui_target_choices())
@@ -76,7 +82,6 @@ def main(page: "ft.Page"):
         return ruta
 
     def cargar_archivo(ruta: Path, *, desde_arbol: bool = False) -> None:
-        nonlocal directorio_actual
         try:
             if desde_arbol:
                 entrada.value, salida.value = runtime.cargar_archivo_desde_arbol(
@@ -96,7 +101,6 @@ def main(page: "ft.Page"):
             mostrar_error_archivo(exc)
             page.update()
             return
-        directorio_actual = estado.ruta.parent if estado.ruta else directorio_actual
         reconstruir_arbol()
         actualizar_pagina()
 
@@ -129,16 +133,16 @@ def main(page: "ft.Page"):
         cargar_archivo(Path(ruta), desde_arbol=True)
 
     def reconstruir_arbol() -> bool:
-        raiz_input.value = str(directorio_actual)
+        raiz_input.value = str(project_root)
         arbol.controls.clear()
         arbol.controls.append(
-            runtime.flet_text(ft, value=f"Directorio raíz: {directorio_actual}")
+            runtime.flet_text(ft, value=f"Directorio raíz: {project_root}")
         )
         try:
             arbol_canonico = runtime.crear_arbol_directorios(
                 ft,
                 on_click=cargar_archivo_desde_evento_arbol,
-                root_path=directorio_actual,
+                root_path=project_root,
             )
         except (FileNotFoundError, NotADirectoryError, PermissionError) as exc:
             mostrar_error_archivo(exc)
@@ -153,7 +157,7 @@ def main(page: "ft.Page"):
         return True
 
     def establecer_raiz_arbol_handler(_e):
-        nonlocal directorio_actual
+        nonlocal project_root
         if not raiz_input.value:
             salida.value = "Indica un directorio para usar como raíz del árbol."
             page.update()
@@ -173,11 +177,11 @@ def main(page: "ft.Page"):
             salida.value = f"La raíz del árbol debe ser un directorio: {nueva_raiz}"
             page.update()
             return
-        directorio_actual = nueva_raiz
+        project_root = nueva_raiz
         if not reconstruir_arbol():
             page.update()
             return
-        salida.value = f"Raíz del árbol actualizada: {directorio_actual}"
+        salida.value = f"Raíz del árbol actualizada: {project_root}"
         actualizar_pagina()
 
     def nuevo_handler(_e):
@@ -323,7 +327,6 @@ def main(page: "ft.Page"):
     )
 
     page.add(runtime.flet_row(ft, controls=[panel_lateral, editor], expand=True))
-
 
 
 if __name__ == "__main__":
