@@ -249,6 +249,11 @@ def resolver_ruta_archivo_en_project_root(
         raise NotADirectoryError(f"La raíz del proyecto debe ser un directorio: {raiz}")
 
     ruta_original = Path(ruta).expanduser()
+    ruta_final = (
+        ruta_original.with_suffix(".cobra")
+        if not ruta_original.suffix
+        else ruta_original
+    )
     candidata_original = (
         ruta_original if ruta_original.is_absolute() else raiz / ruta_original
     )
@@ -259,14 +264,11 @@ def resolver_ruta_archivo_en_project_root(
             "La ruta indicada corresponde a un directorio; indica un archivo Cobra."
         )
 
-    if not ruta_original.suffix:
-        ruta_original = ruta_original.with_suffix(".cobra")
-
-    extension = ruta_original.suffix.lower()
+    extension = ruta_final.suffix.lower()
     if extension not in COBRA_FILE_EXTENSIONS:
         raise ValueError("El archivo debe usar la extensión .cobra o .co.")
 
-    candidata = ruta_original if ruta_original.is_absolute() else raiz / ruta_original
+    candidata = ruta_final if ruta_final.is_absolute() else raiz / ruta_final
     ruta_resuelta = candidata.resolve()
 
     try:

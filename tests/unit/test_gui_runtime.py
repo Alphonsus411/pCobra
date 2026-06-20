@@ -236,6 +236,7 @@ def test_crear_arbol_directorios_sin_root_path_usa_workspace_idle(
     assert arbol.scroll == ft.ScrollMode.ALWAYS
     assert arbol.controls[0].value == "No hay archivos Cobra en esta carpeta"
 
+
 def test_crear_arbol_directorios_propaga_file_not_found_en_ruta_inexistente(
     tmp_path: Path,
 ) -> None:
@@ -1204,6 +1205,30 @@ def test_resolver_ruta_archivo_en_project_root_relativa_y_extension_por_defecto(
     destino = runtime.resolver_ruta_archivo_en_project_root("src/programa", tmp_path)
 
     assert destino == (tmp_path / "src" / "programa.cobra").resolve()
+
+
+@pytest.mark.parametrize(
+    ("ruta", "esperado"),
+    [
+        ("main", "main.cobra"),
+        ("src/main", "src/main.cobra"),
+        ("main.co", "main.co"),
+        ("main.cobra", "main.cobra"),
+    ],
+)
+def test_resolver_ruta_archivo_en_project_root_normaliza_extensiones_cobra(
+    tmp_path: Path, ruta: str, esperado: str
+) -> None:
+    destino = runtime.resolver_ruta_archivo_en_project_root(ruta, tmp_path)
+
+    assert destino == (tmp_path / esperado).resolve()
+
+
+def test_resolver_ruta_archivo_en_project_root_rechaza_extension_no_cobra(
+    tmp_path: Path,
+) -> None:
+    with pytest.raises(ValueError, match="extensión .cobra o .co"):
+        runtime.resolver_ruta_archivo_en_project_root("main.txt", tmp_path)
 
 
 def test_resolver_ruta_archivo_en_project_root_acepta_absoluta_interna(
