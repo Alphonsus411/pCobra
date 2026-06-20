@@ -47,7 +47,9 @@ def _fake_flet():
     class Layout:
         def __init__(self, controls=None, **_kwargs):
             self.controls = controls or []
+            self.kwargs = _kwargs
             self.data = _kwargs.get("data")
+            self.expand = _kwargs.get("expand")
             self.on_click = _kwargs.get("on_click")
             self.on_change = _kwargs.get("on_change")
             self.scroll = _kwargs.get("scroll")
@@ -55,6 +57,8 @@ def _fake_flet():
     class Container:
         def __init__(self, content=None, **_kwargs):
             self.content = content
+            self.kwargs = _kwargs
+            self.width = _kwargs.get("width")
 
     class ListTile(TextButton):
         def __init__(
@@ -347,7 +351,9 @@ def test_main_selector_y_switch_sin_targets(monkeypatch):
     assert activar.disabled is True
 
 
-def test_main_arbol_inicial_muestra_subdirectorios_y_archivos_cobra(monkeypatch, tmp_path):
+def test_main_arbol_inicial_muestra_subdirectorios_y_archivos_cobra(
+    monkeypatch, tmp_path
+):
     ft = _fake_flet()
     programa_cobra = tmp_path / "programa.cobra"
     programa_cobra.write_text("imprimir('cobra')", encoding="utf-8")
@@ -392,15 +398,77 @@ def test_main_arbol_inicial_muestra_subdirectorios_y_archivos_cobra(monkeypatch,
     assert "programa.co" in titulos
     assert len(entradas) == 3
     assert entradas
-    assert next(
-        control for control in entradas if control.title.value == "subdirectorio"
-    ).leading.name == ft.Icons.FOLDER
-    assert next(
-        control for control in entradas if control.title.value == "programa.cobra"
-    ).leading.name == ft.Icons.INSERT_DRIVE_FILE
-    assert next(
-        control for control in entradas if control.title.value == "programa.co"
-    ).leading.name == ft.Icons.INSERT_DRIVE_FILE
+    assert (
+        next(
+            control for control in entradas if control.title.value == "subdirectorio"
+        ).leading.name
+        == ft.Icons.FOLDER
+    )
+    assert (
+        next(
+            control for control in entradas if control.title.value == "programa.cobra"
+        ).leading.name
+        == ft.Icons.INSERT_DRIVE_FILE
+    )
+    assert (
+        next(
+            control for control in entradas if control.title.value == "programa.co"
+        ).leading.name
+        == ft.Icons.INSERT_DRIVE_FILE
+    )
+
+
+def test_main_panel_lateral_conserva_ancho_contenido_y_arbol(monkeypatch, tmp_path):
+    ft = _fake_flet()
+    programa_cobra = tmp_path / "programa.cobra"
+    programa_cobra.write_text("imprimir('cobra')", encoding="utf-8")
+    programa_co = tmp_path / "programa.co"
+    programa_co.write_text("imprimir('co')", encoding="utf-8")
+    subdirectorio = tmp_path / "subdirectorio"
+    subdirectorio.mkdir()
+
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(idle.runtime, "require_flet", lambda: ft)
+    monkeypatch.setattr(
+        idle.runtime, "detectar_motor_ia_sugerencias", _motor_disponible
+    )
+    monkeypatch.setattr(idle.runtime, "gui_target_choices", lambda: ("python",))
+    monkeypatch.setattr(
+        idle.runtime,
+        "require_gui_dependencies",
+        lambda: {
+            "TRANSPILERS": {"python": object},
+            "LexerError": RuntimeError,
+            "ParserError": ValueError,
+        },
+    )
+
+    page = ft.Page()
+    idle.main(page)
+
+    panel_lateral = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.Container)
+        and getattr(getattr(c, "content", None), "controls", [None])[0].value
+        == "Archivos Cobra"
+    )
+    columna = panel_lateral.content
+    arbol = columna.controls[-1]
+    entradas = [control for control in arbol.controls[1:] if hasattr(control, "title")]
+    titulos = [getattr(control.title, "value", "") for control in entradas]
+
+    assert panel_lateral.width == 280
+    assert panel_lateral.kwargs["padding"] == 12
+    assert panel_lateral.kwargs["border_radius"] == 8
+    assert getattr(columna, "controls", None)
+    assert columna.expand is True
+    assert arbol.expand is True
+    assert columna.controls[0].value == "Archivos Cobra"
+    assert columna.controls[-1] is arbol
+    assert arbol.controls[0].value == f"Directorio raíz: {tmp_path.resolve()}"
+    assert {"subdirectorio", "programa.cobra", "programa.co"}.issubset(titulos)
+    assert entradas
 
 
 def test_main_muestra_error_visible_si_falla_arbol_directorios(monkeypatch, tmp_path):
