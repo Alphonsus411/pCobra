@@ -395,6 +395,84 @@ def test_main_muestra_error_visible_si_falla_arbol_directorios(monkeypatch, tmp_
     )
 
 
+def test_main_establecer_raiz_arbol_muestra_error_si_listado_falla(
+    monkeypatch, tmp_path
+):
+    ft = _fake_flet()
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(idle.runtime, "require_flet", lambda: ft)
+    monkeypatch.setattr(
+        idle.runtime, "detectar_motor_ia_sugerencias", _motor_disponible
+    )
+    monkeypatch.setattr(idle.runtime, "gui_target_choices", lambda: ("python",))
+    monkeypatch.setattr(
+        idle.runtime,
+        "require_gui_dependencies",
+        lambda: {
+            "TRANSPILERS": {"python": object},
+            "LexerError": RuntimeError,
+            "ParserError": ValueError,
+        },
+    )
+    monkeypatch.setattr(
+        idle.runtime, "formatear_error", lambda exc, **_kwargs: f"error: {exc}"
+    )
+
+    raiz_bloqueada = tmp_path / "bloqueada"
+    raiz_bloqueada.mkdir()
+    llamadas = {"total": 0}
+    crear_arbol_real = idle.runtime.crear_arbol_directorios
+
+    def _crear_arbol_falla_en_raiz_bloqueada(*args, **kwargs):
+        llamadas["total"] += 1
+        if kwargs.get("root_path") == raiz_bloqueada.resolve():
+            raise PermissionError("sin permiso portable")
+        return crear_arbol_real(*args, **kwargs)
+
+    monkeypatch.setattr(
+        idle.runtime, "crear_arbol_directorios", _crear_arbol_falla_en_raiz_bloqueada
+    )
+
+    page = ft.Page()
+    idle.main(page)
+
+    raiz_input = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.TextField) and c.kwargs.get("label") == "Raíz del árbol"
+    )
+    boton_raiz = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.ElevatedButton) and c.text == "Establecer raíz"
+    )
+    salida = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.Text) and c.kwargs.get("selectable")
+    )
+    arbol = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.ListView)
+        and getattr(getattr(c, "controls", [None])[0], "value", "").startswith(
+            "Directorio raíz:"
+        )
+    )
+
+    raiz_input.value = str(raiz_bloqueada)
+    boton_raiz.on_click(None)
+
+    assert llamadas["total"] >= 2
+    assert salida.value == "error: sin permiso portable"
+    assert any(
+        getattr(control, "value", "")
+        == "No se pudo listar la ruta: error: sin permiso portable"
+        for control in arbol.controls
+    )
+    assert len(arbol.controls) > 1
+
+
 def test_main_acciones_publicas_de_archivo(monkeypatch, tmp_path):
     ft = _fake_flet()
     monkeypatch.chdir(tmp_path)
