@@ -6,7 +6,8 @@ Esta especificación describe las acciones visibles soportadas por `src/pcobra/g
 
 - La interfaz principal se construye en `pcobra.gui.idle.main` y delega la lógica reusable en `pcobra.gui.runtime`.
 - Las acciones que analizan código Cobra deben ejecutar primero el flujo canónico `Lexer(codigo).tokenizar()` y después `Parser(tokens).parsear()` mediante `analizar_codigo()` antes de interpretar, transpilar, mostrar tokens, mostrar AST o solicitar sugerencias.
-- La acción **Sugerencias del Libro** debe pasar siempre primero por `Lexer` y `Parser`. Si alguno falla, el IDLE debe mostrar los errores léxicos/sintácticos y no debe invocar el motor opcional de sugerencias.
+- Las acciones **Sugerencias del Libro** y **Corrección** deben pasar siempre primero por `Lexer(codigo).tokenizar()` y `Parser(tokens).parsear()`. Si cualquiera falla, el IDLE debe mostrar el diagnóstico léxico/sintáctico y no debe invocar el motor IA opcional. Ninguna de las dos acciones modifica automáticamente el contenido del editor.
+- **Sugerencias del Libro** muestra recomendaciones pedagógicas agrupadas por categoría. **Corrección** genera un reporte tipográfico/estilístico no destructivo para revisión humana.
 - El motor IA canónico para sugerencias es `agix`; `agi-core` no debe usarse como sustituto ni dependencia paralela sin una ADR nueva. La decisión vigente está documentada en [`docs/ADR/002-motor-ia-sugerencias-agix.md`](ADR/002-motor-ia-sugerencias-agix.md).
 - El selector de transpilación del IDLE solo puede mostrar los targets públicos canónicos: `python`, `javascript` y `rust`. No debe exponer aliases, targets legacy ni backends experimentales.
 - La gestión del árbol de archivos es funcionalidad de archivos/rutas de la GUI: no afecta la sintaxis Cobra y no debe requerir cambios en `Lexer` ni `Parser`.
@@ -24,7 +25,8 @@ Esta especificación describe las acciones visibles soportadas por `src/pcobra/g
 | Transpilar desde Ejecutar | Selector + switch `activar` + `ejecutar_handler` | `ejecutar_o_transpilar()` → `transpilar_codigo()` | Obligatorio. | Cuando el switch de transpilación está activo, valida que el target seleccionado exista en `TRANSPILERS`, analiza con `Lexer`/`Parser` y genera código desde el AST. El selector solo puede contener `python`, `javascript` y `rust`. |
 | Tokens | `tokens_handler`, creado por `crear_handler_tokens()` | `mostrar_tokens()` → `analizar_codigo()` | Obligatorio. | Ejecuta `Lexer` y `Parser` mediante `analizar_codigo()` y muestra una línea por token. Los errores se formatean como errores léxicos o sintácticos. |
 | AST | `ast_handler`, creado por `crear_handler_ast()` | `mostrar_ast()` → `analizar_codigo()` | Obligatorio. | Ejecuta `Lexer` y `Parser` mediante `analizar_codigo()` y muestra la representación serializada del AST. |
-| Sugerencias del Libro | `sugerencias_handler`, creado por `crear_handler_sugerencias()`; botón creado por `crear_boton_sugerencias_libro()` | `generar_reporte_sugerencias()` → `analizar_codigo()` → `generar_sugerencias()` | Obligatorio y previo al motor de sugerencias. | Valida primero con `Lexer` y `Parser`. Si hay errores, informa que deben corregirse antes de solicitar sugerencias. Si no hay errores, comprueba el motor opcional de sugerencias y agrupa las sugerencias por categorías pedagógicas. |
+| Sugerencias del Libro | `sugerencias_handler`, creado por `crear_handler_sugerencias()`; botón creado por `crear_boton_sugerencias_libro()` | `generar_reporte_sugerencias()` → `analizar_codigo()` → `generar_sugerencias()` | Obligatorio y previo al motor IA. | Valida primero con `Lexer(codigo).tokenizar()` y `Parser(tokens).parsear()`. Si hay error léxico o sintáctico, muestra el diagnóstico, no invoca el motor IA y no modifica el editor. Si no hay errores, comprueba el motor opcional y muestra recomendaciones pedagógicas agrupadas por categoría. |
+| Corrección | `correccion_handler`, creado por `crear_handler_correccion_tipografica()`; botón creado por `crear_boton_correccion()` | `generar_reporte_correccion_tipografica()` → `analizar_codigo()` → `generar_sugerencias()` | Obligatorio y previo al motor IA. | Valida primero con `Lexer(codigo).tokenizar()` y `Parser(tokens).parsear()`. Si hay error léxico o sintáctico, muestra el diagnóstico, no invoca el motor IA y no modifica el editor. Si no hay errores, genera un reporte tipográfico/estilístico no destructivo para revisión humana; el editor nunca se actualiza automáticamente. |
 | Árbol de directorios | `reconstruir_arbol()`, `establecer_raiz_arbol_handler()` y `cargar_archivo_desde_evento_arbol()` | `normalizar_ruta_archivo_gui()`, `crear_arbol_directorios()`, `listar_directorio_cobra()` y `cargar_archivo_desde_arbol()` | No aplica. | Reconstruye el primer nivel visible cuando cambia la raíz, se abre un archivo o se guarda; las subcarpetas se cargan bajo demanda al expandirse con `crear_arbol_directorios()`. El campo `Raíz del árbol` pasa por `normalizar_ruta_archivo_gui()` y respeta el sandbox compartido. Solo los archivos `.co` y `.cobra` son cargables por defecto; el resto de entradas se rechaza antes de leerlas. |
 
 ## Restricción del selector de transpilación
@@ -37,15 +39,16 @@ El IDLE obtiene los lenguajes visibles con `gui_target_choices()` y los pasa a `
 
 Cualquier cambio que muestre más opciones en la GUI debe considerarse una ruptura del contrato público documentado aquí y en la política de targets del proyecto.
 
-## Flujo obligatorio para sugerencias
+## Flujo obligatorio para sugerencias y corrección
 
-El flujo de **Sugerencias del Libro** es deliberadamente conservador:
+El flujo de **Sugerencias del Libro** y **Corrección** es deliberadamente conservador:
 
 1. Normalizar el contenido del editor.
 2. Ejecutar `analizar_codigo()`.
 3. Dentro de `analizar_codigo()`, ejecutar `Lexer(codigo).tokenizar()`.
 4. Con esos tokens, ejecutar `Parser(tokens).parsear()`.
-5. Solo si los pasos anteriores terminan sin excepción, consultar disponibilidad del motor opcional de sugerencias.
+5. Solo si los pasos anteriores terminan sin excepción, consultar disponibilidad del motor IA opcional.
 6. Solo con validación léxica y sintáctica exitosa, llamar a `generar_sugerencias(codigo)`.
+7. Presentar el resultado sin escribir cambios en el editor: **Sugerencias del Libro** como recomendaciones pedagógicas agrupadas por categoría y **Corrección** como reporte tipográfico/estilístico no destructivo.
 
-Este orden evita generar recomendaciones sobre código que el compilador Cobra no puede tokenizar o parsear correctamente.
+Este orden evita generar recomendaciones o reportes sobre código que el compilador Cobra no puede tokenizar o parsear correctamente, y garantiza que un error léxico o sintáctico muestre diagnóstico sin invocar el motor IA.
