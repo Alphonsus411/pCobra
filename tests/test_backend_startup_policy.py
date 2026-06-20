@@ -21,7 +21,9 @@ EXPECTED_PUBLIC_TARGETS = ("python", "javascript", "rust")
 
 @pytest.mark.parity_contract
 @pytest.mark.parametrize("module_name", RETIRED_TRANSPILER_MODULES)
-def test_runtime_startup_policy_does_not_import_legacy_transpilers(module_name: str) -> None:
+def test_runtime_startup_policy_does_not_import_legacy_transpilers(
+    module_name: str,
+) -> None:
     before = set(sys.modules)
 
     # Startup normal de política contractual (sin resolver transpilers legacy).
@@ -31,10 +33,12 @@ def test_runtime_startup_policy_does_not_import_legacy_transpilers(module_name: 
     after = set(sys.modules)
     loaded_during_startup = after - before
 
-    assert module_name not in after, f"{module_name} no debe quedar cargado tras startup"
-    assert module_name not in loaded_during_startup, (
-        f"{module_name} fue cargado durante startup/runtime, violando política pública"
-    )
+    assert (
+        module_name not in after
+    ), f"{module_name} no debe quedar cargado tras startup"
+    assert (
+        module_name not in loaded_during_startup
+    ), f"{module_name} fue cargado durante startup/runtime, violando política pública"
 
 
 @pytest.mark.parity_contract
@@ -49,14 +53,18 @@ def test_normal_boot_paths_do_not_import_legacy_transpilers(module_name: str) ->
     after = set(sys.modules)
     loaded_during_boot = after - before
 
-    assert module_name not in after, f"{module_name} no debe quedar cargado tras boot normal"
-    assert module_name not in loaded_during_boot, (
-        f"{module_name} fue cargado durante boot normal, violando política pública"
-    )
+    assert (
+        module_name not in after
+    ), f"{module_name} no debe quedar cargado tras boot normal"
+    assert (
+        module_name not in loaded_during_boot
+    ), f"{module_name} fue cargado durante boot normal, violando política pública"
 
 
 @pytest.mark.parity_contract
-def test_import_pcobra_exposes_lazy_public_api_without_legacy_transpiler_modules() -> None:
+def test_import_pcobra_exposes_lazy_public_api_without_legacy_transpiler_modules() -> (
+    None
+):
     before = set(sys.modules)
 
     package = importlib.import_module("pcobra")
@@ -82,7 +90,9 @@ def test_import_pcobra_exposes_lazy_public_api_without_legacy_transpiler_modules
     "base_module",
     ("pcobra.__main__", "pcobra.cli", "pcobra.cobra.cli.bootstrap"),
 )
-def test_base_command_import_paths_do_not_load_legacy_transpilers(base_module: str) -> None:
+def test_base_command_import_paths_do_not_load_legacy_transpilers(
+    base_module: str,
+) -> None:
     before = set(sys.modules)
 
     importlib.import_module(base_module)
@@ -114,7 +124,9 @@ def test_public_targets_contract_is_exact_in_config_and_architecture() -> None:
 
 
 @pytest.mark.parity_contract
-@pytest.mark.parametrize("invalid_target", ("go", "java", "cpp", "asm", "wasm", "brainfuck"))
+@pytest.mark.parametrize(
+    "invalid_target", ("go", "java", "cpp", "asm", "wasm", "brainfuck")
+)
 def test_non_official_target_fails_with_clear_policy_error(invalid_target: str) -> None:
     assert_public_command_uses_only_public_backends = importlib.import_module(
         "pcobra.cobra.architecture.backend_policy"
@@ -180,3 +192,73 @@ def test_legacy_syntax_validators_are_not_imported_by_public_runtime_routes() ->
     importlib.import_module("pcobra.cobra.cli.commands.qa_validar_cmd")
 
     assert legacy_module not in sys.modules
+
+
+@pytest.mark.parity_contract
+def test_transpiler_and_gui_official_targets_match_public_backends_exactly() -> None:
+    public_backends = importlib.import_module(
+        "pcobra.cobra.architecture.backend_policy"
+    ).PUBLIC_BACKENDS
+    transpiler_targets = importlib.import_module(
+        "pcobra.cobra.transpilers.targets"
+    ).OFFICIAL_TARGETS
+    gui_deps_targets = importlib.import_module("pcobra.cobra.gui.deps").OFFICIAL_TARGETS
+
+    assert public_backends == EXPECTED_PUBLIC_TARGETS
+    assert tuple(transpiler_targets) == public_backends
+    assert tuple(gui_deps_targets) == public_backends
+
+
+@pytest.mark.parity_contract
+def test_gui_target_choices_ignores_retired_registered_transpilers() -> None:
+    gui_runtime = importlib.import_module("pcobra.gui.runtime")
+    public_backends = importlib.import_module(
+        "pcobra.cobra.architecture.backend_policy"
+    ).PUBLIC_BACKENDS
+    retired_targets = ("go", "java", "cpp", "asm", "wasm", "brainfuck")
+
+    gui_runtime.require_gui_dependencies.cache_clear()
+    original_require_gui_dependencies = gui_runtime.require_gui_dependencies
+    try:
+        gui_runtime.require_gui_dependencies = lambda: {
+            "OFFICIAL_TARGETS": public_backends,
+            "TRANSPILERS": {
+                **{target: object() for target in public_backends},
+                **{target: object() for target in retired_targets},
+            },
+            "target_cli_choices": lambda targets: tuple(
+                target for target in public_backends if target in targets
+            ),
+        }
+
+        assert gui_runtime.gui_target_choices() == public_backends
+    finally:
+        gui_runtime.require_gui_dependencies = original_require_gui_dependencies
+        importlib.reload(gui_runtime)
+
+
+@pytest.mark.parity_contract
+def test_gui_target_choices_rejects_official_targets_different_from_public_backends() -> (
+    None
+):
+    gui_runtime = importlib.import_module("pcobra.gui.runtime")
+    public_backends = importlib.import_module(
+        "pcobra.cobra.architecture.backend_policy"
+    ).PUBLIC_BACKENDS
+
+    gui_runtime.require_gui_dependencies.cache_clear()
+    original_require_gui_dependencies = gui_runtime.require_gui_dependencies
+    try:
+        gui_runtime.require_gui_dependencies = lambda: {
+            "OFFICIAL_TARGETS": public_backends + ("go",),
+            "TRANSPILERS": {target: object() for target in public_backends + ("go",)},
+            "target_cli_choices": lambda targets: tuple(targets),
+        }
+
+        with pytest.raises(
+            RuntimeError, match="OFFICIAL_TARGETS debe coincidir con PUBLIC_BACKENDS"
+        ):
+            gui_runtime.gui_target_choices()
+    finally:
+        gui_runtime.require_gui_dependencies = original_require_gui_dependencies
+        importlib.reload(gui_runtime)

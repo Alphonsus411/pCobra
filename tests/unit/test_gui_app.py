@@ -30,9 +30,11 @@ def _fake_flet():
             self.disabled = kwargs.get("disabled", False)
 
     class ElevatedButton:
-        def __init__(self, text, on_click=None):
+        def __init__(self, text, on_click=None, **kwargs):
             self.text = text
             self.on_click = on_click
+            self.disabled = kwargs.get("disabled", False)
+            self.tooltip = kwargs.get("tooltip")
 
     class TextButton(ElevatedButton):
         pass
@@ -316,3 +318,48 @@ def test_crear_arbol_directorios_carga_hijos_bajo_demanda_y_filtra(tmp_path):
     hijo = subdir.controls[0]
     assert isinstance(hijo, ft.ExpansionTile)
     assert hijo.controls == []
+
+
+def test_gui_runtime_target_choices_usa_public_backends_y_filtra_retirados(monkeypatch):
+    from pcobra.cobra.architecture.backend_policy import PUBLIC_BACKENDS
+    from pcobra.gui import runtime
+
+    retired_targets = ("go", "java", "cpp", "asm", "wasm", "brainfuck")
+    monkeypatch.setattr(
+        runtime,
+        "require_gui_dependencies",
+        lambda: {
+            "OFFICIAL_TARGETS": PUBLIC_BACKENDS,
+            "TRANSPILERS": {
+                **{target: object() for target in PUBLIC_BACKENDS},
+                **{target: object() for target in retired_targets},
+            },
+            "target_cli_choices": lambda targets: tuple(
+                target for target in PUBLIC_BACKENDS if target in targets
+            ),
+        },
+    )
+
+    assert runtime.gui_target_choices() == PUBLIC_BACKENDS
+
+
+def test_gui_runtime_target_choices_rechaza_official_targets_con_legacy(monkeypatch):
+    import pytest
+
+    from pcobra.cobra.architecture.backend_policy import PUBLIC_BACKENDS
+    from pcobra.gui import runtime
+
+    monkeypatch.setattr(
+        runtime,
+        "require_gui_dependencies",
+        lambda: {
+            "OFFICIAL_TARGETS": PUBLIC_BACKENDS + ("go",),
+            "TRANSPILERS": {target: object() for target in PUBLIC_BACKENDS + ("go",)},
+            "target_cli_choices": tuple,
+        },
+    )
+
+    with pytest.raises(
+        RuntimeError, match="OFFICIAL_TARGETS debe coincidir con PUBLIC_BACKENDS"
+    ):
+        runtime.gui_target_choices()
