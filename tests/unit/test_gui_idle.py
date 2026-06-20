@@ -117,6 +117,15 @@ def _fake_flet():
     )
 
 
+def test_fake_flet_expone_icons_moderno_y_legacy():
+    ft = _fake_flet()
+
+    assert ft.Icons.INSERT_DRIVE_FILE == "file"
+    assert ft.Icons.FOLDER == "folder"
+    assert ft.icons.INSERT_DRIVE_FILE == "file"
+    assert ft.icons.FOLDER == "folder"
+
+
 def test_main_renderiza_botones_esperados(monkeypatch):
     ft = _fake_flet()
     monkeypatch.setattr(idle.runtime, "require_flet", lambda: ft)
