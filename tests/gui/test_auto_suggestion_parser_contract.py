@@ -97,8 +97,29 @@ def test_recomendaciones_gui_cubren_ejemplos_invalidos_sin_ampliar_parser(
         _parsear(fragmento_invalido)
 
 
-def test_reporte_sugerencias_no_invoca_fachada_si_codigo_no_parsea(monkeypatch) -> None:
-    """La GUI debe cortar antes de llamar a la fachada IA si Parser falla."""
+@pytest.mark.parametrize(
+    ("codigo_invalido", "tipo_fallo"),
+    [
+        pytest.param(
+            'imprimir("hola)',
+            "Lexer",
+            id="corta-si-falla-lexer",
+        ),
+        pytest.param(
+            """
+funcion calcular_total(subtotal, impuesto):
+    retorno subtotal + impuesto
+fin
+""",
+            "Parser",
+            id="corta-si-falla-parser",
+        ),
+    ],
+)
+def test_reporte_sugerencias_no_invoca_motor_ia_si_lexer_o_parser_fallan(
+    monkeypatch, codigo_invalido: str, tipo_fallo: str
+) -> None:
+    """La GUI debe cortar antes de llamar al motor IA si Lexer o Parser fallan."""
 
     monkeypatch.setattr(
         runtime,
@@ -106,22 +127,12 @@ def test_reporte_sugerencias_no_invoca_fachada_si_codigo_no_parsea(monkeypatch) 
         lambda: runtime.MotorIASugerencias(disponible=True),
     )
 
-    codigo_invalido = """
-funcion calcular_total(subtotal, impuesto):
-    retorno subtotal + impuesto
-fin
-"""
+    def fallar_si_se_invoca_motor(_codigo: str) -> list[str]:
+        pytest.fail(f"generar_sugerencias no debe ejecutarse cuando falla {tipo_fallo}")
 
-    from pcobra.ia import analizador_sugerencias
+    monkeypatch.setattr(runtime, "generar_sugerencias", fallar_si_se_invoca_motor)
 
-    with pytest.MonkeyPatch.context() as contexto:
-        llamada_fachada = contexto.setattr(
-            analizador_sugerencias,
-            "generar_sugerencias",
-            pytest.fail,
-        )
-        assert llamada_fachada is None
-        reporte = runtime.generar_reporte_sugerencias(codigo_invalido)
+    reporte = runtime.generar_reporte_sugerencias(codigo_invalido)
 
     assert "Errores léxicos/sintácticos:" in reporte
     assert "Corrige primero los errores anteriores" in reporte
