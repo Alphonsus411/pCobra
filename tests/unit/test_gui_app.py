@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 
@@ -100,8 +101,8 @@ def _fake_flet():
         ExpansionTile=ExpansionTile,
         ListTile=ListTile,
         Icon=Icon,
-        icons=SimpleNamespace(FOLDER="folder", INSERT_DRIVE_FILE="file"),
-        Icons=SimpleNamespace(FOLDER="folder", INSERT_DRIVE_FILE="file"),
+        icons=SimpleNamespace(INSERT_DRIVE_FILE="file", FOLDER="folder"),
+        Icons=SimpleNamespace(INSERT_DRIVE_FILE="file", FOLDER="folder"),
         ScrollMode=SimpleNamespace(ALWAYS="always"),
         Page=Page,
         dropdown=SimpleNamespace(Option=lambda v: v),
@@ -272,6 +273,15 @@ def test_main_configura_selector_por_defecto_y_switch_deshabilitado_si_no_hay_ta
     assert activar.disabled is True
 
 
+def test_fake_flet_expone_icons_moderno_y_legacy():
+    ft = _fake_flet()
+
+    assert ft.Icons.INSERT_DRIVE_FILE == "file"
+    assert ft.Icons.FOLDER == "folder"
+    assert ft.icons.INSERT_DRIVE_FILE == "file"
+    assert ft.icons.FOLDER == "folder"
+
+
 def _text_value(control):
     return getattr(getattr(control, "title", None), "value", None)
 
@@ -294,6 +304,8 @@ def test_crear_arbol_directorios_lista_solo_nivel_inicial(tmp_path):
     assert nombres == ["subdir", "programa.co", "programa.cobra"]
     subdir = arbol.controls[0]
     assert isinstance(subdir, ft.ExpansionTile)
+    assert subdir.leading.name == ft.Icons.FOLDER
+    assert arbol.controls[1].leading.name == ft.Icons.INSERT_DRIVE_FILE
     assert subdir.controls == []
 
 
@@ -319,7 +331,22 @@ def test_crear_arbol_directorios_carga_hijos_bajo_demanda_y_filtra(tmp_path):
     assert nombres == ["hijo", "codigo.co", "codigo.cobra"]
     hijo = subdir.controls[0]
     assert isinstance(hijo, ft.ExpansionTile)
+    assert hijo.leading.name == ft.Icons.FOLDER
+    assert subdir.controls[1].leading.name == ft.Icons.INSERT_DRIVE_FILE
     assert hijo.controls == []
+
+
+def test_gui_runtime_no_usa_ft_icons_legacy():
+    gui_dir = Path(__file__).resolve().parents[2] / "src" / "pcobra" / "gui"
+
+    referencias_legacy = {
+        path.relative_to(gui_dir): line_no
+        for path in gui_dir.rglob("*.py")
+        for line_no, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1)
+        if "ft.icons" in line
+    }
+
+    assert referencias_legacy == {}
 
 
 def test_gui_runtime_target_choices_usa_public_backends_y_filtra_retirados(monkeypatch):
