@@ -971,15 +971,26 @@ def _preparar_idle_archivos(monkeypatch, tmp_path):
         for c in page.controls
         if isinstance(c, ft.ElevatedButton) and c.text == "Guardar como"
     )
-    return ft, page, entrada, ruta_input, salida, guardar_como
+    abrir = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.ElevatedButton) and c.text == "Abrir"
+    )
+    return ft, page, entrada, ruta_input, salida, abrir, guardar_como
 
 
 def test_guardar_como_resuelve_ruta_relativa_con_extension_y_normaliza_input(
     monkeypatch, tmp_path
 ):
-    _ft, _page, entrada, ruta_input, salida, guardar_como = _preparar_idle_archivos(
-        monkeypatch, tmp_path
-    )
+    (
+        _ft,
+        _page,
+        entrada,
+        ruta_input,
+        salida,
+        _abrir,
+        guardar_como,
+    ) = _preparar_idle_archivos(monkeypatch, tmp_path)
     (tmp_path / "src").mkdir()
     destino = (tmp_path / "src" / "main.cobra").resolve()
 
@@ -995,9 +1006,15 @@ def test_guardar_como_resuelve_ruta_relativa_con_extension_y_normaliza_input(
 def test_guardar_como_rechaza_escape_relativo_absoluto_externo_y_directorio(
     monkeypatch, tmp_path
 ):
-    _ft, _page, entrada, ruta_input, salida, guardar_como = _preparar_idle_archivos(
-        monkeypatch, tmp_path
-    )
+    (
+        _ft,
+        _page,
+        entrada,
+        ruta_input,
+        salida,
+        _abrir,
+        guardar_como,
+    ) = _preparar_idle_archivos(monkeypatch, tmp_path)
     directorio = tmp_path / "existente"
     directorio.mkdir()
     absoluto_externo = (tmp_path.parent / "escape_idle_absoluto.cobra").resolve()
@@ -1011,3 +1028,62 @@ def test_guardar_como_rechaza_escape_relativo_absoluto_externo_y_directorio(
     assert not (tmp_path.parent / "escape.cobra").exists()
     assert not absoluto_externo.exists()
     assert directorio.is_dir()
+
+
+def test_abrir_valida_ruta_relativa_visible_dentro_del_proyecto(
+    monkeypatch, tmp_path
+):
+    (
+        _ft,
+        _page,
+        entrada,
+        ruta_input,
+        salida,
+        abrir,
+        _guardar_como,
+    ) = _preparar_idle_archivos(monkeypatch, tmp_path)
+    (tmp_path / "src").mkdir()
+    archivo = (tmp_path / "src" / "abrir.co").resolve()
+    archivo.write_text("imprimir('ok')", encoding="utf-8")
+
+    ruta_input.value = "src/abrir.co"
+    abrir.on_click(None)
+
+    assert entrada.value == "imprimir('ok')"
+    assert salida.value == f"Archivo cargado: {archivo}"
+    assert ruta_input.value == str(archivo)
+
+
+def test_abrir_rechaza_ruta_visible_fuera_del_proyecto_antes_del_runtime(
+    monkeypatch, tmp_path
+):
+    llamadas = []
+    abrir_real = idle.runtime.abrir_archivo_desde_ruta
+
+    def _abrir_spy(ruta, estado):
+        llamadas.append(ruta)
+        return abrir_real(ruta, estado)
+
+    monkeypatch.setattr(idle.runtime, "abrir_archivo_desde_ruta", _abrir_spy)
+    (
+        _ft,
+        _page,
+        entrada,
+        ruta_input,
+        salida,
+        abrir,
+        _guardar_como,
+    ) = _preparar_idle_archivos(monkeypatch, tmp_path)
+    externo = (tmp_path.parent / "abrir_fuera_idle.cobra").resolve()
+    externo.write_text("imprimir('fuera')", encoding="utf-8")
+
+    try:
+        ruta_input.value = str(externo)
+        abrir.on_click(None)
+
+        assert llamadas == []
+        assert entrada.value == ""
+        assert salida.value.startswith("error: ")
+        assert "raíz del proyecto" in salida.value
+    finally:
+        externo.unlink(missing_ok=True)
