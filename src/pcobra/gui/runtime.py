@@ -213,7 +213,7 @@ def leer_archivo_texto(path: str | Path, *, encoding: str = "utf-8") -> str:
 def escribir_archivo_texto(
     path: str | Path, contenido: str | None, *, encoding: str = "utf-8"
 ) -> str:
-    """Escribe exactamente el contenido normalizado del editor y lo devuelve."""
+    """Escribe una sola vez el contenido normalizado del editor y lo devuelve."""
 
     codigo = normalizar_codigo(contenido)
     destino = normalizar_ruta_archivo_gui(path)
