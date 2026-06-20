@@ -348,6 +348,59 @@ def test_main_selector_y_switch_sin_targets(monkeypatch):
     assert activar.disabled is True
 
 
+def test_main_inicializa_ruta_y_raiz_arbol_con_cwd(monkeypatch, tmp_path):
+    ft = _fake_flet()
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(idle.runtime, "require_flet", lambda: ft)
+    monkeypatch.setattr(
+        idle.runtime, "detectar_motor_ia_sugerencias", _motor_disponible
+    )
+    monkeypatch.setattr(idle.runtime, "gui_target_choices", lambda: ("python",))
+    monkeypatch.setattr(
+        idle.runtime,
+        "require_gui_dependencies",
+        lambda: {
+            "TRANSPILERS": {"python": object},
+            "LexerError": RuntimeError,
+            "ParserError": ValueError,
+            "Lexer": lambda _codigo: SimpleNamespace(tokenizar=lambda: []),
+            "Parser": lambda _tokens: SimpleNamespace(parsear=lambda: []),
+        },
+    )
+    monkeypatch.setattr(idle.runtime, "normalizar_codigo", lambda value: value or "")
+    monkeypatch.setattr(idle.runtime, "ejecutar_codigo", lambda _codigo: "ok")
+    monkeypatch.setattr(
+        idle.runtime, "transpilar_codigo", lambda _codigo, _lang: "transpilado"
+    )
+    monkeypatch.setattr(idle.runtime, "mostrar_tokens", lambda _codigo: "Token(X)")
+    monkeypatch.setattr(idle.runtime, "mostrar_ast", lambda _codigo: "[Nodo]")
+    monkeypatch.setattr(
+        idle.runtime,
+        "generar_sugerencias",
+        lambda _codigo: ["Usa nombres descriptivos"],
+    )
+    monkeypatch.setattr(
+        idle.runtime, "formatear_error", lambda exc, **_kwargs: f"error: {exc}"
+    )
+
+    page = ft.Page()
+    idle.main(page)
+
+    ruta_input = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.TextField) and c.kwargs.get("label") == "Ruta"
+    )
+    raiz_input = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.TextField) and c.kwargs.get("label") == "Raíz del árbol"
+    )
+
+    assert ruta_input.value == str(tmp_path.resolve())
+    assert raiz_input.value == str(tmp_path.resolve())
+
+
 def test_main_arbol_inicial_muestra_subdirectorios_y_archivos_cobra(
     monkeypatch, tmp_path
 ):
