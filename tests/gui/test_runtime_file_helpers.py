@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 import pytest
 
-from pcobra.gui import runtime
+from pcobra.gui import idle, runtime
 
 
 @pytest.fixture(autouse=True)
@@ -230,3 +230,160 @@ def test_cargar_archivo_desde_arbol_reusa_apertura_y_valida_extension(tmp_path: 
         assert "Selecciona un archivo Cobra" in str(exc)
     else:
         raise AssertionError("El árbol solo debe cargar archivos .co/.cobra")
+
+
+@pytest.mark.parametrize(
+    "ruta_relativa, descripcion",
+    [
+        (Path("."), "la raíz del repositorio"),
+        (Path("src"), "src/"),
+        (Path("src/pcobra"), "src/pcobra/"),
+        (Path("src/pcobra/gui"), "src/pcobra/gui/"),
+    ],
+)
+def test_validar_project_root_idle_rechaza_carpetas_internas_del_repo(
+    ruta_relativa: Path, descripcion: str
+):
+    repo_root = runtime.resolver_repo_root_gui()
+    carpeta_prohibida = repo_root / ruta_relativa
+
+    with pytest.raises(ValueError) as exc_info:
+        runtime.validar_project_root_idle(carpeta_prohibida)
+
+    mensaje = str(exc_info.value)
+    assert "No se puede abrir como proyecto del IDLE" in mensaje
+    assert descripcion in mensaje
+    assert "fuera del código fuente de Cobra" in mensaje
+
+
+def test_validar_project_root_idle_acepta_carpeta_de_proyecto_externa(tmp_path: Path):
+    proyecto = tmp_path / "mi_proyecto"
+    proyecto.mkdir()
+
+    assert runtime.validar_project_root_idle(proyecto) == proyecto.resolve()
+
+
+class _FakeControl:
+    def __init__(self, *args, **kwargs):
+        if args:
+            self.controls = args[0]
+        self.value = kwargs.get(
+            "value", args[0] if args and isinstance(args[0], str) else ""
+        )
+        self.label = kwargs.get("label")
+        self.text = args[0] if args and isinstance(args[0], str) else kwargs.get("text")
+        self.on_click = kwargs.get("on_click")
+        self.controls = kwargs.get("controls", getattr(self, "controls", []))
+        self.data = kwargs.get("data")
+        self.title = kwargs.get("title")
+        self.leading = kwargs.get("leading")
+        self.disabled = kwargs.get("disabled", False)
+        self.tooltip = kwargs.get("tooltip", "")
+        self.expand = kwargs.get("expand")
+        self.spacing = kwargs.get("spacing")
+        self.auto_scroll = kwargs.get("auto_scroll")
+
+    def update(self):
+        return None
+
+
+class _FakePage:
+    def __init__(self):
+        self.controls = []
+        self.update_calls = 0
+
+    def add(self, *controls):
+        self.controls.extend(controls)
+
+    def update(self):
+        self.update_calls += 1
+
+
+def _fake_flet_idle():
+    botones = []
+    campos = []
+    textos = []
+
+    class Text(_FakeControl):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            textos.append(self)
+
+    class TextField(_FakeControl):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            campos.append(self)
+
+    class ElevatedButton(_FakeControl):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            botones.append(self)
+
+    class Option(_FakeControl):
+        pass
+
+    ft = type(
+        "FakeFlet",
+        (),
+        {
+            "TextField": TextField,
+            "Text": Text,
+            "Dropdown": _FakeControl,
+            "Switch": _FakeControl,
+            "ElevatedButton": ElevatedButton,
+            "TextButton": _FakeControl,
+            "Row": _FakeControl,
+            "Column": _FakeControl,
+            "Container": _FakeControl,
+            "ListView": _FakeControl,
+            "ListTile": _FakeControl,
+            "ExpansionTile": _FakeControl,
+            "Icon": _FakeControl,
+            "Option": Option,
+            "Icons": type(
+                "Icons", (), {"INSERT_DRIVE_FILE": "file", "FOLDER": "folder"}
+            )(),
+            "ScrollMode": type("ScrollMode", (), {"ALWAYS": "always"})(),
+        },
+    )()
+    return ft, campos, botones, textos
+
+
+@pytest.mark.parametrize(
+    "ruta_relativa, descripcion",
+    [
+        (Path("."), "la raíz del repositorio"),
+        (Path("src"), "src/"),
+        (Path("src/pcobra"), "src/pcobra/"),
+        (Path("src/pcobra/gui"), "src/pcobra/gui/"),
+    ],
+)
+def test_idle_abrir_proyecto_rechaza_carpetas_internas_del_repo(
+    monkeypatch: pytest.MonkeyPatch, ruta_relativa: Path, descripcion: str
+):
+    repo_root = runtime.resolver_repo_root_gui()
+    monkeypatch.setenv("COBRA_PROJECTS_DIR", str(repo_root.parent))
+    monkeypatch.setattr(runtime, "require_flet", lambda: ft)
+    monkeypatch.setattr(
+        runtime,
+        "require_gui_dependencies",
+        lambda: {
+            "OFFICIAL_TARGETS": runtime.PUBLIC_BACKENDS,
+            "TRANSPILERS": {target: object for target in runtime.PUBLIC_BACKENDS},
+            "target_cli_choices": lambda targets: tuple(sorted(targets)),
+        },
+    )
+    ft, campos, botones, textos = _fake_flet_idle()
+    page = _FakePage()
+
+    idle.main(page)
+    raiz_input = next(campo for campo in campos if campo.label == "Proyecto activo")
+    abrir_proyecto = next(boton for boton in botones if boton.text == "Abrir proyecto")
+
+    raiz_input.value = str((repo_root / ruta_relativa).resolve())
+    abrir_proyecto.on_click(None)
+
+    salida = next(texto for texto in textos if "No se puede abrir" in texto.value)
+    assert "No se puede abrir como proyecto del IDLE" in salida.value
+    assert descripcion in salida.value
+    assert "fuera del código fuente de Cobra" in salida.value
