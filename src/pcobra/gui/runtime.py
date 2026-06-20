@@ -237,38 +237,38 @@ def resolver_ruta_archivo_en_project_root(
 ) -> Path:
     """Resuelve una ruta de archivo Cobra dentro de la raíz del proyecto IDLE.
 
-    Las rutas relativas se interpretan desde ``project_root``. Las absolutas se
-    aceptan únicamente si su ruta canónica queda dentro de ``project_root``. La
-    resolución con ``Path.resolve()`` y la comprobación con
-    ``Path.relative_to(project_root)`` bloquean escapes mediante ``..`` y
-    enlaces simbólicos externos.
+    Las rutas relativas se interpretan desde ``project_root`` y las absolutas
+    se aceptan únicamente si su ruta canónica queda dentro de esa raíz. La
+    resolución con ``Path.resolve()`` y la validación con ``Path.relative_to()``
+    bloquean escapes mediante ``..`` y enlaces simbólicos externos.
     """
 
     raiz = Path(project_root).expanduser().resolve()
     if raiz.exists() and not raiz.is_dir():
         raise NotADirectoryError(f"La raíz del proyecto debe ser un directorio: {raiz}")
 
-    ruta_original = Path(ruta).expanduser()
-    ruta_final = (
-        ruta_original.with_suffix(".cobra")
-        if not ruta_original.suffix
-        else ruta_original
+    ruta_expandida = Path(ruta).expanduser()
+    ruta_con_extension = (
+        ruta_expandida.with_suffix(".cobra")
+        if not ruta_expandida.suffix
+        else ruta_expandida
     )
-    candidata_original = (
-        ruta_original if ruta_original.is_absolute() else raiz / ruta_original
-    )
-    ruta_original_resuelta = candidata_original.resolve()
+    if ruta_con_extension.suffix.lower() not in COBRA_FILE_EXTENSIONS:
+        raise ValueError("El archivo debe usar la extensión .cobra o .co.")
 
-    if ruta_original_resuelta.exists() and ruta_original_resuelta.is_dir():
+    candidata_original = (
+        ruta_expandida if ruta_expandida.is_absolute() else raiz / ruta_expandida
+    ).resolve()
+    if candidata_original.exists() and candidata_original.is_dir():
         raise NotADirectoryError(
             "La ruta indicada corresponde a un directorio; indica un archivo Cobra."
         )
 
-    extension = ruta_final.suffix.lower()
-    if extension not in COBRA_FILE_EXTENSIONS:
-        raise ValueError("El archivo debe usar la extensión .cobra o .co.")
-
-    candidata = ruta_final if ruta_final.is_absolute() else raiz / ruta_final
+    candidata = (
+        ruta_con_extension
+        if ruta_con_extension.is_absolute()
+        else raiz / ruta_con_extension
+    )
     ruta_resuelta = candidata.resolve()
 
     try:
