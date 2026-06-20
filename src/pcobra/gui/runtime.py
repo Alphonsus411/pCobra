@@ -106,8 +106,12 @@ def resolver_workspace_root_idle() -> Path:
 
     configured_root = os.environ.get("COBRA_PROJECTS_DIR")
     if configured_root:
-        return Path(configured_root).expanduser().resolve()
-    return (Path.home() / "CobraProjects").expanduser().resolve()
+        workspace_root = Path(configured_root).expanduser().resolve()
+    else:
+        workspace_root = (Path.home() / "CobraProjects").expanduser().resolve()
+
+    workspace_root.mkdir(parents=True, exist_ok=True)
+    return workspace_root
 
 
 def resolver_repo_root_gui() -> Path:
