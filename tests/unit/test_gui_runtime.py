@@ -1241,6 +1241,19 @@ def test_resolver_ruta_archivo_en_project_root_acepta_absoluta_interna(
     assert destino == archivo.resolve()
 
 
+def test_resolver_ruta_archivo_en_project_root_rechaza_absoluta_externa(
+    tmp_path: Path,
+) -> None:
+    archivo_externo = tmp_path.parent / "externo_idle_helper.cobra"
+    archivo_externo.write_text("imprimir('externo')", encoding="utf-8")
+
+    try:
+        with pytest.raises(ValueError, match="dentro de la raíz del proyecto"):
+            runtime.resolver_ruta_archivo_en_project_root(archivo_externo, tmp_path)
+    finally:
+        archivo_externo.unlink(missing_ok=True)
+
+
 @pytest.mark.parametrize("ruta", ["../escape.cobra", "programa.txt"])
 def test_resolver_ruta_archivo_en_project_root_rechaza_rutas_invalidas(
     tmp_path: Path, ruta: str
