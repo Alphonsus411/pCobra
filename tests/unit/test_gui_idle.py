@@ -1197,6 +1197,74 @@ def test_crear_proyectos_separados_con_src_y_readme(monkeypatch, tmp_path):
     assert (tmp_path / "proyecto_uno") != (tmp_path / "proyecto_dos")
 
 
+def test_guardar_relativo_usa_project_root_activo_tras_abrir_segundo_proyecto(
+    monkeypatch, tmp_path
+):
+    (
+        ft,
+        page,
+        entrada,
+        ruta_input,
+        salida,
+        _abrir,
+        guardar_como,
+    ) = _preparar_idle_archivos(monkeypatch, tmp_path)
+    proyecto_input = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.TextField) and c.kwargs.get("label") == "Proyecto activo"
+    )
+    crear_proyecto = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.ElevatedButton) and c.text == "Crear proyecto"
+    )
+    abrir_proyecto = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.ElevatedButton) and c.text == "Abrir proyecto"
+    )
+    arbol = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.ListView)
+        and getattr(getattr(c, "controls", [None])[0], "value", "").startswith(
+            "Proyecto activo:"
+        )
+    )
+
+    proyecto_input.value = "proyecto_uno"
+    crear_proyecto.on_click(None)
+    proyecto_uno = (tmp_path / "proyecto_uno").resolve()
+
+    proyecto_input.value = "proyecto_dos"
+    crear_proyecto.on_click(None)
+    proyecto_dos = (tmp_path / "proyecto_dos").resolve()
+
+    proyecto_input.value = "proyecto_dos"
+    abrir_proyecto.on_click(None)
+
+    entrada.value = "imprimir('desde proyecto dos')"
+    ruta_input.value = "src/main"
+    guardar_como.on_click(None)
+
+    destino_activo = proyecto_dos / "src" / "main.cobra"
+    destino_workspace = tmp_path / "src" / "main.cobra"
+    destino_otro_proyecto = proyecto_uno / "src" / "main.cobra"
+
+    assert proyecto_uno.is_dir()
+    assert proyecto_dos.is_dir()
+    assert salida.value == f"Archivo guardado: {destino_activo}"
+    assert ruta_input.value == str(destino_activo)
+    assert proyecto_input.value == str(proyecto_dos)
+    assert arbol.controls[0].value == f"Proyecto activo: {proyecto_dos}"
+    assert (
+        destino_activo.read_text(encoding="utf-8") == "imprimir('desde proyecto dos')"
+    )
+    assert not destino_workspace.exists()
+    assert not destino_otro_proyecto.exists()
+
+
 def test_crear_proyecto_normaliza_nombre_seguro(monkeypatch, tmp_path):
     (
         ft,
