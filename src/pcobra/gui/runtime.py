@@ -204,6 +204,15 @@ def resolver_ruta_archivo_en_project_root(
         raise NotADirectoryError(f"La raíz del proyecto debe ser un directorio: {raiz}")
 
     ruta_original = Path(ruta).expanduser()
+    candidata_original = (
+        ruta_original if ruta_original.is_absolute() else raiz / ruta_original
+    )
+    ruta_original_resuelta = candidata_original.resolve()
+
+    if ruta_original_resuelta.exists() and ruta_original_resuelta.is_dir():
+        raise NotADirectoryError(
+            "La ruta indicada corresponde a un directorio; indica un archivo Cobra."
+        )
 
     if not ruta_original.suffix:
         ruta_original = ruta_original.with_suffix(".cobra")

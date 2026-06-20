@@ -1199,6 +1199,16 @@ def test_resolver_ruta_archivo_en_project_root_rechaza_directorios(
         runtime.resolver_ruta_archivo_en_project_root(directorio, tmp_path)
 
 
+def test_resolver_ruta_archivo_en_project_root_rechaza_directorio_sin_extension(
+    tmp_path: Path,
+) -> None:
+    directorio = tmp_path / "directorio"
+    directorio.mkdir()
+
+    with pytest.raises(NotADirectoryError):
+        runtime.resolver_ruta_archivo_en_project_root(directorio, tmp_path)
+
+
 def test_resolver_ruta_archivo_en_project_root_rechaza_symlink_externo(
     tmp_path: Path,
 ) -> None:

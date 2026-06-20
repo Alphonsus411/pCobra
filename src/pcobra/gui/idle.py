@@ -218,11 +218,20 @@ def main(page: "ft.Page"):
 
     def guardar_como_handler(_e):
         """Guarda usando el campo Ruta, flujo canónico del IDLE principal."""
-        ruta = obtener_ruta_archivo_desde_input()
+        texto = (ruta_input.value or "").strip()
+
+        if not texto:
+            salida.value = "Indica la ruta de un archivo Cobra."
+            page.update()
+            return
+
+        ruta = resolver_ruta_archivo_idle(texto)
         if ruta is None:
             return
 
-        guardar_en(ruta)
+        if guardar_en(ruta):
+            ruta_input.value = str(ruta)
+            page.update()
 
     def recargar_handler(_e):
         if estado.ruta is None:

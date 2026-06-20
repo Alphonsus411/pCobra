@@ -915,3 +915,99 @@ def test_crear_arbol_directorios_muestra_estado_vacio_en_carpeta_sin_cobras(tmp_
     assert arbol.scroll == ft.ScrollMode.ALWAYS
     assert len(arbol.controls) == 1
     assert arbol.controls[0].value == "No hay archivos Cobra en esta carpeta"
+
+
+def _preparar_idle_archivos(monkeypatch, tmp_path):
+    ft = _fake_flet()
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("COBRA_PROJECTS_DIR", str(tmp_path))
+    monkeypatch.setattr(idle.runtime, "require_flet", lambda: ft)
+    monkeypatch.setattr(
+        idle.runtime,
+        "detectar_motor_ia_sugerencias",
+        _motor_disponible,
+    )
+    monkeypatch.setattr(idle.runtime, "gui_target_choices", lambda: ("python",))
+    monkeypatch.setattr(
+        idle.runtime,
+        "require_gui_dependencies",
+        lambda: {
+            "TRANSPILERS": {"python": object},
+            "LexerError": RuntimeError,
+            "ParserError": ValueError,
+            "Lexer": lambda _codigo: SimpleNamespace(tokenizar=lambda: []),
+            "Parser": lambda _tokens: SimpleNamespace(parsear=lambda: []),
+        },
+    )
+    monkeypatch.setattr(idle.runtime, "normalizar_codigo", lambda value: value or "")
+    monkeypatch.setattr(idle.runtime, "ejecutar_codigo", lambda _codigo: "ok")
+    monkeypatch.setattr(
+        idle.runtime, "transpilar_codigo", lambda _codigo, _lang: "transpilado"
+    )
+    monkeypatch.setattr(idle.runtime, "mostrar_tokens", lambda _codigo: "Token(X)")
+    monkeypatch.setattr(idle.runtime, "mostrar_ast", lambda _codigo: "[Nodo]")
+    monkeypatch.setattr(
+        idle.runtime, "formatear_error", lambda exc, **_kwargs: f"error: {exc}"
+    )
+    page = ft.Page()
+    idle.main(page)
+    entrada = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.TextField) and c.kwargs.get("multiline")
+    )
+    ruta_input = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.TextField) and c.kwargs.get("label") == "Ruta"
+    )
+    salida = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.Text) and c.kwargs.get("selectable")
+    )
+    guardar_como = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.ElevatedButton) and c.text == "Guardar como"
+    )
+    return ft, page, entrada, ruta_input, salida, guardar_como
+
+
+def test_guardar_como_resuelve_ruta_relativa_con_extension_y_normaliza_input(
+    monkeypatch, tmp_path
+):
+    _ft, _page, entrada, ruta_input, salida, guardar_como = _preparar_idle_archivos(
+        monkeypatch, tmp_path
+    )
+    (tmp_path / "src").mkdir()
+    destino = (tmp_path / "src" / "main.cobra").resolve()
+
+    entrada.value = "imprimir('main')"
+    ruta_input.value = "src/main"
+    guardar_como.on_click(None)
+
+    assert destino.read_text(encoding="utf-8") == "imprimir('main')"
+    assert salida.value == f"Archivo guardado: {destino}"
+    assert ruta_input.value == str(destino)
+
+
+def test_guardar_como_rechaza_escape_relativo_absoluto_externo_y_directorio(
+    monkeypatch, tmp_path
+):
+    _ft, _page, entrada, ruta_input, salida, guardar_como = _preparar_idle_archivos(
+        monkeypatch, tmp_path
+    )
+    directorio = tmp_path / "existente"
+    directorio.mkdir()
+    absoluto_externo = (tmp_path.parent / "escape_idle_absoluto.cobra").resolve()
+    entrada.value = "imprimir('no guardar')"
+
+    for ruta in ("../escape.cobra", str(absoluto_externo), str(directorio)):
+        ruta_input.value = ruta
+        guardar_como.on_click(None)
+        assert salida.value.startswith("error: ")
+
+    assert not (tmp_path.parent / "escape.cobra").exists()
+    assert not absoluto_externo.exists()
+    assert directorio.is_dir()
