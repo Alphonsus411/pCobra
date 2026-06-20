@@ -1,4 +1,5 @@
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 
@@ -40,6 +41,19 @@ def test_escribir_archivo_texto_no_parsea_ni_modifica_contenido(tmp_path: Path):
 
     assert escrito == codigo
     assert destino.read_text(encoding="utf-8") == codigo
+
+
+def test_escribir_archivo_texto_escribe_una_sola_vez(tmp_path: Path):
+    destino = tmp_path / "codigo.co"
+    codigo = "imprimir('una vez')"
+
+    with patch.object(
+        Path, "write_text", autospec=True, return_value=len(codigo)
+    ) as write_text:
+        escrito = runtime.escribir_archivo_texto(destino, codigo)
+
+    assert escrito == codigo
+    write_text.assert_called_once_with(destino.resolve(), codigo, encoding="utf-8")
 
 
 def test_escribir_archivo_texto_propaga_ruta_inexistente(tmp_path: Path):
