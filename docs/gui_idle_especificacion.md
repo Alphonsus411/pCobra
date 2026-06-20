@@ -9,6 +9,7 @@ Esta especificación describe las acciones visibles soportadas por `src/pcobra/g
 - La acción **Sugerencias del Libro** debe pasar siempre primero por `Lexer` y `Parser`. Si alguno falla, el IDLE debe mostrar los errores léxicos/sintácticos y no debe invocar el motor opcional de sugerencias.
 - El motor IA canónico para sugerencias es `agix`; `agi-core` no debe usarse como sustituto ni dependencia paralela sin una ADR nueva. La decisión vigente está documentada en [`docs/ADR/002-motor-ia-sugerencias-agix.md`](ADR/002-motor-ia-sugerencias-agix.md).
 - El selector de transpilación del IDLE solo puede mostrar los targets públicos canónicos: `python`, `javascript` y `rust`. No debe exponer aliases, targets legacy ni backends experimentales.
+- La gestión del árbol de archivos es funcionalidad de archivos/rutas de la GUI: no afecta la sintaxis Cobra y no debe requerir cambios en `Lexer` ni `Parser`.
 
 ## Acciones soportadas y funciones runtime
 
@@ -24,7 +25,7 @@ Esta especificación describe las acciones visibles soportadas por `src/pcobra/g
 | Tokens | `tokens_handler`, creado por `crear_handler_tokens()` | `mostrar_tokens()` → `analizar_codigo()` | Obligatorio. | Ejecuta `Lexer` y `Parser` mediante `analizar_codigo()` y muestra una línea por token. Los errores se formatean como errores léxicos o sintácticos. |
 | AST | `ast_handler`, creado por `crear_handler_ast()` | `mostrar_ast()` → `analizar_codigo()` | Obligatorio. | Ejecuta `Lexer` y `Parser` mediante `analizar_codigo()` y muestra la representación serializada del AST. |
 | Sugerencias del Libro | `sugerencias_handler`, creado por `crear_handler_sugerencias()`; botón creado por `crear_boton_sugerencias_libro()` | `generar_reporte_sugerencias()` → `analizar_codigo()` → `generar_sugerencias()` | Obligatorio y previo al motor de sugerencias. | Valida primero con `Lexer` y `Parser`. Si hay errores, informa que deben corregirse antes de solicitar sugerencias. Si no hay errores, comprueba el motor opcional de sugerencias y agrupa las sugerencias por categorías pedagógicas. |
-| Árbol de directorios | `reconstruir_arbol()`, `establecer_raiz_arbol_handler()` y `cargar_archivo_desde_evento_arbol()` | `normalizar_ruta_archivo_gui()`, `crear_arbol_directorios()`, `listar_directorio_cobra()` y `cargar_archivo_desde_arbol()` | No aplica. | Permite fijar la raíz del árbol, lista carpetas y archivos Cobra `.co`/`.cobra`, carga archivos seleccionados y rechaza entradas que no sean archivos Cobra. |
+| Árbol de directorios | `reconstruir_arbol()`, `establecer_raiz_arbol_handler()` y `cargar_archivo_desde_evento_arbol()` | `normalizar_ruta_archivo_gui()`, `crear_arbol_directorios()`, `listar_directorio_cobra()` y `cargar_archivo_desde_arbol()` | No aplica. | Reconstruye el primer nivel visible cuando cambia la raíz, se abre un archivo o se guarda; las subcarpetas se cargan bajo demanda al expandirse con `crear_arbol_directorios()`. El campo `Raíz del árbol` pasa por `normalizar_ruta_archivo_gui()` y respeta el sandbox compartido. Solo los archivos `.co` y `.cobra` son cargables por defecto; el resto de entradas se rechaza antes de leerlas. |
 
 ## Restricción del selector de transpilación
 
