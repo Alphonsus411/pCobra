@@ -293,6 +293,8 @@ def main(page: "ft.Page"):
             expand=True,
         ),
         width=280,
+        padding=12,
+        border_radius=8,
     )
 
     page.add(runtime.flet_row(ft, controls=[panel_lateral, editor], expand=True))
