@@ -94,7 +94,7 @@ def test_boton_sugerencias_se_deshabilita_y_menciona_paquete_correcto(monkeypatc
 
 
 def test_es_archivo_cobra_reconoce_extensiones_seguras_documentadas() -> None:
-    assert runtime.COBRA_FILE_EXTENSIONS == (".co", ".cobra")
+    assert runtime.COBRA_FILE_EXTENSIONS == (".cobra", ".co")
     assert runtime.es_archivo_cobra("programa.co")
     assert runtime.es_archivo_cobra("modulo.COBRA")
     assert not runtime.es_archivo_cobra("notas.txt")

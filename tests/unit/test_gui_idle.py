@@ -981,7 +981,7 @@ def _preparar_idle_archivos(monkeypatch, tmp_path, workspace_root=None):
     return ft, page, entrada, ruta_input, salida, abrir, guardar_como
 
 
-def test_guardar_como_resuelve_ruta_relativa_con_extension_y_normaliza_input(
+def test_guardar_como_resuelve_src_programa_sin_extension_como_cobra(
     monkeypatch, tmp_path
 ):
     (
@@ -994,13 +994,13 @@ def test_guardar_como_resuelve_ruta_relativa_con_extension_y_normaliza_input(
         guardar_como,
     ) = _preparar_idle_archivos(monkeypatch, tmp_path)
     (tmp_path / "src").mkdir()
-    destino = (tmp_path / "src" / "main.cobra").resolve()
+    destino = (tmp_path / "src" / "programa.cobra").resolve()
 
-    entrada.value = "imprimir('main')"
-    ruta_input.value = "src/main"
+    entrada.value = "imprimir('programa')"
+    ruta_input.value = "src/programa"
     guardar_como.on_click(None)
 
-    assert destino.read_text(encoding="utf-8") == "imprimir('main')"
+    assert destino.read_text(encoding="utf-8") == "imprimir('programa')"
     assert salida.value == f"Archivo guardado: {destino}"
     assert ruta_input.value == str(destino)
 

@@ -80,8 +80,8 @@ def _local_import_action(module_name: str, symbol_name: str) -> str:
     )
 
 
-COBRA_FILE_EXTENSIONS: tuple[str, ...] = (".co", ".cobra")
-"""Extensiones Cobra priorizadas para el explorador del IDLE."""
+COBRA_FILE_EXTENSIONS: tuple[str, ...] = (".cobra", ".co")
+"""Extensiones Cobra aceptadas y priorizadas para el explorador del IDLE."""
 
 MOSTRAR_TODOS_LOS_ARCHIVOS_IDLE = False
 """Bandera interna para una futura configuración de visibilidad completa.
