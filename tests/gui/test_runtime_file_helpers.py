@@ -19,7 +19,10 @@ def test_resolver_workspace_root_idle_usa_cobra_projects_dir(
     workspace = tmp_path / "workspace personalizado"
     monkeypatch.setenv("COBRA_PROJECTS_DIR", str(workspace))
 
+    assert not workspace.exists()
+
     assert runtime.resolver_workspace_root_idle() == workspace.resolve()
+    assert workspace.is_dir()
 
 
 def test_resolver_workspace_root_idle_usa_cobraprojects_en_home_sin_env(
@@ -28,9 +31,11 @@ def test_resolver_workspace_root_idle_usa_cobraprojects_en_home_sin_env(
     monkeypatch.delenv("COBRA_PROJECTS_DIR", raising=False)
     monkeypatch.setattr(Path, "home", lambda: tmp_path)
 
-    assert (
-        runtime.resolver_workspace_root_idle() == (tmp_path / "CobraProjects").resolve()
-    )
+    workspace = tmp_path / "CobraProjects"
+    assert not workspace.exists()
+
+    assert runtime.resolver_workspace_root_idle() == workspace.resolve()
+    assert workspace.is_dir()
 
 
 def test_es_archivo_cobra_prioriza_extensiones_documentadas():
