@@ -1086,8 +1086,8 @@ def test_abrir_archivo_en_subdirectorio_reconstruye_arbol_con_project_root(
 
     monkeypatch.setattr(idle.runtime, "crear_arbol_directorios", _crear_arbol_spy)
     (
-        _ft,
-        _page,
+        ft,
+        page,
         entrada,
         ruta_input,
         salida,
@@ -1103,9 +1103,16 @@ def test_abrir_archivo_en_subdirectorio_reconstruye_arbol_con_project_root(
     ruta_input.value = "src/main.cobra"
     abrir.on_click(None)
 
+    raiz_input = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.TextField) and c.kwargs.get("label") == "Proyecto activo"
+    )
+
     assert entrada.value == "imprimir('main')"
     assert salida.value == f"Archivo cargado: {archivo}"
     assert ruta_input.value == str(archivo)
+    assert raiz_input.value == str(project_root)
     assert llamadas_root_path[-1] == project_root
     assert project_root / "src" not in llamadas_root_path
 
