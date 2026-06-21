@@ -112,7 +112,7 @@ def main(page: "ft.Page"):
 
     def guardar_en(ruta: Path) -> bool:
         try:
-            _contenido, salida.value = runtime.guardar_archivo_como(
+            _contenido, salida.value = runtime.guardar_archivo_como_validado(
                 ruta, entrada.value, estado
             )
         except (

@@ -432,6 +432,41 @@ def guardar_archivo_como(
     return contenido_guardado, f"Archivo guardado: {estado.ruta}"
 
 
+def escribir_archivo_texto_validado(
+    path: str | Path, contenido: str | None, *, encoding: str = "utf-8"
+) -> str:
+    """Escribe en una ruta ya validada por el IDLE principal.
+
+    Esta función no revalida contra el sandbox global porque el flujo del IDLE
+    principal ya validó la ruta contra project_root mediante
+    resolver_ruta_archivo_en_project_root().
+    """
+
+    destino = Path(path).expanduser().resolve()
+    if destino.exists() and destino.is_dir():
+        raise NotADirectoryError(
+            "La ruta indicada corresponde a un directorio; indica un archivo Cobra."
+        )
+
+    destino.parent.mkdir(parents=True, exist_ok=True)
+    codigo = normalizar_codigo(contenido)
+    destino.write_text(codigo, encoding=encoding)
+    return codigo
+
+
+def guardar_archivo_como_validado(
+    ruta: str | Path, contenido: str | None, estado: GuiFileState
+) -> tuple[str, str]:
+    """Guarda un archivo cuya ruta ya fue validada contra project_root."""
+
+    destino = Path(ruta).expanduser().resolve()
+    codigo = escribir_archivo_texto_validado(destino, contenido)
+    estado.ruta = destino
+    estado.contenido_cargado = codigo
+    estado.cambios_sin_guardar = False
+    return codigo, f"Archivo guardado: {destino}"
+
+
 def recargar_archivo_activo(estado: GuiFileState) -> tuple[str, str]:
     """Recarga el archivo activo desde disco y devuelve contenido/mensaje."""
 
