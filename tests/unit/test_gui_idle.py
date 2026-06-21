@@ -1378,6 +1378,49 @@ def test_guardar_relativo_usa_project_root_activo_tras_abrir_segundo_proyecto(
     assert not destino_repo.exists()
 
 
+def test_abrir_proyecto_rechaza_ruta_fuera_de_workspace(monkeypatch, tmp_path):
+    (
+        ft,
+        page,
+        _entrada,
+        _ruta_input,
+        salida,
+        _abrir,
+        _guardar_como,
+    ) = _preparar_idle_archivos(monkeypatch, tmp_path)
+    workspace_root = idle.runtime.resolver_workspace_root_idle()
+    externo = tmp_path / "proyecto_externo"
+    externo.mkdir()
+    (externo / "src").mkdir()
+
+    proyecto_input = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.TextField) and c.kwargs.get("label") == "Proyecto activo"
+    )
+    abrir_proyecto = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.ElevatedButton) and c.text == "Abrir proyecto"
+    )
+    arbol = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.ListView)
+        and getattr(getattr(c, "controls", [None])[0], "value", "").startswith(
+            "Proyecto activo:"
+        )
+    )
+
+    proyecto_input.value = str(externo)
+    abrir_proyecto.on_click(None)
+
+    assert salida.value.startswith("error: ")
+    assert f"El proyecto debe estar dentro de: {workspace_root}" in salida.value
+    assert proyecto_input.value == str(externo)
+    assert arbol.controls[0].value == f"Proyecto activo: {workspace_root}"
+
+
 def test_crear_proyecto_normaliza_nombre_seguro(monkeypatch, tmp_path):
     (
         ft,
