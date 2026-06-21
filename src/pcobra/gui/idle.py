@@ -39,6 +39,13 @@ def main(page: "ft.Page"):
         if estado.ruta is not None:
             ruta_input.value = str(estado.ruta)
 
+    def limpiar_archivo_activo() -> None:
+        estado.ruta = None
+        estado.contenido_cargado = ""
+        estado.cambios_sin_guardar = False
+        entrada.value = ""
+        ruta_input.value = ""
+
     def actualizar_pagina() -> None:
         sincronizar_estado_visual()
         page.update()
@@ -295,11 +302,7 @@ def main(page: "ft.Page"):
 
         proyecto_eliminado = project_root_resuelto
         project_root = workspace_root
-        estado.ruta = None
-        estado.contenido_cargado = ""
-        estado.cambios_sin_guardar = False
-        entrada.value = ""
-        ruta_input.value = ""
+        limpiar_archivo_activo()
         reconstruir_arbol()
         raiz_input.value = str(project_root)
         salida.value = f"Proyecto eliminado: {proyecto_eliminado}"
@@ -422,11 +425,7 @@ def main(page: "ft.Page"):
             mostrar_error_archivo(exc)
             page.update()
             return
-        estado.ruta = None
-        estado.contenido_cargado = ""
-        estado.cambios_sin_guardar = False
-        entrada.value = ""
-        ruta_input.value = ""
+        limpiar_archivo_activo()
         reconstruir_arbol()
         salida.value = f"Archivo eliminado: {ruta_resuelta}"
         actualizar_pagina()
@@ -508,11 +507,7 @@ def main(page: "ft.Page"):
             return
 
         if archivo_activo_en_carpeta:
-            estado.ruta = None
-            estado.contenido_cargado = ""
-            estado.cambios_sin_guardar = False
-            entrada.value = ""
-            ruta_input.value = ""
+            limpiar_archivo_activo()
 
         reconstruir_arbol()
         salida.value = f"Carpeta eliminada: {ruta_resuelta}"
