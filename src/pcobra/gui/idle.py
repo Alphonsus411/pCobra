@@ -263,6 +263,48 @@ def main(page: "ft.Page"):
         salida.value = f"Proyecto abierto: {project_root}"
         actualizar_pagina()
 
+    def eliminar_proyecto_handler(_e):
+        nonlocal project_root
+        if not hay_proyecto_activo():
+            salida.value = "No hay proyecto activo para eliminar."
+            page.update()
+            return
+
+        project_root_resuelto = project_root.resolve()
+        workspace_root_resuelto = workspace_root.resolve()
+
+        if project_root_resuelto == workspace_root_resuelto:
+            salida.value = "No se puede eliminar la raíz completa del workspace."
+            page.update()
+            return
+
+        try:
+            runtime.eliminar_proyecto_validado(
+                project_root_resuelto, workspace_root_resuelto
+            )
+        except (
+            FileNotFoundError,
+            NotADirectoryError,
+            PermissionError,
+            OSError,
+            ValueError,
+        ) as exc:
+            mostrar_error_archivo(exc)
+            page.update()
+            return
+
+        proyecto_eliminado = project_root_resuelto
+        project_root = workspace_root
+        estado.ruta = None
+        estado.contenido_cargado = ""
+        estado.cambios_sin_guardar = False
+        entrada.value = ""
+        ruta_input.value = ""
+        reconstruir_arbol()
+        raiz_input.value = str(project_root)
+        salida.value = f"Proyecto eliminado: {proyecto_eliminado}"
+        actualizar_pagina()
+
     def nuevo_handler(_e):
         entrada.value, salida.value = runtime.crear_archivo_nuevo_en_editor(estado)
         actualizar_pagina()
@@ -505,6 +547,9 @@ def main(page: "ft.Page"):
                     ),
                     runtime.flet_elevated_button(
                         ft, "Abrir proyecto", on_click=establecer_raiz_arbol_handler
+                    ),
+                    runtime.flet_elevated_button(
+                        ft, "Eliminar proyecto", on_click=eliminar_proyecto_handler
                     ),
                 ],
                 wrap=True,
