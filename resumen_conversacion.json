@@ -1,7 +1,7 @@
 {
   "asistente": "Bella",
   "proyecto": "pCobra / Cobra",
-  "fecha_contexto": "2026-06-20",
+  "fecha_contexto": "2026-06-21",
   "version_objetivo": "10.1.1",
   "objetivo_actual": "Consolidar el IDLE gráfico de Cobra con gestión segura de archivos, proyectos independientes y árbol lateral funcional.",
   "restricciones_permanentes": [
@@ -10,243 +10,369 @@
     "No modificar gramática.",
     "No modificar tokens.",
     "No modificar nodos AST.",
-    "No modificar transpiladores salvo una tarea específica autorizada.",
+    "No modificar transpiladores salvo autorización explícita.",
     "No cambiar la sintaxis Cobra.",
     "No inventar APIs ni comportamientos sin inspeccionar el código real.",
     "Aplicar parches mínimos, localizados y acompañados de pruebas.",
     "No guardar proyectos de usuario dentro del repositorio pCobra ni bajo src/."
   ],
-  "estado_previo_release": {
-    "cli": "verde",
-    "build_utf8_bom": "verde",
-    "gui_flet_arranque": "verde",
-    "ejecucion_cobra_desde_gui": "verde",
-    "transpilacion_javascript_smoke": "verde",
-    "transpilacion_rust_simple": "verde",
-    "deuda_previa": [
-      "Bug de transpilación Python con funciones: maximum recursion depth exceeded.",
-      "Posible conflicto de dependencias numpy/agix.",
-      "Mojibake Unicode en algunos textos de GUI."
+  "archivos_trabajados": [
+    "src/pcobra/gui/runtime.py",
+    "src/pcobra/gui/idle.py"
+  ],
+  "estado_general": {
+    "workspace_idle": "verde",
+    "controles_proyecto_visibles": "verde",
+    "crear_proyecto": "verde",
+    "abrir_proyecto": "verde",
+    "aislamiento_visual_proyecto": "verde",
+    "guardar_como_en_proyecto_activo": "verde",
+    "bloqueo_escape_con_parent_dir": "verde",
+    "bloqueo_operaciones_sin_proyecto_activo": "verde",
+    "abrir_archivo_existente": "verde",
+    "guardar_archivo_activo": "verde",
+    "recargar_archivo_activo": "pendiente de repetir tras parche",
+    "ejecutar_codigo_desde_idle": "pendiente tras cambios recientes",
+    "tokens_ast_sugerencias_correccion": "pendiente tras cambios recientes"
+  },
+  "pocs_verdes": [
+    {
+      "id": "POC-1",
+      "nombre": "Workspace creado",
+      "resultado": "verde",
+      "evidencia": "El IDLE arranca con C:\\Users\\Adolfo\\CobraProjects sin WinError 3."
+    },
+    {
+      "id": "POC-2",
+      "nombre": "Controles de proyecto visibles",
+      "resultado": "verde",
+      "evidencia": "Se ven Proyecto activo, Crear proyecto y Abrir proyecto."
+    },
+    {
+      "id": "POC-3",
+      "nombre": "Crear proyecto independiente",
+      "resultado": "verde",
+      "evidencia": "proyecto_alpha creado con src/ y README.md dentro de C:\\Users\\Adolfo\\CobraProjects\\proyecto_alpha."
+    },
+    {
+      "id": "POC-4",
+      "nombre": "Aislamiento visual entre proyectos",
+      "resultado": "verde",
+      "evidencia": "proyecto_beta activo muestra solo su propio árbol."
+    },
+    {
+      "id": "POC-5",
+      "nombre": "Guardar dentro del proyecto activo",
+      "resultado": "verde",
+      "evidencia": "src\\principal.cobra se guarda como C:\\Users\\Adolfo\\CobraProjects\\proyecto_beta\\src\\principal.cobra."
+    },
+    {
+      "id": "POC-6",
+      "nombre": "Bloqueo de escape ../",
+      "resultado": "verde",
+      "evidencia": "..\\escape.cobra fue rechazado y Test-Path \"$HOME\\CobraProjects\\escape.cobra\" devolvió False."
+    },
+    {
+      "id": "POC-7A",
+      "nombre": "Bloqueo sin proyecto activo",
+      "resultado": "verde",
+      "evidencia": "Sin abrir proyecto, Guardar como src\\prueba_bloqueo.cobra muestra: Crea o abre un proyecto antes de trabajar con archivos. Test-Path devolvió False."
+    },
+    {
+      "id": "POC-7B",
+      "nombre": "Guardar con proyecto activo tras bloqueo",
+      "resultado": "verde",
+      "evidencia": "Con proyecto_beta activo, Guardar como funciona y Get-Content mostró imprimir(\"Hola desde el proyecto_beta\")."
+    },
+    {
+      "id": "POC-8A",
+      "nombre": "Abrir archivo existente",
+      "resultado": "verde",
+      "evidencia": "Abrir src\\principal.cobra carga C:\\Users\\Adolfo\\CobraProjects\\proyecto_beta\\src\\principal.cobra y muestra el contenido en el editor."
+    },
+    {
+      "id": "POC-8B",
+      "nombre": "Guardar archivo activo",
+      "resultado": "verde",
+      "evidencia": "Guardar actualizó C:\\Users\\Adolfo\\CobraProjects\\proyecto_beta\\src\\principal.cobra. Get-Content mostró imprimir(\"Hola desde el proyecto_beta_actualizado\")."
+    }
+  ],
+  "poc_actual_pendiente": {
+    "id": "POC-8C",
+    "nombre": "Recargar archivo activo",
+    "estado": "pendiente de repetir tras parche",
+    "contexto": "Antes del parche falló con 'La ruta queda fuera del directorio permitido'. Luego se añadieron funciones validadas y se cambió idle.py para usar recargar_archivo_activo_validado.",
+    "pasos_para_repetir": [
+      "Reiniciar el IDLE.",
+      "Abrir proyecto_beta.",
+      "Abrir src\\principal.cobra.",
+      "Cambiar el editor a imprimir(\"CAMBIO TEMPORAL SIN GUARDAR\") sin guardar.",
+      "Pulsar Recargar.",
+      "Esperar que el editor vuelva a imprimir(\"Hola desde el proyecto_beta_actualizado\")."
     ]
   },
-  "problemas_detectados_en_esta_sesion": [
-    {
-      "id": "GUI-FLET-ICONS-001",
-      "descripcion": "Flet ya no exponía ft.icons en la versión instalada.",
-      "error": "AttributeError: module 'flet' has no attribute 'icons'",
-      "archivos": [
-        "src/pcobra/gui/runtime.py"
-      ],
-      "correccion": [
-        "ft.icons.INSERT_DRIVE_FILE -> ft.Icons.INSERT_DRIVE_FILE",
-        "ft.icons.FOLDER -> ft.Icons.FOLDER"
-      ],
-      "estado": "corregido y validado"
-    },
-    {
-      "id": "GUI-PATH-STATE-001",
-      "descripcion": "El campo Ruta recibía el directorio actual cuando no existía archivo activo.",
-      "consecuencia": "Abrir o guardar intentaba tratar un directorio como archivo.",
-      "error_observado": "[Errno 13] Permission denied sobre src/pcobra/gui",
-      "causa": "ruta_input mezclaba la raíz del árbol con la ruta del archivo activo.",
-      "correccion": [
-        "Mantener ruta_input vacío cuando estado.ruta es None.",
-        "Separar directorio_actual, estado.ruta y ruta_input.",
-        "Añadir validación defensiva de rutas de archivo."
-      ],
-      "estado": "corregido y validado"
-    },
+  "bugs_detectados_y_corregidos": [
     {
       "id": "GUI-WORKSPACE-001",
-      "descripcion": "resolver_workspace_root_idle calcula ~/CobraProjects pero no crea físicamente la carpeta.",
-      "error_observado": "[WinError 3] El sistema no puede encontrar la ruta especificada: C:\\Users\\Adolfo\\CobraProjects",
-      "causa": "El árbol se construye antes de crear el primer proyecto.",
-      "correccion_pendiente": "Crear workspace_root con mkdir(parents=True, exist_ok=True) antes de construir el árbol.",
-      "estado": "pendiente"
+      "descripcion": "resolver_workspace_root_idle calculaba ~/CobraProjects pero no creaba físicamente la carpeta.",
+      "archivo": "src/pcobra/gui/runtime.py",
+      "correccion": "workspace_root.mkdir(parents=True, exist_ok=True) antes de devolver workspace_root.",
+      "estado": "corregido y validado"
     },
     {
       "id": "GUI-LAYOUT-PROJECTS-001",
-      "descripcion": "Los controles nuevos de gestión de proyectos existen en idle.py, pero no aparecen en la GUI.",
-      "controles_esperados": [
-        "Proyecto activo",
-        "Crear proyecto",
-        "Abrir proyecto",
-        "Campo de proyecto o raíz"
+      "descripcion": "Los controles de gestión de proyecto no eran visibles.",
+      "archivo": "src/pcobra/gui/idle.py",
+      "correccion": "Codex ajustó layout; se validó visualmente.",
+      "estado": "corregido y validado"
+    },
+    {
+      "id": "GUI-SAVE-SANDBOX-001",
+      "descripcion": "Guardar como validaba primero contra project_root pero luego runtime.guardar_archivo_como volvía a pasar por el sandbox global antiguo.",
+      "archivos": [
+        "src/pcobra/gui/runtime.py",
+        "src/pcobra/gui/idle.py"
       ],
-      "hipotesis_actual": "Problema de layout, dimensiones, expand, scroll o composición del panel lateral.",
-      "estado": "pendiente de diagnóstico exacto"
+      "correccion": [
+        "Añadida escribir_archivo_texto_validado(path, contenido, encoding='utf-8').",
+        "Añadida guardar_archivo_como_validado(ruta, contenido, estado).",
+        "idle.py: guardar_en(ruta) ahora llama a runtime.guardar_archivo_como_validado(...)."
+      ],
+      "estado": "corregido y validado"
+    },
+    {
+      "id": "GUI-WORKSPACE-AS-PROJECT-001",
+      "descripcion": "Al iniciar, project_root = workspace_root permitía guardar accidentalmente en C:\\Users\\Adolfo\\CobraProjects\\src.",
+      "archivo": "src/pcobra/gui/idle.py",
+      "correccion": [
+        "Añadida función interna hay_proyecto_activo().",
+        "Añadida función interna requerir_proyecto_activo().",
+        "Añadido bloqueo al inicio de abrir_handler, guardar_handler, guardar_como_handler y recargar_handler."
+      ],
+      "estado": "corregido y validado"
+    },
+    {
+      "id": "GUI-OPEN-SANDBOX-001",
+      "descripcion": "Abrir archivo existente fallaba porque runtime.abrir_archivo_desde_ruta usaba cargar_archivo_en_estado, que volvía al sandbox global.",
+      "archivos": [
+        "src/pcobra/gui/runtime.py",
+        "src/pcobra/gui/idle.py"
+      ],
+      "correccion": [
+        "Añadida leer_archivo_texto_validado(path, encoding='utf-8').",
+        "Añadida abrir_archivo_desde_ruta_validada(ruta, estado).",
+        "idle.py: cargar_archivo(..., desde_arbol=False) ahora llama a runtime.abrir_archivo_desde_ruta_validada(...)."
+      ],
+      "estado": "corregido y validado"
+    },
+    {
+      "id": "GUI-SAVE-ACTIVE-SANDBOX-001",
+      "descripcion": "Guardar archivo activo fallaba porque runtime.guardar_archivo_activo usaba guardar_archivo_en_estado y volvía al sandbox global.",
+      "archivos": [
+        "src/pcobra/gui/runtime.py",
+        "src/pcobra/gui/idle.py"
+      ],
+      "correccion": [
+        "Añadida guardar_archivo_activo_validado(contenido, estado).",
+        "idle.py: guardar_handler ahora llama a runtime.guardar_archivo_activo_validado(...)."
+      ],
+      "estado": "corregido y validado"
+    },
+    {
+      "id": "GUI-RELOAD-SANDBOX-001",
+      "descripcion": "Recargar archivo activo fallaba porque runtime.recargar_archivo_activo volvía al sandbox global.",
+      "archivos": [
+        "src/pcobra/gui/runtime.py",
+        "src/pcobra/gui/idle.py"
+      ],
+      "correccion": [
+        "Añadida recargar_archivo_activo_validado(estado).",
+        "idle.py: recargar_handler ahora llama a runtime.recargar_archivo_activo_validado(estado)."
+      ],
+      "estado": "pendiente de repetir POC-8C"
     }
   ],
-  "cambios_validados": {
-    "guardar_como": {
-      "estado": "verde",
-      "evidencia": "Archivo guardado correctamente en src/pcobra/gui/poc_idle.cobra durante la prueba anterior."
-    },
-    "guardar": {
-      "estado": "verde",
-      "evidencia": "El archivo activo se actualizó correctamente."
-    },
-    "recargar": {
-      "estado": "verde",
-      "evidencia": "Un cambio no guardado fue descartado y se restauró el contenido persistido."
-    },
-    "abrir": {
-      "estado": "verde",
-      "evidencia": "El archivo se cargó correctamente usando su ruta completa."
-    },
-    "validacion_directorio_como_archivo": {
-      "estado": "verde",
-      "mensaje": "La ruta indicada corresponde a un directorio. Escribe también el nombre del archivo."
-    },
-    "ejecucion_basica": {
-      "estado": "verde",
-      "caso": "imprimir(\"Hola desde el IDLE de Cobra\")"
-    },
-    "variables_y_operaciones": {
-      "estado": "verde",
-      "resultado": [
-        "15",
-        "50"
-      ]
-    }
-  },
-  "arquitectura_de_proyectos_implementada": {
-    "workspace_root": {
-      "origen": "COBRA_PROJECTS_DIR si existe; de lo contrario Path.home() / \"CobraProjects\"",
-      "implementacion": "runtime.resolver_workspace_root_idle()"
-    },
-    "project_root": {
-      "descripcion": "Carpeta del proyecto activo.",
-      "estado_inicial_actual": "Se inicializa temporalmente con workspace_root."
-    },
-    "estado_ruta": {
-      "descripcion": "Archivo Cobra actualmente abierto."
-    },
-    "ruta_input": {
-      "descripcion": "Ruta visible del archivo activo o destino de guardado."
-    },
-    "estructura_por_proyecto": [
-      "CobraProjects/<nombre>/",
-      "CobraProjects/<nombre>/src/",
-      "CobraProjects/<nombre>/README.md"
-    ],
-    "regla_central": "Cada proyecto debe vivir en una carpeta propia, independiente y aislada del resto."
-  },
-  "codigo_confirmado": {
-    "runtime_resolver_workspace": [
-      "Lee COBRA_PROJECTS_DIR.",
-      "Si no existe, devuelve Path.home() / CobraProjects.",
-      "Actualmente no ejecuta mkdir."
-    ],
-    "crear_proyecto_handler": [
-      "Valida el nombre del proyecto.",
-      "Construye workspace_root / nombre.",
-      "Crea la carpeta del proyecto.",
-      "Crea src/.",
-      "Crea README.md si no existe.",
-      "Actualiza project_root.",
-      "Reconstruye el árbol."
-    ],
-    "seguridad": [
-      "Existe validar_project_root_idle().",
-      "Rechaza la raíz del repositorio.",
-      "Rechaza src/.",
-      "Rechaza src/pcobra/.",
-      "Rechaza src/pcobra/gui/.",
-      "Los proyectos deben permanecer dentro de workspace_root."
+  "cambios_en_runtime_py": {
+    "archivo": "src/pcobra/gui/runtime.py",
+    "funciones_confirmadas": [
+      {
+        "nombre": "resolver_workspace_root_idle",
+        "cambio": "Crea workspace_root con mkdir(parents=True, exist_ok=True).",
+        "estado": "validado"
+      },
+      {
+        "nombre": "escribir_archivo_texto_validado",
+        "linea_observada_aprox": 450,
+        "proposito": "Escribe una ruta ya validada por el IDLE principal sin revalidar contra el sandbox global.",
+        "estado": "validado para Guardar como y Guardar"
+      },
+      {
+        "nombre": "guardar_archivo_como_validado",
+        "proposito": "Guarda un archivo cuya ruta ya fue validada contra project_root.",
+        "estado": "validado"
+      },
+      {
+        "nombre": "guardar_archivo_activo_validado",
+        "linea_observada_aprox": 470,
+        "proposito": "Guarda estado.ruta ya validada contra project_root.",
+        "estado": "validado"
+      },
+      {
+        "nombre": "leer_archivo_texto_validado",
+        "linea_observada_aprox": 470,
+        "proposito": "Lee una ruta ya validada por el IDLE principal.",
+        "estado": "validado para Abrir"
+      },
+      {
+        "nombre": "abrir_archivo_desde_ruta_validada",
+        "linea_observada_aprox": 483,
+        "proposito": "Abre un archivo cuya ruta ya fue validada contra project_root.",
+        "estado": "validado"
+      },
+      {
+        "nombre": "recargar_archivo_activo_validado",
+        "linea_observada_aprox": 512,
+        "proposito": "Recarga estado.ruta ya validada contra project_root.",
+        "estado": "pendiente de validación funcional"
+      }
     ]
   },
-  "archivos_principales": [
-    "src/pcobra/gui/idle.py",
-    "src/pcobra/gui/runtime.py"
-  ],
-  "pruebas_realizadas": [
+  "cambios_en_idle_py": {
+    "archivo": "src/pcobra/gui/idle.py",
+    "funciones_modificadas": [
+      {
+        "funcion": "guardar_en",
+        "linea_observada_aprox": 115,
+        "cambio": "runtime.guardar_archivo_como(...) -> runtime.guardar_archivo_como_validado(...)",
+        "estado": "validado"
+      },
+      {
+        "funcion": "hay_proyecto_activo",
+        "linea_observada_aprox": 190,
+        "cambio": "Función interna nueva dentro de main(page). Devuelve project_root.resolve() != workspace_root.resolve().",
+        "estado": "validado"
+      },
+      {
+        "funcion": "requerir_proyecto_activo",
+        "linea_observada_aprox": 193,
+        "cambio": "Función interna nueva dentro de main(page). Bloquea operaciones de archivo si no hay proyecto hijo activo.",
+        "estado": "validado"
+      },
+      {
+        "funcion": "abrir_handler",
+        "linea_observada_aprox": 254,
+        "cambio": "Añadida guarda inicial if not requerir_proyecto_activo(): return.",
+        "estado": "validado"
+      },
+      {
+        "funcion": "guardar_handler",
+        "linea_observada_aprox": 265,
+        "cambio": "Añadida guarda inicial if not requerir_proyecto_activo(): return y llamada a runtime.guardar_archivo_activo_validado(...).",
+        "estado": "validado"
+      },
+      {
+        "funcion": "guardar_como_handler",
+        "linea_observada_aprox": 294,
+        "cambio": "Añadida guarda inicial if not requerir_proyecto_activo(): return.",
+        "estado": "validado"
+      },
+      {
+        "funcion": "recargar_handler",
+        "linea_observada_aprox": 314,
+        "cambio": "Añadida guarda inicial if not requerir_proyecto_activo(): return y llamada a runtime.recargar_archivo_activo_validado(estado).",
+        "estado": "pendiente de validar POC-8C"
+      },
+      {
+        "funcion": "cargar_archivo",
+        "linea_observada_aprox": 94,
+        "cambio": "En rama desde_arbol=False ahora usa runtime.abrir_archivo_desde_ruta_validada(...).",
+        "estado": "validado"
+      }
+    ]
+  },
+  "comandos_usados": {
+    "arrancar_idle": ".\\.venv\\Scripts\\python.exe -m pcobra.gui.idle",
+    "validar_workspace": "Test-Path \"$HOME\\CobraProjects\"",
+    "listar_proyecto_alpha": "Get-ChildItem \"$HOME\\CobraProjects\\proyecto_alpha\" -Force | Select-Object Name,Mode",
+    "validar_guardado_beta": "Test-Path \"$HOME\\CobraProjects\\proyecto_beta\\src\\principal.cobra\"",
+    "leer_principal_beta": "Get-Content \"$HOME\\CobraProjects\\proyecto_beta\\src\\principal.cobra\"",
+    "validar_escape": "Test-Path \"$HOME\\CobraProjects\\escape.cobra\"",
+    "validar_bloqueo_workspace_src": "Test-Path \"$HOME\\CobraProjects\\src\\prueba_bloqueo.cobra\"",
+    "buscar_idle": "Select-String -Path .\\src\\pcobra\\gui\\idle.py -Pattern \"hay_proyecto_activo|requerir_proyecto_activo|guardar_archivo_como_validado\"",
+    "buscar_runtime_recargar": "Select-String -Path .\\src\\pcobra\\gui\\runtime.py -Pattern \"recargar_archivo_activo_validado\""
+  },
+  "evidencia_de_rutas": {
+    "workspace_root": "C:\\Users\\Adolfo\\CobraProjects",
+    "proyecto_alpha": "C:\\Users\\Adolfo\\CobraProjects\\proyecto_alpha",
+    "proyecto_beta": "C:\\Users\\Adolfo\\CobraProjects\\proyecto_beta",
+    "archivo_principal_beta": "C:\\Users\\Adolfo\\CobraProjects\\proyecto_beta\\src\\principal.cobra",
+    "contenido_actual_principal_beta": "imprimir(\"Hola desde el proyecto_beta_actualizado\")"
+  },
+  "siguiente_paso_recomendado": {
+    "id": "POC-8C",
+    "accion": "Repetir Recargar tras haber añadido recargar_archivo_activo_validado.",
+    "pasos": [
+      "Reiniciar el IDLE.",
+      "Abrir proyecto_beta.",
+      "Abrir src\\principal.cobra.",
+      "Cambiar el editor a imprimir(\"CAMBIO TEMPORAL SIN GUARDAR\") sin guardar.",
+      "Pulsar Recargar.",
+      "Confirmar que el editor vuelve a imprimir(\"Hola desde el proyecto_beta_actualizado\")."
+    ],
+    "resultado_esperado": "Archivo cargado: C:\\Users\\Adolfo\\CobraProjects\\proyecto_beta\\src\\principal.cobra"
+  },
+  "siguientes_pruebas_despues_de_poc_8c": [
     {
-      "id": "POC-EXEC-001",
-      "resultado": "verde",
-      "descripcion": "Ejecución mínima desde el editor."
+      "id": "POC-9A",
+      "nombre": "Ejecutar archivo abierto",
+      "codigo": "imprimir(\"Hola desde el proyecto_beta_actualizado\")",
+      "resultado_esperado": "Hola desde el proyecto_beta_actualizado"
     },
     {
-      "id": "POC-EXEC-002",
-      "resultado": "verde",
-      "descripcion": "Variables, suma y multiplicación."
+      "id": "POC-9B",
+      "nombre": "Ejecutar variables y operaciones",
+      "codigo": "a = 10\nb = 5\nimprimir(a + b)\nimprimir(a * b)",
+      "resultado_esperado": "15\n50"
     },
     {
-      "id": "POC-FILE-001",
-      "resultado": "verde",
-      "descripcion": "Guardar como."
+      "id": "POC-10A",
+      "nombre": "Tokens",
+      "resultado_esperado": "Debe mostrar tokens sin error para código Cobra válido."
     },
     {
-      "id": "POC-FILE-002",
-      "resultado": "verde",
-      "descripcion": "Guardar archivo activo."
+      "id": "POC-10B",
+      "nombre": "AST",
+      "resultado_esperado": "Debe mostrar representación del AST sin error para código Cobra válido."
     },
     {
-      "id": "POC-FILE-003",
-      "resultado": "verde",
-      "descripcion": "Recargar archivo activo."
+      "id": "POC-10C",
+      "nombre": "Sugerencias del Libro",
+      "resultado_esperado": "Debe validar Lexer/Parser antes de sugerir. Si agix no está disponible, debe mostrar mensaje controlado."
     },
     {
-      "id": "POC-FILE-004",
-      "resultado": "verde",
-      "descripcion": "Abrir mediante ruta."
+      "id": "POC-10D",
+      "nombre": "Corrección",
+      "resultado_esperado": "Debe generar reporte no destructivo o mensaje controlado si falta motor opcional."
     },
     {
-      "id": "POC-FILE-005",
-      "resultado": "verde",
-      "descripcion": "Rechazar un directorio usado como archivo."
-    },
-    {
-      "id": "POC-WORKSPACE-001",
-      "resultado": "rojo",
-      "descripcion": "El workspace no existe antes de crear el primer proyecto y el árbol falla con WinError 3."
-    },
-    {
-      "id": "POC-LAYOUT-001",
-      "resultado": "rojo",
-      "descripcion": "Los controles de proyecto no son visibles en la GUI renderizada."
+      "id": "POC-11A",
+      "nombre": "Árbol lateral: abrir desde árbol",
+      "resultado_esperado": "Pendiente revisar si cargar_archivo_desde_arbol sigue usando runtime.cargar_archivo_desde_arbol y sandbox global."
     }
   ],
-  "siguiente_parche_recomendado": {
-    "objetivo": "Corregir únicamente workspace inexistente y controles de proyecto invisibles.",
-    "cambio_1": {
-      "archivo": "src/pcobra/gui/runtime.py",
-      "funcion": "resolver_workspace_root_idle",
-      "accion": "Crear la ruta resuelta mediante mkdir(parents=True, exist_ok=True) antes de devolverla."
+  "riesgo_actual": "bajo-medio",
+  "riesgos_pendientes": [
+    {
+      "id": "TREE-OPEN-SANDBOX-POSSIBLE",
+      "descripcion": "La rama desde_arbol=True en cargar_archivo todavía llama a runtime.cargar_archivo_desde_arbol(...), que podría seguir usando sandbox global. No se ha probado abrir archivo desde el árbol tras los cambios.",
+      "prioridad": "media",
+      "accion_recomendada": "Después de POC-8C, probar click en principal.cobra desde árbol. Si falla, crear cargar_archivo_desde_arbol_validado o usar abrir_archivo_desde_ruta_validada tras validar ruta."
     },
-    "cambio_2": {
-      "archivo": "src/pcobra/gui/idle.py",
-      "accion": "Inspeccionar el layout real y determinar por qué los controles de proyecto no reciben espacio o no se renderizan."
-    },
-    "restriccion": "No reescribir el IDLE ni tocar el frontend del lenguaje."
-  },
-  "proximas_pruebas": [
-    "Arrancar el IDLE y confirmar que C:\\Users\\Adolfo\\CobraProjects existe.",
-    "Confirmar que aparecen los controles Crear proyecto y Abrir proyecto.",
-    "Crear proyecto_alpha.",
-    "Verificar proyecto_alpha/src y proyecto_alpha/README.md.",
-    "Crear proyecto_beta y confirmar aislamiento entre carpetas.",
-    "Comprobar que el árbol solo muestra el proyecto activo.",
-    "Guardar src/principal.cobra dentro de proyecto_alpha.",
-    "Rechazar ../escape.cobra.",
-    "Rechazar rutas absolutas fuera de project_root.",
-    "Verificar Abrir, Guardar, Guardar como y Recargar dentro del proyecto activo.",
-    "Repetir Ejecutar, Tokens, AST, Sugerencias del Libro y Corrección."
+    {
+      "id": "DUPLICACION-FUNCIONES-VALIDADAS",
+      "descripcion": "runtime.py ahora tiene funciones antiguas basadas en sandbox global y funciones nuevas *_validado. Conviene mantener separación por ahora para parche mínimo, pero documentar que el IDLE principal debe usar las validadas.",
+      "prioridad": "baja"
+    }
   ],
-  "comandos_utiles": {
-    "arrancar_idle": ".\\.venv\\Scripts\\python.exe -m pcobra.gui.idle",
-    "comprobar_workspace": "Test-Path \"$HOME\\CobraProjects\"",
-    "listar_workspace": "Get-ChildItem \"$HOME\\CobraProjects\" -Recurse -Force | Select-Object FullName",
-    "buscar_codigo_sin_ripgrep": "Get-ChildItem .\\src\\pcobra\\gui -Recurse -Filter *.py | Select-String -Pattern \"COBRA_PROJECTS_DIR|CobraProjects|workspace_root|project_root|crear_proyecto\"",
-    "comprobar_modulo_ejecutado": ".\\.venv\\Scripts\\python.exe -c \"import pcobra.gui.idle as m; print(m.__file__)\""
-  },
-  "estado_final_de_la_sesion": {
-    "valoracion": "El núcleo de edición, ejecución y persistencia básica está operativo.",
-    "riesgo_actual": "medio-bajo",
-    "bloqueantes_actuales": [
-      "Crear workspace antes de construir el árbol.",
-      "Hacer visibles y utilizables los controles de proyecto."
-    ],
-    "nota": "No continuar consumiendo Codex hasta disponer de una nueva sesión o presupuesto de tokens."
-  }
+  "nota_para_continuar": "No reabrir diagnóstico amplio. Empezar directamente por POC-8C. Si verde, pasar a Ejecutar, Tokens, AST, Sugerencias y Corrección. Mantener parches mínimos y no tocar Lexer/Parser/gramática."
 }
