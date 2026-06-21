@@ -9,6 +9,18 @@ from unittest.mock import MagicMock
 from pcobra.gui import idle
 
 
+
+def _estado_workspace_proyecto(workspace, proyecto=None):
+    workspace = workspace.resolve()
+    if proyecto is None or proyecto.resolve() == workspace:
+        return f"Workspace: {workspace}\nProyecto activo: ninguno"
+    proyecto = proyecto.resolve()
+    return (
+        f"Workspace: {workspace}\n"
+        f"Proyecto activo: {proyecto.name}\n"
+        f"Ruta completa: {proyecto}"
+    )
+
 def _motor_disponible():
     return idle.runtime.MotorIASugerencias(disponible=True)
 
@@ -523,13 +535,13 @@ def test_main_arbol_inicial_muestra_subdirectorios_y_archivos_cobra(
         for c in page.controls
         if isinstance(c, ft.ListView)
         and getattr(getattr(c, "controls", [None])[0], "value", "").startswith(
-            "Proyecto activo:"
+            "Workspace:"
         )
     )
     entradas = arbol.controls[1:]
     titulos = [getattr(control.title, "value", "") for control in entradas]
 
-    assert arbol.controls[0].value == f"Proyecto activo: {tmp_path.resolve()}"
+    assert arbol.controls[0].value == _estado_workspace_proyecto(tmp_path)
     assert "subdirectorio" in titulos
     assert "programa.cobra" in titulos
     assert "programa.co" in titulos
@@ -601,7 +613,7 @@ def test_main_arbol_inicial_muestra_estado_vacio_en_tmp_path_vacio(
         for c in page.controls
         if isinstance(c, ft.ListView)
         and getattr(getattr(c, "controls", [None])[0], "value", "").startswith(
-            "Proyecto activo:"
+            "Workspace:"
         )
     )
 
@@ -661,7 +673,7 @@ def test_main_panel_lateral_conserva_ancho_contenido_y_arbol(monkeypatch, tmp_pa
     assert arbol.expand is True
     assert columna.controls[0].value == "Archivos Cobra"
     assert columna.controls[-1] is arbol
-    assert arbol.controls[0].value == f"Proyecto activo: {tmp_path.resolve()}"
+    assert arbol.controls[0].value == _estado_workspace_proyecto(tmp_path)
     assert {"subdirectorio", "programa.cobra", "programa.co"}.issubset(titulos)
     assert entradas
 
@@ -706,7 +718,7 @@ def test_main_muestra_error_visible_si_falla_arbol_directorios(monkeypatch, tmp_
         for c in page.controls
         if isinstance(c, ft.ListView)
         and getattr(getattr(c, "controls", [None])[0], "value", "").startswith(
-            "Proyecto activo:"
+            "Workspace:"
         )
     )
 
@@ -780,7 +792,7 @@ def test_main_establecer_raiz_arbol_muestra_error_si_listado_falla(
         for c in page.controls
         if isinstance(c, ft.ListView)
         and getattr(getattr(c, "controls", [None])[0], "value", "").startswith(
-            "Proyecto activo:"
+            "Workspace:"
         )
     )
 
@@ -860,7 +872,7 @@ def test_main_acciones_publicas_de_archivo(monkeypatch, tmp_path):
         for c in page.controls
         if isinstance(c, ft.ListView)
         and getattr(getattr(c, "controls", [None])[0], "value", "").startswith(
-            "Proyecto activo:"
+            "Workspace:"
         )
     )
     estado_archivo = next(
@@ -883,7 +895,7 @@ def test_main_acciones_publicas_de_archivo(monkeypatch, tmp_path):
     assert salida.value == f"Archivo cargado: {archivo_abrir.resolve()}"
     assert estado_archivo.value == str(archivo_abrir.resolve())
     assert ruta_input.value == str(archivo_abrir.resolve())
-    assert arbol.controls[0].value == f"Proyecto activo: {tmp_path.resolve()}"
+    assert arbol.controls[0].value == _estado_workspace_proyecto(tmp_path)
 
     entrada.value = "imprimir('guardado')"
     botones["Guardar"].on_click(None)
@@ -971,7 +983,7 @@ def test_main_establecer_raiz_arbol_valida_directorios(monkeypatch, tmp_path):
         for c in page.controls
         if isinstance(c, ft.ListView)
         and getattr(getattr(c, "controls", [None])[0], "value", "").startswith(
-            "Proyecto activo:"
+            "Workspace:"
         )
     )
 
@@ -986,7 +998,8 @@ def test_main_establecer_raiz_arbol_valida_directorios(monkeypatch, tmp_path):
     boton_raiz.on_click(None)
     assert salida.value == f"Proyecto abierto: {subdir.resolve()}"
     assert raiz_input.value == str(subdir.resolve())
-    assert arbol.controls[0].value == f"Proyecto activo: {subdir.resolve()}"
+    workspace_root = idle.runtime.resolver_workspace_root_idle()
+    assert arbol.controls[0].value == _estado_workspace_proyecto(workspace_root, subdir)
 
 
 def test_crear_arbol_directorios_muestra_estado_vacio_en_carpeta_sin_cobras(tmp_path):
@@ -1270,9 +1283,11 @@ def test_crear_proyectos_separados_con_src_y_readme(monkeypatch, tmp_path):
         for c in page.controls
         if isinstance(c, ft.ListView)
         and getattr(getattr(c, "controls", [None])[0], "value", "").startswith(
-            "Proyecto activo:"
+            "Workspace:"
         )
     )
+
+    workspace_root = idle.runtime.resolver_workspace_root_idle()
 
     for nombre in ("proyecto_uno", "proyecto_dos"):
         proyecto_input.value = nombre
@@ -1284,7 +1299,7 @@ def test_crear_proyectos_separados_con_src_y_readme(monkeypatch, tmp_path):
         assert (proyecto / "README.md").read_text(encoding="utf-8") == f"# {nombre}\n"
         assert salida.value == f"Proyecto creado: {proyecto}"
         assert proyecto_input.value == str(proyecto)
-        assert arbol.controls[0].value == f"Proyecto activo: {proyecto}"
+        assert arbol.controls[0].value == _estado_workspace_proyecto(workspace_root, proyecto)
 
     assert not (tmp_path / "proyecto_uno").exists()
     assert not (tmp_path / "proyecto_dos").exists()
@@ -1322,7 +1337,7 @@ def test_guardar_relativo_usa_project_root_activo_tras_abrir_segundo_proyecto(
         for c in page.controls
         if isinstance(c, ft.ListView)
         and getattr(getattr(c, "controls", [None])[0], "value", "").startswith(
-            "Proyecto activo:"
+            "Workspace:"
         )
     )
 
@@ -1347,7 +1362,7 @@ def test_guardar_relativo_usa_project_root_activo_tras_abrir_segundo_proyecto(
     ]
 
     assert workspace_root == (tmp_path / "CobraProjects").resolve()
-    assert arbol.controls[0].value == f"Proyecto activo: {proyecto_dos}"
+    assert arbol.controls[0].value == _estado_workspace_proyecto(workspace_root, proyecto_dos)
     assert "src" in titulos_arbol_activo
     assert "proyecto_uno" not in titulos_arbol_activo
     assert "solo_uno.cobra" not in titulos_arbol_activo
@@ -1373,7 +1388,7 @@ def test_guardar_relativo_usa_project_root_activo_tras_abrir_segundo_proyecto(
     assert salida.value == f"Archivo guardado: {destino_activo}"
     assert ruta_input.value == str(destino_activo)
     assert proyecto_input.value == str(proyecto_dos)
-    assert arbol.controls[0].value == f"Proyecto activo: {proyecto_dos}"
+    assert arbol.controls[0].value == _estado_workspace_proyecto(workspace_root, proyecto_dos)
     assert (
         destino_activo.read_text(encoding="utf-8") == "imprimir('desde proyecto dos')"
     )
@@ -1412,7 +1427,7 @@ def test_abrir_proyecto_rechaza_ruta_fuera_de_workspace(monkeypatch, tmp_path):
         for c in page.controls
         if isinstance(c, ft.ListView)
         and getattr(getattr(c, "controls", [None])[0], "value", "").startswith(
-            "Proyecto activo:"
+            "Workspace:"
         )
     )
 
@@ -1422,7 +1437,7 @@ def test_abrir_proyecto_rechaza_ruta_fuera_de_workspace(monkeypatch, tmp_path):
     assert salida.value.startswith("error: ")
     assert f"El proyecto debe estar dentro de: {workspace_root}" in salida.value
     assert proyecto_input.value == str(externo)
-    assert arbol.controls[0].value == f"Proyecto activo: {workspace_root}"
+    assert arbol.controls[0].value == _estado_workspace_proyecto(workspace_root)
 
 
 def test_crear_proyecto_normaliza_nombre_seguro(monkeypatch, tmp_path):
@@ -1601,7 +1616,7 @@ def test_eliminar_proyecto_activo_reinicia_estado_y_vuelve_al_workspace(
         for c in page.controls
         if isinstance(c, ft.ListView)
         and getattr(getattr(c, "controls", [None])[0], "value", "").startswith(
-            "Proyecto activo:"
+            "Workspace:"
         )
     )
 
@@ -1619,7 +1634,7 @@ def test_eliminar_proyecto_activo_reinicia_estado_y_vuelve_al_workspace(
     assert entrada.value == ""
     assert ruta_input.value == ""
     assert proyecto_input.value == str(workspace_root)
-    assert arbol.controls[0].value == f"Proyecto activo: {workspace_root}"
+    assert arbol.controls[0].value == _estado_workspace_proyecto(workspace_root)
     assert salida.value == f"Proyecto eliminado: {proyecto}"
     assert estado_archivo.value == "Archivo nuevo (sin guardar)"
 
@@ -1667,7 +1682,7 @@ def test_cerrar_proyecto_reinicia_al_workspace_y_bloquea_archivos(
         for c in page.controls
         if isinstance(c, ft.ListView)
         and getattr(getattr(c, "controls", [None])[0], "value", "").startswith(
-            "Proyecto activo:"
+            "Workspace:"
         )
     )
 
@@ -1684,7 +1699,7 @@ def test_cerrar_proyecto_reinicia_al_workspace_y_bloquea_archivos(
     assert entrada.value == ""
     assert ruta_input.value == ""
     assert estado_archivo.value == "Archivo nuevo (sin guardar)"
-    assert arbol.controls[0].value == "Proyecto activo: ninguno"
+    assert arbol.controls[0].value == _estado_workspace_proyecto(workspace_root)
     assert salida.value == "Proyecto cerrado."
 
     eliminar_archivo.on_click(None)
