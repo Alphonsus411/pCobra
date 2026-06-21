@@ -179,16 +179,17 @@ def main(page: "ft.Page"):
         candidata = ruta if ruta.is_absolute() else workspace_root / ruta
         candidata = candidata.resolve()
         workspace_canonico = workspace_root.resolve()
-        if (
-            candidata != workspace_canonico
-            and workspace_canonico not in candidata.parents
-        ):
-            raise ValueError(f"El proyecto debe estar dentro de: {workspace_canonico}")
+        try:
+            candidata.relative_to(workspace_canonico)
+        except ValueError as exc:
+            raise ValueError(
+                f"El proyecto debe estar dentro de: {workspace_canonico}"
+            ) from exc
         return runtime.validar_project_root_idle(candidata)
 
     def inicializar_estructura_proyecto(ruta_proyecto: Path, nombre: str) -> None:
         ruta_proyecto.mkdir(parents=True, exist_ok=True)
-        (ruta_proyecto / "src").mkdir(exist_ok=True)
+        (ruta_proyecto / "src").mkdir(parents=True, exist_ok=True)
         readme = ruta_proyecto / "README.md"
         if not readme.exists():
             readme.write_text(f"# {nombre}\n", encoding="utf-8")
