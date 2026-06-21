@@ -241,9 +241,11 @@ def test_panel_lateral_organiza_proyecto_en_columna(monkeypatch, tmp_path):
     assert [boton.text for boton in botones] == [
         "Crear proyecto",
         "Abrir proyecto",
+        "Eliminar proyecto",
     ]
     assert botones[0].on_click.__name__ == "crear_proyecto_handler"
     assert botones[1].on_click.__name__ == "establecer_raiz_arbol_handler"
+    assert botones[2].on_click.__name__ == "eliminar_proyecto_handler"
 
     filas_con_textfield_expand_y_botones = [
         control
@@ -1558,6 +1560,89 @@ def test_eliminar_carpeta_reinicia_editor_si_archivo_activo_esta_dentro(
     assert salida.value == f"Carpeta eliminada: {carpeta}"
     assert estado_archivo.value == "Archivo nuevo (sin guardar)"
 
+
+
+def test_eliminar_proyecto_activo_reinicia_estado_y_vuelve_al_workspace(
+    monkeypatch, tmp_path
+):
+    (
+        ft,
+        page,
+        entrada,
+        ruta_input,
+        salida,
+        _abrir,
+        guardar_como,
+    ) = _preparar_idle_archivos(monkeypatch, tmp_path)
+    proyecto_input = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.TextField) and c.kwargs.get("label") == "Proyecto activo"
+    )
+    crear_proyecto = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.ElevatedButton) and c.text == "Crear proyecto"
+    )
+    eliminar_proyecto = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.ElevatedButton) and c.text == "Eliminar proyecto"
+    )
+    estado_archivo = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.Text) and c.value == "Archivo nuevo (sin guardar)"
+    )
+    arbol = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.ListView)
+        and getattr(getattr(c, "controls", [None])[0], "value", "").startswith(
+            "Proyecto activo:"
+        )
+    )
+
+    proyecto_input.value = "proyecto"
+    crear_proyecto.on_click(None)
+    workspace_root = idle.runtime.resolver_workspace_root_idle()
+    proyecto = (workspace_root / "proyecto").resolve()
+    entrada.value = "imprimir('borrar proyecto')"
+    ruta_input.value = "src/main"
+    guardar_como.on_click(None)
+
+    eliminar_proyecto.on_click(None)
+
+    assert not proyecto.exists()
+    assert entrada.value == ""
+    assert ruta_input.value == ""
+    assert proyecto_input.value == str(workspace_root)
+    assert arbol.controls[0].value == f"Proyecto activo: {workspace_root}"
+    assert salida.value == f"Proyecto eliminado: {proyecto}"
+    assert estado_archivo.value == "Archivo nuevo (sin guardar)"
+
+
+def test_eliminar_proyecto_bloquea_si_no_hay_proyecto_activo(monkeypatch, tmp_path):
+    (
+        ft,
+        page,
+        _entrada,
+        _ruta_input,
+        salida,
+        _abrir,
+        _guardar_como,
+    ) = _preparar_idle_archivos(monkeypatch, tmp_path)
+    workspace_root = idle.runtime.resolver_workspace_root_idle()
+    eliminar_proyecto = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.ElevatedButton) and c.text == "Eliminar proyecto"
+    )
+
+    eliminar_proyecto.on_click(None)
+
+    assert workspace_root.exists()
+    assert salida.value == "No hay proyecto activo para eliminar."
 
 def test_eliminar_carpeta_bloquea_project_root_activo(monkeypatch, tmp_path):
     (
