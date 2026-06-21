@@ -10,6 +10,47 @@ if TYPE_CHECKING:
     import flet as ft
 
 
+def resolver_ruta_en_project_root(ruta: str | Path, project_root: str | Path) -> Path:
+    """Resuelve ``ruta`` de forma canónica y exige que quede bajo ``project_root``."""
+
+    project_root_resuelto = Path(project_root).expanduser().resolve()
+    ruta_expandida = Path(ruta).expanduser()
+    candidata = (
+        ruta_expandida
+        if ruta_expandida.is_absolute()
+        else project_root_resuelto / ruta_expandida
+    )
+    candidata = candidata.resolve()
+    try:
+        candidata.relative_to(project_root_resuelto)
+    except ValueError as exc:
+        raise ValueError(
+            f"La ruta debe estar dentro del proyecto activo: {project_root_resuelto}"
+        ) from exc
+    return candidata
+
+
+def validar_ruta_carpeta_eliminable_idle(
+    ruta: str | Path, project_root: str | Path, workspace_root: str | Path
+) -> Path:
+    """Valida una carpeta visible antes de permitir su eliminación desde el IDLE."""
+
+    ruta_resuelta = resolver_ruta_en_project_root(ruta, project_root)
+    project_root_resuelto = Path(project_root).resolve()
+    workspace_root_resuelto = Path(workspace_root).resolve()
+
+    if ruta_resuelta == project_root_resuelto:
+        raise ValueError(
+            "No se puede eliminar el proyecto activo como carpeta normal. "
+            'Usa "Eliminar proyecto".'
+        )
+
+    if ruta_resuelta == workspace_root_resuelto:
+        raise ValueError("No se puede eliminar la raíz completa del workspace.")
+
+    return ruta_resuelta
+
+
 def main(page: "ft.Page"):
     """Interfaz principal del IDLE con archivos, árbol, ejecución, tokens, AST y sugerencias."""
     ft = runtime.require_flet()
@@ -104,23 +145,6 @@ def main(page: "ft.Page"):
 
     def mostrar_error_archivo(exc: Exception) -> None:
         salida.value = runtime.formatear_error(exc)
-
-    def resolver_ruta_en_project_root(ruta: str | Path) -> Path:
-        project_root_resuelto = Path(project_root).expanduser().resolve()
-        ruta_expandida = Path(ruta).expanduser()
-        candidata = (
-            ruta_expandida
-            if ruta_expandida.is_absolute()
-            else project_root_resuelto / ruta_expandida
-        )
-        candidata = candidata.resolve()
-        try:
-            candidata.relative_to(project_root_resuelto)
-        except ValueError as exc:
-            raise ValueError(
-                f"La ruta debe estar dentro del proyecto activo: {project_root_resuelto}"
-            ) from exc
-        return candidata
 
     def resolver_ruta_archivo_idle(ruta: str | Path) -> Path | None:
         try:
@@ -549,7 +573,9 @@ def main(page: "ft.Page"):
             return
 
         try:
-            ruta_resuelta = resolver_ruta_en_project_root(texto)
+            ruta_resuelta = validar_ruta_carpeta_eliminable_idle(
+                texto, project_root, workspace_root
+            )
         except (
             FileNotFoundError,
             NotADirectoryError,
@@ -561,21 +587,6 @@ def main(page: "ft.Page"):
             page.update()
             return
 
-        project_root_resuelto = project_root.resolve()
-        workspace_root_resuelto = workspace_root.resolve()
-
-        if ruta_resuelta == project_root_resuelto:
-            salida.value = (
-                "No se puede eliminar el proyecto activo como carpeta normal. "
-                'Usa "Eliminar proyecto".'
-            )
-            page.update()
-            return
-
-        if ruta_resuelta == workspace_root_resuelto:
-            salida.value = "No se puede eliminar la raíz completa del workspace."
-            page.update()
-            return
 
         if not ruta_resuelta.exists():
             salida.value = (
