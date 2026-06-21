@@ -4,6 +4,7 @@ import io
 import importlib.util
 import os
 import re
+import shutil
 import warnings
 from contextlib import redirect_stdout, redirect_stderr
 from dataclasses import dataclass
@@ -481,6 +482,54 @@ def guardar_archivo_activo_validado(
     estado.contenido_cargado = codigo
     estado.cambios_sin_guardar = False
     return codigo, f"Archivo guardado: {destino}"
+
+
+def eliminar_archivo_validado(ruta: Path) -> None:
+    """Elimina un archivo cuya ruta ya fue validada por el IDLE principal."""
+
+    destino = Path(ruta).resolve()
+    if not destino.exists():
+        raise FileNotFoundError(
+            f"No existe el archivo que se quiere eliminar: {destino}"
+        )
+    if not destino.is_file():
+        raise ValueError(f"La ruta indicada no es un archivo: {destino}")
+    destino.unlink()
+
+
+def eliminar_directorio_validado(ruta: Path) -> None:
+    """Elimina un directorio cuya ruta ya fue validada por el IDLE principal."""
+
+    destino = Path(ruta).resolve()
+    if not destino.exists():
+        raise FileNotFoundError(
+            f"No existe el directorio que se quiere eliminar: {destino}"
+        )
+    if not destino.is_dir():
+        raise NotADirectoryError(f"La ruta indicada no es un directorio: {destino}")
+    shutil.rmtree(destino)
+
+
+def eliminar_proyecto_validado(project_root: Path, workspace_root: Path) -> None:
+    """Elimina un proyecto cuya raíz ya fue validada por el IDLE principal."""
+
+    proyecto = Path(project_root).resolve()
+    workspace = Path(workspace_root).resolve()
+    if proyecto == workspace:
+        raise ValueError("No se puede eliminar la raíz completa del workspace.")
+    if proyecto.parent != workspace:
+        raise ValueError(
+            "La raíz del proyecto debe ser hija directa de la raíz del workspace."
+        )
+    if not proyecto.exists():
+        raise FileNotFoundError(
+            f"No existe el proyecto que se quiere eliminar: {proyecto}"
+        )
+    if not proyecto.is_dir():
+        raise NotADirectoryError(
+            f"La ruta del proyecto no es un directorio: {proyecto}"
+        )
+    shutil.rmtree(proyecto)
 
 
 def leer_archivo_texto_validado(
