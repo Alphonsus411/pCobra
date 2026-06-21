@@ -920,7 +920,9 @@ def test_crear_arbol_directorios_muestra_estado_vacio_en_carpeta_sin_cobras(tmp_
 
 def _preparar_idle_archivos(monkeypatch, tmp_path, workspace_root=None):
     ft = _fake_flet()
-    workspace_root = tmp_path if workspace_root is None else workspace_root
+    workspace_root = (
+        tmp_path / "CobraProjects" if workspace_root is None else workspace_root
+    )
     monkeypatch.chdir(tmp_path)
     monkeypatch.setenv("COBRA_PROJECTS_DIR", str(workspace_root))
     monkeypatch.setattr(idle.runtime, "require_flet", lambda: ft)
@@ -993,8 +995,9 @@ def test_guardar_como_resuelve_src_programa_sin_extension_como_cobra(
         _abrir,
         guardar_como,
     ) = _preparar_idle_archivos(monkeypatch, tmp_path)
-    (tmp_path / "src").mkdir()
-    destino = (tmp_path / "src" / "programa.cobra").resolve()
+    workspace_root = idle.runtime.resolver_workspace_root_idle()
+    (workspace_root / "src").mkdir()
+    destino = (workspace_root / "src" / "programa.cobra").resolve()
 
     entrada.value = "imprimir('programa')"
     ruta_input.value = "src/programa"
@@ -1017,7 +1020,8 @@ def test_guardar_como_rechaza_escape_relativo_absoluto_externo_y_directorio(
         _abrir,
         guardar_como,
     ) = _preparar_idle_archivos(monkeypatch, tmp_path)
-    directorio = tmp_path / "existente"
+    workspace_root = idle.runtime.resolver_workspace_root_idle()
+    directorio = workspace_root / "existente"
     directorio.mkdir()
     absoluto_externo = (tmp_path.parent / "escape_idle_absoluto.cobra").resolve()
     entrada.value = "imprimir('no guardar')"
@@ -1042,8 +1046,9 @@ def test_abrir_valida_ruta_relativa_visible_dentro_del_proyecto(monkeypatch, tmp
         abrir,
         _guardar_como,
     ) = _preparar_idle_archivos(monkeypatch, tmp_path)
-    (tmp_path / "src").mkdir()
-    archivo = (tmp_path / "src" / "abrir.co").resolve()
+    workspace_root = idle.runtime.resolver_workspace_root_idle()
+    (workspace_root / "src").mkdir()
+    archivo = (workspace_root / "src" / "abrir.co").resolve()
     archivo.write_text("imprimir('ok')", encoding="utf-8")
 
     ruta_input.value = "src/abrir.co"
@@ -1064,7 +1069,8 @@ def test_abrir_ruta_sin_extension_normaliza_input_con_ruta_final(monkeypatch, tm
         abrir,
         _guardar_como,
     ) = _preparar_idle_archivos(monkeypatch, tmp_path)
-    archivo = (tmp_path / "main.cobra").resolve()
+    workspace_root = idle.runtime.resolver_workspace_root_idle()
+    archivo = (workspace_root / "main.cobra").resolve()
     archivo.write_text("imprimir('main')", encoding="utf-8")
 
     ruta_input.value = "main"
@@ -1095,8 +1101,8 @@ def test_abrir_archivo_en_subdirectorio_reconstruye_arbol_con_project_root(
         abrir,
         _guardar_como,
     ) = _preparar_idle_archivos(monkeypatch, tmp_path)
-    project_root = tmp_path.resolve()
-    src = tmp_path / "src"
+    project_root = idle.runtime.resolver_workspace_root_idle()
+    src = project_root / "src"
     src.mkdir()
     archivo = (src / "main.cobra").resolve()
     archivo.write_text("imprimir('main')", encoding="utf-8")
@@ -1197,7 +1203,8 @@ def test_crear_proyectos_separados_con_src_y_readme(monkeypatch, tmp_path):
         assert proyecto_input.value == str(proyecto)
         assert arbol.controls[0].value == f"Proyecto activo: {proyecto}"
 
-    assert (tmp_path / "proyecto_uno") != (tmp_path / "proyecto_dos")
+    assert not (tmp_path / "proyecto_uno").exists()
+    assert not (tmp_path / "proyecto_dos").exists()
 
 
 def test_guardar_relativo_usa_project_root_activo_tras_abrir_segundo_proyecto(
@@ -1238,11 +1245,12 @@ def test_guardar_relativo_usa_project_root_activo_tras_abrir_segundo_proyecto(
 
     proyecto_input.value = "proyecto_uno"
     crear_proyecto.on_click(None)
-    proyecto_uno = (tmp_path / "proyecto_uno").resolve()
+    workspace_root = idle.runtime.resolver_workspace_root_idle()
+    proyecto_uno = (workspace_root / "proyecto_uno").resolve()
 
     proyecto_input.value = "proyecto_dos"
     crear_proyecto.on_click(None)
-    proyecto_dos = (tmp_path / "proyecto_dos").resolve()
+    proyecto_dos = (workspace_root / "proyecto_dos").resolve()
 
     proyecto_input.value = "proyecto_dos"
     abrir_proyecto.on_click(None)
@@ -1252,7 +1260,7 @@ def test_guardar_relativo_usa_project_root_activo_tras_abrir_segundo_proyecto(
     guardar_como.on_click(None)
 
     destino_activo = proyecto_dos / "src" / "main.cobra"
-    destino_workspace = tmp_path / "src" / "main.cobra"
+    destino_workspace = workspace_root / "src" / "main.cobra"
     destino_otro_proyecto = proyecto_uno / "src" / "main.cobra"
 
     assert proyecto_uno.is_dir()
@@ -1292,7 +1300,8 @@ def test_crear_proyecto_normaliza_nombre_seguro(monkeypatch, tmp_path):
     proyecto_input.value = " proyecto uno! "
     crear_proyecto.on_click(None)
 
-    proyecto = (tmp_path / "proyecto_uno").resolve()
+    workspace_root = idle.runtime.resolver_workspace_root_idle()
+    proyecto = (workspace_root / "proyecto_uno").resolve()
     assert proyecto.is_dir()
     assert (proyecto / "src").is_dir()
     assert (proyecto / "README.md").is_file()
