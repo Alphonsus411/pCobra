@@ -166,12 +166,21 @@ def main(page: "ft.Page"):
             return
         cargar_archivo(ruta_resuelta, desde_arbol=True)
 
+    def formatear_estado_workspace_proyecto() -> str:
+        workspace_resuelto = workspace_root.resolve()
+        project_resuelto = project_root.resolve()
+        lineas = [f"Workspace: {workspace_resuelto}"]
+        if project_resuelto == workspace_resuelto:
+            lineas.append("Proyecto activo: ninguno")
+        else:
+            lineas.append(f"Proyecto activo: {project_resuelto.name}")
+            lineas.append(f"Ruta completa: {project_resuelto}")
+        return "\n".join(lineas)
+
     def reconstruir_arbol() -> bool:
         raiz_input.value = str(project_root)
         arbol.controls.clear()
-        arbol.controls.append(
-            runtime.flet_text(ft, value=f"Proyecto activo: {project_root}")
-        )
+        arbol.controls.append(runtime.flet_text(ft, value=formatear_estado_workspace_proyecto()))
         try:
             arbol_canonico = runtime.crear_arbol_directorios(
                 ft,
@@ -285,8 +294,6 @@ def main(page: "ft.Page"):
         limpiar_archivo_activo()
         reconstruir_arbol()
         raiz_input.value = str(project_root)
-        if arbol.controls:
-            arbol.controls[0].value = "Proyecto activo: ninguno"
         salida.value = "Proyecto cerrado."
         actualizar_pagina()
 
