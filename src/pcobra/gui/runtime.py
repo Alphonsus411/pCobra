@@ -509,6 +509,22 @@ def abrir_archivo_desde_ruta_validada(
     return contenido, f"Archivo cargado: {origen}"
 
 
+def recargar_archivo_activo_validado(
+    estado: GuiFileState,
+) -> tuple[str, str]:
+    """Recarga el archivo activo cuya ruta ya fue validada contra project_root."""
+
+    if estado.ruta is None:
+        raise ValueError("No hay archivo activo que recargar.")
+
+    origen = Path(estado.ruta).expanduser().resolve()
+    contenido = leer_archivo_texto_validado(origen)
+    estado.ruta = origen
+    estado.contenido_cargado = contenido
+    estado.cambios_sin_guardar = False
+    return contenido, f"Archivo cargado: {origen}"
+
+
 def recargar_archivo_activo(estado: GuiFileState) -> tuple[str, str]:
     """Recarga el archivo activo desde disco y devuelve contenido/mensaje."""
 

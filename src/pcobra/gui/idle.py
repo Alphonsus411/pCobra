@@ -323,7 +323,7 @@ def main(page: "ft.Page"):
             return
         estado.ruta = ruta_resuelta
         try:
-            entrada.value, salida.value = runtime.recargar_archivo_activo(estado)
+            entrada.value, salida.value = runtime.recargar_archivo_activo_validado(estado)
         except (
             FileNotFoundError,
             NotADirectoryError,
