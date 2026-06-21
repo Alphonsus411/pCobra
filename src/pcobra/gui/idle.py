@@ -17,6 +17,7 @@ def main(page: "ft.Page"):
     estado = runtime.GuiFileState()
     workspace_root = runtime.resolver_workspace_root_idle()
     project_root = workspace_root
+    proyecto_cerrado = False
 
     entrada = runtime.crear_editor_codigo(ft)
     salida = runtime.crear_salida_seleccionable(ft)
@@ -212,7 +213,7 @@ def main(page: "ft.Page"):
         return runtime.validar_project_root_idle(candidata)
 
     def hay_proyecto_activo() -> bool:
-        return project_root.resolve() != workspace_root.resolve()
+        return not proyecto_cerrado
 
     def requerir_proyecto_activo() -> bool:
         if hay_proyecto_activo():
@@ -229,7 +230,7 @@ def main(page: "ft.Page"):
             readme.write_text(f"# {nombre}\n", encoding="utf-8")
 
     def crear_proyecto_handler(_e):
-        nonlocal project_root
+        nonlocal project_root, proyecto_cerrado
         try:
             nombre = nombre_proyecto_seguro(raiz_input.value or "")
             nuevo_proyecto = (workspace_root / nombre).resolve()
@@ -239,6 +240,7 @@ def main(page: "ft.Page"):
             page.update()
             return
         project_root = nuevo_proyecto
+        proyecto_cerrado = False
         if not reconstruir_arbol():
             page.update()
             return
@@ -246,7 +248,7 @@ def main(page: "ft.Page"):
         actualizar_pagina()
 
     def establecer_raiz_arbol_handler(_e):
-        nonlocal project_root
+        nonlocal project_root, proyecto_cerrado
         try:
             nueva_raiz = resolver_directorio_proyecto(raiz_input.value or "")
         except (OSError, ValueError) as exc:
@@ -264,24 +266,40 @@ def main(page: "ft.Page"):
             page.update()
             return
         project_root = nueva_raiz
+        proyecto_cerrado = False
         if not reconstruir_arbol():
             page.update()
             return
         salida.value = f"Proyecto abierto: {project_root}"
         actualizar_pagina()
 
-    def eliminar_proyecto_handler(_e):
-        nonlocal project_root
-        if not hay_proyecto_activo():
-            salida.value = "No hay proyecto activo para eliminar."
+    def cerrar_proyecto_handler(_e):
+        nonlocal project_root, proyecto_cerrado
+        if project_root.resolve() == workspace_root.resolve():
+            salida.value = "No hay proyecto activo para cerrar."
             page.update()
             return
 
+        project_root = workspace_root
+        proyecto_cerrado = True
+        limpiar_archivo_activo()
+        reconstruir_arbol()
+        raiz_input.value = str(project_root)
+        if arbol.controls:
+            arbol.controls[0].value = "Proyecto activo: ninguno"
+        salida.value = "Proyecto cerrado."
+        actualizar_pagina()
+
+    def eliminar_proyecto_handler(_e):
+        nonlocal project_root, proyecto_cerrado
         project_root_resuelto = project_root.resolve()
         workspace_root_resuelto = workspace_root.resolve()
 
-        if project_root_resuelto == workspace_root_resuelto:
-            salida.value = "No se puede eliminar la raíz completa del workspace."
+        if (
+            not hay_proyecto_activo()
+            or project_root_resuelto == workspace_root_resuelto
+        ):
+            salida.value = "No hay proyecto activo para eliminar."
             page.update()
             return
 
@@ -302,6 +320,7 @@ def main(page: "ft.Page"):
 
         proyecto_eliminado = project_root_resuelto
         project_root = workspace_root
+        proyecto_cerrado = True
         limpiar_archivo_activo()
         reconstruir_arbol()
         raiz_input.value = str(project_root)
@@ -542,6 +561,9 @@ def main(page: "ft.Page"):
                     ),
                     runtime.flet_elevated_button(
                         ft, "Abrir proyecto", on_click=establecer_raiz_arbol_handler
+                    ),
+                    runtime.flet_elevated_button(
+                        ft, "Cerrar proyecto", on_click=cerrar_proyecto_handler
                     ),
                     runtime.flet_elevated_button(
                         ft, "Eliminar proyecto", on_click=eliminar_proyecto_handler
