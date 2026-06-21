@@ -1312,6 +1312,8 @@ def test_guardar_relativo_usa_project_root_activo_tras_abrir_segundo_proyecto(
     crear_proyecto.on_click(None)
     workspace_root = idle.runtime.resolver_workspace_root_idle()
     proyecto_uno = (workspace_root / "proyecto_uno").resolve()
+    archivo_proyecto_uno = proyecto_uno / "src" / "solo_uno.cobra"
+    archivo_proyecto_uno.write_text("imprimir('solo proyecto uno')", encoding="utf-8")
 
     proyecto_input.value = "proyecto_dos"
     crear_proyecto.on_click(None)
@@ -1320,6 +1322,22 @@ def test_guardar_relativo_usa_project_root_activo_tras_abrir_segundo_proyecto(
     proyecto_input.value = "proyecto_dos"
     abrir_proyecto.on_click(None)
 
+    controles_arbol_activo = arbol.controls[1:]
+    titulos_arbol_activo = [
+        getattr(getattr(control, "title", None), "value", "")
+        for control in controles_arbol_activo
+    ]
+
+    assert workspace_root == (tmp_path / "CobraProjects").resolve()
+    assert arbol.controls[0].value == f"Proyecto activo: {proyecto_dos}"
+    assert "src" in titulos_arbol_activo
+    assert "proyecto_uno" not in titulos_arbol_activo
+    assert "solo_uno.cobra" not in titulos_arbol_activo
+    assert all(
+        not str(getattr(control, "data", "")).startswith(str(proyecto_uno))
+        for control in controles_arbol_activo
+    )
+
     entrada.value = "imprimir('desde proyecto dos')"
     ruta_input.value = "src/main"
     guardar_como.on_click(None)
@@ -1327,9 +1345,13 @@ def test_guardar_relativo_usa_project_root_activo_tras_abrir_segundo_proyecto(
     destino_activo = proyecto_dos / "src" / "main.cobra"
     destino_workspace = workspace_root / "src" / "main.cobra"
     destino_otro_proyecto = proyecto_uno / "src" / "main.cobra"
+    destino_repo = (
+        idle.runtime.resolver_repo_root_gui() / "src" / "main.cobra"
+    ).resolve()
 
     assert proyecto_uno.is_dir()
     assert proyecto_dos.is_dir()
+    assert archivo_proyecto_uno.is_file()
     assert salida.value == f"Archivo guardado: {destino_activo}"
     assert ruta_input.value == str(destino_activo)
     assert proyecto_input.value == str(proyecto_dos)
@@ -1339,6 +1361,7 @@ def test_guardar_relativo_usa_project_root_activo_tras_abrir_segundo_proyecto(
     )
     assert not destino_workspace.exists()
     assert not destino_otro_proyecto.exists()
+    assert not destino_repo.exists()
 
 
 def test_crear_proyecto_normaliza_nombre_seguro(monkeypatch, tmp_path):
