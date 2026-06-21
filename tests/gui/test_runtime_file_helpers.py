@@ -13,7 +13,7 @@ def _ejecutar_en_tmp_path(monkeypatch, tmp_path: Path):
     monkeypatch.chdir(tmp_path)
 
 
-def test_resolver_workspace_root_idle_usa_cobra_projects_dir(
+def test_resolver_workspace_root_idle_crea_cobra_projects_dir_configurado(
     monkeypatch, tmp_path: Path
 ):
     workspace = tmp_path / "workspace personalizado"
@@ -25,7 +25,7 @@ def test_resolver_workspace_root_idle_usa_cobra_projects_dir(
     assert workspace.is_dir()
 
 
-def test_resolver_workspace_root_idle_usa_cobraprojects_en_home_sin_env(
+def test_resolver_workspace_root_idle_crea_cobraprojects_en_home_sin_env(
     monkeypatch, tmp_path: Path
 ):
     monkeypatch.delenv("COBRA_PROJECTS_DIR", raising=False)

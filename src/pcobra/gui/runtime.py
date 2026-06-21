@@ -102,7 +102,7 @@ CANONICAL_SUGGESTION_ENGINE = "agix"
 
 
 def resolver_workspace_root_idle() -> Path:
-    """Resuelve la raíz de trabajo inicial del IDLE sin depender de ``Path.cwd()``."""
+    """Resuelve y crea la raíz de trabajo inicial del IDLE sin usar ``Path.cwd()``."""
 
     configured_root = os.environ.get("COBRA_PROJECTS_DIR")
     if configured_root:
