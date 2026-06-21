@@ -1797,6 +1797,7 @@ def test_eliminar_proyecto_activo_reinicia_estado_y_vuelve_al_workspace(
     ruta_input.value = "src/main"
     guardar_como.on_click(None)
 
+    ruta_input.value = "proyecto"
     eliminar_proyecto.on_click(None)
 
     assert not proyecto.exists()
@@ -1806,6 +1807,51 @@ def test_eliminar_proyecto_activo_reinicia_estado_y_vuelve_al_workspace(
     assert arbol.controls[0].value == _estado_workspace_proyecto(workspace_root)
     assert salida.value == f"Proyecto eliminado: {proyecto}"
     assert estado_archivo.value == "Archivo nuevo (sin guardar)"
+
+
+def test_eliminar_proyecto_exige_nombre_exacto(monkeypatch, tmp_path):
+    (
+        ft,
+        page,
+        _entrada,
+        ruta_input,
+        salida,
+        _abrir,
+        _guardar_como,
+    ) = _preparar_idle_archivos(monkeypatch, tmp_path)
+    proyecto_input = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.TextField) and c.kwargs.get("label") == "Proyecto activo"
+    )
+    crear_proyecto = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.ElevatedButton) and c.text == "Crear proyecto"
+    )
+    eliminar_proyecto = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.ElevatedButton) and c.text == "Eliminar proyecto"
+    )
+
+    proyecto_input.value = "proyecto"
+    crear_proyecto.on_click(None)
+    proyecto = (idle.runtime.resolver_workspace_root_idle() / "proyecto").resolve()
+
+    ruta_input.value = "Proyecto"
+    eliminar_proyecto.on_click(None)
+
+    assert proyecto.exists()
+    assert salida.value == (
+        "Para eliminar este proyecto escribe su nombre exacto: proyecto"
+    )
+
+    ruta_input.value = "proyecto"
+    eliminar_proyecto.on_click(None)
+
+    assert not proyecto.exists()
+    assert salida.value == f"Proyecto eliminado: {proyecto}"
 
 
 def test_cerrar_proyecto_reinicia_al_workspace_y_bloquea_archivos(

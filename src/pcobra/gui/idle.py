@@ -357,6 +357,16 @@ def main(page: "ft.Page"):
             page.update()
             return
 
+        nombre_proyecto = project_root_resuelto.name
+        confirmacion = ruta_input.value or ""
+        if confirmacion != nombre_proyecto:
+            salida.value = (
+                "Para eliminar este proyecto escribe su nombre exacto: "
+                f"{nombre_proyecto}"
+            )
+            page.update()
+            return
+
         try:
             runtime.eliminar_proyecto_validado(
                 project_root_resuelto, workspace_root_resuelto
