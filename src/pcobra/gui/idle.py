@@ -33,6 +33,17 @@ def main(page: "ft.Page"):
     lenguajes = list(runtime.gui_target_choices())
     selector = runtime.crear_selector_target(ft, lenguajes=lenguajes)
     activar = runtime.crear_switch_transpilacion(ft, lenguajes=lenguajes)
+    ruta_eliminacion_pendiente: Path | None = None
+    ruta_estado_eliminacion_pendiente: Path | None = None
+    ruta_visible_eliminacion_pendiente = ""
+
+    def cancelar_confirmacion_eliminacion_pendiente() -> None:
+        nonlocal ruta_eliminacion_pendiente
+        nonlocal ruta_estado_eliminacion_pendiente
+        nonlocal ruta_visible_eliminacion_pendiente
+        ruta_eliminacion_pendiente = None
+        ruta_estado_eliminacion_pendiente = None
+        ruta_visible_eliminacion_pendiente = ""
 
     def sincronizar_estado_visual() -> None:
         estado_archivo.value = runtime.crear_titulo_archivo(estado)
@@ -41,6 +52,7 @@ def main(page: "ft.Page"):
             ruta_input.value = str(estado.ruta)
 
     def limpiar_archivo_activo() -> None:
+        cancelar_confirmacion_eliminacion_pendiente()
         estado.ruta = None
         estado.contenido_cargado = ""
         estado.cambios_sin_guardar = False
@@ -50,6 +62,20 @@ def main(page: "ft.Page"):
     def actualizar_pagina() -> None:
         sincronizar_estado_visual()
         page.update()
+
+    def cancelar_confirmacion_si_cambia_ruta_pendiente() -> None:
+        if ruta_eliminacion_pendiente is None:
+            return
+        if (
+            estado.ruta != ruta_estado_eliminacion_pendiente
+            or (ruta_input.value or "") != ruta_visible_eliminacion_pendiente
+        ):
+            cancelar_confirmacion_eliminacion_pendiente()
+
+    def ruta_visible_cambiada(_e=None) -> None:
+        cancelar_confirmacion_si_cambia_ruta_pendiente()
+
+    ruta_input.on_change = ruta_visible_cambiada
 
     def marcar_cambios(_e=None) -> None:
         runtime.marcar_cambios_editor(estado, entrada.value)
@@ -180,7 +206,9 @@ def main(page: "ft.Page"):
     def reconstruir_arbol() -> bool:
         raiz_input.value = str(project_root)
         arbol.controls.clear()
-        arbol.controls.append(runtime.flet_text(ft, value=formatear_estado_workspace_proyecto()))
+        arbol.controls.append(
+            runtime.flet_text(ft, value=formatear_estado_workspace_proyecto())
+        )
         try:
             arbol_canonico = runtime.crear_arbol_directorios(
                 ft,
@@ -428,17 +456,35 @@ def main(page: "ft.Page"):
         actualizar_pagina()
 
     def eliminar_archivo_handler(_e):
+        nonlocal ruta_eliminacion_pendiente
+        nonlocal ruta_estado_eliminacion_pendiente
+        nonlocal ruta_visible_eliminacion_pendiente
+
+        cancelar_confirmacion_si_cambia_ruta_pendiente()
 
         if not requerir_proyecto_activo():
             return
 
         if estado.ruta is None:
+            cancelar_confirmacion_eliminacion_pendiente()
             salida.value = "No hay archivo activo para eliminar."
             page.update()
             return
         ruta_resuelta = resolver_ruta_archivo_idle(estado.ruta)
         if ruta_resuelta is None:
+            cancelar_confirmacion_eliminacion_pendiente()
             return
+
+        if ruta_eliminacion_pendiente != ruta_resuelta:
+            ruta_eliminacion_pendiente = ruta_resuelta
+            ruta_estado_eliminacion_pendiente = estado.ruta
+            ruta_visible_eliminacion_pendiente = ruta_input.value or ""
+            salida.value = (
+                "Pulsa de nuevo Eliminar archivo para confirmar: " f"{ruta_resuelta}"
+            )
+            page.update()
+            return
+
         try:
             runtime.eliminar_archivo_validado(ruta_resuelta)
         except (

@@ -9,7 +9,6 @@ from unittest.mock import MagicMock
 from pcobra.gui import idle
 
 
-
 def _estado_workspace_proyecto(workspace, proyecto=None):
     workspace = workspace.resolve()
     if proyecto is None or proyecto.resolve() == workspace:
@@ -20,6 +19,7 @@ def _estado_workspace_proyecto(workspace, proyecto=None):
         f"Proyecto activo: {proyecto.name}\n"
         f"Ruta completa: {proyecto}"
     )
+
 
 def _motor_disponible():
     return idle.runtime.MotorIASugerencias(disponible=True)
@@ -1299,7 +1299,9 @@ def test_crear_proyectos_separados_con_src_y_readme(monkeypatch, tmp_path):
         assert (proyecto / "README.md").read_text(encoding="utf-8") == f"# {nombre}\n"
         assert salida.value == f"Proyecto creado: {proyecto}"
         assert proyecto_input.value == str(proyecto)
-        assert arbol.controls[0].value == _estado_workspace_proyecto(workspace_root, proyecto)
+        assert arbol.controls[0].value == _estado_workspace_proyecto(
+            workspace_root, proyecto
+        )
 
     assert not (tmp_path / "proyecto_uno").exists()
     assert not (tmp_path / "proyecto_dos").exists()
@@ -1362,7 +1364,9 @@ def test_guardar_relativo_usa_project_root_activo_tras_abrir_segundo_proyecto(
     ]
 
     assert workspace_root == (tmp_path / "CobraProjects").resolve()
-    assert arbol.controls[0].value == _estado_workspace_proyecto(workspace_root, proyecto_dos)
+    assert arbol.controls[0].value == _estado_workspace_proyecto(
+        workspace_root, proyecto_dos
+    )
     assert "src" in titulos_arbol_activo
     assert "proyecto_uno" not in titulos_arbol_activo
     assert "solo_uno.cobra" not in titulos_arbol_activo
@@ -1388,7 +1392,9 @@ def test_guardar_relativo_usa_project_root_activo_tras_abrir_segundo_proyecto(
     assert salida.value == f"Archivo guardado: {destino_activo}"
     assert ruta_input.value == str(destino_activo)
     assert proyecto_input.value == str(proyecto_dos)
-    assert arbol.controls[0].value == _estado_workspace_proyecto(workspace_root, proyecto_dos)
+    assert arbol.controls[0].value == _estado_workspace_proyecto(
+        workspace_root, proyecto_dos
+    )
     assert (
         destino_activo.read_text(encoding="utf-8") == "imprimir('desde proyecto dos')"
     )
@@ -1517,11 +1523,116 @@ def test_eliminar_archivo_activo_reinicia_editor_y_estado_visual(monkeypatch, tm
 
     eliminar.on_click(None)
 
+    assert destino.exists()
+    assert salida.value == f"Pulsa de nuevo Eliminar archivo para confirmar: {destino}"
+
+    eliminar.on_click(None)
+
     assert not destino.exists()
     assert entrada.value == ""
     assert ruta_input.value == ""
     assert salida.value == f"Archivo eliminado: {destino}"
     assert estado_archivo.value == "Archivo nuevo (sin guardar)"
+
+
+def test_eliminar_archivo_cancela_confirmacion_si_cambia_ruta_visible(
+    monkeypatch, tmp_path
+):
+    (
+        ft,
+        page,
+        entrada,
+        ruta_input,
+        salida,
+        _abrir,
+        guardar_como,
+    ) = _preparar_idle_archivos(monkeypatch, tmp_path)
+    proyecto_input = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.TextField) and c.kwargs.get("label") == "Proyecto activo"
+    )
+    crear_proyecto = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.ElevatedButton) and c.text == "Crear proyecto"
+    )
+    eliminar = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.ElevatedButton) and c.text == "Eliminar archivo"
+    )
+
+    proyecto_input.value = "proyecto"
+    crear_proyecto.on_click(None)
+    destino = (
+        idle.runtime.resolver_workspace_root_idle()
+        / "proyecto"
+        / "src"
+        / "borrar.cobra"
+    ).resolve()
+    entrada.value = "imprimir('borrar')"
+    ruta_input.value = "src/borrar"
+    guardar_como.on_click(None)
+
+    eliminar.on_click(None)
+    ruta_input.value = "src/otra.cobra"
+    ruta_input.on_change(None)
+    eliminar.on_click(None)
+
+    assert destino.exists()
+    assert salida.value == f"Pulsa de nuevo Eliminar archivo para confirmar: {destino}"
+
+    eliminar.on_click(None)
+
+    assert not destino.exists()
+    assert salida.value == f"Archivo eliminado: {destino}"
+
+
+def test_eliminar_archivo_mantiene_bloqueo_de_escape_relativo(monkeypatch, tmp_path):
+    (
+        ft,
+        page,
+        entrada,
+        ruta_input,
+        salida,
+        _abrir,
+        guardar_como,
+    ) = _preparar_idle_archivos(monkeypatch, tmp_path)
+    proyecto_input = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.TextField) and c.kwargs.get("label") == "Proyecto activo"
+    )
+    crear_proyecto = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.ElevatedButton) and c.text == "Crear proyecto"
+    )
+    eliminar = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.ElevatedButton) and c.text == "Eliminar archivo"
+    )
+
+    proyecto_input.value = "proyecto"
+    crear_proyecto.on_click(None)
+    entrada.value = "imprimir('borrar')"
+    ruta_input.value = "src/borrar"
+    guardar_como.on_click(None)
+    escape = (tmp_path / "CobraProjects" / "escape.cobra").resolve()
+    escape.write_text("imprimir('escape')", encoding="utf-8")
+
+    # Simula un cambio inseguro del archivo activo antes del borrado.
+    ruta_guardada = ruta_input.value
+    ruta_input.value = "../escape.cobra"
+    guardar_como.on_click(None)
+    ruta_input.value = ruta_guardada
+
+    eliminar.on_click(None)
+
+    assert escape.exists()
+    assert salida.value.startswith("Pulsa de nuevo Eliminar archivo para confirmar: ")
 
 
 def test_eliminar_carpeta_reinicia_editor_si_archivo_activo_esta_dentro(
@@ -1576,7 +1687,6 @@ def test_eliminar_carpeta_reinicia_editor_si_archivo_activo_esta_dentro(
     assert ruta_input.value == ""
     assert salida.value == f"Carpeta eliminada: {carpeta}"
     assert estado_archivo.value == "Archivo nuevo (sin guardar)"
-
 
 
 def test_eliminar_proyecto_activo_reinicia_estado_y_vuelve_al_workspace(
@@ -1749,6 +1859,7 @@ def test_eliminar_proyecto_bloquea_si_no_hay_proyecto_activo(monkeypatch, tmp_pa
 
     assert workspace_root.exists()
     assert salida.value == "No hay proyecto activo para eliminar."
+
 
 def test_eliminar_carpeta_bloquea_project_root_activo(monkeypatch, tmp_path):
     (
