@@ -52,6 +52,23 @@ def main(page: "ft.Page"):
     def mostrar_error_archivo(exc: Exception) -> None:
         salida.value = runtime.formatear_error(exc)
 
+    def resolver_ruta_en_project_root(ruta: str | Path) -> Path:
+        project_root_resuelto = Path(project_root).expanduser().resolve()
+        ruta_expandida = Path(ruta).expanduser()
+        candidata = (
+            ruta_expandida
+            if ruta_expandida.is_absolute()
+            else project_root_resuelto / ruta_expandida
+        )
+        candidata = candidata.resolve()
+        try:
+            candidata.relative_to(project_root_resuelto)
+        except ValueError as exc:
+            raise ValueError(
+                f"La ruta debe estar dentro del proyecto activo: {project_root_resuelto}"
+            ) from exc
+        return candidata
+
     def resolver_ruta_archivo_idle(ruta: str | Path) -> Path | None:
         try:
             return runtime.resolver_ruta_archivo_en_project_root(ruta, project_root)
