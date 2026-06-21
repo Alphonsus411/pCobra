@@ -236,7 +236,7 @@ def test_panel_lateral_organiza_proyecto_en_columna(monkeypatch, tmp_path):
     assert raiz_input.kwargs.get("expand") is True
 
     barra_botones = barra_raiz_arbol.controls[1]
-    assert isinstance(barra_botones, (ft.Row, ft.Column))
+    assert isinstance(barra_botones, ft.Row)
     botones = barra_botones.controls
     assert [boton.text for boton in botones] == [
         "Crear proyecto",
