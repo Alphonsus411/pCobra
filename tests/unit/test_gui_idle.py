@@ -213,11 +213,22 @@ def test_panel_lateral_organiza_proyecto_en_columna(monkeypatch, tmp_path):
     panel_lateral = next(
         c for c in page.controls if isinstance(c, ft.Container) and c.width == 280
     )
+    assert panel_lateral.width == 280
+
     contenido_panel = panel_lateral.content
     assert isinstance(contenido_panel, ft.Column)
+    assert contenido_panel.controls[0].value == "Archivos Cobra"
 
     barra_raiz_arbol = contenido_panel.controls[1]
     assert isinstance(barra_raiz_arbol, ft.Column)
+
+    arbol = contenido_panel.controls[2]
+    assert isinstance(arbol, ft.ListView)
+    assert contenido_panel.controls == [
+        contenido_panel.controls[0],
+        barra_raiz_arbol,
+        arbol,
+    ]
 
     raiz_input = barra_raiz_arbol.controls[0]
     assert isinstance(raiz_input, ft.TextField)
@@ -226,10 +237,13 @@ def test_panel_lateral_organiza_proyecto_en_columna(monkeypatch, tmp_path):
 
     barra_botones = barra_raiz_arbol.controls[1]
     assert isinstance(barra_botones, (ft.Row, ft.Column))
-    assert [boton.text for boton in barra_botones.controls] == [
+    botones = barra_botones.controls
+    assert [boton.text for boton in botones] == [
         "Crear proyecto",
         "Abrir proyecto",
     ]
+    assert botones[0].on_click.__name__ == "crear_proyecto_handler"
+    assert botones[1].on_click.__name__ == "establecer_raiz_arbol_handler"
 
     filas_con_textfield_expand_y_botones = [
         control
