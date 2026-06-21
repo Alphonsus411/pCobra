@@ -36,6 +36,8 @@ def main(page: "ft.Page"):
     ruta_eliminacion_pendiente: Path | None = None
     ruta_estado_eliminacion_pendiente: Path | None = None
     ruta_visible_eliminacion_pendiente = ""
+    ruta_carpeta_eliminacion_pendiente: Path | None = None
+    ruta_visible_carpeta_eliminacion_pendiente = ""
 
     def cancelar_confirmacion_eliminacion_pendiente() -> None:
         nonlocal ruta_eliminacion_pendiente
@@ -45,6 +47,16 @@ def main(page: "ft.Page"):
         ruta_estado_eliminacion_pendiente = None
         ruta_visible_eliminacion_pendiente = ""
 
+    def cancelar_confirmacion_carpeta_eliminacion_pendiente() -> None:
+        nonlocal ruta_carpeta_eliminacion_pendiente
+        nonlocal ruta_visible_carpeta_eliminacion_pendiente
+        ruta_carpeta_eliminacion_pendiente = None
+        ruta_visible_carpeta_eliminacion_pendiente = ""
+
+    def cancelar_confirmaciones_eliminacion_pendientes() -> None:
+        cancelar_confirmacion_eliminacion_pendiente()
+        cancelar_confirmacion_carpeta_eliminacion_pendiente()
+
     def sincronizar_estado_visual() -> None:
         estado_archivo.value = runtime.crear_titulo_archivo(estado)
 
@@ -52,7 +64,7 @@ def main(page: "ft.Page"):
             ruta_input.value = str(estado.ruta)
 
     def limpiar_archivo_activo() -> None:
-        cancelar_confirmacion_eliminacion_pendiente()
+        cancelar_confirmaciones_eliminacion_pendientes()
         estado.ruta = None
         estado.contenido_cargado = ""
         estado.cambios_sin_guardar = False
@@ -72,8 +84,15 @@ def main(page: "ft.Page"):
         ):
             cancelar_confirmacion_eliminacion_pendiente()
 
+    def cancelar_confirmacion_carpeta_si_cambia_ruta_pendiente() -> None:
+        if ruta_carpeta_eliminacion_pendiente is None:
+            return
+        if (ruta_input.value or "") != ruta_visible_carpeta_eliminacion_pendiente:
+            cancelar_confirmacion_carpeta_eliminacion_pendiente()
+
     def ruta_visible_cambiada(_e=None) -> None:
         cancelar_confirmacion_si_cambia_ruta_pendiente()
+        cancelar_confirmacion_carpeta_si_cambia_ruta_pendiente()
 
     ruta_input.on_change = ruta_visible_cambiada
 
@@ -503,6 +522,10 @@ def main(page: "ft.Page"):
         actualizar_pagina()
 
     def eliminar_carpeta_handler(_e):
+        nonlocal ruta_carpeta_eliminacion_pendiente
+        nonlocal ruta_visible_carpeta_eliminacion_pendiente
+
+        cancelar_confirmacion_carpeta_si_cambia_ruta_pendiente()
 
         if not requerir_proyecto_activo():
             return
@@ -510,6 +533,7 @@ def main(page: "ft.Page"):
         texto = (ruta_input.value or "").strip()
 
         if not texto:
+            cancelar_confirmacion_carpeta_eliminacion_pendiente()
             salida.value = "Indica la ruta de una carpeta."
             page.update()
             return
@@ -555,6 +579,15 @@ def main(page: "ft.Page"):
             page.update()
             return
 
+        if ruta_carpeta_eliminacion_pendiente != ruta_resuelta:
+            ruta_carpeta_eliminacion_pendiente = ruta_resuelta
+            ruta_visible_carpeta_eliminacion_pendiente = ruta_input.value or ""
+            salida.value = (
+                "Pulsa de nuevo Eliminar carpeta para confirmar: " f"{ruta_resuelta}"
+            )
+            page.update()
+            return
+
         archivo_activo_en_carpeta = False
         if estado.ruta is not None:
             try:
@@ -577,6 +610,8 @@ def main(page: "ft.Page"):
             mostrar_error_archivo(exc)
             page.update()
             return
+
+        cancelar_confirmacion_carpeta_eliminacion_pendiente()
 
         if archivo_activo_en_carpeta:
             limpiar_archivo_activo()

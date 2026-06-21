@@ -1681,12 +1681,71 @@ def test_eliminar_carpeta_reinicia_editor_si_archivo_activo_esta_dentro(
     ruta_input.value = "src"
     eliminar_carpeta.on_click(None)
 
+    assert carpeta.exists()
+    assert destino.exists()
+    assert salida.value == f"Pulsa de nuevo Eliminar carpeta para confirmar: {carpeta}"
+
+    eliminar_carpeta.on_click(None)
+
     assert not carpeta.exists()
     assert not destino.exists()
     assert entrada.value == ""
     assert ruta_input.value == ""
     assert salida.value == f"Carpeta eliminada: {carpeta}"
     assert estado_archivo.value == "Archivo nuevo (sin guardar)"
+
+
+def test_eliminar_carpeta_cancela_confirmacion_si_cambia_ruta_visible(
+    monkeypatch, tmp_path
+):
+    (
+        ft,
+        page,
+        _entrada,
+        ruta_input,
+        salida,
+        _abrir,
+        _guardar_como,
+    ) = _preparar_idle_archivos(monkeypatch, tmp_path)
+    proyecto_input = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.TextField) and c.kwargs.get("label") == "Proyecto activo"
+    )
+    crear_proyecto = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.ElevatedButton) and c.text == "Crear proyecto"
+    )
+    eliminar_carpeta = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.ElevatedButton) and c.text == "Eliminar carpeta"
+    )
+
+    proyecto_input.value = "proyecto"
+    crear_proyecto.on_click(None)
+    proyecto = (idle.runtime.resolver_workspace_root_idle() / "proyecto").resolve()
+    carpeta = proyecto / "docs"
+    otra_carpeta = proyecto / "tmp"
+    carpeta.mkdir()
+    otra_carpeta.mkdir()
+
+    ruta_input.value = "docs"
+    eliminar_carpeta.on_click(None)
+    ruta_input.value = "tmp"
+    ruta_input.on_change(None)
+    eliminar_carpeta.on_click(None)
+
+    assert carpeta.exists()
+    assert otra_carpeta.exists()
+    assert salida.value == f"Pulsa de nuevo Eliminar carpeta para confirmar: {otra_carpeta}"
+
+    eliminar_carpeta.on_click(None)
+
+    assert carpeta.exists()
+    assert not otra_carpeta.exists()
+    assert salida.value == f"Carpeta eliminada: {otra_carpeta}"
 
 
 def test_eliminar_proyecto_activo_reinicia_estado_y_vuelve_al_workspace(
@@ -1897,4 +1956,53 @@ def test_eliminar_carpeta_bloquea_project_root_activo(monkeypatch, tmp_path):
     assert proyecto.exists()
     assert salida.value == (
         'No se puede eliminar el proyecto activo como carpeta normal. Usa "Eliminar proyecto".'
+    )
+
+
+def test_eliminar_carpeta_mantiene_bloqueos_de_workspace_y_escape(
+    monkeypatch, tmp_path
+):
+    (
+        ft,
+        page,
+        _entrada,
+        ruta_input,
+        salida,
+        _abrir,
+        _guardar_como,
+    ) = _preparar_idle_archivos(monkeypatch, tmp_path)
+    proyecto_input = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.TextField) and c.kwargs.get("label") == "Proyecto activo"
+    )
+    crear_proyecto = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.ElevatedButton) and c.text == "Crear proyecto"
+    )
+    eliminar_carpeta = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.ElevatedButton) and c.text == "Eliminar carpeta"
+    )
+
+    proyecto_input.value = "proyecto"
+    crear_proyecto.on_click(None)
+    workspace = idle.runtime.resolver_workspace_root_idle().resolve()
+
+    ruta_input.value = str(workspace)
+    eliminar_carpeta.on_click(None)
+
+    assert workspace.exists()
+    assert salida.value == "error: La ruta debe estar dentro del proyecto activo: " + str(
+        workspace / "proyecto"
+    )
+
+    ruta_input.value = "../escape"
+    eliminar_carpeta.on_click(None)
+
+    assert workspace.exists()
+    assert salida.value == "error: La ruta debe estar dentro del proyecto activo: " + str(
+        workspace / "proyecto"
     )
