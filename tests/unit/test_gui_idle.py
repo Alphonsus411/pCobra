@@ -1503,3 +1503,96 @@ def test_eliminar_archivo_activo_reinicia_editor_y_estado_visual(monkeypatch, tm
     assert ruta_input.value == ""
     assert salida.value == f"Archivo eliminado: {destino}"
     assert estado_archivo.value == "Archivo nuevo (sin guardar)"
+
+
+def test_eliminar_carpeta_reinicia_editor_si_archivo_activo_esta_dentro(
+    monkeypatch, tmp_path
+):
+    (
+        ft,
+        page,
+        entrada,
+        ruta_input,
+        salida,
+        _abrir,
+        guardar_como,
+    ) = _preparar_idle_archivos(monkeypatch, tmp_path)
+    proyecto_input = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.TextField) and c.kwargs.get("label") == "Proyecto activo"
+    )
+    crear_proyecto = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.ElevatedButton) and c.text == "Crear proyecto"
+    )
+    eliminar_carpeta = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.ElevatedButton) and c.text == "Eliminar carpeta"
+    )
+    estado_archivo = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.Text) and c.value == "Archivo nuevo (sin guardar)"
+    )
+
+    proyecto_input.value = "proyecto"
+    crear_proyecto.on_click(None)
+    carpeta = (
+        idle.runtime.resolver_workspace_root_idle() / "proyecto" / "src"
+    ).resolve()
+    destino = (carpeta / "borrar.cobra").resolve()
+    entrada.value = "imprimir('borrar')"
+    ruta_input.value = "src/borrar"
+    guardar_como.on_click(None)
+
+    ruta_input.value = "src"
+    eliminar_carpeta.on_click(None)
+
+    assert not carpeta.exists()
+    assert not destino.exists()
+    assert entrada.value == ""
+    assert ruta_input.value == ""
+    assert salida.value == f"Carpeta eliminada: {carpeta}"
+    assert estado_archivo.value == "Archivo nuevo (sin guardar)"
+
+
+def test_eliminar_carpeta_bloquea_project_root_activo(monkeypatch, tmp_path):
+    (
+        ft,
+        page,
+        _entrada,
+        ruta_input,
+        salida,
+        _abrir,
+        _guardar_como,
+    ) = _preparar_idle_archivos(monkeypatch, tmp_path)
+    proyecto_input = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.TextField) and c.kwargs.get("label") == "Proyecto activo"
+    )
+    crear_proyecto = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.ElevatedButton) and c.text == "Crear proyecto"
+    )
+    eliminar_carpeta = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.ElevatedButton) and c.text == "Eliminar carpeta"
+    )
+
+    proyecto_input.value = "proyecto"
+    crear_proyecto.on_click(None)
+    proyecto = (idle.runtime.resolver_workspace_root_idle() / "proyecto").resolve()
+
+    ruta_input.value = str(proyecto)
+    eliminar_carpeta.on_click(None)
+
+    assert proyecto.exists()
+    assert salida.value == (
+        'No se puede eliminar el proyecto activo como carpeta normal. Usa "Eliminar proyecto".'
+    )

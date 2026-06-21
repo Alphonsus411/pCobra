@@ -340,7 +340,9 @@ def main(page: "ft.Page"):
             return
         estado.ruta = ruta_resuelta
         try:
-            entrada.value, salida.value = runtime.recargar_archivo_activo_validado(estado)
+            entrada.value, salida.value = runtime.recargar_archivo_activo_validado(
+                estado
+            )
         except (
             FileNotFoundError,
             NotADirectoryError,
@@ -385,6 +387,93 @@ def main(page: "ft.Page"):
         ruta_input.value = ""
         reconstruir_arbol()
         salida.value = f"Archivo eliminado: {ruta_resuelta}"
+        actualizar_pagina()
+
+    def eliminar_carpeta_handler(_e):
+
+        if not requerir_proyecto_activo():
+            return
+
+        texto = (ruta_input.value or "").strip()
+
+        if not texto:
+            salida.value = "Indica la ruta de una carpeta."
+            page.update()
+            return
+
+        try:
+            ruta_resuelta = resolver_ruta_en_project_root(texto)
+        except (
+            FileNotFoundError,
+            NotADirectoryError,
+            PermissionError,
+            OSError,
+            ValueError,
+        ) as exc:
+            mostrar_error_archivo(exc)
+            page.update()
+            return
+
+        project_root_resuelto = project_root.resolve()
+        workspace_root_resuelto = workspace_root.resolve()
+
+        if ruta_resuelta == project_root_resuelto:
+            salida.value = (
+                "No se puede eliminar el proyecto activo como carpeta normal. "
+                'Usa "Eliminar proyecto".'
+            )
+            page.update()
+            return
+
+        if ruta_resuelta == workspace_root_resuelto:
+            salida.value = "No se puede eliminar la raíz completa del workspace."
+            page.update()
+            return
+
+        if not ruta_resuelta.exists():
+            salida.value = (
+                f"No existe la carpeta que se quiere eliminar: {ruta_resuelta}"
+            )
+            page.update()
+            return
+
+        if not ruta_resuelta.is_dir():
+            salida.value = f"La ruta indicada no es una carpeta: {ruta_resuelta}"
+            page.update()
+            return
+
+        archivo_activo_en_carpeta = False
+        if estado.ruta is not None:
+            try:
+                estado_ruta_resuelta = estado.ruta.resolve()
+                estado_ruta_resuelta.relative_to(ruta_resuelta)
+            except ValueError:
+                archivo_activo_en_carpeta = False
+            else:
+                archivo_activo_en_carpeta = True
+
+        try:
+            runtime.eliminar_directorio_validado(ruta_resuelta)
+        except (
+            FileNotFoundError,
+            NotADirectoryError,
+            PermissionError,
+            OSError,
+            ValueError,
+        ) as exc:
+            mostrar_error_archivo(exc)
+            page.update()
+            return
+
+        if archivo_activo_en_carpeta:
+            estado.ruta = None
+            estado.contenido_cargado = ""
+            estado.cambios_sin_guardar = False
+            entrada.value = ""
+            ruta_input.value = ""
+
+        reconstruir_arbol()
+        salida.value = f"Carpeta eliminada: {ruta_resuelta}"
         actualizar_pagina()
 
     ejecutar_handler = runtime.crear_handler_ejecucion(
@@ -435,6 +524,9 @@ def main(page: "ft.Page"):
             runtime.flet_elevated_button(ft, "Recargar", on_click=recargar_handler),
             runtime.flet_elevated_button(
                 ft, "Eliminar", on_click=eliminar_archivo_handler
+            ),
+            runtime.flet_elevated_button(
+                ft, "Eliminar carpeta", on_click=eliminar_carpeta_handler
             ),
         ],
         wrap=True,
