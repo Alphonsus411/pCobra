@@ -1451,3 +1451,55 @@ def test_crear_proyecto_normaliza_nombre_seguro(monkeypatch, tmp_path):
     assert (proyecto / "src").is_dir()
     assert (proyecto / "README.md").is_file()
     assert salida.value == f"Proyecto creado: {proyecto}"
+
+
+def test_eliminar_archivo_activo_reinicia_editor_y_estado_visual(monkeypatch, tmp_path):
+    (
+        ft,
+        page,
+        entrada,
+        ruta_input,
+        salida,
+        _abrir,
+        guardar_como,
+    ) = _preparar_idle_archivos(monkeypatch, tmp_path)
+    proyecto_input = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.TextField) and c.kwargs.get("label") == "Proyecto activo"
+    )
+    crear_proyecto = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.ElevatedButton) and c.text == "Crear proyecto"
+    )
+    eliminar = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.ElevatedButton) and c.text == "Eliminar"
+    )
+    estado_archivo = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.Text) and c.value == "Archivo nuevo (sin guardar)"
+    )
+
+    proyecto_input.value = "proyecto"
+    crear_proyecto.on_click(None)
+    destino = (
+        idle.runtime.resolver_workspace_root_idle()
+        / "proyecto"
+        / "src"
+        / "borrar.cobra"
+    ).resolve()
+    entrada.value = "imprimir('borrar')"
+    ruta_input.value = "src/borrar"
+    guardar_como.on_click(None)
+
+    eliminar.on_click(None)
+
+    assert not destino.exists()
+    assert entrada.value == ""
+    assert ruta_input.value == ""
+    assert salida.value == f"Archivo eliminado: {destino}"
+    assert estado_archivo.value == "Archivo nuevo (sin guardar)"
