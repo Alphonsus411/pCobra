@@ -187,6 +187,16 @@ def main(page: "ft.Page"):
             ) from exc
         return runtime.validar_project_root_idle(candidata)
 
+    def hay_proyecto_activo() -> bool:
+        return project_root.resolve() != workspace_root.resolve()
+
+    def requerir_proyecto_activo() -> bool:
+        if hay_proyecto_activo():
+            return True
+        salida.value = "Crea o abre un proyecto antes de trabajar con archivos."
+        page.update()
+        return False
+
     def inicializar_estructura_proyecto(ruta_proyecto: Path, nombre: str) -> None:
         ruta_proyecto.mkdir(parents=True, exist_ok=True)
         (ruta_proyecto / "src").mkdir(parents=True, exist_ok=True)
@@ -241,6 +251,9 @@ def main(page: "ft.Page"):
         actualizar_pagina()
 
     def abrir_handler(_e):
+        if not requerir_proyecto_activo():
+            return
+
         ruta = validar_ruta_visible_para_abrir()
         if ruta is None:
             return
@@ -248,6 +261,10 @@ def main(page: "ft.Page"):
         cargar_archivo(ruta)
 
     def guardar_handler(_e):
+
+        if not requerir_proyecto_activo():
+            return
+
         if estado.ruta is None:
             guardar_como_handler(_e)
             return
@@ -274,6 +291,9 @@ def main(page: "ft.Page"):
 
     def guardar_como_handler(_e):
         """Guarda usando el campo Ruta, flujo canónico del IDLE principal."""
+        if not requerir_proyecto_activo():
+            return
+
         texto = (ruta_input.value or "").strip()
 
         if not texto:
@@ -290,6 +310,10 @@ def main(page: "ft.Page"):
             page.update()
 
     def recargar_handler(_e):
+
+        if not requerir_proyecto_activo():
+            return
+
         if estado.ruta is None:
             salida.value = "No hay archivo activo que recargar."
             page.update()
