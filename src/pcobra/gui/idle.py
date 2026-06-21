@@ -91,7 +91,7 @@ def main(page: "ft.Page"):
                     ruta, estado
                 )
             else:
-                entrada.value, salida.value = runtime.abrir_archivo_desde_ruta(
+                entrada.value, salida.value = runtime.abrir_archivo_desde_ruta_validada(
                     ruta, estado
                 )
         except (

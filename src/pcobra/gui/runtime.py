@@ -467,6 +467,32 @@ def guardar_archivo_como_validado(
     return codigo, f"Archivo guardado: {destino}"
 
 
+def leer_archivo_texto_validado(
+    path: str | Path, *, encoding: str = "utf-8"
+) -> str:
+    """Lee una ruta ya validada por el IDLE principal."""
+
+    origen = Path(path).expanduser().resolve()
+    if origen.exists() and origen.is_dir():
+        raise NotADirectoryError(
+            "La ruta indicada corresponde a un directorio; indica un archivo Cobra."
+        )
+    return origen.read_text(encoding=encoding)
+
+
+def abrir_archivo_desde_ruta_validada(
+    ruta: str | Path, estado: GuiFileState
+) -> tuple[str, str]:
+    """Abre un archivo cuya ruta ya fue validada contra project_root."""
+
+    origen = Path(ruta).expanduser().resolve()
+    contenido = leer_archivo_texto_validado(origen)
+    estado.ruta = origen
+    estado.contenido_cargado = contenido
+    estado.cambios_sin_guardar = False
+    return contenido, f"Archivo cargado: {origen}"
+
+
 def recargar_archivo_activo(estado: GuiFileState) -> tuple[str, str]:
     """Recarga el archivo activo desde disco y devuelve contenido/mensaje."""
 
