@@ -467,6 +467,22 @@ def guardar_archivo_como_validado(
     return codigo, f"Archivo guardado: {destino}"
 
 
+def guardar_archivo_activo_validado(
+    contenido: str | None, estado: GuiFileState
+) -> tuple[str, str]:
+    """Guarda el archivo activo cuya ruta ya fue validada contra project_root."""
+
+    if estado.ruta is None:
+        raise ValueError("No hay archivo activo que guardar.")
+
+    destino = Path(estado.ruta).expanduser().resolve()
+    codigo = escribir_archivo_texto_validado(destino, contenido)
+    estado.ruta = destino
+    estado.contenido_cargado = codigo
+    estado.cambios_sin_guardar = False
+    return codigo, f"Archivo guardado: {destino}"
+
+
 def leer_archivo_texto_validado(
     path: str | Path, *, encoding: str = "utf-8"
 ) -> str:

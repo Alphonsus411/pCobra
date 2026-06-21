@@ -273,7 +273,7 @@ def main(page: "ft.Page"):
             return
         estado.ruta = ruta_resuelta
         try:
-            _contenido, salida.value = runtime.guardar_archivo_activo(
+            _contenido, salida.value = runtime.guardar_archivo_activo_validado(
                 entrada.value, estado
             )
         except (
