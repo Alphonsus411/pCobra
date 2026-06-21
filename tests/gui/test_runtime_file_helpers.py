@@ -17,11 +17,12 @@ def test_resolver_workspace_root_idle_crea_cobra_projects_dir_configurado(
     monkeypatch, tmp_path: Path
 ):
     workspace = tmp_path / "workspace personalizado"
+    workspace_resuelto = workspace.resolve()
     monkeypatch.setenv("COBRA_PROJECTS_DIR", str(workspace))
 
     assert not workspace.exists()
 
-    assert runtime.resolver_workspace_root_idle() == workspace.resolve()
+    assert runtime.resolver_workspace_root_idle() == workspace_resuelto
     assert workspace.is_dir()
 
 
@@ -32,9 +33,10 @@ def test_resolver_workspace_root_idle_crea_cobraprojects_en_home_sin_env(
     monkeypatch.setattr(Path, "home", lambda: tmp_path)
 
     workspace = tmp_path / "CobraProjects"
+    workspace_resuelto = workspace.resolve()
     assert not workspace.exists()
 
-    assert runtime.resolver_workspace_root_idle() == workspace.resolve()
+    assert runtime.resolver_workspace_root_idle() == workspace_resuelto
     assert workspace.is_dir()
 
 
