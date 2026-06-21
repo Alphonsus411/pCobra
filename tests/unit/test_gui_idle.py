@@ -54,6 +54,15 @@ def _fake_flet():
             self.on_change = _kwargs.get("on_change")
             self.scroll = _kwargs.get("scroll")
 
+    class Row(Layout):
+        pass
+
+    class Column(Layout):
+        pass
+
+    class ListView(Layout):
+        pass
+
     class Container:
         def __init__(self, content=None, **_kwargs):
             self.content = content
@@ -109,10 +118,10 @@ def _fake_flet():
         Switch=Switch,
         ElevatedButton=ElevatedButton,
         TextButton=TextButton,
-        Row=Layout,
-        Column=Layout,
+        Row=Row,
+        Column=Column,
         Container=Container,
-        ListView=Layout,
+        ListView=ListView,
         ListTile=ListTile,
         ExpansionTile=ExpansionTile,
         Icon=Icon,
@@ -177,6 +186,62 @@ def test_main_renderiza_botones_esperados(monkeypatch):
         "AST",
         "Sugerencias del Libro",
     ]
+
+
+def test_panel_lateral_organiza_proyecto_en_columna(monkeypatch, tmp_path):
+    ft = _fake_flet()
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("COBRA_PROJECTS_DIR", str(tmp_path))
+    monkeypatch.setattr(idle.runtime, "require_flet", lambda: ft)
+    monkeypatch.setattr(
+        idle.runtime, "detectar_motor_ia_sugerencias", _motor_disponible
+    )
+    monkeypatch.setattr(idle.runtime, "gui_target_choices", lambda: ("python",))
+    monkeypatch.setattr(
+        idle.runtime,
+        "require_gui_dependencies",
+        lambda: {
+            "TRANSPILERS": {"python": object},
+            "LexerError": RuntimeError,
+            "ParserError": ValueError,
+        },
+    )
+
+    page = ft.Page()
+    idle.main(page)
+
+    panel_lateral = next(
+        c for c in page.controls if isinstance(c, ft.Container) and c.width == 280
+    )
+    contenido_panel = panel_lateral.content
+    assert isinstance(contenido_panel, ft.Column)
+
+    barra_raiz_arbol = contenido_panel.controls[1]
+    assert isinstance(barra_raiz_arbol, ft.Column)
+
+    raiz_input = barra_raiz_arbol.controls[0]
+    assert isinstance(raiz_input, ft.TextField)
+    assert raiz_input.kwargs.get("label") == "Proyecto activo"
+    assert raiz_input.kwargs.get("expand") is True
+
+    barra_botones = barra_raiz_arbol.controls[1]
+    assert isinstance(barra_botones, (ft.Row, ft.Column))
+    assert [boton.text for boton in barra_botones.controls] == [
+        "Crear proyecto",
+        "Abrir proyecto",
+    ]
+
+    filas_con_textfield_expand_y_botones = [
+        control
+        for control in barra_raiz_arbol.controls
+        if isinstance(control, ft.Row)
+        and any(
+            isinstance(hijo, ft.TextField) and hijo.kwargs.get("expand") is True
+            for hijo in control.controls
+        )
+        and any(isinstance(hijo, ft.ElevatedButton) for hijo in control.controls)
+    ]
+    assert filas_con_textfield_expand_y_botones == []
 
 
 def test_main_muestra_sugerencias_deshabilitadas_sin_motor(monkeypatch):

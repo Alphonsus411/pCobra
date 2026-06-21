@@ -320,18 +320,23 @@ def main(page: "ft.Page"):
     reconstruir_arbol()
     sincronizar_estado_visual()
 
-    barra_raiz_arbol = runtime.flet_row(
+    barra_raiz_arbol = runtime.flet_column(
         ft,
         controls=[
             raiz_input,
-            runtime.flet_elevated_button(
-                ft, "Crear proyecto", on_click=crear_proyecto_handler
-            ),
-            runtime.flet_elevated_button(
-                ft, "Abrir proyecto", on_click=establecer_raiz_arbol_handler
+            runtime.flet_row(
+                ft,
+                controls=[
+                    runtime.flet_elevated_button(
+                        ft, "Crear proyecto", on_click=crear_proyecto_handler
+                    ),
+                    runtime.flet_elevated_button(
+                        ft, "Abrir proyecto", on_click=establecer_raiz_arbol_handler
+                    ),
+                ],
+                wrap=True,
             ),
         ],
-        wrap=True,
     )
 
     barra_archivo = runtime.flet_row(
