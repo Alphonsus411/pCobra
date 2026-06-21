@@ -568,10 +568,13 @@ def main(page: "ft.Page"):
             ),
             runtime.flet_elevated_button(ft, "Recargar", on_click=recargar_handler),
             runtime.flet_elevated_button(
-                ft, "Eliminar", on_click=eliminar_archivo_handler
+                ft, "Eliminar archivo", on_click=eliminar_archivo_handler
             ),
             runtime.flet_elevated_button(
                 ft, "Eliminar carpeta", on_click=eliminar_carpeta_handler
+            ),
+            runtime.flet_elevated_button(
+                ft, "Eliminar proyecto", on_click=eliminar_proyecto_handler
             ),
         ],
         wrap=True,
