@@ -1,54 +1,107 @@
-# Especificación del IDLE gráfico (`pcobra.gui.idle`)
+# Especificación del IDLE gráfico Cobra
 
-Esta especificación describe las acciones visibles soportadas por `src/pcobra/gui/idle.py` y su función runtime correspondiente en `src/pcobra/gui/runtime.py`. El IDLE debe mantener esta tabla alineada con la matriz de trazabilidad en [`docs/gui_idle_trazabilidad.md`](gui_idle_trazabilidad.md).
+Esta especificación define el alcance funcional del IDLE gráfico Cobra (`pcobra.gui.idle`) y el contrato de comportamiento esperado para su runtime (`pcobra.gui.runtime`). Debe mantenerse alineada con la matriz de trazabilidad en [`docs/gui_idle_trazabilidad.md`](gui_idle_trazabilidad.md) y con el contrato pedagógico del Libro §3.9.
 
-## Contrato general
+## Estado
 
-- La interfaz principal se construye en `pcobra.gui.idle.main` y delega la lógica reusable en `pcobra.gui.runtime`.
-- Las acciones que analizan código Cobra deben ejecutar primero el flujo canónico `Lexer(codigo).tokenizar()` y después `Parser(tokens).parsear()` mediante `analizar_codigo()` antes de interpretar, transpilar, mostrar tokens, mostrar AST o solicitar sugerencias.
-- Las acciones **Sugerencias del Libro** y **Corrección** deben pasar siempre primero por `Lexer(codigo).tokenizar()` y `Parser(tokens).parsear()`. Si cualquiera falla, el IDLE debe mostrar el diagnóstico léxico/sintáctico y no debe invocar el motor IA opcional. Ninguna de las dos acciones modifica automáticamente el contenido del editor.
-- **Sugerencias del Libro** muestra recomendaciones pedagógicas agrupadas por categoría. **Corrección** genera un reporte tipográfico/estilístico no destructivo para revisión humana.
-- El motor IA canónico para sugerencias es `agix`; `agi-core` no debe usarse como sustituto ni dependencia paralela sin una ADR nueva. La decisión vigente está documentada en [`docs/ADR/002-motor-ia-sugerencias-agix.md`](ADR/002-motor-ia-sugerencias-agix.md).
+- IDLE básico funcional para 10.1.1.
+- Alcance: edición, proyectos, archivos, ejecución, tokens, AST, sugerencias, corrección y borrado seguro.
+- No es un IDE completo: prioriza flujos simples, verificables y seguros para trabajo local con archivos Cobra.
 - El selector de transpilación del IDLE solo puede mostrar los targets públicos canónicos: `python`, `javascript` y `rust`. No debe exponer aliases, targets legacy ni backends experimentales.
+
+## Workspace
+
+- El workspace por defecto es `~/CobraProjects`.
+- El IDLE crea el workspace si no existe.
+- No se deben guardar proyectos de usuario dentro del repositorio pCobra ni bajo `src/`.
+- El workspace actúa como contenedor de proyectos de usuario y como límite superior para operaciones de gestión de proyectos.
+
+## Proyecto activo
+
+- Un proyecto activo debe ser hijo directo del workspace.
+- Si `project_root == workspace_root`, no hay proyecto activo.
+- Las operaciones de archivo requieren proyecto activo.
+- Abrir o crear un proyecto establece `project_root` como raíz operativa para las acciones sobre archivos.
+- Cerrar el proyecto activo devuelve el estado del IDLE a workspace sin proyecto activo y bloquea operaciones que dependan de archivos de proyecto.
+
+## Operaciones soportadas
+
+| Operación | Comportamiento esperado | Requisito Lexer/Parser |
+| --- | --- | --- |
+| Crear proyecto | Crea un directorio hijo directo del workspace, lo establece como proyecto activo y reconstruye el árbol lateral. | No aplica. |
+| Abrir proyecto | Abre un directorio existente que sea hijo directo del workspace y lo establece como proyecto activo. | No aplica. |
+| Cerrar proyecto | Limpia el proyecto activo, conserva el workspace y bloquea operaciones de archivo hasta abrir o crear otro proyecto. | No aplica. |
+| Nuevo archivo en memoria | Limpia el editor, reinicia el estado del archivo activo y marca el contenido como archivo nuevo sin ruta. | No aplica. |
+| Abrir archivo | Lee un archivo ubicado dentro del proyecto activo y actualiza el editor y el estado del archivo activo. | No aplica. |
+| Guardar | Guarda el contenido del editor en la ruta activa si existe; si no existe, deriva a Guardar como. | No aplica. |
+| Guardar como | Guarda el contenido del editor en una ruta resuelta dentro del proyecto activo y actualiza la ruta activa. | No aplica. |
+| Recargar | Vuelve a leer desde disco el archivo activo y reemplaza el contenido del editor. | No aplica. |
+| Ejecutar | Normaliza el texto del editor, analiza el código y entrega el AST al intérprete Cobra. | Obligatorio. |
+| Tokens | Analiza el código y muestra una línea por token o el diagnóstico de error correspondiente. | Obligatorio. |
+| AST | Analiza el código y muestra una representación serializada del AST o el diagnóstico de error correspondiente. | Obligatorio. |
+| Sugerencias del Libro | Valida el código y, solo si no hay errores léxicos ni sintácticos, genera sugerencias pedagógicas agrupadas por categoría. | Obligatorio y previo. |
+| Corrección | Valida el código y, solo si no hay errores léxicos ni sintácticos, genera un reporte tipográfico/estilístico no destructivo. | Obligatorio y previo. |
+| Eliminar archivo | Elimina un archivo dentro del proyecto activo, aplicando confirmación mínima y actualización posterior del estado del editor. | No aplica. |
+| Eliminar carpeta | Elimina una carpeta dentro del proyecto activo sin permitir que `project_root` se borre como carpeta normal. | No aplica. |
+| Eliminar proyecto | Elimina el proyecto activo solo si es hijo directo del workspace y deja el IDLE sin proyecto activo. | No aplica. |
+
+## Seguridad de rutas
+
+- Toda ruta relativa de archivo o carpeta se resuelve contra `project_root`.
+- Se bloquea cualquier ruta con escape mediante `../` o equivalentes que salga del proyecto activo.
+- Se bloquean rutas absolutas fuera del proyecto activo.
+- Se bloquean operaciones de archivo sin proyecto activo.
+- Se bloquea la eliminación de `project_root` como carpeta normal; para borrar un proyecto debe usarse la operación específica de eliminación de proyecto.
+- Se bloquea la eliminación de `workspace_root`.
+- La eliminación de proyecto solo está permitida si el proyecto activo es hijo directo del workspace.
 - La gestión del árbol de archivos es funcionalidad de archivos/rutas de la GUI: no afecta la sintaxis Cobra y no debe requerir cambios en `Lexer` ni `Parser`.
 
-## Acciones soportadas y funciones runtime
+## Sugerencias y Corrección
 
-| Acción visible en `idle.py` | Handler o flujo en `idle.py` | Función runtime correspondiente | Requisito Lexer/Parser | Comportamiento esperado |
-| --- | --- | --- | --- | --- |
-| Nuevo | `nuevo_handler` | `crear_archivo_nuevo_en_editor()` → `nuevo_archivo()` | No aplica. | Limpia el editor, reinicia `GuiFileState`, marca el archivo como nuevo sin ruta y actualiza la salida con un mensaje de creación en memoria. |
-| Abrir | `abrir_handler` → `cargar_archivo()` | `abrir_archivo_desde_ruta()` → `cargar_archivo_en_estado()` | No aplica. | Lee una ruta validada por el sandbox GUI, carga el contenido en el editor, actualiza `GuiFileState` y reconstruye el árbol. |
-| Guardar | `guardar_handler` | `guardar_archivo_activo()` → `guardar_archivo_en_estado()` | No aplica. | Si hay ruta activa, guarda el contenido normalizado del editor en esa ruta y limpia la marca de cambios sin guardar; si no hay ruta, deriva a Guardar como. |
-| Guardar como | `guardar_como_handler` → `guardar_en()` | `guardar_archivo_como()` → `guardar_archivo_en_estado()` | No aplica. | Guarda el contenido normalizado del editor en la ruta indicada, actualiza la ruta activa y reconstruye el árbol. |
-| Recargar | `recargar_handler` | `recargar_archivo_activo()` → `abrir_archivo_desde_ruta()` | No aplica. | Vuelve a leer desde disco el archivo activo, reemplaza el contenido del editor y limpia la marca de cambios. |
-| Ejecutar | `ejecutar_handler`, creado por `crear_handler_ejecucion()` | `ejecutar_o_transpilar()` → `ejecutar_codigo()` | Obligatorio. | Normaliza el texto del editor, ejecuta `analizar_codigo()` (`Lexer` y `Parser`) y entrega el AST a `InterpretadorCobra().ejecutar_ast(ast)`, capturando stdout/stderr. |
-| Transpilar desde Ejecutar | Selector + switch `activar` + `ejecutar_handler` | `ejecutar_o_transpilar()` → `transpilar_codigo()` | Obligatorio. | Cuando el switch de transpilación está activo, valida que el target seleccionado exista en `TRANSPILERS`, analiza con `Lexer`/`Parser` y genera código desde el AST. El selector solo puede contener `python`, `javascript` y `rust`. |
-| Tokens | `tokens_handler`, creado por `crear_handler_tokens()` | `mostrar_tokens()` → `analizar_codigo()` | Obligatorio. | Ejecuta `Lexer` y `Parser` mediante `analizar_codigo()` y muestra una línea por token. Los errores se formatean como errores léxicos o sintácticos. |
-| AST | `ast_handler`, creado por `crear_handler_ast()` | `mostrar_ast()` → `analizar_codigo()` | Obligatorio. | Ejecuta `Lexer` y `Parser` mediante `analizar_codigo()` y muestra la representación serializada del AST. |
-| Sugerencias del Libro | `sugerencias_handler`, creado por `crear_handler_sugerencias()`; botón creado por `crear_boton_sugerencias_libro()` | `generar_reporte_sugerencias()` → `analizar_codigo()` → `generar_sugerencias()` | Obligatorio y previo al motor IA. | Valida primero con `Lexer(codigo).tokenizar()` y `Parser(tokens).parsear()`. Si hay error léxico o sintáctico, muestra el diagnóstico, no invoca el motor IA y no modifica el editor. Si no hay errores, comprueba el motor opcional y muestra recomendaciones pedagógicas agrupadas por categoría. |
-| Corrección | `correccion_handler`, creado por `crear_handler_correccion_tipografica()`; botón creado por `crear_boton_correccion()` | `generar_reporte_correccion_tipografica()` → `analizar_codigo()` → `generar_sugerencias()` | Obligatorio y previo al motor IA. | Valida primero con `Lexer(codigo).tokenizar()` y `Parser(tokens).parsear()`. Si hay error léxico o sintáctico, muestra el diagnóstico, no invoca el motor IA y no modifica el editor. Si no hay errores, genera un reporte tipográfico/estilístico no destructivo para revisión humana; el editor nunca se actualiza automáticamente. |
-| Árbol de directorios | `reconstruir_arbol()`, `establecer_raiz_arbol_handler()` y `cargar_archivo_desde_evento_arbol()` | `normalizar_ruta_archivo_gui()`, `crear_arbol_directorios()`, `listar_directorio_cobra()` y `cargar_archivo_desde_arbol()` | No aplica. | Reconstruye el primer nivel visible cuando cambia la raíz, se abre un archivo o se guarda; las subcarpetas se cargan bajo demanda al expandirse con `crear_arbol_directorios()`. El campo `Raíz del árbol` pasa por `normalizar_ruta_archivo_gui()` y respeta el sandbox compartido. Solo los archivos `.co` y `.cobra` son cargables por defecto; el resto de entradas se rechaza antes de leerlas. |
+- Las acciones **Sugerencias del Libro** y **Corrección** deben validar previamente el contenido con `Lexer(codigo).tokenizar()` y `Parser(tokens).parsear()`.
+- No se deben invocar sugerencias ni corrección aplicable si existe un error léxico o sintáctico.
+- Si la validación falla, el IDLE debe mostrar el diagnóstico correspondiente y no debe invocar el motor IA opcional.
+- Ninguna acción debe modificar automáticamente el contenido del editor.
+- **Sugerencias del Libro** muestra recomendaciones pedagógicas agrupadas por categoría.
+- **Corrección** genera un reporte tipográfico/estilístico no destructivo para revisión humana.
+- El flujo debe respetar el contrato del Libro §3.9.
+- El motor IA canónico para sugerencias es `agix`; `agi-core` no debe usarse como sustituto ni dependencia paralela sin una ADR nueva. La decisión vigente está documentada en [`docs/ADR/002-motor-ia-sugerencias-agix.md`](ADR/002-motor-ia-sugerencias-agix.md).
 
-## Restricción del selector de transpilación
+## Borrado seguro
 
-El IDLE obtiene los lenguajes visibles con `gui_target_choices()` y los pasa a `crear_selector_target()` y `crear_switch_transpilacion()`. La especificación exige que esa lista permanezca limitada a:
+- La eliminación de archivo activo requiere confirmación mínima antes de borrar.
+- Tras borrar el archivo activo, el editor queda en estado de archivo nuevo en memoria, sin ruta activa asociada, y el árbol lateral se reconstruye.
+- La eliminación de carpeta solo puede aplicarse a carpetas internas del proyecto activo.
+- La eliminación de carpeta requiere confirmación mínima y no puede usarse para borrar `project_root` ni `workspace_root`.
+- La eliminación de proyecto activo requiere confirmación mínima específica de proyecto.
+- Tras borrar el proyecto activo, el IDLE queda sin proyecto activo, con las operaciones de archivo bloqueadas hasta crear o abrir otro proyecto, y el árbol lateral vuelve al estado de workspace.
 
-1. `python`
-2. `javascript`
-3. `rust`
+## POCs validados manualmente
 
-Cualquier cambio que muestre más opciones en la GUI debe considerarse una ruptura del contrato público documentado aquí y en la política de targets del proyecto.
+| POC | Validación manual | Estado |
+| --- | --- | --- |
+| POC-1 | Arranque del IDLE y creación automática del workspace por defecto. | verde |
+| POC-2 | Crear proyecto como hijo directo del workspace. | verde |
+| POC-3 | Abrir proyecto existente como hijo directo del workspace. | verde |
+| POC-4 | Cerrar proyecto activo y bloquear operaciones que requieren proyecto. | verde |
+| POC-5 | Nuevo archivo en memoria dentro del flujo del editor. | verde |
+| POC-6 | Abrir archivo del proyecto activo. | verde |
+| POC-7 | Guardar y Guardar como dentro del proyecto activo. | verde |
+| POC-8 | Recargar archivo activo desde disco. | verde |
+| POC-9 | Ejecutar código Cobra validado con Lexer y Parser. | verde |
+| POC-10 | Mostrar tokens y AST desde código validado. | verde |
+| POC-11A | Sugerencias del Libro con código válido. | verde |
+| POC-11B | Corrección con código válido. | verde |
+| POC-11C | Bloqueo de sugerencias ante error léxico. | verde |
+| POC-11D | Bloqueo de corrección ante error sintáctico. | verde |
+| POC-11E | Bloqueo de rutas con `../` fuera del proyecto activo. | verde |
+| POC-11F | Bloqueo de rutas absolutas fuera del proyecto activo. | verde |
+| POC-11G | Eliminación segura de archivo activo. | verde |
+| POC-11H | Eliminación segura de carpeta interna del proyecto. | verde |
+| POC-11I | Eliminación segura de proyecto activo hijo directo del workspace. | verde |
 
-## Flujo obligatorio para sugerencias y corrección
+## Limitaciones conocidas
 
-El flujo de **Sugerencias del Libro** y **Corrección** es deliberadamente conservador:
-
-1. Normalizar el contenido del editor.
-2. Ejecutar `analizar_codigo()`.
-3. Dentro de `analizar_codigo()`, ejecutar `Lexer(codigo).tokenizar()`.
-4. Con esos tokens, ejecutar `Parser(tokens).parsear()`.
-5. Solo si los pasos anteriores terminan sin excepción, consultar disponibilidad del motor IA opcional.
-6. Solo con validación léxica y sintáctica exitosa, llamar a `generar_sugerencias(codigo)`.
-7. Presentar el resultado sin escribir cambios en el editor: **Sugerencias del Libro** como recomendaciones pedagógicas agrupadas por categoría y **Corrección** como reporte tipográfico/estilístico no destructivo.
-
-Este orden evita generar recomendaciones o reportes sobre código que el compilador Cobra no puede tokenizar o parsear correctamente, y garantiza que un error léxico o sintáctico muestre diagnóstico sin invocar el motor IA.
+- El menú contextual del árbol lateral queda para fase posterior.
+- La confirmación avanzada de borrado puede evolucionar.
+- No es IDE completo, sino IDLE básico funcional.
