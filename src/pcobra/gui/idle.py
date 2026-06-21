@@ -354,6 +354,39 @@ def main(page: "ft.Page"):
         reconstruir_arbol()
         actualizar_pagina()
 
+    def eliminar_archivo_handler(_e):
+
+        if not requerir_proyecto_activo():
+            return
+
+        if estado.ruta is None:
+            salida.value = "No hay archivo activo para eliminar."
+            page.update()
+            return
+        ruta_resuelta = resolver_ruta_archivo_idle(estado.ruta)
+        if ruta_resuelta is None:
+            return
+        try:
+            runtime.eliminar_archivo_validado(ruta_resuelta)
+        except (
+            FileNotFoundError,
+            NotADirectoryError,
+            PermissionError,
+            OSError,
+            ValueError,
+        ) as exc:
+            mostrar_error_archivo(exc)
+            page.update()
+            return
+        estado.ruta = None
+        estado.contenido_cargado = ""
+        estado.cambios_sin_guardar = False
+        entrada.value = ""
+        ruta_input.value = ""
+        reconstruir_arbol()
+        salida.value = f"Archivo eliminado: {ruta_resuelta}"
+        actualizar_pagina()
+
     ejecutar_handler = runtime.crear_handler_ejecucion(
         entrada=entrada, salida=salida, selector=selector, activar=activar, page=page
     )
@@ -400,6 +433,9 @@ def main(page: "ft.Page"):
                 ft, "Guardar como", on_click=guardar_como_handler
             ),
             runtime.flet_elevated_button(ft, "Recargar", on_click=recargar_handler),
+            runtime.flet_elevated_button(
+                ft, "Eliminar", on_click=eliminar_archivo_handler
+            ),
         ],
         wrap=True,
     )
