@@ -75,18 +75,15 @@ def main(page: "ft.Page"):
     selector = runtime.crear_selector_target(ft, lenguajes=lenguajes)
     activar = runtime.crear_switch_transpilacion(ft, lenguajes=lenguajes)
     confirmacion_eliminacion_archivo_pendiente: dict[str, object] | None = None
-    ruta_carpeta_eliminacion_pendiente: Path | None = None
-    ruta_visible_carpeta_eliminacion_pendiente = ""
+    confirmacion_eliminacion_carpeta_pendiente: dict[str, object] | None = None
 
     def cancelar_confirmacion_eliminacion_pendiente() -> None:
         nonlocal confirmacion_eliminacion_archivo_pendiente
         confirmacion_eliminacion_archivo_pendiente = None
 
     def cancelar_confirmacion_carpeta_eliminacion_pendiente() -> None:
-        nonlocal ruta_carpeta_eliminacion_pendiente
-        nonlocal ruta_visible_carpeta_eliminacion_pendiente
-        ruta_carpeta_eliminacion_pendiente = None
-        ruta_visible_carpeta_eliminacion_pendiente = ""
+        nonlocal confirmacion_eliminacion_carpeta_pendiente
+        confirmacion_eliminacion_carpeta_pendiente = None
 
     def cancelar_confirmaciones_eliminacion_pendientes() -> None:
         cancelar_confirmacion_eliminacion_pendiente()
@@ -122,9 +119,13 @@ def main(page: "ft.Page"):
             cancelar_confirmacion_eliminacion_pendiente()
 
     def cancelar_confirmacion_carpeta_si_cambia_ruta_pendiente() -> None:
-        if ruta_carpeta_eliminacion_pendiente is None:
+        if confirmacion_eliminacion_carpeta_pendiente is None:
             return
-        if (ruta_input.value or "") != ruta_visible_carpeta_eliminacion_pendiente:
+        if (
+            confirmacion_eliminacion_carpeta_pendiente["tipo"] != "carpeta"
+            or (ruta_input.value or "")
+            != confirmacion_eliminacion_carpeta_pendiente["ruta_visible"]
+        ):
             cancelar_confirmacion_carpeta_eliminacion_pendiente()
 
     def ruta_visible_cambiada(_e=None) -> None:
@@ -561,8 +562,7 @@ def main(page: "ft.Page"):
         actualizar_pagina()
 
     def eliminar_carpeta_handler(_e):
-        nonlocal ruta_carpeta_eliminacion_pendiente
-        nonlocal ruta_visible_carpeta_eliminacion_pendiente
+        nonlocal confirmacion_eliminacion_carpeta_pendiente
 
         cancelar_confirmacion_carpeta_si_cambia_ruta_pendiente()
 
@@ -588,10 +588,14 @@ def main(page: "ft.Page"):
             OSError,
             ValueError,
         ) as exc:
-            mostrar_error_archivo(exc)
+            if str(exc).startswith(
+                "No se puede eliminar el proyecto activo como carpeta normal."
+            ):
+                salida.value = str(exc)
+            else:
+                mostrar_error_archivo(exc)
             page.update()
             return
-
 
         if not ruta_resuelta.exists():
             salida.value = (
@@ -605,9 +609,17 @@ def main(page: "ft.Page"):
             page.update()
             return
 
-        if ruta_carpeta_eliminacion_pendiente != ruta_resuelta:
-            ruta_carpeta_eliminacion_pendiente = ruta_resuelta
-            ruta_visible_carpeta_eliminacion_pendiente = ruta_input.value or ""
+        if (
+            confirmacion_eliminacion_carpeta_pendiente is None
+            or confirmacion_eliminacion_carpeta_pendiente["tipo"] != "carpeta"
+            or confirmacion_eliminacion_carpeta_pendiente["ruta"] != ruta_resuelta
+        ):
+            cancelar_confirmacion_carpeta_eliminacion_pendiente()
+            confirmacion_eliminacion_carpeta_pendiente = {
+                "tipo": "carpeta",
+                "ruta": ruta_resuelta,
+                "ruta_visible": ruta_input.value or "",
+            }
             salida.value = (
                 "Pulsa de nuevo Eliminar carpeta para confirmar: " f"{ruta_resuelta}"
             )
