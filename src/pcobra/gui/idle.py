@@ -51,6 +51,35 @@ def validar_ruta_carpeta_eliminable_idle(
     return ruta_resuelta
 
 
+def validar_project_root_eliminable_idle(
+    project_root: str | Path, workspace_root: str | Path
+) -> Path:
+    """Valida el proyecto activo antes de permitir su eliminación desde el IDLE."""
+
+    project_root_resuelto = Path(project_root).resolve()
+    workspace_root_resuelto = Path(workspace_root).resolve()
+
+    if project_root_resuelto == workspace_root_resuelto:
+        raise ValueError("No se puede eliminar la raíz completa del workspace.")
+
+    if project_root_resuelto.parent != workspace_root_resuelto:
+        raise ValueError(
+            "La raíz del proyecto debe ser hija directa de la raíz del workspace."
+        )
+
+    if not project_root_resuelto.exists():
+        raise FileNotFoundError(
+            f"No existe el proyecto que se quiere eliminar: {project_root_resuelto}"
+        )
+
+    if not project_root_resuelto.is_dir():
+        raise NotADirectoryError(
+            f"La ruta del proyecto no es un directorio: {project_root_resuelto}"
+        )
+
+    return project_root_resuelto
+
+
 def main(page: "ft.Page"):
     """Interfaz principal del IDLE con archivos, árbol, ejecución, tokens, AST y sugerencias."""
     ft = runtime.require_flet()
@@ -111,8 +140,7 @@ def main(page: "ft.Page"):
         if confirmacion_eliminacion_archivo_pendiente is None:
             return
         if (
-            estado.ruta
-            != confirmacion_eliminacion_archivo_pendiente["ruta_estado"]
+            estado.ruta != confirmacion_eliminacion_archivo_pendiente["ruta_estado"]
             or (ruta_input.value or "")
             != confirmacion_eliminacion_archivo_pendiente["ruta_visible"]
         ):
@@ -371,14 +399,28 @@ def main(page: "ft.Page"):
 
     def eliminar_proyecto_handler(_e):
         nonlocal project_root, proyecto_cerrado
-        project_root_resuelto = project_root.resolve()
         workspace_root_resuelto = workspace_root.resolve()
 
-        if (
-            not hay_proyecto_activo()
-            or project_root_resuelto == workspace_root_resuelto
-        ):
+        if not hay_proyecto_activo():
             salida.value = "No hay proyecto activo para eliminar."
+            page.update()
+            return
+
+        try:
+            project_root_resuelto = validar_project_root_eliminable_idle(
+                project_root, workspace_root
+            )
+        except (
+            FileNotFoundError,
+            NotADirectoryError,
+            PermissionError,
+            OSError,
+            ValueError,
+        ) as exc:
+            if project_root.resolve() == workspace_root_resuelto:
+                salida.value = "No hay proyecto activo para eliminar."
+            else:
+                mostrar_error_archivo(exc)
             page.update()
             return
 
