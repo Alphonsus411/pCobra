@@ -69,36 +69,37 @@ Esta especificación define el alcance funcional del IDLE gráfico Cobra (`pcobr
 
 ## Borrado seguro
 
-- La eliminación de archivo activo requiere confirmación mínima antes de borrar.
+- Eliminar archivo opera sobre el archivo activo.
+- Eliminar carpeta opera sobre la ruta indicada o seleccionada dentro del proyecto activo.
+- Eliminar proyecto opera solo sobre el proyecto activo.
+- Deben existir confirmaciones mínimas antes del borrado de archivos, carpetas o proyectos.
 - Tras borrar el archivo activo, el editor queda en estado de archivo nuevo en memoria, sin ruta activa asociada, y el árbol lateral se reconstruye.
-- La eliminación de carpeta solo puede aplicarse a carpetas internas del proyecto activo.
-- La eliminación de carpeta requiere confirmación mínima y no puede usarse para borrar `project_root` ni `workspace_root`.
-- La eliminación de proyecto activo requiere confirmación mínima específica de proyecto.
 - Tras borrar el proyecto activo, el IDLE queda sin proyecto activo, con las operaciones de archivo bloqueadas hasta crear o abrir otro proyecto, y el árbol lateral vuelve al estado de workspace.
+- La eliminación de carpeta no puede usarse para borrar `project_root` ni `workspace_root`.
 
 ## POCs validados manualmente
 
 | POC | Validación manual | Estado |
 | --- | --- | --- |
-| POC-1 | Arranque del IDLE y creación automática del workspace por defecto. | verde |
-| POC-2 | Crear proyecto como hijo directo del workspace. | verde |
-| POC-3 | Abrir proyecto existente como hijo directo del workspace. | verde |
-| POC-4 | Cerrar proyecto activo y bloquear operaciones que requieren proyecto. | verde |
-| POC-5 | Nuevo archivo en memoria dentro del flujo del editor. | verde |
-| POC-6 | Abrir archivo del proyecto activo. | verde |
-| POC-7 | Guardar y Guardar como dentro del proyecto activo. | verde |
-| POC-8 | Recargar archivo activo desde disco. | verde |
-| POC-9 | Ejecutar código Cobra validado con Lexer y Parser. | verde |
-| POC-10 | Mostrar tokens y AST desde código validado. | verde |
-| POC-11A | Sugerencias del Libro con código válido. | verde |
-| POC-11B | Corrección con código válido. | verde |
-| POC-11C | Bloqueo de sugerencias ante error léxico. | verde |
-| POC-11D | Bloqueo de corrección ante error sintáctico. | verde |
-| POC-11E | Bloqueo de rutas con `../` fuera del proyecto activo. | verde |
-| POC-11F | Bloqueo de rutas absolutas fuera del proyecto activo. | verde |
-| POC-11G | Eliminación segura de archivo activo. | verde |
-| POC-11H | Eliminación segura de carpeta interna del proyecto. | verde |
-| POC-11I | Eliminación segura de proyecto activo hijo directo del workspace. | verde |
+| POC-1 | Arranque del IDLE y creación automática del workspace por defecto. | 🟢 Verde |
+| POC-2 | Crear proyecto como hijo directo del workspace. | 🟢 Verde |
+| POC-3 | Abrir proyecto existente como hijo directo del workspace. | 🟢 Verde |
+| POC-4 | Cerrar proyecto activo y bloquear operaciones que requieren proyecto. | 🟢 Verde |
+| POC-5 | Nuevo archivo en memoria dentro del flujo del editor. | 🟢 Verde |
+| POC-6 | Abrir archivo del proyecto activo. | 🟢 Verde |
+| POC-7 | Guardar y Guardar como dentro del proyecto activo. | 🟢 Verde |
+| POC-8 | Recargar archivo activo desde disco. | 🟢 Verde |
+| POC-9 | Ejecutar código Cobra validado con Lexer y Parser. | 🟢 Verde |
+| POC-10 | Mostrar tokens y AST desde código validado. | 🟢 Verde |
+| POC-11A | Sugerencias del Libro con código válido. | 🟢 Verde |
+| POC-11B | Corrección con código válido. | 🟢 Verde |
+| POC-11C | Bloqueo de sugerencias ante error léxico. | 🟢 Verde |
+| POC-11D | Bloqueo de corrección ante error sintáctico. | 🟢 Verde |
+| POC-11E | Bloqueo de rutas con `../` fuera del proyecto activo. | 🟢 Verde |
+| POC-11F | Bloqueo de rutas absolutas fuera del proyecto activo. | 🟢 Verde |
+| POC-11G | Eliminación segura de archivo activo. | 🟢 Verde |
+| POC-11H | Eliminación segura de carpeta interna del proyecto. | 🟢 Verde |
+| POC-11I | Eliminación segura de proyecto activo hijo directo del workspace. | 🟢 Verde |
 
 ## Limitaciones conocidas
 
