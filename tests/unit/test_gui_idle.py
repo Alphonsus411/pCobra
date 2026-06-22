@@ -1907,6 +1907,35 @@ def test_cerrar_proyecto_reinicia_al_workspace_y_bloquea_archivos(
     entrada.value = "imprimir('beta')"
     ruta_input.value = "src/main.cobra"
 
+    def fallar_si_cierra_escribiendo_o_borrando(*_args, **_kwargs):
+        raise AssertionError("Cerrar proyecto no debe escribir ni borrar archivos")
+
+    monkeypatch.setattr(
+        idle.runtime,
+        "guardar_archivo_activo_validado",
+        fallar_si_cierra_escribiendo_o_borrando,
+    )
+    monkeypatch.setattr(
+        idle.runtime,
+        "guardar_archivo_como_validado",
+        fallar_si_cierra_escribiendo_o_borrando,
+    )
+    monkeypatch.setattr(
+        idle.runtime,
+        "eliminar_archivo_validado",
+        fallar_si_cierra_escribiendo_o_borrando,
+    )
+    monkeypatch.setattr(
+        idle.runtime,
+        "eliminar_directorio_validado",
+        fallar_si_cierra_escribiendo_o_borrando,
+    )
+    monkeypatch.setattr(
+        idle.runtime,
+        "eliminar_proyecto_validado",
+        fallar_si_cierra_escribiendo_o_borrando,
+    )
+
     cerrar_proyecto.on_click(None)
 
     assert proyecto.exists()
