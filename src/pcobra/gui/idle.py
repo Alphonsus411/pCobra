@@ -363,6 +363,7 @@ def main(page: "ft.Page"):
         project_root = workspace_root
         proyecto_cerrado = True
         limpiar_archivo_activo()
+        estado_archivo.value = "Archivo nuevo (sin guardar)"
         reconstruir_arbol()
         raiz_input.value = str(project_root)
         salida.value = "Proyecto cerrado."
