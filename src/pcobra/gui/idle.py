@@ -246,12 +246,15 @@ def main(page: "ft.Page"):
             lineas.append(f"Ruta completa: {project_resuelto}")
         return "\n".join(lineas)
 
+    estado_workspace_proyecto = runtime.flet_text(
+        ft, value=formatear_estado_workspace_proyecto()
+    )
+
     def reconstruir_arbol() -> bool:
         raiz_input.value = str(project_root)
+        estado_workspace_proyecto.value = formatear_estado_workspace_proyecto()
         arbol.controls.clear()
-        arbol.controls.append(
-            runtime.flet_text(ft, value=formatear_estado_workspace_proyecto())
-        )
+        arbol.controls.append(estado_workspace_proyecto)
         try:
             arbol_canonico = runtime.crear_arbol_directorios(
                 ft,
