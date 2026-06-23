@@ -64,6 +64,12 @@ Plantilla reutilizable:
 
 - `docs/templates/feature_rollout_checklist.md`
 
+La plantilla exige documentar el resumen de archivos modificados, las pruebas
+añadidas, el resultado de comandos ejecutados, las POCs manuales pendientes,
+las validaciones manuales no ejecutadas y las confirmaciones explícitas de
+alcance cuando no se tocaron lexer, parser, gramática, tokens, AST,
+transpiladores, sintaxis Cobra ni dependencias.
+
 Gates de CI relacionados:
 
 - `python scripts/ci/audit_feature_rollout.py --base <sha_base> --head <sha_head>`
