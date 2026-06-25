@@ -63,6 +63,10 @@ EXPECTED_TRANSPILER_MODULES = tuple(
     f"src/pcobra/cobra/transpilers/transpiler/{filename}"
     for filename in official_transpiler_module_filenames()
 )
+COMPAT_LEGACY_TRANSPILER_SHIMS = tuple(
+    f"src/pcobra/cobra/transpilers/transpiler/to_{target}.py"
+    for target in INTERNAL_LEGACY_TARGETS
+)
 EXPECTED_GOLDEN_FILES = tuple(
     f"tests/integration/transpilers/golden/{target}.golden"
     for target in FINAL_OFFICIAL_TARGETS
@@ -595,20 +599,26 @@ def validate_targeted_artifact_roots(
         if not (set(path.relative_to(ROOT).parts) & ignored_parts)
         and "legacy" not in path.relative_to(ROOT).parts
     }
-    expected_forward_paths = set(EXPECTED_TRANSPILER_MODULES) | {
-        "src/pcobra/cobra/transpilers/transpiler/to_js.py"
-    }
+    expected_forward_paths = (
+        set(EXPECTED_TRANSPILER_MODULES)
+        | set(COMPAT_LEGACY_TRANSPILER_SHIMS)
+        | {"src/pcobra/cobra/transpilers/transpiler/to_js.py"}
+    )
     for missing in sorted(expected_forward_paths - found_forward_paths):
         errors.append(
             f"{missing}: falta módulo oficial to_*.py para un backend canónico"
         )
     for extra in sorted(found_forward_paths - expected_forward_paths):
         errors.append(
-            f"{extra}: módulo to_*.py extra fuera de política (target retirado o alias interno expuesto)"
+            f"{extra}: módulo to_*.py extra fuera de política (target retirado o alias interno no controlado)"
         )
 
     found_forward = {path.name for path in TRANSPILER_DIR.glob("to_*.py")}
-    expected_forward = {Path(path).name for path in EXPECTED_TRANSPILER_MODULES} | {"to_js.py"}
+    expected_forward = (
+        {Path(path).name for path in EXPECTED_TRANSPILER_MODULES}
+        | {Path(path).name for path in COMPAT_LEGACY_TRANSPILER_SHIMS}
+        | {"to_js.py"}
+    )
     if found_forward != expected_forward:
         errors.append(
             f"{TRANSPILER_DIR.relative_to(ROOT).as_posix()}: directorio canónico desalineado -> "
@@ -617,7 +627,7 @@ def validate_targeted_artifact_roots(
     unexpected_forward = sorted(found_forward - expected_forward)
     if unexpected_forward:
         errors.append(
-            f"{TRANSPILER_DIR.relative_to(ROOT).as_posix()}: inventario to_*.py contiene módulos no permitidos -> "
+            f"{TRANSPILER_DIR.relative_to(ROOT).as_posix()}: inventario to_*.py contiene módulos no permitidos ni shims legacy controlados -> "
             f"{unexpected_forward}"
         )
     expected_registry_modules = {
