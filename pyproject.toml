@@ -30,7 +30,7 @@ dependencies = [
     "pandas>=2.3.3,<3",
     "agix>=1.4,<1.5",
     "chardet>=5.2,<6",
-    "holobit-sdk>=1.2,<2; python_version >= '3.10'",
+    "holobit-sdk>=1.0.8,<1.2; python_version >= '3.10'",
     "smooth-criminal>=0.8,<1",
     "tomli>=2.4,<3",
     "PyYAML>=6.0.3,<7",
