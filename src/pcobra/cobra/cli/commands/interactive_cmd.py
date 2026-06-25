@@ -41,6 +41,7 @@ except ModuleNotFoundError:  # pragma: no cover - entornos sin prompt_toolkit
 from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.cli.execution_pipeline import (
     construir_script_sandbox_canonico,
+    ejecutar_usar_prevalidacion,
     prevalidar_y_parsear_codigo,
     resolver_interpretador_cls,
     validar_ast_seguro,
@@ -560,8 +561,7 @@ class InteractiveCommand(BaseCommand):
                 if getattr(nodo, "__class__", type("", (), {})).__name__ == "NodoUsar"
             ]
             if nodos_usar:
-                for nodo_usar in nodos_usar:
-                    self.interpretador.ejecutar_nodo(nodo_usar)
+                ejecutar_usar_prevalidacion(nodos_usar, self.interpretador)
             validar_ast_seguro(
                 ast,
                 validadores_extra=self._extra_validators_repl,

@@ -550,6 +550,9 @@ class InterpretadorCobra:
             self._main_file, self._main_file
         )
         self._current_module_stack: list[Path] = []
+        # Prepasadas de modo seguro solo deben poblar/validar metadatos de `usar`
+        # sin ejecutar efectos de módulos Cobra de proyecto.
+        self._usar_prepass_metadata_only = False
         # Debe ejecutarse siempre después de crear _validador y _usar_symbol_metadata.
         self.asegurar_estado_runtime_inicial()
 
@@ -2298,6 +2301,15 @@ class InterpretadorCobra:
 
         self._current_module_stack.append(ruta_modulo)
         try:
+            if self._usar_prepass_metadata_only:
+                for subnodo in ast:
+                    modo_prev = self._set_mode("analysis")
+                    try:
+                        self._validar(subnodo)
+                    finally:
+                        self._set_mode(modo_prev)
+                return None
+
             for subnodo in ast:
                 self.ejecutar_nodo(subnodo)
         finally:
