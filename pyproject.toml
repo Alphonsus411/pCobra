@@ -8,7 +8,7 @@ version = "10.1.1"
 description = "Un lenguaje de programación en español para simulaciones y más."
 authors = [ {name = "Adolfo González Hernández", email = "adolfogonzal@gmail.com"} ]
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.11,<3.14"
 license = { file = "LICENSE" }
 keywords = ["cobra", "lenguaje", "cli"]
 classifiers = [
@@ -19,7 +19,7 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
 ]
 
-# Política Python >=3.11: las dependencias se fijan al tramo más reciente
+# Política Python >=3.11,<3.14: las dependencias se fijan al tramo más reciente
 # publicado compatible con la superficie actual del proyecto.
 dependencies = [
     "numpy>=2.1.3,<2.2",
