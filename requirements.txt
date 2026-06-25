@@ -35,8 +35,10 @@ contourpy==1.3.3
     # via matplotlib
 cycler==0.12.1
     # via matplotlib
-fastapi==0.136.3
-    # via agix
+fastapi==0.128.8
+    # via
+    #   agix
+    #   pcobra (pyproject.toml)
 flet==0.28.3
     # via
     #   agix
@@ -158,7 +160,7 @@ six==1.17.0
     #   repath
 smooth-criminal==0.8.0
     # via pcobra (pyproject.toml)
-starlette==1.2.1
+starlette==0.52.1
     # via fastapi
 sympy==1.14.0
     # via pcobra (pyproject.toml)
