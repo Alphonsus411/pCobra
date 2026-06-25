@@ -66,10 +66,17 @@ STANDARD_IMPORTS = {
         *build_javascript_standard_runtime_lines(),
     ],
     "rust": build_rust_standard_runtime_lines(),
+    # Entradas legacy internas: no forman parte de ACTIVE_RUNTIME_BACKENDS ni del
+    # contrato público, pero mantienen operativos los transpiladores históricos
+    # cuando se importan con PCOBRA_ENABLE_LEGACY_TRANSPILERS=1.
+    "go": [],
     "cpp": [
         "#include <iostream>",
         "#include <stdexcept>",
     ],
+    "java": [],
+    "wasm": [],
+    "asm": [],
 }
 
 HOOK_SIGNATURE_MARKERS = {
@@ -102,6 +109,13 @@ RUNTIME_ERROR_MESSAGE = {
 
 
 RUNTIME_HOOKS = {
+    # Hooks legacy internos: solo se consultan desde módulos bajo
+    # transpiler.legacy, ya protegidos por opt-in explícito.
+    "go": [],
+    "cpp": [],
+    "java": [],
+    "wasm": [],
+    "asm": [],
     "python": [
         "def _cobra_missing_holobit(feature):",
         "    raise ModuleNotFoundError(",
