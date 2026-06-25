@@ -56,8 +56,10 @@ docstring-to-markdown==0.17
     # via python-lsp-server
 executing==2.2.1
     # via stack-data
-fastapi==0.136.3
-    # via agix
+fastapi==0.128.8
+    # via
+    #   agix
+    #   pcobra (pyproject.toml)
 flet==0.28.3
     # via
     #   agix
@@ -280,7 +282,7 @@ sortedcontainers==2.4.0
     # via hypothesis
 stack-data==0.6.3
     # via ipython
-starlette==1.2.1
+starlette==0.52.1
     # via fastapi
 sympy==1.14.0
     # via pcobra (pyproject.toml)

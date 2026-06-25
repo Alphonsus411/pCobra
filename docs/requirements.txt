@@ -44,8 +44,10 @@ docutils==0.20.1
     #   myst-parser
     #   sphinx
     #   sphinx-rtd-theme
-fastapi==0.136.3
-    # via agix
+fastapi==0.128.8
+    # via
+    #   agix
+    #   pcobra (pyproject.toml)
 flet==0.28.3
     # via
     #   agix
@@ -215,7 +217,7 @@ sphinxcontrib-qthelp==2.0.0
     # via sphinx
 sphinxcontrib-serializinghtml==2.0.0
     # via sphinx
-starlette==1.2.1
+starlette==0.52.1
     # via fastapi
 sympy==1.14.0
     # via pcobra (pyproject.toml)
