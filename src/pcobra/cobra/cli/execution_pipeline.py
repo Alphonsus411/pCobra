@@ -128,6 +128,17 @@ def ejecutar_ast(ast: Any, interpreter: Any) -> Any:
     return interpreter.ejecutar_ast(ast)
 
 
+def ejecutar_usar_prevalidacion(nodos_usar: Any, interpreter: Any) -> Any:
+    """Ejecuta la prepasada segura de `usar` sin efectos en módulos de proyecto."""
+
+    previo = getattr(interpreter, "_usar_prepass_metadata_only", False)
+    setattr(interpreter, "_usar_prepass_metadata_only", True)
+    try:
+        return ejecutar_ast(nodos_usar, interpreter)
+    finally:
+        setattr(interpreter, "_usar_prepass_metadata_only", previo)
+
+
 def resolver_validadores_seguridad(
     extra_validators: Any,
     *,
@@ -352,7 +363,7 @@ def ejecutar_codigo_canonico(
             nodo for nodo in ast if getattr(nodo, "__class__", type("", (), {})).__name__ == "NodoUsar"
         ]
         if nodos_usar:
-            ejecutar_ast(nodos_usar, interpretador)
+            ejecutar_usar_prevalidacion(nodos_usar, interpretador)
         validar_ast_seguro(
             ast,
             validadores_extra=extra_validators,
