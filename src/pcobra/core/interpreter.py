@@ -2453,6 +2453,9 @@ class InterpretadorCobra:
             es_repl_estricto = self._repl_usar_alias_map is not None
             mapa_repl = self._repl_usar_alias_map or REPL_COBRA_MODULE_MAP
 
+            if es_repl_estricto and nombre_modulo not in mapa_repl:
+                raise PermissionError(REPL_USAR_EXTERNAL_MODULE_ERROR)
+
             if nombre_modulo not in USAR_COBRA_ALLOWLIST:
                 # Trazabilidad explícita para intentos de importar módulos de backend directamente.
                 if nombre_modulo in mapa_repl.values():
@@ -2483,8 +2486,12 @@ class InterpretadorCobra:
             if isinstance(nombre_modulo, str):
                 nombre_modulo_limpio = nombre_modulo.strip()
                 if (
-                    "." in nombre_modulo_limpio
-                    or nombre_modulo_limpio not in USAR_COBRA_ALLOWLIST
+                    self._repl_usar_alias_map is None
+                    and not nombre_modulo_limpio.startswith("pcobra")
+                    and (
+                        "." in nombre_modulo_limpio
+                        or nombre_modulo_limpio not in USAR_COBRA_ALLOWLIST
+                    )
                 ):
                     try:
                         return self._ejecutar_usar_modulo_proyecto(nombre_modulo_limpio)
@@ -2645,6 +2652,8 @@ class InterpretadorCobra:
             else:
                 logging.error("Error al usar el módulo '%s': %s", nodo.modulo, exc)
             if isinstance(exc, PermissionError):
+                if str(exc) == REPL_USAR_EXTERNAL_MODULE_ERROR or str(exc).startswith("usar_error["):
+                    raise
                 mensaje = formatear_error_usar_usuario("modulo_fuera_catalogo", nodo.modulo)
                 if detalle_usar_habilitado:
                     mensaje = f"{mensaje} ({exc})"
