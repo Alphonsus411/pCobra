@@ -201,6 +201,28 @@ def test_resolver_modulo_cobra_proyecto_resuelve_modulo_anidado(tmp_path):
     assert resolver_modulo_cobra_proyecto("a.b.c", project_root=proyecto) == modulo.resolve()
 
 
+def test_interpretador_usar_proyecto_simple_se_bloquea_en_repl_estricto(monkeypatch, tmp_path):
+    import pytest
+
+    proyecto = tmp_path / "app"
+    proyecto.mkdir()
+    (proyecto / "cobra.toml").write_text("[proyecto]\n", encoding="utf-8")
+    principal = proyecto / "main.co"
+    principal.write_text("", encoding="utf-8")
+    (proyecto / "saludos.co").write_text("", encoding="utf-8")
+
+    def fake_cargar_ast_modulo(_ruta, **_kwargs):
+        raise AssertionError("REPL estricto no debe resolver módulos Cobra de proyecto")
+
+    monkeypatch.setattr("pcobra.core.interpreter.cargar_ast_modulo", fake_cargar_ast_modulo)
+
+    interp = InterpretadorCobra(main_file=principal)
+    interp.configurar_restriccion_usar_repl({"numero": "numero", "texto": "texto"})
+
+    with pytest.raises(PermissionError, match=r"módulo externo no permitido en REPL estricto"):
+        interp.ejecutar_usar(SimpleNamespace(modulo="saludos"))
+
+
 def test_interpretador_usar_proyecto_misma_carpeta_con_nombre_simple(monkeypatch, tmp_path):
     proyecto = tmp_path / "app"
     proyecto.mkdir()
