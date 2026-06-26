@@ -1503,3 +1503,54 @@ def test_eliminar_archivo_activo_reinicia_editor_y_estado_visual(monkeypatch, tm
     assert ruta_input.value == ""
     assert salida.value == f"Archivo eliminado: {destino}"
     assert estado_archivo.value == "Archivo nuevo (sin guardar)"
+
+
+def test_eliminar_archivo_activo_bloquea_cambios_sin_guardar(monkeypatch, tmp_path):
+    (
+        ft,
+        page,
+        entrada,
+        ruta_input,
+        salida,
+        _abrir,
+        guardar_como,
+    ) = _preparar_idle_archivos(monkeypatch, tmp_path)
+    proyecto_input = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.TextField) and c.kwargs.get("label") == "Proyecto activo"
+    )
+    crear_proyecto = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.ElevatedButton) and c.text == "Crear proyecto"
+    )
+    eliminar = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.ElevatedButton) and c.text == "Eliminar"
+    )
+
+    proyecto_input.value = "proyecto"
+    crear_proyecto.on_click(None)
+    destino = (
+        idle.runtime.resolver_workspace_root_idle()
+        / "proyecto"
+        / "src"
+        / "con-cambios.cobra"
+    ).resolve()
+    entrada.value = "imprimir('original')"
+    ruta_input.value = "src/con-cambios"
+    guardar_como.on_click(None)
+
+    entrada.value = "imprimir('editado')"
+    entrada.on_change(None)
+    eliminar.on_click(None)
+
+    assert destino.exists()
+    assert entrada.value == "imprimir('editado')"
+    assert ruta_input.value == str(destino)
+    assert salida.value == (
+        "Guarda o descarta los cambios sin guardar antes de eliminar "
+        f"el archivo: {destino}"
+    )
