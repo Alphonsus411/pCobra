@@ -282,8 +282,10 @@ sortedcontainers==2.4.0
     # via hypothesis
 stack-data==0.6.3
     # via ipython
-starlette==0.52.1
-    # via fastapi
+starlette==0.49.3
+    # via
+    #   fastapi
+    #   pcobra (pyproject.toml)
 sympy==1.14.0
     # via pcobra (pyproject.toml)
 tabulate==0.10.0
