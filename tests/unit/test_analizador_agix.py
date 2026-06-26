@@ -182,10 +182,10 @@ def test_sugerencia_principal_referencia_regla_interna_trazable():
 def test_motor_canonico_es_agix_y_no_agi_core():
     """El contrato público mantiene agix como dependencia oficial y fachada GUI."""
 
-    pyproject = tomllib.loads(Path("pyproject.toml").read_text())
+    pyproject = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))
     dependencias = pyproject["project"]["dependencies"]
-    requirements_docs = Path("docs/requirements.txt").read_text()
-    libro = Path("docs/LIBRO_PROGRAMACION_COBRA.md").read_text()
+    requirements_docs = Path("docs/requirements.txt").read_text(encoding="utf-8")
+    libro = Path("docs/LIBRO_PROGRAMACION_COBRA.md").read_text(encoding="utf-8")
 
     assert any(dep.startswith("agix") for dep in dependencias)
     assert not any(dep.startswith("agi-core") for dep in dependencias)
