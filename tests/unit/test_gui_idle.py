@@ -6,6 +6,8 @@ import sys
 from types import ModuleType, SimpleNamespace
 from unittest.mock import MagicMock
 
+import pytest
+
 from pcobra.gui import idle
 
 
@@ -1198,3 +1200,41 @@ def test_crear_proyecto_normaliza_nombre_seguro(monkeypatch, tmp_path):
     assert (proyecto / "src").is_dir()
     assert (proyecto / "README.md").is_file()
     assert salida.value == f"Proyecto creado: {proyecto}"
+
+
+def test_crear_proyecto_rechaza_nombre_symlink_fuera_workspace(monkeypatch, tmp_path):
+    (
+        ft,
+        page,
+        _entrada,
+        _ruta_input,
+        salida,
+        _abrir,
+        _guardar_como,
+    ) = _preparar_idle_archivos(monkeypatch, tmp_path)
+    externo = tmp_path.parent / f"{tmp_path.name}_externo"
+    externo.mkdir()
+    symlink = tmp_path / "proyecto_symlink"
+    try:
+        symlink.symlink_to(externo, target_is_directory=True)
+    except (OSError, NotImplementedError) as exc:
+        pytest.skip(f"No se pueden crear symlinks en este entorno: {exc}")
+
+    proyecto_input = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.TextField) and c.kwargs.get("label") == "Proyecto activo"
+    )
+    crear_proyecto = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.ElevatedButton) and c.text == "Crear proyecto"
+    )
+
+    proyecto_input.value = "proyecto_symlink"
+    crear_proyecto.on_click(None)
+
+    assert not (externo / "src").exists()
+    assert not (externo / "README.md").exists()
+    assert salida.value.startswith("error: ")
+    assert "debe crearse dentro" in salida.value
