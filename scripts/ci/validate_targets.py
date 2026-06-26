@@ -101,6 +101,7 @@ REPO_AUDIT_ALLOWED_FILE_PATHS = frozenset(
         "scripts/validate_targets_policy.py",
         "scripts/ci/validate_targets.py",
         "scripts/ci/audit_targets_contract.py",
+        "scripts/ci/audit_public_backend_exposure_terms.py",
         "scripts/audit_retired_targets.py",
         "scripts/ci/validate_workflow_target_matrix.py",
         "tests/unit/test_cli_target_aliases.py",
