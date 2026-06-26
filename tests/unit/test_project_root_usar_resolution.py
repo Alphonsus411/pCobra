@@ -528,7 +528,7 @@ def test_api_e_interpretador_comparten_cache_por_ruta_canonica(monkeypatch, tmp_
 
     assert interp.variables["hoy"] == 1
     assert cargas == [modulo.resolve()]
-    assert list(obtener_cache_modulos_cobra_proyecto()) == [modulo.resolve()]
+    assert list(obtener_cache_modulos_cobra_proyecto()) == [(modulo.resolve(), False)]
 
 
 def test_interpretador_usar_proyecto_detecta_ciclo_directo_self(monkeypatch, tmp_path):

@@ -28,7 +28,7 @@ _VALID_NAME_RE = re.compile(r"^[a-z][a-z0-9_]*$")
 # Segmentos seguros para módulos de proyecto: ruta lógica punteada, no ruta del sistema.
 _VALID_PROJECT_MODULE_SEGMENT_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 _PROJECT_MODULE_FORBIDDEN_CHARS = frozenset('/\\@$%*?"\'<>|;`!()[]{}=+,')
-_USAR_PROJECT_MODULE_CACHE: dict[Path, dict[str, Any]] = {}
+_USAR_PROJECT_MODULE_CACHE: dict[tuple[Path, bool], dict[str, Any]] = {}
 _USAR_PROJECT_LOADING_STACK: list[Path] = []
 _IMPORT_CO_AST_CACHE: dict[Path, list[Any]] = {} # Nueva caché para ASTs de .co
 
@@ -280,7 +280,7 @@ def resolver_ruta_canonica_modulo_cobra_proyecto(
     )
 
 
-def obtener_cache_modulos_cobra_proyecto() -> dict[Path, dict[str, Any]]:
+def obtener_cache_modulos_cobra_proyecto() -> dict[tuple[Path, bool], dict[str, Any]]:
     """Expone la caché compartida de módulos de proyecto para el intérprete."""
 
     return _USAR_PROJECT_MODULE_CACHE
@@ -475,6 +475,7 @@ def _cargar_exports_modulo_cobra_proyecto(
     *,
     project_root: Path,
     current_file: Path | None = None,
+    safe_mode: bool = False,
 ) -> dict[str, Any]:
     """Carga un módulo Cobra de proyecto usando resolución canónica y cache."""
 
@@ -489,8 +490,9 @@ def _cargar_exports_modulo_cobra_proyecto(
         current_file=current_file,
     )
 
-    if ruta_modulo in _USAR_PROJECT_MODULE_CACHE:
-        return _USAR_PROJECT_MODULE_CACHE[ruta_modulo]
+    clave_cache = (ruta_modulo, safe_mode)
+    if clave_cache in _USAR_PROJECT_MODULE_CACHE:
+        return _USAR_PROJECT_MODULE_CACHE[clave_cache]
 
     if ruta_modulo in _USAR_PROJECT_LOADING_STACK:
         cadena = formatear_ciclo_modulos_cobra_proyecto(ruta_modulo)
@@ -506,7 +508,7 @@ def _cargar_exports_modulo_cobra_proyecto(
         raise FileNotFoundError(f"Módulo no encontrado: {nombre}") from exc
 
     interpretador = InterpretadorCobra(
-        safe_mode=False, main_file=current_file or ruta_modulo
+        safe_mode=safe_mode, main_file=current_file or ruta_modulo
     )
     interpretador._project_root = canonicalizar_ruta_usar_proyecto(project_root)
     interpretador._main_file = (
@@ -520,20 +522,26 @@ def _cargar_exports_modulo_cobra_proyecto(
         for subnodo in ast:
             if isinstance(subnodo, NodoExport):
                 continue
+            if safe_mode:
+                modo_previo = interpretador._set_mode("analysis")
+                try:
+                    interpretador._validar(subnodo)
+                finally:
+                    interpretador._set_mode(modo_previo)
             interpretador.ejecutar_nodo(subnodo)
         exports = _extraer_exports_modulo_cobra_proyecto(
             ast,
             interpretador.contextos[-1],
             ruta_modulo=ruta_modulo,
         )
-        _USAR_PROJECT_MODULE_CACHE[ruta_modulo] = _construir_exports_usar(
+        _USAR_PROJECT_MODULE_CACHE[clave_cache] = _construir_exports_usar(
             list(exports["simbolos"]),
             {
                 nombre: dict(metadata)
                 for nombre, metadata in exports["metadata"].items()
             },
         )
-        return _USAR_PROJECT_MODULE_CACHE[ruta_modulo]
+        return _USAR_PROJECT_MODULE_CACHE[clave_cache]
     finally:
         memoria_local = interpretador.mem_contextos.pop()
         for idx, tam in memoria_local.values():
@@ -548,6 +556,7 @@ def usar_modulo(
     *,
     project_root: str | Path | None = None,
     current_file: str | Path | None = None,
+    safe_mode: bool = False,
 ) -> dict[str, Any]:
     """API única para resolver ``usar`` en runtime y transpilación Python.
 
@@ -576,6 +585,7 @@ def usar_modulo(
                     nombre_limpio,
                     project_root=root,
                     current_file=current,
+                    safe_mode=safe_mode,
                 )
                 return exports
             except (FileNotFoundError, ValueError) as exc:

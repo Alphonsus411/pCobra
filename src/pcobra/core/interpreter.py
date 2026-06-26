@@ -2482,6 +2482,7 @@ class InterpretadorCobra:
                         nombre_modulo_limpio,
                         project_root=self._project_root,
                         current_file=self._main_file,
+                        safe_mode=self.safe_mode,
                     )
                     self._inyectar_exports_modulo_proyecto(exports)
                     return

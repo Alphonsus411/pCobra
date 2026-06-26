@@ -10,6 +10,7 @@ from pcobra.cobra.usar_loader import (
     usar_modulo,
 )
 from pcobra.cobra.core import Lexer, Parser # Importar Lexer y Parser
+from pcobra.core.semantic_validators import PrimitivaPeligrosaError
 
 # Fixture para un intérprete limpio y aislado para cada test
 @pytest.fixture
@@ -135,6 +136,32 @@ def test_usar_modulo_proyecto_exportar_api_idempotencia_y_conflicto(
     interprete_conflicto.contextos[-1].define("hoy", "valor preexistente incompatible")
     with pytest.raises(NameError, match="conflicto de símbolos"):
         interprete_conflicto.ejecutar_ast(ast[:1])
+
+
+
+def test_usar_modulo_proyecto_respeta_safe_mode_explicito(
+    crear_modulo_cobra, tmp_path
+):
+    crear_modulo_cobra(
+        "peligroso.co",
+        """
+        leer_archivo("README.md")
+        exportar valor
+        variable valor := 1
+        """,
+    )
+
+    with pytest.raises(PrimitivaPeligrosaError, match="leer_archivo|Primitiva peligrosa"):
+        usar_modulo(
+            "peligroso",
+            project_root=tmp_path,
+            current_file=tmp_path / "main.co",
+            safe_mode=True,
+        )
+
+    assert ((tmp_path / "peligroso.co").resolve(), True) not in (
+        obtener_cache_modulos_cobra_proyecto()
+    )
 
 def test_usar_modulo_anidado(interprete_limpio, crear_modulo_cobra, tmp_path):
     crear_modulo_cobra(
