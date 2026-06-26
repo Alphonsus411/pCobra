@@ -573,16 +573,17 @@ def _cargar_exports_modulo_cobra_proyecto(
                 continue
             if isinstance(subnodo, NodoUsar) or subnodo.__class__.__name__ == "NodoUsar":
                 modulo_hijo = str(subnodo.modulo).strip().strip('\"\'')
-                ruta_hijo = resolver_ruta_canonica_modulo_cobra_proyecto(
-                    modulo_hijo,
-                    project_root=project_root,
-                    current_file=ruta_modulo,
-                )
-                if ruta_hijo in _USAR_PROJECT_LOADING_STACK:
-                    cadena = formatear_ciclo_modulos_cobra_proyecto(
-                        ruta_hijo, project_root=project_root
+                if normalizar_nombre_usar(modulo_hijo) not in USAR_COBRA_PUBLIC_MODULES:
+                    ruta_hijo = resolver_ruta_canonica_modulo_cobra_proyecto(
+                        modulo_hijo,
+                        project_root=project_root,
+                        current_file=ruta_modulo,
                     )
-                    raise ImportError(f"Ciclo de módulos detectado en usar: {cadena}")
+                    if ruta_hijo in _USAR_PROJECT_LOADING_STACK:
+                        cadena = formatear_ciclo_modulos_cobra_proyecto(
+                            ruta_hijo, project_root=project_root
+                        )
+                        raise ImportError(f"Ciclo de módulos detectado en usar: {cadena}")
             interpretador.ejecutar_nodo(subnodo)
         exports = _extraer_exports_modulo_cobra_proyecto(
             ast,

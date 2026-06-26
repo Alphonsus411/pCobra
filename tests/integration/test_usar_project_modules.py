@@ -125,6 +125,20 @@ def test_usar_carga_una_sola_vez_con_cache_y_monkeypatch(crear_modulo_cobra, mon
     assert llamadas.count("util.co") == 1
 
 
+def test_usar_modulo_proyecto_preserva_usar_oficial_texto(crear_modulo_cobra):
+    crear_modulo_cobra(
+        "util.co",
+        """
+        usar texto
+        variable saludo_mayusculas := mayusculas("hola")
+        """,
+    )
+    main = crear_modulo_cobra("main.co", "usar util")
+
+    interprete = ejecutar_archivo(main)
+
+    assert interprete.obtener_variable("saludo_mayusculas") == "HOLA"
+
 def test_usar_detecta_ciclo_directo(crear_modulo_cobra):
     crear_modulo_cobra("a.co", """
         usar a
