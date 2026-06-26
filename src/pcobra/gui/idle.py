@@ -26,7 +26,7 @@ def main(page: "ft.Page"):
     # como helper FilePicker para integraciones alternativas de Flet.
     ruta_input = runtime.flet_text_field(ft, label="Ruta", value="", expand=True)
     raiz_input = runtime.flet_text_field(
-        ft, label="Proyecto activo", value=str(project_root), expand=True
+        ft, label="Proyecto activo", value=str(project_root)
     )
     arbol = runtime.flet_list_view(ft, expand=True, spacing=2, auto_scroll=False)
     lenguajes = list(runtime.gui_target_choices())
