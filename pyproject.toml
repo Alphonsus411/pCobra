@@ -39,8 +39,9 @@ dependencies = [
     "pexpect>=4.9,<5",
     "requests>=2.32.5,<2.33",
     "flet>=0.28.3,<0.29",
-    # agix pulls FastAPI transitively; keep it on the newest Python 3.9-compatible line.
+    # agix pulls FastAPI/Starlette transitively; keep both on the newest Python 3.9-compatible lines.
     "fastapi>=0.128.8,<0.129",
+    "starlette>=0.49.3,<0.50",
     "packaging>=26,<27",
     "pybind11>=3.0,<4",
     "tree-sitter>=0.23.2,<0.24",
