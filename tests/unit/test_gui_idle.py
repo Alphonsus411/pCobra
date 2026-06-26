@@ -222,7 +222,7 @@ def test_panel_lateral_organiza_proyecto_en_columna(monkeypatch, tmp_path):
     raiz_input = barra_raiz_arbol.controls[0]
     assert isinstance(raiz_input, ft.TextField)
     assert raiz_input.kwargs.get("label") == "Proyecto activo"
-    assert raiz_input.kwargs.get("expand") is True
+    assert raiz_input.kwargs.get("expand") is not True
 
     barra_botones = barra_raiz_arbol.controls[1]
     assert isinstance(barra_botones, (ft.Row, ft.Column))
