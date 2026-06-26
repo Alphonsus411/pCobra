@@ -39,45 +39,45 @@ features:
       - // @decorador traza
       - '// decorador aplicado: saludar = traza(saludar)'
   decorator_support:
-    memoizar:
-      python: full
-      javascript: full
-      rust: full
-    orden_total:
-      python: full
-      javascript: full
-      rust: full
-    despachar_por_tipo:
-      python: full
-      javascript: full
-      rust: full
-    depreciado:
-      python: full
-      javascript: full
-      rust: full
-    sincronizar:
-      python: full
-      javascript: full
-      rust: full
-    reintentar:
-      python: full
-      javascript: full
-      rust: full
-    reintentar_async:
-      python: full
-      javascript: full
-      rust: full
-    dataclase:
-      python: full
-      javascript: full
-      rust: full
-    temporizar:
-      python: full
-      javascript: full
-      rust: full
+      memoizar:
+        python: full
+        javascript: full
+        rust: full
+      orden_total:
+        python: full
+        javascript: full
+        rust: full
+      despachar_por_tipo:
+        python: full
+        javascript: full
+        rust: full
+      depreciado:
+        python: full
+        javascript: full
+        rust: full
+      sincronizar:
+        python: full
+        javascript: full
+        rust: full
+      reintentar:
+        python: full
+        javascript: full
+        rust: full
+      reintentar_async:
+        python: full
+        javascript: full
+        rust: full
+      dataclase:
+        python: full
+        javascript: full
+        rust: full
+      temporizar:
+        python: full
+        javascript: full
+        rust: full
   python_expected_markers:
-  - from corelibs import *
-  - from standard_library import *
+  - import pcobra.corelibs as _pcobra_corelibs
+  - import pcobra.standard_library as _pcobra_standard_library
 - id: imports_corelibs
   cobra_syntax: 'usar corelibs
 
@@ -124,8 +124,8 @@ features:
       - use crate::corelibs::*;
       - use crate::standard_library::*;
   python_expected_markers:
-  - from corelibs import *
-  - from standard_library import *
+  - import pcobra.corelibs as _pcobra_corelibs
+  - import pcobra.standard_library as _pcobra_standard_library
   - longitud(3)
 - id: manejo_errores
   cobra_syntax: "intentar:\n    transformar(h, \"operacion_no_soportada\")\ncapturar\
