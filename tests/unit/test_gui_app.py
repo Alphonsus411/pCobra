@@ -30,9 +30,11 @@ def _fake_flet():
             self.disabled = kwargs.get("disabled", False)
 
     class ElevatedButton:
-        def __init__(self, text, on_click=None):
+        def __init__(self, text, on_click=None, **kwargs):
             self.text = text
             self.on_click = on_click
+            self.disabled = kwargs.get("disabled", False)
+            self.tooltip = kwargs.get("tooltip")
 
     class TextButton(ElevatedButton):
         pass
