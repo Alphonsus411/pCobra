@@ -366,6 +366,13 @@ def main(page: "ft.Page"):
         ruta_resuelta = resolver_ruta_archivo_idle(estado.ruta)
         if ruta_resuelta is None:
             return
+        if estado.cambios_sin_guardar:
+            salida.value = (
+                "Guarda o descarta los cambios sin guardar antes de eliminar "
+                f"el archivo: {ruta_resuelta}"
+            )
+            page.update()
+            return
         try:
             runtime.eliminar_archivo_validado(ruta_resuelta)
         except (
