@@ -190,7 +190,16 @@ def main(page: "ft.Page"):
         nonlocal project_root
         try:
             nombre = nombre_proyecto_seguro(raiz_input.value or "")
-            nuevo_proyecto = (workspace_root / nombre).resolve()
+            workspace_canonico = workspace_root.resolve()
+            ruta_proyecto = workspace_root / nombre
+            nuevo_proyecto = ruta_proyecto.resolve()
+            if ruta_proyecto.is_symlink() or (
+                nuevo_proyecto != workspace_canonico
+                and workspace_canonico not in nuevo_proyecto.parents
+            ):
+                raise ValueError(
+                    f"El proyecto debe crearse dentro de: {workspace_canonico}"
+                )
             nuevo_proyecto.mkdir(parents=True, exist_ok=True)
             (nuevo_proyecto / "src").mkdir(exist_ok=True)
             readme = nuevo_proyecto / "README.md"
