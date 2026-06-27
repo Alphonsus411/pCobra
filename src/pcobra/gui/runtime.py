@@ -749,11 +749,19 @@ def recargar_archivo_activo(estado: GuiFileState) -> tuple[str, str]:
 def cargar_archivo_desde_arbol(
     ruta: str | Path, estado: GuiFileState
 ) -> tuple[str, str]:
-    """Carga una entrada de árbol si es archivo Cobra y devuelve contenido/mensaje."""
+    """Carga una entrada de árbol si es un archivo de texto clasificado."""
 
-    if not es_archivo_cobra(ruta):
-        raise ValueError("Selecciona un archivo Cobra (.co o .cobra).")
-    return abrir_archivo_desde_ruta(ruta, estado)
+    origen = Path(ruta).expanduser().resolve()
+    if origen.exists() and origen.is_dir():
+        raise NotADirectoryError(
+            "La ruta indicada corresponde a un directorio; "
+            "indica un archivo de texto del proyecto."
+        )
+
+    if detectar_tipo_archivo(origen) not in TIPOS_ARCHIVO_TEXTO_IDLE:
+        raise ValueError("Selecciona un archivo de texto del proyecto.")
+
+    return abrir_archivo_desde_ruta_validada(origen, estado)
 
 
 def require_flet() -> Any:

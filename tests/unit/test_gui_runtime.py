@@ -940,16 +940,21 @@ def test_accion_cargar_archivo_desde_arbol_filtra_extensiones(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.setenv("COBRA_IO_BASE_DIR", str(tmp_path))
-    archivo = tmp_path / "arbol.co"
-    archivo.write_text("imprimir('arbol')", encoding="utf-8")
+    archivo = tmp_path / "notas.txt"
+    archivo.write_text("notas del proyecto", encoding="utf-8")
     estado = runtime.GuiFileState()
 
     contenido, mensaje = runtime.cargar_archivo_desde_arbol(archivo, estado)
 
-    assert contenido == "imprimir('arbol')"
+    assert runtime.detectar_tipo_archivo(archivo) == runtime.TIPO_ARCHIVO_TEXTO
+    assert not runtime.es_archivo_cobra(archivo)
+    assert contenido == "notas del proyecto"
+    assert estado.ruta == archivo.resolve()
+    assert estado.contenido_cargado == "notas del proyecto"
+    assert estado.cambios_sin_guardar is False
     assert mensaje == f"Archivo cargado: {archivo.resolve()}"
-    with pytest.raises(ValueError, match="archivo Cobra"):
-        runtime.cargar_archivo_desde_arbol(tmp_path / "notas.txt", estado)
+    with pytest.raises(ValueError, match="archivo de texto del proyecto"):
+        runtime.cargar_archivo_desde_arbol(tmp_path / "imagen.png", estado)
 
 
 def test_require_flet_error_accionable(monkeypatch: pytest.MonkeyPatch) -> None:
