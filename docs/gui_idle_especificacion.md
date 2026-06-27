@@ -125,12 +125,12 @@ La seguridad de rutas existente se conserva para todos los tipos soportados: se 
 
 | POC | Validación esperada | Estado |
 | --- | --- | --- |
-| POC-13A | Abrir, editar, guardar y recargar archivos Cobra (`.cobra`, `.co`) dentro del proyecto activo. | 🟡 Pendiente |
-| POC-13B | Abrir, editar, guardar y recargar archivos auxiliares de documentación/texto (`.md`, `.markdown`, `.txt`) sin invocar `Lexer` ni `Parser`. | 🟡 Pendiente |
-| POC-13C | Abrir, editar, guardar y recargar archivos auxiliares de configuración/datos (`.json`, `.yml`, `.yaml`, `.toml`) sin invocar `Lexer` ni `Parser`. | 🟡 Pendiente |
-| POC-13D | Abrir, editar, guardar y recargar archivos Docker (`Dockerfile`, `Dockerfile.*`) y de ignorados (`.gitignore`, `.dockerignore`) sin invocar `Lexer` ni `Parser`. | 🟡 Pendiente |
-| POC-13E | Abrir, editar, guardar y recargar `.env.example` sin invocar `Lexer` ni `Parser`. | 🟡 Pendiente |
-| POC-13F | Bloquear **Ejecutar**, **Tokens**, **AST**, **Sugerencias del Libro** y **Corrección** para todo archivo que no sea `.cobra` ni `.co`, conservando las restricciones de rutas existentes. | 🟡 Pendiente |
+| POC-13A | Abrir, editar, guardar y recargar archivos Cobra (`.cobra`, `.co`) dentro del proyecto activo. | 🟢 Verde |
+| POC-13B | Abrir, editar, guardar y recargar archivos auxiliares de documentación/texto (`.md`, `.markdown`, `.txt`) sin invocar `Lexer` ni `Parser`. | 🟢 Verde |
+| POC-13C | Abrir, editar, guardar y recargar archivos auxiliares de configuración/datos (`.json`, `.yml`, `.yaml`, `.toml`) sin invocar `Lexer` ni `Parser`. | 🟢 Verde |
+| POC-13D | Abrir, editar, guardar y recargar archivos Docker (`Dockerfile`, `Dockerfile.*`) y de ignorados (`.gitignore`, `.dockerignore`) sin invocar `Lexer` ni `Parser`. | 🟢 Verde |
+| POC-13E | Abrir, editar, guardar y recargar `.env.example` sin invocar `Lexer` ni `Parser`. | 🟢 Verde |
+| POC-13F | Bloquear **Ejecutar**, **Tokens**, **AST**, **Sugerencias del Libro** y **Corrección** para todo archivo que no sea `.cobra` ni `.co`, conservando las restricciones de rutas existentes. | 🟢 Verde |
 
 ## Limitaciones conocidas
 
