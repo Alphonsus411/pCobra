@@ -45,6 +45,26 @@ Esta especificación define el alcance funcional del IDLE gráfico Cobra (`pcobr
 | Eliminar carpeta | Elimina una carpeta dentro del proyecto activo sin permitir que `project_root` se borre como carpeta normal. | No aplica. |
 | Eliminar proyecto | Elimina el proyecto activo solo si es hijo directo del workspace y deja el IDLE sin proyecto activo. | No aplica. |
 
+## Tipos de archivo soportados
+
+El IDLE puede abrir, editar, guardar, recargar y borrar archivos de texto del proyecto con los siguientes nombres o extensiones:
+
+- Archivos Cobra: `.cobra`, `.co`.
+- Markdown: `.md`, `.markdown`.
+- Texto plano: `.txt`.
+- Configuración y datos: `.json`, `.yml`, `.yaml`, `.toml`.
+- Docker: `Dockerfile`, `Dockerfile.*`.
+- Ignorados de herramientas: `.gitignore`, `.dockerignore`.
+- Plantillas de entorno: `.env.example`.
+
+Estos archivos auxiliares forman parte del proyecto activo y se gestionan con las mismas operaciones seguras de archivos, pero no amplían la gramática Cobra ni el alcance del compilador/intérprete.
+
+## Acciones Cobra solo para archivos Cobra
+
+Las acciones **Ejecutar**, **Tokens**, **AST**, **Sugerencias del Libro** y **Corrección** solo están disponibles cuando el archivo activo es Cobra (`.cobra` o `.co`). Los archivos auxiliares nunca se envían a `Lexer` ni a `Parser`; por tanto, solo pueden participar en operaciones de edición y gestión de archivos.
+
+La seguridad de rutas existente se conserva para todos los tipos soportados: se requiere proyecto activo, se bloquean escapes con `../` o equivalentes, se bloquean rutas absolutas externas y se impide usar como proyectos directorios ubicados bajo el repositorio pCobra o bajo `src/`.
+
 ## Seguridad de rutas
 
 - Toda ruta relativa de archivo o carpeta se resuelve contra `project_root`.
@@ -100,6 +120,17 @@ Esta especificación define el alcance funcional del IDLE gráfico Cobra (`pcobr
 | POC-11G | Eliminación segura de archivo activo. | 🟢 Verde |
 | POC-11H | Eliminación segura de carpeta interna del proyecto. | 🟢 Verde |
 | POC-11I | Eliminación segura de proyecto activo hijo directo del workspace. | 🟢 Verde |
+
+## POCs pendientes/esperadas
+
+| POC | Validación esperada | Estado |
+| --- | --- | --- |
+| POC-13A | Abrir, editar, guardar y recargar archivos Cobra (`.cobra`, `.co`) dentro del proyecto activo. | 🟡 Pendiente |
+| POC-13B | Abrir, editar, guardar y recargar archivos auxiliares de documentación/texto (`.md`, `.markdown`, `.txt`) sin invocar `Lexer` ni `Parser`. | 🟡 Pendiente |
+| POC-13C | Abrir, editar, guardar y recargar archivos auxiliares de configuración/datos (`.json`, `.yml`, `.yaml`, `.toml`) sin invocar `Lexer` ni `Parser`. | 🟡 Pendiente |
+| POC-13D | Abrir, editar, guardar y recargar archivos Docker (`Dockerfile`, `Dockerfile.*`) y de ignorados (`.gitignore`, `.dockerignore`) sin invocar `Lexer` ni `Parser`. | 🟡 Pendiente |
+| POC-13E | Abrir, editar, guardar y recargar `.env.example` sin invocar `Lexer` ni `Parser`. | 🟡 Pendiente |
+| POC-13F | Bloquear **Ejecutar**, **Tokens**, **AST**, **Sugerencias del Libro** y **Corrección** para todo archivo que no sea `.cobra` ni `.co`, conservando las restricciones de rutas existentes. | 🟡 Pendiente |
 
 ## Limitaciones conocidas
 
