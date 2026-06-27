@@ -27,7 +27,7 @@ def test_ast_falla_si_hay_lista_donde_se_espera_nodo_bloque() -> None:
     [
         ("si 1 == 1:\n    pasar\nfin", "bloque_si"),
         ("mientras 1 == 1:\n    pasar\nfin", "cuerpo"),
-        ("para i in [1]:\n    pasar\nfin", "cuerpo"),
+        ("para i en [1]:\n    pasar\nfin", "cuerpo"),
     ],
 )
 def test_parser_genera_nodos_bloque_en_estructuras_de_control(

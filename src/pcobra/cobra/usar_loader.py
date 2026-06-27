@@ -650,59 +650,67 @@ def usar_modulo(
       misma resolución canónica por ruta y una cache global por archivo.
     """
 
-    if isinstance(nombre, str):
-        nombre_limpio = nombre.strip()
-        es_modulo_oficial = (
-            normalizar_nombre_usar(nombre_limpio) in USAR_COBRA_PUBLIC_MODULES
-        )
-        if "." in nombre_limpio or not es_modulo_oficial:
-            current = (
-                Path(current_file).expanduser() if current_file is not None else None
-            )
-            root = (
-                canonicalizar_ruta_usar_proyecto(project_root)
-                if project_root is not None
-                else descubrir_raiz_proyecto(current, current)
-            )
-            try:
-                exports = _cargar_exports_modulo_cobra_proyecto(
-                    nombre_limpio,
-                    project_root=root,
-                    current_file=current,
-                )
-                return exports
-            except ValueError:
-                raise
-            except FileNotFoundError as exc:
-                if "." not in nombre_limpio and not es_modulo_oficial:
-                    spec_externo = importlib.util.find_spec(nombre_limpio)
-                    if spec_externo is not None or nombre_limpio in {"numpy"}:
-                        raise PermissionError(
-                            f"usar_error[modulo_no_canonico]: '{nombre_limpio}' no canónico; "
-                            "use el alias oficial Cobra"
-                        ) from exc
-                if "." in nombre_limpio or not es_modulo_oficial:
-                    ruta_buscada = root.joinpath(
-                        *nombre_limpio.split(".")
-                    ).with_suffix(".co")
-                    raise FileNotFoundError(
-                        f"Módulo no encontrado: {nombre_limpio}. Ruta buscada: {ruta_buscada}"
-                    ) from exc
+    nombre_raw = nombre.strip()
+    if not nombre_raw:
+        raise ValueError("Nombre de módulo vacío en 'usar'.")
 
-    modulo = obtener_modulo(nombre)
-    simbolos_saneados, metadata_por_simbolo, conflictos = sanitizar_exports_publicos(
-        modulo,
-        normalizar_nombre_usar(nombre),
-    )
-    if conflictos:
-        logging.debug(
-            "USAR sanitize conflicts en API única module=%s conflicts=%s",
-            nombre,
-            conflictos,
+    # 1. Intentar cargar como módulo oficial Cobra
+    try:
+        nombre_validado_oficial = validar_nombre_modulo_usar(nombre_raw, require_allowlist=True)
+        modulo = obtener_modulo(nombre_validado_oficial)
+        simbolos_saneados, metadata_por_simbolo, conflictos = sanitizar_exports_publicos(
+            modulo,
+            normalizar_nombre_usar(nombre_validado_oficial),
         )
-    if not simbolos_saneados:
-        raise ImportError(f"No se encontraron símbolos exportables para usar '{nombre}'.")
-    return _construir_exports_usar(simbolos_saneados, metadata_por_simbolo)
+        if conflictos:
+            logging.debug(
+                "USAR sanitize conflicts en API única module=%s conflicts=%s",
+                nombre_validado_oficial,
+                conflictos,
+            )
+        if not simbolos_saneados:
+            raise ImportError(f"No se encontraron símbolos exportables para usar '{nombre_validado_oficial}'.")
+        return _construir_exports_usar(simbolos_saneados, metadata_por_simbolo)
+    except (ModuleNotFoundError, PermissionError, ValueError) as e:
+        # Si no es un módulo oficial o no está permitido, intentar como módulo de proyecto
+        # Si es un ValueError, significa que el nombre no es válido para un módulo oficial,
+        # pero podría serlo para un módulo de proyecto (ej. contiene puntos).
+        pass
+
+    # 2. Intentar cargar como módulo de proyecto
+    try:
+        segmentos_proyecto = validar_nombre_modulo_cobra_proyecto(nombre_raw)
+        nombre_validado_proyecto = ".".join(segmentos_proyecto)
+
+        current = (
+            Path(current_file).expanduser() if current_file is not None else None
+        )
+        root = (
+            canonicalizar_ruta_usar_proyecto(project_root)
+            if project_root is not None
+            else descubrir_raiz_proyecto(current, current)
+        )
+        try:
+            exports = _cargar_exports_modulo_cobra_proyecto(
+                nombre_validado_proyecto,
+                project_root=root,
+                current_file=current,
+            )
+            return exports
+        except ValueError:
+            raise
+        except FileNotFoundError as exc:
+            ruta_buscada = root.joinpath(
+                *nombre_validado_proyecto.split(".")
+            ).with_suffix(".co")
+            raise FileNotFoundError(
+                f"Módulo de proyecto no encontrado: {nombre_validado_proyecto}. Ruta buscada: {ruta_buscada}"
+            ) from exc
+    except ValueError as e:
+        # Si tampoco es un módulo de proyecto válido, entonces el nombre es inválido.
+        raise ValueError(f"Nombre de módulo inválido en 'usar': '{nombre_raw}'.") from e
+    except FileNotFoundError as e:
+        raise e
 
 
 def sanitizar_exports_publicos(modulo: object, alias_modulo: str) -> tuple[dict[str, Any], list[dict[str, str]]]:

@@ -1119,6 +1119,12 @@ class InterpretadorCobra:
             return
         if not isinstance(self._usar_symbol_metadata, dict):
             return
+
+        # Eliminar del validador los símbolos que ya no están en el intérprete.
+        claves_a_eliminar = [nombre for nombre in metadata_validador if nombre not in self._usar_symbol_metadata]
+        for nombre in claves_a_eliminar:
+            del metadata_validador[nombre]
+
         for nombre, metadata_interp in self._usar_symbol_metadata.items():
             if not isinstance(metadata_interp, dict):
                 continue
@@ -1521,7 +1527,17 @@ class InterpretadorCobra:
         if self.mode == "analysis":
             # En análisis no se ejecutan nodos: evita prints, mutaciones y efectos observables.
             return None
+
+        if isinstance(nodo, NodoUsar):
+            # Para NodoUsar, ejecutamos primero para poblar _usar_symbol_metadata
+            # antes de la auditoría.
+            result = self.ejecutar_usar(nodo)
+            self._auditar_en_ejecucion(nodo)  # Auditar después de la ejecución para NodoUsar
+            return result
+        
+        # Para el resto de los nodos, auditar antes de la ejecución
         self._auditar_en_ejecucion(nodo)
+        
         if isinstance(nodo, NodoAsignacion):
             return self.ejecutar_asignacion(nodo)
         elif isinstance(nodo, NodoCondicional):

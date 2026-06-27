@@ -120,7 +120,7 @@ def test_entrypoint_repl_real_rechaza_numpy_externo(monkeypatch):
     )
 
     cmd = ReplCommandV2()
-    with pytest.raises(PermissionError, match=r"(módulo externo no permitido en REPL estricto|modulo_fuera_catalogo_publico)"):
+    with pytest.raises(PermissionError, match=r"Importación no permitida en 'usar': 'numpy'. Es un módulo backend/no canónico y no forma parte de la API pública."):
         cmd._ejecutar_en_modo_normal('usar "numpy"')
 
 
@@ -233,19 +233,19 @@ def test_entrypoint_repl_metadata_longitud_persistente_entre_sentencias(monkeypa
         "obtener_modulo",
         lambda nombre, **_kwargs: mod_datos if nombre == "datos" else (_ for _ in ()).throw(ModuleNotFoundError(nombre)),
     )
-    monkeypatch.setattr(
-        core_interpreter,
-        "build_and_validate_usar_symbol_metadata",
-        lambda *, module_name, symbol_name, callable_obj: {
-            "origin_kind": "usar",
-            "module": module_name,
-            "symbol": symbol_name,
-            "sanitized": True,
-            "public_api": True,
-            "backend_exposed": False,
-            "callable": callable(callable_obj),
-        },
-    )
+    # monkeypatch.setattr(
+    #     core_interpreter,
+    #     "build_and_validate_usar_symbol_metadata",
+    #     lambda *, module_name, symbol_name, callable_obj: {
+    #         "origin_kind": "usar",
+    #         "module": module_name,
+    #         "symbol": symbol_name,
+    #         "sanitized": True,
+    #         "public_api": True,
+    #         "backend_exposed": False,
+    #         "callable": callable(callable_obj),
+    #     },
+    # )
 
     cmd = ReplCommandV2()
     interp = cmd._delegate.interpretador

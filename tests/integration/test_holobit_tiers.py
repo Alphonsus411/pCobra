@@ -66,7 +66,7 @@ FULL_MARKERS = {
     }
 }
 RUNTIME_SMOKE_MARKERS = {
-    "python": {"corelibs": ("from corelibs import *", "longitud('cobra')"), "standard_library": ("from standard_library import *", "mostrar('hola')")},
+    "python": {"corelibs": ("import pcobra.corelibs as _pcobra_corelibs", "longitud('cobra')"), "standard_library": ("import pcobra.standard_library as _pcobra_standard_library", "mostrar('hola')")},
     "javascript": {"corelibs": ("const longitud = (valor) => cobraJsCorelibs.longitud(valor);", "longitud('cobra');"), "standard_library": ("const mostrar = (...args) => cobraJsStandardLibrary.mostrar(...args);", "mostrar('hola');")},
     "rust": {"corelibs": ('fn longitud<T: ToString>(valor: T) -> usize {', 'longitud("cobra");'), "standard_library": ('fn mostrar<T: Display>(valor: T) {', 'mostrar("hola");')},
     "wasm": {"corelibs": ('(import "pcobra:corelibs" "longitud"', '(call $longitud (i32.const 0))'), "standard_library": ('(import "pcobra:standard_library" "mostrar"', '(call $mostrar (i32.const 0))')},

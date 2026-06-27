@@ -222,12 +222,12 @@ def test_repl_v2_usar_fronteras_rechaza_numpy_y_sintaxis_invalida(capsys):
     """Fase actual: validar fronteras de `usar` sin tocar gramática/tokenización."""
     cmd = ReplCommandV2()
 
-    with pytest.raises(PermissionError, match=r"(módulo fuera del catálogo público|modulo_fuera_catalogo_publico)"):
+    with pytest.raises(PermissionError, match=r"Importación no permitida en 'usar': 'numpy'. Es un módulo backend/no canónico y no forma parte de la API pública."):
         cmd._ejecutar_en_modo_normal('usar "numpy"')
     salida_numpy = capsys.readouterr().out
     assert "Traceback" not in salida_numpy
 
-    with pytest.raises(ParserError, match=r"comillas"):
+    with pytest.raises(ParserError, match=r"Se esperaba una ruta de módulo entre comillas \(ej\. 'usar \"modulo\"'\) o identificadores separados por puntos \(ej\. 'usar modulo\.submodulo'\)\. Un solo identificador sin comillas no es válido\."):
         cmd._ejecutar_en_modo_normal("usar archivo")
     salida_archivo = capsys.readouterr().out
     assert "Traceback" not in salida_archivo

@@ -55,7 +55,7 @@ def test_parser_para_asincronico():
         Token(TipoToken.ASINCRONICO, "asincronico"),
         Token(TipoToken.PARA, "para"),
         Token(TipoToken.IDENTIFICADOR, "item"),
-        Token(TipoToken.IN, "in"),
+        Token(TipoToken.EN, "en"),
         Token(TipoToken.IDENTIFICADOR, "datos"),
         Token(TipoToken.DOSPUNTOS, ":"),
         Token(TipoToken.PASAR, "pasar"),
@@ -87,7 +87,7 @@ def test_parser_con_asincronico():
 def test_parser_con_alias_mixto_emite_advertencia():
     tokens = [
         Token(TipoToken.ASINCRONICO, "asincronico"),
-        Token(TipoToken.WITH, "with"),
+        Token(TipoToken.CON, "con"),
         Token(TipoToken.IDENTIFICADOR, "resource"),
         Token(TipoToken.COMO, "como"),
         Token(TipoToken.IDENTIFICADOR, "alias"),

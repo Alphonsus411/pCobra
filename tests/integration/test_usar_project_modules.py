@@ -49,7 +49,7 @@ def test_usar_modulo_en_misma_carpeta_util(crear_modulo_cobra, tmp_path):
     main = crear_modulo_cobra(
         "main.co",
         """
-        usar util
+        usar "util"
         """,
     )
 
@@ -89,7 +89,7 @@ def test_usar_desde_otro_directorio_respeta_cobra_toml(tmp_path, monkeypatch):
     app = proyecto / "app"
     app.mkdir()
     main = app / "main.co"
-    main.write_text("usar util\n", encoding="utf-8")
+    main.write_text('usar "util"\n', encoding="utf-8")
     otro_directorio = tmp_path / "otro"
     otro_directorio.mkdir()
     monkeypatch.chdir(otro_directorio)
@@ -104,8 +104,8 @@ def test_usar_carga_una_sola_vez_con_cache_y_monkeypatch(crear_modulo_cobra, mon
     main = crear_modulo_cobra(
         "main.co",
         """
-        usar util
-        usar util
+        usar "util"
+        usar "util"
         """,
     )
     import pcobra.core.import_utils as import_utils
@@ -126,30 +126,27 @@ def test_usar_carga_una_sola_vez_con_cache_y_monkeypatch(crear_modulo_cobra, mon
 
 
 def test_usar_detecta_ciclo_directo(crear_modulo_cobra):
-    crear_modulo_cobra("a.co", """
-        usar a
-        variable valor_a := 1
-        """)
-    main = crear_modulo_cobra("main.co", "usar a")
+    crear_modulo_cobra("a.co", 'usar "a"\nvariable valor_a := 1')
+    main = crear_modulo_cobra("main.co", 'usar "a"')
 
     with pytest.raises(ImportError, match=r"Ciclo de módulos detectado en usar: .*a\.co"):
         ejecutar_archivo(main)
 
 
 def test_usar_detecta_ciclo_indirecto(crear_modulo_cobra):
-    crear_modulo_cobra("a.co", "usar b\nvariable valor_a := 1")
-    crear_modulo_cobra("b.co", "usar c\nvariable valor_b := 2")
-    crear_modulo_cobra("c.co", "usar a\nvariable valor_c := 3")
-    main = crear_modulo_cobra("main.co", "usar a")
+    crear_modulo_cobra("a.co", 'usar "b"\nvariable valor_a := 1')
+    crear_modulo_cobra("b.co", 'usar "c"\nvariable valor_b := 2')
+    crear_modulo_cobra("c.co", 'usar "a"\nvariable valor_c := 3')
+    main = crear_modulo_cobra("main.co", 'usar "a"')
 
     with pytest.raises(ImportError, match=r"Ciclo de módulos detectado en usar: .*a\.co.*b\.co.*c\.co.*a\.co"):
         ejecutar_archivo(main)
 
 
 def test_usar_modulo_inexistente_muestra_error_claro(crear_modulo_cobra, tmp_path):
-    main = crear_modulo_cobra("main.co", "usar modulo_que_no_existe")
+    main = crear_modulo_cobra("main.co", 'usar "modulo_que_no_existe"')
 
-    with pytest.raises(FileNotFoundError, match=r"Módulo no encontrado: modulo_que_no_existe\. Ruta buscada: .*modulo_que_no_existe\.co"):
+    with pytest.raises(FileNotFoundError, match=r"Módulo de proyecto no encontrado: modulo_que_no_existe\. Ruta buscada: .*modulo_que_no_existe\.co"):
         ejecutar_archivo(main)
 
 
@@ -198,7 +195,44 @@ def test_usar_bloquea_escape_de_raiz_autorizada(crear_modulo_cobra, tmp_path):
     # Crear un módulo fuera de la raíz del proyecto
     (tmp_path.parent / "modulo_secreto.co").write_text("variable secreto := 'valor_secreto'")
 
-    main = crear_modulo_cobra("main.co", "usar ../modulo_secreto")
+    main = crear_modulo_cobra("main.co", 'usar "../modulo_secreto"')
 
-    with pytest.raises(ParserError, match="Se esperaba una ruta de módulo"):
+    with pytest.raises(ValueError, match=r"Nombre de módulo inválido en 'usar': '\.\./modulo_secreto' parece ruta/traversal."):
+        ejecutar_archivo(main)
+
+
+def test_usar_canonicaliza_rutas_y_carga_una_sola_vez(crear_modulo_cobra, monkeypatch):
+    crear_modulo_cobra("utilidades/fechas.co", "variable valor := 1")
+    main = crear_modulo_cobra(
+        "main.co",
+        """
+        usar "utilidades.fechas"
+        usar "utilidades.fechas"
+        """,
+    )
+    import pcobra.core.import_utils as import_utils
+
+    cargar_original = import_utils.cargar_ast_modulo
+    llamadas = []
+
+    def cargar_contando(*args, **kwargs):
+        llamadas.append(Path(args[0]).name)
+        return cargar_original(*args, **kwargs)
+
+    monkeypatch.setattr(import_utils, "cargar_ast_modulo", cargar_contando)
+
+    ejecutar_archivo(main)
+
+    assert llamadas.count("fechas.co") == 1
+
+
+def test_usar_no_soporta_sintaxis_desde(crear_modulo_cobra):
+    main = crear_modulo_cobra("main.co", "usar desde modulo importar simbolo")
+    with pytest.raises(ParserError, match="Se esperaba una ruta de módulo entre comillas o identificadores separados por puntos"):
+        ejecutar_archivo(main)
+
+
+def test_usar_no_soporta_sintaxis_exportar(crear_modulo_cobra):
+    main = crear_modulo_cobra("main.co", "usar exportar modulo")
+    with pytest.raises(ParserError, match="Se esperaba una ruta de módulo entre comillas o identificadores separados por puntos"):
         ejecutar_archivo(main)

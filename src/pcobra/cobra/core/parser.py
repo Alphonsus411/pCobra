@@ -399,11 +399,11 @@ class ClassicParser:
             variable = self.token_actual().valor
             self.comer(TipoToken.IDENTIFICADOR)
 
-        # Consume la palabra clave 'in'
-        if self.token_actual().tipo != TipoToken.IN:
-            self.reportar_error("Se esperaba 'in' después del identificador en 'para'")
+        # Consume la palabra clave 'en'
+        if self.token_actual().tipo != TipoToken.EN:
+            self.reportar_error("Se esperaba 'en' después del identificador en 'para'")
         else:
-            self.comer(TipoToken.IN)
+            self.comer(TipoToken.EN)
 
         # Procesa el rango o iterable
         try:
@@ -917,8 +917,18 @@ class ClassicParser:
             ruta = self.token_actual().valor
             self.comer(TipoToken.CADENA)
             return NodoUsar(ruta)
+        # Si no es una cadena, debe ser una ruta de módulo con identificadores separados por puntos.
+        # Un solo identificador sin comillas no es válido.
         if self.token_actual().tipo != TipoToken.IDENTIFICADOR:
-            raise ParserError("Se esperaba una ruta de módulo")
+            raise ParserError("Se esperaba una ruta de módulo entre comillas o identificadores separados por puntos")
+
+        # Verificar si es un identificador simple sin puntos (que ahora es un error)
+        # o el inicio de una ruta con puntos.
+        # Para verificar si es un identificador simple, necesitamos mirar el siguiente token.
+        # Si el siguiente token no es un punto, entonces es un identificador simple.
+        if self.token_siguiente() is None or self.token_siguiente().tipo != TipoToken.PUNTO:
+            raise ParserError("Se esperaba una ruta de módulo entre comillas (ej. 'usar \"modulo\"') o identificadores separados por puntos (ej. 'usar modulo.submodulo'). Un solo identificador sin comillas no es válido.")
+
         partes = [self.token_actual().valor]
         self.comer(TipoToken.IDENTIFICADOR)
         while self.token_actual().tipo == TipoToken.PUNTO:
@@ -1147,7 +1157,7 @@ class ClassicParser:
             return self.declaracion_funcion(True)
         if siguiente.tipo == TipoToken.PARA:
             return self.declaracion_para(asincronico=True)
-        if siguiente.tipo in (TipoToken.CON, TipoToken.WITH):
+        if siguiente.tipo == TipoToken.CON:
             return self.declaracion_con(asincronico=True)
         raise ParserError(
             "Se esperaba 'func', 'para' o 'con/with' después de 'asincronico'"
@@ -1156,7 +1166,7 @@ class ClassicParser:
     def declaracion_esperar(self):
         """Parsea una expresión 'esperar' para await."""
         self.comer(TipoToken.ESPERAR)
-        return NodoEsperar(self.expresion())
+        return NodoEsperar(self.exp_unario())
 
     def declaracion_romper(self):
         """Parsea la sentencia 'romper' para salir de un bucle."""
@@ -1222,32 +1232,32 @@ class ClassicParser:
     def declaracion_con(self, asincronico: bool = False):
         """Parsea el contexto ``con``/``with`` similar a ``with`` en Python."""
         token_con = self.token_actual()
-        if token_con.tipo in (TipoToken.CON, TipoToken.WITH):
+        if token_con.tipo == TipoToken.CON:
             self.avanzar()
         else:
-            raise ParserError("Se esperaba 'con' o 'with'")
+            raise ParserError("Se esperaba 'con'")
         contexto = self.expresion()
         alias = None
         alias_token = None
-        if self.token_actual().tipo in (TipoToken.COMO, TipoToken.AS):
+        if self.token_actual().tipo == TipoToken.COMO:
             alias_token = self.token_actual()
             self.avanzar()
             if self.token_actual().tipo != TipoToken.IDENTIFICADOR:
-                raise ParserError("Se esperaba un identificador luego de 'como' o 'as'")
+                raise ParserError("Se esperaba un identificador luego de 'como'")
             alias = self.token_actual().valor
             self.comer(TipoToken.IDENTIFICADOR)
         if (
             alias_token is not None
-            and ((token_con.tipo == TipoToken.WITH and alias_token.tipo == TipoToken.COMO)
-                 or (token_con.tipo == TipoToken.CON and alias_token.tipo == TipoToken.AS))
+            and (False
+                 or (token_con.tipo == TipoToken.CON and alias_token.tipo == TipoToken.COMO))
         ):
             expresion_entrada = f"{token_con.valor} ... {alias_token.valor}"
             self.registrar_advertencia(
-                "Se detectó una mezcla de alias en la instrucción 'con/with'. "
+                "Se detectó una mezcla de alias en la instrucción 'con'. "
                 "Procura utilizar 'with ... as' o 'con ... como' de forma consistente. "
                 f"Entrada: {expresion_entrada}"
             )
-        self._exigir_dospuntos("'con/with'")
+        self._exigir_dospuntos("'con'")
         cuerpo = []
         self._contexto_bloques.append("metodo")
         try:
@@ -1273,10 +1283,10 @@ class ClassicParser:
         nombre = self.token_actual().valor
         self.comer(TipoToken.IDENTIFICADOR)
         alias = None
-        if self.token_actual().tipo in (TipoToken.COMO, TipoToken.AS):
+        if self.token_actual().tipo == TipoToken.COMO:
             self.avanzar()
             if self.token_actual().tipo != TipoToken.IDENTIFICADOR:
-                raise ParserError("Se esperaba un alias después de 'como' o 'as'")
+                raise ParserError("Se esperaba un alias después de 'como'")
             alias = self.token_actual().valor
             self.comer(TipoToken.IDENTIFICADOR)
         return NodoImportDesde(modulo, nombre, alias)
@@ -1669,9 +1679,9 @@ class ClassicParser:
                 )
             variable = self.token_actual().valor
             self.comer(TipoToken.IDENTIFICADOR)
-            if self.token_actual().tipo != TipoToken.IN:
+            if self.token_actual().tipo != TipoToken.EN:
                 raise ParserError("Se esperaba 'en' en la comprensión de lista")
-            self.comer(TipoToken.IN)
+            self.comer(TipoToken.EN)
             iterable = self.expresion()
             condicion = None
             if self.token_actual().tipo == TipoToken.SI:
@@ -1712,9 +1722,9 @@ class ClassicParser:
                 )
             variable = self.token_actual().valor
             self.comer(TipoToken.IDENTIFICADOR)
-            if self.token_actual().tipo != TipoToken.IN:
+            if self.token_actual().tipo != TipoToken.EN:
                 raise ParserError("Se esperaba 'en' en la comprensión de diccionario")
-            self.comer(TipoToken.IN)
+            self.comer(TipoToken.EN)
             iterable = self.expresion()
             condicion = None
             if self.token_actual().tipo == TipoToken.SI:

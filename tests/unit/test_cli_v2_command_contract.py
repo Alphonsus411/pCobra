@@ -202,7 +202,7 @@ def test_run_v2_valida_seguridad_por_ruta_binding(monkeypatch):
         "cobra.cli.commands_v2.run_cmd.backend_pipeline.resolve_backend",
         lambda _file, _hints: type("R", (), {"reason_for": lambda self, debug: "ok"})(),
     )
-    monkeypatch.setattr(command._legacy, "run", lambda _args: 0)
+
 
     status = command.run(
         argparse.Namespace(file="programa.co", debug=False, sandbox=False, container="rust", modo="mixto")
