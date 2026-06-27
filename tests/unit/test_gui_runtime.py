@@ -102,13 +102,13 @@ def test_es_archivo_cobra_reconoce_extensiones_seguras_documentadas() -> None:
 
 def test_detectar_tipo_archivo_clasifica_extensiones_y_nombres_conocidos() -> None:
     casos = {
-        "programa.cobra": runtime.TIPO_ARCHIVO_COBRA,
-        "programa.co": runtime.TIPO_ARCHIVO_COBRA,
+        "main.cobra": runtime.TIPO_ARCHIVO_COBRA,
+        "main.co": runtime.TIPO_ARCHIVO_COBRA,
         "README.md": runtime.TIPO_ARCHIVO_MARKDOWN,
-        "manual.markdown": runtime.TIPO_ARCHIVO_MARKDOWN,
+        "README.markdown": runtime.TIPO_ARCHIVO_MARKDOWN,
         "notas.txt": runtime.TIPO_ARCHIVO_TEXTO,
-        "package.json": runtime.TIPO_ARCHIVO_CONFIG,
-        "compose.yml": runtime.TIPO_ARCHIVO_CONFIG,
+        "docker-compose.yml": runtime.TIPO_ARCHIVO_CONFIG,
+        "config.json": runtime.TIPO_ARCHIVO_CONFIG,
         "compose.yaml": runtime.TIPO_ARCHIVO_CONFIG,
         "pyproject.toml": runtime.TIPO_ARCHIVO_CONFIG,
         "Dockerfile": runtime.TIPO_ARCHIVO_DOCKER,
@@ -172,7 +172,7 @@ def test_capacidades_archivo_reservan_acciones_cobra_para_codigo_cobra() -> None
     for ruta in [
         "README.md",
         "notas.txt",
-        "package.json",
+        "config.json",
         "Dockerfile",
         ".gitignore",
         ".env.example",
@@ -185,7 +185,7 @@ def test_capacidades_archivo_reservan_acciones_cobra_para_codigo_cobra() -> None
         )
 
 
-def test_listar_directorio_cobra_modo_seguro_filtra_archivos_no_cobra(
+def test_listar_directorio_cobra_modo_seguro_incluye_texto_auxiliar_clasificado(
     tmp_path: Path,
 ) -> None:
     (tmp_path / "zeta").mkdir()
@@ -193,12 +193,14 @@ def test_listar_directorio_cobra_modo_seguro_filtra_archivos_no_cobra(
     (tmp_path / "alfa.cobra").write_text("", encoding="utf-8")
     (tmp_path / "ignorado.py").write_text("", encoding="utf-8")
     (tmp_path / "README.md").write_text("", encoding="utf-8")
+    (tmp_path / "notas.txt").write_text("", encoding="utf-8")
 
-    assert runtime.MOSTRAR_TODOS_LOS_ARCHIVOS_IDLE is False
     assert [path.name for path in runtime.listar_directorio_cobra(tmp_path)] == [
         "zeta",
         "alfa.cobra",
         "beta.co",
+        "notas.txt",
+        "README.md",
     ]
 
 
@@ -319,7 +321,7 @@ def test_crear_arbol_directorios_sin_root_path_usa_workspace_idle(
 
     assert llamadas == ["resolver"]
     assert arbol.scroll == ft.ScrollMode.ALWAYS
-    assert arbol.controls[0].value == "No hay archivos Cobra en esta carpeta"
+    assert arbol.controls[0].value == "No hay archivos visibles en esta carpeta"
 
 
 def test_crear_arbol_directorios_propaga_file_not_found_en_ruta_inexistente(
@@ -342,7 +344,7 @@ def test_crear_arbol_directorios_propaga_permission_error_sin_tocar_permisos(
     def fake(_root_path):
         raise PermissionError("sin permiso portable")
 
-    monkeypatch.setattr(runtime, "listar_directorio_cobra", fake)
+    monkeypatch.setattr(runtime, "listar_directorio_idle", fake)
 
     with pytest.raises(PermissionError, match="sin permiso portable"):
         runtime.crear_arbol_directorios(

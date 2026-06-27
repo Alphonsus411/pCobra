@@ -325,12 +325,14 @@ def test_cargar_archivo_desde_arbol_reusa_apertura_y_valida_extension(tmp_path: 
     assert estado.ruta == archivo_cobra.resolve()
     assert estado.contenido_cargado == "imprimir('arbol')"
 
-    try:
-        runtime.cargar_archivo_desde_arbol(archivo_no_cobra, estado)
-    except ValueError as exc:
-        assert "Selecciona un archivo Cobra" in str(exc)
-    else:
-        raise AssertionError("El árbol solo debe cargar archivos .co/.cobra")
+    contenido_txt, mensaje_txt = runtime.cargar_archivo_desde_arbol(
+        archivo_no_cobra, estado
+    )
+
+    assert contenido_txt == "texto"
+    assert mensaje_txt == f"Archivo cargado: {archivo_no_cobra.resolve()}"
+    assert estado.ruta == archivo_no_cobra.resolve()
+    assert estado.contenido_cargado == "texto"
 
 
 @pytest.mark.parametrize(
