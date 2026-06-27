@@ -9,7 +9,7 @@ Esta matriz documenta únicamente comportamiento existente en el IDLE gráfico c
 | Guardar | `src/pcobra/gui/idle.py` / `src/pcobra/gui/runtime.py` | `guardar_handler` → `guardar_archivo_activo()` → `guardar_archivo_en_estado()` | No usa Lexer/Parser; escribe el contenido normalizado del editor tras validar la ruta activa. | `docs/LIBRO_PROGRAMACION_COBRA.md`, sección 10.1, “Gestión de archivos / Guardar”. | Implementado. |
 | Guardar como | `src/pcobra/gui/idle.py` / `src/pcobra/gui/runtime.py` | `guardar_como_handler` → `guardar_en()` → `guardar_archivo_como()` | No usa Lexer/Parser; escribe en una ruta nueva validada por la política de sandbox. | `docs/LIBRO_PROGRAMACION_COBRA.md`, sección 10.1, “Gestión de archivos / Guardar como”. | Implementado. |
 | Recargar | `src/pcobra/gui/idle.py` / `src/pcobra/gui/runtime.py` | `recargar_handler` → `recargar_archivo_activo()` | No usa Lexer/Parser; vuelve a leer desde disco el archivo activo. | `docs/LIBRO_PROGRAMACION_COBRA.md`, sección 10.1, “Gestión de archivos / Recargar”. | Implementado. |
-| Árbol de directorios / Establecer raíz | `src/pcobra/gui/idle.py` / `src/pcobra/gui/runtime.py` | `establecer_raiz_arbol_handler()` → `normalizar_ruta_archivo_gui()` → `reconstruir_arbol()` / `cargar_archivo_desde_evento_arbol()` → `crear_arbol_directorios()` / `listar_directorio_cobra()` | No usa Lexer/Parser; normaliza la raíz contra el sandbox, exige que sea directorio, muestra directorios y archivos Cobra con extensiones `.co` y `.cobra`, y delega la carga a los handlers de archivo. El modo por defecto sigue siendo seguro y centrado en Cobra; existe una opción interna de runtime para mostrar todos los archivos si el equipo decide convertirla en configuración futura. | `docs/LIBRO_PROGRAMACION_COBRA.md`, sección 10.1, “Gestión de archivos / Árbol de directorios”. | Implementado. |
+| Árbol de directorios / Establecer raíz | `src/pcobra/gui/idle.py` / `src/pcobra/gui/runtime.py` | `establecer_raiz_arbol_handler()` → `normalizar_ruta_archivo_gui()` → `reconstruir_arbol()` / `cargar_archivo_desde_evento_arbol()` → `crear_arbol_directorios()` / `listar_directorio_idle()` | No usa Lexer/Parser; normaliza la raíz contra el sandbox, exige que sea directorio y aplica la política de `listar_directorio_idle()`: muestra directorios, archivos Cobra y auxiliares de texto/configuración clasificados por `detectar_tipo_archivo()`. Los archivos desconocidos no se exponen por defecto salvo que se active `MOSTRAR_DESCONOCIDOS_COMO_TEXTO_IDLE`. Al seleccionar auxiliares se cargan como texto y las acciones Cobra se bloquean desde `archivo_activo_permite_accion_cobra` en `src/pcobra/gui/idle.py`. | `docs/LIBRO_PROGRAMACION_COBRA.md`, sección 10.1, “Gestión de archivos / Árbol de directorios”. | Implementado. |
 | Ejecutar | `src/pcobra/gui/idle.py` / `src/pcobra/gui/runtime.py` | `crear_handler_ejecucion()` → `ejecutar_o_transpilar()` → `ejecutar_codigo()` | Sí. `ejecutar_codigo()` llama a `analizar_codigo()`, que ejecuta `Lexer(codigo).tokenizar()` y `Parser(tokens).parsear()` antes de `InterpretadorCobra().ejecutar_ast(ast)`. | `docs/LIBRO_PROGRAMACION_COBRA.md`, sección 10.1, “Ejecución y transpilación / Ejecutar”. | Implementado. |
 | Transpilar | `src/pcobra/gui/idle.py` / `src/pcobra/gui/runtime.py` | Switch `activar` + `crear_handler_ejecucion()` → `ejecutar_o_transpilar()` → `transpilar_codigo()` | Sí. `transpilar_codigo()` llama a `analizar_codigo()` y entrega el AST al transpilador seleccionado si existe en `TRANSPILERS`. | `docs/LIBRO_PROGRAMACION_COBRA.md`, sección 10.1, “Ejecución y transpilación”. | Implementado para targets disponibles en el registro público de transpiladores. |
 | Tokens | `src/pcobra/gui/idle.py` / `src/pcobra/gui/runtime.py` | `tokens_handler` generado por `crear_handler_tokens()` → `mostrar_tokens()` | Sí. `mostrar_tokens()` usa `analizar_codigo()`; muestra los tokens obtenidos del Lexer y propaga errores léxicos/sintácticos formateados. | `docs/LIBRO_PROGRAMACION_COBRA.md`, sección 10.1, “Inspección del lenguaje / Tokens”. | Implementado. |
@@ -18,17 +18,28 @@ Esta matriz documenta únicamente comportamiento existente en el IDLE gráfico c
 
 ## Política de filtrado del árbol de directorios
 
-El árbol del IDLE gráfico muestra siempre los directorios y, en su modo seguro
-por defecto, solo archivos Cobra con extensiones `.co` y `.cobra`. Esta política
-está centralizada en `COBRA_FILE_EXTENSIONS`, `es_archivo_cobra()` y
-`listar_directorio_cobra()` dentro de `src/pcobra/gui/runtime.py`, para que la
-GUI mantenga un criterio único al listar y al cargar archivos desde el árbol.
+El árbol del IDLE gráfico muestra siempre los directorios y, con la política
+actual de `listar_directorio_idle()`, expone archivos Cobra junto con archivos
+auxiliares de texto/configuración clasificados por `detectar_tipo_archivo()`
+(por ejemplo Markdown, TXT, JSON/YAML/TOML, Dockerfile, ignore y
+`.env.example`). La clasificación compartida permite que la GUI use un criterio
+único para listar, etiquetar, abrir como texto y determinar capacidades por tipo
+de archivo.
 
-`listar_directorio_cobra()` incluye la opción interna `mostrar_todos`, respaldada
-por la bandera `MOSTRAR_TODOS_LOS_ARCHIVOS_IDLE = False`, como punto de extensión
-para una posible configuración futura. Mientras esa opción no se active de forma
-explícita, el comportamiento visible conserva el filtro seguro centrado en
-archivos Cobra y evita exponer archivos ajenos al flujo principal del IDLE.
+`listar_directorio_cobra()` queda como alias compatible para integraciones que
+aún llamen al helper histórico; el código nuevo debe usar
+`listar_directorio_idle()`. Su parámetro heredado `mostrar_todos` se conserva
+como alias de `incluir_desconocidos`, respaldado por la bandera interna
+`MOSTRAR_DESCONOCIDOS_COMO_TEXTO_IDLE = False`. Mientras esa bandera no se active
+de forma explícita, los archivos desconocidos no se exponen por defecto desde el
+árbol del IDLE.
+
+Seleccionar archivos auxiliares desde el árbol no invoca `Lexer` ni `Parser`: se
+cargan como texto mediante los handlers de archivo. Las acciones propias de
+Cobra, como ejecutar, tokens, AST, sugerencias o corrección, quedan bloqueadas
+para esos auxiliares desde
+`src/pcobra/gui/idle.py::archivo_activo_permite_accion_cobra`, que consulta las
+capacidades del archivo activo antes de delegar en los handlers Cobra.
 
 ## Especificación normativa
 
