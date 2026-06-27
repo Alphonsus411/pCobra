@@ -700,19 +700,54 @@ def main(page: "ft.Page"):
         salida.value = f"Carpeta eliminada: {ruta_resuelta}"
         actualizar_pagina()
 
-    ejecutar_handler = runtime.crear_handler_ejecucion(
+    def archivo_activo_permite_accion_cobra(accion: str) -> bool:
+        """Valida que el archivo activo permita una acción propia de Cobra."""
+
+        if estado.ruta is None:
+            return True
+
+        if runtime.archivo_permite_accion(estado.ruta, accion):
+            return True
+
+        salida.value = "Esta acción solo está disponible para archivos Cobra."
+        page.update()
+        return False
+
+    ejecutar_runtime_handler = runtime.crear_handler_ejecucion(
         entrada=entrada, salida=salida, selector=selector, activar=activar, page=page
     )
-    tokens_handler = runtime.crear_handler_tokens(
+    tokens_runtime_handler = runtime.crear_handler_tokens(
         entrada=entrada, salida=salida, page=page
     )
-    ast_handler = runtime.crear_handler_ast(entrada=entrada, salida=salida, page=page)
-    sugerencias_handler = runtime.crear_handler_sugerencias(
+    ast_runtime_handler = runtime.crear_handler_ast(
         entrada=entrada, salida=salida, page=page
     )
-    correccion_handler = runtime.crear_handler_correccion_tipografica(
+    sugerencias_runtime_handler = runtime.crear_handler_sugerencias(
         entrada=entrada, salida=salida, page=page
     )
+    correccion_runtime_handler = runtime.crear_handler_correccion_tipografica(
+        entrada=entrada, salida=salida, page=page
+    )
+
+    def ejecutar_handler(e):
+        if archivo_activo_permite_accion_cobra(runtime.ACCION_EJECUTAR):
+            ejecutar_runtime_handler(e)
+
+    def tokens_handler(e):
+        if archivo_activo_permite_accion_cobra(runtime.ACCION_TOKENS):
+            tokens_runtime_handler(e)
+
+    def ast_handler(e):
+        if archivo_activo_permite_accion_cobra(runtime.ACCION_AST):
+            ast_runtime_handler(e)
+
+    def sugerencias_handler(e):
+        if archivo_activo_permite_accion_cobra(runtime.ACCION_SUGERENCIAS):
+            sugerencias_runtime_handler(e)
+
+    def correccion_handler(e):
+        if archivo_activo_permite_accion_cobra(runtime.ACCION_CORRECCION):
+            correccion_runtime_handler(e)
 
     reconstruir_arbol()
     sincronizar_estado_visual()

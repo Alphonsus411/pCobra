@@ -401,6 +401,107 @@ def test_main_handlers_smoke(monkeypatch):
     assert page.update.call_count == 6
 
 
+def test_main_bloquea_acciones_cobra_en_archivos_no_cobra(monkeypatch, tmp_path):
+    ft = _fake_flet()
+    monkeypatch.setenv("COBRA_PROJECTS_DIR", str(tmp_path))
+    monkeypatch.setattr(idle.runtime, "require_flet", lambda: ft)
+    monkeypatch.setattr(
+        idle.runtime, "detectar_motor_ia_sugerencias", _motor_disponible
+    )
+    monkeypatch.setattr(idle.runtime, "gui_target_choices", lambda: ("python",))
+    monkeypatch.setattr(
+        idle.runtime,
+        "require_gui_dependencies",
+        lambda: {
+            "TRANSPILERS": {"python": object},
+            "LexerError": RuntimeError,
+            "ParserError": ValueError,
+            "Lexer": lambda _codigo: SimpleNamespace(tokenizar=lambda: []),
+            "Parser": lambda _tokens: SimpleNamespace(parsear=lambda: []),
+        },
+    )
+    monkeypatch.setattr(idle.runtime, "normalizar_codigo", lambda value: value or "")
+    ejecutar_mock = MagicMock(return_value="ejecutado")
+    tokens_mock = MagicMock(return_value="Token(X)")
+    ast_mock = MagicMock(return_value="[Nodo]")
+    sugerencias_mock = MagicMock(return_value="sugerencias")
+    correccion_mock = MagicMock(return_value="correccion")
+    monkeypatch.setattr(idle.runtime, "ejecutar_codigo", ejecutar_mock)
+    monkeypatch.setattr(idle.runtime, "mostrar_tokens", tokens_mock)
+    monkeypatch.setattr(idle.runtime, "mostrar_ast", ast_mock)
+    monkeypatch.setattr(idle.runtime, "generar_reporte_sugerencias", sugerencias_mock)
+    monkeypatch.setattr(
+        idle.runtime, "generar_reporte_correccion_tipografica", correccion_mock
+    )
+
+    archivos_no_cobra = [
+        "README.md",
+        "Dockerfile",
+        "config.json",
+        "config.yaml",
+        "config.toml",
+        "notas.txt",
+        ".gitignore",
+        ".env.example",
+    ]
+    for nombre in archivos_no_cobra:
+        (tmp_path / nombre).write_text("contenido", encoding="utf-8")
+
+    page = ft.Page()
+    idle.main(page)
+
+    ruta_input = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.TextField) and c.kwargs.get("label") == "Ruta"
+    )
+    salida = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.Text) and c.kwargs.get("selectable")
+    )
+    botones = {
+        c.text: c
+        for c in page.controls
+        if isinstance(c, ft.ElevatedButton)
+        and c.text
+        in {
+            "Abrir",
+            "Ejecutar",
+            "Tokens",
+            "AST",
+            "Sugerencias del Libro",
+            "Corrección",
+        }
+    }
+
+    for nombre in archivos_no_cobra:
+        ruta_input.value = str(tmp_path / nombre)
+        botones["Abrir"].on_click(None)
+
+        ejecutar_mock.reset_mock()
+        tokens_mock.reset_mock()
+        ast_mock.reset_mock()
+        sugerencias_mock.reset_mock()
+        correccion_mock.reset_mock()
+
+        for accion in [
+            "Ejecutar",
+            "Tokens",
+            "AST",
+            "Sugerencias del Libro",
+            "Corrección",
+        ]:
+            botones[accion].on_click(None)
+            assert salida.value == "Esta acción solo está disponible para archivos Cobra."
+
+        ejecutar_mock.assert_not_called()
+        tokens_mock.assert_not_called()
+        ast_mock.assert_not_called()
+        sugerencias_mock.assert_not_called()
+        correccion_mock.assert_not_called()
+
+
 def test_main_selector_y_switch_sin_targets(monkeypatch):
     ft = _fake_flet()
     monkeypatch.setattr(idle.runtime, "require_flet", lambda: ft)
