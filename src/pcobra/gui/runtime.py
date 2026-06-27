@@ -140,6 +140,18 @@ CAPACIDADES_POR_TIPO: dict[str, frozenset[str]] = {
 }
 """Acciones permitidas por tipo de archivo detectado."""
 
+ETIQUETAS_TIPO_ARCHIVO: dict[str, str] = {
+    TIPO_ARCHIVO_COBRA: "Archivo Cobra",
+    TIPO_ARCHIVO_MARKDOWN: "Archivo Markdown",
+    TIPO_ARCHIVO_TEXTO: "Archivo de texto",
+    TIPO_ARCHIVO_CONFIG: "Archivo de configuración",
+    TIPO_ARCHIVO_DOCKER: "Archivo Docker",
+    TIPO_ARCHIVO_IGNORE: "Archivo ignore",
+    TIPO_ARCHIVO_ENV_EXAMPLE: "Archivo de entorno de ejemplo",
+    TIPO_ARCHIVO_DESCONOCIDO: "Archivo de texto",
+}
+"""Etiquetas visibles por tipo de archivo detectado."""
+
 MOSTRAR_DESCONOCIDOS_COMO_TEXTO_IDLE = False
 """Bandera interna para exponer archivos desconocidos como texto plano.
 
@@ -311,6 +323,15 @@ def detectar_tipo_archivo(path: str | Path) -> str:
     if nombre_lower in ENV_EXAMPLE_FILE_NAMES:
         return TIPO_ARCHIVO_ENV_EXAMPLE
     return TIPO_ARCHIVO_DESCONOCIDO
+
+
+def etiqueta_tipo_archivo(path: str | Path) -> str:
+    """Devuelve la etiqueta visible para el tipo detectado de una ruta."""
+
+    tipo_archivo = detectar_tipo_archivo(path)
+    return ETIQUETAS_TIPO_ARCHIVO.get(
+        tipo_archivo, ETIQUETAS_TIPO_ARCHIVO[TIPO_ARCHIVO_DESCONOCIDO]
+    )
 
 
 def obtener_capacidades_archivo(path: str | Path) -> frozenset[str]:
@@ -502,9 +523,10 @@ def escribir_archivo_texto(
 def crear_titulo_archivo(estado: GuiFileState) -> str:
     """Devuelve la etiqueta común del archivo activo en la GUI."""
 
-    nombre = (
-        str(estado.ruta) if estado.ruta is not None else "Archivo nuevo (sin guardar)"
-    )
+    if estado.ruta is None:
+        nombre = "Archivo nuevo (sin guardar)"
+    else:
+        nombre = f"{etiqueta_tipo_archivo(estado.ruta)}: {estado.ruta}"
     return f"{nombre}{' *' if estado.cambios_sin_guardar else ''}"
 
 

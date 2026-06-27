@@ -123,6 +123,34 @@ def test_detectar_tipo_archivo_clasifica_extensiones_y_nombres_conocidos() -> No
         assert runtime.detectar_tipo_archivo(ruta) == tipo_esperado
 
 
+def test_etiqueta_tipo_archivo_devuelve_textos_visibles() -> None:
+    casos = {
+        "programa.cobra": "Archivo Cobra",
+        "README.md": "Archivo Markdown",
+        "notas.txt": "Archivo de texto",
+        "pyproject.toml": "Archivo de configuración",
+        "Dockerfile": "Archivo Docker",
+        ".gitignore": "Archivo ignore",
+        ".env.example": "Archivo de entorno de ejemplo",
+        "imagen.png": "Archivo de texto",
+    }
+
+    for ruta, etiqueta_esperada in casos.items():
+        assert runtime.etiqueta_tipo_archivo(ruta) == etiqueta_esperada
+
+
+def test_crear_titulo_archivo_antepone_etiqueta_y_conserva_asterisco() -> None:
+    estado = runtime.GuiFileState(ruta=Path("README.md"), cambios_sin_guardar=True)
+
+    assert runtime.crear_titulo_archivo(estado) == "Archivo Markdown: README.md *"
+
+
+def test_crear_titulo_archivo_sin_ruta_mantiene_texto_de_archivo_nuevo() -> None:
+    estado = runtime.GuiFileState(cambios_sin_guardar=True)
+
+    assert runtime.crear_titulo_archivo(estado) == "Archivo nuevo (sin guardar) *"
+
+
 def test_capacidades_archivo_reservan_acciones_cobra_para_codigo_cobra() -> None:
     acciones_cobra = {
         runtime.ACCION_EJECUTAR,
