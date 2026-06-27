@@ -401,8 +401,16 @@ def test_main_handlers_smoke(monkeypatch):
     assert page.update.call_count == 6
 
 
-def test_main_bloquea_acciones_cobra_en_archivos_no_cobra(monkeypatch, tmp_path):
+def test_main_bloquea_acciones_cobra_en_readme_de_proyecto_activo(
+    monkeypatch, tmp_path
+):
     ft = _fake_flet()
+    proyecto = tmp_path / "proyecto"
+    proyecto.mkdir()
+    readme = proyecto / "README.md"
+    contenido_readme = "# Proyecto\n\nDocumentación"
+    readme.write_text(contenido_readme, encoding="utf-8")
+
     monkeypatch.setenv("COBRA_PROJECTS_DIR", str(tmp_path))
     monkeypatch.setattr(idle.runtime, "require_flet", lambda: ft)
     monkeypatch.setattr(
@@ -421,11 +429,53 @@ def test_main_bloquea_acciones_cobra_en_archivos_no_cobra(monkeypatch, tmp_path)
         },
     )
     monkeypatch.setattr(idle.runtime, "normalizar_codigo", lambda value: value or "")
-    ejecutar_mock = MagicMock(return_value="ejecutado")
-    tokens_mock = MagicMock(return_value="Token(X)")
-    ast_mock = MagicMock(return_value="[Nodo]")
-    sugerencias_mock = MagicMock(return_value="sugerencias")
-    correccion_mock = MagicMock(return_value="correccion")
+
+    acciones_invocadas = {
+        "ejecutar": 0,
+        "tokens": 0,
+        "ast": 0,
+        "sugerencias": 0,
+        "correccion": 0,
+    }
+
+    def _handler_que_falla(nombre):
+        def _handler(_e=None):
+            acciones_invocadas[nombre] += 1
+            raise AssertionError(f"No debía invocarse la acción Cobra: {nombre}")
+
+        return _handler
+
+    monkeypatch.setattr(
+        idle.runtime,
+        "crear_handler_ejecucion",
+        lambda **_kwargs: _handler_que_falla("ejecutar"),
+    )
+    monkeypatch.setattr(
+        idle.runtime,
+        "crear_handler_tokens",
+        lambda **_kwargs: _handler_que_falla("tokens"),
+    )
+    monkeypatch.setattr(
+        idle.runtime,
+        "crear_handler_ast",
+        lambda **_kwargs: _handler_que_falla("ast"),
+    )
+    monkeypatch.setattr(
+        idle.runtime,
+        "crear_handler_sugerencias",
+        lambda **_kwargs: _handler_que_falla("sugerencias"),
+    )
+    monkeypatch.setattr(
+        idle.runtime,
+        "crear_handler_correccion_tipografica",
+        lambda **_kwargs: _handler_que_falla("correccion"),
+    )
+
+    ejecutar_mock = MagicMock(side_effect=AssertionError("ejecutar invocado"))
+    tokens_mock = MagicMock(side_effect=AssertionError("tokens invocado"))
+    ast_mock = MagicMock(side_effect=AssertionError("ast invocado"))
+    sugerencias_mock = MagicMock(side_effect=AssertionError("sugerencias invocado"))
+    correccion_mock = MagicMock(side_effect=AssertionError("corrección invocada"))
     monkeypatch.setattr(idle.runtime, "ejecutar_codigo", ejecutar_mock)
     monkeypatch.setattr(idle.runtime, "mostrar_tokens", tokens_mock)
     monkeypatch.setattr(idle.runtime, "mostrar_ast", ast_mock)
@@ -434,26 +484,23 @@ def test_main_bloquea_acciones_cobra_en_archivos_no_cobra(monkeypatch, tmp_path)
         idle.runtime, "generar_reporte_correccion_tipografica", correccion_mock
     )
 
-    archivos_no_cobra = [
-        "README.md",
-        "Dockerfile",
-        "config.json",
-        "config.yaml",
-        "config.toml",
-        "notas.txt",
-        ".gitignore",
-        ".env.example",
-    ]
-    for nombre in archivos_no_cobra:
-        (tmp_path / nombre).write_text("contenido", encoding="utf-8")
-
     page = ft.Page()
     idle.main(page)
 
+    entrada = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.TextField) and c.kwargs.get("multiline")
+    )
     ruta_input = next(
         c
         for c in page.controls
         if isinstance(c, ft.TextField) and c.kwargs.get("label") == "Ruta"
+    )
+    raiz_input = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.TextField) and c.kwargs.get("label") == "Proyecto activo"
     )
     salida = next(
         c
@@ -466,6 +513,7 @@ def test_main_bloquea_acciones_cobra_en_archivos_no_cobra(monkeypatch, tmp_path)
         if isinstance(c, ft.ElevatedButton)
         and c.text
         in {
+            "Abrir proyecto",
             "Abrir",
             "Ejecutar",
             "Tokens",
@@ -475,31 +523,35 @@ def test_main_bloquea_acciones_cobra_en_archivos_no_cobra(monkeypatch, tmp_path)
         }
     }
 
-    for nombre in archivos_no_cobra:
-        ruta_input.value = str(tmp_path / nombre)
-        botones["Abrir"].on_click(None)
+    raiz_input.value = str(proyecto)
+    botones["Abrir proyecto"].on_click(None)
+    ruta_input.value = str(readme)
+    botones["Abrir"].on_click(None)
+    valor_entrada_original = entrada.value
 
-        ejecutar_mock.reset_mock()
-        tokens_mock.reset_mock()
-        ast_mock.reset_mock()
-        sugerencias_mock.reset_mock()
-        correccion_mock.reset_mock()
+    for accion in [
+        "Ejecutar",
+        "Tokens",
+        "AST",
+        "Sugerencias del Libro",
+        "Corrección",
+    ]:
+        botones[accion].on_click(None)
+        assert "Esta acción solo está disponible para archivos Cobra." in salida.value
 
-        for accion in [
-            "Ejecutar",
-            "Tokens",
-            "AST",
-            "Sugerencias del Libro",
-            "Corrección",
-        ]:
-            botones[accion].on_click(None)
-            assert salida.value == "Esta acción solo está disponible para archivos Cobra."
-
-        ejecutar_mock.assert_not_called()
-        tokens_mock.assert_not_called()
-        ast_mock.assert_not_called()
-        sugerencias_mock.assert_not_called()
-        correccion_mock.assert_not_called()
+    assert entrada.value == valor_entrada_original == contenido_readme
+    assert acciones_invocadas == {
+        "ejecutar": 0,
+        "tokens": 0,
+        "ast": 0,
+        "sugerencias": 0,
+        "correccion": 0,
+    }
+    ejecutar_mock.assert_not_called()
+    tokens_mock.assert_not_called()
+    ast_mock.assert_not_called()
+    sugerencias_mock.assert_not_called()
+    correccion_mock.assert_not_called()
 
 
 def test_main_selector_y_switch_sin_targets(monkeypatch):
