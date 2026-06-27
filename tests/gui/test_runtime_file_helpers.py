@@ -46,17 +46,50 @@ def test_es_archivo_cobra_prioriza_extensiones_documentadas():
     assert not runtime.es_archivo_cobra("README.md")
 
 
-def test_listar_directorio_cobra_filtra_y_ordena(tmp_path: Path):
+def test_listar_directorio_idle_incluye_auxiliares_y_ordena(tmp_path: Path):
     (tmp_path / "zeta").mkdir()
     (tmp_path / "beta.co").write_text("", encoding="utf-8")
     (tmp_path / "alfa.cobra").write_text("", encoding="utf-8")
+    (tmp_path / "README.md").write_text("", encoding="utf-8")
+    (tmp_path / "config.yaml").write_text("", encoding="utf-8")
     (tmp_path / "ignorado.py").write_text("", encoding="utf-8")
 
-    assert [path.name for path in runtime.listar_directorio_cobra(tmp_path)] == [
+    assert [path.name for path in runtime.listar_directorio_idle(tmp_path)] == [
         "zeta",
         "alfa.cobra",
         "beta.co",
+        "config.yaml",
+        "README.md",
     ]
+
+
+def test_listar_directorio_cobra_delega_en_politica_idle(tmp_path: Path):
+    (tmp_path / "README.md").write_text("", encoding="utf-8")
+
+    assert [path.name for path in runtime.listar_directorio_cobra(tmp_path)] == [
+        "README.md",
+    ]
+
+
+def test_listar_directorio_idle_permite_desconocidos_opcionalmente(tmp_path: Path):
+    (tmp_path / "script.py").write_text("", encoding="utf-8")
+
+    assert runtime.listar_directorio_idle(tmp_path) == []
+    assert [
+        path.name
+        for path in runtime.listar_directorio_idle(
+            tmp_path, incluir_desconocidos=True
+        )
+    ] == ["script.py"]
+
+
+def test_construir_entradas_directorio_muestra_readme_markdown(tmp_path: Path):
+    (tmp_path / "README.md").write_text("", encoding="utf-8")
+
+    padre, entradas = runtime.construir_entradas_directorio(tmp_path)
+
+    assert padre == tmp_path.resolve().parent
+    assert [(tipo, ruta.name) for tipo, ruta in entradas] == [("file", "README.md")]
 
 
 @pytest.mark.parametrize(
