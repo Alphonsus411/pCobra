@@ -100,6 +100,63 @@ def test_es_archivo_cobra_reconoce_extensiones_seguras_documentadas() -> None:
     assert not runtime.es_archivo_cobra("notas.txt")
 
 
+def test_detectar_tipo_archivo_clasifica_extensiones_y_nombres_conocidos() -> None:
+    casos = {
+        "programa.cobra": runtime.TIPO_ARCHIVO_COBRA,
+        "programa.co": runtime.TIPO_ARCHIVO_COBRA,
+        "README.md": runtime.TIPO_ARCHIVO_MARKDOWN,
+        "manual.markdown": runtime.TIPO_ARCHIVO_MARKDOWN,
+        "notas.txt": runtime.TIPO_ARCHIVO_TEXTO,
+        "package.json": runtime.TIPO_ARCHIVO_CONFIG,
+        "compose.yml": runtime.TIPO_ARCHIVO_CONFIG,
+        "compose.yaml": runtime.TIPO_ARCHIVO_CONFIG,
+        "pyproject.toml": runtime.TIPO_ARCHIVO_CONFIG,
+        "Dockerfile": runtime.TIPO_ARCHIVO_DOCKER,
+        "Dockerfile.dev": runtime.TIPO_ARCHIVO_DOCKER,
+        ".gitignore": runtime.TIPO_ARCHIVO_IGNORE,
+        ".dockerignore": runtime.TIPO_ARCHIVO_IGNORE,
+        ".env.example": runtime.TIPO_ARCHIVO_ENV_EXAMPLE,
+        "imagen.png": runtime.TIPO_ARCHIVO_DESCONOCIDO,
+    }
+
+    for ruta, tipo_esperado in casos.items():
+        assert runtime.detectar_tipo_archivo(ruta) == tipo_esperado
+
+
+def test_capacidades_archivo_reservan_acciones_cobra_para_codigo_cobra() -> None:
+    acciones_cobra = {
+        runtime.ACCION_EJECUTAR,
+        runtime.ACCION_TOKENS,
+        runtime.ACCION_AST,
+        runtime.ACCION_SUGERENCIAS,
+        runtime.ACCION_CORRECCION,
+    }
+    acciones_base = {
+        runtime.ACCION_EDITAR,
+        runtime.ACCION_GUARDAR,
+        runtime.ACCION_RECARGAR,
+        runtime.ACCION_BORRAR,
+    }
+
+    assert acciones_cobra <= runtime.obtener_capacidades_archivo("programa.cobra")
+    assert acciones_base <= runtime.obtener_capacidades_archivo("programa.cobra")
+
+    for ruta in [
+        "README.md",
+        "notas.txt",
+        "package.json",
+        "Dockerfile",
+        ".gitignore",
+        ".env.example",
+        "imagen.png",
+    ]:
+        capacidades = runtime.obtener_capacidades_archivo(ruta)
+        assert capacidades == acciones_base
+        assert not any(
+            runtime.archivo_permite_accion(ruta, accion) for accion in acciones_cobra
+        )
+
+
 def test_listar_directorio_cobra_modo_seguro_filtra_archivos_no_cobra(
     tmp_path: Path,
 ) -> None:

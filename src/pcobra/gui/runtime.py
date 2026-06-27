@@ -81,8 +81,64 @@ def _local_import_action(module_name: str, symbol_name: str) -> str:
     )
 
 
+TIPO_ARCHIVO_COBRA = "cobra"
+TIPO_ARCHIVO_MARKDOWN = "markdown"
+TIPO_ARCHIVO_TEXTO = "texto"
+TIPO_ARCHIVO_CONFIG = "config"
+TIPO_ARCHIVO_DOCKER = "docker"
+TIPO_ARCHIVO_IGNORE = "ignore"
+TIPO_ARCHIVO_ENV_EXAMPLE = "env_example"
+TIPO_ARCHIVO_DESCONOCIDO = "desconocido"
+
+ACCION_EDITAR = "editar"
+ACCION_GUARDAR = "guardar"
+ACCION_RECARGAR = "recargar"
+ACCION_BORRAR = "borrar"
+ACCION_EJECUTAR = "ejecutar"
+ACCION_TOKENS = "tokens"
+ACCION_AST = "ast"
+ACCION_SUGERENCIAS = "sugerencias"
+ACCION_CORRECCION = "correccion"
+
+ACCIONES_ARCHIVO_BASE: frozenset[str] = frozenset(
+    {ACCION_EDITAR, ACCION_GUARDAR, ACCION_RECARGAR, ACCION_BORRAR}
+)
+"""Acciones comunes para archivos manipulables desde la GUI."""
+
+ACCIONES_ARCHIVO_COBRA: frozenset[str] = ACCIONES_ARCHIVO_BASE | frozenset(
+    {
+        ACCION_EJECUTAR,
+        ACCION_TOKENS,
+        ACCION_AST,
+        ACCION_SUGERENCIAS,
+        ACCION_CORRECCION,
+    }
+)
+"""Acciones disponibles para archivos Cobra."""
+
 COBRA_FILE_EXTENSIONS: tuple[str, ...] = (".cobra", ".co")
 """Extensiones Cobra aceptadas y priorizadas para el explorador del IDLE."""
+
+MARKDOWN_FILE_EXTENSIONS: frozenset[str] = frozenset({".md", ".markdown"})
+TEXT_FILE_EXTENSIONS: frozenset[str] = frozenset({".txt"})
+CONFIG_FILE_EXTENSIONS: frozenset[str] = frozenset(
+    {".json", ".yml", ".yaml", ".toml"}
+)
+IGNORE_FILE_NAMES: frozenset[str] = frozenset({".gitignore", ".dockerignore"})
+ENV_EXAMPLE_FILE_NAMES: frozenset[str] = frozenset({".env.example"})
+"""Nombres especiales de archivos de entorno de ejemplo."""
+
+CAPACIDADES_POR_TIPO: dict[str, frozenset[str]] = {
+    TIPO_ARCHIVO_COBRA: ACCIONES_ARCHIVO_COBRA,
+    TIPO_ARCHIVO_MARKDOWN: ACCIONES_ARCHIVO_BASE,
+    TIPO_ARCHIVO_TEXTO: ACCIONES_ARCHIVO_BASE,
+    TIPO_ARCHIVO_CONFIG: ACCIONES_ARCHIVO_BASE,
+    TIPO_ARCHIVO_DOCKER: ACCIONES_ARCHIVO_BASE,
+    TIPO_ARCHIVO_IGNORE: ACCIONES_ARCHIVO_BASE,
+    TIPO_ARCHIVO_ENV_EXAMPLE: ACCIONES_ARCHIVO_BASE,
+    TIPO_ARCHIVO_DESCONOCIDO: ACCIONES_ARCHIVO_BASE,
+}
+"""Acciones permitidas por tipo de archivo detectado."""
 
 MOSTRAR_TODOS_LOS_ARCHIVOS_IDLE = False
 """Bandera interna para una futura configuración de visibilidad completa.
@@ -231,10 +287,48 @@ def generar_sugerencias(codigo: str) -> list[str]:
     return _generar(codigo)
 
 
+def detectar_tipo_archivo(path: str | Path) -> str:
+    """Clasifica una ruta según los tipos de archivo conocidos por la GUI."""
+
+    ruta = Path(path)
+    nombre = ruta.name
+    nombre_lower = nombre.lower()
+    extension = ruta.suffix.lower()
+
+    if extension in COBRA_FILE_EXTENSIONS:
+        return TIPO_ARCHIVO_COBRA
+    if extension in MARKDOWN_FILE_EXTENSIONS:
+        return TIPO_ARCHIVO_MARKDOWN
+    if extension in TEXT_FILE_EXTENSIONS:
+        return TIPO_ARCHIVO_TEXTO
+    if extension in CONFIG_FILE_EXTENSIONS:
+        return TIPO_ARCHIVO_CONFIG
+    if nombre == "Dockerfile" or nombre.startswith("Dockerfile."):
+        return TIPO_ARCHIVO_DOCKER
+    if nombre_lower in IGNORE_FILE_NAMES:
+        return TIPO_ARCHIVO_IGNORE
+    if nombre_lower in ENV_EXAMPLE_FILE_NAMES:
+        return TIPO_ARCHIVO_ENV_EXAMPLE
+    return TIPO_ARCHIVO_DESCONOCIDO
+
+
+def obtener_capacidades_archivo(path: str | Path) -> frozenset[str]:
+    """Devuelve las acciones permitidas para el tipo detectado de una ruta."""
+
+    tipo_archivo = detectar_tipo_archivo(path)
+    return CAPACIDADES_POR_TIPO.get(tipo_archivo, ACCIONES_ARCHIVO_BASE)
+
+
+def archivo_permite_accion(path: str | Path, accion: str) -> bool:
+    """Indica si una ruta permite ejecutar una acción concreta en la GUI."""
+
+    return accion in obtener_capacidades_archivo(path)
+
+
 def es_archivo_cobra(path: str | Path) -> bool:
     """Indica si una ruta parece contener código Cobra editable."""
 
-    return Path(path).suffix.lower() in COBRA_FILE_EXTENSIONS
+    return detectar_tipo_archivo(path) == TIPO_ARCHIVO_COBRA
 
 
 def resolver_ruta_archivo_en_project_root(
