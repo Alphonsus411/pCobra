@@ -1103,6 +1103,12 @@ def crear_handler_guardar_como(
     abrir, guardar como y la ruta activa compartan una única entrada visible.
     Este helper queda disponible para integraciones GUI alternativas que
     prefieran delegar la selección de destino al diálogo nativo de Flet.
+
+    El diálogo nativo anuncia las extensiones auxiliares que Cobra trata como
+    texto/configuración editable. Nombres especiales sin una extensión final
+    estándar, como ``Dockerfile``, ``.gitignore``, ``.dockerignore`` o
+    ``.env.example``, siguen teniendo como flujo canónico el campo ``Ruta``
+    del IDLE, ya que no encajan bien en el filtrado por ``allowed_extensions``.
     """
 
     def guardar_como_handler(_e: Any) -> None:
@@ -1118,9 +1124,19 @@ def crear_handler_guardar_como(
         page.overlay.append(file_picker)
         page.update()
         file_picker.save_file(
-            dialog_title="Guardar archivo del proyecto",
+            dialog_title="Guardar archivo del proyecto Cobra",
             file_name="nuevo_archivo.cobra",
-            allowed_extensions=["cobra", "co"],
+            allowed_extensions=[
+                "cobra",
+                "co",
+                "md",
+                "markdown",
+                "txt",
+                "json",
+                "yml",
+                "yaml",
+                "toml",
+            ],
         )
 
     return guardar_como_handler
