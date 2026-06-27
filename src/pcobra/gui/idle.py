@@ -736,6 +736,12 @@ def main(page: "ft.Page"):
         if estado.ruta is None:
             return True
 
+        tipo_archivo = runtime.detectar_tipo_archivo(estado.ruta)
+        if tipo_archivo != runtime.TIPO_ARCHIVO_COBRA:
+            salida.value = "Esta acción solo está disponible para archivos Cobra."
+            page.update()
+            return False
+
         if runtime.archivo_permite_accion(estado.ruta, accion):
             return True
 

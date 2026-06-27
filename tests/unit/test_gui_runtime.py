@@ -181,8 +181,28 @@ def test_capacidades_archivo_reservan_acciones_cobra_para_codigo_cobra() -> None
         capacidades = runtime.obtener_capacidades_archivo(ruta)
         assert capacidades == acciones_base
         assert not any(
-            runtime.archivo_permite_accion(ruta, accion) for accion in acciones_cobra
-        )
+        runtime.archivo_permite_accion(ruta, accion) for accion in acciones_cobra
+    )
+
+
+def test_archivo_permite_accion_bloquea_acciones_cobra_para_archivos_config() -> None:
+    acciones_cobra = {
+        runtime.ACCION_EJECUTAR,
+        runtime.ACCION_TOKENS,
+        runtime.ACCION_AST,
+        runtime.ACCION_SUGERENCIAS,
+        runtime.ACCION_CORRECCION,
+    }
+    config_file = "config.json"
+    
+    for accion in acciones_cobra:
+        assert not runtime.archivo_permite_accion(config_file, accion)
+
+    # Verify base actions are still allowed
+    assert runtime.archivo_permite_accion(config_file, runtime.ACCION_EDITAR)
+    assert runtime.archivo_permite_accion(config_file, runtime.ACCION_GUARDAR)
+    assert runtime.archivo_permite_accion(config_file, runtime.ACCION_RECARGAR)
+    assert runtime.archivo_permite_accion(config_file, runtime.ACCION_BORRAR)
 
 
 def test_listar_directorio_cobra_modo_seguro_incluye_texto_auxiliar_clasificado(

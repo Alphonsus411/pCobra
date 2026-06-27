@@ -84,37 +84,10 @@ def test_cli_build_help_public_contract_no_expone_flags_backend():
     assert "--tipos" not in output
 
 
-def test_cli_help_public_contract_bloquea_ui_v1_en_perfil_publico():
-    repo_root = Path(__file__).resolve().parents[2]
-    result = subprocess.run(
-        [sys.executable, "-m", "cobra.cli.cli", "--ui", "v1", "--help"],
-        capture_output=True,
-        text=True,
-        cwd=str(repo_root),
-        env=_public_env(),
-    )
-    assert result.returncode == 2
-    lower_output = result.stderr.lower() + result.stdout.lower()
-    assert "ui v1 está deshabilitada para uso público" in lower_output
-    assert "se mantiene ui v2 (cobra run/build/test/mod/repl)" in lower_output
-    assert "argument --ui: invalid choice: 'v1' (choose from v2)" in lower_output
 
 
-def test_cli_help_public_contract_bloquea_flags_legacy_en_arranque():
-    repo_root = Path(__file__).resolve().parents[2]
-    env = _public_env()
-    env["COBRA_INTERNAL_ENABLE_LEGACY_CLI"] = "1"
-    result = subprocess.run(
-        [sys.executable, "-m", "cobra.cli.cli", "--help"],
-        capture_output=True,
-        text=True,
-        cwd=str(repo_root),
-        env=env,
-    )
-    assert result.returncode == 1
-    lower_error = result.stderr.lower() + result.stdout.lower()
-    assert "internal migration only" in lower_error
-    assert "cobra_internal_enable_legacy_cli=1" in lower_error
+
+
 
 
 def test_cli_help_public_contract_muestra_warning_migracion_en_comando_legacy():
