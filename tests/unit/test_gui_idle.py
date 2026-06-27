@@ -229,7 +229,7 @@ def test_panel_lateral_organiza_proyecto_en_columna(monkeypatch, tmp_path):
 
     contenido_panel = panel_lateral.content
     assert isinstance(contenido_panel, ft.Column)
-    assert contenido_panel.controls[0].value == "Archivos Cobra"
+    assert contenido_panel.controls[0].value == "Archivos del proyecto"
 
     barra_raiz_arbol = contenido_panel.controls[1]
     assert isinstance(barra_raiz_arbol, ft.Column)
@@ -719,7 +719,7 @@ def test_main_arbol_inicial_muestra_estado_vacio_en_tmp_path_vacio(
     )
 
     assert any(
-        getattr(control, "value", "") == "No hay archivos Cobra en esta carpeta"
+        getattr(control, "value", "") == "No hay archivos visibles en esta carpeta"
         for control in arbol.controls[1:]
     )
     assert len(arbol.controls) > 1
@@ -759,7 +759,7 @@ def test_main_panel_lateral_conserva_ancho_contenido_y_arbol(monkeypatch, tmp_pa
         for c in page.controls
         if isinstance(c, ft.Container)
         and getattr(getattr(c, "content", None), "controls", [None])[0].value
-        == "Archivos Cobra"
+        == "Archivos del proyecto"
     )
     columna = panel_lateral.content
     arbol = columna.controls[-1]
@@ -772,7 +772,7 @@ def test_main_panel_lateral_conserva_ancho_contenido_y_arbol(monkeypatch, tmp_pa
     assert getattr(columna, "controls", None)
     assert columna.expand is True
     assert arbol.expand is True
-    assert columna.controls[0].value == "Archivos Cobra"
+    assert columna.controls[0].value == "Archivos del proyecto"
     assert columna.controls[-1] is arbol
     assert arbol.controls[0].value == _estado_workspace_proyecto(tmp_path)
     assert {"subdirectorio", "programa.cobra", "programa.co"}.issubset(titulos)
@@ -994,7 +994,7 @@ def test_main_acciones_publicas_de_archivo(monkeypatch, tmp_path):
     botones["Abrir"].on_click(None)
     assert entrada.value == "imprimir('abrir')"
     assert salida.value == f"Archivo cargado: {archivo_abrir.resolve()}"
-    assert estado_archivo.value == str(archivo_abrir.resolve())
+    assert estado_archivo.value == f"Archivo Cobra: {archivo_abrir.resolve()}"
     assert ruta_input.value == str(archivo_abrir.resolve())
     assert arbol.controls[0].value == _estado_workspace_proyecto(tmp_path)
 
@@ -1112,7 +1112,7 @@ def test_crear_arbol_directorios_muestra_estado_vacio_en_carpeta_sin_cobras(tmp_
 
     assert arbol.scroll == ft.ScrollMode.ALWAYS
     assert len(arbol.controls) == 1
-    assert arbol.controls[0].value == "No hay archivos Cobra en esta carpeta"
+    assert arbol.controls[0].value == "No hay archivos visibles en esta carpeta"
 
 
 def _preparar_idle_archivos(monkeypatch, tmp_path, workspace_root=None):
