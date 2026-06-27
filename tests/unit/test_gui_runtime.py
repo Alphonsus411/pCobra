@@ -1222,6 +1222,21 @@ def test_guardar_como_por_ruta_y_filepicker_actualizan_estado_igual(
     )
     handler(None)
     assert page.overlay == picker_creados
+    assert picker_creados[0].save_file_args == {
+        "dialog_title": "Guardar archivo del proyecto Cobra",
+        "file_name": "nuevo_archivo.cobra",
+        "allowed_extensions": [
+            "cobra",
+            "co",
+            "md",
+            "markdown",
+            "txt",
+            "json",
+            "yml",
+            "yaml",
+            "toml",
+        ],
+    }
     picker_creados[0].on_result(SimpleNamespace(path=str(destino_picker)))
 
     assert contenido == codigo
