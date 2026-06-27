@@ -84,6 +84,42 @@ def test_resolver_ruta_archivo_en_project_root_rechaza_extension_ajena_txt(
         runtime.resolver_ruta_archivo_en_project_root("src/programa.txt", tmp_path)
 
 
+def test_resolver_ruta_texto_en_project_root_no_agrega_extension_ni_exige_cobra(
+    tmp_path: Path,
+):
+    (tmp_path / "src").mkdir()
+
+    assert runtime.resolver_ruta_texto_en_project_root("src/nota.txt", tmp_path) == (
+        tmp_path / "src" / "nota.txt"
+    ).resolve()
+    assert runtime.resolver_ruta_texto_en_project_root("src/programa", tmp_path) == (
+        tmp_path / "src" / "programa"
+    ).resolve()
+
+
+def test_resolver_ruta_texto_en_project_root_bloquea_escapes_y_symlinks(
+    tmp_path: Path,
+):
+    proyecto = tmp_path / "proyecto"
+    externo = tmp_path / "externo"
+    proyecto.mkdir()
+    externo.mkdir()
+    (externo / "nota.txt").write_text("fuera", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="dentro de la raíz del proyecto"):
+        runtime.resolver_ruta_texto_en_project_root("../externo/nota.txt", proyecto)
+
+    enlace = proyecto / "enlace.txt"
+    enlace.symlink_to(externo / "nota.txt")
+    with pytest.raises(ValueError, match="dentro de la raíz del proyecto"):
+        runtime.resolver_ruta_texto_en_project_root(enlace, proyecto)
+
+
+def test_resolver_ruta_texto_en_project_root_rechaza_directorios(tmp_path: Path):
+    with pytest.raises(NotADirectoryError, match="archivo de texto del proyecto"):
+        runtime.resolver_ruta_texto_en_project_root(tmp_path, tmp_path)
+
+
 def test_escribir_archivo_texto_no_parsea_ni_modifica_contenido(tmp_path: Path):
     (tmp_path / "sub").mkdir()
     destino = tmp_path / "sub" / "codigo.co"

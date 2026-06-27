@@ -291,6 +291,44 @@ def resolver_ruta_archivo_en_project_root(
     return ruta_resuelta
 
 
+def resolver_ruta_texto_en_project_root(
+    ruta: str | Path, project_root: str | Path
+) -> Path:
+    """Resuelve una ruta de archivo de texto dentro de ``project_root``.
+
+    Las rutas relativas se interpretan desde ``project_root``. Las rutas
+    absolutas se aceptan solo si su ruta canónica queda dentro de esa raíz.
+    ``Path.resolve()`` junto con ``Path.relative_to()`` bloquea escapes con
+    ``..`` y enlaces simbólicos externos. Este helper no añade extensiones ni
+    exige que el archivo sea Cobra.
+    """
+
+    raiz = Path(project_root).expanduser().resolve()
+    if raiz.exists() and not raiz.is_dir():
+        raise NotADirectoryError(f"La raíz del proyecto debe ser un directorio: {raiz}")
+
+    ruta_expandida = Path(ruta).expanduser()
+    candidata = (
+        ruta_expandida if ruta_expandida.is_absolute() else raiz / ruta_expandida
+    )
+    ruta_resuelta = candidata.resolve()
+
+    try:
+        ruta_resuelta.relative_to(raiz)
+    except ValueError as exc:
+        raise ValueError(
+            f"La ruta del archivo debe estar dentro de la raíz del proyecto: {raiz}"
+        ) from exc
+
+    if ruta_resuelta.exists() and ruta_resuelta.is_dir():
+        raise NotADirectoryError(
+            "La ruta indicada corresponde a un directorio; "
+            "indica un archivo de texto del proyecto."
+        )
+
+    return ruta_resuelta
+
+
 def listar_directorio_cobra(
     root: str | Path, *, mostrar_todos: bool = MOSTRAR_TODOS_LOS_ARCHIVOS_IDLE
 ) -> list[Path]:
@@ -440,13 +478,13 @@ def escribir_archivo_texto_validado(
 
     Esta función no revalida contra el sandbox global porque el flujo del IDLE
     principal ya validó la ruta contra project_root mediante
-    resolver_ruta_archivo_en_project_root().
+    resolver_ruta_texto_en_project_root().
     """
 
     destino = Path(path).expanduser().resolve()
     if destino.exists() and destino.is_dir():
         raise NotADirectoryError(
-            "La ruta indicada corresponde a un directorio; indica un archivo Cobra."
+            "La ruta indicada corresponde a un directorio; indica un archivo de texto del proyecto."
         )
 
     destino.parent.mkdir(parents=True, exist_ok=True)
@@ -540,7 +578,7 @@ def leer_archivo_texto_validado(
     origen = Path(path).expanduser().resolve()
     if origen.exists() and origen.is_dir():
         raise NotADirectoryError(
-            "La ruta indicada corresponde a un directorio; indica un archivo Cobra."
+            "La ruta indicada corresponde a un directorio; indica un archivo de texto del proyecto."
         )
     return origen.read_text(encoding=encoding)
 
@@ -924,7 +962,7 @@ def crear_handler_guardar_como(
         page.overlay.append(file_picker)
         page.update()
         file_picker.save_file(
-            dialog_title="Guardar archivo Cobra",
+            dialog_title="Guardar archivo del proyecto",
             file_name="nuevo_archivo.cobra",
             allowed_extensions=["cobra", "co"],
         )

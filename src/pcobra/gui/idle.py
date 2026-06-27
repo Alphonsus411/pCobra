@@ -173,7 +173,7 @@ def main(page: "ft.Page"):
 
     def resolver_ruta_archivo_idle(ruta: str | Path) -> Path | None:
         try:
-            return runtime.resolver_ruta_archivo_en_project_root(ruta, project_root)
+            return runtime.resolver_ruta_texto_en_project_root(ruta, project_root)
         except (
             FileNotFoundError,
             NotADirectoryError,
@@ -197,7 +197,7 @@ def main(page: "ft.Page"):
         texto = (ruta_input.value or "").strip()
 
         if not texto:
-            salida.value = "Indica la ruta de un archivo Cobra."
+            salida.value = "Indica la ruta de un archivo de texto del proyecto."
             page.update()
             return None
 
@@ -509,7 +509,7 @@ def main(page: "ft.Page"):
         texto = (ruta_input.value or "").strip()
 
         if not texto:
-            salida.value = "Indica la ruta de un archivo Cobra."
+            salida.value = "Indica la ruta de un archivo de texto del proyecto."
             page.update()
             return
 
@@ -794,7 +794,7 @@ def main(page: "ft.Page"):
         content=runtime.flet_column(
             ft,
             controls=[
-                runtime.flet_text(ft, value="Archivos Cobra"),
+                runtime.flet_text(ft, value="Archivos del proyecto"),
                 barra_raiz_arbol,
                 arbol,
             ],
