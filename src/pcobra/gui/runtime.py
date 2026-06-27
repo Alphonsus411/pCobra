@@ -140,12 +140,13 @@ CAPACIDADES_POR_TIPO: dict[str, frozenset[str]] = {
 }
 """Acciones permitidas por tipo de archivo detectado."""
 
-MOSTRAR_TODOS_LOS_ARCHIVOS_IDLE = False
-"""Bandera interna para una futura configuración de visibilidad completa.
+MOSTRAR_DESCONOCIDOS_COMO_TEXTO_IDLE = False
+"""Bandera interna para exponer archivos desconocidos como texto plano.
 
-El valor por defecto mantiene el modo seguro del IDLE: mostrar directorios y
-solo archivos Cobra. Puede activarse desde código o una configuración futura si
-el equipo decide exponer todos los archivos en el árbol.
+El valor por defecto mantiene visible solo lo que la GUI clasifica como Cobra o
+texto/configuración auxiliar soportado por ``detectar_tipo_archivo()``. Puede
+activarse desde código o una configuración futura si el equipo decide permitir
+abrir archivos desconocidos como texto plano desde el árbol del IDLE.
 """
 
 SUGERENCIAS_BUTTON_TEXT = "Sugerencias del Libro"
@@ -423,25 +424,56 @@ def resolver_ruta_texto_en_project_root(
     return ruta_resuelta
 
 
-def listar_directorio_cobra(
-    root: str | Path, *, mostrar_todos: bool = MOSTRAR_TODOS_LOS_ARCHIVOS_IDLE
+TIPOS_ARCHIVO_TEXTO_IDLE: frozenset[str] = frozenset(CAPACIDADES_POR_TIPO) - frozenset(
+    {TIPO_ARCHIVO_DESCONOCIDO}
+)
+"""Tipos de archivo no directorio visibles y abribles como texto en el IDLE."""
+
+
+def listar_directorio_idle(
+    root: str | Path,
+    *,
+    incluir_desconocidos: bool = MOSTRAR_DESCONOCIDOS_COMO_TEXTO_IDLE,
 ) -> list[Path]:
     """Lista carpetas y archivos visibles del IDLE, con orden estable.
 
-    Por defecto conserva el modo seguro centrado en Cobra: siempre muestra
-    directorios y solo archivos con extensiones documentadas ``.co``/``.cobra``.
-    ``mostrar_todos`` queda como opción interna para una configuración futura si
-    el equipo decide exponer todos los archivos del directorio.
+    La política general muestra siempre directorios, archivos Cobra y archivos
+    auxiliares de texto/configuración clasificados por ``detectar_tipo_archivo()``
+    (por ejemplo Markdown, TXT, JSON/YAML/TOML, Dockerfile, ignore y
+    ``.env.example``). ``incluir_desconocidos`` permite exponer archivos no
+    clasificados si se decide abrirlos como texto plano.
     """
 
     base = Path(root).expanduser()
     entradas = list(base.iterdir())
-    visibles = [
-        entry
-        for entry in entradas
-        if entry.is_dir() or mostrar_todos or es_archivo_cobra(entry)
-    ]
+    visibles = []
+    for entry in entradas:
+        if entry.is_dir():
+            visibles.append(entry)
+            continue
+        tipo_archivo = detectar_tipo_archivo(entry)
+        if tipo_archivo in TIPOS_ARCHIVO_TEXTO_IDLE or (
+            incluir_desconocidos and tipo_archivo == TIPO_ARCHIVO_DESCONOCIDO
+        ):
+            visibles.append(entry)
+
     return sorted(visibles, key=lambda entry: (not entry.is_dir(), entry.name.lower()))
+
+
+def listar_directorio_cobra(
+    root: str | Path,
+    *,
+    mostrar_todos: bool = MOSTRAR_DESCONOCIDOS_COMO_TEXTO_IDLE,
+) -> list[Path]:
+    """Lista entradas visibles del IDLE usando la política general actual.
+
+    Legado: se conserva por compatibilidad con integraciones que aún llaman al
+    helper histórico centrado en Cobra. Delegue nuevo código en
+    ``listar_directorio_idle()``. El parámetro ``mostrar_todos`` se conserva como
+    alias compatible para incluir archivos desconocidos como texto plano.
+    """
+
+    return listar_directorio_idle(root, incluir_desconocidos=mostrar_todos)
 
 
 def normalizar_ruta_archivo_gui(path: str | Path) -> Path:
@@ -527,7 +559,7 @@ def construir_entradas_directorio(
     padre = actual.parent if actual.parent != actual else None
     entradas = [
         ("dir" if ruta.is_dir() else "file", ruta)
-        for ruta in listar_directorio_cobra(actual)
+        for ruta in listar_directorio_idle(actual)
     ]
     return padre, entradas
 
@@ -902,7 +934,7 @@ def crear_arbol_directorios(
             if data.get("children_loaded"):
                 return
             tile.controls = [
-                _crear_nodo(entrada) for entrada in listar_directorio_cobra(path)
+                _crear_nodo(entrada) for entrada in listar_directorio_idle(path)
             ]
             data["children_loaded"] = True
             tile.data = data
@@ -918,10 +950,10 @@ def crear_arbol_directorios(
             return _crear_nodo_directorio(path)
         return _crear_nodo_archivo(path)
 
-    entradas = listar_directorio_cobra(root_path)
+    entradas = listar_directorio_idle(root_path)
     if not entradas:
         return ft.Column(
-            [flet_text(ft, value="No hay archivos Cobra en esta carpeta")],
+            [flet_text(ft, value="No hay archivos visibles en esta carpeta")],
             scroll=ft.ScrollMode.ALWAYS,
         )
 
