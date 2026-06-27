@@ -152,13 +152,13 @@ ETIQUETAS_TIPO_ARCHIVO: dict[str, str] = {
 }
 """Etiquetas visibles por tipo de archivo detectado."""
 
-MOSTRAR_DESCONOCIDOS_COMO_TEXTO_IDLE = False
+MOSTRAR_DESCONOCIDOS_COMO_TEXTO_IDLE = True
 """Bandera interna para exponer archivos desconocidos como texto plano.
 
-El valor por defecto mantiene visible solo lo que la GUI clasifica como Cobra o
-texto/configuración auxiliar soportado por ``detectar_tipo_archivo()``. Puede
-activarse desde código o una configuración futura si el equipo decide permitir
-abrir archivos desconocidos como texto plano desde el árbol del IDLE.
+El valor por defecto muestra también los archivos no clasificados del proyecto
+activo para que puedan abrirse como texto plano desde el árbol del IDLE. Estas
+rutas conservan solo acciones base de archivo: nunca habilitan ejecución,
+tokens, AST, sugerencias ni corrección Cobra.
 """
 
 SUGERENCIAS_BUTTON_TEXT = "Sugerencias del Libro"
@@ -445,9 +445,7 @@ def resolver_ruta_texto_en_project_root(
     return ruta_resuelta
 
 
-TIPOS_ARCHIVO_TEXTO_IDLE: frozenset[str] = frozenset(CAPACIDADES_POR_TIPO) - frozenset(
-    {TIPO_ARCHIVO_DESCONOCIDO}
-)
+TIPOS_ARCHIVO_TEXTO_IDLE: frozenset[str] = frozenset(CAPACIDADES_POR_TIPO)
 """Tipos de archivo no directorio visibles y abribles como texto en el IDLE."""
 
 
@@ -461,8 +459,8 @@ def listar_directorio_idle(
     La política general muestra siempre directorios, archivos Cobra y archivos
     auxiliares de texto/configuración clasificados por ``detectar_tipo_archivo()``
     (por ejemplo Markdown, TXT, JSON/YAML/TOML, Dockerfile, ignore y
-    ``.env.example``). ``incluir_desconocidos`` permite exponer archivos no
-    clasificados si se decide abrirlos como texto plano.
+    ``.env.example``). ``incluir_desconocidos`` permite ocultar o exponer archivos
+    no clasificados, que se tratan únicamente como texto plano.
     """
 
     base = Path(root).expanduser()
@@ -473,9 +471,11 @@ def listar_directorio_idle(
             visibles.append(entry)
             continue
         tipo_archivo = detectar_tipo_archivo(entry)
-        if tipo_archivo in TIPOS_ARCHIVO_TEXTO_IDLE or (
-            incluir_desconocidos and tipo_archivo == TIPO_ARCHIVO_DESCONOCIDO
-        ):
+        if tipo_archivo == TIPO_ARCHIVO_DESCONOCIDO:
+            if incluir_desconocidos:
+                visibles.append(entry)
+            continue
+        if tipo_archivo in TIPOS_ARCHIVO_TEXTO_IDLE:
             visibles.append(entry)
 
     return sorted(visibles, key=lambda entry: (not entry.is_dir(), entry.name.lower()))

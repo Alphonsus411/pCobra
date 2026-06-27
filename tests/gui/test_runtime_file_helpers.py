@@ -59,6 +59,7 @@ def test_listar_directorio_idle_incluye_auxiliares_y_ordena(tmp_path: Path):
         "alfa.cobra",
         "beta.co",
         "config.yaml",
+        "ignorado.py",
         "README.md",
     ]
 
@@ -71,16 +72,15 @@ def test_listar_directorio_cobra_delega_en_politica_idle(tmp_path: Path):
     ]
 
 
-def test_listar_directorio_idle_permite_desconocidos_opcionalmente(tmp_path: Path):
+def test_listar_directorio_idle_muestra_desconocidos_por_defecto_y_permite_ocultarlos(tmp_path: Path):
     (tmp_path / "script.py").write_text("", encoding="utf-8")
 
-    assert runtime.listar_directorio_idle(tmp_path) == []
-    assert [
-        path.name
-        for path in runtime.listar_directorio_idle(
-            tmp_path, incluir_desconocidos=True
-        )
-    ] == ["script.py"]
+    assert [path.name for path in runtime.listar_directorio_idle(tmp_path)] == [
+        "script.py"
+    ]
+    assert runtime.listar_directorio_idle(
+        tmp_path, incluir_desconocidos=False
+    ) == []
 
 
 def test_construir_entradas_directorio_muestra_readme_markdown(tmp_path: Path):
@@ -333,6 +333,29 @@ def test_cargar_archivo_desde_arbol_reusa_apertura_y_valida_extension(tmp_path: 
     assert mensaje_txt == f"Archivo cargado: {archivo_no_cobra.resolve()}"
     assert estado.ruta == archivo_no_cobra.resolve()
     assert estado.contenido_cargado == "texto"
+
+
+def test_archivo_desconocido_se_abre_como_texto_sin_lexer_parser(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    monkeypatch.setenv("COBRA_IO_BASE_DIR", str(tmp_path))
+    desconocido = tmp_path / "script.py"
+    desconocido.write_text("print('texto plano')", encoding="utf-8")
+    estado = runtime.GuiFileState()
+
+    def fail_require_gui_dependencies():
+        raise AssertionError("No debe invocar Lexer/Parser para abrir texto plano")
+
+    monkeypatch.setattr(
+        runtime, "require_gui_dependencies", fail_require_gui_dependencies
+    )
+
+    contenido, mensaje = runtime.cargar_archivo_desde_arbol(desconocido, estado)
+
+    assert contenido == "print('texto plano')"
+    assert mensaje == f"Archivo cargado: {desconocido.resolve()}"
+    assert estado.ruta == desconocido.resolve()
+    assert estado.contenido_cargado == "print('texto plano')"
 
 
 @pytest.mark.parametrize(

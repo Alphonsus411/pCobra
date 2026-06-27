@@ -199,6 +199,7 @@ def test_listar_directorio_cobra_modo_seguro_incluye_texto_auxiliar_clasificado(
         "zeta",
         "alfa.cobra",
         "beta.co",
+        "ignorado.py",
         "notas.txt",
         "README.md",
     ]
@@ -983,8 +984,18 @@ def test_accion_cargar_archivo_desde_arbol_filtra_extensiones(
     assert estado.contenido_cargado == "notas del proyecto"
     assert estado.cambios_sin_guardar is False
     assert mensaje == f"Archivo cargado: {archivo.resolve()}"
-    with pytest.raises(ValueError, match="archivo de texto del proyecto"):
-        runtime.cargar_archivo_desde_arbol(tmp_path / "imagen.png", estado)
+    desconocido = tmp_path / "imagen.png"
+    desconocido.write_bytes(b"texto plano compatible utf-8")
+
+    contenido_desconocido, mensaje_desconocido = runtime.cargar_archivo_desde_arbol(
+        desconocido, estado
+    )
+
+    assert runtime.detectar_tipo_archivo(desconocido) == runtime.TIPO_ARCHIVO_DESCONOCIDO
+    assert contenido_desconocido == "texto plano compatible utf-8"
+    assert estado.ruta == desconocido.resolve()
+    assert estado.contenido_cargado == "texto plano compatible utf-8"
+    assert mensaje_desconocido == f"Archivo cargado: {desconocido.resolve()}"
 
 
 def test_require_flet_error_accionable(monkeypatch: pytest.MonkeyPatch) -> None:
