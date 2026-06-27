@@ -59,11 +59,13 @@ La barra de archivo expone estas acciones:
 
 Todas las lecturas y escrituras de archivos de texto Cobra se tratan como UTF-8. Si hay cambios sin guardar, la interfaz conserva el indicador visual hasta que el contenido del editor coincide de nuevo con el contenido persistido. Toda lectura, escritura y normalización de rutas se mantiene en `src/pcobra/gui/runtime.py`; `src/pcobra/gui/idle.py` solo coordina eventos Flet, estado visual y mensajes.
 
-## Árbol de directorios
+## Árbol de directorios y archivos auxiliares
 
 El panel lateral muestra un árbol de directorios construido con `runtime.crear_arbol_directorios`. La raíz inicial es el directorio de trabajo actual y puede cambiarse desde el campo `Raíz del árbol` con el botón **Establecer raíz**; por tanto, la raíz es editable desde la propia GUI.
 
-El árbol lista carpetas y archivos Cobra con extensión `.co` o `.cobra`. Los subdirectorios se cargan bajo demanda al expandirlos, y los archivos no Cobra quedan ocultos salvo que se active una configuración interna futura para mostrar todo. Al seleccionar un archivo Cobra visible, el IDLE llama a `runtime.cargar_archivo_desde_arbol`, valida la extensión y reutiliza el mismo flujo de apertura de archivos para cargar su contenido en el editor.
+El árbol muestra directorios y archivos de texto del proyecto activo clasificados por `runtime.detectar_tipo_archivo()`. Los tipos visibles y soportados incluyen archivos Cobra (`.co` y `.cobra`), Markdown (`.md` y `.markdown`), TXT, configuración JSON/YAML/TOML, `Dockerfile` y variantes `Dockerfile.*`, `.gitignore`, `.dockerignore` y `.env.example`. Los subdirectorios se cargan bajo demanda al expandirlos; los archivos que no encajan en esos tipos permanecen fuera del árbol salvo que una configuración interna futura active la exposición de desconocidos como texto plano.
+
+Al seleccionar un archivo visible, el IDLE llama a `runtime.cargar_archivo_desde_arbol`, comprueba que sea un archivo de texto soportado y reutiliza el mismo flujo de apertura para cargarlo en el editor. Los archivos auxiliares se pueden abrir, editar, guardar, recargar y borrar como texto dentro del proyecto activo, pero no participan en el análisis Cobra. Solo los archivos Cobra habilitan **Ejecutar**, **Tokens**, **AST**, **Sugerencias del Libro** y **Corrección**; por tanto, el `Lexer` y el `Parser` se usan explícitamente solo con archivos Cobra.
 
 ## Dependencias opcionales y degradación
 
