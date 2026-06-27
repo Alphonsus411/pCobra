@@ -283,6 +283,12 @@ def _normalizar_argumentos(argumentos: Optional[Iterable[str]]) -> Optional[List
     primer_argumento = normalizados[0].lower()
     if primer_argumento in {"ayuda", "help"}:
         normalizados[0:1] = ["--ayuda"]
+        return normalizados
+
+    for indice, argumento in enumerate(normalizados):
+        if argumento.lower() == "ejecutar":
+            normalizados[indice] = "run"
+            break
 
     return normalizados
 
@@ -380,3 +386,7 @@ def main(argumentos: Optional[List[str]] = None) -> int:
         return 1
     aplicacion = CliApplication()
     return aplicacion.run(argv)
+
+
+if __name__ == "__main__":
+    sys.exit(main())

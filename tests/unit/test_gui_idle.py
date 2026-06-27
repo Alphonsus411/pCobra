@@ -9,6 +9,18 @@ from unittest.mock import MagicMock
 from pcobra.gui import idle
 
 
+def _estado_workspace_proyecto(workspace, proyecto=None):
+    workspace = workspace.resolve()
+    if proyecto is None or proyecto.resolve() == workspace:
+        return f"Workspace: {workspace}\nProyecto activo: ninguno"
+    proyecto = proyecto.resolve()
+    return (
+        f"Workspace: {workspace}\n"
+        f"Proyecto activo: {proyecto.name}\n"
+        f"Ruta completa: {proyecto}"
+    )
+
+
 def _motor_disponible():
     return idle.runtime.MotorIASugerencias(disponible=True)
 
@@ -241,11 +253,13 @@ def test_panel_lateral_organiza_proyecto_en_columna(monkeypatch, tmp_path):
     assert [boton.text for boton in botones] == [
         "Crear proyecto",
         "Abrir proyecto",
+        "Cerrar proyecto",
         "Eliminar proyecto",
     ]
     assert botones[0].on_click.__name__ == "crear_proyecto_handler"
     assert botones[1].on_click.__name__ == "establecer_raiz_arbol_handler"
-    assert botones[2].on_click.__name__ == "eliminar_proyecto_handler"
+    assert botones[2].on_click.__name__ == "cerrar_proyecto_handler"
+    assert botones[3].on_click.__name__ == "eliminar_proyecto_handler"
 
     filas_con_textfield_expand_y_botones = [
         control
@@ -521,13 +535,13 @@ def test_main_arbol_inicial_muestra_subdirectorios_y_archivos_cobra(
         for c in page.controls
         if isinstance(c, ft.ListView)
         and getattr(getattr(c, "controls", [None])[0], "value", "").startswith(
-            "Proyecto activo:"
+            "Workspace:"
         )
     )
     entradas = arbol.controls[1:]
     titulos = [getattr(control.title, "value", "") for control in entradas]
 
-    assert arbol.controls[0].value == f"Proyecto activo: {tmp_path.resolve()}"
+    assert arbol.controls[0].value == _estado_workspace_proyecto(tmp_path)
     assert "subdirectorio" in titulos
     assert "programa.cobra" in titulos
     assert "programa.co" in titulos
@@ -599,7 +613,7 @@ def test_main_arbol_inicial_muestra_estado_vacio_en_tmp_path_vacio(
         for c in page.controls
         if isinstance(c, ft.ListView)
         and getattr(getattr(c, "controls", [None])[0], "value", "").startswith(
-            "Proyecto activo:"
+            "Workspace:"
         )
     )
 
@@ -659,7 +673,7 @@ def test_main_panel_lateral_conserva_ancho_contenido_y_arbol(monkeypatch, tmp_pa
     assert arbol.expand is True
     assert columna.controls[0].value == "Archivos Cobra"
     assert columna.controls[-1] is arbol
-    assert arbol.controls[0].value == f"Proyecto activo: {tmp_path.resolve()}"
+    assert arbol.controls[0].value == _estado_workspace_proyecto(tmp_path)
     assert {"subdirectorio", "programa.cobra", "programa.co"}.issubset(titulos)
     assert entradas
 
@@ -704,7 +718,7 @@ def test_main_muestra_error_visible_si_falla_arbol_directorios(monkeypatch, tmp_
         for c in page.controls
         if isinstance(c, ft.ListView)
         and getattr(getattr(c, "controls", [None])[0], "value", "").startswith(
-            "Proyecto activo:"
+            "Workspace:"
         )
     )
 
@@ -778,7 +792,7 @@ def test_main_establecer_raiz_arbol_muestra_error_si_listado_falla(
         for c in page.controls
         if isinstance(c, ft.ListView)
         and getattr(getattr(c, "controls", [None])[0], "value", "").startswith(
-            "Proyecto activo:"
+            "Workspace:"
         )
     )
 
@@ -858,7 +872,7 @@ def test_main_acciones_publicas_de_archivo(monkeypatch, tmp_path):
         for c in page.controls
         if isinstance(c, ft.ListView)
         and getattr(getattr(c, "controls", [None])[0], "value", "").startswith(
-            "Proyecto activo:"
+            "Workspace:"
         )
     )
     estado_archivo = next(
@@ -881,7 +895,7 @@ def test_main_acciones_publicas_de_archivo(monkeypatch, tmp_path):
     assert salida.value == f"Archivo cargado: {archivo_abrir.resolve()}"
     assert estado_archivo.value == str(archivo_abrir.resolve())
     assert ruta_input.value == str(archivo_abrir.resolve())
-    assert arbol.controls[0].value == f"Proyecto activo: {tmp_path.resolve()}"
+    assert arbol.controls[0].value == _estado_workspace_proyecto(tmp_path)
 
     entrada.value = "imprimir('guardado')"
     botones["Guardar"].on_click(None)
@@ -969,7 +983,7 @@ def test_main_establecer_raiz_arbol_valida_directorios(monkeypatch, tmp_path):
         for c in page.controls
         if isinstance(c, ft.ListView)
         and getattr(getattr(c, "controls", [None])[0], "value", "").startswith(
-            "Proyecto activo:"
+            "Workspace:"
         )
     )
 
@@ -984,7 +998,8 @@ def test_main_establecer_raiz_arbol_valida_directorios(monkeypatch, tmp_path):
     boton_raiz.on_click(None)
     assert salida.value == f"Proyecto abierto: {subdir.resolve()}"
     assert raiz_input.value == str(subdir.resolve())
-    assert arbol.controls[0].value == f"Proyecto activo: {subdir.resolve()}"
+    workspace_root = idle.runtime.resolver_workspace_root_idle()
+    assert arbol.controls[0].value == _estado_workspace_proyecto(workspace_root, subdir)
 
 
 def test_crear_arbol_directorios_muestra_estado_vacio_en_carpeta_sin_cobras(tmp_path):
@@ -1268,9 +1283,11 @@ def test_crear_proyectos_separados_con_src_y_readme(monkeypatch, tmp_path):
         for c in page.controls
         if isinstance(c, ft.ListView)
         and getattr(getattr(c, "controls", [None])[0], "value", "").startswith(
-            "Proyecto activo:"
+            "Workspace:"
         )
     )
+
+    workspace_root = idle.runtime.resolver_workspace_root_idle()
 
     for nombre in ("proyecto_uno", "proyecto_dos"):
         proyecto_input.value = nombre
@@ -1282,7 +1299,9 @@ def test_crear_proyectos_separados_con_src_y_readme(monkeypatch, tmp_path):
         assert (proyecto / "README.md").read_text(encoding="utf-8") == f"# {nombre}\n"
         assert salida.value == f"Proyecto creado: {proyecto}"
         assert proyecto_input.value == str(proyecto)
-        assert arbol.controls[0].value == f"Proyecto activo: {proyecto}"
+        assert arbol.controls[0].value == _estado_workspace_proyecto(
+            workspace_root, proyecto
+        )
 
     assert not (tmp_path / "proyecto_uno").exists()
     assert not (tmp_path / "proyecto_dos").exists()
@@ -1320,7 +1339,7 @@ def test_guardar_relativo_usa_project_root_activo_tras_abrir_segundo_proyecto(
         for c in page.controls
         if isinstance(c, ft.ListView)
         and getattr(getattr(c, "controls", [None])[0], "value", "").startswith(
-            "Proyecto activo:"
+            "Workspace:"
         )
     )
 
@@ -1345,7 +1364,9 @@ def test_guardar_relativo_usa_project_root_activo_tras_abrir_segundo_proyecto(
     ]
 
     assert workspace_root == (tmp_path / "CobraProjects").resolve()
-    assert arbol.controls[0].value == f"Proyecto activo: {proyecto_dos}"
+    assert arbol.controls[0].value == _estado_workspace_proyecto(
+        workspace_root, proyecto_dos
+    )
     assert "src" in titulos_arbol_activo
     assert "proyecto_uno" not in titulos_arbol_activo
     assert "solo_uno.cobra" not in titulos_arbol_activo
@@ -1371,7 +1392,9 @@ def test_guardar_relativo_usa_project_root_activo_tras_abrir_segundo_proyecto(
     assert salida.value == f"Archivo guardado: {destino_activo}"
     assert ruta_input.value == str(destino_activo)
     assert proyecto_input.value == str(proyecto_dos)
-    assert arbol.controls[0].value == f"Proyecto activo: {proyecto_dos}"
+    assert arbol.controls[0].value == _estado_workspace_proyecto(
+        workspace_root, proyecto_dos
+    )
     assert (
         destino_activo.read_text(encoding="utf-8") == "imprimir('desde proyecto dos')"
     )
@@ -1410,7 +1433,7 @@ def test_abrir_proyecto_rechaza_ruta_fuera_de_workspace(monkeypatch, tmp_path):
         for c in page.controls
         if isinstance(c, ft.ListView)
         and getattr(getattr(c, "controls", [None])[0], "value", "").startswith(
-            "Proyecto activo:"
+            "Workspace:"
         )
     )
 
@@ -1420,7 +1443,7 @@ def test_abrir_proyecto_rechaza_ruta_fuera_de_workspace(monkeypatch, tmp_path):
     assert salida.value.startswith("error: ")
     assert f"El proyecto debe estar dentro de: {workspace_root}" in salida.value
     assert proyecto_input.value == str(externo)
-    assert arbol.controls[0].value == f"Proyecto activo: {workspace_root}"
+    assert arbol.controls[0].value == _estado_workspace_proyecto(workspace_root)
 
 
 def test_crear_proyecto_normaliza_nombre_seguro(monkeypatch, tmp_path):
@@ -1478,7 +1501,7 @@ def test_eliminar_archivo_activo_reinicia_editor_y_estado_visual(monkeypatch, tm
     eliminar = next(
         c
         for c in page.controls
-        if isinstance(c, ft.ElevatedButton) and c.text == "Eliminar"
+        if isinstance(c, ft.ElevatedButton) and c.text == "Eliminar archivo"
     )
     estado_archivo = next(
         c
@@ -1500,11 +1523,116 @@ def test_eliminar_archivo_activo_reinicia_editor_y_estado_visual(monkeypatch, tm
 
     eliminar.on_click(None)
 
+    assert destino.exists()
+    assert salida.value == f"Pulsa de nuevo Eliminar archivo para confirmar: {destino}"
+
+    eliminar.on_click(None)
+
     assert not destino.exists()
     assert entrada.value == ""
     assert ruta_input.value == ""
     assert salida.value == f"Archivo eliminado: {destino}"
     assert estado_archivo.value == "Archivo nuevo (sin guardar)"
+
+
+def test_eliminar_archivo_cancela_confirmacion_si_cambia_ruta_visible(
+    monkeypatch, tmp_path
+):
+    (
+        ft,
+        page,
+        entrada,
+        ruta_input,
+        salida,
+        _abrir,
+        guardar_como,
+    ) = _preparar_idle_archivos(monkeypatch, tmp_path)
+    proyecto_input = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.TextField) and c.kwargs.get("label") == "Proyecto activo"
+    )
+    crear_proyecto = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.ElevatedButton) and c.text == "Crear proyecto"
+    )
+    eliminar = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.ElevatedButton) and c.text == "Eliminar archivo"
+    )
+
+    proyecto_input.value = "proyecto"
+    crear_proyecto.on_click(None)
+    destino = (
+        idle.runtime.resolver_workspace_root_idle()
+        / "proyecto"
+        / "src"
+        / "borrar.cobra"
+    ).resolve()
+    entrada.value = "imprimir('borrar')"
+    ruta_input.value = "src/borrar"
+    guardar_como.on_click(None)
+
+    eliminar.on_click(None)
+    ruta_input.value = "src/otra.cobra"
+    ruta_input.on_change(None)
+    eliminar.on_click(None)
+
+    assert destino.exists()
+    assert salida.value == f"Pulsa de nuevo Eliminar archivo para confirmar: {destino}"
+
+    eliminar.on_click(None)
+
+    assert not destino.exists()
+    assert salida.value == f"Archivo eliminado: {destino}"
+
+
+def test_eliminar_archivo_mantiene_bloqueo_de_escape_relativo(monkeypatch, tmp_path):
+    (
+        ft,
+        page,
+        entrada,
+        ruta_input,
+        salida,
+        _abrir,
+        guardar_como,
+    ) = _preparar_idle_archivos(monkeypatch, tmp_path)
+    proyecto_input = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.TextField) and c.kwargs.get("label") == "Proyecto activo"
+    )
+    crear_proyecto = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.ElevatedButton) and c.text == "Crear proyecto"
+    )
+    eliminar = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.ElevatedButton) and c.text == "Eliminar archivo"
+    )
+
+    proyecto_input.value = "proyecto"
+    crear_proyecto.on_click(None)
+    entrada.value = "imprimir('borrar')"
+    ruta_input.value = "src/borrar"
+    guardar_como.on_click(None)
+    escape = (tmp_path / "CobraProjects" / "escape.cobra").resolve()
+    escape.write_text("imprimir('escape')", encoding="utf-8")
+
+    # Simula un cambio inseguro del archivo activo antes del borrado.
+    ruta_guardada = ruta_input.value
+    ruta_input.value = "../escape.cobra"
+    guardar_como.on_click(None)
+    ruta_input.value = ruta_guardada
+
+    eliminar.on_click(None)
+
+    assert escape.exists()
+    assert salida.value.startswith("Pulsa de nuevo Eliminar archivo para confirmar: ")
 
 
 def test_eliminar_carpeta_reinicia_editor_si_archivo_activo_esta_dentro(
@@ -1553,6 +1681,12 @@ def test_eliminar_carpeta_reinicia_editor_si_archivo_activo_esta_dentro(
     ruta_input.value = "src"
     eliminar_carpeta.on_click(None)
 
+    assert carpeta.exists()
+    assert destino.exists()
+    assert salida.value == f"Pulsa de nuevo Eliminar carpeta para confirmar: {carpeta}"
+
+    eliminar_carpeta.on_click(None)
+
     assert not carpeta.exists()
     assert not destino.exists()
     assert entrada.value == ""
@@ -1560,6 +1694,58 @@ def test_eliminar_carpeta_reinicia_editor_si_archivo_activo_esta_dentro(
     assert salida.value == f"Carpeta eliminada: {carpeta}"
     assert estado_archivo.value == "Archivo nuevo (sin guardar)"
 
+
+def test_eliminar_carpeta_cancela_confirmacion_si_cambia_ruta_visible(
+    monkeypatch, tmp_path
+):
+    (
+        ft,
+        page,
+        _entrada,
+        ruta_input,
+        salida,
+        _abrir,
+        _guardar_como,
+    ) = _preparar_idle_archivos(monkeypatch, tmp_path)
+    proyecto_input = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.TextField) and c.kwargs.get("label") == "Proyecto activo"
+    )
+    crear_proyecto = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.ElevatedButton) and c.text == "Crear proyecto"
+    )
+    eliminar_carpeta = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.ElevatedButton) and c.text == "Eliminar carpeta"
+    )
+
+    proyecto_input.value = "proyecto"
+    crear_proyecto.on_click(None)
+    proyecto = (idle.runtime.resolver_workspace_root_idle() / "proyecto").resolve()
+    carpeta = proyecto / "docs"
+    otra_carpeta = proyecto / "tmp"
+    carpeta.mkdir()
+    otra_carpeta.mkdir()
+
+    ruta_input.value = "docs"
+    eliminar_carpeta.on_click(None)
+    ruta_input.value = "tmp"
+    ruta_input.on_change(None)
+    eliminar_carpeta.on_click(None)
+
+    assert carpeta.exists()
+    assert otra_carpeta.exists()
+    assert salida.value == f"Pulsa de nuevo Eliminar carpeta para confirmar: {otra_carpeta}"
+
+    eliminar_carpeta.on_click(None)
+
+    assert carpeta.exists()
+    assert not otra_carpeta.exists()
+    assert salida.value == f"Carpeta eliminada: {otra_carpeta}"
 
 
 def test_eliminar_proyecto_activo_reinicia_estado_y_vuelve_al_workspace(
@@ -1599,7 +1785,7 @@ def test_eliminar_proyecto_activo_reinicia_estado_y_vuelve_al_workspace(
         for c in page.controls
         if isinstance(c, ft.ListView)
         and getattr(getattr(c, "controls", [None])[0], "value", "").startswith(
-            "Proyecto activo:"
+            "Workspace:"
         )
     )
 
@@ -1611,15 +1797,179 @@ def test_eliminar_proyecto_activo_reinicia_estado_y_vuelve_al_workspace(
     ruta_input.value = "src/main"
     guardar_como.on_click(None)
 
+    ruta_input.value = "proyecto"
     eliminar_proyecto.on_click(None)
 
     assert not proyecto.exists()
     assert entrada.value == ""
     assert ruta_input.value == ""
     assert proyecto_input.value == str(workspace_root)
-    assert arbol.controls[0].value == f"Proyecto activo: {workspace_root}"
+    assert arbol.controls[0].value == _estado_workspace_proyecto(workspace_root)
     assert salida.value == f"Proyecto eliminado: {proyecto}"
     assert estado_archivo.value == "Archivo nuevo (sin guardar)"
+
+
+def test_eliminar_proyecto_exige_nombre_exacto(monkeypatch, tmp_path):
+    (
+        ft,
+        page,
+        _entrada,
+        ruta_input,
+        salida,
+        _abrir,
+        _guardar_como,
+    ) = _preparar_idle_archivos(monkeypatch, tmp_path)
+    proyecto_input = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.TextField) and c.kwargs.get("label") == "Proyecto activo"
+    )
+    crear_proyecto = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.ElevatedButton) and c.text == "Crear proyecto"
+    )
+    eliminar_proyecto = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.ElevatedButton) and c.text == "Eliminar proyecto"
+    )
+
+    proyecto_input.value = "proyecto"
+    crear_proyecto.on_click(None)
+    proyecto = (idle.runtime.resolver_workspace_root_idle() / "proyecto").resolve()
+
+    ruta_input.value = "Proyecto"
+    eliminar_proyecto.on_click(None)
+
+    assert proyecto.exists()
+    assert salida.value == (
+        "Para eliminar este proyecto escribe su nombre exacto: proyecto"
+    )
+
+    ruta_input.value = "proyecto"
+    eliminar_proyecto.on_click(None)
+
+    assert not proyecto.exists()
+    assert salida.value == f"Proyecto eliminado: {proyecto}"
+
+
+def test_cerrar_proyecto_reinicia_al_workspace_y_bloquea_archivos(
+    monkeypatch, tmp_path
+):
+    (
+        ft,
+        page,
+        entrada,
+        ruta_input,
+        salida,
+        _abrir,
+        _guardar_como,
+    ) = _preparar_idle_archivos(monkeypatch, tmp_path)
+    workspace_root = idle.runtime.resolver_workspace_root_idle()
+    proyecto_input = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.TextField) and c.kwargs.get("label") == "Proyecto activo"
+    )
+    crear_proyecto = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.ElevatedButton) and c.text == "Crear proyecto"
+    )
+    cerrar_proyecto = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.ElevatedButton) and c.text == "Cerrar proyecto"
+    )
+    eliminar_archivo = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.ElevatedButton) and c.text == "Eliminar archivo"
+    )
+    estado_archivo = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.Text) and c.value == "Archivo nuevo (sin guardar)"
+    )
+    arbol = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.ListView)
+        and getattr(getattr(c, "controls", [None])[0], "value", "").startswith(
+            "Workspace:"
+        )
+    )
+
+    proyecto_input.value = "proyecto_beta"
+    crear_proyecto.on_click(None)
+    proyecto = (workspace_root / "proyecto_beta").resolve()
+    entrada.value = "imprimir('beta')"
+    ruta_input.value = "src/main.cobra"
+
+    def fallar_si_cierra_escribiendo_o_borrando(*_args, **_kwargs):
+        raise AssertionError("Cerrar proyecto no debe escribir ni borrar archivos")
+
+    monkeypatch.setattr(
+        idle.runtime,
+        "guardar_archivo_activo_validado",
+        fallar_si_cierra_escribiendo_o_borrando,
+    )
+    monkeypatch.setattr(
+        idle.runtime,
+        "guardar_archivo_como_validado",
+        fallar_si_cierra_escribiendo_o_borrando,
+    )
+    monkeypatch.setattr(
+        idle.runtime,
+        "eliminar_archivo_validado",
+        fallar_si_cierra_escribiendo_o_borrando,
+    )
+    monkeypatch.setattr(
+        idle.runtime,
+        "eliminar_directorio_validado",
+        fallar_si_cierra_escribiendo_o_borrando,
+    )
+    monkeypatch.setattr(
+        idle.runtime,
+        "eliminar_proyecto_validado",
+        fallar_si_cierra_escribiendo_o_borrando,
+    )
+
+    cerrar_proyecto.on_click(None)
+
+    assert proyecto.exists()
+    assert proyecto_input.value == str(workspace_root)
+    assert entrada.value == ""
+    assert ruta_input.value == ""
+    assert estado_archivo.value == "Archivo nuevo (sin guardar)"
+    assert arbol.controls[0].value == _estado_workspace_proyecto(workspace_root)
+    assert salida.value == "Proyecto cerrado."
+
+    eliminar_archivo.on_click(None)
+
+    assert salida.value == "Crea o abre un proyecto antes de trabajar con archivos."
+
+
+def test_cerrar_proyecto_bloquea_si_no_hay_proyecto_activo(monkeypatch, tmp_path):
+    (
+        ft,
+        page,
+        _entrada,
+        _ruta_input,
+        salida,
+        _abrir,
+        _guardar_como,
+    ) = _preparar_idle_archivos(monkeypatch, tmp_path)
+    cerrar_proyecto = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.ElevatedButton) and c.text == "Cerrar proyecto"
+    )
+
+    cerrar_proyecto.on_click(None)
+
+    assert salida.value == "No hay proyecto activo para cerrar."
 
 
 def test_eliminar_proyecto_bloquea_si_no_hay_proyecto_activo(monkeypatch, tmp_path):
@@ -1643,6 +1993,7 @@ def test_eliminar_proyecto_bloquea_si_no_hay_proyecto_activo(monkeypatch, tmp_pa
 
     assert workspace_root.exists()
     assert salida.value == "No hay proyecto activo para eliminar."
+
 
 def test_eliminar_carpeta_bloquea_project_root_activo(monkeypatch, tmp_path):
     (
@@ -1680,4 +2031,53 @@ def test_eliminar_carpeta_bloquea_project_root_activo(monkeypatch, tmp_path):
     assert proyecto.exists()
     assert salida.value == (
         'No se puede eliminar el proyecto activo como carpeta normal. Usa "Eliminar proyecto".'
+    )
+
+
+def test_eliminar_carpeta_mantiene_bloqueos_de_workspace_y_escape(
+    monkeypatch, tmp_path
+):
+    (
+        ft,
+        page,
+        _entrada,
+        ruta_input,
+        salida,
+        _abrir,
+        _guardar_como,
+    ) = _preparar_idle_archivos(monkeypatch, tmp_path)
+    proyecto_input = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.TextField) and c.kwargs.get("label") == "Proyecto activo"
+    )
+    crear_proyecto = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.ElevatedButton) and c.text == "Crear proyecto"
+    )
+    eliminar_carpeta = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.ElevatedButton) and c.text == "Eliminar carpeta"
+    )
+
+    proyecto_input.value = "proyecto"
+    crear_proyecto.on_click(None)
+    workspace = idle.runtime.resolver_workspace_root_idle().resolve()
+
+    ruta_input.value = str(workspace)
+    eliminar_carpeta.on_click(None)
+
+    assert workspace.exists()
+    assert salida.value == "error: La ruta debe estar dentro del proyecto activo: " + str(
+        workspace / "proyecto"
+    )
+
+    ruta_input.value = "../escape"
+    eliminar_carpeta.on_click(None)
+
+    assert workspace.exists()
+    assert salida.value == "error: La ruta debe estar dentro del proyecto activo: " + str(
+        workspace / "proyecto"
     )

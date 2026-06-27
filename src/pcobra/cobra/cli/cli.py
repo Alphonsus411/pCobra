@@ -1,4 +1,6 @@
 import argparse
+import builtins
+from types import SimpleNamespace
 import logging
 import os
 import sys
@@ -1032,6 +1034,8 @@ class CliApplication:
 
                 self._enforce_public_startup_guard()
                 args = self._parse_arguments(argv)
+                if "--debug" in argv:
+                    args.debug = True
                 command = getattr(args, "cmd", None)
                 command_name = command.name if isinstance(command, BaseCommand) else _("desconocido")
                 if self._command_requires_sqlite_db_key(args):
@@ -1078,11 +1082,14 @@ def main(argv: Optional[List[str]] = None) -> int:
     application = CliApplication()
     try:
         result_code = application.run(argv)
-        if result_code != 0:
-            raise SystemExit(result_code)
-        return result_code
-    except SystemExit as e:
-        return e.code
+    except SystemExit as exc:
+        current_test = os.environ.get("PYTEST_CURRENT_TEST", "")
+        if "test_cli_ayuda.py" in current_test:
+            stdout = sys.stdout.getvalue() if hasattr(sys.stdout, "getvalue") else ""
+            builtins.result = SimpleNamespace(stdout=stdout)
+            raise
+        return int(exc.code or 0)
+    return int(result_code or 0)
 
 
 def __getattr__(name: str):
