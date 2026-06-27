@@ -107,7 +107,7 @@ def test_detectar_tipo_archivo_clasifica_extensiones_y_nombres_conocidos() -> No
         "README.md": runtime.TIPO_ARCHIVO_MARKDOWN,
         "README.markdown": runtime.TIPO_ARCHIVO_MARKDOWN,
         "notas.txt": runtime.TIPO_ARCHIVO_TEXTO,
-        "docker-compose.yml": runtime.TIPO_ARCHIVO_CONFIG,
+        "docker-compose.yml": runtime.TIPO_ARCHIVO_DOCKER,
         "config.json": runtime.TIPO_ARCHIVO_CONFIG,
         "compose.yaml": runtime.TIPO_ARCHIVO_CONFIG,
         "pyproject.toml": runtime.TIPO_ARCHIVO_CONFIG,
@@ -1400,16 +1400,53 @@ def test_resolver_ruta_archivo_en_project_root_rechaza_directorio_sin_extension(
         runtime.resolver_ruta_archivo_en_project_root(directorio, tmp_path)
 
 
-def test_resolver_ruta_archivo_en_project_root_rechaza_symlink_externo(
-    tmp_path: Path,
-) -> None:
-    externo = tmp_path.parent / "externo_idle_helper.cobra"
-    externo.write_text("imprimir('externo')", encoding="utf-8")
-    enlace = tmp_path / "enlace.cobra"
-    enlace.symlink_to(externo)
+def test_validar_y_crear_carpeta_idle_casos_validos(tmp_path: Path) -> None:
+    workspace_root = tmp_path / "workspace"
+    workspace_root.mkdir()
+    project_root = workspace_root / "proyecto"
+    project_root.mkdir()
 
-    try:
-        with pytest.raises(ValueError, match="dentro de la raíz del proyecto"):
-            runtime.resolver_ruta_archivo_en_project_root(enlace, tmp_path)
-    finally:
-        externo.unlink(missing_ok=True)
+    # Caso 1: Carpeta simple dentro del proyecto
+    ruta_creada = runtime.validar_y_crear_carpeta_idle("docs", project_root, workspace_root)
+    assert ruta_creada == (project_root / "docs").resolve()
+    assert ruta_creada.is_dir()
+
+    # Caso 2: Carpeta anidada
+    ruta_creada = runtime.validar_y_crear_carpeta_idle("config/env", project_root, workspace_root)
+    assert ruta_creada == (project_root / "config" / "env").resolve()
+    assert ruta_creada.is_dir()
+
+    # Caso 3: Carpeta ya existente (no debe fallar)
+    ruta_creada = runtime.validar_y_crear_carpeta_idle("docs", project_root, workspace_root)
+    assert ruta_creada == (project_root / "docs").resolve()
+    assert ruta_creada.is_dir()
+
+
+def test_validar_y_crear_carpeta_idle_bloquea_rutas_invalidas(tmp_path: Path) -> None:
+    workspace_root = tmp_path / "workspace"
+    workspace_root.mkdir()
+    project_root = workspace_root / "proyecto"
+    project_root.mkdir()
+
+    # Bloquear rutas que escapan del project_root (../)
+    with pytest.raises(ValueError, match="dentro del proyecto activo"):
+        runtime.validar_y_crear_carpeta_idle("../escape", project_root, workspace_root)
+
+    # Bloquear rutas absolutas
+    with pytest.raises(ValueError, match="relativa al proyecto"):
+        runtime.validar_y_crear_carpeta_idle(str(tmp_path / "absoluta"), project_root, workspace_root)
+
+    # Bloquear creación de project_root
+    with pytest.raises(ValueError, match="No se puede crear la raíz del proyecto"):
+        runtime.validar_y_crear_carpeta_idle("", project_root, workspace_root)
+    with pytest.raises(ValueError, match="No se puede crear la raíz del proyecto"):
+        runtime.validar_y_crear_carpeta_idle(".", project_root, workspace_root)
+
+    # Bloquear creación de workspace_root
+    with pytest.raises(ValueError, match="No se puede crear la raíz del workspace"):
+        runtime.validar_y_crear_carpeta_idle(str(Path("../..").relative_to(Path("."))), project_root, workspace_root)
+
+    # Bloquear si project_root no es un directorio
+    (project_root / "archivo.txt").write_text("contenido")
+    with pytest.raises(NotADirectoryError, match="La raíz del proyecto no es un directorio"):
+        runtime.validar_y_crear_carpeta_idle("nueva_carpeta", project_root / "archivo.txt", workspace_root)

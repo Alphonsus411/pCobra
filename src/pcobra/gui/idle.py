@@ -551,6 +551,36 @@ def main(page: "ft.Page"):
         reconstruir_arbol()
         actualizar_pagina()
 
+    def crear_carpeta_handler(_e):
+        if not requerir_proyecto_activo():
+            return
+
+        texto = (ruta_input.value or "").strip()
+
+        if not texto:
+            salida.value = "Indica la ruta de la nueva carpeta."
+            page.update()
+            return
+
+        try:
+            ruta_creada = runtime.validar_y_crear_carpeta_idle(
+                texto, project_root, workspace_root
+            )
+        except (
+            FileNotFoundError,
+            NotADirectoryError,
+            PermissionError,
+            OSError,
+            ValueError,
+        ) as exc:
+            mostrar_error_archivo(exc)
+            page.update()
+            return
+
+        reconstruir_arbol()
+        salida.value = f"Carpeta creada: {ruta_creada}"
+        actualizar_pagina()
+
     def eliminar_archivo_handler(_e):
         nonlocal confirmacion_eliminacion_archivo_pendiente
 
@@ -792,6 +822,9 @@ def main(page: "ft.Page"):
             ),
             runtime.flet_elevated_button(
                 ft, "Eliminar carpeta", on_click=eliminar_carpeta_handler
+            ),
+            runtime.flet_elevated_button(
+                ft, "Crear carpeta", on_click=crear_carpeta_handler
             ),
             runtime.flet_elevated_button(
                 ft, "Eliminar proyecto", on_click=eliminar_proyecto_handler

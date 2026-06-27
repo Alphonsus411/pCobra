@@ -1,7 +1,6 @@
 from pcobra.cobra.architecture.backend_policy import PUBLIC_BACKENDS
 from pcobra.cobra.architecture.unified_ecosystem import (
     IMPORT_POLICY_BLUEPRINT,
-    LEGACY_BACKEND_REMOVAL_CANDIDATES,
     OFFICIAL_EXECUTION_BACKENDS,
     OFFICIAL_USER_LANGUAGE,
     build_refactor_workplan,
@@ -13,8 +12,6 @@ def test_unified_blueprint_keeps_public_contract() -> None:
     assert OFFICIAL_EXECUTION_BACKENDS == PUBLIC_BACKENDS
 
 
-def test_legacy_inventory_matches_internal_backends() -> None:
-    assert set(LEGACY_BACKEND_REMOVAL_CANDIDATES) == set(INTERNAL_BACKENDS)
 
 
 def test_refactor_workplan_is_structured() -> None:

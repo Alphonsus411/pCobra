@@ -316,7 +316,7 @@ def detectar_tipo_archivo(path: str | Path) -> str:
         return TIPO_ARCHIVO_TEXTO
     if extension in CONFIG_FILE_EXTENSIONS:
         return TIPO_ARCHIVO_CONFIG
-    if nombre == "Dockerfile" or nombre.startswith("Dockerfile."):
+    if nombre == "Dockerfile" or nombre.startswith("Dockerfile.") or nombre == "docker-compose.yml":
         return TIPO_ARCHIVO_DOCKER
     if nombre_lower in IGNORE_FILE_NAMES:
         return TIPO_ARCHIVO_IGNORE
@@ -681,6 +681,45 @@ def eliminar_archivo_validado(ruta: Path) -> None:
     if not destino.is_file():
         raise ValueError(f"La ruta indicada no es un archivo: {destino}")
     destino.unlink()
+
+
+def validar_y_crear_carpeta_idle(
+    ruta: str | Path, project_root: str | Path, workspace_root: str | Path
+) -> Path:
+    """Valida y crea una carpeta dentro del proyecto activo.
+
+    Bloquea escapes con ``..``, rutas absolutas externas y la creación de la
+    propia raíz del proyecto o del workspace.
+    """
+    project_root_resuelto = Path(project_root).expanduser().resolve()
+    workspace_root_resuelto = Path(workspace_root).expanduser().resolve()
+
+    if not project_root_resuelto.is_dir():
+        raise NotADirectoryError(
+            f"La raíz del proyecto no es un directorio: {project_root_resuelto}"
+        )
+
+    ruta_expandida = Path(ruta).expanduser()
+    if ruta_expandida.is_absolute():
+        raise ValueError("La ruta de la carpeta debe ser relativa al proyecto.")
+
+    # Construir la ruta candidata y resolverla para detectar escapes
+    candidata = (project_root_resuelto / ruta_expandida).resolve()
+
+    try:
+        candidata.relative_to(project_root_resuelto)
+    except ValueError as exc:
+        raise ValueError(
+            f"La ruta de la carpeta debe estar dentro del proyecto activo: {project_root_resuelto}"
+        ) from exc
+
+    if candidata == project_root_resuelto:
+        raise ValueError("No se puede crear la raíz del proyecto como una carpeta.")
+    if candidata == workspace_root_resuelto:
+        raise ValueError("No se puede crear la raíz del workspace como una carpeta.")
+
+    candidata.mkdir(parents=True, exist_ok=True)
+    return candidata
 
 
 def eliminar_directorio_validado(ruta: Path) -> None:
@@ -1125,7 +1164,7 @@ def crear_handler_guardar_como(
         page.update()
         file_picker.save_file(
             dialog_title="Guardar archivo del proyecto Cobra",
-            file_name="nuevo_archivo.cobra",
+            file_name="nuevo_archivo.txt",
             allowed_extensions=[
                 "cobra",
                 "co",
@@ -1136,6 +1175,7 @@ def crear_handler_guardar_como(
                 "yml",
                 "yaml",
                 "toml",
+                "docker-compose.yml",
             ],
         )
 
