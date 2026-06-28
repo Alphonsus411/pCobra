@@ -9,6 +9,7 @@ import pytest
 from pcobra.cobra.architecture.backend_policy import PUBLIC_BACKENDS
 from pcobra.cobra.cli.commands.interactive_cmd import InteractiveCommand
 from pcobra.cobra.cli.commands_v2.repl_cmd import ReplCommandV2
+from pcobra.cobra import usar_loader as cli_usar_loader
 from pcobra.core import usar_loader as core_usar_loader
 from pcobra.cobra.core.runtime import InterpretadorCobra
 
@@ -49,7 +50,16 @@ def _crear_numero() -> ModuleType:
 def _crear_texto() -> ModuleType:
     return _modulo_stub(
         "texto",
-        {"a_snake": lambda texto: "hola_mundo" if texto == "HolaMundo" else str(texto)},
+        {
+            "mayusculas": lambda texto: str(texto).upper(),
+            "minusculas": lambda texto: str(texto).lower(),
+            "prefijo_comun": lambda a, b: str(a)[: min(len(str(a)), len(str(b)))],
+            "sufijo_comun": lambda a, b: str(a)[-min(len(str(a)), len(str(b))) :],
+            "recortar": lambda texto: str(texto).strip(),
+            "repetir": lambda texto, veces=2: str(texto) * int(veces),
+            "quitar_acentos": lambda texto: str(texto),
+            "dividir": lambda texto, separador=None, max_divisiones=-1: str(texto).split(separador, max_divisiones),
+        },
         "/workspace/pCobra/src/pcobra/corelibs/texto.py",
     )
 
@@ -77,11 +87,16 @@ def _crear_comando(factory):
     return cmd, (lambda code: cmd._ejecutar_en_modo_normal(code)), cmd._delegate.interpretador
 
 
+def _patch_official_loader(monkeypatch, resolver):
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", resolver)
+    monkeypatch.setattr(cli_usar_loader, "obtener_modulo_cobra_oficial", resolver)
+
+
 @pytest.mark.parametrize("factory", [lambda: InteractiveCommand(InterpretadorCobra()), ReplCommandV2])
 def test_caso_1_numero_superficie_publica_espanol(factory, monkeypatch):
     mod_numero = _crear_numero()
     resolver = lambda nombre, **_kwargs: mod_numero if nombre == "numero" else (_ for _ in ()).throw(ModuleNotFoundError(nombre))
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", resolver)
+    _patch_official_loader(monkeypatch, resolver)
 
     _cmd, ejecutar, interp = _crear_comando(factory)
     ejecutar('usar "numero"')
@@ -94,12 +109,12 @@ def test_caso_1_numero_superficie_publica_espanol(factory, monkeypatch):
 def test_caso_2_texto_superficie_publica_espanol(factory, monkeypatch):
     mod_texto = _crear_texto()
     resolver = lambda nombre, **_kwargs: mod_texto if nombre == "texto" else (_ for _ in ()).throw(ModuleNotFoundError(nombre))
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", resolver)
+    _patch_official_loader(monkeypatch, resolver)
 
     _cmd, ejecutar, interp = _crear_comando(factory)
     ejecutar('usar "texto"')
 
-    assert "a_snake" in interp.contextos[-1].values
+    assert "mayusculas" in interp.contextos[-1].values
     assert "to_snake" not in interp.contextos[-1].values
 
 
@@ -117,13 +132,16 @@ def test_caso_3_datos_superficie_publica_espanol():
 def test_casos_4_a_7_rechaza_modulos_no_permitidos(modulo_externo, factory, monkeypatch):
     mod_numero = _crear_numero()
     resolver = lambda nombre, **_kwargs: mod_numero if nombre == "numero" else (_ for _ in ()).throw(ModuleNotFoundError(nombre))
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", resolver)
+    _patch_official_loader(monkeypatch, resolver)
 
     _cmd, ejecutar, interp = _crear_comando(factory)
     ejecutar('usar "numero"')
     estado_pre = dict(interp.contextos[-1].values)
 
-    with pytest.raises(PermissionError, match=r"módulo externo no permitido en REPL estricto"):
+    with pytest.raises(
+        PermissionError,
+        match=r"Importación no permitida en 'usar': '.*'. Es un módulo backend/no canónico y no forma parte de la API pública\.",
+    ):
         ejecutar(f'usar "{modulo_externo}"')
 
     assert interp.contextos[-1].values == estado_pre
@@ -147,7 +165,7 @@ def test_usar_modulos_canonicos_solo_exponen_superficie_espanol(modulo, factory,
         "holobit": _crear_holobit(),
     }
     resolver = lambda nombre, **_kwargs: stubs[nombre] if nombre in stubs else (_ for _ in ()).throw(ModuleNotFoundError(nombre))
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", resolver)
+    _patch_official_loader(monkeypatch, resolver)
 
     _cmd, ejecutar, interp = _crear_comando(factory)
     ejecutar(f'usar "{modulo}"')

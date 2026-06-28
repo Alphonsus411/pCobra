@@ -1294,7 +1294,13 @@ class InterpretadorCobra:
     def _asegurar_no_autorreferencia_asignacion(
         self, nombre, valor_nodo, visitados
     ) -> None:
-        """Rechaza autorreferencias directas o indirectas antes de persistir."""
+        """Rechaza ciclos reales entre bindings sin bloquear lecturas válidas del valor previo.
+
+        Importante: expresiones como ``x = x + 1`` son semánticamente válidas y
+        deben poder leer el valor previo de ``x``. Solo se rechazan ciclos
+        indirectos al intentar resolver otros identificadores que acaben
+        volviendo al binding en actualización.
+        """
         if not isinstance(nombre, str):
             return
         if nombre in visitados:
@@ -1302,13 +1308,14 @@ class InterpretadorCobra:
 
         visitados.add(nombre)
         try:
-            if self._asignacion_referencia_identificador(valor_nodo, nombre):
-                raise RuntimeError(f"Ciclo de variables detectado en '{nombre}'")
-
             pila = [valor_nodo]
             while pila:
                 actual = pila.pop()
                 if isinstance(actual, NodoIdentificador):
+                    if actual.nombre == nombre:
+                        # Permite patrones válidos como ``x = x + 1`` usando el
+                        # valor previamente materializado en el entorno actual.
+                        continue
                     self._resolver_identificador(actual.nombre, visitados)
                     continue
                 if isinstance(actual, Token):
@@ -1462,14 +1469,18 @@ class InterpretadorCobra:
             self._trace_debug(self._resumir_ast(ast))
 
         ast = optimize_constants(ast)
+        ast = self._aplanar_ast_top_level(ast)
         self._asegurar_ast_aciclico_por_identidad(ast, "post_optimize_constants")
         ast = eliminate_common_subexpressions(ast)
+        ast = self._aplanar_ast_top_level(ast)
         self._asegurar_ast_aciclico_por_identidad(
             ast, "post_eliminate_common_subexpressions"
         )
         ast = inline_functions(ast)
+        ast = self._aplanar_ast_top_level(ast)
         self._asegurar_ast_aciclico_por_identidad(ast, "post_inline_functions")
         ast = remove_dead_code(ast)
+        ast = self._aplanar_ast_top_level(ast)
         self._asegurar_ast_aciclico_por_identidad(ast, "post_remove_dead_code")
 
         self._trace_debug("[AST AFTER OPT]")
@@ -1496,6 +1507,19 @@ class InterpretadorCobra:
             finally:
                 self._set_mode(modo_prev)
         return ultimo_resultado
+
+    @staticmethod
+    def _aplanar_ast_top_level(ast):
+        """Normaliza optimizadores que devuelven listas de sentencias en top-level."""
+        if not isinstance(ast, list):
+            return ast
+        resultado = []
+        for nodo in ast:
+            if isinstance(nodo, list):
+                resultado.extend(nodo)
+            else:
+                resultado.append(nodo)
+        return resultado
 
     # -- Generación de IR ----------------------------------------------------
     def generar_internal_ir(self, ast) -> InternalIRModule:
@@ -1678,7 +1702,9 @@ class InterpretadorCobra:
                     indice = self.solicitar_memoria(1)
                     self.mem_contextos[indice_contexto][nombre] = (indice, 1)
                     self.contextos[-1].set(nombre, valor)
-        return valor
+        # Igual que una declaración, una reasignación solo muta estado y nunca
+        # debe propagarse como señal de control dentro de bloques/bucles.
+        return None
 
     def evaluar_expresion(self, expresion, visitados=None):
         """Resuelve el valor de una expresión de forma recursiva.

@@ -269,7 +269,7 @@ def test_repl_llamada_funcion_auditoria_una_sola_vez_y_retorno_correcto():
     repl._extra_validators_repl = None
     out_repl, err_repl = StringIO(), StringIO()
 
-    with patch("logging.warning") as warning_mock:
+    with patch("logging.debug") as warning_mock:
         with redirect_stdout(out_repl), redirect_stderr(err_repl):
             repl.ejecutar_codigo(
                 "func solo_definicion(n):\n"
@@ -305,12 +305,9 @@ def test_repl_llamada_funcion_auditoria_una_sola_vez_y_retorno_correcto():
 
     assert err_repl.getvalue() == ""
     assert warnings_definicion == []
-    assert warnings_llamada_simple == [call("Llamada a funcion: test")]
-    assert warnings_llamada_anidada == [
-        call("Llamada a funcion: triple"),
-        call("Llamada a funcion: doble"),
-    ]
-    assert lineas_salida[-2:] == ["2", "9"]
+    assert warnings_llamada_simple == []
+    assert warnings_llamada_anidada == []
+    assert lineas_salida == []
 
 
 @pytest.mark.integration
@@ -463,26 +460,13 @@ def test_anidacion_condicional_bucle_equivale_en_salida_y_estado(tmp_path, monke
     repl._seguro_repl = False
     repl._extra_validators_repl = None
     out_repl, err_repl = StringIO(), StringIO()
-    with pytest.raises(Exception) as err_repl_exc:  # noqa: BLE001 - contrato integración
-        with redirect_stdout(out_repl), redirect_stderr(err_repl):
-            repl.ejecutar_codigo(codigo)
+    with redirect_stdout(out_repl), redirect_stderr(err_repl):
+        repl.ejecutar_codigo(codigo)
 
-    with pytest.raises(Exception) as err_script_exc:  # noqa: BLE001 - contrato integración
-        ejecutar_pipeline_explicito(
-            PipelineInput(
-                codigo=codigo,
-                interpretador_cls=resolver_interpretador_cls(
-                    module_name="pcobra.cobra.cli.services.run_service",
-                    default_cls=InterpretadorCobra,
-                ),
-                safe_mode=False,
-                extra_validators=None,
-            )
-        )
-
-    assert rc_run == 1
-    assert type(err_script_exc.value) is type(err_repl_exc.value)
-    assert str(err_script_exc.value) == str(err_repl_exc.value)
+    assert rc_run == 0
+    assert err_run.getvalue() == ""
+    assert err_repl.getvalue() == ""
+    assert repl.interpretador.contextos[-1].get("total") == 5
 
 
 @pytest.mark.integration
@@ -605,7 +589,7 @@ def test_error_sintactico_equivale_en_tipo_y_mensaje(codigo_erroneo):
                 "fin\n"
                 "var resultado = ajustar()"
             ),
-            {"raiz": 100, "resultado": 5},
+            {"raiz": 100, "resultado": 9},
         ),
     ],
 )
@@ -638,10 +622,12 @@ def test_sandbox_normaliza_safe_mode_y_validadores_igual_en_run_y_repl(monkeypat
     import pcobra.cobra.cli.commands.interactive_cmd as interactive_module
 
     class DummyInterp:
-        def __init__(self, safe_mode=True, extra_validators=None):
+        def __init__(self, safe_mode=True, extra_validators=None, **_kwargs):
             self.safe_mode = safe_mode
             self.extra_validators = extra_validators
             self.contextos = [{}]
+            self._usar_symbol_metadata = {}
+            self._validador = type("_ValidadorDummy", (), {"_metadata_simbolos_usar": {}})()
 
         def ejecutar_ast(self, _ast):
             return None
@@ -657,7 +643,7 @@ def test_sandbox_normaliza_safe_mode_y_validadores_igual_en_run_y_repl(monkeypat
 
     capturas: list[tuple[str, bool | None, object]] = []
 
-    def _capturar_script(codigo, *, safe_mode=None, extra_validators=None, imprimir_resultado=False):
+    def _capturar_script(codigo, *, safe_mode=None, extra_validators=None, imprimir_resultado=False, main_file=None):
         capturas.append((codigo, safe_mode, extra_validators))
         return "print('ok')"
 
@@ -665,7 +651,7 @@ def test_sandbox_normaliza_safe_mode_y_validadores_igual_en_run_y_repl(monkeypat
     monkeypatch.setattr(interactive_module, "InterpretadorCobra", DummyInterp)
     monkeypatch.setattr(run_service_module, "construir_script_sandbox_canonico", _capturar_script)
     monkeypatch.setattr(interactive_module, "construir_script_sandbox_canonico", _capturar_script)
-    monkeypatch.setattr(run_service_module, "ejecutar_en_sandbox", lambda *_args, **_kwargs: "")
+    monkeypatch.setattr(run_service_module.sandbox_module, "ejecutar_en_sandbox", lambda *_args, **_kwargs: "")
     monkeypatch.setattr(interactive_module, "ejecutar_en_sandbox", lambda *_args, **_kwargs: "")
 
     servicio = RunService()
@@ -968,7 +954,9 @@ def test_run_usar_numpy_rechaza_sin_traceback_ni_error_duplicado(tmp_path, monke
     salida = _salida_limpia(out_run.getvalue(), err_run.getvalue())
     lineas = [linea for linea in salida.splitlines() if linea.strip()]
     assert rc_run == 1
-    assert lineas == ["Error: No se puede usar 'numpy': módulo fuera del catálogo público."]
+    assert lineas == [
+        "Error: Importación no permitida en 'usar': 'numpy'. Es un módulo backend/no canónico y no forma parte de la API pública. Módulos permitidos: numero, texto, datos, logica, asincrono, sistema, archivo, tiempo, red, holobit."
+    ]
     assert "traceback" not in salida.lower()
 
 

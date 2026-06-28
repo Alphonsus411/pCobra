@@ -43,7 +43,12 @@ def test_transpile_semantics(tmp_path, lang):
     ast = Parser(tokens).parsear()
     codigo = TRANSPILERS[lang]().generate_code(ast)
 
-    salida = execute_transpiled_code(lang, codigo, tmp_path)
+    try:
+        salida = execute_transpiled_code(lang, codigo, tmp_path)
+    except RuntimeError as exc:
+        if lang == "javascript" and "vm2 no disponible" in str(exc):
+            pytest.skip("vm2 no disponible")
+        raise
     assert salida == esperado
 
 

@@ -671,7 +671,9 @@ def usar_modulo(
         if not simbolos_saneados:
             raise ImportError(f"No se encontraron símbolos exportables para usar '{nombre_validado_oficial}'.")
         return _construir_exports_usar(simbolos_saneados, metadata_por_simbolo)
-    except (ModuleNotFoundError, PermissionError, ValueError) as e:
+    except PermissionError:
+        raise
+    except (ModuleNotFoundError, ValueError):
         # Si no es un módulo oficial o no está permitido, intentar como módulo de proyecto
         # Si es un ValueError, significa que el nombre no es válido para un módulo oficial,
         # pero podría serlo para un módulo de proyecto (ej. contiene puntos).

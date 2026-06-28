@@ -29,5 +29,10 @@ def test_generate_and_syntax(tmp_path, lang):
 
     if lang in OFFICIAL_RUNTIME_TARGETS:
         esperado = obtener_salida_interprete(src)
-        salida = execute_transpiled_code(lang, codigo, tmp_path)
+        try:
+            salida = execute_transpiled_code(lang, codigo, tmp_path)
+        except RuntimeError as exc:
+            if lang == "javascript" and "vm2 no disponible" in str(exc):
+                pytest.skip("vm2 no disponible")
+            raise
         assert salida == esperado

@@ -4,15 +4,15 @@ from unittest.mock import patch
 
 import pytest
 
-from cobra.core import Token, TipoToken
-from core.ast_nodes import (
+from pcobra.core.lexer import Token, TipoToken
+from pcobra.core.ast_nodes import (
     NodoAsignacion,
     NodoBucleMientras,
     NodoIdentificador,
     NodoOperacionBinaria,
     NodoValor,
 )
-from core.interpreter import InterpretadorCobra
+from pcobra.core.interpreter import InterpretadorCobra
 
 
 @pytest.mark.integration

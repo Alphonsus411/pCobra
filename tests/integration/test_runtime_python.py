@@ -36,10 +36,6 @@ def test_runtime_python_ejecucion(request, codigo_cobra_fixture):
     ast = parser.parsear()
     codigo_python = TranspiladorPython().generate_code(ast)
 
-    # Elimina las importaciones estándar generadas por el transpiler
-    lineas = codigo_python.splitlines()[3:]
-    codigo_python = "\n".join(lineas)
-
     salida = run_code("python", codigo_python)
 
     assert "1" in salida

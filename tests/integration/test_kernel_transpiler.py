@@ -50,7 +50,7 @@ def test_kernel_transpiler_mode(monkeypatch):
     sys.modules["core.interpreter"] = interp_mod
     sys.modules["core.qualia_bridge"] = qualia_mod
 
-    from jupyter_kernel import CobraKernel
+    from pcobra.jupyter_kernel import CobraKernel
 
     class DummyKernel(CobraKernel):
         def __init__(self):

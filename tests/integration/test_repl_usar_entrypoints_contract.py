@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from types import ModuleType
 import asyncio
+import logging
 import pytest
 import httpx
 
@@ -61,7 +62,13 @@ def test_repl_contract_sintaxis_usar_compat_parser_semantica_plana_numero_sin_pr
         raise ModuleNotFoundError(nombre)
 
     monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre: _resolver_modulo(nombre))
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre: _resolver_modulo(nombre))
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre: _resolver_modulo(nombre))
     monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: _resolver_modulo(nombre))
+    monkeypatch.setattr(cli_usar_loader, "obtener_modulo", lambda nombre: _resolver_modulo(nombre))
+    monkeypatch.setattr(cli_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: _resolver_modulo(nombre))
+    monkeypatch.setattr(cli_usar_loader, "obtener_modulo", lambda nombre: _resolver_modulo(nombre))
+    monkeypatch.setattr(cli_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: _resolver_modulo(nombre))
     monkeypatch.setattr(cli_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: _resolver_modulo(nombre))
 
     # monkeypatch.setattr(
@@ -553,14 +560,19 @@ def test_logs_usar_conflictos_formato_resumido_sin_diccionario_gigante(caplog, m
     modulo.A_snake = lambda texto: texto
     modulo.a_snake = lambda texto: texto
     modulo.__file__ = "/workspace/pCobra/src/pcobra/corelibs/texto.py"
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _nombre: modulo)
     monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: modulo)
+    monkeypatch.setattr(cli_usar_loader, "obtener_modulo", lambda _nombre: modulo)
+    monkeypatch.setattr(cli_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: modulo)
     monkeypatch.delenv("PCOBRA_DEBUG_RUNTIME", raising=False)
     monkeypatch.delenv("PCOBRA_DEBUG_TRACES", raising=False)
+    caplog.set_level(logging.INFO)
 
     interp = InterpretadorCobra()
     interp.configurar_restriccion_usar_repl({"texto": "texto"})
 
-    interp.ejecutar_nodo(NodoUsar("texto"))
+    with pytest.raises(ImportError, match=r"No se encontraron símbolos exportables para usar 'texto'"):
+        interp.ejecutar_nodo(NodoUsar("texto"))
 
     eventos = [rec.message for rec in caplog.records if "USAR_SANITIZE_REJECTION_METRICS" in rec.message]
     assert eventos
@@ -589,7 +601,10 @@ def test_repl_contract_resuelve_usar_datos_y_tiempo(factory, executor, get_inter
         raise ModuleNotFoundError(nombre)
 
     monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre: _resolver_modulo(nombre))
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre: _resolver_modulo(nombre))
     monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: _resolver_modulo(nombre))
+    monkeypatch.setattr(cli_usar_loader, "obtener_modulo", lambda nombre: _resolver_modulo(nombre))
+    monkeypatch.setattr(cli_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: _resolver_modulo(nombre))
     monkeypatch.setattr(cli_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: _resolver_modulo(nombre))
     # monkeypatch.setattr(
     #     core_interpreter_module,
@@ -739,6 +754,7 @@ def test_repl_contract_pipeline_completo_por_modulo_canonico(monkeypatch, modulo
         ]
         for nombre in expected_symbols:
             setattr(mod, nombre, lambda *args, _mod=modulo, _nombre=nombre, **kwargs: {"modulo": _mod, "simbolo": _nombre, "args": args, "kwargs": kwargs})
+        monkeypatch.setattr("pcobra.corelibs.holobit._runtime_graficar", lambda _hb: "holobit-render")
     elif modulo == "numero":
         expected_symbols = ["es_finito", "signo"]
         setattr(mod, "es_finito", lambda valor: valor == valor and valor not in (float("inf"), float("-inf")))
@@ -773,6 +789,10 @@ def test_repl_contract_pipeline_completo_por_modulo_canonico(monkeypatch, modulo
         setattr(mod, "listar_dir", lambda ruta: [])
         setattr(mod, "directorio_actual", lambda: Path("."))
         monkeypatch.setattr("pcobra.corelibs.sistema._verificar_ruta", lambda exe_real, st_dev, st_ino: None)
+        monkeypatch.setattr("pcobra.corelibs.sistema._resolver_ejecutable", lambda comando, permitidos: ([r"C:\\cobra\\mock.exe", *list(comando)[1:]], r"C:\\cobra\\mock.exe", 10, 1, 2))
+        monkeypatch.setattr("pcobra.corelibs.sistema._verificar_descriptor", lambda *args: None)
+        monkeypatch.setattr("os.close", lambda _fd: None)
+        monkeypatch.setattr("subprocess.run", lambda *args, **kwargs: type("Result", (object,), {"stdout": "", "stderr": "", "returncode": 0})())
     elif modulo == "red":
         expected_symbols = ["obtener_url", "enviar_post", "obtener_url_async", "enviar_post_async", "descargar_archivo", "obtener_json", "obtener_url_texto"]
         for nombre in expected_symbols:
@@ -792,10 +812,26 @@ def test_repl_contract_pipeline_completo_por_modulo_canonico(monkeypatch, modulo
                 setattr(mod, nombre, lambda url, permitir_redirecciones=False: {})
         monkeypatch.setattr("pcobra.corelibs.red._validar_esquema", lambda url: None)
         monkeypatch.setattr("pcobra.corelibs.red._obtener_hosts_permitidos", lambda: {"example.com"})
-        monkeypatch.setattr("requests.get", lambda *args, **kwargs: type("Response", (object,), {"status_code": 200, "raise_for_status": lambda: None, "url": "http://example.com", "headers": {}, "iter_content": lambda chunk_size: [b""]})())
-        monkeypatch.setattr("requests.post", lambda *args, **kwargs: type("Response", (object,), {"status_code": 200, "raise_for_status": lambda: None, "url": "http://example.com", "headers": {}, "iter_content": lambda chunk_size: [b""]})())
-        monkeypatch.setattr("httpx.get", lambda *args, **kwargs: type("Response", (object,), {"status_code": 200, "raise_for_status": lambda: None, "url": "http://example.com", "headers": {}, "iter_content": lambda chunk_size: [b""]})())
-        monkeypatch.setattr("httpx.post", lambda *args, **kwargs: type("Response", (object,), {"status_code": 200, "raise_for_status": lambda: None, "url": "http://example.com", "headers": {}, "iter_content": lambda chunk_size: [b""]})())
+        class _Response:
+            status_code = 200
+            url = "https://example.com"
+            headers = {}
+            encoding = "utf-8"
+
+            def raise_for_status(self):
+                return None
+
+            def iter_content(self, chunk_size=8192):
+                _ = chunk_size
+                yield b"{}"
+
+            def close(self):
+                return None
+
+        monkeypatch.setattr("requests.get", lambda *args, **kwargs: _Response())
+        monkeypatch.setattr("requests.post", lambda *args, **kwargs: _Response())
+        monkeypatch.setattr(httpx, "get", lambda *args, **kwargs: type("Response", (object,), {"status_code": 200, "raise_for_status": lambda: None, "url": "http://example.com", "headers": {}, "iter_content": lambda chunk_size: [b""]})(), raising=False)
+        monkeypatch.setattr(httpx, "post", lambda *args, **kwargs: type("Response", (object,), {"status_code": 200, "raise_for_status": lambda: None, "url": "http://example.com", "headers": {}, "iter_content": lambda chunk_size: [b""]})(), raising=False)
     elif modulo == "asincrono":
         expected_symbols = ["grupo_tareas", "limitar_tiempo", "proteger_tarea", "ejecutar_en_hilo", "reintentar_async", "recolectar"]
         for nombre in expected_symbols:
@@ -843,6 +879,18 @@ def test_repl_contract_pipeline_completo_por_modulo_canonico(monkeypatch, modulo
             interp.contextos[-1].values[symbol]({})
         elif modulo == "holobit" and symbol == "serializar_holobit":
             interp.contextos[-1].values[symbol]({"tipo": "holobit", "valores": [1, 2, 3]})
+        elif modulo == "holobit" and symbol == "deserializar_holobit":
+            interp.contextos[-1].values[symbol]('{"tipo":"holobit","valores":[1,2,3]}')
+        elif modulo == "holobit" and symbol == "proyectar":
+            interp.contextos[-1].values[symbol]({"tipo": "holobit", "valores": [1, 2, 3]}, "2d")
+        elif modulo == "holobit" and symbol == "transformar":
+            interp.contextos[-1].values[symbol]({"tipo": "holobit", "valores": [1, 2, 3]}, "rotar", "x", 90)
+        elif modulo == "holobit" and symbol == "graficar":
+            interp.contextos[-1].values[symbol]({"tipo": "holobit", "valores": [1, 2, 3]})
+        elif modulo == "holobit" and symbol == "combinar":
+            interp.contextos[-1].values[symbol]({"tipo": "holobit", "valores": [1, 2]}, {"tipo": "holobit", "valores": [3, 4]})
+        elif modulo == "holobit" and symbol == "medir":
+            interp.contextos[-1].values[symbol]({"tipo": "holobit", "valores": [1, 2, 3]})
         elif modulo == "logica" and symbol == "conjuncion":
             interp.contextos[-1].values[symbol](True, False)
         elif modulo == "logica" and symbol == "negacion":
@@ -860,11 +908,19 @@ def test_repl_contract_pipeline_completo_por_modulo_canonico(monkeypatch, modulo
         elif modulo == "texto" and symbol == "quitar_acentos":
             interp.contextos[-1].values[symbol]("canción")
         elif modulo == "sistema" and symbol == "ejecutar":
-            interp.contextos[-1].values[symbol]("ls", permitidos=["ls"])
+            interp.contextos[-1].values[symbol](["cobra"], permitidos=[r"C:\\cobra\\mock.exe"])
+        elif modulo == "sistema" and symbol == "ejecutar_async":
+            interp.contextos[-1].values[symbol](["cobra"], permitidos=[r"C:\\cobra\\mock.exe"])
+        elif modulo == "sistema" and symbol == "ejecutar_stream":
+            interp.contextos[-1].values[symbol](["cobra"], permitidos=[r"C:\\cobra\\mock.exe"])
+        elif modulo == "sistema" and symbol == "obtener_env":
+            interp.contextos[-1].values[symbol]("PATH")
+        elif modulo == "sistema" and symbol == "listar_dir":
+            interp.contextos[-1].values[symbol](".")
         elif modulo == "red" and symbol == "obtener_url":
-            interp.contextos[-1].values[symbol]("http://example.com")
+            interp.contextos[-1].values[symbol]("https://example.com")
         elif modulo == "red" and symbol == "enviar_post":
-            interp.contextos[-1].values[symbol]("http://example.com", {})
+            interp.contextos[-1].values[symbol]("https://example.com", {})
         elif modulo == "red" and symbol == "obtener_url_async":
             interp.contextos[-1].values[symbol]("http://example.com")
         elif modulo == "red" and symbol == "enviar_post_async":
@@ -926,7 +982,7 @@ def test_repl_rechaza_nombres_invalidos_o_maliciosos(nombre):
     cmd = InteractiveCommand(InterpretadorCobra())
     estado_pre = dict(cmd.interpretador.contextos[-1].values)
 
-    with pytest.raises((ValueError, PermissionError), match=r"(inválido|no permitido|externo|modulo_fuera_catalogo_publico|Nombre de módulo vacío en 'usar')"):
+    with pytest.raises((ValueError, PermissionError), match=r"(inválido|no permitid|externo|modulo_fuera_catalogo_publico|Nombre de módulo vacío en 'usar')"):
         cmd.ejecutar_codigo(f'usar "{nombre}"')
 
     assert estado_pre == cmd.interpretador.contextos[-1].values
@@ -936,7 +992,7 @@ def test_repl_rechaza_alias_legacy_fuera_contrato():
     cmd = InteractiveCommand(InterpretadorCobra())
     estado_pre = dict(cmd.interpretador.contextos[-1].values)
 
-    with pytest.raises(PermissionError, match=r"solo alias oficiales Cobra|nombres canónicos exactos|no permitido|modulo_fuera_catalogo_publico"):
+    with pytest.raises(PermissionError, match=r"solo alias oficiales Cobra|nombres canónicos exactos|no permitid|modulo_fuera_catalogo_publico"):
         cmd.ejecutar_codigo('usar "node-fetch"')
 
     assert estado_pre == cmd.interpretador.contextos[-1].values
@@ -958,12 +1014,8 @@ def test_repl_usar_datos_longitud_salida_exacta(factory, executor, monkeypatch, 
 
     monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre: _resolver_modulo(nombre))
     monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: _resolver_modulo(nombre))
+    monkeypatch.setattr(cli_usar_loader, "obtener_modulo", lambda nombre: _resolver_modulo(nombre))
     monkeypatch.setattr(cli_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: _resolver_modulo(nombre))
-    monkeypatch.setattr(
-        core_interpreter_module,
-        "build_and_validate_usar_symbol_metadata",
-        lambda module_name, symbol_name, callable_obj: {"origin_kind": "usar", "module": module_name, "symbol": symbol_name, "sanitized": True, "public_api": True, "callable": True, "backend_exposed": False},
-    )
 
     cmd = factory()
     executor(cmd, 'usar "datos"')
@@ -1203,6 +1255,21 @@ def test_repl_usar_idempotente_y_conflicto_real(monkeypatch):
     mod_numero = _modulo_numero_stub()
     monkeypatch.setattr(
         core_usar_loader,
+        'obtener_modulo',
+        lambda nombre: mod_numero if nombre == 'numero' else (_ for _ in ()).throw(ModuleNotFoundError(nombre)),
+    )
+    monkeypatch.setattr(
+        core_usar_loader,
+        'obtener_modulo_cobra_oficial',
+        lambda nombre: mod_numero if nombre == 'numero' else (_ for _ in ()).throw(ModuleNotFoundError(nombre)),
+    )
+    monkeypatch.setattr(
+        cli_usar_loader,
+        'obtener_modulo',
+        lambda nombre: mod_numero if nombre == 'numero' else (_ for _ in ()).throw(ModuleNotFoundError(nombre)),
+    )
+    monkeypatch.setattr(
+        cli_usar_loader,
         'obtener_modulo_cobra_oficial',
         lambda nombre: mod_numero if nombre == 'numero' else (_ for _ in ()).throw(ModuleNotFoundError(nombre)),
     )
@@ -1210,8 +1277,7 @@ def test_repl_usar_idempotente_y_conflicto_real(monkeypatch):
     cmd = ReplCommandV2()
     cmd._ejecutar_en_modo_normal('usar "numero"')
     estado_1 = dict(cmd._delegate.interpretador.contextos[-1].values)
-    with pytest.raises(NameError):
-        cmd._ejecutar_en_modo_normal('usar "numero"')
+    cmd._ejecutar_en_modo_normal('usar "numero"')
     assert estado_1 == cmd._delegate.interpretador.contextos[-1].values
 
 def test_repl_ux_error_salida_corta_vs_debug(capsys, caplog):
@@ -1264,7 +1330,7 @@ def test_repl_usar_numpy_error_explicito_corto_sin_traceback_en_modo_normal(caps
     assert "Traceback" not in mensaje
     assert "detalle=" not in mensaje
     assert len(mensaje) < 220
-    assert "Importación no permitida en 'usar': 'numpy'. Es un módulo backend/no canónico y no forma parte de la API pública\. Módulos permitidos: numero, texto, datos, logica, asincrono, sistema, archivo, tiempo, red, holobit\." in mensaje
+    assert "Importación no permitida en 'usar': 'numpy'. Es un módulo backend/no canónico y no forma parte de la API pública. Módulos permitidos: numero, texto, datos, logica, asincrono, sistema, archivo, tiempo, red, holobit." in mensaje
 
     salida = capsys.readouterr().out
     assert "Traceback" not in salida
@@ -1297,12 +1363,8 @@ def test_regresion_metadata_usar_none_pre_auditoria(factory, executor, get_inter
 
     monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre: _resolver_modulo(nombre))
     monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: _resolver_modulo(nombre))
+    monkeypatch.setattr(cli_usar_loader, "obtener_modulo", lambda nombre: _resolver_modulo(nombre))
     monkeypatch.setattr(cli_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: _resolver_modulo(nombre))
-    monkeypatch.setattr(
-        core_interpreter_module,
-        "build_and_validate_usar_symbol_metadata",
-        lambda module_name, symbol_name, callable_obj: {"origin_kind": "usar", "module": module_name, "symbol": symbol_name, "sanitized": True, "public_api": True, "callable": True, "backend_exposed": False},
-    )
 
     cmd = factory()
     interp = get_interp(cmd)

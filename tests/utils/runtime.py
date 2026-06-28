@@ -19,6 +19,21 @@ from tests.utils.targets import (
 )
 
 
+def _normalize_rust_program(code: str) -> str:
+    """Envuelve snippets Rust del transpilador en un harness mínimo ejecutable."""
+    if "fn main(" in code:
+        return code
+
+    body = "\n".join(f"    {line}" if line else "" for line in code.splitlines())
+    return (
+        "mod corelibs {}\n"
+        "mod standard_library {}\n\n"
+        "fn main() {\n"
+        f"{body}\n"
+        "}\n"
+    )
+
+
 def _run_python(code: str) -> str:
     """Ejecuta código Python en la sandbox interna y devuelve la salida."""
     return ejecutar_en_sandbox(code)
@@ -47,6 +62,7 @@ def _run_go(code: str) -> str:
 
 def _run_rust(code: str) -> str:
     """Compila y ejecuta código Rust usando ``rustc``."""
+    code = _normalize_rust_program(code)
     with tempfile.TemporaryDirectory() as tmpdir:
         src = Path(tmpdir) / "main.rs"
         src.write_text(code)
@@ -186,7 +202,7 @@ def execute_transpiled_code(
         if not comp:
             pytest.skip("rustc no disponible")
         src = tmp_path / "prog.rs"
-        src.write_text(code)
+        src.write_text(_normalize_rust_program(code))
         exe = tmp_path / "prog"
         subprocess.run([comp, str(src), "-o", str(exe)], check=True)
         proc = subprocess.run([str(exe)], capture_output=True, text=True, check=True)

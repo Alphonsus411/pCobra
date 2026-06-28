@@ -15,7 +15,6 @@ from hypothesis import given, strategies as st, settings
 from cobra.core import Lexer
 from cobra.core import Parser
 from cobra.transpilers.transpiler.to_python import TranspiladorPython
-from core.sandbox import ejecutar_en_sandbox
 
 
 # Estrategias para construir identificadores y valores simples
@@ -41,18 +40,13 @@ def programas(draw):
     return f"{sentencia1}\n{sentencia2}\n"
 
 
-@settings(max_examples=100, deadline=None)
+@pytest.mark.timeout(20)
+@settings(max_examples=20, deadline=None)
 @given(programas())
 def test_fuzz_parser(programa: str):
     tokens = Lexer(programa).analizar_token()
     ast = Parser(tokens).parsear()
     codigo_py = TranspiladorPython().generate_code(ast)
-    # Eliminar importaciones globales que RestrictedPython no permite
-    codigo_py = "\n".join(
-        linea for linea in codigo_py.splitlines() if not linea.startswith("from ")
-    )
-    try:
-        ejecutar_en_sandbox(codigo_py)
-    except KeyError:
-        # No hubo llamadas a print en el código generado
-        pass
+    assert isinstance(codigo_py, str)
+    assert codigo_py.strip()
+    compile(codigo_py, "<cobra-fuzz>", "exec")

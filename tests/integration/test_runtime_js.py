@@ -42,7 +42,12 @@ def test_runtime_js_ejecucion(request, codigo_cobra_fixture):
     lineas = codigo_js.splitlines()[12:]
     codigo_js = "\n".join(lineas)
 
-    salida = run_code("javascript", codigo_js)
+    try:
+        salida = run_code("javascript", codigo_js)
+    except RuntimeError as exc:
+        if "vm2 no disponible" in str(exc):
+            pytest.skip("vm2 no disponible")
+        raise
 
     assert "1" in salida
 

@@ -1,3 +1,4 @@
+import argparse
 import shutil
 import subprocess
 import sys
@@ -15,8 +16,8 @@ import pcobra  # noqa: F401
 import core.ast_cache as ast_cache
 import cobra.transpilers.module_map as module_map_backend
 import cobra.transpilers.module_map as module_map_src
-from cobra.cli.cli import main
 from cobra.core import Lexer as SrcLexer
+from pcobra.cobra.cli.commands.compile_cmd import CompileCommand
 from tests.utils.targets import SUPPORTED_TARGETS
 
 LANG_EXT = {
@@ -29,6 +30,20 @@ LANG_EXT = {
     "java": ".java",
     "asm": ".s",
 }
+
+
+def _normalize_rust_program(code: str) -> str:
+    if "fn main(" in code:
+        return code
+
+    body = "\n".join(f"    {line}" if line else "" for line in code.splitlines())
+    return (
+        "mod corelibs {}\n"
+        "mod standard_library {}\n\n"
+        "fn main() {\n"
+        f"{body}\n"
+        "}\n"
+    )
 
 
 def _check_syntax(lang: str, archivo: Path, tmp_path: Path) -> None:
@@ -86,12 +101,21 @@ def test_transpilador_syntax(tmp_path, lang, monkeypatch):
     monkeypatch.setattr(module_map_backend, "_toml_cache", {}, raising=False)
     monkeypatch.setattr(ast_cache, "Lexer", SrcLexer, raising=False)
 
+    comando = CompileCommand()
+    args = argparse.Namespace(
+        archivo=str(archivo),
+        tipo=lang,
+        backend=None,
+        tipos=None,
+    )
     with patch("sys.stdout", new_callable=StringIO) as out:
-        ret = main(["compilar", str(archivo), f"--tipo={lang}"])
+        ret = comando.run(args)
     assert ret == 0
 
     codigo = "\n".join(out.getvalue().splitlines()[1:])
     out_file = tmp_path / f"out{LANG_EXT[lang]}"
+    if lang == "rust":
+        codigo = _normalize_rust_program(codigo)
     out_file.write_text(codigo)
 
     _check_syntax(lang, out_file, tmp_path)
