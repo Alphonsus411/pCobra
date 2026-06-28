@@ -63,7 +63,7 @@ def test_usar_subcarpeta_punteada_utilidades_fechas(crear_modulo_cobra, tmp_path
     main = crear_modulo_cobra(
         "main.co",
         """
-        usar utilidades.fechas
+        usar "utilidades.fechas"
         """,
     )
 
@@ -74,7 +74,7 @@ def test_usar_subcarpeta_punteada_utilidades_fechas(crear_modulo_cobra, tmp_path
 
 def test_usar_modulo_anidado_a_b_c(crear_modulo_cobra):
     crear_modulo_cobra("a/b/c.co", "variable secreto := 42")
-    main = crear_modulo_cobra("main.co", "usar a.b.c")
+    main = crear_modulo_cobra("main.co", 'usar "a.b.c"')
 
     interprete = ejecutar_archivo(main)
 
@@ -207,7 +207,7 @@ def test_usar_canonicaliza_rutas_y_carga_una_sola_vez(crear_modulo_cobra, monkey
         "main.co",
         """
         usar "utilidades.fechas"
-        usar "utilidades.fechas"
+        usar "utilidades/fechas"
         """,
     )
     import pcobra.core.import_utils as import_utils

@@ -22,7 +22,7 @@ from pcobra.cobra.core.usar_symbol_policy import (
 )
 
 # Regex estricta para mantener la sintaxis `usar "modulo"` acotada a identificadores simples.
-_VALID_NAME_RE = re.compile(r"^[a-z][a-z0-9_]*$")
+_VALID_NAME_RE = re.compile(r"^[a-z][a-z0-9_.]*$")
 
 
 # Segmentos seguros para módulos de proyecto: ruta lógica punteada, no ruta del sistema.
