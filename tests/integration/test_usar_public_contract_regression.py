@@ -145,6 +145,24 @@ def test_usar_datos_incluye_filtrar_mapear_reducir(factory, executor, get_interp
         (ReplCommandV2, lambda cmd, code: cmd._ejecutar_en_modo_normal(code), lambda cmd: cmd._delegate.interpretador),
     ],
 )
+def test_usar_datos_filtrar_contrato_publico_real(factory, executor, get_interp):
+    cmd = factory()
+    interp = get_interp(cmd)
+    executor(cmd, 'usar "datos"')
+
+    tabla = [{"activo": True}, {"activo": False}]
+    simbolos = interp.contextos[-1].values
+
+    assert simbolos["filtrar"](tabla, lambda fila: fila["activo"]) == [{"activo": True}]
+
+
+@pytest.mark.parametrize(
+    ("factory", "executor", "get_interp"),
+    [
+        (lambda: InteractiveCommand(InterpretadorCobra()), lambda cmd, code: cmd.ejecutar_codigo(code), lambda cmd: cmd.interpretador),
+        (ReplCommandV2, lambda cmd, code: cmd._ejecutar_en_modo_normal(code), lambda cmd: cmd._delegate.interpretador),
+    ],
+)
 def test_rechaza_usar_numpy(factory, executor, get_interp, monkeypatch):
     monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: (_ for _ in ()).throw(ModuleNotFoundError(nombre)))
 

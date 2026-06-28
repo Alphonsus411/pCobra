@@ -66,6 +66,23 @@ def test_usar_datos_expone_filtrar_mapear_reducir(monkeypatch):
     assert simbolos["filtrar"](tabla, lambda fila: fila["activo"]) == [{"activo": True}]
 
 
+def test_usar_datos_filtrar_contrato_publico_minimo(monkeypatch):
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _nombre: _modulo_datos_publico_stub())
+
+    interp = InterpretadorCobra()
+    interp.configurar_restriccion_usar_repl(REPL_COBRA_MODULE_MAP)
+
+    class _NodoUsar:
+        modulo = "datos"
+
+    interp.ejecutar_usar(_NodoUsar())
+
+    tabla = [{"activo": True}, {"activo": False}]
+    simbolos = interp.contextos[-1].values
+
+    assert simbolos["filtrar"](tabla, lambda fila: fila["activo"]) == [{"activo": True}]
+
+
 @pytest.mark.parametrize("nombre", ["numpy", "np", "node-fetch", "serde", "holobit_sdk"] )
 def test_rechazo_usar_modulos_externos_y_no_canonicos(monkeypatch, nombre):
     monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: (_ for _ in ()).throw(ModuleNotFoundError(nombre)))
