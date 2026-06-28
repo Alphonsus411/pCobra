@@ -214,46 +214,35 @@ def test_parse_missing_target_detecta_simbolo_faltante_en_import_local():
 def test_ejecutar_codigo_usa_dependencias_gui_y_captura_stdout_stderr(monkeypatch):
     calls = []
 
-    class FakeValidador:
-        _metadata_simbolos_usar = {}
-
     class FakeInterpretadorCobra:
-        def __init__(self, **kwargs) -> None:
-            calls.append(("interpreter_init", kwargs))
-            self._usar_symbol_metadata = {}
-            self._validador = FakeValidador()
+        pass
 
-        def configurar_restriccion_usar_repl(self, alias_map):
-            calls.append(("configurar_restriccion_usar_repl", alias_map))
+    def fake_ejecutar_pipeline_explicito(pipeline_input, **kwargs):
+        import sys
 
-        def asegurar_estado_runtime_inicial(self) -> None:
-            calls.append(("asegurar_estado_runtime_inicial",))
-
-        def ejecutar_ast(self, ast) -> None:
-            import sys
-
-            print(f"stdout ast_type={type(ast).__name__}")
-            print("stderr capturado", file=sys.stderr)
-            calls.append(("ejecutar_ast", type(ast).__name__))
+        calls.append(("pipeline_codigo", pipeline_input.codigo))
+        print("stdout capturado")
+        print("stderr capturado", file=sys.stderr)
+        return None, None
 
     monkeypatch.setattr(
         runtime,
         "require_gui_dependencies",
-        lambda: {
-            "Lexer": object,
-            "Parser": object,
-            "InterpretadorCobra": FakeInterpretadorCobra,
-        },
+        lambda: {"InterpretadorCobra": FakeInterpretadorCobra},
     )
 
-    salida = runtime.ejecutar_codigo("imprimir(1)")
+    from pcobra.cobra.cli import execution_pipeline
 
-    assert calls[0] == (
-        "interpreter_init",
-        {"safe_mode": True, "extra_validators": None, "main_file": None},
+    monkeypatch.setattr(
+        execution_pipeline,
+        "ejecutar_pipeline_explicito",
+        fake_ejecutar_pipeline_explicito,
     )
-    assert ("ejecutar_ast", "list") in calls
-    assert "stdout ast_type=list" in salida
+
+    salida = runtime.ejecutar_codigo("mostrar 1")
+
+    assert calls == [("pipeline_codigo", "mostrar 1")]
+    assert "stdout capturado" in salida
     assert "stderr capturado" in salida
 
 
