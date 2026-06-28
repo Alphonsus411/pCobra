@@ -1015,18 +1015,18 @@ def test_repl_usar_texto_simbolo_fuera_de_overrides_no_disponible(monkeypatch):
         _ejecutar_codigo('usar "texto"\ncapitalizar("hola")', interp)
 
 
-def test_usar_texto_mantiene_filtro_outside_public_api_para_capitalizar(monkeypatch):
+def test_usar_texto_inyecta_a_snake_desde_all_y_no_capitalizar(monkeypatch):
     modulo_texto = core_usar_loader.obtener_modulo_cobra_oficial("texto")
 
-    _, conflictos = core_usar_loader.sanitizar_exports_publicos(modulo_texto, "texto")
-    conflicto_capitalizar = next(
-        (c for c in conflictos if c.get("symbol") == "capitalizar"),
-        None,
-    )
+    assert "a_snake" in modulo_texto.__all__
+    assert "capitalizar" not in modulo_texto.__all__
 
-    assert conflicto_capitalizar is not None
-    assert conflicto_capitalizar["code"] == "outside_public_api"
-    assert conflicto_capitalizar["symbol"] == "capitalizar"
+    simbolos_saneados, _, conflictos = core_usar_loader.sanitizar_exports_publicos(modulo_texto, "texto")
+    simbolos = dict(simbolos_saneados)
+
+    assert "a_snake" in simbolos
+    assert "capitalizar" not in simbolos
+    assert not any(c.get("symbol") == "capitalizar" for c in conflictos)
 
     monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: modulo_texto)
     interp = InterpretadorCobra()
@@ -1035,6 +1035,7 @@ def test_usar_texto_mantiene_filtro_outside_public_api_para_capitalizar(monkeypa
     with pytest.raises(NameError, match=r"capitalizar"):
         _ejecutar_codigo('usar "texto"\ncapitalizar("hola")', interp)
 
+    assert "a_snake" in interp.variables
     assert "capitalizar" not in interp.variables
 
 
