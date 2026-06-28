@@ -917,7 +917,7 @@ En REPL incremental, `usar` aplica una política **estricta** y explícita:
 - **Semántica aplicada:** modelo oficial plano del libro (`usar numero`), sin acceso por prefijo de módulo (`numero.funcion(...)`).
 - **Inyección de símbolos:** solo se inyectan símbolos públicos **callables** exportados por `__all__`.
 - **Filtrado:** se ignoran símbolos privados (`_...`) y cualquier símbolo no callable.
-- **Módulos externos en REPL estricto:** deben fallar con error claro: `módulo externo no permitido en REPL estricto (solo alias oficiales Cobra)`.
+- **Módulos externos/no canónicos en REPL estricto:** deben rechazarse de forma controlada. El diagnóstico debe indicar que el módulo está fuera del catálogo, no permitido, no canónico o externo; no debe exponer traceback crudo ni activar fallback a instalación dinámica o carga externa.
 - Solo se aceptan módulos oficiales definidos en `REPL_COBRA_MODULE_MAP` y no hay fallback de instalación con `pip`.
 
 Ejemplos de comportamiento esperado en REPL:
@@ -930,7 +930,7 @@ usar "texto"
 imprimir(a_snake("HolaMundo"))  # ✅
 
 usar "numpy"
-imprimir(sqrt(4))  # ❌ módulo externo no permitido en REPL estricto (solo alias oficiales Cobra)
+imprimir(sqrt(4))  # ❌ rechazado de forma controlada: módulo fuera del catálogo/no permitido/no canónico/externo
 ```
 
 > Nota: en Cobra REPL no hay dot-access para estos símbolos inyectados.
