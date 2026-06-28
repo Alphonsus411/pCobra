@@ -35,3 +35,41 @@ imprimir(filtrar(registros, condicion))
     assert errores.getvalue() == ""
     assert "Variable no declarada: registros" not in evidencia
     assert "{'activo': True}" in salida.getvalue()
+
+
+@pytest.mark.integration
+def test_filtrar_callback_no_declarado_falla_antes_de_stdlib(monkeypatch) -> None:
+    def filtrar_no_debe_ejecutarse(*_args, **_kwargs):
+        raise AssertionError("filtrar de la stdlib no debe ejecutarse")
+
+    monkeypatch.setattr(
+        "pcobra.corelibs.datos.filtrar",
+        filtrar_no_debe_ejecutarse,
+    )
+    codigo = '''usar "datos"
+
+var tabla = [["activo", verdadero]]
+imprimir(filtrar(tabla, callback_no_declarado))
+'''
+    salida = StringIO()
+    errores = StringIO()
+
+    with (
+        redirect_stdout(salida),
+        redirect_stderr(errores),
+        pytest.raises(NameError) as exc_info,
+    ):
+        ejecutar_pipeline_explicito(
+            PipelineInput(
+                codigo=codigo,
+                interpretador_cls=InterpretadorCobra,
+                safe_mode=False,
+                extra_validators=None,
+            )
+        )
+
+    mensaje = str(exc_info.value)
+    evidencia = "\n".join([mensaje, salida.getvalue(), errores.getvalue()])
+    assert "Variable no declarada: callback_no_declarado" in mensaje
+    assert "Traceback" not in evidencia
+    assert "filtrar de la stdlib no debe ejecutarse" not in evidencia
