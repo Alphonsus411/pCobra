@@ -229,6 +229,7 @@ USAR_RUNTIME_EXPORT_OVERRIDES: dict[str, tuple[str, ...]] = {
         "producto",
     ),
     "texto": (
+        "a_snake",
         "mayusculas",
         "minusculas",
         "prefijo_comun",
