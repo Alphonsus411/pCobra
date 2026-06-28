@@ -2,24 +2,21 @@
   "asistente": "Bella",
   "proyecto": "pCobra / Cobra",
   "version_objetivo": "10.1.1",
-  "fecha_resumen": "2026-06-21",
-  "estado_global": "IDLE grafico basico funcional, validado manualmente y pendiente de cierre/endurecimiento final",
-  "objetivo_principal": "Consolidar el IDLE grafico de Cobra con proyectos independientes, gestion segura de archivos, ejecucion, analisis, asistencia pedagogica y borrado seguro.",
+  "fecha_resumen": "2026-06-28",
+  "estado_global": "IDLE grafico avanzado en fase verde con observacion pendiente en datos.filtrar callback",
+  "objetivo_general": "Consolidar el IDLE grafico de Cobra como entorno basico real de proyecto, manteniendo seguridad de rutas, compatibilidad con archivos auxiliares y contrato de modulos Core/stdlib.",
   "restricciones_permanentes": [
     "No modificar Lexer",
     "No modificar Parser",
     "No modificar gramatica",
     "No modificar tokens",
     "No modificar nodos AST",
-    "No modificar transpiladores salvo autorizacion explicita",
+    "No modificar transpiladores salvo autorizacion explicita o regresion demostrada",
     "No cambiar la sintaxis Cobra",
     "No inventar APIs sin inspeccionar codigo real",
     "Aplicar parches minimos y localizados",
-    "No guardar ni borrar proyectos de usuario dentro del repositorio pCobra ni bajo src/"
-  ],
-  "archivos_trabajados": [
-    "src/pcobra/gui/runtime.py",
-    "src/pcobra/gui/idle.py"
+    "No guardar ni borrar proyectos de usuario dentro del repositorio pCobra ni bajo src/",
+    "Mantener validaciones contra ../, rutas absolutas fuera del proyecto, workspace_root y project_root"
   ],
   "bloques_validados": {
     "GUI_WORKSPACE_FILES": {
@@ -32,341 +29,262 @@
     },
     "GUI_DELETE_SAFE_001": {
       "estado": "verde",
-      "descripcion": "Borrado seguro de archivos, carpetas y proyectos, con proteccion de workspace_root, project_root y escapes ../."
+      "descripcion": "Borrado seguro de archivos, carpetas y proyectos con proteccion de workspace_root, project_root y escapes ../."
+    },
+    "GUI_CLOSE_PROJECT_001": {
+      "estado": "verde",
+      "descripcion": "Cerrar proyecto vuelve al estado sin proyecto activo, sin borrar workspace ni proyecto, y bloquea operaciones posteriores sin proyecto."
+    },
+    "GUI_MULTI_FILE_TYPES_001": {
+      "estado": "verde",
+      "descripcion": "Soporte de archivos auxiliares editables: .txt, .md, Dockerfile, .json, .yml, .yaml, .toml, ignore files y similares, sin enviarlos al pipeline Cobra."
+    },
+    "GUI_CREATE_FOLDER_SAFE_001": {
+      "estado": "verde",
+      "descripcion": "Creacion segura de carpetas dentro del proyecto activo, incluyendo carpetas anidadas y bloqueo de escapes."
+    },
+    "GUI_CONFIG_FILES_SAFE_001": {
+      "estado": "verde",
+      "descripcion": "Archivos config como .json, .yml, .yaml y .toml se crean, abren, editan y guardan como auxiliares, bloqueando acciones Cobra."
+    },
+    "CORE_STDLIB_USAR_CONTRACT_001": {
+      "estado": "verde_con_observacion",
+      "descripcion": "Contrato basico de usar para modulos Core/stdlib validado. usar numero, usar texto y usar datos cargan correctamente. Modulo inexistente falla de forma controlada.",
+      "observacion": "datos.filtrar con callback Cobra queda como caso avanzado pendiente."
     }
   },
-  "pocs_verdes": [
-    {
-      "id": "POC-1",
-      "nombre": "Workspace creado",
-      "estado": "verde",
-      "evidencia": "El IDLE arranca con C:\\Users\\Adolfo\\CobraProjects sin WinError 3."
-    },
-    {
-      "id": "POC-2",
-      "nombre": "Controles de proyecto visibles",
-      "estado": "verde",
-      "evidencia": "Se ven Proyecto activo, Crear proyecto y Abrir proyecto."
-    },
-    {
-      "id": "POC-3",
-      "nombre": "Crear proyecto independiente",
-      "estado": "verde",
-      "evidencia": "proyecto_alpha creado con src/ y README.md dentro de C:\\Users\\Adolfo\\CobraProjects\\proyecto_alpha."
-    },
-    {
-      "id": "POC-4",
-      "nombre": "Aislamiento visual entre proyectos",
-      "estado": "verde",
-      "evidencia": "proyecto_beta activo muestra solo su propio arbol."
-    },
-    {
-      "id": "POC-5",
-      "nombre": "Guardar dentro del proyecto activo",
-      "estado": "verde",
-      "evidencia": "src\\principal.cobra se guarda dentro de proyecto_beta."
-    },
-    {
-      "id": "POC-6",
-      "nombre": "Bloqueo de escape ../",
-      "estado": "verde",
-      "evidencia": "..\\escape.cobra fue rechazado y no se creo fuera del proyecto."
-    },
-    {
-      "id": "POC-7A",
-      "nombre": "Bloqueo sin proyecto activo",
-      "estado": "verde",
-      "evidencia": "Sin proyecto activo, operaciones de archivo son bloqueadas."
-    },
-    {
-      "id": "POC-7B",
-      "nombre": "Guardar con proyecto activo tras bloqueo",
-      "estado": "verde",
-      "evidencia": "Con proyecto_beta activo, Guardar como funciona correctamente."
-    },
-    {
-      "id": "POC-8A",
-      "nombre": "Abrir archivo existente",
-      "estado": "verde",
-      "evidencia": "Abrir src\\principal.cobra carga el archivo correcto en el editor."
-    },
-    {
-      "id": "POC-8B",
-      "nombre": "Guardar archivo activo",
-      "estado": "verde",
-      "evidencia": "Guardar actualiza C:\\Users\\Adolfo\\CobraProjects\\proyecto_beta\\src\\principal.cobra."
-    },
-    {
-      "id": "POC-8C",
-      "nombre": "Recargar archivo activo",
-      "estado": "verde",
-      "evidencia": "Tras modificar sin guardar, Recargar restaura imprimir(\"Hola desde el proyecto_beta_actualizado\")."
-    },
-    {
-      "id": "POC-9A",
-      "nombre": "Ejecutar codigo desde IDLE",
-      "estado": "verde",
-      "evidencia": "La salida muestra Hola desde el proyecto_beta_actualizado."
-    },
-    {
-      "id": "POC-9B",
-      "nombre": "Tokens desde IDLE",
-      "estado": "verde",
-      "evidencia": "Tokeniza correctamente imprimir(\"Hola desde el proyecto_beta_actualizado\")."
-    },
-    {
-      "id": "POC-9C",
-      "nombre": "AST desde IDLE",
-      "estado": "verde",
-      "evidencia": "Muestra [<NodoImprimir ...>] para el codigo de impresion."
-    },
-    {
-      "id": "POC-9D",
-      "nombre": "Sugerencias del Libro con codigo valido",
-      "estado": "verde",
-      "evidencia": "Valida Lexer/Parser primero, no detecta errores y no inventa sugerencias."
-    },
-    {
-      "id": "POC-9E",
-      "nombre": "Correccion con codigo valido",
-      "estado": "verde",
-      "evidencia": "Genera informe no destructivo y muestra nota de que el editor no se modifica automaticamente."
-    },
-    {
-      "id": "POC-10A",
-      "nombre": "Sugerencias con codigo invalido",
-      "estado": "verde",
-      "evidencia": "Con cadena sin cerrar, bloquea sugerencias y pide corregir errores primero."
-    },
-    {
-      "id": "POC-10B",
-      "nombre": "Correccion con codigo invalido",
-      "estado": "verde",
-      "evidencia": "Con imprimir(\"texto\" sin parentesis final, detecta error sintactico y bloquea correccion."
-    },
-    {
-      "id": "POC-11A",
-      "nombre": "Eliminar archivo activo dentro del proyecto activo",
-      "estado": "verde",
-      "evidencia": "src\\poc_delete_11a.cobra fue eliminado; Test-Path devolvio False."
-    },
-    {
-      "id": "POC-11B",
-      "nombre": "Bloquear eliminar archivo sin proyecto activo",
-      "estado": "verde",
-      "evidencia": "En workspace_root, Eliminar archivo muestra: Crea o abre un proyecto antes de trabajar con archivos."
-    },
-    {
-      "id": "POC-11C",
-      "nombre": "Bloquear eliminar usando ../",
-      "estado": "verde",
-      "evidencia": "La ruta .\\escape_delete fue bloqueada por quedar fuera del proyecto activo; Test-Path fuera del proyecto devolvio False."
-    },
-    {
-      "id": "POC-11D",
-      "nombre": "Eliminar carpeta dentro del proyecto activo",
-      "estado": "verde",
-      "evidencia": "temp_delete_11d fue eliminada; Test-Path devolvio False."
-    },
-    {
-      "id": "POC-11E",
-      "nombre": "Bloquear eliminar project_root como carpeta normal",
-      "estado": "verde",
-      "evidencia": "Con Ruta '.', Eliminar carpeta fue bloqueado y proyecto_beta siguio existiendo."
-    },
-    {
-      "id": "POC-11F",
-      "nombre": "Eliminar proyecto activo",
-      "estado": "verde",
-      "evidencia": "proyecto_delete_11f fue creado y eliminado; workspace_root siguio existiendo."
-    },
-    {
-      "id": "POC-11G",
-      "nombre": "Bloquear eliminacion de workspace_root",
-      "estado": "verde",
-      "evidencia": "Sin proyecto activo, Eliminar proyecto muestra: No hay proyecto activo para eliminar; workspace y proyectos existentes permanecen."
-    },
-    {
-      "id": "POC-11H",
-      "nombre": "Editor limpio tras borrar archivo activo",
-      "estado": "verde",
-      "evidencia": "Tras eliminar archivo activo, el editor queda vacio, ruta vacia y estado Archivo nuevo sin guardar."
-    },
-    {
-      "id": "POC-11I",
-      "nombre": "Arbol lateral refrescado tras borrar",
-      "estado": "verde",
-      "evidencia": "El arbol se actualiza tras borrar archivo/carpeta/proyecto."
-    }
-  ],
-  "funciones_runtime_confirmadas": [
-    {
-      "nombre": "resolver_workspace_root_idle",
-      "estado": "validado",
-      "detalle": "Crea workspace_root con mkdir(parents=True, exist_ok=True)."
-    },
-    {
-      "nombre": "escribir_archivo_texto_validado",
-      "estado": "validado",
-      "detalle": "Escribe rutas ya validadas por el IDLE sin revalidar contra sandbox global antiguo."
-    },
-    {
-      "nombre": "guardar_archivo_como_validado",
-      "estado": "validado",
-      "detalle": "Guardar como dentro del proyecto activo."
-    },
-    {
-      "nombre": "guardar_archivo_activo_validado",
-      "estado": "validado",
-      "detalle": "Guardar archivo activo sin caer en sandbox global antiguo."
-    },
-    {
-      "nombre": "leer_archivo_texto_validado",
-      "estado": "validado",
-      "detalle": "Lectura de archivo ya validado."
-    },
-    {
-      "nombre": "abrir_archivo_desde_ruta_validada",
-      "estado": "validado",
-      "detalle": "Abrir archivo existente validado contra project_root."
-    },
-    {
-      "nombre": "recargar_archivo_activo_validado",
-      "estado": "validado",
-      "detalle": "Recargar archivo activo validado contra project_root."
-    },
-    {
-      "nombre": "eliminar_archivo_validado",
-      "estado": "validado",
-      "detalle": "Borra archivo existente tras validacion previa del IDLE."
-    },
-    {
-      "nombre": "eliminar_directorio_validado",
-      "estado": "validado",
-      "detalle": "Borra directorio existente tras validacion previa del IDLE."
-    },
-    {
-      "nombre": "eliminar_proyecto_validado",
-      "estado": "validado",
-      "detalle": "Borra solo proyecto hijo directo de workspace_root; bloquea workspace_root."
-    }
-  ],
-  "comandos_usados": {
-    "arrancar_idle": ".\\.venv\\Scripts\\python.exe -m pcobra.gui.idle",
-    "validar_runtime_delete": ".\\.venv\\Scripts\\python.exe -c \"from pcobra.gui import runtime; print('runtime OK'); print(hasattr(runtime, 'eliminar_archivo_validado')); print(hasattr(runtime, 'eliminar_directorio_validado')); print(hasattr(runtime, 'eliminar_proyecto_validado'))\"",
-    "validar_archivo_borrado": "Test-Path \"$HOME\\CobraProjects\\proyecto_beta\\src\\poc_delete_11a.cobra\"",
-    "validar_escape_delete_archivo": "Test-Path \"$HOME\\CobraProjects\\escape_delete.cobra\"",
-    "validar_escape_delete_carpeta": "Test-Path \"$HOME\\CobraProjects\\escape_delete\"",
-    "validar_carpeta_borrada": "Test-Path \"$HOME\\CobraProjects\\proyecto_beta\\temp_delete_11d\"",
-    "validar_project_root_no_borrado": "Test-Path \"$HOME\\CobraProjects\\proyecto_beta\"",
-    "validar_workspace_no_borrado": "Test-Path \"$HOME\\CobraProjects\"",
-    "validar_proyecto_delete_11f_borrado": "Test-Path \"$HOME\\CobraProjects\\proyecto_delete_11f\""
-  },
-  "veredicto_actual": {
-    "idle_basico_funcional": true,
-    "idle_completo": false,
-    "ide_avanzado": false,
-    "descripcion": "El IDLE ya puede considerarse un MVP funcional estable: permite crear/abrir/cerrar conceptualmente proyectos mediante flujos actuales, gestionar archivos, ejecutar codigo, inspeccionar tokens/AST, usar asistencia pedagogica y borrar recursos de forma segura. Aun falta endurecimiento final, pruebas automaticas y documentacion."
-  },
-  "recomendaciones_pendientes": [
-    {
-      "id": "NEXT-1",
-      "nombre": "Congelar hito",
-      "descripcion": "Declarar GUI-IDLE-BASIC-001 y GUI-DELETE-SAFE-001 como validados."
-    },
-    {
-      "id": "NEXT-2",
-      "nombre": "Agregar accion Cerrar proyecto",
-      "descripcion": "Permitir volver a workspace_root sin reiniciar el IDLE."
-    },
-    {
-      "id": "NEXT-3",
-      "nombre": "Mejorar etiquetas visuales",
-      "descripcion": "Separar Workspace y Proyecto activo; mostrar Proyecto activo: ninguno cuando project_root == workspace_root."
-    },
-    {
-      "id": "NEXT-4",
-      "nombre": "Confirmaciones de borrado",
-      "descripcion": "Agregar doble pulsacion o confirmacion textual, especialmente para eliminar proyecto."
-    },
-    {
-      "id": "NEXT-5",
-      "nombre": "Pruebas automaticas",
-      "descripcion": "Crear tests/gui para runtime delete safe, validaciones de rutas y helpers testeables."
-    },
-    {
-      "id": "NEXT-6",
-      "nombre": "Documentacion oficial",
-      "descripcion": "Actualizar o crear docs/gui_idle_especificacion.md con estado, operaciones soportadas, seguridad y tabla de POCs."
-    },
-    {
-      "id": "NEXT-7",
-      "nombre": "README / Libro",
-      "descripcion": "Asegurar enlace minimo a docs/gui_idle_especificacion.md y preservar contrato §3.9 de Sugerencias/Correccion."
-    }
-  ],
-  "prompt_codex_final_entregado": {
-    "objetivo": "Consolidar el IDLE grafico basico como hito estable para 10.1.1.",
-    "incluye": [
-      "Accion Cerrar proyecto",
-      "Etiquetas visuales Workspace / Proyecto activo",
-      "Confirmaciones minimas para borrado",
-      "Pruebas automaticas de runtime seguro",
-      "Documentacion docs/gui_idle_especificacion.md",
-      "Enlace minimo desde README y posible nota minima en Libro",
-      "Validaciones compileall, pytest y arranque manual"
+  "estructura_actual_proyecto_beta": {
+    "workspace": "C:\\Users\\Adolfo\\CobraProjects",
+    "proyecto": "proyecto_beta",
+    "carpetas_confirmadas": [
+      "docs",
+      "config",
+      "config/env",
+      "src"
     ],
-    "estado": "pendiente de aplicar por Codex el proximo ciclo"
+    "archivos_confirmados": [
+      "README.md",
+      "notas.txt",
+      "Dockerfile",
+      "docker-compose.yml",
+      "config.json",
+      "config/app.yaml",
+      "pyproject.toml",
+      "docs/nota.md",
+      "src/poc_15f.cobra",
+      "src/poc_16a_numero.cobra",
+      "src/poc_16b_texto.cobra",
+      "src/poc_16c.cobra",
+      "src/poc_16d.cobra"
+    ]
   },
-  "estado_para_retomar": {
-    "proximo_paso_recomendado": "Aplicar con Codex el prompt final de endurecimiento/documentacion y despues ejecutar validaciones automaticas y POCs 12/13.",
-    "pocs_nuevos_sugeridos": [
+  "pocs_relevantes": {
+    "GUI_CREATE_FOLDER_SAFE_001": [
       {
-        "id": "POC-12A",
-        "nombre": "Cerrar proyecto desde proyecto activo",
-        "esperado": "project_root vuelve a workspace_root, editor/ruta se limpian, Proyecto activo: ninguno."
+        "id": "POC-14A",
+        "nombre": "Crear carpeta docs",
+        "estado": "verde",
+        "evidencia": "Test-Path \"$HOME\\CobraProjects\\proyecto_beta\\docs\" devolvio True."
       },
       {
-        "id": "POC-12B",
-        "nombre": "Bloqueo tras cerrar proyecto",
-        "esperado": "Eliminar archivo tras cerrar proyecto muestra: Crea o abre un proyecto antes de trabajar con archivos."
+        "id": "POC-14B",
+        "nombre": "Crear carpeta anidada config/env",
+        "estado": "verde",
+        "evidencia": "Test-Path para config y config/env devolvio True."
       },
       {
-        "id": "POC-12C",
-        "nombre": "Etiqueta sin proyecto",
-        "esperado": "Al iniciar o cerrar proyecto, se ve Proyecto activo: ninguno."
+        "id": "POC-14C",
+        "nombre": "Bloquear escape ../ al crear carpeta",
+        "estado": "verde",
+        "evidencia": "Test-Path \"$HOME\\CobraProjects\\escape_folder\" devolvio False."
       },
       {
-        "id": "POC-12D",
-        "nombre": "Etiqueta con proyecto activo",
-        "esperado": "Al abrir proyecto_beta, se ve Proyecto activo: proyecto_beta."
+        "id": "POC-14D",
+        "nombre": "Bloquear crear carpeta sin proyecto activo",
+        "estado": "verde",
+        "evidencia": "Test-Path \"$HOME\\CobraProjects\\carpeta_sin_proyecto\" devolvio False."
+      }
+    ],
+    "GUI_CONFIG_FILES_SAFE_001": [
+      {
+        "id": "POC-15A",
+        "nombre": "Crear y guardar config.json",
+        "estado": "verde",
+        "evidencia": "config.json existe y contiene nombre proyecto_beta y modo idle."
       },
       {
-        "id": "POC-13A",
-        "nombre": "Eliminar archivo requiere confirmacion",
-        "esperado": "Primera pulsacion no borra."
+        "id": "POC-15B",
+        "nombre": "Crear y guardar docker-compose.yml",
+        "estado": "verde",
+        "evidencia": "docker-compose.yml existe y contiene services/app/build/command."
       },
       {
-        "id": "POC-13B",
-        "nombre": "Eliminar archivo confirmado",
-        "esperado": "Segunda pulsacion borra si la ruta no cambio."
+        "id": "POC-15C",
+        "nombre": "Crear y guardar config/app.yaml",
+        "estado": "verde",
+        "evidencia": "Test-Path \"$HOME\\CobraProjects\\proyecto_beta\\config\\app.yaml\" devolvio True."
       },
       {
-        "id": "POC-13C",
-        "nombre": "Eliminar carpeta requiere confirmacion",
-        "esperado": "Primera pulsacion no borra."
+        "id": "POC-15D",
+        "nombre": "Crear y guardar pyproject.toml",
+        "estado": "verde",
+        "evidencia": "Test-Path \"$HOME\\CobraProjects\\proyecto_beta\\pyproject.toml\" devolvio True."
       },
       {
-        "id": "POC-13D",
-        "nombre": "Eliminar proyecto requiere confirmacion",
-        "esperado": "No borra accidentalmente; idealmente exige nombre exacto."
+        "id": "POC-15E",
+        "nombre": "Crear y guardar docs/nota.md",
+        "estado": "verde",
+        "evidencia": "docs/nota.md existe y contiene '# Nota interna'."
       },
       {
-        "id": "POC-13E",
-        "nombre": "Protecciones siguen activas",
-        "esperado": "Bloqueos de ../, workspace_root y project_root siguen verdes tras confirmaciones."
+        "id": "POC-15F",
+        "nombre": "No regresion Cobra",
+        "estado": "verde",
+        "evidencia": "Archivo .cobra ejecuta, tokeniza, genera AST y mantiene sugerencias/correccion."
+      }
+    ],
+    "CORE_STDLIB_USAR_CONTRACT_001": [
+      {
+        "id": "POC-16A",
+        "nombre": "usar numero",
+        "estado": "verde",
+        "evidencia": "usar \"numero\" con es_finito funciona."
+      },
+      {
+        "id": "POC-16B",
+        "nombre": "usar texto",
+        "estado": "verde",
+        "evidencia": "usar \"texto\" con funcion publica actual funciona; no depende de a_snake."
+      },
+      {
+        "id": "POC-16C1",
+        "nombre": "usar datos carga",
+        "estado": "verde",
+        "evidencia": "usar \"datos\" seguido de imprimir(\"datos cargado\") ejecuta correctamente."
+      },
+      {
+        "id": "POC-16C2",
+        "nombre": "datos.filtrar con callback Cobra",
+        "estado": "amarillo",
+        "evidencia": "Errores observados: funcion inline no parseable por DOSPUNTOS, variable no declarada numeros, variable no declarada mayor_que_dos.",
+        "interpretacion": "No parece fallo de usar datos. Parece limitacion de callbacks Cobra, funciones de primera clase o resolucion de funciones declaradas como valores."
+      },
+      {
+        "id": "POC-16D",
+        "nombre": "Modulo inexistente falla controladamente",
+        "estado": "verde",
+        "evidencia": "Error de ejecucion: usar_error[modulo_fuera_catalogo_publico]: modulo fuera del catalogo publico."
+      },
+      {
+        "id": "POC-16E",
+        "nombre": ".cobra con usar sigue siendo Cobra",
+        "estado": "verde",
+        "evidencia": "Acciones Cobra siguen habilitadas en archivos .cobra con usar."
+      },
+      {
+        "id": "POC-16F",
+        "nombre": ".json con texto usar no se ejecuta como Cobra",
+        "estado": "verde",
+        "evidencia": "Archivo config bloquea Ejecutar/Tokens/AST/Sugerencias/Correccion antes de Lexer/Parser."
       }
     ]
   },
-  "nota_final": "Se acuerda cerrar o retomar el trabajo el proximo fin de semana, con el IDLE basico ya funcional y pendiente solo de endurecimiento/documentacion final."
+  "tests_y_regresion": {
+    "gui": {
+      "comando": "python -m pytest tests/gui -q",
+      "resultado": "67 tests passed, 1 warning"
+    },
+    "suite_completa": {
+      "comando": "python -m pytest tests -q",
+      "resultado": "Interrumpido por el usuario en una ejecucion previa",
+      "nota": "Pendiente recomendable antes de release o merge mayor."
+    },
+    "archivos_modificados_reportados": [
+      "src/pcobra/gui/idle.py",
+      "src/pcobra/gui/runtime.py",
+      "tests/unit/test_gui_runtime.py"
+    ],
+    "tests_anadidos_o_actualizados": [
+      "Deteccion de tipos de archivo",
+      "Bloqueo de acciones Cobra para archivos config/no-Cobra",
+      "Creacion segura de carpetas",
+      "Contrato publico de usar actualizado frente a expectativas legacy"
+    ]
+  },
+  "problemas_detectados_y_estado": [
+    {
+      "problema": "No habia boton ni flujo visible para crear carpetas",
+      "estado": "resuelto",
+      "bloque": "GUI_CREATE_FOLDER_SAFE_001"
+    },
+    {
+      "problema": ".json, .yml y .yaml no respondian correctamente",
+      "estado": "resuelto",
+      "bloque": "GUI_CONFIG_FILES_SAFE_001"
+    },
+    {
+      "problema": "Tests historicos esperaban a_snake, firmas antiguas de datos.filtrar y mensaje antiguo de modulo externo",
+      "estado": "resuelto_en_tests",
+      "nota": "Se ajustaron expectativas al contrato publico actual."
+    },
+    {
+      "problema": "datos.filtrar no funciona con callback Cobra declarado",
+      "estado": "pendiente",
+      "bloque_sugerido": "CORE_DATA_FILTER_CALLBACK_001",
+      "nota": "Caso avanzado separado. No bloquea CORE_STDLIB_USAR_CONTRACT_001."
+    }
+  ],
+  "prompts_generados": [
+    {
+      "nombre": "GUI_MULTI_FILE_TYPES_001",
+      "objetivo": "Permitir archivos auxiliares editables y bloquear acciones Cobra en no-Cobra."
+    },
+    {
+      "nombre": "GUI_CREATE_FOLDER_SAFE_001 + GUI_CONFIG_FILES_SAFE_001",
+      "objetivo": "Crear carpetas seguras y corregir soporte .json/.yml/.yaml/.toml."
+    },
+    {
+      "nombre": "Regresion GUI IDLE",
+      "objetivo": "Asegurar que nada se haya roto tras cambios del IDLE."
+    },
+    {
+      "nombre": "CORE_STDLIB_USAR_CONTRACT_001",
+      "objetivo": "Validar integridad de modulos Core/stdlib y contrato usar."
+    },
+    {
+      "nombre": "Actualizar tests legacy de usar",
+      "objetivo": "Ajustar expectativas historicas: a_snake, datos.filtrar y mensaje modulo externo."
+    },
+    {
+      "nombre": "CORE_DATA_FILTER_CALLBACK_001",
+      "objetivo": "Investigar y corregir datos.filtrar con callback Cobra declarado."
+    }
+  ],
+  "siguiente_bloque_recomendado": {
+    "id": "CORE_DATA_FILTER_CALLBACK_001",
+    "estado": "pendiente",
+    "objetivo": "Revisar contrato real de datos.filtrar y soporte de callbacks Cobra sin tocar Lexer/Parser/gramatica.",
+    "poc_objetivo": {
+      "archivo": "src/poc_data_filter_callback.cobra",
+      "contenido_esperado_si_firma_lista_predicado": [
+        "usar \"datos\"",
+        "",
+        "func mayor_que_dos(n):",
+        "    retorno n > 2",
+        "fin",
+        "",
+        "imprimir(filtrar([1, 2, 3, 4], mayor_que_dos))"
+      ],
+      "salida_esperada": "[3, 4] o equivalente"
+    }
+  },
+  "veredicto_final": {
+    "idle_basico_funcional": true,
+    "idle_entorno_proyecto_real": true,
+    "seguridad_rutas": "verde",
+    "archivos_auxiliares": "verde",
+    "core_stdlib_usar": "verde_con_observacion",
+    "pendiente_critico": false,
+    "pendiente_tecnico": "datos.filtrar con callbacks Cobra"
+  }
 }
