@@ -1527,15 +1527,16 @@ def _analizar_codigo_gui_con_declaraciones_implicitas(codigo: str) -> Any:
     for nodo in ast if isinstance(ast, list) else []:
         if type(nodo).__name__ != "NodoAsignacion":
             continue
-        nombre = getattr(nodo, "identificador", getattr(nodo, "variable", None))
+
+        nombre = getattr(nodo, "identificador", None)
+        if nombre is None:
+            nombre = getattr(nodo, "variable", None)
         if not isinstance(nombre, str):
             continue
-        if getattr(nodo, "declaracion", False) or getattr(nodo, "inferencia", False):
-            declarados.add(nombre)
-            continue
+
         if nombre not in declarados:
             setattr(nodo, "declaracion", True)
-            declarados.add(nombre)
+        declarados.add(nombre)
     return ast
 
 
