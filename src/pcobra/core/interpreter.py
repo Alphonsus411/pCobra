@@ -2087,6 +2087,53 @@ class InterpretadorCobra:
         self.contextos[-1].define(nodo.nombre, funcion)
         return None
 
+    @staticmethod
+    def _es_descriptor_funcion_cobra(valor):
+        """Indica si ``valor`` es un descriptor runtime de función Cobra."""
+        return isinstance(valor, dict) and valor.get("tipo") == "funcion"
+
+    def _ejecutar_descriptor_funcion_cobra(self, funcion, argumentos):
+        """Ejecuta un descriptor de función Cobra con argumentos ya resueltos."""
+        parametros = funcion.get("parametros", funcion.get("params", []))
+        cuerpo = funcion.get("cuerpo", funcion.get("body", []))
+
+        if len(parametros) != len(argumentos):
+            raise TypeError(f"se esperaban {len(parametros)} argumentos")
+
+        entorno_capturado = funcion.get(
+            "scope_lexico", funcion.get("entorno", self.contextos[-1])
+        )
+        self.contextos.append(Environment(parent=entorno_capturado))
+        self.mem_contextos.append({})
+        try:
+            for nombre_param, valor in zip(parametros, argumentos):
+                indice = self.solicitar_memoria(1)
+                self.mem_contextos[-1][nombre_param] = (indice, 1)
+                self.contextos[-1].define(nombre_param, valor)
+
+            resultado = None
+            for instruccion in cuerpo:
+                resultado = self.ejecutar_nodo(instruccion)
+                if resultado is not None:
+                    break
+            return resultado
+        finally:
+            memoria_local = self.mem_contextos.pop()
+            for idx, tam in memoria_local.values():
+                self.liberar_memoria(idx, tam)
+            self.contextos.pop()
+
+    def _adaptar_callback_cobra(self, funcion):
+        """Convierte un descriptor de función Cobra en un callback Python mínimo."""
+
+        def callback(*argumentos):
+            return self._ejecutar_descriptor_funcion_cobra(funcion, list(argumentos))
+
+        nombre = funcion.get("nombre")
+        if nombre:
+            callback.__name__ = str(nombre)
+        return callback
+
     def ejecutar_llamada_funcion(self, nodo):
         """Ejecuta la invocación de una función, interna o del usuario."""
         emitir_salida_llamada = self.in_execution()
@@ -2111,6 +2158,8 @@ class InterpretadorCobra:
                 for arg in nodo.argumentos:
                     valor = self.evaluar_expresion(arg)
                     self._verificar_valor_contexto(valor)
+                    if self._es_descriptor_funcion_cobra(valor):
+                        valor = self._adaptar_callback_cobra(valor)
                     argumentos_resueltos.append(valor)
 
                 try:
@@ -2120,21 +2169,19 @@ class InterpretadorCobra:
                 self._verificar_valor_contexto(resultado)
                 return resultado
 
-            if not isinstance(funcion, dict) or funcion.get("tipo") != "funcion":
+            if not self._es_descriptor_funcion_cobra(funcion):
                 if emitir_salida_llamada:
                     print(f"Funci\u00f3n '{nodo.nombre}' no implementada")
                 return None
 
-            if len(funcion["parametros"]) != len(nodo.argumentos):
+            parametros = funcion.get("parametros", funcion.get("params", []))
+            if len(parametros) != len(nodo.argumentos):
                 if emitir_salida_llamada:
-                    print(
-                        f"Error: se esperaban {len(funcion['parametros'])} argumentos"
-                    )
+                    print(f"Error: se esperaban {len(parametros)} argumentos")
                 return None
 
-            contiene_yield = any(
-                self._contiene_yield(instr) for instr in funcion["cuerpo"]
-            )
+            cuerpo = funcion.get("cuerpo", funcion.get("body", []))
+            contiene_yield = any(self._contiene_yield(instr) for instr in cuerpo)
 
             def preparar_contexto():
                 # Los argumentos se evalúan en el contexto llamador antes de
@@ -2152,7 +2199,7 @@ class InterpretadorCobra:
                 )
                 self.contextos.append(Environment(parent=entorno_capturado))
                 self.mem_contextos.append({})
-                for nombre_param, valor in zip(funcion["parametros"], argumentos_resueltos):
+                for nombre_param, valor in zip(parametros, argumentos_resueltos):
                     indice = self.solicitar_memoria(1)
                     self.mem_contextos[-1][nombre_param] = (indice, 1)
                     self.contextos[-1].define(nombre_param, valor)
@@ -2169,7 +2216,7 @@ class InterpretadorCobra:
                 def generador():
                     preparar_contexto()
                     try:
-                        for instr in funcion["cuerpo"]:
+                        for instr in cuerpo:
                             if isinstance(instr, NodoYield):
                                 yield self.evaluar_expresion(instr.expresion)
                             else:
@@ -2184,7 +2231,7 @@ class InterpretadorCobra:
                 preparar_contexto()
                 try:
                     resultado = None
-                    for instruccion in funcion["cuerpo"]:
+                    for instruccion in cuerpo:
                         resultado = self.ejecutar_nodo(instruccion)
                         if resultado is not None:
                             break
