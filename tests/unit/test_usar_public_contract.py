@@ -104,6 +104,26 @@ def test_rechazo_usar_modulos_externos_y_no_canonicos(monkeypatch, nombre):
     assert nombre.replace("-", "_") not in simbolos
 
 
+def test_usar_modulo_inexistente_falla_con_diagnostico_publico(monkeypatch):
+    monkeypatch.setattr(
+        core_usar_loader,
+        "obtener_modulo_cobra_oficial",
+        lambda nombre: (_ for _ in ()).throw(ModuleNotFoundError(nombre)),
+    )
+
+    cmd = InteractiveCommand(InterpretadorCobra())
+    estado_pre = dict(cmd.interpretador.contextos[-1].values)
+
+    with pytest.raises(PermissionError, match=USAR_RECHAZO_EXTERNO_MATCH) as excinfo:
+        cmd.ejecutar_codigo('usar "modulo_inexistente"')
+
+    mensaje = str(excinfo.value).lower()
+    assert "modulo_fuera_catalogo_publico" in mensaje or "usar_error[" in mensaje
+    assert "traceback" not in mensaje
+    assert cmd.interpretador.contextos[-1].values == estado_pre
+    assert "modulo_inexistente" not in cmd.interpretador.contextos[-1].values
+
+
 def test_rechazo_internals_holobit_sdk(monkeypatch):
     monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: _modulo_holobit_publico_stub() if nombre == "holobit" else (_ for _ in ()).throw(ModuleNotFoundError(nombre)))
 
