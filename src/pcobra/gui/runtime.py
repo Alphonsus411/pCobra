@@ -1512,6 +1512,33 @@ def normalizar_codigo(codigo: str | None) -> str:
     return codigo or ""
 
 
+def _analizar_codigo_gui_con_declaraciones_implicitas(codigo: str) -> Any:
+    """Analiza código GUI permitiendo primeras asignaciones como declaraciones.
+
+    El editor/IDLE acepta fragmentos cortos como ``x = 1`` para facilitar la
+    ejecución interactiva. El parser conserva esas asignaciones como mutaciones;
+    aquí las marcamos como declaración solo cuando introducen un nombre nuevo en
+    el nivel superior, sin alterar el error de lectura de variables inexistentes.
+    """
+    from pcobra.cobra.cli.execution_pipeline import analizar_codigo
+
+    ast = analizar_codigo(codigo)
+    declarados: set[str] = set()
+    for nodo in ast if isinstance(ast, list) else []:
+        if type(nodo).__name__ != "NodoAsignacion":
+            continue
+        nombre = getattr(nodo, "identificador", getattr(nodo, "variable", None))
+        if not isinstance(nombre, str):
+            continue
+        if getattr(nodo, "declaracion", False) or getattr(nodo, "inferencia", False):
+            declarados.add(nombre)
+            continue
+        if nombre not in declarados:
+            setattr(nodo, "declaracion", True)
+            declarados.add(nombre)
+    return ast
+
+
 def ejecutar_codigo(codigo: str) -> str:
     """Ejecuta código Cobra y captura la salida impresa."""
     from pcobra.cobra.cli.execution_pipeline import (
@@ -1528,7 +1555,8 @@ def ejecutar_codigo(codigo: str) -> str:
                 interpretador_cls=deps["InterpretadorCobra"],
                 safe_mode=True,
                 extra_validators=None,
-            )
+            ),
+            analizar_codigo_fn=_analizar_codigo_gui_con_declaraciones_implicitas,
         )
     return buffer.getvalue()
 
