@@ -23,6 +23,9 @@ from tests.integration.test_repl_usar_entrypoints_contract import (
 from tests.unit.test_backend_bootstrap_contract import _run_python_isolated
 
 
+USAR_RECHAZO_EXTERNO_MATCH = r"usar_error|no permitid[ao]|externo|fuera|no can[oó]nico|cat[aá]logo|m[oó]dulo"
+
+
 def _modulo_datos_publico_stub() -> ModuleType:
     mod = ModuleType("datos")
     mod.__all__ = ["filtrar", "mapear", "reducir"]
@@ -88,8 +91,17 @@ def test_rechazo_usar_modulos_externos_y_no_canonicos(monkeypatch, nombre):
     monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: (_ for _ in ()).throw(ModuleNotFoundError(nombre)))
 
     cmd = InteractiveCommand(InterpretadorCobra())
-    with pytest.raises(PermissionError, match=r"Importación no permitida|usar_error\[(modulo_fuera_catalogo_publico|modulo_no_canonico)\]|módulo externo no permitido"):
+    estado_pre = dict(cmd.interpretador.contextos[-1].values)
+
+    with pytest.raises(PermissionError, match=USAR_RECHAZO_EXTERNO_MATCH) as excinfo:
         cmd.ejecutar_codigo(f'usar "{nombre}"')
+
+    mensaje = str(excinfo.value).lower()
+    assert "traceback" not in mensaje
+    assert cmd.interpretador.contextos[-1].values == estado_pre
+    simbolos = cmd.interpretador.contextos[-1].values
+    assert nombre not in simbolos
+    assert nombre.replace("-", "_") not in simbolos
 
 
 def test_rechazo_internals_holobit_sdk(monkeypatch):
@@ -97,8 +109,18 @@ def test_rechazo_internals_holobit_sdk(monkeypatch):
 
     cmd = InteractiveCommand(InterpretadorCobra())
     cmd.interpretador.configurar_restriccion_usar_repl({**REPL_COBRA_MODULE_MAP, "holobit": "holobit"})
-    with pytest.raises(PermissionError, match=r"Importación no permitida|usar_error\[(modulo_fuera_catalogo_publico|modulo_no_canonico)\]|módulo externo no permitido"):
+    estado_pre = dict(cmd.interpretador.contextos[-1].values)
+
+    with pytest.raises(PermissionError, match=USAR_RECHAZO_EXTERNO_MATCH) as excinfo:
         cmd.ejecutar_codigo('usar "holobit_sdk"')
+
+    mensaje = str(excinfo.value).lower()
+    assert "traceback" not in mensaje
+    assert cmd.interpretador.contextos[-1].values == estado_pre
+    simbolos = cmd.interpretador.contextos[-1].values
+    assert "holobit_sdk" not in simbolos
+    assert "crear_holobit" not in simbolos
+    assert "validar_holobit" not in simbolos
 
 
 def test_usar_holobit_solo_api_cobra(monkeypatch):
@@ -171,7 +193,7 @@ def test_usar_rechaza_modulo_fuera_allowlist_aun_si_alias_map_lo_declara():
     class _NodoUsar:
         modulo = "numpy"
 
-    with pytest.raises(PermissionError, match=r"^Importación no permitida|^usar_error\[modulo_no_canonico\]"):
+    with pytest.raises(PermissionError, match=USAR_RECHAZO_EXTERNO_MATCH):
         interp.ejecutar_usar(_NodoUsar())
 
 

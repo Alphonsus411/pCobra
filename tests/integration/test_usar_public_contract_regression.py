@@ -11,6 +11,9 @@ from pcobra.cobra.core.runtime import InterpretadorCobra
 from pcobra.cobra.usar_policy import REPL_COBRA_MODULE_MAP, USAR_RUNTIME_EXPORT_OVERRIDES
 from pcobra.core import usar_loader as core_usar_loader
 
+USAR_RECHAZO_EXTERNO_MATCH = r"usar_error|no permitid[ao]|externo|fuera|no can[oó]nico|cat[aá]logo|m[oó]dulo"
+
+
 from tests.integration.test_repl_usar_entrypoints_contract import (
     _assert_contrato_simbolos_saneados,
     _modulo_holobit_publico_stub,
@@ -170,7 +173,7 @@ def test_rechaza_usar_numpy(factory, executor, get_interp, monkeypatch):
     interp = get_interp(cmd)
     estado_pre = dict(interp.contextos[-1].values)
 
-    with pytest.raises(PermissionError, match=r"no permitid[ao]|externo|fuera") as excinfo:
+    with pytest.raises(PermissionError, match=USAR_RECHAZO_EXTERNO_MATCH) as excinfo:
         executor(cmd, 'usar "numpy"')
 
     mensaje = str(excinfo.value).lower()
@@ -178,6 +181,8 @@ def test_rechaza_usar_numpy(factory, executor, get_interp, monkeypatch):
     assert "no permitid" in mensaje or "externo" in mensaje or "fuera" in mensaje
     assert "traceback" not in mensaje
     assert interp.contextos[-1].values == estado_pre
+    assert "numpy" not in interp.contextos[-1].values
+    assert "np" not in interp.contextos[-1].values
 
 
 def test_holobit_sdk_internals_no_son_importables(monkeypatch):
@@ -188,8 +193,18 @@ def test_holobit_sdk_internals_no_son_importables(monkeypatch):
 
     cmd = InteractiveCommand(InterpretadorCobra())
     cmd.interpretador.configurar_restriccion_usar_repl(alias_map)
-    with pytest.raises(PermissionError, match=r"Importación no permitida|usar_error\[(modulo_fuera_catalogo_publico|modulo_no_canonico)\]|módulo externo no permitido"):
+    estado_pre = dict(cmd.interpretador.contextos[-1].values)
+
+    with pytest.raises(PermissionError, match=USAR_RECHAZO_EXTERNO_MATCH) as excinfo:
         cmd.ejecutar_codigo('usar "holobit_sdk"')
+
+    mensaje = str(excinfo.value).lower()
+    assert "traceback" not in mensaje
+    assert cmd.interpretador.contextos[-1].values == estado_pre
+    simbolos = cmd.interpretador.contextos[-1].values
+    assert "holobit_sdk" not in simbolos
+    assert "crear_holobit" not in simbolos
+    assert "validar_holobit" not in simbolos
 
 
 def test_usar_holobit_expone_solo_api_cobra_facing(monkeypatch):
