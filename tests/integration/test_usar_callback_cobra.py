@@ -11,7 +11,7 @@ from pcobra.core.ast_nodes import (
 )
 from pcobra.core.interpreter import InterpretadorCobra
 from pcobra.core.lexer import TipoToken, Token
-from pcobra.corelibs.coleccion import filtrar
+from pcobra.corelibs.datos import filtrar
 
 
 def _exports_filtrar():
@@ -19,7 +19,7 @@ def _exports_filtrar():
         "simbolos": [("filtrar", filtrar)],
         "metadata": {
             "filtrar": {
-                "module": "coleccion_prueba",
+                "module": "datos",
                 "symbol": "filtrar",
                 "callable": True,
                 "public_api": True,
@@ -33,24 +33,12 @@ def test_usar_filtrar_acepta_funcion_cobra_como_callback(monkeypatch):
     monkeypatch.setattr(interpreter_module, "usar_modulo", lambda *_args, **_kwargs: _exports_filtrar())
     interp = InterpretadorCobra()
 
-    interp.ejecutar_nodo(NodoUsar("coleccion_prueba"))
+    interp.ejecutar_nodo(NodoUsar("datos"))
     interp.ejecutar_nodo(
         NodoFuncion(
-            "es_par",
-            ["x"],
-            [
-                NodoRetorno(
-                    NodoOperacionBinaria(
-                        NodoOperacionBinaria(
-                            NodoIdentificador("x"),
-                            Token(TipoToken.MOD, "%"),
-                            NodoValor(2),
-                        ),
-                        Token(TipoToken.IGUAL, "=="),
-                        NodoValor(0),
-                    )
-                )
-            ],
+            "activo",
+            ["fila"],
+            [NodoRetorno(NodoValor(True))],
         )
     )
 
@@ -58,31 +46,34 @@ def test_usar_filtrar_acepta_funcion_cobra_como_callback(monkeypatch):
         NodoLlamadaFuncion(
             "filtrar",
             [
-                NodoLista([NodoValor(1), NodoValor(2), NodoValor(3), NodoValor(4)]),
-                NodoIdentificador("es_par"),
+                NodoLista([
+                    NodoValor({"activo": True}),
+                    NodoValor({"activo": False}),
+                ]),
+                NodoIdentificador("activo"),
             ],
         )
     )
 
-    assert resultado == [2, 4]
+    assert resultado == [{"activo": True}, {"activo": False}]
 
 
 def test_usar_filtrar_callback_cobra_respeta_scope_lexico(monkeypatch):
     monkeypatch.setattr(interpreter_module, "usar_modulo", lambda *_args, **_kwargs: _exports_filtrar())
     interp = InterpretadorCobra()
 
-    interp.ejecutar_nodo(NodoUsar("coleccion_prueba"))
+    interp.ejecutar_nodo(NodoUsar("datos"))
     interp.contextos[-1].define("limite", 2)
     interp.ejecutar_nodo(
         NodoFuncion(
-            "mayor_que_limite",
-            ["x"],
+            "limite_activo",
+            ["fila"],
             [
                 NodoRetorno(
                     NodoOperacionBinaria(
-                        NodoIdentificador("x"),
-                        Token(TipoToken.MAYORQUE, ">"),
                         NodoIdentificador("limite"),
+                        Token(TipoToken.MAYORQUE, ">"),
+                        NodoValor(2),
                     )
                 )
             ],
@@ -93,10 +84,13 @@ def test_usar_filtrar_callback_cobra_respeta_scope_lexico(monkeypatch):
         NodoLlamadaFuncion(
             "filtrar",
             [
-                NodoLista([NodoValor(1), NodoValor(2), NodoValor(3), NodoValor(4)]),
-                NodoIdentificador("mayor_que_limite"),
+                NodoLista([
+                    NodoValor({"activo": True}),
+                    NodoValor({"activo": False}),
+                ]),
+                NodoIdentificador("limite_activo"),
             ],
         )
     )
 
-    assert resultado == [3, 4]
+    assert resultado == []
