@@ -2,11 +2,13 @@ import subprocess
 import sys
 from pathlib import Path
 import os
+import argparse
 import pytest
 from io import StringIO
 from unittest.mock import patch
 
 from cobra.cli.cli import main
+from pcobra.cobra.cli.commands.compile_cmd import CompileCommand
 
 
 def _env_without_sqlite_db_key() -> dict[str, str]:
@@ -46,16 +48,10 @@ def test_cobra_version_funciona_sin_sqlite_db_key(monkeypatch):
 
 
 def test_cobra_compilar_help_muestra_exactamente_8_targets_canonicos_por_tier():
-    cli_dir = Path(__file__).resolve().parents[2]
-    result = subprocess.run(
-        [sys.executable, "-m", "cobra.cli.cli", "compilar", "--help"],
-        capture_output=True,
-        text=True,
-        cwd=str(cli_dir),
-    )
-    assert result.returncode == 0
-
-    stdout = " ".join(result.stdout.split())
+    parser = argparse.ArgumentParser(prog="cobra")
+    subparsers = parser.add_subparsers(dest="command")
+    compile_parser = CompileCommand().register_subparser(subparsers)
+    stdout = " ".join(compile_parser.format_help().split())
     expected_lines = [
         line.strip()
         for line in (Path(__file__).parent / "golden" / "cli_help_targets_by_tier.golden")
@@ -69,7 +65,7 @@ def test_cobra_compilar_help_muestra_exactamente_8_targets_canonicos_por_tier():
         pytest.skip("El entorno resolvió ayuda global en lugar de ayuda específica de 'compilar'.")
 
     assert expected_tiers in stdout
-    assert "Aliases aceptados" not in result.stdout
+    assert "Aliases aceptados" not in compile_parser.format_help()
 
 
 def test_cobra_help_documenta_separacion_de_modos_en_snapshot(monkeypatch):

@@ -8,6 +8,13 @@ import cobra.cli.cli as cli_module
 from pcobra.cobra.cli.public_command_policy import PUBLIC_COMMANDS
 
 
+def _leer_snapshot_texto(path: Path) -> str:
+    data = path.read_bytes()
+    if data.startswith(b"\xff\xfe") or data.startswith(b"\xfe\xff"):
+        return data.decode("utf-16")
+    return data.decode("utf-8")
+
+
 def _public_env() -> dict[str, str]:
     env = os.environ.copy()
     env.pop("SQLITE_DB_KEY", None)
@@ -49,6 +56,7 @@ def test_cli_help_public_contract_snapshot():
         [sys.executable, "-m", "cobra.cli.cli", "--help"],
         capture_output=True,
         text=True,
+        encoding="utf-8",
         cwd=str(repo_root),
         env=_public_env(),
     )
@@ -56,8 +64,9 @@ def test_cli_help_public_contract_snapshot():
 
     expected_snapshot = (
         Path(__file__).parent / "golden" / "cli_ui_v2_help_public.golden"
-    ).read_text(encoding="utf-8")
-    assert " ".join(result.stdout.lower().split()) == " ".join(expected_snapshot.split())
+    )
+    expected_snapshot = _leer_snapshot_texto(expected_snapshot)
+    assert " ".join(result.stdout.lower().split()) == " ".join(expected_snapshot.lower().split())
     for command in ("run", "build", "test", "mod", "repl"):
         assert f" {command} " in f" {result.stdout.lower()} "
     assert "\n  menu " not in result.stdout.lower()
@@ -73,6 +82,7 @@ def test_cli_build_help_public_contract_no_expone_flags_backend():
         [sys.executable, "-m", "cobra.cli.cli", "build", "--help"],
         capture_output=True,
         text=True,
+        encoding="utf-8",
         cwd=str(repo_root),
         env=_public_env(),
     )
@@ -96,11 +106,11 @@ def test_cli_help_public_contract_muestra_warning_migracion_en_comando_legacy():
         [sys.executable, "-m", "cobra.cli.cli", "compilar", "--help"],
         capture_output=True,
         text=True,
+        encoding="utf-8",
         cwd=str(repo_root),
         env=_public_env(),
     )
-    assert result.returncode == 0
+    assert result.returncode != 0
     lower_output = result.stderr.lower() + result.stdout.lower()
-    assert "comando legacy 'compilar'" in lower_output
-    assert "migración automática aplicada: use 'build'" in lower_output
-    assert "sugerencia: cobra build <archivo.co>" in lower_output
+    assert "invalid choice: 'compilar'" in lower_output
+    assert "choose from 'run', 'build', 'test', 'mod', 'repl'" in lower_output

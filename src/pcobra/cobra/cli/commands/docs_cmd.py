@@ -28,10 +28,11 @@ class DocsCommand(BaseCommand):
     def run(self, args: Any) -> int:
         """Ejecuta la lógica del comando."""
         raiz = self._obtener_raiz()
-        source = raiz / "docs"
-        build = source / "_build" / "html"
+        docs_root = raiz / "docs"
+        source = docs_root / "frontend"
+        build = docs_root / "build" / "html"
         api = source / "api"
-        codigo = raiz / "src" / "pcobra"
+        codigo = raiz / "src"
 
         # Validar todos los directorios necesarios
         if not self._validar_directorios(source, codigo):

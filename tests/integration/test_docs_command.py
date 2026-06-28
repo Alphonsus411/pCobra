@@ -24,9 +24,10 @@ def test_docs_command_sin_sphinx_no_falla_por_rutas(tmp_path, monkeypatch, capsy
     """Comprueba que la validación de rutas no falla si Sphinx falta."""
 
     docs_dir = tmp_path / "docs"
-    codigo_dir = tmp_path / "src" / "pcobra"
-    docs_dir.mkdir()
-    codigo_dir.mkdir(parents=True)
+    frontend_dir = docs_dir / "frontend"
+    codigo_dir = tmp_path / "src"
+    frontend_dir.mkdir(parents=True)
+    codigo_dir.mkdir()
 
     comando = DocsCommand()
     monkeypatch.setattr(DocsCommand, "_obtener_raiz", lambda self: tmp_path)
@@ -37,9 +38,9 @@ def test_docs_command_sin_sphinx_no_falla_por_rutas(tmp_path, monkeypatch, capsy
     assert resultado == 1
 
     salida = capsys.readouterr().out
-    assert "Sphinx no está instalado" in salida
+    assert "No se encontró Sphinx" in salida
     assert "No se encuentra el directorio" not in salida
 
     # Los directorios necesarios deben crearse incluso sin Sphinx
-    assert (docs_dir / "api").is_dir()
-    assert (docs_dir / "_build" / "html").is_dir()
+    assert (frontend_dir / "api").is_dir()
+    assert (docs_dir / "build" / "html").is_dir()

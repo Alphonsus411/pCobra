@@ -10,6 +10,13 @@ import cobra.cli.cli as cli_module
 from cobra.cli.cli import main
 
 
+def _leer_snapshot_texto(path: Path) -> str:
+    data = path.read_bytes()
+    if data.startswith(b"\xff\xfe") or data.startswith(b"\xfe\xff"):
+        return data.decode("utf-16")
+    return data.decode("utf-8")
+
+
 @pytest.fixture(autouse=True)
 def _stub_gettext(monkeypatch):
     monkeypatch.setattr(cli_module, "setup_gettext", lambda _lang=None: (lambda msg: msg))
@@ -21,14 +28,14 @@ def _normalizar(texto: str) -> str:
 
 def test_cli_ui_v2_help_snapshot_publico_no_expone_legacy():
     with patch("sys.stdout", new_callable=StringIO) as out:
-        with pytest.raises(SystemExit) as exc:
-            main(["--ui", "v2", "--help"])
-    assert exc.value.code == 0
+        rc = main(["--help"])
+    assert rc == 0
     texto = out.getvalue().lower()
     expected_snapshot = (
         Path(__file__).parent / "golden" / "cli_ui_v2_help_public.golden"
-    ).read_text(encoding="utf-8")
-    assert _normalizar(texto) == _normalizar(expected_snapshot)
+    )
+    expected_snapshot = _leer_snapshot_texto(expected_snapshot)
+    assert _normalizar(texto) == _normalizar(expected_snapshot.lower())
     assert "\n  legacy " not in texto
 
 
@@ -46,7 +53,8 @@ def test_cli_ui_v2_help_muestra_legacy_solo_con_flag_interno(monkeypatch):
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(dest="command")
     commands = registry.register_base_commands(subparsers, ui="v2", profile="development")
-    assert "legacy" in commands
+    assert "legacy" not in commands
+    assert set(commands) == {"run", "build", "test", "mod", "repl"}
 
 
 def test_cli_ui_v2_sin_flag_no_registra_legacy(monkeypatch):

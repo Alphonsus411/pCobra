@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 import json
+from argparse import Namespace
 
-from cobra.cli.cli import main
 from cobra.cli.commands import qa_validar_cmd as cmd_module
 from pcobra.cobra.cli.commands import qa_validar_cmd as pcobra_cmd_module
+from pcobra.cobra.cli.commands.qa_validar_cmd import QaValidarCommand
 from pcobra.cobra.qa.syntax_validation import SyntaxReport, SyntaxValidationExecution, TargetSummary, ValidationResult
 
 
@@ -45,20 +46,18 @@ def test_cli_qa_validar_exporta_feature_gap_report_json_estable(monkeypatch, tmp
     monkeypatch.setattr(cmd_module, "build_feature_gap_report", lambda: fake_report)
     monkeypatch.setattr(pcobra_cmd_module, "build_feature_gap_report", lambda: fake_report)
 
-    rc = main(
-        [
-            "--modo",
-            "mixto",
-            "qa-validar",
-            "--scope",
-            "syntax",
-            "--targets",
-            "python",
-            "--feature-gap-report",
-            str(output),
-            "--feature-gap-format",
-            "json",
-        ]
+    rc = QaValidarCommand().run(
+        Namespace(
+            modo="mixto",
+            archivo="programa.co",
+            strict=False,
+            solo_cobra=False,
+            targets="python",
+            scope="syntax",
+            report_json=None,
+            feature_gap_report=str(output),
+            feature_gap_format="json",
+        )
     )
 
     assert rc == 0

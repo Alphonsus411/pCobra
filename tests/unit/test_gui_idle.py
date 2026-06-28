@@ -6,6 +6,8 @@ import sys
 from types import ModuleType, SimpleNamespace
 from unittest.mock import MagicMock
 
+import pytest
+
 from pcobra.gui import idle
 
 
@@ -1253,6 +1255,69 @@ def test_guardar_como_resuelve_src_programa_sin_extension_como_cobra(
     guardar_como.on_click(None)
 
     assert destino.read_text(encoding="utf-8") == "imprimir('programa')"
+    assert salida.value == f"Archivo guardado: {destino}"
+    assert ruta_input.value == str(destino)
+
+
+def test_guardar_como_desde_dockerfile_conserva_nombre_sin_forzar_cobra(
+    monkeypatch, tmp_path
+):
+    (
+        _ft,
+        _page,
+        entrada,
+        ruta_input,
+        salida,
+        abrir,
+        guardar_como,
+    ) = _preparar_idle_archivos(monkeypatch, tmp_path)
+    workspace_root = idle.runtime.resolver_workspace_root_idle()
+    origen = (workspace_root / "Dockerfile").resolve()
+    origen.write_text("FROM python:3.12", encoding="utf-8")
+
+    ruta_input.value = "Dockerfile"
+    abrir.on_click(None)
+    assert salida.value == f"Archivo cargado: {origen}"
+
+    entrada.value = "FROM python:3.13"
+    ruta_input.value = "deploy/Dockerfile"
+    guardar_como.on_click(None)
+
+    destino = (workspace_root / "deploy" / "Dockerfile").resolve()
+    assert destino.read_text(encoding="utf-8") == "FROM python:3.13"
+    assert not destino.with_suffix(".cobra").exists()
+    assert salida.value == f"Archivo guardado: {destino}"
+    assert ruta_input.value == str(destino)
+
+
+@pytest.mark.parametrize("nombre_especial", [".gitignore", ".dockerignore"])
+def test_guardar_como_desde_ignore_especial_conserva_nombre_sin_forzar_cobra(
+    monkeypatch, tmp_path, nombre_especial
+):
+    (
+        _ft,
+        _page,
+        entrada,
+        ruta_input,
+        salida,
+        abrir,
+        guardar_como,
+    ) = _preparar_idle_archivos(monkeypatch, tmp_path)
+    workspace_root = idle.runtime.resolver_workspace_root_idle()
+    origen = (workspace_root / nombre_especial).resolve()
+    origen.write_text("__pycache__/\n", encoding="utf-8")
+
+    ruta_input.value = nombre_especial
+    abrir.on_click(None)
+    assert salida.value == f"Archivo cargado: {origen}"
+
+    entrada.value = "__pycache__/\n*.pyc\n"
+    ruta_input.value = f"config/{nombre_especial}"
+    guardar_como.on_click(None)
+
+    destino = (workspace_root / "config" / nombre_especial).resolve()
+    assert destino.read_text(encoding="utf-8") == "__pycache__/\n*.pyc\n"
+    assert not destino.with_name(f"{destino.name}.cobra").exists()
     assert salida.value == f"Archivo guardado: {destino}"
     assert ruta_input.value == str(destino)
 

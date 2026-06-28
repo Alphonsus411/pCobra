@@ -1027,7 +1027,9 @@ class CliApplication:
             self.initialize()
             debug_activo = False
             if argv is None:
-                argv = ["repl"] if "PYTEST_CURRENT_TEST" in environ else sys.argv[1:]
+                argv = sys.argv[1:]
+                if not argv and "PYTEST_CURRENT_TEST" in environ:
+                    argv = ["repl"]
 
             try:
                 argv = self._sanear_argv(argv)

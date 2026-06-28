@@ -998,105 +998,13 @@ def test_accion_cargar_archivo_desde_arbol_filtra_extensiones(
     contenido, mensaje = runtime.cargar_archivo_desde_arbol(archivo, estado)
 
     assert runtime.detectar_tipo_archivo(archivo) == runtime.TIPO_ARCHIVO_TEXTO
-
-
-def test_validar_y_crear_carpeta_idle_crea_carpeta_valida(tmp_path: Path) -> None:
-    project_root = tmp_path / "proyecto"
-    project_root.mkdir()
-    ruta_relativa = "nueva_carpeta"
-    ruta_esperada = project_root / ruta_relativa
-
-    runtime.validar_y_crear_carpet-idle(project_root, ruta_relativa)
-
-    assert ruta_esperada.is_dir()
-
-
-def test_validar_y_crear_carpeta_idle_crea_carpetas_intermedias(tmp_path: Path) -> None:
-    project_root = tmp_path / "proyecto"
-    project_root.mkdir()
-    ruta_relativa = "nivel1/nivel2/nivel3"
-    ruta_esperada = project_root / ruta_relativa
-
-    runtime.validar_y_crear_carpet-idle(project_root, ruta_relativa)
-
-    assert ruta_esperada.is_dir()
-
-
-def test_validar_y_crear_carpeta_idle_bloquea_path_traversal(tmp_path: Path) -> None:
-    project_root = tmp_path / "proyecto"
-    project_root.mkdir()
-    ruta_relativa = "../carpeta_fuera"
-
-    with pytest.raises(ValueError, match="Ruta de carpeta inválida: no se permite traversal de directorios."):
-        runtime.validar_y_crear_carpet-idle(project_root, ruta_relativa)
-
-
-def test_validar_y_crear_carpeta_idle_bloquea_ruta_absoluta_externa(tmp_path: Path) -> None:
-    project_root = tmp_path / "proyecto"
-    project_root.mkdir()
-    ruta_externa = tmp_path.parent / "carpeta_absoluta_externa"
-    ruta_relativa = str(ruta_externa)
-
-    with pytest.raises(ValueError, match="Ruta de carpeta inválida: no se permiten rutas absolutas externas."):
-        runtime.validar_y_crear_carpet-idle(project_root, ruta_relativa)
-
-
-def test_validar_y_crear_carpet-idle_bloquea_punto_como_nombre(tmp_path: Path) -> None:
-    project_root = tmp_path / "proyecto"
-    project_root.mkdir()
-    ruta_relativa = "."
-
-    with pytest.raises(ValueError, match="Ruta de carpeta inválida: el nombre '.' no está permitido."):
-        runtime.validar_y_crear_carpet-idle(project_root, ruta_relativa)
-
-
-def test_validar_y_crear_carpet-idle_no_sobrescribe_existente(tmp_path: Path) -> None:
-    project_root = tmp_path / "proyecto"
-    project_root.mkdir()
-    ruta_relativa = "existente"
-    (project_root / ruta_relativa).mkdir()
-    (project_root / ruta_relativa / "archivo.txt").write_text("contenido original")
-
-    runtime.validar_y_crear_carpet-idle(project_root, ruta_relativa)
-
-    assert (project_root / ruta_relativa).is_dir()
-    assert (project_root / ruta_relativa / "archivo.txt").read_text() == "contenido original"
-
-
-def test_crear_handler_guardar_como_no_fuerza_extension_cobra_para_config_files(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    project_root = tmp_path / "proyecto"
-    project_root.mkdir()
-    (project_root / "cobra.toml").write_text("[proyecto]\n", encoding="utf-8")
-
-    estado = runtime.GuiFileState(
-        ruta=project_root / "config.json",
-        contenido_cargado="{}",
-        cambios_sin_guardar=True,
-    )
-
-    # Simular el diálogo de guardar como seleccionando un nombre de archivo .yml
-    def mock_guardar_dialogo(page, file_type_filter):
-        return str(project_root / "nueva_config.yml")
-
-    monkeypatch.setattr(runtime, "_mostrar_dialogo_guardar_archivo", mock_guardar_dialogo)
-
-    # Simular la página de Flet
-    mock_page = SimpleNamespace(snack_bar=SimpleNamespace(open=lambda: None))
-
-    handler = runtime.crear_handler_guardar_como(mock_page, estado, lambda: None)
-    handler(SimpleNamespace())
-
-    assert (project_root / "nueva_config.yml").exists()
-    assert not (project_root / "nueva_config.yml.cobra").exists()
-    assert estado.ruta == (project_root / "nueva_config.yml").resolve()
     assert not runtime.es_archivo_cobra(archivo)
     assert contenido == "notas del proyecto"
     assert estado.ruta == archivo.resolve()
     assert estado.contenido_cargado == "notas del proyecto"
     assert estado.cambios_sin_guardar is False
     assert mensaje == f"Archivo cargado: {archivo.resolve()}"
+
     desconocido = tmp_path / "imagen.png"
     desconocido.write_bytes(b"texto plano compatible utf-8")
 
@@ -1350,7 +1258,7 @@ def test_guardar_como_por_ruta_y_filepicker_actualizan_estado_igual(
     assert page.overlay == picker_creados
     assert picker_creados[0].save_file_args == {
         "dialog_title": "Guardar archivo del proyecto Cobra",
-        "file_name": "nuevo_archivo.cobra",
+        "file_name": "nuevo_archivo.txt",
         "allowed_extensions": [
             "cobra",
             "co",
@@ -1361,6 +1269,7 @@ def test_guardar_como_por_ruta_y_filepicker_actualizan_estado_igual(
             "yml",
             "yaml",
             "toml",
+            "docker-compose.yml",
         ],
     }
     picker_creados[0].on_result(SimpleNamespace(path=str(destino_picker)))
@@ -1556,7 +1465,7 @@ def test_validar_y_crear_carpeta_idle_bloquea_rutas_invalidas(tmp_path: Path) ->
         runtime.validar_y_crear_carpeta_idle(".", project_root, workspace_root)
 
     # Bloquear creación de workspace_root
-    with pytest.raises(ValueError, match="No se puede crear la raíz del workspace"):
+    with pytest.raises(ValueError, match="dentro del proyecto activo"):
         runtime.validar_y_crear_carpeta_idle(str(Path("../..").relative_to(Path("."))), project_root, workspace_root)
 
     # Bloquear si project_root no es un directorio

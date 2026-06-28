@@ -173,7 +173,42 @@ def main(page: "ft.Page"):
 
     def resolver_ruta_archivo_idle(ruta: str | Path) -> Path | None:
         try:
-            return runtime.resolver_ruta_texto_en_project_root(ruta, project_root)
+            ruta_path = Path(ruta)
+            if ruta_path.suffix.lower() in runtime.COBRA_FILE_EXTENSIONS:
+                return runtime.resolver_ruta_archivo_en_project_root(
+                    ruta_path, project_root
+                )
+
+            if not ruta_path.suffix:
+                tipo_visible = runtime.detectar_tipo_archivo(ruta_path)
+                if tipo_visible not in {
+                    runtime.TIPO_ARCHIVO_COBRA,
+                    runtime.TIPO_ARCHIVO_DESCONOCIDO,
+                }:
+                    return runtime.resolver_ruta_texto_en_project_root(
+                        ruta_path, project_root
+                    )
+
+                ruta_texto = runtime.resolver_ruta_texto_en_project_root(
+                    ruta_path, project_root
+                )
+                if ruta_texto.exists() and ruta_texto.is_file():
+                    return ruta_texto
+
+                if estado.ruta is not None:
+                    tipo_activo = runtime.detectar_tipo_archivo(estado.ruta)
+                    if tipo_activo != runtime.TIPO_ARCHIVO_COBRA:
+                        sufijo_activo = Path(estado.ruta).suffix
+                        if sufijo_activo:
+                            return runtime.resolver_ruta_texto_en_project_root(
+                                ruta_path.with_suffix(sufijo_activo), project_root
+                            )
+                        return runtime.resolver_ruta_texto_en_project_root(
+                            ruta_path, project_root
+                        )
+                return runtime.resolver_ruta_archivo_en_project_root(ruta_path, project_root)
+
+            return runtime.resolver_ruta_texto_en_project_root(ruta_path, project_root)
         except (
             FileNotFoundError,
             NotADirectoryError,

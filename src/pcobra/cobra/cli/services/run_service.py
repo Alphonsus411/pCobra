@@ -1,4 +1,5 @@
 import logging
+from argparse import ArgumentTypeError
 from pathlib import Path
 from typing import Any
 
@@ -25,6 +26,7 @@ from pcobra.cobra.core.runtime import (
     construir_cadena,
     limitar_cpu_segundos,
 )
+from pcobra.cobra.core.sandbox import ejecutar_en_contenedor as ejecutar_en_contenedor_docker
 from pcobra.cobra.transpilers import module_map
 
 from pcobra.cobra.core import sandbox as sandbox_module
@@ -184,6 +186,20 @@ class RunService:
             if "RestrictedPython" in str(e):
                 mensaje += "\nSugerencia: instala RestrictedPython para el modo seguro (por ejemplo: pip install RestrictedPython)."
             mostrar_error(mensaje, registrar_log=False)
+            return 1
+
+    def ejecutar_en_contenedor(self, codigo: str, backend: str) -> int:
+        try:
+            salida = ejecutar_en_contenedor_docker(
+                codigo,
+                resolve_docker_backend(backend),
+                timeout=self.execution_timeout,
+            )
+            if salida:
+                mostrar_info(str(salida))
+            return 0
+        except (ArgumentTypeError, RuntimeError, ValueError) as e:
+            mostrar_error(f"Error de ejecución en contenedor: {e}", registrar_log=False)
             return 1
 
     def ejecutar_normal(

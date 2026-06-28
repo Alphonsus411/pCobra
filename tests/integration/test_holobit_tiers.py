@@ -10,6 +10,7 @@ from pcobra.cobra.transpilers.compatibility_matrix import (
     BACKEND_FEATURE_GAPS,
     COMPATIBILITY_LEVEL_ORDER,
     CONTRACT_FEATURES,
+    FEATURE_FULL_BACKENDS,
     MIN_REQUIRED_BACKEND_COMPATIBILITY,
     SDK_FULL_BACKENDS,
     SDK_PARTIAL_BACKENDS,
@@ -59,7 +60,7 @@ PARTIAL_MARKERS = {
 }
 FULL_MARKERS = {
     "python": {
-        "holobit": ("from corelibs import *", "cobra_holobit([1.0, 2.0, 3.0])"),
+        "holobit": ("import pcobra.corelibs as _pcobra_corelibs", "cobra_holobit([1.0, 2.0, 3.0])"),
         "proyectar": ("def cobra_proyectar", "cobra_proyectar(h"),
         "transformar": ("def cobra_transformar", "cobra_transformar(h"),
         "graficar": ("def cobra_graficar", "cobra_graficar(h"),
@@ -187,8 +188,8 @@ def test_only_python_es_full_para_holobit_y_runtime_base():
     for feature in CONTRACT_FEATURES:
         full_backends = {backend for backend in OFFICIAL_TARGETS if BACKEND_COMPATIBILITY[backend][feature] == "full"}
         partial_backends = {backend for backend in OFFICIAL_TARGETS if BACKEND_COMPATIBILITY[backend][feature] == "partial"}
-        assert full_backends == {"python"}
-        assert partial_backends == set(SDK_PARTIAL_BACKENDS)
+        assert full_backends == set(FEATURE_FULL_BACKENDS[feature])
+        assert partial_backends == set(OFFICIAL_TARGETS) - set(FEATURE_FULL_BACKENDS[feature])
 
 
 def test_sdk_full_y_partial_se_mantienen_como_particion_exacta_de_official_targets():

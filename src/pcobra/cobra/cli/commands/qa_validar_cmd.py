@@ -20,6 +20,7 @@ from pcobra.cobra.cli.services.verification_service import (
     parse_verification_targets,
     resolve_executable_targets,
 )
+from pcobra.cobra.cli.commands.verify_cmd import VerifyCommand
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
 from pcobra.cobra.transpilers.compatibility_matrix import build_feature_gap_report
@@ -217,10 +218,10 @@ class QaValidarCommand(BaseCommand):
             archivo=getattr(args, "archivo"),
             lenguajes=executable_targets,
         )
-        rc = execute_runtime_verification(
-            archivo=verify_args.archivo,
-            lenguajes=list(verify_args.lenguajes),
-        )
+        # Mantiene compatibilidad con pruebas/consumidores que parchean
+        # `VerifyCommand.run`, delegando el detalle de ejecución al adaptador
+        # legacy de verificación.
+        rc = VerifyCommand().run(verify_args)
         has_failures = rc != 0
         message = "equivalencia runtime verificada" if rc == 0 else "falló equivalencia runtime"
 

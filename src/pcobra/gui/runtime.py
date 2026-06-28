@@ -308,6 +308,8 @@ def detectar_tipo_archivo(path: str | Path) -> str:
     nombre_lower = nombre.lower()
     extension = ruta.suffix.lower()
 
+    if nombre == "Dockerfile" or nombre.startswith("Dockerfile.") or nombre == "docker-compose.yml":
+        return TIPO_ARCHIVO_DOCKER
     if extension in COBRA_FILE_EXTENSIONS:
         return TIPO_ARCHIVO_COBRA
     if extension in MARKDOWN_FILE_EXTENSIONS:
@@ -316,8 +318,6 @@ def detectar_tipo_archivo(path: str | Path) -> str:
         return TIPO_ARCHIVO_TEXTO
     if extension in CONFIG_FILE_EXTENSIONS:
         return TIPO_ARCHIVO_CONFIG
-    if nombre == "Dockerfile" or nombre.startswith("Dockerfile.") or nombre == "docker-compose.yml":
-        return TIPO_ARCHIVO_DOCKER
     if nombre_lower in IGNORE_FILE_NAMES:
         return TIPO_ARCHIVO_IGNORE
     if nombre_lower in ENV_EXAMPLE_FILE_NAMES:

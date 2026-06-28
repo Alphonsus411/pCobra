@@ -51,7 +51,8 @@
         "recortar",
         "repetir",
         "quitar_acentos",
-        "dividir"
+        "dividir",
+        "reemplazar"
     ],
     "datos": [
         "leer_csv",

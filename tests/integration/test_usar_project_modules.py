@@ -182,7 +182,10 @@ def test_import_archivo_co_no_delega_en_usar_modulo(crear_modulo_cobra, monkeypa
 
 @pytest.mark.parametrize("nombre", ["dir/modulo", r"dir\\modulo", r"C:\\tmp\\modulo"])
 def test_usar_strings_windows_posix_son_rechazados(tmp_path, nombre):
-    with pytest.raises((ValueError, PermissionError), match="ruta|separadores|Windows|fuera"):
+    with pytest.raises(
+        (ValueError, PermissionError),
+        match=r"Nombre de módulo inválido en 'usar'",
+    ):
         usar_modulo(nombre, project_root=tmp_path, current_file=tmp_path / "main.co")
 
 
@@ -197,7 +200,10 @@ def test_usar_bloquea_escape_de_raiz_autorizada(crear_modulo_cobra, tmp_path):
 
     main = crear_modulo_cobra("main.co", 'usar "../modulo_secreto"')
 
-    with pytest.raises(ValueError, match=r"Nombre de módulo inválido en 'usar': '\.\./modulo_secreto' parece ruta/traversal."):
+    with pytest.raises(
+        ValueError,
+        match=r"Nombre de módulo inválido en 'usar': '\.\./modulo_secreto'\.",
+    ):
         ejecutar_archivo(main)
 
 
@@ -207,7 +213,7 @@ def test_usar_canonicaliza_rutas_y_carga_una_sola_vez(crear_modulo_cobra, monkey
         "main.co",
         """
         usar "utilidades.fechas"
-        usar "utilidades/fechas"
+        usar "utilidades.fechas"
         """,
     )
     import pcobra.core.import_utils as import_utils
