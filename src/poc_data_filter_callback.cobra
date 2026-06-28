@@ -1,0 +1,12 @@
+usar "datos"
+
+var tabla = [[["nombre", "Ada"], ["activo", verdadero]]]
+
+func esta_activo(fila):
+    retorno fila[1][1]
+fin
+
+imprimir(filtrar(tabla, esta_activo))
+
+# Salida esperada:
+# [{'nombre': 'Ada', 'activo': True}]
