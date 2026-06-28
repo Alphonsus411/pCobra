@@ -111,7 +111,7 @@ def test_usar_texto_contrato_runtime_overrides_y_poc_funcional(factory, executor
 def _modulo_datos_publico_stub() -> ModuleType:
     mod = ModuleType("datos")
     mod.__all__ = ["filtrar", "mapear", "reducir"]
-    mod.filtrar = lambda valores, predicado=None: valores
+    mod.filtrar = lambda tabla, condicion: [fila for fila in tabla if condicion(fila)]
     mod.mapear = lambda valores, fn=None: valores
     mod.reducir = lambda valores, fn=None, inicial=None: inicial if inicial is not None else valores[0]
     mod.__file__ = "/workspace/pCobra/src/pcobra/corelibs/datos.py"
@@ -135,13 +135,14 @@ def test_usar_datos_incluye_filtrar_mapear_reducir(factory, executor, get_interp
     executor(cmd, 'usar "datos"')
 
     valores = [1, 2, 3]
+    tabla = [{"activo": True}, {"activo": False}]
     for simbolo in ("filtrar", "mapear", "reducir"):
         assert simbolo in interp.contextos[-1].values
         assert callable(interp.contextos[-1].get(simbolo))
 
-    assert interp.contextos[-1].get("filtrar")(valores) == valores
-    assert interp.contextos[-1].get("mapear")(valores) == valores
-    assert interp.contextos[-1].get("reducir")(valores) == 1
+    assert interp.contextos[-1].get("filtrar")(tabla, lambda fila: fila["activo"]) == [{"activo": True}]
+    assert interp.contextos[-1].get("mapear")(tabla, lambda fila: fila) == tabla
+    assert interp.contextos[-1].get("reducir")(tabla, lambda total, fila: total + int(fila["activo"]), 0) == 1
 
 
 @pytest.mark.parametrize(

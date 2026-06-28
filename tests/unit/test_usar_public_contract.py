@@ -22,7 +22,7 @@ from tests.unit.test_backend_bootstrap_contract import _run_python_isolated
 def _modulo_datos_publico_stub() -> ModuleType:
     mod = ModuleType("datos")
     mod.__all__ = ["filtrar", "mapear", "reducir"]
-    mod.filtrar = lambda valores, predicado=None: valores
+    mod.filtrar = lambda tabla, condicion: [fila for fila in tabla if condicion(fila)]
     mod.mapear = lambda valores, fn=None: valores
     mod.reducir = lambda valores, fn=None, inicial=None: inicial if inicial is not None else valores[0]
     mod.__file__ = "/workspace/pCobra/src/pcobra/corelibs/datos.py"
@@ -57,6 +57,9 @@ def test_usar_datos_expone_filtrar_mapear_reducir(monkeypatch):
 
     simbolos = interp.contextos[-1].values
     assert {"filtrar", "mapear", "reducir"}.issubset(simbolos)
+
+    tabla = [{"activo": True}, {"activo": False}]
+    assert simbolos["filtrar"](tabla, lambda fila: fila["activo"]) == [{"activo": True}]
 
 
 @pytest.mark.parametrize("nombre", ["numpy", "np", "node-fetch", "serde", "holobit_sdk"] )
