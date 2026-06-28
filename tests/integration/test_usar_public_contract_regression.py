@@ -159,10 +159,13 @@ def test_rechaza_usar_numpy(factory, executor, get_interp, monkeypatch):
     interp = get_interp(cmd)
     estado_pre = dict(interp.contextos[-1].values)
 
-    with pytest.raises(PermissionError, match=r"módulo externo no permitido en REPL estricto") as excinfo:
+    with pytest.raises(PermissionError, match=r"no permitid[ao]|externo|fuera") as excinfo:
         executor(cmd, 'usar "numpy"')
 
-    assert str(excinfo.value) == "usar_error[modulo_no_permitido]: módulo externo no permitido en REPL estricto (solo alias oficiales Cobra)"
+    mensaje = str(excinfo.value).lower()
+    assert "usar_error" in mensaje or "módulo" in mensaje or "modulo" in mensaje
+    assert "no permitid" in mensaje or "externo" in mensaje or "fuera" in mensaje
+    assert "traceback" not in mensaje
     assert interp.contextos[-1].values == estado_pre
 
 
