@@ -1514,11 +1514,22 @@ def normalizar_codigo(codigo: str | None) -> str:
 
 def ejecutar_codigo(codigo: str) -> str:
     """Ejecuta código Cobra y captura la salida impresa."""
+    from pcobra.cobra.cli.execution_pipeline import (
+        PipelineInput,
+        ejecutar_pipeline_explicito,
+    )
+
     deps = require_gui_dependencies()
     buffer = io.StringIO()
     with redirect_stdout(buffer), redirect_stderr(buffer):
-        _tokens, ast = analizar_codigo(codigo)
-        deps["InterpretadorCobra"]().ejecutar_ast(ast)
+        ejecutar_pipeline_explicito(
+            PipelineInput(
+                codigo=codigo,
+                interpretador_cls=deps["InterpretadorCobra"],
+                safe_mode=True,
+                extra_validators=None,
+            )
+        )
     return buffer.getvalue()
 
 
