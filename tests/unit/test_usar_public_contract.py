@@ -7,7 +7,7 @@ import pytest
 from pcobra.cobra.architecture.backend_policy import PUBLIC_BACKENDS
 from pcobra.cobra.cli.commands.interactive_cmd import InteractiveCommand
 from pcobra.cobra.core.runtime import InterpretadorCobra
-from pcobra.cobra.usar_policy import REPL_COBRA_MODULE_MAP
+from pcobra.cobra.usar_policy import REPL_COBRA_MODULE_MAP, USAR_COBRA_PUBLIC_MODULES
 from pcobra.core import usar_loader as core_usar_loader
 
 from tests.integration.test_repl_usar_entrypoints_contract import (
@@ -118,8 +118,8 @@ def test_runtime_startup_no_carga_legacy_backends():
 
 
 def test_usar_policy_publica_exacta_modulos_canonicos():
-    assert tuple(REPL_COBRA_MODULE_MAP.keys()) == ("numero", "texto", "datos")
-    assert tuple(REPL_COBRA_MODULE_MAP.values()) == ("numero", "texto", "datos")
+    assert tuple(REPL_COBRA_MODULE_MAP.keys()) == USAR_COBRA_PUBLIC_MODULES
+    assert tuple(REPL_COBRA_MODULE_MAP.values()) == USAR_COBRA_PUBLIC_MODULES
 
 def test_public_backends_contrato_exacto_en_backend_policy():
     assert PUBLIC_BACKENDS == ("python", "javascript", "rust")
