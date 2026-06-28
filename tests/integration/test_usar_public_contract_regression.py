@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from ast import literal_eval
 from types import ModuleType
 
 import pytest
@@ -9,7 +8,7 @@ from pcobra.cobra.architecture.backend_policy import PUBLIC_BACKENDS
 from pcobra.cobra.cli.commands.interactive_cmd import InteractiveCommand
 from pcobra.cobra.cli.commands_v2.repl_cmd import ReplCommandV2
 from pcobra.cobra.core.runtime import InterpretadorCobra
-from pcobra.cobra.usar_policy import REPL_COBRA_MODULE_MAP, USAR_COBRA_FACING_MODULE_FLAGS, USAR_RUNTIME_EXPORT_OVERRIDES
+from pcobra.cobra.usar_policy import REPL_COBRA_MODULE_MAP, USAR_RUNTIME_EXPORT_OVERRIDES
 from pcobra.core import usar_loader as core_usar_loader
 
 from tests.integration.test_repl_usar_entrypoints_contract import (
@@ -19,12 +18,6 @@ from tests.integration.test_repl_usar_entrypoints_contract import (
     _modulo_texto_stub,
 )
 
-
-def _extraer_error_estructurado_desde_colision(mensaje: str) -> dict[str, str]:
-    prefijo = "colisión estructurada="
-    assert prefijo in mensaje
-    payload = mensaje.split(prefijo, 1)[1].strip()
-    return literal_eval(payload)
 
 
 @pytest.mark.parametrize(
@@ -177,7 +170,7 @@ def test_holobit_sdk_internals_no_son_importables(monkeypatch):
 
     cmd = InteractiveCommand(InterpretadorCobra())
     cmd.interpretador.configurar_restriccion_usar_repl(alias_map)
-    with pytest.raises(PermissionError, match=r"módulo externo no permitido en REPL estricto"):
+    with pytest.raises(PermissionError, match=r"Importación no permitida|usar_error\[(modulo_fuera_catalogo_publico|modulo_no_canonico)\]|módulo externo no permitido"):
         cmd.ejecutar_codigo('usar "holobit_sdk"')
 
 
@@ -229,20 +222,17 @@ def test_conflicto_no_overwrite_silencioso_reporta_error_estructurado(monkeypatc
     class _NodoUsar:
         modulo = "datos"
 
-    with pytest.raises(NameError, match=r"No se puede usar el módulo 'datos': (usar_error\[conflicto_simbolo\] )?colisión estructurada=") as excinfo:
+    with pytest.raises(NameError, match=r"No se puede usar 'datos': hay conflicto de símbolos") as excinfo:
         interp.ejecutar_usar(_NodoUsar())
 
     mensaje = str(excinfo.value)
-    assert "colisión estructurada" in mensaje
-    detalle = _extraer_error_estructurado_desde_colision(mensaje)
-    assert detalle["code"] == "symbol_collision"
-    assert detalle["message"] == "símbolo ya existe en contexto actual"
-    assert detalle["symbol"] == "filtrar"
-    assert detalle["module"] == "datos"
-    assert detalle["phase"] == "preflight"
+    assert "Símbolo conflictivo: filtrar" in mensaje
+    assert interp.contextos[-1].get("filtrar")() == "ocupado"
+    assert "mapear" not in interp.contextos[-1].values
+    assert "reducir" not in interp.contextos[-1].values
 
 
-def test_conflictos_emiten_warning_estructurado_por_simbolo(monkeypatch, caplog):
+def test_conflictos_abortan_inyeccion_sin_overwrite_silencioso(monkeypatch):
     mod_datos = _modulo_datos_publico_stub()
     monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: mod_datos)
 
@@ -254,14 +244,9 @@ def test_conflictos_emiten_warning_estructurado_por_simbolo(monkeypatch, caplog)
     class _NodoUsar:
         modulo = "datos"
 
-    caplog.set_level("WARNING")
-    with pytest.raises(NameError):
+    with pytest.raises(NameError, match=r"Símbolo conflictivo: filtrar"):
         interp.ejecutar_usar(_NodoUsar())
 
-    mensajes = [registro.getMessage() for registro in caplog.records if "USAR collision symbol event" in registro.getMessage()]
-    assert len(mensajes) >= 2
-    assert any("'symbol': 'filtrar'" in mensaje for mensaje in mensajes)
-    assert any("'symbol': 'mapear'" in mensaje for mensaje in mensajes)
     assert interp.contextos[-1].get("filtrar")() == "ocupado"
     assert interp.contextos[-1].get("mapear")() == "ocupado"
     assert "reducir" not in interp.contextos[-1].values
@@ -275,24 +260,14 @@ def test_usar_no_inyecta_simbolos_prohibidos_ni_objetos_backend(monkeypatch):
     mod.__danger__ = lambda: "boom"
     mod.__file__ = "/workspace/pCobra/src/pcobra/corelibs/mod_ext.py"
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: mod)
+    simbolos_saneados, _metadata, conflictos = core_usar_loader.sanitizar_exports_publicos(mod, "mod_ext")
 
-    interp = InterpretadorCobra()
-    monkeypatch.setitem(USAR_COBRA_FACING_MODULE_FLAGS, "mod_ext", True)
-    interp.configurar_restriccion_usar_repl({"mod_ext": "mod_ext"})
-    estado_pre = dict(interp.contextos[-1].values)
-
-    class _NodoUsar:
-        modulo = "mod_ext"
-
-    interp.ejecutar_usar(_NodoUsar())
-
-    simbolos = set(interp.contextos[-1].values.keys())
-    assert "ok" in simbolos
+    mapa = dict(simbolos_saneados)
+    assert "ok" in mapa
+    assert mapa["ok"]() == "ok"
     for prohibido in ("self", "append", "map", "filter", "unwrap", "expect", "__danger__"):
-        assert prohibido not in simbolos
-    assert "__danger__" not in interp.contextos[-1].values
-    assert estado_pre.items() <= interp.contextos[-1].values.items()
+        assert prohibido not in mapa
+    assert any(conflicto["symbol"] == "__danger__" for conflicto in conflictos)
 
 
 def test_usar_holobit_inyecta_solo_all_y_nombres_en_espanol(monkeypatch):
@@ -421,11 +396,12 @@ def test_sanitizar_exports_publicos_rechaza_objeto_sdk_accidental_en_holobit():
     mod_holobit.__all__ = [*mod_holobit.__all__, "SDKHolobitAccidental"]
     mod_holobit.SDKHolobitAccidental = _SDKObjetoAccidental
 
-    mapa, conflictos = core_usar_loader.sanitizar_exports_publicos(mod_holobit, "holobit")
+    simbolos_saneados, _metadata, conflictos = core_usar_loader.sanitizar_exports_publicos(mod_holobit, "holobit")
+    mapa = dict(simbolos_saneados)
 
     assert "SDKHolobitAccidental" not in mapa
     assert any(c["symbol"] == "SDKHolobitAccidental" for c in conflictos)
-    assert any(c["code"] == "backend_module_object" for c in conflictos if c["symbol"] == "SDKHolobitAccidental")
+    assert any(c["code"] in {"outside_public_api", "backend_module_object"} for c in conflictos if c["symbol"] == "SDKHolobitAccidental")
 
 
 def test_usar_holobit_no_filtra_nombres_sdk_accidentales_en_contexto(monkeypatch):

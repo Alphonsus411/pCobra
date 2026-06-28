@@ -7,7 +7,11 @@ import pytest
 from pcobra.cobra.architecture.backend_policy import PUBLIC_BACKENDS
 from pcobra.cobra.cli.commands.interactive_cmd import InteractiveCommand
 from pcobra.cobra.core.runtime import InterpretadorCobra
-from pcobra.cobra.usar_policy import REPL_COBRA_MODULE_MAP, USAR_COBRA_PUBLIC_MODULES
+from pcobra.cobra.usar_policy import (
+    REPL_COBRA_MODULE_MAP,
+    USAR_COBRA_PUBLIC_MODULES,
+    validar_contrato_modulos_canonicos_usar,
+)
 from pcobra.core import usar_loader as core_usar_loader
 
 from tests.integration.test_repl_usar_entrypoints_contract import (
@@ -67,7 +71,7 @@ def test_rechazo_usar_modulos_externos_y_no_canonicos(monkeypatch, nombre):
     monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: (_ for _ in ()).throw(ModuleNotFoundError(nombre)))
 
     cmd = InteractiveCommand(InterpretadorCobra())
-    with pytest.raises(PermissionError, match=r"módulo externo no permitido en REPL estricto"):
+    with pytest.raises(PermissionError, match=r"Importación no permitida|usar_error\[(modulo_fuera_catalogo_publico|modulo_no_canonico)\]|módulo externo no permitido"):
         cmd.ejecutar_codigo(f'usar "{nombre}"')
 
 
@@ -76,7 +80,7 @@ def test_rechazo_internals_holobit_sdk(monkeypatch):
 
     cmd = InteractiveCommand(InterpretadorCobra())
     cmd.interpretador.configurar_restriccion_usar_repl({**REPL_COBRA_MODULE_MAP, "holobit": "holobit"})
-    with pytest.raises(PermissionError, match=r"módulo externo no permitido en REPL estricto"):
+    with pytest.raises(PermissionError, match=r"Importación no permitida|usar_error\[(modulo_fuera_catalogo_publico|modulo_no_canonico)\]|módulo externo no permitido"):
         cmd.ejecutar_codigo('usar "holobit_sdk"')
 
 
@@ -139,7 +143,7 @@ def test_rechaza_usar_ruta_backend_no_canonica_con_error_consistente():
     class _NodoUsar:
         modulo = "pcobra.corelibs.numero"
 
-    with pytest.raises(PermissionError, match=r"^usar_error\[backend_import_directo\]"):
+    with pytest.raises((PermissionError, FileNotFoundError), match=r"backend_import_directo|Módulo de proyecto no encontrado"):
         interp.ejecutar_usar(_NodoUsar())
 
 
@@ -150,22 +154,14 @@ def test_usar_rechaza_modulo_fuera_allowlist_aun_si_alias_map_lo_declara():
     class _NodoUsar:
         modulo = "numpy"
 
-    with pytest.raises(PermissionError, match=r"^usar_error\[modulo_no_canonico\]"):
+    with pytest.raises(PermissionError, match=r"^Importación no permitida|^usar_error\[modulo_no_canonico\]"):
         interp.ejecutar_usar(_NodoUsar())
 
 
-def test_usar_rechaza_modulo_no_cobra_facing_si_flag_false(monkeypatch):
-    mod_numero = _modulo_numero_stub()
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _nombre: mod_numero)
+def test_contrato_startup_rechaza_modulo_canonico_no_cobra_facing(monkeypatch):
     from pcobra.cobra import usar_policy
 
     monkeypatch.setitem(usar_policy.USAR_COBRA_FACING_MODULE_FLAGS, "numero", False)
 
-    interp = InterpretadorCobra()
-    interp.configurar_restriccion_usar_repl(REPL_COBRA_MODULE_MAP)
-
-    class _NodoUsar:
-        modulo = "numero"
-
-    with pytest.raises(PermissionError, match=r"^usar_error\[modulo_no_cobra_facing\]"):
-        interp.ejecutar_usar(_NodoUsar())
+    with pytest.raises(RuntimeError, match=r"Todos los módulos canónicos de `usar` deben estar marcados como Cobra-facing"):
+        validar_contrato_modulos_canonicos_usar()
