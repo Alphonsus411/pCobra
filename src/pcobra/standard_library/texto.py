@@ -87,6 +87,7 @@ _T = TypeVar("_T")
 _SIN_VALOR = object()
 
 __all__ = [
+    "a_snake",
     "mayusculas",
     "minusculas",
     "prefijo_comun",
