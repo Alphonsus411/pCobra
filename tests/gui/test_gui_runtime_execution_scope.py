@@ -3,22 +3,20 @@ import pytest
 from pcobra.gui import runtime
 
 
-def test_ejecutar_codigo_permite_asignacion_numerica_en_mismo_fragmento():
-    salida = runtime.ejecutar_codigo("x = 123\nimprimir(x)")
+@pytest.mark.parametrize(
+    ("codigo", "salida_esperada"),
+    [
+        ("x = 123\nimprimir(x)", "123"),
+        ('x = "hola"\nimprimir(x)', "hola"),
+        ("numeros = [1, 2, 3, 4]\nimprimir(numeros)", "[1, 2, 3, 4]"),
+    ],
+)
+def test_ejecutar_codigo_permite_asignaciones_en_mismo_fragmento(
+    codigo, salida_esperada
+):
+    salida = runtime.ejecutar_codigo(codigo)
 
-    assert "123" in salida
-
-
-def test_ejecutar_codigo_permite_asignacion_texto_en_mismo_fragmento():
-    salida = runtime.ejecutar_codigo('x = "hola"\nimprimir(x)')
-
-    assert "hola" in salida
-
-
-def test_ejecutar_codigo_permite_asignacion_lista_en_mismo_fragmento():
-    salida = runtime.ejecutar_codigo("numeros = [1, 2, 3, 4]\nimprimir(numeros)")
-
-    assert "[1, 2, 3, 4]" in salida
+    assert salida_esperada in salida
 
 
 def test_ejecutar_codigo_variable_inexistente_sigue_fallando():
