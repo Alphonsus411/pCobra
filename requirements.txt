@@ -8,7 +8,7 @@ agix==1.9.0
     # via pcobra (pyproject.toml)
 annotated-types==0.7.0
     # via pydantic
-anyio==4.13.0
+anyio==4.14.1
     # via
     #   httpx
     #   starlette
@@ -18,7 +18,7 @@ attrs==26.1.0
     # via
     #   jsonschema
     #   referencing
-certifi==2026.5.20
+certifi==2026.6.17
     # via
     #   httpcore
     #   httpx
@@ -27,10 +27,8 @@ chardet==7.4.3
     # via pcobra (pyproject.toml)
 charset-normalizer==3.4.7
     # via requests
-click==8.4.1
+click==8.4.2
     # via uvicorn
-colorama==0.4.6
-    # via click
 contourpy==1.3.3
     # via matplotlib
 cycler==0.12.1
@@ -72,7 +70,7 @@ lark==1.3.1
     # via pcobra (pyproject.toml)
 markdown-it-py==4.2.0
     # via rich
-matplotlib==3.10.9
+matplotlib==3.11.0
     # via
     #   agix
     #   holobit-sdk
@@ -99,7 +97,7 @@ packaging==26.2
     # via
     #   matplotlib
     #   pcobra (pyproject.toml)
-pandas==3.0.3
+pandas==3.0.4
     # via
     #   pcobra (pyproject.toml)
     #   smooth-criminal
@@ -143,7 +141,7 @@ requests==2.34.2
     # via
     #   agix
     #   pcobra (pyproject.toml)
-restrictedpython==8.2
+restrictedpython==8.3
     # via pcobra (pyproject.toml)
 rich==15.0.0
     # via pcobra (pyproject.toml)
@@ -187,11 +185,9 @@ typing-extensions==4.15.0
     #   typing-inspection
 typing-inspection==0.4.2
     # via pydantic
-tzdata==2026.2
-    # via pandas
 urllib3==2.7.0
     # via requests
 uvicorn==0.34.3
     # via agix
-wcwidth==0.8.0
+wcwidth==0.8.1
     # via prompt-toolkit
