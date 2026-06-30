@@ -8,12 +8,73 @@ import pytest
 
 from pcobra.cobra.packaging import (
     MANIFEST_NAME,
+    PackageManifest,
     construir_paquete,
     crear_paquete,
     extraer_paquete,
     inspeccionar_paquete,
+    manifest_from_dict,
+    manifest_to_dict,
     validar_paquete,
 )
+
+
+def test_package_manifest_minimo_compatible():
+    data = {
+        "format": "cobra-package-v1",
+        "name": "demo",
+        "version": "1.0.0",
+        "files": [],
+        "checksums": {},
+    }
+
+    manifest = manifest_from_dict(data)
+
+    assert manifest == PackageManifest(
+        format="cobra-package-v1",
+        name="demo",
+        version="1.0.0",
+        files=[],
+        checksums={},
+    )
+    assert manifest_to_dict(manifest) == data
+
+
+def test_package_manifest_acepta_campos_extra_permitidos():
+    data = {
+        "format": "cobra-package-v1",
+        "name": "demo",
+        "version": "1.0.0",
+        "files": [],
+        "checksums": {},
+        "description": "Paquete de prueba",
+        "authors": ["Equipo Cobra"],
+        "license": "MIT",
+        "homepage": "https://example.test/demo",
+        "dependencies": {"stdlib": ">=1.0"},
+    }
+
+    manifest = manifest_from_dict(data)
+
+    assert manifest.description == "Paquete de prueba"
+    assert manifest.authors == ["Equipo Cobra"]
+    assert manifest.license == "MIT"
+    assert manifest.homepage == "https://example.test/demo"
+    assert manifest.dependencies == {"stdlib": ">=1.0"}
+    assert manifest_to_dict(manifest) == data
+
+
+def test_package_manifest_rechaza_formato_no_soportado():
+    with pytest.raises(ValueError, match="Formato de paquete no soportado"):
+        manifest_from_dict(
+            {
+                "format": "cobra-package-v0",
+                "name": "demo",
+                "version": "1.0.0",
+                "files": [],
+                "checksums": {},
+            }
+        )
 
 
 def test_packaging_no_importa_lexer_parser():
@@ -35,7 +96,8 @@ def test_packaging_no_importa_lexer_parser():
     forbidden_modules = {
         module
         for module in imported_modules
-        if module in {"pcobra.cobra.core", "pcobra.cobra.core.lexer", "pcobra.cobra.core.parser"}
+        if module
+        in {"pcobra.cobra.core", "pcobra.cobra.core.lexer", "pcobra.cobra.core.parser"}
         or module.endswith((".lexer", ".parser"))
     }
 
@@ -46,7 +108,9 @@ def test_paquete_cobra_conserva_estructura_y_recursos(tmp_path: Path):
     proyecto = tmp_path / "demo"
     crear_paquete(proyecto, nombre="demo", version="1.0.0")
     (proyecto / "src" / "main.cobra").write_text("imprimir('hola')\n", encoding="utf-8")
-    (proyecto / "src" / "helper.co").write_text("funcion ayuda() {}\n", encoding="utf-8")
+    (proyecto / "src" / "helper.co").write_text(
+        "funcion ayuda() {}\n", encoding="utf-8"
+    )
     (proyecto / "README.md").write_text("# Demo\n", encoding="utf-8")
     (proyecto / "docs").mkdir()
     (proyecto / "docs" / "guia.md").write_text("# Guía\n", encoding="utf-8")
@@ -73,12 +137,18 @@ def test_paquete_cobra_conserva_estructura_y_recursos(tmp_path: Path):
     assert inspeccion.checksum
 
     destino = extraer_paquete(paquete, tmp_path / "instalado")
-    assert (destino / "src" / "main.cobra").read_text(encoding="utf-8") == "imprimir('hola')\n"
-    assert (destino / "assets" / "imagenes" / "logo.bin").read_bytes() == b"\x89PNG recurso"
+    assert (destino / "src" / "main.cobra").read_text(
+        encoding="utf-8"
+    ) == "imprimir('hola')\n"
+    assert (
+        destino / "assets" / "imagenes" / "logo.bin"
+    ).read_bytes() == b"\x89PNG recurso"
     assert (destino / "resources" / "i18n" / "es.dat").read_bytes() == b"hola=recurso"
 
 
-def _crear_zip_con_manifest(tmp_path: Path, manifest: dict, files: dict[str, bytes] | None = None) -> Path:
+def _crear_zip_con_manifest(
+    tmp_path: Path, manifest: dict, files: dict[str, bytes] | None = None
+) -> Path:
     paquete = tmp_path / "manual.co"
     with zipfile.ZipFile(paquete, "w", zipfile.ZIP_DEFLATED) as zf:
         zf.writestr(MANIFEST_NAME, json.dumps(manifest, ensure_ascii=False))
@@ -158,7 +228,9 @@ def test_validar_paquete_rechaza_checksum_no_string(tmp_path: Path):
         {"src/main.cobra": contenido},
     )
 
-    with pytest.raises(ValueError, match="Checksum inválido para src/main\\.cobra: debe ser una cadena"):
+    with pytest.raises(
+        ValueError, match="Checksum inválido para src/main\\.cobra: debe ser una cadena"
+    ):
         validar_paquete(paquete)
 
 
@@ -176,7 +248,10 @@ def test_validar_paquete_rechaza_checksum_demasiado_corto(tmp_path: Path):
         {"src/main.cobra": contenido},
     )
 
-    with pytest.raises(ValueError, match="Checksum inválido para src/main\\.cobra: debe tener 64 caracteres"):
+    with pytest.raises(
+        ValueError,
+        match="Checksum inválido para src/main\\.cobra: debe tener 64 caracteres",
+    ):
         validar_paquete(paquete)
 
 
@@ -271,7 +346,10 @@ def test_es_paquete_cobra_acepta_zip_con_manifest(tmp_path: Path):
 def _corromper_contenido_paquete(paquete: Path, nombre: str, contenido: bytes) -> None:
     original = paquete.with_suffix(".tmp.co")
     paquete.rename(original)
-    with zipfile.ZipFile(original) as src, zipfile.ZipFile(paquete, "w", zipfile.ZIP_DEFLATED) as dst:
+    with (
+        zipfile.ZipFile(original) as src,
+        zipfile.ZipFile(paquete, "w", zipfile.ZIP_DEFLATED) as dst,
+    ):
         for item in src.infolist():
             data = src.read(item.filename)
             if item.filename == nombre:
@@ -297,7 +375,9 @@ def test_cli_paquete_verificar_integridad_exitosa(tmp_path: Path, capsys):
     assert "Integridad válida" in salida
 
 
-def test_cli_paquete_verificar_integridad_falla_por_checksum_alterado(tmp_path: Path, capsys):
+def test_cli_paquete_verificar_integridad_falla_por_checksum_alterado(
+    tmp_path: Path, capsys
+):
     from argparse import Namespace
 
     from pcobra.cobra.cli.commands.package_cmd import PaqueteCommand

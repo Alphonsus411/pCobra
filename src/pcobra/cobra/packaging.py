@@ -22,6 +22,103 @@ MAX_PACKAGE_SIZE = 50 * 1024 * 1024
 
 
 @dataclass(frozen=True)
+class PackageManifest:
+    """Modelo explícito del manifiesto de un paquete Cobra."""
+
+    format: str
+    name: str
+    version: str
+    files: list[str]
+    checksums: dict[str, str]
+    description: str | None = None
+    authors: list[str] | None = None
+    license: str | None = None
+    homepage: str | None = None
+    dependencies: dict[str, str] | None = None
+
+
+def manifest_from_dict(data: dict[str, Any]) -> PackageManifest:
+    """Convierte un diccionario JSON en un manifiesto Cobra validado.
+
+    Mantiene compatibilidad con manifiestos históricos que solo declaran
+    ``format``, ``name``, ``version``, ``files`` y ``checksums``.
+    """
+    package_format = data.get("format")
+    if package_format is None:
+        raise ValueError("El manifiesto no declara format")
+    if package_format != PACKAGE_FORMAT:
+        raise ValueError(f"Formato de paquete no soportado: {package_format}")
+
+    name = data.get("name")
+    if not name:
+        raise ValueError("El manifiesto no declara name")
+
+    version = data.get("version")
+    if not version:
+        raise ValueError("El manifiesto no declara version")
+
+    files = data.get("files", [])
+    checksums = data.get("checksums", {})
+    if not isinstance(files, list):
+        raise ValueError("El manifiesto debe declarar files como lista")
+    if not isinstance(checksums, dict):
+        raise ValueError("El manifiesto debe declarar checksums como objeto")
+
+    authors = data.get("authors")
+    if authors is not None and not isinstance(authors, list):
+        raise ValueError("El manifiesto debe declarar authors como lista")
+
+    dependencies = data.get("dependencies")
+    if dependencies is not None and not isinstance(dependencies, dict):
+        raise ValueError("El manifiesto debe declarar dependencies como objeto")
+
+    return PackageManifest(
+        format=str(package_format),
+        name=str(name),
+        version=str(version),
+        files=[str(file) for file in files],
+        checksums={str(name): checksum for name, checksum in checksums.items()},
+        description=(
+            None if data.get("description") is None else str(data.get("description"))
+        ),
+        authors=None if authors is None else [str(author) for author in authors],
+        license=None if data.get("license") is None else str(data.get("license")),
+        homepage=None if data.get("homepage") is None else str(data.get("homepage")),
+        dependencies=(
+            None
+            if dependencies is None
+            else {str(name): str(value) for name, value in dependencies.items()}
+        ),
+    )
+
+
+def manifest_to_dict(manifest: PackageManifest) -> dict[str, Any]:
+    """Convierte un ``PackageManifest`` en un diccionario JSON-compatible."""
+    data: dict[str, Any] = {
+        "format": manifest.format,
+        "name": manifest.name,
+        "version": manifest.version,
+        "files": list(manifest.files),
+        "checksums": dict(manifest.checksums),
+    }
+    optional_fields = {
+        "description": manifest.description,
+        "authors": manifest.authors,
+        "license": manifest.license,
+        "homepage": manifest.homepage,
+        "dependencies": manifest.dependencies,
+    }
+    for key, value in optional_fields.items():
+        if value is not None:
+            data[key] = (
+                list(value)
+                if isinstance(value, list)
+                else dict(value) if isinstance(value, dict) else value
+            )
+    return data
+
+
+@dataclass(frozen=True)
 class PackageSearchResult:
     """Metadatos normalizados para resultados remotos de CobraHub."""
 
@@ -88,45 +185,80 @@ def crear_paquete(source: str | Path, *, nombre: str, version: str = "0.1.0") ->
     root = Path(source)
     root.mkdir(parents=True, exist_ok=True)
     (root / "src").mkdir(exist_ok=True)
-    manifest = {
-        "format": PACKAGE_FORMAT,
-        "name": _safe_name(nombre),
-        "version": version,
-        "files": [],
-        "checksums": {},
-    }
+    manifest = manifest_to_dict(
+        PackageManifest(
+            format=PACKAGE_FORMAT,
+            name=_safe_name(nombre),
+            version=version,
+            files=[],
+            checksums={},
+        )
+    )
     manifest_path = root / MANIFEST_NAME
     if not manifest_path.exists():
-        manifest_path.write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+        manifest_path.write_text(
+            json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+        )
     readme = root / "README.md"
     if not readme.exists():
         readme.write_text(f"# {nombre}\n\nPaquete Cobra.\n", encoding="utf-8")
     return manifest_path
 
 
-def construir_paquete(source: str | Path, output: str | Path | None = None, *, nombre: str | None = None, version: str | None = None) -> Path:
+def construir_paquete(
+    source: str | Path,
+    output: str | Path | None = None,
+    *,
+    nombre: str | None = None,
+    version: str | None = None,
+) -> Path:
     """Construye un archivo ``.co`` ZIP con manifiesto e integridad."""
     root = Path(source).resolve()
     if not root.is_dir():
         raise ValueError("La fuente del paquete debe ser un directorio")
     manifest_path = root / MANIFEST_NAME
-    manifest: dict[str, Any]
     if manifest_path.exists():
-        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        manifest_data = json.loads(manifest_path.read_text(encoding="utf-8"))
+        manifest = manifest_from_dict(manifest_data)
     else:
-        manifest = {"format": PACKAGE_FORMAT, "name": nombre or root.name, "version": version or "0.1.0"}
-    manifest["format"] = PACKAGE_FORMAT
-    manifest["name"] = _safe_name(str(nombre or manifest.get("name") or root.name))
-    manifest["version"] = str(version or manifest.get("version") or "0.1.0")
+        manifest = PackageManifest(
+            format=PACKAGE_FORMAT,
+            name=str(nombre or root.name),
+            version=str(version or "0.1.0"),
+            files=[],
+            checksums={},
+        )
 
-    files = [p for p in _iter_package_files(root) if p.relative_to(root).as_posix() != MANIFEST_NAME]
+    files = [
+        p
+        for p in _iter_package_files(root)
+        if p.relative_to(root).as_posix() != MANIFEST_NAME
+    ]
     checksums = {p.relative_to(root).as_posix(): _sha256_file(p) for p in files}
-    manifest["files"] = list(checksums)
-    manifest["checksums"] = checksums
-    dest = Path(output) if output else root.parent / f"{manifest['name']}-{manifest['version']}.co"
+    manifest = PackageManifest(
+        format=PACKAGE_FORMAT,
+        name=_safe_name(str(nombre or manifest.name or root.name)),
+        version=str(version or manifest.version or "0.1.0"),
+        files=list(checksums),
+        checksums=checksums,
+        description=manifest.description,
+        authors=manifest.authors,
+        license=manifest.license,
+        homepage=manifest.homepage,
+        dependencies=manifest.dependencies,
+    )
+    manifest_data = manifest_to_dict(manifest)
+    dest = (
+        Path(output)
+        if output
+        else root.parent / f"{manifest.name}-{manifest.version}.co"
+    )
     dest.parent.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(dest, "w", zipfile.ZIP_DEFLATED) as zf:
-        zf.writestr(MANIFEST_NAME, json.dumps(manifest, indent=2, ensure_ascii=False) + "\n")
+        zf.writestr(
+            MANIFEST_NAME,
+            json.dumps(manifest_data, indent=2, ensure_ascii=False) + "\n",
+        )
         for file in files:
             zf.write(file, file.relative_to(root).as_posix())
     return dest
@@ -156,11 +288,15 @@ def inspeccionar_paquete(package: str | Path) -> PackageInspection:
     if pkg.stat().st_size > MAX_PACKAGE_SIZE:
         raise ValueError("El paquete excede el tamaño máximo permitido")
     if not es_paquete_cobra(pkg):
-        raise ValueError("El paquete no es un paquete Cobra válido: debe ser ZIP y contener cobra.pkg.json")
+        raise ValueError(
+            "El paquete no es un paquete Cobra válido: debe ser ZIP y contener cobra.pkg.json"
+        )
     with zipfile.ZipFile(pkg) as zf:
         names = zf.namelist()
-        manifest = json.loads(zf.read(MANIFEST_NAME).decode("utf-8"))
-    return PackageInspection(pkg, manifest, names, _sha256_file(pkg))
+        manifest = manifest_from_dict(
+            json.loads(zf.read(MANIFEST_NAME).decode("utf-8"))
+        )
+    return PackageInspection(pkg, manifest_to_dict(manifest), names, _sha256_file(pkg))
 
 
 def _normalizar_ruta_paquete(name: str) -> str:
@@ -185,7 +321,9 @@ def _validar_checksum_sha256(name: str, checksum: Any) -> str:
     if len(checksum) != 64:
         raise ValueError(f"Checksum inválido para {name}: debe tener 64 caracteres")
     if not all(char in "0123456789abcdefABCDEF" for char in checksum):
-        raise ValueError(f"Checksum inválido para {name}: debe contener solo caracteres hexadecimales")
+        raise ValueError(
+            f"Checksum inválido para {name}: debe contener solo caracteres hexadecimales"
+        )
     return checksum
 
 
@@ -201,19 +339,10 @@ def _normalizar_checksums(values: Any) -> dict[str, str]:
 
 def validar_paquete(package: str | Path) -> PackageInspection:
     inspection = inspeccionar_paquete(package)
-    manifest = inspection.manifest
-    package_format = manifest.get("format")
-    if package_format is None:
-        raise ValueError("El manifiesto no declara format")
-    if package_format != PACKAGE_FORMAT:
-        raise ValueError(f"Formato de paquete no soportado: {package_format}")
-    if not manifest.get("name"):
-        raise ValueError("El manifiesto no declara name")
-    if not manifest.get("version"):
-        raise ValueError("El manifiesto no declara version")
+    manifest = manifest_from_dict(inspection.manifest)
 
-    declared_files = _normalizar_lista_archivos(manifest.get("files"), field="files")
-    checksums = _normalizar_checksums(manifest.get("checksums"))
+    declared_files = _normalizar_lista_archivos(manifest.files, field="files")
+    checksums = _normalizar_checksums(manifest.checksums)
 
     with zipfile.ZipFile(inspection.path) as zf:
         real_files = {
@@ -223,20 +352,28 @@ def validar_paquete(package: str | Path) -> PackageInspection:
         }
         extra_files = real_files - declared_files
         if extra_files:
-            raise ValueError(f"Archivos no declarados en paquete: {', '.join(sorted(extra_files))}")
+            raise ValueError(
+                f"Archivos no declarados en paquete: {', '.join(sorted(extra_files))}"
+            )
 
         missing_files = declared_files - real_files
         if missing_files:
-            raise ValueError(f"Archivos declarados ausentes: {', '.join(sorted(missing_files))}")
+            raise ValueError(
+                f"Archivos declarados ausentes: {', '.join(sorted(missing_files))}"
+            )
 
         checksum_files = set(checksums)
         undeclared_checksums = checksum_files - declared_files
         if undeclared_checksums:
-            raise ValueError(f"Checksums para archivos no declarados: {', '.join(sorted(undeclared_checksums))}")
+            raise ValueError(
+                f"Checksums para archivos no declarados: {', '.join(sorted(undeclared_checksums))}"
+            )
 
         missing_checksums = declared_files - checksum_files
         if missing_checksums:
-            raise ValueError(f"Faltan checksums para archivos declarados: {', '.join(sorted(missing_checksums))}")
+            raise ValueError(
+                f"Faltan checksums para archivos declarados: {', '.join(sorted(missing_checksums))}"
+            )
 
         for name in sorted(declared_files):
             actual = _sha256_bytes(zf.read(name))
