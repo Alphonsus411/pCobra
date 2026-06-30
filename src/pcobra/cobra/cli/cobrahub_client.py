@@ -412,9 +412,28 @@ class CobraHubClient:
                 stream=True,
             ) as response:
                 response.raise_for_status()
+                checksum_servidor = response.headers.get("X-Content-Checksum")
+                sha256 = hashlib.sha256()
+                tamaño_total = 0
+
                 with open(cache_path, "wb") as out:
                     for chunk in response.iter_content(chunk_size=self.CHUNK_SIZE):
+                        if not chunk:
+                            continue
+                        tamaño_total += len(chunk)
+                        if tamaño_total > self.MAX_FILE_SIZE:
+                            out.close()
+                            os.unlink(cache_path)
+                            mostrar_error(_("Archivo descargado demasiado grande"))
+                            return False
+                        sha256.update(chunk)
                         out.write(chunk)
+
+            if checksum_servidor and sha256.hexdigest() != checksum_servidor:
+                os.unlink(cache_path)
+                mostrar_error(_("Verificación de integridad fallida"))
+                return False
+
             install_path = (
                 Path(destino).expanduser() if destino else _install_dir() / nombre
             )
@@ -424,6 +443,11 @@ class CobraHubClient:
         except Exception as e:
             logger.error(f"Error instalando paquete: {e}")
             mostrar_error(_("Error instalando paquete: {err}").format(err=str(e)))
+            if cache_path.exists():
+                try:
+                    os.unlink(cache_path)
+                except Exception:
+                    pass
             return False
 
 
