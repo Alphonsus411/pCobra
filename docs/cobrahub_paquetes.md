@@ -2,6 +2,12 @@
 
 La guía de uso actualizada para crear, construir, validar, inspeccionar y extraer paquetes está en [`docs/frontend/paquetes.rst`](frontend/paquetes.rst).
 
+## APIs CobraHub: legacy y recomendada
+
+- **Legacy de módulos:** `src/pcobra/cobra/cli/cobrahub_client.py` mantiene el cliente HTTP base y la fachada compatible para publicar/descargar módulos sueltos con los endpoints `/modulos`. El comando `modulos` sigue apuntando a este flujo para no romper scripts existentes.
+- **Ruta recomendada para paquetes:** `src/pcobra/cobra/cli/cobrahub_packages.py` concentra la API de paquetes publicables `.co`: publicación, búsqueda, instalación, caché local y lectura de metadatos. El comando `cobra hub publicar|buscar|instalar` usa esta capa.
+- **Compatibilidad:** los métodos `publicar_paquete`, `buscar_paquetes` e `instalar_paquete` siguen disponibles en `CobraHubClient`, pero delegan en `CobraHubPackages`. El código nuevo debería importar `CobraHubPackages` directamente.
+
 ## Auditoría inicial
 
 - La implementación previa de CobraHub estaba en `src/pcobra/cobra/cli/cobrahub_client.py` y se centraba en publicar/descargar módulos sueltos `.co` mediante endpoints `/modulos`.
@@ -23,9 +29,10 @@ La funcionalidad se implementa en `pcobra.cobra.packaging`, una capa independien
 1. Crear módulo independiente de empaquetado.
 2. Sustituir el comando `cobra paquete` por acciones crear/validar/construir/inspeccionar/extraer e instalar como alias legacy.
 3. Añadir `cobra hub publicar|buscar|instalar` para paquetes.
-4. Ampliar el cliente CobraHub con publicación, búsqueda, instalación y caché local.
-5. Añadir acciones del IDLE que reutilizan la misma lógica de empaquetado.
-6. Añadir pruebas unitarias de construcción, validación, inspección y extracción.
+4. Separar la API CobraHub de paquetes en `pcobra.cobra.cli.cobrahub_packages`, con publicación, búsqueda, instalación, caché local y lectura de metadatos.
+5. Mantener `pcobra.cobra.cli.cobrahub_client` como cliente HTTP base/fachada compatible y `modulos` en el flujo legacy de módulos.
+6. Añadir acciones del IDLE que reutilizan la misma lógica de empaquetado.
+7. Añadir pruebas unitarias de construcción, validación, inspección y extracción.
 
 ## Por qué no se toca Lexer ni Parser
 
