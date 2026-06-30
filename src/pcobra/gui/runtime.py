@@ -1631,16 +1631,25 @@ def idle_validar_paquete(paquete: str | Path):
 
 
 def idle_construir_paquete(project_root: str | Path, salida: str | Path | None = None) -> Path:
-    from pcobra.cobra.packaging import construir_paquete
+    from pcobra.cobra.packaging import MANIFEST_NAME, construir_paquete
 
     root = validar_project_root_idle(project_root)
+    manifest_path = root / MANIFEST_NAME
+    if not manifest_path.is_file():
+        raise FileNotFoundError(
+            f"No se encontró el manifiesto del paquete: {manifest_path}. "
+            "Usa 'Crear paquete' antes de construir."
+        )
     return construir_paquete(root, salida)
 
 
 def idle_abrir_paquete(paquete: str | Path, destino: str | Path) -> Path:
     from pcobra.cobra.packaging import extraer_paquete
 
-    return extraer_paquete(paquete, destino)
+    destino_path = Path(destino)
+    if not destino_path.is_dir():
+        raise FileNotFoundError(f"Destino de extracción inexistente: {destino_path}")
+    return extraer_paquete(paquete, destino_path)
 
 
 def idle_publicar_paquete(paquete: str | Path) -> bool:
