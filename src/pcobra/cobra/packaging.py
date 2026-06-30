@@ -180,10 +180,24 @@ def _normalizar_lista_archivos(values: Any, *, field: str) -> set[str]:
     return {_normalizar_ruta_paquete(str(value)) for value in values}
 
 
-def _normalizar_checksums(values: Any) -> dict[str, Any]:
+def _validar_checksum_sha256(name: str, checksum: Any) -> str:
+    if not isinstance(checksum, str):
+        raise ValueError(f"Checksum inválido para {name}: debe ser una cadena")
+    if len(checksum) != 64:
+        raise ValueError(f"Checksum inválido para {name}: debe tener 64 caracteres")
+    if not all(char in "0123456789abcdefABCDEF" for char in checksum):
+        raise ValueError(f"Checksum inválido para {name}: debe contener solo caracteres hexadecimales")
+    return checksum
+
+
+def _normalizar_checksums(values: Any) -> dict[str, str]:
     if not isinstance(values, dict):
         raise ValueError("El manifiesto debe declarar checksums como objeto")
-    return {_normalizar_ruta_paquete(str(name)): checksum for name, checksum in values.items()}
+    return {
+        normalized_name: _validar_checksum_sha256(normalized_name, checksum)
+        for name, checksum in values.items()
+        for normalized_name in [_normalizar_ruta_paquete(str(name))]
+    }
 
 
 def validar_paquete(package: str | Path) -> PackageInspection:
