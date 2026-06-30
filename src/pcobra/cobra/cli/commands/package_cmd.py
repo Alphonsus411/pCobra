@@ -14,6 +14,7 @@ from pcobra.cobra.packaging import (
     extraer_paquete,
     inspeccionar_paquete,
     validar_paquete,
+    verificar_integridad,
 )
 
 
@@ -43,6 +44,9 @@ class PaqueteCommand(BaseCommand):
 
         inspeccionar = sub.add_parser("inspeccionar", help=_("Inspecciona el contenido de un paquete"))
         inspeccionar.add_argument("paquete", type=Path)
+
+        verificar = sub.add_parser("verificar", aliases=["integridad"], help=_("Verifica la integridad de un paquete .co"))
+        verificar.add_argument("paquete", type=Path)
 
         extraer = sub.add_parser("extraer", help=_("Extrae un paquete .co"))
         extraer.add_argument("paquete", type=Path)
@@ -85,6 +89,14 @@ class PaqueteCommand(BaseCommand):
                     mostrar_info(f" - {file}")
                 mostrar_info(_("SHA256: {checksum}").format(checksum=info.checksum))
                 return 0
+            if args.accion in {"verificar", "integridad"}:
+                if not es_paquete_cobra(args.paquete):
+                    raise ValueError("No es un paquete Cobra: debe ser ZIP y contener cobra.pkg.json")
+                if verificar_integridad(args.paquete):
+                    mostrar_info(_("Integridad válida: {pkg}").format(pkg=args.paquete))
+                    return 0
+                mostrar_error(_("Integridad inválida: {pkg}").format(pkg=args.paquete))
+                return 1
             if args.accion == "extraer":
                 if not es_paquete_cobra(args.paquete):
                     raise ValueError("No es un paquete Cobra: debe ser ZIP y contener cobra.pkg.json")

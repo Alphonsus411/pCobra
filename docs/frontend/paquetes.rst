@@ -71,6 +71,14 @@ Validar checksums y manifiesto:
 
    cobra paquete validar dist/demo.co
 
+Verificar explícitamente la integridad del paquete antes de publicarlo o
+instalarlo; el alias ``integridad`` es equivalente:
+
+.. code-block:: bash
+
+   cobra paquete verificar dist/demo.co
+   cobra paquete integridad dist/demo.co
+
 Inspeccionar los metadatos y archivos incluidos:
 
 .. code-block:: bash
