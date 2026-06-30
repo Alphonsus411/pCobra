@@ -20,7 +20,11 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Protocol
 
 from pcobra.cobra.cli.i18n import _
-from pcobra.cobra.packaging import PackageSearchResult
+from pcobra.cobra.packaging import (
+    PackageSearchResult,
+    normalizar_nombre_paquete,
+    validar_version_paquete,
+)
 
 if TYPE_CHECKING:  # pragma: no cover - solo para tipado
     from pcobra.cobra.cli.cobrahub_client import CobraHubClient
@@ -41,7 +45,9 @@ class DownloadedPackage:
 class PackageRepository(Protocol):
     """Contrato independiente para repositorios de paquetes Cobra."""
 
-    def publish(self, package_path: str | Path, metadata: dict[str, Any], checksum: str) -> bool:
+    def publish(
+        self, package_path: str | Path, metadata: dict[str, Any], checksum: str
+    ) -> bool:
         """Publica un paquete ya validado con sus metadatos y checksum."""
         ...
 
@@ -64,7 +70,9 @@ class HttpCobraHubRepository:
     def __init__(self, client: "CobraHubClient") -> None:
         self.client = client
 
-    def publish(self, package_path: str | Path, metadata: dict[str, Any], checksum: str) -> bool:
+    def publish(
+        self, package_path: str | Path, metadata: dict[str, Any], checksum: str
+    ) -> bool:
         """Publica un paquete .co mediante la API HTTP de CobraHub."""
         ruta = Path(package_path)
         with ruta.open("rb") as f:
@@ -101,24 +109,40 @@ class HttpCobraHubRepository:
 
     def download(self, name: str, version: str | None = None) -> DownloadedPackage:
         """Descarga un paquete por nombre y versión opcional en la caché local."""
-        cache_path = package_cache_dir() / _cache_filename(name, version)
+        normalized_name = normalizar_nombre_paquete(name)
+        normalized_version = (
+            validar_version_paquete(version) if version is not None else None
+        )
+        cache_path = package_cache_dir() / _cache_filename(
+            normalized_name, normalized_version
+        )
         try:
             with self.client.session.get(
-                f"{self.client.base_url}/paquetes/{urllib.parse.quote(name)}",
-                **({"params": {"version": version}} if version else {}),
+                f"{self.client.base_url}/paquetes/{urllib.parse.quote(normalized_name)}",
+                **(
+                    {"params": {"version": normalized_version}}
+                    if normalized_version
+                    else {}
+                ),
                 timeout=(self.client.CONNECT_TIMEOUT, self.client.READ_TIMEOUT),
                 stream=True,
             ) as response:
                 response.raise_for_status()
                 checksum_servidor = response.headers.get("X-Content-Checksum")
                 version_servidor = _version_from_response(response)
-                if version_servidor and version_servidor != version:
-                    cache_path = package_cache_dir() / _cache_filename(name, version_servidor)
+                if version_servidor:
+                    version_servidor = validar_version_paquete(version_servidor)
+                if version_servidor and version_servidor != normalized_version:
+                    cache_path = package_cache_dir() / _cache_filename(
+                        normalized_name, version_servidor
+                    )
                 sha256 = hashlib.sha256()
                 tamaño_total = 0
 
                 with open(cache_path, "wb") as out:
-                    for chunk in response.iter_content(chunk_size=self.client.CHUNK_SIZE):
+                    for chunk in response.iter_content(
+                        chunk_size=self.client.CHUNK_SIZE
+                    ):
                         if not chunk:
                             continue
                         tamaño_total += len(chunk)
@@ -136,8 +160,8 @@ class HttpCobraHubRepository:
 
             return DownloadedPackage(
                 path=cache_path,
-                name=name,
-                version=version_servidor or version,
+                name=normalized_name,
+                version=version_servidor or normalized_version,
                 checksum=checksum_servidor or digest,
             )
         except Exception:
@@ -150,7 +174,9 @@ class HttpCobraHubRepository:
         from pcobra.cobra.packaging import es_paquete_cobra, validar_paquete
 
         if not es_paquete_cobra(package_path):
-            raise ValueError("No es un paquete Cobra: debe ser ZIP y contener cobra.pkg.json")
+            raise ValueError(
+                "No es un paquete Cobra: debe ser ZIP y contener cobra.pkg.json"
+            )
         info = validar_paquete(package_path)
         return dict(info.manifest)
 
@@ -162,7 +188,9 @@ def _normalizar_resultado_paquete(item: Any) -> PackageSearchResult:
 
     name = item.get("name") or item.get("nombre") or item.get("package")
     if not name:
-        name = Path(str(item.get("filename") or item.get("archivo") or "paquete.co")).stem
+        name = Path(
+            str(item.get("filename") or item.get("archivo") or "paquete.co")
+        ).stem
 
     return PackageSearchResult(
         name=str(name),
@@ -174,7 +202,9 @@ def _normalizar_resultado_paquete(item: Any) -> PackageSearchResult:
             or item.get("digest")
             or item.get("content_checksum")
         ),
-        download_url=_optional_str(item.get("download_url") or item.get("url") or item.get("href")),
+        download_url=_optional_str(
+            item.get("download_url") or item.get("url") or item.get("href")
+        ),
         remote_id=_optional_str(item.get("remote_id") or item.get("id")),
     )
 
@@ -212,7 +242,9 @@ def _version_from_response(response: Any) -> str | None:
 def package_cache_dir() -> Path:
     """Devuelve el directorio de caché local para paquetes CobraHub."""
     cache = Path(
-        os.environ.get("COBRAHUB_CACHE_DIR", str(Path.home() / ".cobra" / "hub" / "cache"))
+        os.environ.get(
+            "COBRAHUB_CACHE_DIR", str(Path.home() / ".cobra" / "hub" / "cache")
+        )
     ).expanduser()
     cache.mkdir(parents=True, exist_ok=True)
     return cache

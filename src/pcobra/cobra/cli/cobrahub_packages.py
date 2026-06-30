@@ -66,7 +66,9 @@ class CobraHubPackages:
             return False
         try:
             if not es_paquete_cobra(ruta):
-                raise ValueError("No es un paquete Cobra: debe ser ZIP y contener cobra.pkg.json")
+                raise ValueError(
+                    "No es un paquete Cobra: debe ser ZIP y contener cobra.pkg.json"
+                )
             info = validar_paquete(ruta)
             self.repository.publish(ruta, dict(info.manifest), info.checksum)
             _mostrar_info(_("Paquete publicado correctamente"))
@@ -91,13 +93,29 @@ class CobraHubPackages:
         self, nombre: str, destino: str | None = None, version: str | None = None
     ) -> bool:
         """Descarga, cachea e instala un paquete desde CobraHub."""
-        from pcobra.cobra.packaging import es_paquete_cobra, extraer_paquete
+        from pcobra.cobra.packaging import (
+            es_paquete_cobra,
+            extraer_paquete,
+            normalizar_nombre_paquete,
+            validar_version_paquete,
+        )
 
         cache_path: Path | None = None
-        if not self.client._validar_nombre_modulo(nombre) or not self.client._validar_url():
+        try:
+            normalized_name = normalizar_nombre_paquete(nombre)
+            normalized_version = (
+                validar_version_paquete(version) if version is not None else None
+            )
+        except ValueError as e:
+            _mostrar_error(str(e))
+            return False
+        if (
+            not self.client._validar_nombre_modulo(normalized_name)
+            or not self.client._validar_url()
+        ):
             return False
         try:
-            downloaded = self.repository.download(nombre, version)
+            downloaded = self.repository.download(normalized_name, normalized_version)
             cache_path = downloaded.path
 
             if not es_paquete_cobra(cache_path):
@@ -105,7 +123,11 @@ class CobraHubPackages:
                 _mostrar_error(_("La descarga no es un paquete Cobra válido"))
                 return False
 
-            install_path = Path(destino).expanduser() if destino else install_dir() / nombre
+            install_path = (
+                Path(destino).expanduser()
+                if destino
+                else install_dir() / normalized_name
+            )
             extraer_paquete(cache_path, install_path)
             _mostrar_info(_("Paquete instalado en {dest}").format(dest=install_path))
             return True
