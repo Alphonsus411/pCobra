@@ -1,3 +1,4 @@
+import ast
 import hashlib
 import json
 import zipfile
@@ -13,6 +14,32 @@ from pcobra.cobra.packaging import (
     inspeccionar_paquete,
     validar_paquete,
 )
+
+
+def test_packaging_no_importa_lexer_parser():
+    import pcobra.cobra.packaging as packaging
+
+    tree = ast.parse(Path(packaging.__file__).read_text(encoding="utf-8"))
+    imported_modules = {
+        alias.name
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Import)
+        for alias in node.names
+    }
+    imported_modules.update(
+        node.module
+        for node in ast.walk(tree)
+        if isinstance(node, ast.ImportFrom) and node.module is not None
+    )
+
+    forbidden_modules = {
+        module
+        for module in imported_modules
+        if module in {"pcobra.cobra.core", "pcobra.cobra.core.lexer", "pcobra.cobra.core.parser"}
+        or module.endswith((".lexer", ".parser"))
+    }
+
+    assert forbidden_modules == set()
 
 
 def test_paquete_cobra_conserva_estructura_y_recursos(tmp_path: Path):
