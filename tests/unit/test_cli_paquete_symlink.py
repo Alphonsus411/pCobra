@@ -57,3 +57,20 @@ def test_instalar_paquete_con_ruta_maliciosa(tmp_path, monkeypatch):
     assert ret == 1
     err.assert_called_once()
     assert not any(mods_dir.rglob("malo.co"))
+
+
+@pytest.mark.timeout(5)
+def test_instalar_paquete_con_cobra_pkg_json_moderno(tmp_path, monkeypatch):
+    src = tmp_path / "src"
+    src.mkdir()
+    (src / "moderno.co").write_text("var y = 2", encoding="utf-8")
+    pkg = tmp_path / "moderno.co"
+    package_cmd.construir_paquete(src, pkg, nombre="moderno")
+    mods_dir = tmp_path / "mods"
+    monkeypatch.setattr(modules_cmd, "MODULES_PATH", mods_dir)
+    monkeypatch.setattr(package_cmd.modules_cmd, "MODULES_PATH", mods_dir)
+
+    ret = package_cmd.PaqueteCommand._instalar(pkg)
+
+    assert ret == 0
+    assert (mods_dir / "moderno.co").read_text(encoding="utf-8") == "var y = 2"
