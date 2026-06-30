@@ -8,6 +8,104 @@ La guía de uso actualizada para crear, construir, validar, inspeccionar y extra
 - **Ruta recomendada para paquetes:** `src/pcobra/cobra/cli/cobrahub_packages.py` concentra la API de paquetes publicables `.co`: publicación, búsqueda, instalación, caché local y lectura de metadatos. El comando `cobra hub publicar|buscar|instalar` usa esta capa.
 - **Compatibilidad:** los métodos `publicar_paquete`, `buscar_paquetes` e `instalar_paquete` siguen disponibles en `CobraHubClient`, pero delegan en `CobraHubPackages`. El código nuevo debería importar `CobraHubPackages` directamente.
 
+## Contrato HTTP mínimo
+
+Esta especificación define el contrato HTTP mínimo que debe implementar un
+servicio CobraHub para publicar, buscar y descargar paquetes Cobra `.co`. Es
+una especificación provisional: describe el intercambio estable necesario para
+los clientes actuales, pero deja espacio para evolucionar hacia una
+infraestructura de índice y distribución más completa, compatible con un modelo
+tipo PyPI (metadatos enriquecidos, versiones múltiples, mirrors, autenticación,
+firmas y APIs adicionales).
+
+### `POST /paquetes`
+
+Publica un paquete Cobra `.co` en CobraHub. La petición debe enviarse como
+`multipart/form-data` e incluir:
+
+- Campo multipart `file`: archivo binario `.co` que se quiere publicar.
+- Campo multipart `metadata`: metadatos serializados, preferentemente JSON, con
+  la información del paquete que el servidor necesite indexar (por ejemplo
+  `name`, `version`, `description` o etiquetas).
+- Cabecera `X-Content-Checksum`: checksum esperado del contenido enviado,
+  calculado por el cliente para que el servidor pueda verificar integridad antes
+  de aceptar la publicación. Se recomienda SHA-256 en formato hexadecimal.
+- Cabecera `Idempotency-Key`: identificador único de la operación de
+  publicación. El servidor debe usarlo para evitar publicaciones duplicadas si
+  el cliente reintenta la misma petición por errores de red o timeouts.
+
+Respuesta mínima recomendada:
+
+```json
+{
+  "name": "demo",
+  "version": "0.1.0",
+  "filename": "demo-0.1.0.co",
+  "checksum": "sha256:...",
+  "download_url": "https://cobrahub.example/paquetes/demo?version=0.1.0",
+  "remote_id": "pkg_..."
+}
+```
+
+### `GET /paquetes?q=consulta`
+
+Busca paquetes publicados. El parámetro `q` contiene la consulta textual que
+se aplicará sobre el índice del servidor. La respuesta esperada es JSON y debe
+contener una lista de resultados normalizados. Para mantener compatibilidad con
+clientes sencillos, el servidor puede devolver directamente una lista o envolver
+la lista en un objeto con la clave `results`.
+
+Formato recomendado:
+
+```json
+{
+  "results": [
+    {
+      "name": "demo",
+      "version": "0.1.0",
+      "filename": "demo-0.1.0.co",
+      "checksum": "sha256:...",
+      "download_url": "https://cobrahub.example/paquetes/demo?version=0.1.0",
+      "remote_id": "pkg_..."
+    }
+  ]
+}
+```
+
+Campos normalizados por resultado:
+
+- `name`: nombre canónico del paquete.
+- `version`: versión publicada del paquete.
+- `filename`: nombre del archivo `.co` disponible para descarga.
+- `checksum`: checksum del artefacto descargable, preferentemente SHA-256.
+- `download_url`: URL absoluta o relativa que el cliente puede usar para
+  descargar el paquete.
+- `remote_id`: identificador interno estable asignado por el servidor.
+
+### `GET /paquetes/{nombre}`
+
+Descarga el artefacto binario asociado a un paquete. `{nombre}` identifica el
+paquete por su nombre canónico. La petición acepta el parámetro opcional
+`version` para seleccionar una versión concreta:
+
+```text
+GET /paquetes/demo?version=0.1.0
+```
+
+Si `version` no se proporciona, el servidor puede devolver la versión marcada
+como más reciente o la versión por defecto de acuerdo con su política de índice.
+La respuesta debe ser el binario `.co` sin envolver en JSON. Se recomienda usar
+`Content-Type: application/octet-stream` o un tipo específico de paquete Cobra
+si el servidor lo define en el futuro.
+
+Cabeceras esperadas en la respuesta:
+
+- `X-Content-Checksum`: checksum del cuerpo binario devuelto, para que el
+  cliente pueda verificar la integridad tras la descarga.
+- `X-Package-Version` (opcional): versión exacta del paquete devuelto. Es útil
+  cuando el cliente no envió `version` y el servidor resolvió automáticamente
+  una versión.
+
 ## Auditoría inicial
 
 - La implementación previa de CobraHub estaba en `src/pcobra/cobra/cli/cobrahub_client.py` y se centraba en publicar/descargar módulos sueltos `.co` mediante endpoints `/modulos`.

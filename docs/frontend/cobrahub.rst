@@ -5,7 +5,9 @@ CobraHub es el punto de publicación, búsqueda e instalación de artefactos Cob
 El flujo recomendado trabaja con paquetes ``.co`` construidos por la capa de
 empaquetado ``pcobra.cobra.packaging``. Para el formato completo de paquetes y
 las notas de diseño consulta :doc:`paquetes` y el documento
-``../cobrahub_paquetes.md``.
+``../cobrahub_paquetes.md``. Ese documento también recoge el contrato HTTP
+mínimo provisional para ``POST /paquetes``, ``GET /paquetes?q=consulta`` y
+``GET /paquetes/{nombre}``, compatible con una futura infraestructura tipo PyPI.
 
 Flujo recomendado de paquetes
 -----------------------------
