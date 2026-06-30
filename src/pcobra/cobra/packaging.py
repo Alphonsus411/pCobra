@@ -18,7 +18,6 @@ LEGACY_MANIFEST_NAME = "cobra.pkg"
 PACKAGE_FORMAT = "cobra-package-v1"
 DEFAULT_CACHE_DIR = Path.home() / ".cobra" / "hub" / "cache"
 DEFAULT_INSTALL_DIR = Path.home() / ".cobra" / "packages"
-ALLOWED_TEXT_SUFFIXES = {".cobra", ".co", ".md", ".markdown", ".txt", ".json", ".toml", ".yaml", ".yml"}
 MAX_PACKAGE_SIZE = 50 * 1024 * 1024
 
 

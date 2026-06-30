@@ -12,16 +12,30 @@ Los archivos fuente Cobra pueden seguir usando ``.cobra`` o ``.co``; cuando
 ``.co`` se usa como paquete publicable, la CLI lo trata como un ZIP con
 metadatos.
 
-Contenido soportado
--------------------
+Contenido incluido
+------------------
 
-Los paquetes ``.co`` pueden incluir:
+La construcción del paquete no aplica una allowlist por extensión. En concreto,
+``cobra paquete construir`` recorre la carpeta fuente, preserva rutas relativas
+y añade todos los archivos regulares encontrados, con estas reglas:
 
-* archivos fuente ``.cobra`` y ``.co``;
-* documentación ``.md``;
-* archivos de texto ``.txt``;
-* ``Dockerfile``;
-* recursos adicionales preservando sus rutas relativas.
+* el manifiesto ``cobra.pkg.json`` se regenera en la raíz del ZIP y no se copia
+  como archivo de contenido normal;
+* se omiten las carpetas de trabajo ``.git``, ``__pycache__`` y
+  ``.pytest_cache``;
+* se incluyen archivos fuente ``.cobra``;
+* se incluyen archivos ``.co`` de texto usados como fuente Cobra;
+* se incluye documentación como ``README.md``, archivos ``.md`` bajo
+  ``docs/`` y archivos ``.txt``;
+* se incluye ``Dockerfile`` cuando existe en el proyecto;
+* se incluyen recursos arbitrarios, también binarios o con extensiones no
+  conocidas, bajo carpetas como ``resources/``, ``assets/`` o ``docs/``;
+* se conservan las carpetas anidadas porque cada entrada se guarda con su ruta
+  relativa dentro del proyecto.
+
+Por tanto, el límite de seguridad del formato no es la extensión del archivo,
+sino el manifiesto y la integridad: cada archivo incluido debe estar declarado
+en ``files`` y tener su checksum correspondiente en ``checksums``.
 
 Manifiesto ``cobra.pkg.json``
 -----------------------------
@@ -36,18 +50,23 @@ Ejemplo simplificado:
 .. code-block:: json
 
    {
-     "nombre": "demo",
+     "format": "cobra-package-v1",
+     "name": "demo",
      "version": "0.1.0",
-     "archivos": [
-       {
-         "ruta": "main.co",
-         "sha256": "..."
-       },
-       {
-         "ruta": "README.md",
-         "sha256": "..."
-       }
-     ]
+     "files": [
+       "src/main.co",
+       "README.md",
+       "Dockerfile",
+       "assets/imagenes/logo.bin",
+       "resources/i18n/es.dat"
+     ],
+     "checksums": {
+       "src/main.co": "...",
+       "README.md": "...",
+       "Dockerfile": "...",
+       "assets/imagenes/logo.bin": "...",
+       "resources/i18n/es.dat": "..."
+     }
    }
 
 Flujo recomendado
