@@ -34,6 +34,15 @@ La funcionalidad se implementa en `pcobra.cobra.packaging`, una capa independien
 6. Añadir acciones del IDLE que reutilizan la misma lógica de empaquetado.
 7. Añadir pruebas unitarias de construcción, validación, inspección y extracción.
 
+## Regla de detección de paquetes `.co`
+
+Un archivo `.co` solo se considera paquete Cobra cuando cumple ambas condiciones estructurales:
+
+1. El archivo es un ZIP legible.
+2. El ZIP contiene `cobra.pkg.json` en la raíz.
+
+La extensión `.co` por sí sola no basta: un `.co` de texto sigue siendo fuente Cobra, y un ZIP `.co` sin `cobra.pkg.json` no es un paquete Cobra válido. Esta comprobación vive en `pcobra.cobra.packaging.es_paquete_cobra()` y no invoca Lexer ni Parser. Los comandos de empaquetado y CobraHub usan esta regla antes de validar, publicar, instalar o leer metadatos de paquetes.
+
 ## Por qué no se toca Lexer ni Parser
 
 El cambio opera exclusivamente sobre archivos, ZIPs, manifiestos y transporte CobraHub. No añade tokens, reglas gramaticales ni sintaxis Cobra. Los archivos fuente incluidos se tratan como bytes hasta que el usuario decida ejecutarlos con los comandos existentes.

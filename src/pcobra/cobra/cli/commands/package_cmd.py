@@ -10,6 +10,7 @@ from pcobra.cobra.packaging import (
     DEFAULT_INSTALL_DIR,
     construir_paquete,
     crear_paquete,
+    es_paquete_cobra,
     extraer_paquete,
     inspeccionar_paquete,
     validar_paquete,
@@ -66,6 +67,8 @@ class PaqueteCommand(BaseCommand):
                     mostrar_info(_("Estructura de paquete creada: {manifest}").format(manifest=manifest))
                 return 0
             if args.accion == "validar":
+                if not es_paquete_cobra(args.paquete):
+                    raise ValueError("No es un paquete Cobra: debe ser ZIP y contener cobra.pkg.json")
                 validar_paquete(args.paquete)
                 mostrar_info(_("Paquete válido: {pkg}").format(pkg=args.paquete))
                 return 0
@@ -74,6 +77,8 @@ class PaqueteCommand(BaseCommand):
                 mostrar_info(_("Paquete construido en {dest}").format(dest=destino))
                 return 0
             if args.accion == "inspeccionar":
+                if not es_paquete_cobra(args.paquete):
+                    raise ValueError("No es un paquete Cobra: debe ser ZIP y contener cobra.pkg.json")
                 info = inspeccionar_paquete(args.paquete)
                 mostrar_info(_("Paquete: {name} {version}").format(name=info.manifest.get("name"), version=info.manifest.get("version")))
                 for file in info.files:
@@ -81,10 +86,14 @@ class PaqueteCommand(BaseCommand):
                 mostrar_info(_("SHA256: {checksum}").format(checksum=info.checksum))
                 return 0
             if args.accion == "extraer":
+                if not es_paquete_cobra(args.paquete):
+                    raise ValueError("No es un paquete Cobra: debe ser ZIP y contener cobra.pkg.json")
                 destino = extraer_paquete(args.paquete, args.destino)
                 mostrar_info(_("Paquete extraído en {dest}").format(dest=destino))
                 return 0
             if args.accion == "instalar":
+                if not es_paquete_cobra(args.paquete):
+                    raise ValueError("No es un paquete Cobra: debe ser ZIP y contener cobra.pkg.json")
                 destino = extraer_paquete(args.paquete, args.destino)
                 mostrar_info(_("Paquete instalado en {dest}").format(dest=destino))
                 return 0

@@ -19,6 +19,7 @@ from pcobra.cobra.cli.target_policies import resolve_docker_backend
 from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
 from pcobra.cobra.cli.utils.source import read_cobra_source
 from pcobra.cobra.cli.utils.validators import validar_archivo_existente
+from pcobra.cobra.packaging import es_paquete_cobra
 from pcobra.cobra.core import LexerError, ParserError
 from pcobra.cobra.core.runtime import (
     InterpretadorCobra,
@@ -125,6 +126,11 @@ class RunService:
             ) from error
         if resolved_path.stat().st_size > self.max_file_size:
             raise ValueError(f"El archivo excede el tamaño máximo permitido ({self.max_file_size} bytes)")
+        if es_paquete_cobra(resolved_path):
+            raise ValueError(
+                "El archivo es un paquete Cobra .co, no una fuente ejecutable. "
+                "Instálalo o extráelo con el comando paquete antes de ejecutar."
+            )
         return resolved_path
 
     def limitar_recursos(self, funcion: Any) -> int:

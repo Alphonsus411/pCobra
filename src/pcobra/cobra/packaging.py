@@ -133,16 +133,33 @@ def construir_paquete(source: str | Path, output: str | Path | None = None, *, n
     return dest
 
 
+def es_paquete_cobra(path: str | Path) -> bool:
+    """Indica si ``path`` es un paquete Cobra ``.co`` ZIP con manifiesto.
+
+    La detección es deliberadamente estructural y barata: no usa Lexer ni Parser,
+    solo comprueba que el archivo sea un ZIP legible y que contenga
+    ``cobra.pkg.json`` en la raíz del archivo.
+    """
+    candidate = Path(path)
+    if not candidate.is_file() or not zipfile.is_zipfile(candidate):
+        return False
+    try:
+        with zipfile.ZipFile(candidate) as zf:
+            return MANIFEST_NAME in zf.namelist()
+    except (OSError, zipfile.BadZipFile):
+        return False
+
+
 def inspeccionar_paquete(package: str | Path) -> PackageInspection:
     pkg = Path(package)
     if not pkg.exists():
         raise FileNotFoundError(f"Paquete no encontrado: {pkg}")
     if pkg.stat().st_size > MAX_PACKAGE_SIZE:
         raise ValueError("El paquete excede el tamaño máximo permitido")
+    if not es_paquete_cobra(pkg):
+        raise ValueError("El paquete no es un paquete Cobra válido: debe ser ZIP y contener cobra.pkg.json")
     with zipfile.ZipFile(pkg) as zf:
         names = zf.namelist()
-        if MANIFEST_NAME not in names:
-            raise ValueError("El paquete no contiene manifiesto cobra.pkg.json")
         manifest = json.loads(zf.read(MANIFEST_NAME).decode("utf-8"))
     return PackageInspection(pkg, manifest, names, _sha256_file(pkg))
 

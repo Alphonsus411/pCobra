@@ -1109,7 +1109,7 @@ Por defecto el nivel de registro es `INFO`; con `-v` o más se cambia a `DEBUG`:
 cobra -v run programa.co
 ```
 
-Los archivos fuente Cobra pueden usar ``.cobra`` o ``.co`` según el flujo histórico del proyecto. Los paquetes publicables de CobraHub también usan extensión ``.co`` como contenedor ZIP con manifiesto ``cobra.pkg.json``; la distinción se realiza en la capa de herramientas, no en el Lexer ni en el Parser.
+Los archivos fuente Cobra pueden usar ``.cobra`` o ``.co`` según el flujo histórico del proyecto. Los paquetes publicables de CobraHub también usan extensión ``.co`` como contenedor ZIP con manifiesto ``cobra.pkg.json``; la distinción se realiza en la capa de herramientas, no en el Lexer ni en el Parser. Regla exacta: un ``.co`` es paquete solo si es un ZIP legible y contiene ``cobra.pkg.json`` en la raíz; un ``.co`` de texto es fuente, y un ZIP sin manifiesto no es paquete Cobra válido.
 
 El subcomando `docs` ejecuta `sphinx-apidoc` para generar la documentación de la API antes de compilar el HTML.
 El subcomando `gui` abre el IDLE gráfico principal y requiere tener instalado Flet.
