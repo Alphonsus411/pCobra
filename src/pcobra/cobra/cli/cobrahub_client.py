@@ -356,3 +356,101 @@ def descargar_modulo(
 
 __all__ = ["CobraHubClient", "publicar_modulo", "descargar_modulo"]
 
+
+# Extensiones de CobraHub para paquetes .co. Se mantienen junto al cliente legacy
+# para conservar compatibilidad con publicar/descargar módulos individuales.
+def _package_cache_dir() -> Path:
+    cache = Path(os.environ.get("COBRAHUB_CACHE_DIR", str(Path.home() / ".cobra" / "hub" / "cache"))).expanduser()
+    cache.mkdir(parents=True, exist_ok=True)
+    return cache
+
+
+def _install_dir() -> Path:
+    dest = Path(os.environ.get("COBRAHUB_INSTALL_DIR", str(Path.home() / ".cobra" / "packages"))).expanduser()
+    dest.mkdir(parents=True, exist_ok=True)
+    return dest
+
+
+def _publicar_paquete(self: CobraHubClient, ruta: str) -> bool:
+    from pcobra.cobra.packaging import validar_paquete
+
+    if not self._validar_url():
+        return False
+    try:
+        info = validar_paquete(ruta)
+        checksum = info.checksum
+        with open(ruta, "rb") as f:
+            with self.session.post(
+                f"{self.base_url}/paquetes",
+                files={"file": f},
+                data={"metadata": json_dumps(info.manifest)},
+                headers={"X-Content-Checksum": checksum, "Idempotency-Key": checksum},
+                timeout=(self.CONNECT_TIMEOUT, self.READ_TIMEOUT),
+            ) as response:
+                response.raise_for_status()
+        cache_path = _package_cache_dir() / Path(ruta).name
+        if Path(ruta).resolve() != cache_path.resolve():
+            import shutil
+            shutil.copy2(ruta, cache_path)
+        mostrar_info(_("Paquete publicado correctamente"))
+        return True
+    except Exception as e:
+        logger.error(f"Error publicando paquete: {e}")
+        mostrar_error(_("Error publicando paquete: {err}").format(err=str(e)))
+        return False
+
+
+def json_dumps(value):
+    import json
+    return json.dumps(value, ensure_ascii=False, sort_keys=True)
+
+
+def _buscar_paquetes(self: CobraHubClient, consulta: str) -> list[dict]:
+    if not self._validar_url():
+        return []
+    try:
+        with self.session.get(
+            f"{self.base_url}/paquetes",
+            params={"q": consulta},
+            timeout=(self.CONNECT_TIMEOUT, self.READ_TIMEOUT),
+        ) as response:
+            response.raise_for_status()
+            data = response.json() if hasattr(response, "json") else []
+        if isinstance(data, dict):
+            return list(data.get("results", []))
+        return list(data)
+    except Exception as e:
+        logger.error(f"Error buscando paquetes: {e}")
+        mostrar_error(_("Error buscando paquetes: {err}").format(err=str(e)))
+        return []
+
+
+def _instalar_paquete(self: CobraHubClient, nombre: str, destino: str | None = None) -> bool:
+    from pcobra.cobra.packaging import extraer_paquete
+
+    if not self._validar_nombre_modulo(nombre) or not self._validar_url():
+        return False
+    cache_path = _package_cache_dir() / f"{nombre}.co"
+    try:
+        with self.session.get(
+            f"{self.base_url}/paquetes/{urllib.parse.quote(nombre)}",
+            timeout=(self.CONNECT_TIMEOUT, self.READ_TIMEOUT),
+            stream=True,
+        ) as response:
+            response.raise_for_status()
+            with open(cache_path, "wb") as out:
+                for chunk in response.iter_content(chunk_size=self.CHUNK_SIZE):
+                    out.write(chunk)
+        install_path = Path(destino).expanduser() if destino else _install_dir() / nombre
+        extraer_paquete(cache_path, install_path)
+        mostrar_info(_("Paquete instalado en {dest}").format(dest=install_path))
+        return True
+    except Exception as e:
+        logger.error(f"Error instalando paquete: {e}")
+        mostrar_error(_("Error instalando paquete: {err}").format(err=str(e)))
+        return False
+
+
+CobraHubClient.publicar_paquete = _publicar_paquete  # type: ignore[attr-defined]
+CobraHubClient.buscar_paquetes = _buscar_paquetes  # type: ignore[attr-defined]
+CobraHubClient.instalar_paquete = _instalar_paquete  # type: ignore[attr-defined]

@@ -137,6 +137,7 @@ class AppConfig:
         CommandClassRoute("pcobra.cobra.cli.commands.docs_cmd", "DocsCommand"),
         CommandClassRoute("pcobra.cobra.cli.commands.empaquetar_cmd", "EmpaquetarCommand"),
         CommandClassRoute("pcobra.cobra.cli.commands.package_cmd", "PaqueteCommand"),
+        CommandClassRoute("pcobra.cobra.cli.commands.hub_cmd", "HubCommand"),
         CommandClassRoute("pcobra.cobra.cli.commands.crear_cmd", "CrearCommand"),
         CommandClassRoute("pcobra.cobra.cli.commands.init_cmd", "InitCommand"),
         CommandClassRoute("pcobra.cobra.cli.commands.jupyter_cmd", "JupyterCommand"),
@@ -163,6 +164,8 @@ class AppConfig:
         CommandClassRoute("pcobra.cobra.cli.commands_v2.build_cmd", "BuildCommandV2"),
         CommandClassRoute("pcobra.cobra.cli.commands_v2.test_cmd", "TestCommandV2"),
         CommandClassRoute("pcobra.cobra.cli.commands_v2.mod_cmd", "ModCommandV2"),
+        CommandClassRoute("pcobra.cobra.cli.commands.package_cmd", "PaqueteCommand"),
+        CommandClassRoute("pcobra.cobra.cli.commands.hub_cmd", "HubCommand"),
         # `repl` forma parte del contrato público oficial de CLI v2 (no alias legacy).
         CommandClassRoute("pcobra.cobra.cli.commands_v2.repl_cmd", "ReplCommandV2"),
     ]
