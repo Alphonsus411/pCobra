@@ -26,6 +26,7 @@ class HubCommand(BaseCommand):
         buscar.add_argument("consulta")
         inst = sub.add_parser("instalar", help=_("Instala un paquete"))
         inst.add_argument("nombre")
+        inst.add_argument("--version")
         inst.add_argument("--destino", type=Path)
         parser.set_defaults(cmd=self)
         return parser
@@ -42,6 +43,6 @@ class HubCommand(BaseCommand):
             return 0
         if args.accion == "instalar":
             destino = str(args.destino) if args.destino else None
-            return 0 if packages.instalar_paquete(args.nombre, destino) else 1
+            return 0 if packages.instalar_paquete(args.nombre, destino, args.version) else 1
         mostrar_error(_("Acción de hub no reconocida"))
         return 1

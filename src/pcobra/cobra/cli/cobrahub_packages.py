@@ -14,6 +14,7 @@ import logging
 import os
 import shutil
 import urllib.parse
+from email.message import Message
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -23,6 +24,65 @@ if TYPE_CHECKING:  # pragma: no cover - solo para tipado
     from pcobra.cobra.cli.cobrahub_client import CobraHubClient
 
 logger = logging.getLogger(__name__)
+
+
+def _normalizar_resultado_paquete(item: Any) -> dict[str, str]:
+    """Convierte respuestas variadas del servidor al modelo mínimo público."""
+    from pcobra.cobra.packaging import PackageSearchResult
+
+    if not isinstance(item, dict):
+        item = {"name": str(item)}
+
+    name = item.get("name") or item.get("nombre") or item.get("package")
+    if not name:
+        name = Path(str(item.get("filename") or item.get("archivo") or "paquete.co")).stem
+
+    result = PackageSearchResult(
+        name=str(name),
+        version=_optional_str(item.get("version")),
+        filename=_optional_str(item.get("filename") or item.get("archivo")),
+        checksum=_optional_str(
+            item.get("checksum")
+            or item.get("sha256")
+            or item.get("digest")
+            or item.get("content_checksum")
+        ),
+        download_url=_optional_str(
+            item.get("download_url") or item.get("url") or item.get("href")
+        ),
+        remote_id=_optional_str(item.get("remote_id") or item.get("id")),
+    )
+    return result.as_dict()
+
+
+def _optional_str(value: Any) -> str | None:
+    if value is None:
+        return None
+    value = str(value)
+    return value or None
+
+
+def _cache_filename(nombre: str, version: str | None) -> str:
+    return f"{nombre}-{version}.co" if version else f"{nombre}.co"
+
+
+def _version_from_response(response: Any) -> str | None:
+    headers = getattr(response, "headers", {}) or {}
+    version = headers.get("X-Package-Version") or headers.get("X-Cobra-Package-Version")
+    if version:
+        return str(version)
+    content_disposition = headers.get("Content-Disposition")
+    if not content_disposition:
+        return None
+    msg = Message()
+    msg["Content-Disposition"] = content_disposition
+    filename = msg.get_filename()
+    if not filename:
+        return None
+    stem = Path(filename).stem
+    if "-" not in stem:
+        return None
+    return stem.rsplit("-", 1)[1] or None
 
 
 def _mostrar_error(mensaje: str) -> None:
@@ -91,29 +151,34 @@ class CobraHubPackages:
             ) as response:
                 response.raise_for_status()
                 data = response.json() if hasattr(response, "json") else []
-            if isinstance(data, dict):
-                return list(data.get("results", []))
-            return list(data)
+            items = data.get("results", []) if isinstance(data, dict) else data
+            return [_normalizar_resultado_paquete(item) for item in list(items)]
         except Exception as e:
             logger.error(f"Error buscando paquetes: {e}")
             _mostrar_error(_("Error buscando paquetes: {err}").format(err=str(e)))
             return []
 
-    def instalar_paquete(self, nombre: str, destino: str | None = None) -> bool:
+    def instalar_paquete(
+        self, nombre: str, destino: str | None = None, version: str | None = None
+    ) -> bool:
         """Descarga, cachea e instala un paquete desde CobraHub."""
         from pcobra.cobra.packaging import extraer_paquete
 
         if not self.client._validar_nombre_modulo(nombre) or not self.client._validar_url():
             return False
-        cache_path = package_cache_dir() / f"{nombre}.co"
+        cache_path = package_cache_dir() / _cache_filename(nombre, version)
         try:
             with self.client.session.get(
                 f"{self.client.base_url}/paquetes/{urllib.parse.quote(nombre)}",
+                **({"params": {"version": version}} if version else {}),
                 timeout=(self.client.CONNECT_TIMEOUT, self.client.READ_TIMEOUT),
                 stream=True,
             ) as response:
                 response.raise_for_status()
                 checksum_servidor = response.headers.get("X-Content-Checksum")
+                version_servidor = _version_from_response(response)
+                if version_servidor and version_servidor != version:
+                    cache_path = package_cache_dir() / _cache_filename(nombre, version_servidor)
                 sha256 = hashlib.sha256()
                 tamaño_total = 0
 

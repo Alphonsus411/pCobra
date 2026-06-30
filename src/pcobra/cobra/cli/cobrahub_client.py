@@ -382,11 +382,13 @@ class CobraHubClient:
 
         return CobraHubPackages(self).buscar_paquetes(consulta)
 
-    def instalar_paquete(self, nombre: str, destino: str | None = None) -> bool:
+    def instalar_paquete(
+        self, nombre: str, destino: str | None = None, version: str | None = None
+    ) -> bool:
         """Instala un paquete usando la API separada de paquetes."""
         from pcobra.cobra.cli.cobrahub_packages import CobraHubPackages
 
-        return CobraHubPackages(self).instalar_paquete(nombre, destino)
+        return CobraHubPackages(self).instalar_paquete(nombre, destino, version)
 
 
 # Funciones conveniencia para interacción sencilla con CobraHub.
