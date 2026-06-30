@@ -181,8 +181,8 @@ def test_capacidades_archivo_reservan_acciones_cobra_para_codigo_cobra() -> None
         capacidades = runtime.obtener_capacidades_archivo(ruta)
         assert capacidades == acciones_base
         assert not any(
-        runtime.archivo_permite_accion(ruta, accion) for accion in acciones_cobra
-    )
+            runtime.archivo_permite_accion(ruta, accion) for accion in acciones_cobra
+        )
 
 
 def test_archivo_permite_accion_bloquea_acciones_cobra_para_archivos_config() -> None:
@@ -194,7 +194,7 @@ def test_archivo_permite_accion_bloquea_acciones_cobra_para_archivos_config() ->
         runtime.ACCION_CORRECCION,
     }
     config_file = "config.json"
-    
+
     for accion in acciones_cobra:
         assert not runtime.archivo_permite_accion(config_file, accion)
 
@@ -1012,11 +1012,170 @@ def test_accion_cargar_archivo_desde_arbol_filtra_extensiones(
         desconocido, estado
     )
 
-    assert runtime.detectar_tipo_archivo(desconocido) == runtime.TIPO_ARCHIVO_DESCONOCIDO
+    assert (
+        runtime.detectar_tipo_archivo(desconocido) == runtime.TIPO_ARCHIVO_DESCONOCIDO
+    )
     assert contenido_desconocido == "texto plano compatible utf-8"
     assert estado.ruta == desconocido.resolve()
     assert estado.contenido_cargado == "texto plano compatible utf-8"
     assert mensaje_desconocido == f"Archivo cargado: {desconocido.resolve()}"
+
+
+def _crear_proyecto_cobra_minimo(tmp_path: Path) -> Path:
+    project_root = tmp_path / "paquete_demo"
+    (project_root / "src").mkdir(parents=True)
+    (project_root / "assets").mkdir()
+    (project_root / "src" / "main.cobra").write_text(
+        "imprimir('hola paquete')\n", encoding="utf-8"
+    )
+    (project_root / "README.md").write_text("# Paquete demo\n", encoding="utf-8")
+    (project_root / "Dockerfile").write_text("FROM scratch\n", encoding="utf-8")
+    (project_root / "assets" / "recurso.txt").write_text("recurso\n", encoding="utf-8")
+    return project_root
+
+
+def test_idle_crear_paquete_crea_manifest_en_proyecto_minimo(tmp_path: Path) -> None:
+    project_root = _crear_proyecto_cobra_minimo(tmp_path)
+
+    manifest = runtime.idle_crear_paquete(project_root, "paquete demo", version="1.2.3")
+
+    assert manifest == project_root / "cobra.pkg.json"
+    data = manifest.read_text(encoding="utf-8")
+    assert '"name": "paquete-demo"' in data
+    assert '"version": "1.2.3"' in data
+    assert (project_root / "src" / "main.cobra").read_text(
+        encoding="utf-8"
+    ) == "imprimir('hola paquete')\n"
+    assert (project_root / "README.md").read_text(
+        encoding="utf-8"
+    ) == "# Paquete demo\n"
+    assert (project_root / "Dockerfile").read_text(encoding="utf-8") == "FROM scratch\n"
+    assert (project_root / "assets" / "recurso.txt").read_text(
+        encoding="utf-8"
+    ) == "recurso\n"
+
+
+def test_idle_construir_y_validar_paquete_incluye_archivos_del_proyecto_minimo(
+    tmp_path: Path,
+) -> None:
+    project_root = _crear_proyecto_cobra_minimo(tmp_path)
+    runtime.idle_crear_paquete(project_root, "paquete-demo", version="1.0.0")
+    salida = tmp_path / "dist" / "paquete-demo.co"
+
+    paquete = runtime.idle_construir_paquete(project_root, salida)
+    inspection = runtime.idle_validar_paquete(paquete)
+
+    assert paquete == salida
+    assert inspection.manifest["name"] == "paquete-demo"
+    assert inspection.manifest["version"] == "1.0.0"
+    assert "src/main.cobra" in inspection.files
+    assert "README.md" in inspection.files
+    assert "Dockerfile" in inspection.files
+    assert "assets/recurso.txt" in inspection.files
+
+
+def test_idle_abrir_paquete_extrae_proyecto_minimo(tmp_path: Path) -> None:
+    project_root = _crear_proyecto_cobra_minimo(tmp_path)
+    runtime.idle_crear_paquete(project_root, "paquete-demo", version="1.0.0")
+    paquete = runtime.idle_construir_paquete(project_root)
+    destino = tmp_path / "extraido"
+
+    extraido = runtime.idle_abrir_paquete(paquete, destino)
+
+    assert extraido == destino.resolve()
+    assert (destino / "src" / "main.cobra").read_text(
+        encoding="utf-8"
+    ) == "imprimir('hola paquete')\n"
+    assert (destino / "README.md").read_text(encoding="utf-8") == "# Paquete demo\n"
+    assert (destino / "Dockerfile").read_text(encoding="utf-8") == "FROM scratch\n"
+    assert (destino / "assets" / "recurso.txt").read_text(
+        encoding="utf-8"
+    ) == "recurso\n"
+
+
+def test_idle_publicar_paquete_usa_cliente_mockeado_sin_red(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    project_root = _crear_proyecto_cobra_minimo(tmp_path)
+    runtime.idle_crear_paquete(project_root, "paquete-demo", version="1.0.0")
+    paquete = runtime.idle_construir_paquete(project_root)
+    llamadas: list[str] = []
+
+    def publicar_mock(self, ruta: str) -> bool:
+        llamadas.append(ruta)
+        return True
+
+    monkeypatch.setattr(
+        "pcobra.cobra.cli.cobrahub_client.CobraHubClient.publicar_paquete",
+        publicar_mock,
+    )
+
+    assert runtime.idle_publicar_paquete(paquete) is True
+    assert llamadas == [str(paquete)]
+
+
+def test_helpers_idle_de_paquetes_no_importan_lexer_ni_parser_y_delegan_en_packaging(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    project_root = _crear_proyecto_cobra_minimo(tmp_path)
+    paquete = tmp_path / "paquete.co"
+    destino = tmp_path / "destino"
+    llamadas: list[tuple[str, tuple[object, ...], dict[str, object]]] = []
+
+    def fake_crear_paquete(*args, **kwargs):
+        llamadas.append(("crear_paquete", args, kwargs))
+        return project_root / "cobra.pkg.json"
+
+    def fake_validar_paquete(*args, **kwargs):
+        llamadas.append(("validar_paquete", args, kwargs))
+        return SimpleNamespace(path=paquete)
+
+    def fake_construir_paquete(*args, **kwargs):
+        llamadas.append(("construir_paquete", args, kwargs))
+        return paquete
+
+    def fake_extraer_paquete(*args, **kwargs):
+        llamadas.append(("extraer_paquete", args, kwargs))
+        return destino
+
+    monkeypatch.setattr("pcobra.cobra.packaging.crear_paquete", fake_crear_paquete)
+    monkeypatch.setattr("pcobra.cobra.packaging.validar_paquete", fake_validar_paquete)
+    monkeypatch.setattr(
+        "pcobra.cobra.packaging.construir_paquete", fake_construir_paquete
+    )
+    monkeypatch.setattr("pcobra.cobra.packaging.extraer_paquete", fake_extraer_paquete)
+
+    real_import = __import__
+
+    def fail_lexer_parser_import(name, globals=None, locals=None, fromlist=(), level=0):
+        if name == "pcobra.cobra.core" and {"Lexer", "Parser"} & set(
+            fromlist or ()
+        ):  # pragma: no cover - solo falla si hay regresión
+            raise AssertionError(
+                "Los helpers IDLE de paquetes no deben importar Lexer ni Parser"
+            )
+        return real_import(name, globals, locals, fromlist, level)
+
+    monkeypatch.setattr("builtins.__import__", fail_lexer_parser_import)
+
+    assert (
+        runtime.idle_crear_paquete(project_root, "paquete-demo", version="2.0.0")
+        == project_root / "cobra.pkg.json"
+    )
+    assert runtime.idle_validar_paquete(paquete).path == paquete
+    assert runtime.idle_construir_paquete(project_root, paquete) == paquete
+    assert runtime.idle_abrir_paquete(paquete, destino) == destino
+
+    assert llamadas == [
+        (
+            "crear_paquete",
+            (project_root.resolve(),),
+            {"nombre": "paquete-demo", "version": "2.0.0"},
+        ),
+        ("validar_paquete", (paquete,), {}),
+        ("construir_paquete", (project_root.resolve(), paquete), {}),
+        ("extraer_paquete", (paquete, destino), {}),
+    ]
 
 
 def test_require_flet_error_accionable(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -1429,17 +1588,23 @@ def test_validar_y_crear_carpeta_idle_casos_validos(tmp_path: Path) -> None:
     project_root.mkdir()
 
     # Caso 1: Carpeta simple dentro del proyecto
-    ruta_creada = runtime.validar_y_crear_carpeta_idle("docs", project_root, workspace_root)
+    ruta_creada = runtime.validar_y_crear_carpeta_idle(
+        "docs", project_root, workspace_root
+    )
     assert ruta_creada == (project_root / "docs").resolve()
     assert ruta_creada.is_dir()
 
     # Caso 2: Carpeta anidada
-    ruta_creada = runtime.validar_y_crear_carpeta_idle("config/env", project_root, workspace_root)
+    ruta_creada = runtime.validar_y_crear_carpeta_idle(
+        "config/env", project_root, workspace_root
+    )
     assert ruta_creada == (project_root / "config" / "env").resolve()
     assert ruta_creada.is_dir()
 
     # Caso 3: Carpeta ya existente (no debe fallar)
-    ruta_creada = runtime.validar_y_crear_carpeta_idle("docs", project_root, workspace_root)
+    ruta_creada = runtime.validar_y_crear_carpeta_idle(
+        "docs", project_root, workspace_root
+    )
     assert ruta_creada == (project_root / "docs").resolve()
     assert ruta_creada.is_dir()
 
@@ -1456,7 +1621,9 @@ def test_validar_y_crear_carpeta_idle_bloquea_rutas_invalidas(tmp_path: Path) ->
 
     # Bloquear rutas absolutas
     with pytest.raises(ValueError, match="relativa al proyecto"):
-        runtime.validar_y_crear_carpeta_idle(str(tmp_path / "absoluta"), project_root, workspace_root)
+        runtime.validar_y_crear_carpeta_idle(
+            str(tmp_path / "absoluta"), project_root, workspace_root
+        )
 
     # Bloquear creación de project_root
     with pytest.raises(ValueError, match="No se puede crear la raíz del proyecto"):
@@ -1466,9 +1633,15 @@ def test_validar_y_crear_carpeta_idle_bloquea_rutas_invalidas(tmp_path: Path) ->
 
     # Bloquear creación de workspace_root
     with pytest.raises(ValueError, match="dentro del proyecto activo"):
-        runtime.validar_y_crear_carpeta_idle(str(Path("../..").relative_to(Path("."))), project_root, workspace_root)
+        runtime.validar_y_crear_carpeta_idle(
+            str(Path("../..").relative_to(Path("."))), project_root, workspace_root
+        )
 
     # Bloquear si project_root no es un directorio
     (project_root / "archivo.txt").write_text("contenido")
-    with pytest.raises(NotADirectoryError, match="La raíz del proyecto no es un directorio"):
-        runtime.validar_y_crear_carpeta_idle("nueva_carpeta", project_root / "archivo.txt", workspace_root)
+    with pytest.raises(
+        NotADirectoryError, match="La raíz del proyecto no es un directorio"
+    ):
+        runtime.validar_y_crear_carpeta_idle(
+            "nueva_carpeta", project_root / "archivo.txt", workspace_root
+        )
