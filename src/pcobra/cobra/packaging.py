@@ -23,6 +23,30 @@ MAX_PACKAGE_SIZE = 50 * 1024 * 1024
 
 
 @dataclass(frozen=True)
+class PackageSearchResult:
+    """Metadatos normalizados para resultados remotos de CobraHub."""
+
+    name: str
+    version: str | None = None
+    filename: str | None = None
+    checksum: str | None = None
+    download_url: str | None = None
+    remote_id: str | None = None
+
+    def as_dict(self) -> dict[str, str]:
+        """Devuelve solo los campos disponibles para mantener compatibilidad JSON."""
+        values = {
+            "name": self.name,
+            "version": self.version,
+            "filename": self.filename,
+            "checksum": self.checksum,
+            "download_url": self.download_url,
+            "remote_id": self.remote_id,
+        }
+        return {key: value for key, value in values.items() if value is not None}
+
+
+@dataclass(frozen=True)
 class PackageInspection:
     path: Path
     manifest: dict[str, Any]

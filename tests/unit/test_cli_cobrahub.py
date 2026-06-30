@@ -653,6 +653,99 @@ class _PackageStreamingResponse:
 def _sha256_bytes(data):
     return hashlib.sha256(data).hexdigest()
 
+@pytest.mark.timeout(5)
+def test_buscar_paquetes_normaliza_metadatos_disponibles(monkeypatch):
+    class Response:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            return False
+
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {
+                "results": [
+                    {
+                        "nombre": "demo",
+                        "version": "2.0.0",
+                        "archivo": "demo-2.0.0.co",
+                        "sha256": "abc123",
+                        "url": "https://example.test/demo-2.0.0.co",
+                        "id": "pkg-1",
+                    }
+                ]
+            }
+
+    class Session:
+        def get(self, url, params, timeout):
+            return Response()
+
+    monkeypatch.setattr(
+        cobrahub_client.CobraHubClient,
+        "_configurar_sesion",
+        lambda self: Session(),
+    )
+
+    client = cobrahub_client.CobraHubClient()
+
+    assert client.buscar_paquetes("demo") == [
+        {
+            "name": "demo",
+            "version": "2.0.0",
+            "filename": "demo-2.0.0.co",
+            "checksum": "abc123",
+            "download_url": "https://example.test/demo-2.0.0.co",
+            "remote_id": "pkg-1",
+        }
+    ]
+
+
+@pytest.mark.timeout(5)
+def test_instalar_paquete_cache_versionada_si_servidor_entrega_version(tmp_path, monkeypatch):
+    cache_dir = tmp_path / "cache"
+    install_dir = tmp_path / "instalados"
+    monkeypatch.setenv("COBRAHUB_CACHE_DIR", str(cache_dir))
+    monkeypatch.setenv("COBRAHUB_INSTALL_DIR", str(install_dir))
+
+    client = cobrahub_client.CobraHubClient()
+    contenido = b"paquete-versionado"
+    response = _PackageStreamingResponse(client, [contenido], _sha256_bytes(contenido))
+    response.headers["X-Package-Version"] = "2.1.0"
+    client.session.get = MagicMock(return_value=response)
+
+    with patch("pcobra.cobra.packaging.extraer_paquete") as extraer:
+        ok = client.instalar_paquete("demo")
+
+    assert ok
+    cache_path = cache_dir / "demo-2.1.0.co"
+    assert cache_path.read_bytes() == contenido
+    assert not (cache_dir / "demo.co").exists()
+    extraer.assert_called_once_with(cache_path, install_dir / "demo")
+
+
+@pytest.mark.timeout(5)
+def test_instalar_paquete_cache_legacy_si_servidor_no_entrega_version(tmp_path, monkeypatch):
+    cache_dir = tmp_path / "cache"
+    install_dir = tmp_path / "instalados"
+    monkeypatch.setenv("COBRAHUB_CACHE_DIR", str(cache_dir))
+    monkeypatch.setenv("COBRAHUB_INSTALL_DIR", str(install_dir))
+
+    client = cobrahub_client.CobraHubClient()
+    contenido = b"paquete-legacy"
+    response = _PackageStreamingResponse(client, [contenido], _sha256_bytes(contenido))
+    client.session.get = MagicMock(return_value=response)
+
+    with patch("pcobra.cobra.packaging.extraer_paquete") as extraer:
+        ok = client.instalar_paquete("demo")
+
+    assert ok
+    cache_path = cache_dir / "demo.co"
+    assert cache_path.read_bytes() == contenido
+    extraer.assert_called_once_with(cache_path, install_dir / "demo")
+
 
 @pytest.mark.timeout(5)
 def test_instalar_paquete_descarga_valida(tmp_path, monkeypatch):
