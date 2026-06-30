@@ -32,32 +32,39 @@ contra CobraHub:
 
       cobra paquete validar dist/demo.co
 
-4. Inspeccionar metadatos y archivos incluidos antes de publicar o instalar:
+4. Verificar explícitamente la integridad antes de publicar o instalar. El
+   comando devuelve código ``0`` si los checksums son válidos y ``1`` si falla:
+
+   .. code-block:: bash
+
+      cobra paquete verificar dist/demo.co
+
+5. Inspeccionar metadatos y archivos incluidos antes de publicar o instalar:
 
    .. code-block:: bash
 
       cobra paquete inspeccionar dist/demo.co
 
-5. Extraer el contenido en una carpeta local cuando necesites auditarlo o
+6. Extraer el contenido en una carpeta local cuando necesites auditarlo o
    reutilizarlo:
 
    .. code-block:: bash
 
       cobra paquete extraer dist/demo.co salida/demo
 
-6. Publicar el paquete en CobraHub:
+7. Publicar el paquete en CobraHub:
 
    .. code-block:: bash
 
       cobra hub publicar dist/demo.co
 
-7. Buscar paquetes disponibles:
+8. Buscar paquetes disponibles:
 
    .. code-block:: bash
 
       cobra hub buscar demo
 
-8. Instalar un paquete desde CobraHub:
+9. Instalar un paquete desde CobraHub:
 
    .. code-block:: bash
 

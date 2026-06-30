@@ -179,3 +179,50 @@ def test_es_paquete_cobra_acepta_zip_con_manifest(tmp_path: Path):
     from pcobra.cobra.packaging import es_paquete_cobra
 
     assert es_paquete_cobra(paquete) is True
+
+
+def _corromper_contenido_paquete(paquete: Path, nombre: str, contenido: bytes) -> None:
+    original = paquete.with_suffix(".tmp.co")
+    paquete.rename(original)
+    with zipfile.ZipFile(original) as src, zipfile.ZipFile(paquete, "w", zipfile.ZIP_DEFLATED) as dst:
+        for item in src.infolist():
+            data = src.read(item.filename)
+            if item.filename == nombre:
+                data = contenido
+            dst.writestr(item, data)
+    original.unlink()
+
+
+def test_cli_paquete_verificar_integridad_exitosa(tmp_path: Path, capsys):
+    from argparse import Namespace
+
+    from pcobra.cobra.cli.commands.package_cmd import PaqueteCommand
+
+    proyecto = tmp_path / "demo"
+    crear_paquete(proyecto, nombre="demo", version="1.0.0")
+    (proyecto / "src" / "main.cobra").write_text("imprimir('hola')\n", encoding="utf-8")
+    paquete = construir_paquete(proyecto, tmp_path / "demo.co")
+
+    codigo = PaqueteCommand().run(Namespace(accion="verificar", paquete=paquete))
+
+    salida = capsys.readouterr().out
+    assert codigo == 0
+    assert "Integridad válida" in salida
+
+
+def test_cli_paquete_verificar_integridad_falla_por_checksum_alterado(tmp_path: Path, capsys):
+    from argparse import Namespace
+
+    from pcobra.cobra.cli.commands.package_cmd import PaqueteCommand
+
+    proyecto = tmp_path / "demo"
+    crear_paquete(proyecto, nombre="demo", version="1.0.0")
+    (proyecto / "src" / "main.cobra").write_text("imprimir('hola')\n", encoding="utf-8")
+    paquete = construir_paquete(proyecto, tmp_path / "demo.co")
+    _corromper_contenido_paquete(paquete, "src/main.cobra", b"imprimir('adios')\n")
+
+    codigo = PaqueteCommand().run(Namespace(accion="verificar", paquete=paquete))
+
+    salida = capsys.readouterr().out
+    assert codigo == 1
+    assert "Integridad fallida" in salida

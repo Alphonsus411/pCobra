@@ -1124,6 +1124,7 @@ Comandos nuevos:
 cobra paquete crear mi_paquete --nombre demo --version 0.1.0
 cobra paquete construir mi_paquete dist/demo.co
 cobra paquete validar dist/demo.co
+cobra paquete verificar dist/demo.co
 cobra paquete inspeccionar dist/demo.co
 cobra paquete extraer dist/demo.co ./vendor/demo
 cobra hub publicar dist/demo.co
