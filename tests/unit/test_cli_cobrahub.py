@@ -31,7 +31,9 @@ class _PatchedSession:
 
         if isinstance(getattr(resp, "__enter__", None), MagicMock):
             resp.__enter__ = lambda *a, **k: resp
-        if isinstance(getattr(resp, "__exit__", None), MagicMock) or not hasattr(resp, "__exit__"):
+        if isinstance(getattr(resp, "__exit__", None), MagicMock) or not hasattr(
+            resp, "__exit__"
+        ):
             resp.__exit__ = lambda *a, **k: False
 
         return resp
@@ -50,7 +52,9 @@ def _use_patched_session(monkeypatch):
         return _PatchedSession()
 
     monkeypatch.setattr(cobrahub_client.CobraHubClient, "_configurar_sesion", _factory)
-    monkeypatch.setattr(cobrahub_client, "_original_configurar_sesion", original, raising=False)
+    monkeypatch.setattr(
+        cobrahub_client, "_original_configurar_sesion", original, raising=False
+    )
 
     if modules_cmd.yaml is None and "yaml" in sys.modules:
         modules_cmd.yaml = sys.modules["yaml"]
@@ -79,8 +83,10 @@ def test_cli_modulos_publicar(tmp_path):
     archivo = tmp_path / "m.co"
     archivo.write_text("var x = 1")
     args = type("obj", (), {"accion": "publicar", "ruta": str(archivo)})
-    with patch("cobra.cli.cobrahub_client.requests.post") as mock_post, \
-            patch("sys.stdout", new_callable=StringIO) as out:
+    with (
+        patch("cobra.cli.cobrahub_client.requests.post") as mock_post,
+        patch("sys.stdout", new_callable=StringIO) as out,
+    ):
         mock_resp = MagicMock()
         mock_resp.raise_for_status.return_value = None
         mock_post.return_value = mock_resp
@@ -101,8 +107,10 @@ def test_cli_modulos_buscar(tmp_path, monkeypatch):
     monkeypatch.setattr(modules_cmd, "MODULE_MAP_PATH", str(mod_file))
     monkeypatch.setattr(modules_cmd, "LOCK_FILE", mod_file)
     args = type("obj", (), {"accion": "buscar", "nombre": "remote.co"})
-    with patch("cobra.cli.cobrahub_client.requests.get") as mock_get, \
-            patch("sys.stdout", new_callable=StringIO) as out:
+    with (
+        patch("cobra.cli.cobrahub_client.requests.get") as mock_get,
+        patch("sys.stdout", new_callable=StringIO) as out,
+    ):
         response = MagicMock()
         response.raise_for_status.return_value = None
         response.content = b"data"
@@ -122,8 +130,10 @@ def test_publicar_modulo_url_insegura(tmp_path, monkeypatch):
     mod = tmp_path / "m.co"
     mod.write_text("var x = 1")
     monkeypatch.setattr(cobrahub_client, "COBRAHUB_URL", "http://inseguro/api")
-    with patch("cobra.cli.cobrahub_client.mostrar_error") as err, \
-            patch("cobra.cli.cobrahub_client.requests.post") as mock_post:
+    with (
+        patch("cobra.cli.cobrahub_client.mostrar_error") as err,
+        patch("cobra.cli.cobrahub_client.requests.post") as mock_post,
+    ):
         ok = cobrahub_client.publicar_modulo(str(mod))
     assert not ok
     err.assert_called_once()
@@ -136,8 +146,10 @@ def test_descargar_modulo_url_insegura(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     destino = "out.co"
     monkeypatch.setattr(cobrahub_client, "COBRAHUB_URL", "http://inseguro/api")
-    with patch("cobra.cli.cobrahub_client.mostrar_error") as err, \
-            patch("cobra.cli.cobrahub_client.requests.get") as mock_get:
+    with (
+        patch("cobra.cli.cobrahub_client.mostrar_error") as err,
+        patch("cobra.cli.cobrahub_client.requests.get") as mock_get,
+    ):
         ok = cobrahub_client.descargar_modulo("m.co", destino)
     assert not ok
     err.assert_called_once()
@@ -148,8 +160,10 @@ def test_descargar_modulo_url_insegura(tmp_path, monkeypatch):
 @pytest.mark.timeout(5)
 def test_descargar_modulo_ruta_invalida_absoluta(tmp_path):
     destino = tmp_path / "m.co"
-    with patch("cobra.cli.cobrahub_client.mostrar_error") as err, \
-            patch("cobra.cli.cobrahub_client.requests.get") as mock_get:
+    with (
+        patch("cobra.cli.cobrahub_client.mostrar_error") as err,
+        patch("cobra.cli.cobrahub_client.requests.get") as mock_get,
+    ):
         ok = cobrahub_client.descargar_modulo("m.co", str(destino))
     assert not ok
     err.assert_called_once()
@@ -160,8 +174,10 @@ def test_descargar_modulo_ruta_invalida_absoluta(tmp_path):
 def test_descargar_modulo_ruta_invalida_traversal(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     destino = "../salir.co"
-    with patch("cobra.cli.cobrahub_client.mostrar_error") as err, \
-            patch("cobra.cli.cobrahub_client.requests.get") as mock_get:
+    with (
+        patch("cobra.cli.cobrahub_client.mostrar_error") as err,
+        patch("cobra.cli.cobrahub_client.requests.get") as mock_get,
+    ):
         ok = cobrahub_client.descargar_modulo("m.co", destino)
     assert not ok
     err.assert_called_once()
@@ -172,8 +188,10 @@ def test_descargar_modulo_ruta_invalida_traversal(tmp_path, monkeypatch):
 def test_descargar_modulo_ruta_invalida_parent(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     destino = "../"
-    with patch("cobra.cli.cobrahub_client.mostrar_error") as err, \
-            patch("cobra.cli.cobrahub_client.requests.get") as mock_get:
+    with (
+        patch("cobra.cli.cobrahub_client.mostrar_error") as err,
+        patch("cobra.cli.cobrahub_client.requests.get") as mock_get,
+    ):
         ok = cobrahub_client.descargar_modulo("m.co", destino)
     assert not ok
     err.assert_called_once()
@@ -183,8 +201,10 @@ def test_descargar_modulo_ruta_invalida_parent(tmp_path, monkeypatch):
 @pytest.mark.timeout(5)
 def test_descargar_modulo_ruta_invalida_tmp_espacios():
     destino = "/tmp/proyecto falso"
-    with patch("cobra.cli.cobrahub_client.mostrar_error") as err, \
-            patch("cobra.cli.cobrahub_client.requests.get") as mock_get:
+    with (
+        patch("cobra.cli.cobrahub_client.mostrar_error") as err,
+        patch("cobra.cli.cobrahub_client.requests.get") as mock_get,
+    ):
         ok = cobrahub_client.descargar_modulo("m.co", destino)
     assert not ok
     err.assert_called_once()
@@ -241,8 +261,10 @@ def test_descargar_modulo_ruta_parent_fuera_base(tmp_path, monkeypatch):
     base.mkdir()
     destino = base / ".." / "escape" / "m.co"
 
-    with patch("cobra.cli.cobrahub_client.mostrar_error") as err, \
-            patch("cobra.cli.cobrahub_client.requests.get") as mock_get:
+    with (
+        patch("cobra.cli.cobrahub_client.mostrar_error") as err,
+        patch("cobra.cli.cobrahub_client.requests.get") as mock_get,
+    ):
         ok = cobrahub_client.descargar_modulo(
             "m.co", str(destino), base_permitida=str(base)
         )
@@ -264,8 +286,10 @@ def test_descargar_modulo_ruta_symlink_fuera_base(tmp_path, monkeypatch):
     enlace = base / "link.co"
     os.symlink(destino_real, enlace)
 
-    with patch("cobra.cli.cobrahub_client.mostrar_error") as err, \
-            patch("cobra.cli.cobrahub_client.requests.get") as mock_get:
+    with (
+        patch("cobra.cli.cobrahub_client.mostrar_error") as err,
+        patch("cobra.cli.cobrahub_client.requests.get") as mock_get,
+    ):
         ok = cobrahub_client.descargar_modulo(
             "m.co", str(enlace), base_permitida=str(base)
         )
@@ -401,9 +425,11 @@ def test_descargar_modulo_whitelist_insensible_mayusculas(tmp_path, monkeypatch)
 def test_publicar_modulo_permission_error(tmp_path):
     archivo = tmp_path / "m.co"
     archivo.write_text("var x = 1")
-    with patch("cobra.cli.cobrahub_client.mostrar_error") as err, \
-            patch("cobra.cli.cobrahub_client.requests.post") as mock_post, \
-            patch("builtins.open", side_effect=PermissionError):
+    with (
+        patch("cobra.cli.cobrahub_client.mostrar_error") as err,
+        patch("cobra.cli.cobrahub_client.requests.post") as mock_post,
+        patch("builtins.open", side_effect=PermissionError),
+    ):
         ok = cobrahub_client.publicar_modulo(str(archivo))
     assert not ok
     err.assert_called_once()
@@ -434,9 +460,11 @@ def test_publicar_modulo_duplicado(tmp_path):
 def test_descargar_modulo_permission_error(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     destino = "out.co"
-    with patch("cobra.cli.cobrahub_client.mostrar_error") as err, \
-            patch("cobra.cli.cobrahub_client.requests.get") as mock_get, \
-            patch("builtins.open", side_effect=PermissionError):
+    with (
+        patch("cobra.cli.cobrahub_client.mostrar_error") as err,
+        patch("cobra.cli.cobrahub_client.requests.get") as mock_get,
+        patch("builtins.open", side_effect=PermissionError),
+    ):
         resp = MagicMock()
         resp.raise_for_status.return_value = None
         resp.content = b"data"
@@ -455,8 +483,10 @@ def test_descargar_modulo_symlink(tmp_path, monkeypatch):
     destino_real.write_text("")
     enlace = tmp_path / "link.co"
     enlace.symlink_to(destino_real)
-    with patch("cobra.cli.cobrahub_client.mostrar_error") as err, \
-            patch("cobra.cli.cobrahub_client.requests.get") as mock_get:
+    with (
+        patch("cobra.cli.cobrahub_client.mostrar_error") as err,
+        patch("cobra.cli.cobrahub_client.requests.get") as mock_get,
+    ):
         ok = cobrahub_client.descargar_modulo("m.co", str(enlace))
     assert not ok
     err.assert_called_once()
@@ -469,8 +499,10 @@ def test_publicar_modulo_host_no_permitido(tmp_path, monkeypatch):
     archivo.write_text("var x = 1")
     monkeypatch.setenv("COBRA_HOST_WHITELIST", "cobrahub.example.com")
     monkeypatch.setattr(cobrahub_client, "COBRAHUB_URL", "https://otro.com/api")
-    with patch("cobra.cli.cobrahub_client.mostrar_error") as err, \
-            patch("cobra.cli.cobrahub_client.requests.post") as mock_post:
+    with (
+        patch("cobra.cli.cobrahub_client.mostrar_error") as err,
+        patch("cobra.cli.cobrahub_client.requests.post") as mock_post,
+    ):
         ok = cobrahub_client.publicar_modulo(str(archivo))
     assert not ok
     err.assert_called_once()
@@ -484,33 +516,44 @@ def test_descargar_modulo_host_no_permitido(tmp_path, monkeypatch):
     destino = "out.co"
     monkeypatch.setenv("COBRA_HOST_WHITELIST", "cobrahub.example.com")
     monkeypatch.setattr(cobrahub_client, "COBRAHUB_URL", "https://otro.com/api")
-    with patch("cobra.cli.cobrahub_client.mostrar_error") as err, \
-            patch("cobra.cli.cobrahub_client.requests.get") as mock_get:
+    with (
+        patch("cobra.cli.cobrahub_client.mostrar_error") as err,
+        patch("cobra.cli.cobrahub_client.requests.get") as mock_get,
+    ):
         ok = cobrahub_client.descargar_modulo("m.co", destino)
     assert not ok
     err.assert_called_once()
     assert "Host" in err.call_args[0][0]
     mock_get.assert_not_called()
 
+
 @pytest.mark.timeout(5)
 def test_get_validated_base_url_prioriza_parametro_sobre_entorno(monkeypatch):
     monkeypatch.setenv("COBRAHUB_URL", "https://entorno.example.com/api")
 
-    client = cobrahub_client.CobraHubClient(base_url="https://inyectada.example.com/api")
+    client = cobrahub_client.CobraHubClient(
+        base_url="https://inyectada.example.com/api"
+    )
 
     assert client.base_url == "https://inyectada.example.com/api"
 
 
 @pytest.mark.timeout(5)
-def test_funciones_conveniencia_no_modifican_cobrahub_url_en_entorno(tmp_path, monkeypatch):
+def test_funciones_conveniencia_no_modifican_cobrahub_url_en_entorno(
+    tmp_path, monkeypatch
+):
     monkeypatch.delenv("COBRAHUB_URL", raising=False)
-    monkeypatch.setattr(cobrahub_client, "COBRAHUB_URL", "https://inyectada.example.com/api")
+    monkeypatch.setattr(
+        cobrahub_client, "COBRAHUB_URL", "https://inyectada.example.com/api"
+    )
 
     archivo = tmp_path / "m.co"
     archivo.write_text("var x = 1")
 
-    with patch("cobra.cli.cobrahub_client.requests.post") as mock_post, \
-            patch("cobra.cli.cobrahub_client.requests.get") as mock_get:
+    with (
+        patch("cobra.cli.cobrahub_client.requests.post") as mock_post,
+        patch("cobra.cli.cobrahub_client.requests.get") as mock_get,
+    ):
         post_resp = MagicMock()
         post_resp.__enter__.return_value = post_resp
         post_resp.__exit__.return_value = False
@@ -530,5 +573,51 @@ def test_funciones_conveniencia_no_modifican_cobrahub_url_en_entorno(tmp_path, m
         assert "COBRAHUB_URL" not in os.environ
 
         destino = tmp_path / "out.co"
-        assert cobrahub_client.descargar_modulo("m.co", str(destino), base_permitida=str(tmp_path))
+        assert cobrahub_client.descargar_modulo(
+            "m.co", str(destino), base_permitida=str(tmp_path)
+        )
         assert "COBRAHUB_URL" not in os.environ
+
+
+def test_metodos_paquete_estan_definidos_en_clase():
+    assert "publicar_paquete" in cobrahub_client.CobraHubClient.__dict__
+    assert "buscar_paquetes" in cobrahub_client.CobraHubClient.__dict__
+    assert "instalar_paquete" in cobrahub_client.CobraHubClient.__dict__
+    assert not hasattr(cobrahub_client, "_publicar_paquete")
+    assert not hasattr(cobrahub_client, "_buscar_paquetes")
+    assert not hasattr(cobrahub_client, "_instalar_paquete")
+
+
+def test_buscar_paquetes_usa_metodo_real_de_clase(monkeypatch):
+    class Response:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            return False
+
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {"results": [{"name": "demo", "version": "1.0.0"}]}
+
+    class Session:
+        def get(self, url, params, timeout):
+            assert url == "https://cobrahub.example.com/api/paquetes"
+            assert params == {"q": "demo"}
+            assert timeout == (
+                cobrahub_client.CobraHubClient.CONNECT_TIMEOUT,
+                cobrahub_client.CobraHubClient.READ_TIMEOUT,
+            )
+            return Response()
+
+    monkeypatch.setattr(
+        cobrahub_client.CobraHubClient,
+        "_configurar_sesion",
+        lambda self: Session(),
+    )
+
+    client = cobrahub_client.CobraHubClient()
+
+    assert client.buscar_paquetes("demo") == [{"name": "demo", "version": "1.0.0"}]
