@@ -15,7 +15,9 @@ from pcobra.cobra.packaging import (
     inspeccionar_paquete,
     manifest_from_dict,
     manifest_to_dict,
+    normalizar_nombre_paquete,
     validar_paquete,
+    validar_version_paquete,
 )
 
 
@@ -75,6 +77,60 @@ def test_package_manifest_rechaza_formato_no_soportado():
                 "checksums": {},
             }
         )
+
+
+def test_normalizar_nombre_paquete_aplica_politica_documentada():
+    assert (
+        normalizar_nombre_paquete("  Paquete Demo_1.Modulo  ")
+        == "paquete-demo_1.modulo"
+    )
+
+
+@pytest.mark.parametrize(
+    "nombre",
+    [
+        "",
+        "   ",
+        "demo/evil",
+        r"demo\evil",
+        "demo..evil",
+        ".demo",
+        "demo.",
+        "demo@evil",
+        "démø",
+    ],
+)
+def test_normalizar_nombre_paquete_rechaza_nombres_invalidos(nombre):
+    with pytest.raises(ValueError, match="Nombre de paquete inválido"):
+        normalizar_nombre_paquete(nombre)
+
+
+def test_validar_version_paquete_acepta_semver_simple():
+    assert validar_version_paquete(" 1.2.3 ") == "1.2.3"
+    assert validar_version_paquete("1.2.3-beta.1+build.5") == "1.2.3-beta.1+build.5"
+
+
+@pytest.mark.parametrize(
+    "version",
+    ["", "1", "1.2", "01.2.3", "1.2.3.4", "v1.2.3", "1.2.3 beta"],
+)
+def test_validar_version_paquete_rechaza_versiones_invalidas(version):
+    with pytest.raises(ValueError, match="Versión de paquete inválida"):
+        validar_version_paquete(version)
+
+
+def test_crear_y_construir_paquete_normalizan_identidad_consistentemente(
+    tmp_path: Path,
+):
+    proyecto = tmp_path / "demo"
+
+    crear_paquete(proyecto, nombre="Paquete Demo", version="1.0.0")
+    paquete = construir_paquete(proyecto, version="2.0.0")
+
+    manifest = inspeccionar_paquete(paquete).manifest
+    assert manifest["name"] == "paquete-demo"
+    assert manifest["version"] == "2.0.0"
+    assert paquete.name == "paquete-demo-2.0.0.co"
 
 
 def test_packaging_no_importa_lexer_parser():

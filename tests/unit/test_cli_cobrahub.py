@@ -652,8 +652,6 @@ class _PackageStreamingResponse:
         raise AssertionError("La instalación debe descargar el paquete en streaming")
 
 
-
-
 def _paquete_cobra_bytes(label: str = "demo") -> bytes:
     payload = f"imprimir('{label}')\n".encode("utf-8")
     checksum = hashlib.sha256(payload).hexdigest()
@@ -670,8 +668,10 @@ def _paquete_cobra_bytes(label: str = "demo") -> bytes:
         zf.writestr("src/main.cobra", payload)
     return buffer.getvalue()
 
+
 def _sha256_bytes(data):
     return hashlib.sha256(data).hexdigest()
+
 
 @pytest.mark.timeout(5)
 def test_buscar_paquetes_normaliza_metadatos_disponibles(monkeypatch):
@@ -724,7 +724,9 @@ def test_buscar_paquetes_normaliza_metadatos_disponibles(monkeypatch):
 
 
 @pytest.mark.timeout(5)
-def test_instalar_paquete_cache_versionada_si_servidor_entrega_version(tmp_path, monkeypatch):
+def test_instalar_paquete_cache_versionada_si_servidor_entrega_version(
+    tmp_path, monkeypatch
+):
     cache_dir = tmp_path / "cache"
     install_dir = tmp_path / "instalados"
     monkeypatch.setenv("COBRAHUB_CACHE_DIR", str(cache_dir))
@@ -747,7 +749,34 @@ def test_instalar_paquete_cache_versionada_si_servidor_entrega_version(tmp_path,
 
 
 @pytest.mark.timeout(5)
-def test_instalar_paquete_cache_legacy_si_servidor_no_entrega_version(tmp_path, monkeypatch):
+def test_instalar_paquete_normaliza_nombre_y_version_para_cache_e_instalacion(
+    tmp_path, monkeypatch
+):
+    cache_dir = tmp_path / "cache"
+    install_dir = tmp_path / "instalados"
+    monkeypatch.setenv("COBRAHUB_CACHE_DIR", str(cache_dir))
+    monkeypatch.setenv("COBRAHUB_INSTALL_DIR", str(install_dir))
+
+    client = cobrahub_client.CobraHubClient()
+    contenido = _paquete_cobra_bytes("paquete-normalizado")
+    response = _PackageStreamingResponse(client, [contenido], _sha256_bytes(contenido))
+    client.session.get = MagicMock(return_value=response)
+
+    with patch("pcobra.cobra.packaging.extraer_paquete") as extraer:
+        ok = client.instalar_paquete("Demo Package", version=" 1.2.3 ")
+
+    assert ok
+    cache_path = cache_dir / "demo-package-1.2.3.co"
+    assert cache_path.read_bytes() == contenido
+    client.session.get.assert_called_once()
+    assert client.session.get.call_args.args[0].endswith("/paquetes/demo-package")
+    assert client.session.get.call_args.kwargs["params"] == {"version": "1.2.3"}
+    extraer.assert_called_once_with(cache_path, install_dir / "demo-package")
+
+
+def test_instalar_paquete_cache_legacy_si_servidor_no_entrega_version(
+    tmp_path, monkeypatch
+):
     cache_dir = tmp_path / "cache"
     install_dir = tmp_path / "instalados"
     monkeypatch.setenv("COBRAHUB_CACHE_DIR", str(cache_dir))

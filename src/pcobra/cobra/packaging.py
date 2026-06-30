@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import shutil
 import zipfile
 from dataclasses import dataclass
@@ -19,6 +20,12 @@ PACKAGE_FORMAT = "cobra-package-v1"
 DEFAULT_CACHE_DIR = Path.home() / ".cobra" / "hub" / "cache"
 DEFAULT_INSTALL_DIR = Path.home() / ".cobra" / "packages"
 MAX_PACKAGE_SIZE = 50 * 1024 * 1024
+_PACKAGE_NAME_RE = re.compile(r"^[a-z0-9_.-]+$")
+_SIMPLE_SEMVER_RE = re.compile(
+    r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)"
+    r"(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?"
+    r"(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$"
+)
 
 
 @dataclass(frozen=True)
@@ -74,8 +81,8 @@ def manifest_from_dict(data: dict[str, Any]) -> PackageManifest:
 
     return PackageManifest(
         format=str(package_format),
-        name=str(name),
-        version=str(version),
+        name=normalizar_nombre_paquete(str(name)),
+        version=validar_version_paquete(str(version)),
         files=[str(file) for file in files],
         checksums={str(name): checksum for name, checksum in checksums.items()},
         description=(
@@ -150,11 +157,43 @@ class PackageInspection:
     checksum: str
 
 
-def _safe_name(name: str) -> str:
-    normalized = name.strip().replace(" ", "-")
-    if not normalized or any(part in {"..", ""} for part in normalized.split("/")):
+def normalizar_nombre_paquete(nombre: str) -> str:
+    """Normaliza y valida la identidad pública de un paquete Cobra.
+
+    Política de nombres:
+    - se recortan espacios externos y se convierten espacios internos a ``-``;
+    - el resultado siempre se guarda en minúsculas;
+    - solo se admiten letras ASCII, números, ``_``, ``-`` y ``.``;
+    - no se admiten separadores de ruta, segmentos vacíos separados por ``.`` ni
+      segmentos ``..`` para evitar ambigüedad o traversal en cachés/instalación.
+    """
+    normalized = str(nombre).strip().lower().replace(" ", "-")
+    if not normalized:
+        raise ValueError("Nombre de paquete inválido")
+    if "/" in normalized or "\\" in normalized:
+        raise ValueError("Nombre de paquete inválido")
+    if not _PACKAGE_NAME_RE.fullmatch(normalized):
+        raise ValueError("Nombre de paquete inválido")
+    if any(part in {"", ".."} for part in normalized.split(".")):
         raise ValueError("Nombre de paquete inválido")
     return normalized
+
+
+def validar_version_paquete(version: str) -> str:
+    """Valida y devuelve una versión SemVer simple para paquetes Cobra.
+
+    La versión debe seguir ``MAJOR.MINOR.PATCH`` con enteros no negativos sin
+    ceros a la izquierda, y puede incluir sufijo prerelease ``-...`` y metadatos
+    de build ``+...`` compatibles con SemVer.
+    """
+    normalized = str(version).strip()
+    if not normalized or not _SIMPLE_SEMVER_RE.fullmatch(normalized):
+        raise ValueError("Versión de paquete inválida")
+    return normalized
+
+
+def _safe_name(name: str) -> str:
+    return normalizar_nombre_paquete(name)
 
 
 def _sha256_file(path: Path) -> str:
@@ -188,8 +227,8 @@ def crear_paquete(source: str | Path, *, nombre: str, version: str = "0.1.0") ->
     manifest = manifest_to_dict(
         PackageManifest(
             format=PACKAGE_FORMAT,
-            name=_safe_name(nombre),
-            version=version,
+            name=normalizar_nombre_paquete(nombre),
+            version=validar_version_paquete(version),
             files=[],
             checksums={},
         )
@@ -224,7 +263,7 @@ def construir_paquete(
         manifest = PackageManifest(
             format=PACKAGE_FORMAT,
             name=str(nombre or root.name),
-            version=str(version or "0.1.0"),
+            version=validar_version_paquete(str(version or "0.1.0")),
             files=[],
             checksums={},
         )
@@ -237,8 +276,8 @@ def construir_paquete(
     checksums = {p.relative_to(root).as_posix(): _sha256_file(p) for p in files}
     manifest = PackageManifest(
         format=PACKAGE_FORMAT,
-        name=_safe_name(str(nombre or manifest.name or root.name)),
-        version=str(version or manifest.version or "0.1.0"),
+        name=normalizar_nombre_paquete(str(nombre or manifest.name or root.name)),
+        version=validar_version_paquete(str(version or manifest.version or "0.1.0")),
         files=list(checksums),
         checksums=checksums,
         description=manifest.description,
