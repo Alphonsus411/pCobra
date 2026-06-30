@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import ast
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -1079,6 +1080,7 @@ def test_idle_abrir_paquete_extrae_proyecto_minimo(tmp_path: Path) -> None:
     runtime.idle_crear_paquete(project_root, "paquete-demo", version="1.0.0")
     paquete = runtime.idle_construir_paquete(project_root)
     destino = tmp_path / "extraido"
+    destino.mkdir()
 
     extraido = runtime.idle_abrir_paquete(paquete, destino)
 
@@ -1091,6 +1093,87 @@ def test_idle_abrir_paquete_extrae_proyecto_minimo(tmp_path: Path) -> None:
     assert (destino / "assets" / "recurso.txt").read_text(
         encoding="utf-8"
     ) == "recurso\n"
+
+
+def test_idle_validar_paquete_muestra_error_para_paquete_invalido(tmp_path: Path) -> None:
+    paquete = tmp_path / "invalido.co"
+    paquete.write_text("no es un zip cobra", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="paquete Cobra válido"):
+        runtime.idle_validar_paquete(paquete)
+
+
+def test_idle_abrir_paquete_falla_si_destino_no_existe(tmp_path: Path) -> None:
+    project_root = _crear_proyecto_cobra_minimo(tmp_path)
+    runtime.idle_crear_paquete(project_root, "paquete-demo", version="1.0.0")
+    paquete = runtime.idle_construir_paquete(project_root)
+    destino = tmp_path / "destino-inexistente"
+
+    with pytest.raises(FileNotFoundError, match="Destino de extracción inexistente"):
+        runtime.idle_abrir_paquete(paquete, destino)
+
+
+def test_idle_construir_paquete_falla_si_falta_manifest(tmp_path: Path) -> None:
+    project_root = _crear_proyecto_cobra_minimo(tmp_path)
+
+    with pytest.raises(FileNotFoundError, match="Usa 'Crear paquete' antes de construir"):
+        runtime.idle_construir_paquete(project_root)
+
+
+def test_idle_publicar_paquete_expone_fallo_de_publicacion(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    paquete = tmp_path / "paquete.co"
+    paquete.write_text("contenido", encoding="utf-8")
+
+    def publicar_mock(self, ruta: str) -> bool:
+        return False
+
+    monkeypatch.setattr(
+        "pcobra.cobra.cli.cobrahub_client.CobraHubClient.publicar_paquete",
+        publicar_mock,
+    )
+
+    assert runtime.idle_publicar_paquete(paquete) is False
+
+
+def test_botones_idle_de_paquetes_delegan_solo_en_helpers_runtime() -> None:
+    source = Path("src/pcobra/gui/idle.py").read_text(encoding="utf-8")
+    tree = ast.parse(source)
+    package_handlers = {
+        "crear_paquete_handler": "idle_crear_paquete",
+        "abrir_paquete_handler": "idle_abrir_paquete",
+        "validar_paquete_handler": "idle_validar_paquete",
+        "construir_paquete_handler": "idle_construir_paquete",
+        "publicar_paquete_handler": "idle_publicar_paquete",
+    }
+    handler_nodes = {
+        node.name: node
+        for node in ast.walk(tree)
+        if isinstance(node, ast.FunctionDef) and node.name in package_handlers
+    }
+
+    assert set(handler_nodes) == set(package_handlers)
+    for handler_name, helper_name in package_handlers.items():
+        runtime_calls = [
+            call.func.attr
+            for call in ast.walk(handler_nodes[handler_name])
+            if isinstance(call, ast.Call)
+            and isinstance(call.func, ast.Attribute)
+            and isinstance(call.func.value, ast.Name)
+            and call.func.value.id == "runtime"
+        ]
+        assert helper_name in runtime_calls
+
+    forbidden_imports = {
+        "pcobra.cobra.packaging",
+        "pcobra.cobra.cli.cobrahub_client",
+    }
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ImportFrom):
+            assert node.module not in forbidden_imports
+        elif isinstance(node, ast.Import):
+            assert all(alias.name not in forbidden_imports for alias in node.names)
 
 
 def test_idle_publicar_paquete_usa_cliente_mockeado_sin_red(
@@ -1120,6 +1203,7 @@ def test_helpers_idle_de_paquetes_no_importan_lexer_ni_parser_y_delegan_en_packa
     project_root = _crear_proyecto_cobra_minimo(tmp_path)
     paquete = tmp_path / "paquete.co"
     destino = tmp_path / "destino"
+    destino.mkdir()
     llamadas: list[tuple[str, tuple[object, ...], dict[str, object]]] = []
 
     def fake_crear_paquete(*args, **kwargs):
@@ -1157,6 +1241,9 @@ def test_helpers_idle_de_paquetes_no_importan_lexer_ni_parser_y_delegan_en_packa
         return real_import(name, globals, locals, fromlist, level)
 
     monkeypatch.setattr("builtins.__import__", fail_lexer_parser_import)
+
+    manifest = project_root / "cobra.pkg.json"
+    manifest.write_text("{}", encoding="utf-8")
 
     assert (
         runtime.idle_crear_paquete(project_root, "paquete-demo", version="2.0.0")
