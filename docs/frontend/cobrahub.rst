@@ -72,9 +72,46 @@ contra CobraHub:
 
       cobra hub instalar demo
 
+10. Revisar, limpiar o validar la caché local de paquetes descargados o
+    publicados:
+
+   .. code-block:: bash
+
+      cobra hub cache listar
+      cobra hub cache limpiar
+      cobra hub cache validar
+
 Los comandos ``cobra paquete`` gestionan el ciclo de vida local del artefacto.
 Los comandos ``cobra hub`` usan ese artefacto para publicar, buscar e instalar
 paquetes mediante la API recomendada de CobraHub.
+
+
+Caché local de CobraHub
+-----------------------
+
+CobraHub mantiene una caché local de paquetes ``.co`` para reutilizar artefactos
+descargados o publicados sin contactar de nuevo con el servicio remoto. Por
+defecto se ubica en ``~/.cobra/hub/cache`` y puede redirigirse con la variable
+de entorno ``COBRAHUB_CACHE_DIR``.
+
+Las operaciones disponibles son locales y no rompen los comandos existentes de
+publicación, búsqueda o instalación:
+
+.. code-block:: bash
+
+   cobra hub cache listar
+   cobra hub cache limpiar
+   cobra hub cache limpiar demo
+   cobra hub cache validar
+
+``listar`` muestra los archivos ``.co`` cacheados. ``limpiar`` sin argumentos
+elimina todos los paquetes cacheados; con un nombre elimina ``<nombre>.co`` y
+sus variantes versionadas ``<nombre>-<version>.co``. ``validar`` recorre cada
+``.co`` de la caché y aplica las mismas comprobaciones estructurales y de
+integridad usadas para paquetes Cobra: primero ``es_paquete_cobra()`` y después
+``validar_paquete()``. El comando devuelve código ``0`` si todos los paquetes
+son válidos y ``1`` si al menos una entrada está corrupta o no es un paquete
+Cobra.
 
 Qué cuenta como paquete ``.co``
 ------------------------------
