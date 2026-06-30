@@ -1,4 +1,9 @@
+import hashlib
+import json
+import zipfile
 from pathlib import Path
+
+import pytest
 
 from pcobra.cobra.packaging import (
     MANIFEST_NAME,
@@ -33,3 +38,87 @@ def test_paquete_cobra_conserva_estructura_y_recursos(tmp_path: Path):
 
     destino = extraer_paquete(paquete, tmp_path / "instalado")
     assert (destino / "src" / "main.cobra").read_text(encoding="utf-8") == "imprimir('hola')\n"
+
+
+def _crear_zip_con_manifest(tmp_path: Path, manifest: dict, files: dict[str, bytes] | None = None) -> Path:
+    paquete = tmp_path / "manual.co"
+    with zipfile.ZipFile(paquete, "w", zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr(MANIFEST_NAME, json.dumps(manifest, ensure_ascii=False))
+        for name, content in (files or {}).items():
+            zf.writestr(name, content)
+    return paquete
+
+
+def _sha256(content: bytes) -> str:
+    return hashlib.sha256(content).hexdigest()
+
+
+def test_validar_paquete_rechaza_manifest_incompleto(tmp_path: Path):
+    contenido = b"imprimir('hola')\n"
+    paquete = _crear_zip_con_manifest(
+        tmp_path,
+        {
+            "format": "cobra-package-v1",
+            "name": "demo",
+            "files": ["src/main.cobra"],
+            "checksums": {"src/main.cobra": _sha256(contenido)},
+        },
+        {"src/main.cobra": contenido},
+    )
+
+    with pytest.raises(ValueError, match="version"):
+        validar_paquete(paquete)
+
+
+def test_validar_paquete_rechaza_archivo_extra_no_declarado(tmp_path: Path):
+    contenido = b"imprimir('hola')\n"
+    paquete = _crear_zip_con_manifest(
+        tmp_path,
+        {
+            "format": "cobra-package-v1",
+            "name": "demo",
+            "version": "1.0.0",
+            "files": ["src/main.cobra"],
+            "checksums": {"src/main.cobra": _sha256(contenido)},
+        },
+        {"src/main.cobra": contenido, "extra.txt": b"sobrante"},
+    )
+
+    with pytest.raises(ValueError, match="Archivos no declarados"):
+        validar_paquete(paquete)
+
+
+def test_validar_paquete_rechaza_checksum_ausente(tmp_path: Path):
+    contenido = b"imprimir('hola')\n"
+    paquete = _crear_zip_con_manifest(
+        tmp_path,
+        {
+            "format": "cobra-package-v1",
+            "name": "demo",
+            "version": "1.0.0",
+            "files": ["src/main.cobra"],
+            "checksums": {},
+        },
+        {"src/main.cobra": contenido},
+    )
+
+    with pytest.raises(ValueError, match="Faltan checksums"):
+        validar_paquete(paquete)
+
+
+def test_validar_paquete_rechaza_formato_invalido(tmp_path: Path):
+    contenido = b"imprimir('hola')\n"
+    paquete = _crear_zip_con_manifest(
+        tmp_path,
+        {
+            "format": "cobra-package-v0",
+            "name": "demo",
+            "version": "1.0.0",
+            "files": ["src/main.cobra"],
+            "checksums": {"src/main.cobra": _sha256(contenido)},
+        },
+        {"src/main.cobra": contenido},
+    )
+
+    with pytest.raises(ValueError, match="Formato de paquete no soportado"):
+        validar_paquete(paquete)

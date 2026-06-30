@@ -123,19 +123,70 @@ def inspeccionar_paquete(package: str | Path) -> PackageInspection:
     return PackageInspection(pkg, manifest, names, _sha256_file(pkg))
 
 
+def _normalizar_ruta_paquete(name: str) -> str:
+    normalized = Path(str(name).replace("\\", "/"))
+    if normalized.is_absolute() or ".." in normalized.parts:
+        raise ValueError(f"Ruta insegura en paquete: {name}")
+    normalized_name = normalized.as_posix()
+    if not normalized_name or normalized_name == ".":
+        raise ValueError(f"Ruta inválida en paquete: {name}")
+    return normalized_name
+
+
+def _normalizar_lista_archivos(values: Any, *, field: str) -> set[str]:
+    if not isinstance(values, list):
+        raise ValueError(f"El manifiesto debe declarar {field} como lista")
+    return {_normalizar_ruta_paquete(str(value)) for value in values}
+
+
+def _normalizar_checksums(values: Any) -> dict[str, Any]:
+    if not isinstance(values, dict):
+        raise ValueError("El manifiesto debe declarar checksums como objeto")
+    return {_normalizar_ruta_paquete(str(name)): checksum for name, checksum in values.items()}
+
+
 def validar_paquete(package: str | Path) -> PackageInspection:
     inspection = inspeccionar_paquete(package)
-    checksums = inspection.manifest.get("checksums", {})
+    manifest = inspection.manifest
+    package_format = manifest.get("format")
+    if package_format is None:
+        raise ValueError("El manifiesto no declara format")
+    if package_format != PACKAGE_FORMAT:
+        raise ValueError(f"Formato de paquete no soportado: {package_format}")
+    if not manifest.get("name"):
+        raise ValueError("El manifiesto no declara name")
+    if not manifest.get("version"):
+        raise ValueError("El manifiesto no declara version")
+
+    declared_files = _normalizar_lista_archivos(manifest.get("files"), field="files")
+    checksums = _normalizar_checksums(manifest.get("checksums"))
+
     with zipfile.ZipFile(inspection.path) as zf:
-        for name in inspection.files:
-            path = Path(name)
-            if path.is_absolute() or ".." in path.parts:
-                raise ValueError(f"Ruta insegura en paquete: {name}")
-        for name, expected in checksums.items():
-            if name not in inspection.files:
-                raise ValueError(f"Archivo declarado ausente: {name}")
+        real_files = {
+            _normalizar_ruta_paquete(info.filename)
+            for info in zf.infolist()
+            if not info.is_dir() and info.filename != MANIFEST_NAME
+        }
+        extra_files = real_files - declared_files
+        if extra_files:
+            raise ValueError(f"Archivos no declarados en paquete: {', '.join(sorted(extra_files))}")
+
+        missing_files = declared_files - real_files
+        if missing_files:
+            raise ValueError(f"Archivos declarados ausentes: {', '.join(sorted(missing_files))}")
+
+        checksum_files = set(checksums)
+        undeclared_checksums = checksum_files - declared_files
+        if undeclared_checksums:
+            raise ValueError(f"Checksums para archivos no declarados: {', '.join(sorted(undeclared_checksums))}")
+
+        missing_checksums = declared_files - checksum_files
+        if missing_checksums:
+            raise ValueError(f"Faltan checksums para archivos declarados: {', '.join(sorted(missing_checksums))}")
+
+        for name in sorted(declared_files):
             actual = _sha256_bytes(zf.read(name))
-            if actual != expected:
+            if actual != checksums[name]:
                 raise ValueError(f"Integridad fallida para {name}")
     return inspection
 
