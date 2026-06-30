@@ -3,7 +3,12 @@ from pathlib import Path
 from typing import Any
 
 from pcobra.cobra.cli.cobrahub_client import CobraHubClient
-from pcobra.cobra.cli.cobrahub_packages import CobraHubPackages
+from pcobra.cobra.cli.cobrahub_packages import (
+    CobraHubPackages,
+    limpiar_cache,
+    listar_cache,
+    validar_cache,
+)
 from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
@@ -28,6 +33,12 @@ class HubCommand(BaseCommand):
         inst.add_argument("nombre")
         inst.add_argument("--version")
         inst.add_argument("--destino", type=Path)
+        cache = sub.add_parser("cache", help=_("Gestiona la caché local de paquetes"))
+        cache_sub = cache.add_subparsers(dest="cache_accion", required=True)
+        cache_sub.add_parser("listar", help=_("Lista paquetes cacheados"))
+        limpiar = cache_sub.add_parser("limpiar", help=_("Limpia paquetes cacheados"))
+        limpiar.add_argument("nombre", nargs="?")
+        cache_sub.add_parser("validar", help=_("Valida paquetes cacheados"))
         parser.set_defaults(cmd=self)
         return parser
 
@@ -43,6 +54,38 @@ class HubCommand(BaseCommand):
             return 0
         if args.accion == "instalar":
             destino = str(args.destino) if args.destino else None
-            return 0 if packages.instalar_paquete(args.nombre, destino, args.version) else 1
+            return (
+                0
+                if packages.instalar_paquete(args.nombre, destino, args.version)
+                else 1
+            )
+        if args.accion == "cache":
+            return self._run_cache(args)
         mostrar_error(_("Acción de hub no reconocida"))
+        return 1
+
+    def _run_cache(self, args: Namespace) -> int:
+        """Ejecuta las acciones locales de caché sin contactar con CobraHub."""
+        if args.cache_accion == "listar":
+            for path in listar_cache():
+                mostrar_info(str(path))
+            return 0
+        if args.cache_accion == "limpiar":
+            try:
+                borrados = limpiar_cache(args.nombre)
+            except ValueError as exc:
+                mostrar_error(str(exc))
+                return 1
+            mostrar_info(
+                _("Paquetes eliminados de caché: {total}").format(total=borrados)
+            )
+            return 0
+        if args.cache_accion == "validar":
+            resultados = validar_cache()
+            for path, ok, error in resultados:
+                estado = _("válido") if ok else _("inválido")
+                detalle = f": {error}" if error else ""
+                mostrar_info(f"{path} {estado}{detalle}")
+            return 0 if all(ok for _, ok, _ in resultados) else 1
+        mostrar_error(_("Acción de caché no reconocida"))
         return 1

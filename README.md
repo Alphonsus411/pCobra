@@ -14,6 +14,7 @@ Versión 10.0.13
 - `corelibs.asincrono` incorpora `grupo_tareas` y `reintentar_async`, reexportados en la biblioteca estándar para coordinar corrutinas y reintentos con *backoff*.
 - `corelibs.texto`, `corelibs.numero` y `standard_library.datos` añaden validadores `es_*`, helpers como `prefijo_comun`/`sufijo_comun`, funciones `interpolar`/`envolver_modular` y lectura/escritura de Parquet y Feather.
 - `corelibs.sistema.ejecutar` mantiene la ejecución en modo seguro con listas blancas obligatorias tanto en Python como en los *bindings* nativos.
+- `cobra hub cache listar|limpiar|validar` permite inspeccionar, depurar y verificar la caché local de paquetes `.co` de CobraHub sin romper los comandos actuales de publicación, búsqueda e instalación.
 
 [English version available here](docs/README.en.md)
 
@@ -137,6 +138,19 @@ Fuente normativa de detalle: `docs/contrato_runtime_holobit.md` y `docs/matriz_t
 
 El objetivo de pCobra es brindar a la comunidad hispanohablante una alternativa cercana para aprender y construir software, reduciendo la barrera del idioma y fomentando la colaboración abierta. A medida que evoluciona, el proyecto busca ampliar su ecosistema, mejorar la transpilación y proveer herramientas que sirvan de puente entre la educación y el desarrollo profesional.
 
+
+### Caché local de CobraHub
+
+Los paquetes CobraHub descargados o publicados se guardan como artefactos `.co` en la caché local (`~/.cobra/hub/cache` por defecto, configurable con `COBRAHUB_CACHE_DIR`). La CLI incluye operaciones locales para administrarla:
+
+```bash
+cobra hub cache listar
+cobra hub cache limpiar
+cobra hub cache limpiar demo
+cobra hub cache validar
+```
+
+`listar` muestra los `.co` cacheados, `limpiar` elimina todos o los asociados a un nombre de paquete, y `validar` reutiliza los validadores de paquetes Cobra para comprobar estructura e integridad de cada entrada cacheada.
 
 ## Tabla de Contenidos
 
