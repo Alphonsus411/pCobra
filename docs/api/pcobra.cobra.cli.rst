@@ -40,6 +40,14 @@ pcobra.cobra.cli.cobrahub\_client module
    :show-inheritance:
    :undoc-members:
 
+pcobra.cobra.cli.cobrahub\_packages module
+------------------------------------------
+
+.. automodule:: pcobra.cobra.cli.cobrahub_packages
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 pcobra.cobra.cli.deprecation\_policy module
 -------------------------------------------
 
