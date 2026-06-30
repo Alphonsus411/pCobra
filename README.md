@@ -1144,7 +1144,16 @@ cobra hub buscar demo
 cobra hub instalar demo --destino ./vendor/demo
 ```
 
-Los comandos legacy de `paquete crear` con salida posicional y `paquete instalar` se mantienen como alias compatibles. El IDLE (`cobra gui`) reutiliza la misma lógica de `pcobra.cobra.packaging` para las acciones **Crear paquete**, **Abrir paquete**, **Validar paquete**, **Construir paquete** y **Publicar CobraHub**.
+Los comandos legacy se mantienen por compatibilidad con scripts existentes y no deben eliminarse sin una política de deprecación explícita. La equivalencia actual entre comandos antiguos y recomendados es:
+
+| comando legacy | comando recomendado | estado | notas de compatibilidad |
+| --- | --- | --- | --- |
+| `cobra modulos publicar` | `cobra hub publicar` | Compatibilidad | `modulos` conserva el flujo histórico de módulos sueltos; `hub` publica paquetes `.co` validados. |
+| `cobra modulos buscar` | `cobra hub buscar` o `cobra hub instalar` | Compatibilidad | Usa `hub buscar` para descubrir paquetes y `hub instalar` para descargarlos e instalarlos. |
+| `cobra paquete instalar` | `cobra paquete extraer` | Alias legacy | Alias de extracción/instalación local hacia el destino indicado o `~/.cobra/packages` por defecto. |
+| `cobra paquete crear <fuente> <salida>` | `cobra paquete crear <fuente>` + `cobra paquete construir <fuente> <salida>` | Alias legacy | Mantiene la creación del manifiesto y la construcción del artefacto en una sola invocación. |
+
+El IDLE (`cobra gui`) reutiliza la misma lógica de `pcobra.cobra.packaging` para las acciones **Crear paquete**, **Abrir paquete**, **Validar paquete**, **Construir paquete** y **Publicar CobraHub**.
 
 ### IDLE gráfico
 

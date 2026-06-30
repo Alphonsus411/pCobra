@@ -67,7 +67,20 @@ def filter_commands_for_profile(command_names: Iterable[str], profile: str) -> s
     return names.intersection(allowed)
 
 
+def filter_legacy_commands_for_profile(command_names: Iterable[str], profile: str) -> set[str]:
+    """Devuelve comandos legacy visibles según perfil.
 
+    La superficie v1/legacy queda reservada para sesiones de desarrollo y
+    migración; el perfil público no debe exponer esos comandos.
+    """
+
+    normalized_profile = str(profile).strip().lower() or PROFILE_PUBLIC
+    names = {name.strip().lower() for name in command_names}
+
+    if normalized_profile == PROFILE_DEVELOPMENT:
+        return names
+
+    return set()
 
 
 __all__ = [
@@ -80,4 +93,5 @@ __all__ = [
     "COMMAND_PROFILES",
     "resolve_command_profile",
     "filter_commands_for_profile",
+    "filter_legacy_commands_for_profile",
 ]
