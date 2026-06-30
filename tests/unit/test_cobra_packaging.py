@@ -149,3 +149,33 @@ def test_validar_paquete_rechaza_formato_invalido(tmp_path: Path):
 
     with pytest.raises(ValueError, match="Formato de paquete no soportado"):
         validar_paquete(paquete)
+
+
+def test_es_paquete_cobra_rechaza_co_fuente_texto(tmp_path: Path):
+    fuente = tmp_path / "programa.co"
+    fuente.write_text("imprimir('hola')\n", encoding="utf-8")
+
+    from pcobra.cobra.packaging import es_paquete_cobra
+
+    assert es_paquete_cobra(fuente) is False
+
+
+def test_es_paquete_cobra_rechaza_zip_sin_manifest(tmp_path: Path):
+    paquete = tmp_path / "sin-manifest.co"
+    with zipfile.ZipFile(paquete, "w", zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr("src/main.cobra", "imprimir('hola')\n")
+
+    from pcobra.cobra.packaging import es_paquete_cobra
+
+    assert es_paquete_cobra(paquete) is False
+
+
+def test_es_paquete_cobra_acepta_zip_con_manifest(tmp_path: Path):
+    paquete = tmp_path / "con-manifest.co"
+    with zipfile.ZipFile(paquete, "w", zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr(MANIFEST_NAME, json.dumps({"format": "cobra-package-v1"}))
+        zf.writestr("src/main.cobra", "imprimir('hola')\n")
+
+    from pcobra.cobra.packaging import es_paquete_cobra
+
+    assert es_paquete_cobra(paquete) is True

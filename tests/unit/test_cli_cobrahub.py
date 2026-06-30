@@ -1,9 +1,11 @@
-from io import StringIO
+from io import BytesIO, StringIO
 from unittest.mock import patch, MagicMock
 import os
 import sys
 from types import ModuleType
 import hashlib
+import json
+import zipfile
 import pytest
 import requests
 
@@ -650,6 +652,24 @@ class _PackageStreamingResponse:
         raise AssertionError("La instalación debe descargar el paquete en streaming")
 
 
+
+
+def _paquete_cobra_bytes(label: str = "demo") -> bytes:
+    payload = f"imprimir('{label}')\n".encode("utf-8")
+    checksum = hashlib.sha256(payload).hexdigest()
+    manifest = {
+        "format": "cobra-package-v1",
+        "name": label,
+        "version": "1.0.0",
+        "files": ["src/main.cobra"],
+        "checksums": {"src/main.cobra": checksum},
+    }
+    buffer = BytesIO()
+    with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr("cobra.pkg.json", json.dumps(manifest, ensure_ascii=False))
+        zf.writestr("src/main.cobra", payload)
+    return buffer.getvalue()
+
 def _sha256_bytes(data):
     return hashlib.sha256(data).hexdigest()
 
@@ -711,7 +731,7 @@ def test_instalar_paquete_cache_versionada_si_servidor_entrega_version(tmp_path,
     monkeypatch.setenv("COBRAHUB_INSTALL_DIR", str(install_dir))
 
     client = cobrahub_client.CobraHubClient()
-    contenido = b"paquete-versionado"
+    contenido = _paquete_cobra_bytes("paquete-versionado")
     response = _PackageStreamingResponse(client, [contenido], _sha256_bytes(contenido))
     response.headers["X-Package-Version"] = "2.1.0"
     client.session.get = MagicMock(return_value=response)
@@ -734,7 +754,7 @@ def test_instalar_paquete_cache_legacy_si_servidor_no_entrega_version(tmp_path, 
     monkeypatch.setenv("COBRAHUB_INSTALL_DIR", str(install_dir))
 
     client = cobrahub_client.CobraHubClient()
-    contenido = b"paquete-legacy"
+    contenido = _paquete_cobra_bytes("paquete-legacy")
     response = _PackageStreamingResponse(client, [contenido], _sha256_bytes(contenido))
     client.session.get = MagicMock(return_value=response)
 
@@ -755,8 +775,9 @@ def test_instalar_paquete_descarga_valida(tmp_path, monkeypatch):
     monkeypatch.setenv("COBRAHUB_INSTALL_DIR", str(install_dir))
 
     client = cobrahub_client.CobraHubClient()
-    chunks = [b"paquete-", b"valido"]
-    contenido = b"".join(chunks)
+    contenido = _paquete_cobra_bytes("paquete-valido")
+    midpoint = len(contenido) // 2
+    chunks = [contenido[:midpoint], contenido[midpoint:]]
     response = _PackageStreamingResponse(client, chunks, _sha256_bytes(contenido))
     client.session.get = MagicMock(return_value=response)
 

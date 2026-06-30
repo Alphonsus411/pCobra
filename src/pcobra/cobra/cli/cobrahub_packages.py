@@ -107,11 +107,13 @@ class CobraHubPackages:
 
     def publicar_paquete(self, ruta: str) -> bool:
         """Publica un paquete .co en CobraHub y lo guarda en caché local."""
-        from pcobra.cobra.packaging import validar_paquete
+        from pcobra.cobra.packaging import es_paquete_cobra, validar_paquete
 
         if not self.client._validar_url():
             return False
         try:
+            if not es_paquete_cobra(ruta):
+                raise ValueError("No es un paquete Cobra: debe ser ZIP y contener cobra.pkg.json")
             info = validar_paquete(ruta)
             checksum = info.checksum
             with open(ruta, "rb") as f:
@@ -162,7 +164,7 @@ class CobraHubPackages:
         self, nombre: str, destino: str | None = None, version: str | None = None
     ) -> bool:
         """Descarga, cachea e instala un paquete desde CobraHub."""
-        from pcobra.cobra.packaging import extraer_paquete
+        from pcobra.cobra.packaging import es_paquete_cobra, extraer_paquete
 
         if not self.client._validar_nombre_modulo(nombre) or not self.client._validar_url():
             return False
@@ -200,6 +202,11 @@ class CobraHubPackages:
                 _mostrar_error(_("Verificación de integridad fallida"))
                 return False
 
+            if not es_paquete_cobra(cache_path):
+                os.unlink(cache_path)
+                _mostrar_error(_("La descarga no es un paquete Cobra válido"))
+                return False
+
             install_path = Path(destino).expanduser() if destino else install_dir() / nombre
             extraer_paquete(cache_path, install_path)
             _mostrar_info(_("Paquete instalado en {dest}").format(dest=install_path))
@@ -216,8 +223,10 @@ class CobraHubPackages:
 
     def leer_metadatos(self, ruta: str | Path) -> dict[str, Any]:
         """Lee y devuelve el manifiesto/metadatos de un paquete local ``.co``."""
-        from pcobra.cobra.packaging import validar_paquete
+        from pcobra.cobra.packaging import es_paquete_cobra, validar_paquete
 
+        if not es_paquete_cobra(ruta):
+            raise ValueError("No es un paquete Cobra: debe ser ZIP y contener cobra.pkg.json")
         info = validar_paquete(ruta)
         return dict(info.manifest)
 
