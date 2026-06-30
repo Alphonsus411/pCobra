@@ -133,6 +133,82 @@ def test_validar_paquete_rechaza_checksum_ausente(tmp_path: Path):
         validar_paquete(paquete)
 
 
+def test_validar_paquete_rechaza_checksum_no_string(tmp_path: Path):
+    contenido = b"imprimir('hola')\n"
+    paquete = _crear_zip_con_manifest(
+        tmp_path,
+        {
+            "format": "cobra-package-v1",
+            "name": "demo",
+            "version": "1.0.0",
+            "files": ["src/main.cobra"],
+            "checksums": {"src/main.cobra": 123},
+        },
+        {"src/main.cobra": contenido},
+    )
+
+    with pytest.raises(ValueError, match="Checksum inválido para src/main\\.cobra: debe ser una cadena"):
+        validar_paquete(paquete)
+
+
+def test_validar_paquete_rechaza_checksum_demasiado_corto(tmp_path: Path):
+    contenido = b"imprimir('hola')\n"
+    paquete = _crear_zip_con_manifest(
+        tmp_path,
+        {
+            "format": "cobra-package-v1",
+            "name": "demo",
+            "version": "1.0.0",
+            "files": ["src/main.cobra"],
+            "checksums": {"src/main.cobra": "abc123"},
+        },
+        {"src/main.cobra": contenido},
+    )
+
+    with pytest.raises(ValueError, match="Checksum inválido para src/main\\.cobra: debe tener 64 caracteres"):
+        validar_paquete(paquete)
+
+
+def test_validar_paquete_rechaza_checksum_no_hexadecimal(tmp_path: Path):
+    contenido = b"imprimir('hola')\n"
+    paquete = _crear_zip_con_manifest(
+        tmp_path,
+        {
+            "format": "cobra-package-v1",
+            "name": "demo",
+            "version": "1.0.0",
+            "files": ["src/main.cobra"],
+            "checksums": {"src/main.cobra": "g" * 64},
+        },
+        {"src/main.cobra": contenido},
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="Checksum inválido para src/main\\.cobra: debe contener solo caracteres hexadecimales",
+    ):
+        validar_paquete(paquete)
+
+
+def test_validar_paquete_acepta_checksum_valido(tmp_path: Path):
+    contenido = b"imprimir('hola')\n"
+    paquete = _crear_zip_con_manifest(
+        tmp_path,
+        {
+            "format": "cobra-package-v1",
+            "name": "demo",
+            "version": "1.0.0",
+            "files": ["src/main.cobra"],
+            "checksums": {"src/main.cobra": _sha256(contenido)},
+        },
+        {"src/main.cobra": contenido},
+    )
+
+    info = validar_paquete(paquete)
+
+    assert info.manifest["checksums"]["src/main.cobra"] == _sha256(contenido)
+
+
 def test_validar_paquete_rechaza_formato_invalido(tmp_path: Path):
     contenido = b"imprimir('hola')\n"
     paquete = _crear_zip_con_manifest(
