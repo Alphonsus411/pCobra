@@ -46,10 +46,15 @@ def test_paquete_cobra_conserva_estructura_y_recursos(tmp_path: Path):
     proyecto = tmp_path / "demo"
     crear_paquete(proyecto, nombre="demo", version="1.0.0")
     (proyecto / "src" / "main.cobra").write_text("imprimir('hola')\n", encoding="utf-8")
+    (proyecto / "src" / "helper.co").write_text("funcion ayuda() {}\n", encoding="utf-8")
     (proyecto / "README.md").write_text("# Demo\n", encoding="utf-8")
+    (proyecto / "docs").mkdir()
+    (proyecto / "docs" / "guia.md").write_text("# Guía\n", encoding="utf-8")
     (proyecto / "Dockerfile").write_text("FROM scratch\n", encoding="utf-8")
-    (proyecto / "assets").mkdir()
-    (proyecto / "assets" / "dato.txt").write_text("recurso", encoding="utf-8")
+    (proyecto / "assets" / "imagenes").mkdir(parents=True)
+    (proyecto / "assets" / "imagenes" / "logo.bin").write_bytes(b"\x89PNG recurso")
+    (proyecto / "resources" / "i18n").mkdir(parents=True)
+    (proyecto / "resources" / "i18n" / "es.dat").write_bytes(b"hola=recurso")
 
     paquete = construir_paquete(proyecto, tmp_path / "demo.co")
 
@@ -57,14 +62,20 @@ def test_paquete_cobra_conserva_estructura_y_recursos(tmp_path: Path):
     assert info.manifest["format"] == "cobra-package-v1"
     assert MANIFEST_NAME in info.files
     assert "src/main.cobra" in info.files
+    assert "src/helper.co" in info.files
+    assert "README.md" in info.files
+    assert "docs/guia.md" in info.files
     assert "Dockerfile" in info.files
-    assert "assets/dato.txt" in info.files
+    assert "assets/imagenes/logo.bin" in info.files
+    assert "resources/i18n/es.dat" in info.files
 
     inspeccion = inspeccionar_paquete(paquete)
     assert inspeccion.checksum
 
     destino = extraer_paquete(paquete, tmp_path / "instalado")
     assert (destino / "src" / "main.cobra").read_text(encoding="utf-8") == "imprimir('hola')\n"
+    assert (destino / "assets" / "imagenes" / "logo.bin").read_bytes() == b"\x89PNG recurso"
+    assert (destino / "resources" / "i18n" / "es.dat").read_bytes() == b"hola=recurso"
 
 
 def _crear_zip_con_manifest(tmp_path: Path, manifest: dict, files: dict[str, bytes] | None = None) -> Path:
