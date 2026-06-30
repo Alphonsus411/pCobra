@@ -621,3 +621,126 @@ def test_buscar_paquetes_usa_metodo_real_de_clase(monkeypatch):
     client = cobrahub_client.CobraHubClient()
 
     assert client.buscar_paquetes("demo") == [{"name": "demo", "version": "1.0.0"}]
+
+
+class _PackageStreamingResponse:
+    def __init__(self, client, chunks, checksum=None):
+        self.client = client
+        self.chunks = chunks
+        self.headers = {}
+        if checksum is not None:
+            self.headers["X-Content-Checksum"] = checksum
+        self.iter_calls = []
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *_args):
+        return False
+
+    def raise_for_status(self):
+        return None
+
+    def iter_content(self, chunk_size):
+        self.iter_calls.append(chunk_size)
+        yield from self.chunks
+
+    @property
+    def content(self):  # pragma: no cover - asegura que se use streaming
+        raise AssertionError("La instalación debe descargar el paquete en streaming")
+
+
+def _sha256_bytes(data):
+    return hashlib.sha256(data).hexdigest()
+
+
+@pytest.mark.timeout(5)
+def test_instalar_paquete_descarga_valida(tmp_path, monkeypatch):
+    cache_dir = tmp_path / "cache"
+    install_dir = tmp_path / "instalados"
+    monkeypatch.setenv("COBRAHUB_CACHE_DIR", str(cache_dir))
+    monkeypatch.setenv("COBRAHUB_INSTALL_DIR", str(install_dir))
+
+    client = cobrahub_client.CobraHubClient()
+    chunks = [b"paquete-", b"valido"]
+    contenido = b"".join(chunks)
+    response = _PackageStreamingResponse(client, chunks, _sha256_bytes(contenido))
+    client.session.get = MagicMock(return_value=response)
+
+    with patch("pcobra.cobra.packaging.extraer_paquete") as extraer:
+        ok = client.instalar_paquete("demo")
+
+    assert ok
+    cache_path = cache_dir / "demo.co"
+    assert cache_path.read_bytes() == contenido
+    extraer.assert_called_once_with(cache_path, install_dir / "demo")
+    client.session.get.assert_called_once()
+    assert client.session.get.call_args.kwargs["stream"] is True
+    assert response.iter_calls == [client.CHUNK_SIZE]
+
+
+@pytest.mark.timeout(5)
+def test_instalar_paquete_descarga_demasiado_grande(tmp_path, monkeypatch):
+    cache_dir = tmp_path / "cache"
+    monkeypatch.setenv("COBRAHUB_CACHE_DIR", str(cache_dir))
+
+    client = cobrahub_client.CobraHubClient()
+    monkeypatch.setattr(client, "MAX_FILE_SIZE", 4)
+    response = _PackageStreamingResponse(client, [b"123", b"45"])
+    client.session.get = MagicMock(return_value=response)
+
+    with (
+        patch("pcobra.cobra.packaging.extraer_paquete") as extraer,
+        patch("cobra.cli.cobrahub_client.mostrar_error") as err,
+    ):
+        ok = client.instalar_paquete("demo")
+
+    assert not ok
+    assert not (cache_dir / "demo.co").exists()
+    extraer.assert_not_called()
+    err.assert_called_once()
+
+
+@pytest.mark.timeout(5)
+def test_instalar_paquete_checksum_incorrecto(tmp_path, monkeypatch):
+    cache_dir = tmp_path / "cache"
+    monkeypatch.setenv("COBRAHUB_CACHE_DIR", str(cache_dir))
+
+    client = cobrahub_client.CobraHubClient()
+    response = _PackageStreamingResponse(client, [b"contenido"], "0" * 64)
+    client.session.get = MagicMock(return_value=response)
+
+    with (
+        patch("pcobra.cobra.packaging.extraer_paquete") as extraer,
+        patch("cobra.cli.cobrahub_client.mostrar_error") as err,
+    ):
+        ok = client.instalar_paquete("demo")
+
+    assert not ok
+    assert not (cache_dir / "demo.co").exists()
+    extraer.assert_not_called()
+    err.assert_called_once()
+
+
+@pytest.mark.timeout(5)
+def test_instalar_paquete_limpia_cache_parcial(tmp_path, monkeypatch):
+    cache_dir = tmp_path / "cache"
+    monkeypatch.setenv("COBRAHUB_CACHE_DIR", str(cache_dir))
+
+    client = cobrahub_client.CobraHubClient()
+
+    class _ResponseConFallo(_PackageStreamingResponse):
+        def iter_content(self, chunk_size):
+            self.iter_calls.append(chunk_size)
+            yield b"parcial"
+            raise RuntimeError("conexión interrumpida")
+
+    response = _ResponseConFallo(client, [])
+    client.session.get = MagicMock(return_value=response)
+
+    with patch("pcobra.cobra.packaging.extraer_paquete") as extraer:
+        ok = client.instalar_paquete("demo")
+
+    assert not ok
+    assert not (cache_dir / "demo.co").exists()
+    extraer.assert_not_called()
