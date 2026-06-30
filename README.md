@@ -1109,10 +1109,29 @@ Por defecto el nivel de registro es `INFO`; con `-v` o más se cambia a `DEBUG`:
 cobra -v run programa.co
 ```
 
-Los archivos con extensión ``.cobra`` representan paquetes completos, mientras que los scripts individuales se guardan como ``.co``.
+Los archivos fuente Cobra pueden usar ``.cobra`` o ``.co`` según el flujo histórico del proyecto. Los paquetes publicables de CobraHub también usan extensión ``.co`` como contenedor ZIP con manifiesto ``cobra.pkg.json``; la distinción se realiza en la capa de herramientas, no en el Lexer ni en el Parser.
 
 El subcomando `docs` ejecuta `sphinx-apidoc` para generar la documentación de la API antes de compilar el HTML.
 El subcomando `gui` abre el IDLE gráfico principal y requiere tener instalado Flet.
+
+### Paquetes `.co` y CobraHub
+
+CobraHub funciona ahora como una capa de herramientas independiente para crear, construir, validar, inspeccionar, extraer, publicar, buscar e instalar paquetes `.co`. Un paquete `.co` es un ZIP con manifiesto `cobra.pkg.json`, checksums SHA-256 y estructura de carpetas conservada; puede contener archivos `.cobra`, documentación Markdown, texto, `Dockerfile` y recursos. Esta funcionalidad no cambia la sintaxis de Cobra ni requiere tocar Lexer o Parser.
+
+Comandos nuevos:
+
+```bash
+cobra paquete crear mi_paquete --nombre demo --version 0.1.0
+cobra paquete construir mi_paquete dist/demo.co
+cobra paquete validar dist/demo.co
+cobra paquete inspeccionar dist/demo.co
+cobra paquete extraer dist/demo.co ./vendor/demo
+cobra hub publicar dist/demo.co
+cobra hub buscar demo
+cobra hub instalar demo --destino ./vendor/demo
+```
+
+Los comandos legacy de `paquete crear` con salida posicional y `paquete instalar` se mantienen como alias compatibles. El IDLE (`cobra gui`) reutiliza la misma lógica de `pcobra.cobra.packaging` para las acciones **Crear paquete**, **Abrir paquete**, **Validar paquete**, **Construir paquete** y **Publicar CobraHub**.
 
 ### IDLE gráfico
 

@@ -1614,3 +1614,36 @@ def gui_target_choices() -> tuple[str, ...]:
             f"official={official_targets}; public={PUBLIC_BACKENDS}"
         )
     return deps["target_cli_choices"](set(PUBLIC_BACKENDS) & set(deps["TRANSPILERS"]))
+
+# Acciones de empaquetado CobraHub reutilizadas por CLI e IDLE. Estas funciones
+# son una capa de herramientas sobre archivos, no invocan Lexer ni Parser.
+def idle_crear_paquete(project_root: str | Path, nombre: str, version: str = "0.1.0") -> Path:
+    from pcobra.cobra.packaging import crear_paquete
+
+    root = validar_project_root_idle(project_root)
+    return crear_paquete(root, nombre=nombre, version=version)
+
+
+def idle_validar_paquete(paquete: str | Path):
+    from pcobra.cobra.packaging import validar_paquete
+
+    return validar_paquete(paquete)
+
+
+def idle_construir_paquete(project_root: str | Path, salida: str | Path | None = None) -> Path:
+    from pcobra.cobra.packaging import construir_paquete
+
+    root = validar_project_root_idle(project_root)
+    return construir_paquete(root, salida)
+
+
+def idle_abrir_paquete(paquete: str | Path, destino: str | Path) -> Path:
+    from pcobra.cobra.packaging import extraer_paquete
+
+    return extraer_paquete(paquete, destino)
+
+
+def idle_publicar_paquete(paquete: str | Path) -> bool:
+    from pcobra.cobra.cli.cobrahub_client import CobraHubClient
+
+    return CobraHubClient().publicar_paquete(str(paquete))

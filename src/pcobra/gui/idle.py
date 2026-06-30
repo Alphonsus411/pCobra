@@ -820,6 +820,64 @@ def main(page: "ft.Page"):
         if archivo_activo_permite_accion_cobra(runtime.ACCION_CORRECCION):
             correccion_runtime_handler(e)
 
+
+    def crear_paquete_handler(e):
+        if project_root is None:
+            salida.value = "Abre o crea un proyecto antes de crear un paquete."
+        else:
+            manifest = runtime.idle_crear_paquete(project_root, project_root.name)
+            salida.value = f"Paquete inicializado: {manifest}"
+            reconstruir_arbol()
+        actualizar_pagina()
+
+    def abrir_paquete_handler(e):
+        try:
+            if ruta_input.value:
+                destino = project_root or runtime.resolver_workspace_root_idle()
+                runtime.idle_abrir_paquete(Path(ruta_input.value), destino)
+                salida.value = f"Paquete abierto en: {destino}"
+                reconstruir_arbol()
+            else:
+                salida.value = "Indica la ruta del paquete .co en el campo de ruta."
+        except Exception as exc:
+            salida.value = f"Error abriendo paquete: {exc}"
+        actualizar_pagina()
+
+    def validar_paquete_handler(e):
+        try:
+            paquete = Path(ruta_input.value) if ruta_input.value else None
+            if paquete is None:
+                salida.value = "Indica la ruta del paquete .co en el campo de ruta."
+            else:
+                runtime.idle_validar_paquete(paquete)
+                salida.value = f"Paquete válido: {paquete}"
+        except Exception as exc:
+            salida.value = f"Paquete inválido: {exc}"
+        actualizar_pagina()
+
+    def construir_paquete_handler(e):
+        try:
+            if project_root is None:
+                salida.value = "Abre o crea un proyecto antes de construir un paquete."
+            else:
+                paquete = runtime.idle_construir_paquete(project_root)
+                salida.value = f"Paquete construido: {paquete}"
+        except Exception as exc:
+            salida.value = f"Error construyendo paquete: {exc}"
+        actualizar_pagina()
+
+    def publicar_paquete_handler(e):
+        try:
+            paquete = Path(ruta_input.value) if ruta_input.value else None
+            if paquete is None:
+                salida.value = "Indica la ruta del paquete .co en el campo de ruta."
+            else:
+                ok = runtime.idle_publicar_paquete(paquete)
+                salida.value = "Paquete publicado en CobraHub." if ok else "No se pudo publicar el paquete."
+        except Exception as exc:
+            salida.value = f"Error publicando paquete: {exc}"
+        actualizar_pagina()
+
     reconstruir_arbol()
     sincronizar_estado_visual()
 
@@ -867,6 +925,11 @@ def main(page: "ft.Page"):
             runtime.flet_elevated_button(
                 ft, "Crear carpeta", on_click=crear_carpeta_handler
             ),
+            runtime.flet_elevated_button(ft, "Crear paquete", on_click=crear_paquete_handler),
+            runtime.flet_elevated_button(ft, "Abrir paquete", on_click=abrir_paquete_handler),
+            runtime.flet_elevated_button(ft, "Validar paquete", on_click=validar_paquete_handler),
+            runtime.flet_elevated_button(ft, "Construir paquete", on_click=construir_paquete_handler),
+            runtime.flet_elevated_button(ft, "Publicar CobraHub", on_click=publicar_paquete_handler),
             runtime.flet_elevated_button(
                 ft, "Eliminar proyecto", on_click=eliminar_proyecto_handler
             ),

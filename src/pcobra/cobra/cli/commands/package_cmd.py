@@ -1,208 +1,95 @@
-import logging
-import zipfile
-from argparse import ArgumentParser, Namespace
+from argparse import Namespace
 from pathlib import Path
-from typing import List, Any
+from typing import Any
 
 from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
+from pcobra.cobra.packaging import (
+    DEFAULT_INSTALL_DIR,
+    construir_paquete,
+    crear_paquete,
+    extraer_paquete,
+    inspeccionar_paquete,
+    validar_paquete,
+)
 
-# Constantes
-MAX_ZIP_SIZE = 1024 * 1024 * 50  # 50MB
-MAX_FILES = 100
-ALLOWED_EXTENSIONS = {".co"}
-MODULES_PATH = Path.home() / ".cobra" / "modules"
 
 class PaqueteCommand(BaseCommand):
-    """Crea e instala paquetes Cobra."""
+    """Gestiona paquetes Cobra .co sin modificar la sintaxis del lenguaje."""
+
     name = "paquete"
 
     def register_subparser(self, subparsers: Any) -> CustomArgumentParser:
-        """Registra los argumentos del subcomando.
-        
-        Args:
-            subparsers: Objeto para registrar subcomandos
-            
-        Returns:
-            CustomArgumentParser: Parser configurado para este subcomando
-        """
-        parser = subparsers.add_parser(self.name, help=_("Gestiona paquetes Cobra"))
+        parser = subparsers.add_parser(self.name, help=_("Gestiona paquetes Cobra .co"))
         sub = parser.add_subparsers(dest="accion", required=True)
-        
-        crear = sub.add_parser("crear", help=_("Crea un paquete"))
-        crear.add_argument("fuente", help=_("Carpeta con archivos .co"), type=Path)
-        crear.add_argument("paquete", help=_("Archivo de paquete"), type=Path)
-        crear.add_argument("--nombre", default="paquete", help=_("Nombre"))
-        crear.add_argument("--version", default="0.1", help=_("Version"))
-        
-        inst = sub.add_parser("instalar", help=_("Instala un paquete"))
-        inst.add_argument("paquete", help=_("Archivo de paquete"), type=Path)
-        
+
+        crear = sub.add_parser("crear", help=_("Crea la estructura de un paquete"))
+        crear.add_argument("fuente", type=Path, help=_("Directorio del paquete"))
+        crear.add_argument("paquete", nargs="?", type=Path, help=_("Alias legacy: salida .co opcional"))
+        crear.add_argument("--nombre", default=None, help=_("Nombre del paquete"))
+        crear.add_argument("--version", default="0.1.0", help=_("Versión"))
+
+        validar = sub.add_parser("validar", help=_("Valida un paquete .co"))
+        validar.add_argument("paquete", type=Path)
+
+        construir = sub.add_parser("construir", help=_("Construye un paquete .co"))
+        construir.add_argument("fuente", type=Path)
+        construir.add_argument("salida", nargs="?", type=Path)
+        construir.add_argument("--nombre", default=None)
+        construir.add_argument("--version", default=None)
+
+        inspeccionar = sub.add_parser("inspeccionar", help=_("Inspecciona el contenido de un paquete"))
+        inspeccionar.add_argument("paquete", type=Path)
+
+        extraer = sub.add_parser("extraer", help=_("Extrae un paquete .co"))
+        extraer.add_argument("paquete", type=Path)
+        extraer.add_argument("destino", type=Path)
+
+        inst = sub.add_parser("instalar", help=_("Alias legacy de extraer a ~/.cobra/packages"))
+        inst.add_argument("paquete", type=Path)
+        inst.add_argument("--destino", type=Path, default=DEFAULT_INSTALL_DIR)
+
         parser.set_defaults(cmd=self)
         return parser
 
     def run(self, args: Namespace) -> int:
-        """Ejecuta la lógica del comando.
-        
-        Args:
-            args: Argumentos parseados del comando
-            
-        Returns:
-            int: 0 si exitoso, 1 si hay error
-        """
         try:
             if args.accion == "crear":
-                return self._crear(args.fuente, args.paquete, args.nombre, args.version)
-            elif args.accion == "instalar":
-                return self._instalar(args.paquete)
-            else:
-                mostrar_error(_("Acción de paquete no reconocida"))
-                return 1
-        except Exception as e:
-            logging.error(f"Error no manejado: {str(e)}", exc_info=True)
-            mostrar_error(_("Error inesperado: {error}").format(error=str(e)))
+                nombre = args.nombre or args.fuente.name
+                manifest = crear_paquete(args.fuente, nombre=nombre, version=args.version)
+                if args.paquete:
+                    destino = construir_paquete(args.fuente, args.paquete, nombre=nombre, version=args.version)
+                    mostrar_info(_("Paquete creado en {dest}").format(dest=destino))
+                else:
+                    mostrar_info(_("Estructura de paquete creada: {manifest}").format(manifest=manifest))
+                return 0
+            if args.accion == "validar":
+                validar_paquete(args.paquete)
+                mostrar_info(_("Paquete válido: {pkg}").format(pkg=args.paquete))
+                return 0
+            if args.accion == "construir":
+                destino = construir_paquete(args.fuente, args.salida, nombre=args.nombre, version=args.version)
+                mostrar_info(_("Paquete construido en {dest}").format(dest=destino))
+                return 0
+            if args.accion == "inspeccionar":
+                info = inspeccionar_paquete(args.paquete)
+                mostrar_info(_("Paquete: {name} {version}").format(name=info.manifest.get("name"), version=info.manifest.get("version")))
+                for file in info.files:
+                    mostrar_info(f" - {file}")
+                mostrar_info(_("SHA256: {checksum}").format(checksum=info.checksum))
+                return 0
+            if args.accion == "extraer":
+                destino = extraer_paquete(args.paquete, args.destino)
+                mostrar_info(_("Paquete extraído en {dest}").format(dest=destino))
+                return 0
+            if args.accion == "instalar":
+                destino = extraer_paquete(args.paquete, args.destino)
+                mostrar_info(_("Paquete instalado en {dest}").format(dest=destino))
+                return 0
+            mostrar_error(_("Acción de paquete no reconocida"))
             return 1
-
-    @staticmethod
-    def _validar_zip(path: Path) -> None:
-        """Valida el tamaño y contenido del archivo ZIP.
-        
-        Args:
-            path: Ruta al archivo ZIP
-            
-        Raises:
-            ValueError: Si el archivo excede los límites permitidos
-        """
-        if path.stat().st_size > MAX_ZIP_SIZE:
-            raise ValueError(_("El archivo excede el tamaño máximo permitido ({size} MB)").format(
-                size=MAX_ZIP_SIZE//1024//1024))
-
-    @staticmethod
-    def _validar_modulos(mods: List[Path]) -> List[Path]:
-        """Valida la lista de módulos y garantiza que sean rutas.
-
-        Args:
-            mods: Lista de rutas (o cadenas) a módulos
-
-        Returns:
-            List[Path]: Lista normalizada de rutas a módulos
-
-        Raises:
-            ValueError: Si no hay módulos o hay demasiados
-        """
-        paths = [m if isinstance(m, Path) else Path(m) for m in mods]
-        if len(paths) > MAX_FILES:
-            raise ValueError(_("Demasiados archivos en el paquete (máximo {max})").format(max=MAX_FILES))
-        if not paths:
-            raise ValueError(_("No se encontraron módulos"))
-        return paths
-
-    @staticmethod
-    def _crear(src: Path, pkg: Path, nombre: str, version: str) -> int:
-        """Crea un nuevo paquete.
-        
-        Args:
-            src: Ruta a la carpeta fuente
-            pkg: Ruta al archivo de paquete a crear
-            nombre: Nombre del paquete
-            version: Versión del paquete
-            
-        Returns:
-            int: 0 si exitoso, 1 si hay error
-        """
-        try:
-            if not src.is_dir():
-                mostrar_error(_("Directorio inválido"))
-                return 1
-
-            if pkg.exists():
-                mostrar_error(_("El archivo de paquete ya existe"))
-                return 1
-
-            mods = [f for f in src.iterdir() if f.suffix in ALLOWED_EXTENSIONS]
-            mods = PaqueteCommand._validar_modulos(mods)
-
-            mod_list = ", ".join(f'"{m.name}"' for m in mods)
-            contenido = (
-                f'[paquete]\nnombre = "{nombre}"\nversion = "{version}"\n\n'
-                f"[modulos]\narchivos = [{mod_list}]\n"
-            )
-
-            with zipfile.ZipFile(pkg, "w", compression=zipfile.ZIP_DEFLATED) as zf:
-                for m in mods:
-                    zf.write(m, arcname=m.name)
-                zf.writestr("cobra.pkg", contenido)
-
-            mostrar_info(_("Paquete creado en {dest}").format(dest=pkg))
-            return 0
-
-        except ValueError as e:
-            mostrar_error(str(e))
-            return 1
-        except OSError as e:
-            mostrar_error(_("Error de E/S al crear paquete: {error}").format(error=str(e)))
-            return 1
-        except zipfile.BadZipFile as e:
-            mostrar_error(_("Error en archivo ZIP: {error}").format(error=str(e)))
-            return 1
-
-    @staticmethod
-    def _instalar(pkg: Path) -> int:
-        """Instala un paquete.
-        
-        Args:
-            pkg: Ruta al archivo de paquete
-            
-        Returns:
-            int: 0 si exitoso, 1 si hay error
-        """
-        try:
-            if not pkg.exists():
-                mostrar_error(_("Paquete no encontrado"))
-                return 1
-
-            PaqueteCommand._validar_zip(pkg)
-            modules_dir = Path(MODULES_PATH).resolve()
-            modules_dir.mkdir(parents=True, exist_ok=True)
-
-            with zipfile.ZipFile(pkg) as zf:
-                file_list = [name for name in zf.namelist() if name.endswith(".co")]
-                module_paths = [Path(name) for name in file_list]
-                module_paths = PaqueteCommand._validar_modulos(module_paths)
-
-                for name, rel_path in zip(file_list, module_paths):
-                    # Validar y normalizar ruta
-                    try:
-                        candidate = (modules_dir / rel_path).resolve()
-                        candidate.relative_to(modules_dir)
-                    except (ValueError, RuntimeError):
-                        mostrar_error(_("Nombre de archivo no válido en el paquete"))
-                        return 1
-
-                    dest = candidate
-                    if dest.exists() and dest.is_symlink():
-                        mostrar_error(
-                            _("El destino {dest} es un enlace simbólico").format(dest=dest)
-                        )
-                        return 1
-
-                    dest.parent.mkdir(parents=True, exist_ok=True)
-                    with zf.open(name) as src, open(dest, "wb") as out:
-                        out.write(src.read())
-
-            mostrar_info(
-                _("Paquete instalado en {dest}").format(dest=MODULES_PATH)
-            )
-            return 0
-
-        except ValueError as e:
-            mostrar_error(str(e))
-            return 1
-        except OSError as e:
-            mostrar_error(_("Error de E/S al instalar paquete: {error}").format(error=str(e)))
-            return 1
-        except zipfile.BadZipFile as e:
-            mostrar_error(_("Error en archivo ZIP: {error}").format(error=str(e)))
+        except Exception as exc:
+            mostrar_error(_("Error gestionando paquete: {error}").format(error=str(exc)))
             return 1
