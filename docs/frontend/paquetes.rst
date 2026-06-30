@@ -113,10 +113,35 @@ Extraer el paquete en una carpeta local:
 Compatibilidad con comandos legacy
 ----------------------------------
 
-Los comandos legacy, como ``cobra paquete instalar`` y las variantes antiguas de
-``cobra paquete crear`` con salida posicional, se conservan como alias de
-compatibilidad. Para paquetes nuevos, el formato recomendado es el contenedor
-``.co`` con manifiesto ``cobra.pkg.json`` y checksums SHA-256.
+Los comandos legacy se mantienen por compatibilidad con scripts existentes y no
+deben eliminarse sin una política de deprecación explícita. Para paquetes
+nuevos, el formato recomendado es el contenedor ``.co`` con manifiesto
+``cobra.pkg.json`` y checksums SHA-256.
+
+.. list-table:: Alias legacy y comandos recomendados
+   :header-rows: 1
+   :widths: 24 24 16 36
+
+   * - comando legacy
+     - comando recomendado
+     - estado
+     - notas de compatibilidad
+   * - ``cobra modulos publicar``
+     - ``cobra hub publicar``
+     - Compatibilidad
+     - ``modulos`` conserva el flujo histórico de módulos sueltos; ``hub`` publica paquetes ``.co`` validados.
+   * - ``cobra modulos buscar``
+     - ``cobra hub buscar`` o ``cobra hub instalar``
+     - Compatibilidad
+     - Usa ``hub buscar`` para descubrimiento y ``hub instalar`` para descarga e instalación de paquetes CobraHub.
+   * - ``cobra paquete instalar``
+     - ``cobra paquete extraer``
+     - Alias legacy
+     - Alias de extracción/instalación local hacia el directorio indicado o ``~/.cobra/packages`` por defecto.
+   * - ``cobra paquete crear <fuente> <salida>``
+     - ``cobra paquete crear <fuente>`` + ``cobra paquete construir <fuente> <salida>``
+     - Alias legacy
+     - La forma posicional crea el manifiesto y construye el artefacto en un solo paso para compatibilidad.
 
 Véase también
 -------------

@@ -3,15 +3,27 @@ from cobra.cli.public_command_policy import (
     PROFILE_PUBLIC,
     PUBLIC_COMMANDS_CONTRACT,
     filter_commands_for_profile,
+    filter_legacy_commands_for_profile,
 )
 
 
 def test_filter_commands_publico_permite_solo_superficie_v2_publica():
     visibles = filter_commands_for_profile(
-        ("run", "build", "test", "mod", "repl", "interactive", "legacy", "debug"),
+        (
+            "run",
+            "build",
+            "test",
+            "mod",
+            "repl",
+            "paquete",
+            "hub",
+            "interactive",
+            "legacy",
+            "debug",
+        ),
         PROFILE_PUBLIC,
     )
-    assert visibles == {"run", "build", "test", "mod", "repl"}
+    assert visibles == {"run", "build", "test", "mod", "repl", "paquete", "hub"}
 
 
 def test_filter_commands_development_permite_toda_superficie_v2():
@@ -21,7 +33,15 @@ def test_filter_commands_development_permite_toda_superficie_v2():
 
 
 def test_public_commands_contract_oficial_v2_no_incluye_alias_legacy():
-    assert PUBLIC_COMMANDS_CONTRACT == ("run", "build", "test", "mod", "repl")
+    assert PUBLIC_COMMANDS_CONTRACT == (
+        "run",
+        "build",
+        "test",
+        "mod",
+        "repl",
+        "paquete",
+        "hub",
+    )
     assert "interactive" not in PUBLIC_COMMANDS_CONTRACT
 
 

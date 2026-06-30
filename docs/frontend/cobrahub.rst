@@ -94,12 +94,34 @@ Compatibilidad legacy de módulos
 --------------------------------
 
 Los comandos históricos de módulos se mantienen para no romper scripts ni flujos
-existentes que publican o buscan archivos sueltos:
+existentes que publican o buscan archivos sueltos. Estos comandos legacy se
+conservan por compatibilidad y no deben eliminarse sin una política de
+deprecación explícita.
 
-.. code-block:: bash
+.. list-table:: Alias legacy y comandos recomendados
+   :header-rows: 1
+   :widths: 24 24 16 36
 
-   cobra modulos publicar ruta/al/modulo.co
-   cobra modulos buscar nombre.co
+   * - comando legacy
+     - comando recomendado
+     - estado
+     - notas de compatibilidad
+   * - ``cobra modulos publicar``
+     - ``cobra hub publicar``
+     - Compatibilidad
+     - ``modulos`` publica módulos sueltos mediante el flujo histórico; ``hub`` publica paquetes ``.co`` con manifiesto.
+   * - ``cobra modulos buscar``
+     - ``cobra hub buscar`` o ``cobra hub instalar``
+     - Compatibilidad
+     - Para código nuevo, busca paquetes con ``hub buscar`` e instálalos con ``hub instalar``.
+   * - ``cobra paquete instalar``
+     - ``cobra paquete extraer``
+     - Alias legacy
+     - Alias de extracción/instalación local; útil para scripts antiguos que esperan un destino local.
+   * - ``cobra paquete crear <fuente> <salida>``
+     - ``cobra paquete crear <fuente>`` + ``cobra paquete construir <fuente> <salida>``
+     - Alias legacy
+     - Mantiene el flujo antiguo de creación + construcción en una sola invocación.
 
 Este flujo legacy usa el subcomando ``modulos`` y la configuración histórica de
 CobraHub, incluida la variable de entorno ``COBRAHUB_URL`` cuando aplique. Para
