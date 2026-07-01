@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import ast
+import zipfile
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -99,6 +100,59 @@ def test_es_archivo_cobra_reconoce_extensiones_seguras_documentadas() -> None:
     assert runtime.es_archivo_cobra("programa.co")
     assert runtime.es_archivo_cobra("modulo.COBRA")
     assert not runtime.es_archivo_cobra("notas.txt")
+
+
+def test_detectar_tipo_archivo_co_de_texto_sigue_siendo_archivo_cobra(
+    tmp_path: Path,
+) -> None:
+    archivo = tmp_path / "programa.co"
+    archivo.write_text("imprimir('hola')\n", encoding="utf-8")
+
+    assert runtime.detectar_tipo_archivo(archivo) == runtime.TIPO_ARCHIVO_COBRA
+    assert runtime.es_archivo_cobra(archivo)
+
+
+def test_detectar_tipo_archivo_co_zip_con_manifest_es_paquete_cobra(
+    tmp_path: Path,
+) -> None:
+    paquete = tmp_path / "paquete.co"
+    with zipfile.ZipFile(paquete, "w") as zf:
+        zf.writestr("cobra.pkg.json", '{"name":"demo","version":"1.0.0"}')
+        zf.writestr("main.co", "imprimir('hola')\n")
+
+    assert runtime.detectar_tipo_archivo(paquete) == runtime.TIPO_ARCHIVO_PAQUETE_COBRA
+    assert runtime.es_paquete_cobra_gui(paquete)
+    assert not runtime.es_archivo_cobra(paquete)
+
+
+def test_detectar_tipo_archivo_co_zip_sin_manifest_no_es_paquete_cobra_valido(
+    tmp_path: Path,
+) -> None:
+    archivo = tmp_path / "archivo.co"
+    with zipfile.ZipFile(archivo, "w") as zf:
+        zf.writestr("main.co", "imprimir('hola')\n")
+
+    assert runtime.detectar_tipo_archivo(archivo) == runtime.TIPO_ARCHIVO_COBRA
+    assert not runtime.es_paquete_cobra_gui(archivo)
+    assert runtime.es_archivo_cobra(archivo)
+
+
+def test_cargar_archivo_desde_arbol_no_lee_paquete_cobra_zip_como_texto(
+    tmp_path: Path,
+) -> None:
+    paquete = tmp_path / "paquete.co"
+    with zipfile.ZipFile(paquete, "w") as zf:
+        zf.writestr("cobra.pkg.json", '{"name":"demo","version":"1.0.0"}')
+        zf.writestr("main.co", "imprimir('hola')\n")
+    estado = runtime.GuiFileState()
+
+    contenido, mensaje = runtime.cargar_archivo_desde_arbol(paquete, estado)
+
+    assert contenido == ""
+    assert "Paquete Cobra seleccionado" in mensaje
+    assert estado.ruta == paquete.resolve()
+    assert estado.contenido_cargado == ""
+    assert not estado.cambios_sin_guardar
 
 
 def test_detectar_tipo_archivo_clasifica_extensiones_y_nombres_conocidos() -> None:
