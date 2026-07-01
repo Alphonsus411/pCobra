@@ -203,6 +203,43 @@ def test_paquete_cobra_conserva_estructura_y_recursos(tmp_path: Path):
     assert (destino / "resources" / "i18n" / "es.dat").read_bytes() == b"hola=recurso"
 
 
+def test_paquete_cobra_acepta_artefactos_mixtos_y_subcarpetas_anidadas(
+    tmp_path: Path,
+):
+    proyecto = tmp_path / "artefactos"
+    crear_paquete(proyecto, nombre="artefactos", version="1.0.0")
+    archivos = {
+        "src/main.cobra": "contenido de artefacto .cobra, no se parsea\n",
+        "src/main.co": "contenido de artefacto .co, no se parsea\n",
+        "README.md": "# Artefactos\n",
+        "docs/guia.md": "# Guía de uso\n",
+        "Dockerfile": "FROM scratch\n",
+        "LICENSE.txt": "Licencia de prueba\n",
+        "assets/logo.txt": "logo en texto\n",
+        "assets/icons/nested/icon.txt": "icono anidado\n",
+        "docs/referencia/api/v1/notas.md": "notas anidadas\n",
+    }
+    for relative_path, content in archivos.items():
+        target = proyecto / relative_path
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(content, encoding="utf-8")
+
+    paquete = construir_paquete(proyecto, tmp_path / "artefactos.co")
+
+    info = validar_paquete(paquete)
+    esperados = set(archivos)
+    assert set(info.manifest["files"]) == esperados
+
+    inspeccion = inspeccionar_paquete(paquete)
+    assert set(inspeccion.files) == {MANIFEST_NAME, *esperados}
+
+    destino = extraer_paquete(paquete, tmp_path / "instalado")
+    for relative_path, content in archivos.items():
+        assert (destino / relative_path).read_text(encoding="utf-8") == content
+    assert (destino / "assets" / "icons" / "nested").is_dir()
+    assert (destino / "docs" / "referencia" / "api" / "v1").is_dir()
+
+
 def _crear_zip_con_manifest(
     tmp_path: Path, manifest: dict, files: dict[str, bytes] | None = None
 ) -> Path:
