@@ -21,6 +21,8 @@ def test_cobra_project_normaliza_recursos_desde_raiz(tmp_path: Path) -> None:
         assets=("assets/logo.png",),
         co_packages=("paquetes/ui.co",),
         documentation=("docs/manual.md",),
+        config_dirs=("config",),
+        auxiliary_resources=("assets/logo.png",),
         config={"profile": "release"},
     ).normalized()
 
@@ -30,6 +32,8 @@ def test_cobra_project_normaliza_recursos_desde_raiz(tmp_path: Path) -> None:
     assert project.assets == (tmp_path / "assets/logo.png",)
     assert project.co_packages == (tmp_path / "paquetes/ui.co",)
     assert project.documentation == (tmp_path / "docs/manual.md",)
+    assert project.config_dirs == (tmp_path / "config",)
+    assert project.auxiliary_resources == (tmp_path / "assets/logo.png",)
     assert project.config == {"profile": "release"}
 
 
@@ -68,6 +72,8 @@ def test_build_manifest_serializa_campos_del_build(tmp_path: Path) -> None:
             config={"debug": False},
             co_packages=("pkg/app.co",),
             documentation=("README.md",),
+            config_dirs=("config",),
+            auxiliary_resources=("assets/logo.png",),
         ),
         executable_name="cobra-app",
         icon="assets/logo.png",
@@ -92,6 +98,8 @@ def test_build_manifest_serializa_campos_del_build(tmp_path: Path) -> None:
     assert payload["config"] == {"debug": False}
     assert payload["co_packages"] == [str(tmp_path / "pkg/app.co")]
     assert payload["documentation"] == [str(tmp_path / "README.md")]
+    assert payload["config_dirs"] == [str(tmp_path / "config")]
+    assert payload["auxiliary_resources"] == [str(tmp_path / "assets" / "logo.png")]
     assert payload["executable_name"] == "cobra-app"
     assert payload["icon"] == "assets/logo.png"
     assert payload["target"] == "macos"
@@ -138,3 +146,71 @@ def test_create_manifest_mantiene_compatibilidad_y_agrega_campos(tmp_path: Path)
     assert payload["mode"] == "onefile"
     assert payload["dist_dir"] == str(output_dir)
     assert payload["include_dependencies"] is False
+
+
+def test_discover_project_prefiere_main_cobra_y_recolecta_recursos(tmp_path: Path) -> None:
+    from pcobra.cobra_installer import discover_project
+
+    (tmp_path / "main.cobra").write_text("imprimir('hola')\n", encoding="utf-8")
+    (tmp_path / "cobra.toml").write_text('[project]\nentrypoint = "otro.cobra"\n', encoding="utf-8")
+    (tmp_path / "cobra.lock").write_text("# lock\n", encoding="utf-8")
+    (tmp_path / "assets").mkdir()
+    (tmp_path / "assets" / "logo.png").write_bytes(b"png")
+    (tmp_path / "config").mkdir()
+    (tmp_path / "config" / "app.yaml").write_text("debug: false\n", encoding="utf-8")
+    (tmp_path / "pkg").mkdir()
+    (tmp_path / "pkg" / "ui.co").write_text("paquete ui\n", encoding="utf-8")
+    (tmp_path / "README.md").write_text("# Demo\n", encoding="utf-8")
+
+    project = discover_project(tmp_path)
+
+    assert project.project_root == tmp_path.resolve()
+    assert project.entrypoint == tmp_path / "main.cobra"
+    assert project.cobra_toml == tmp_path / "cobra.toml"
+    assert project.cobra_lock == tmp_path / "cobra.lock"
+    assert project.assets == (tmp_path / "assets",)
+    assert project.config_dirs == (tmp_path / "config",)
+    assert project.co_packages == (tmp_path / "pkg" / "ui.co",)
+    assert project.documentation == (tmp_path / "README.md",)
+    assert tmp_path / "assets" / "logo.png" in project.auxiliary_resources
+    assert tmp_path / "config" / "app.yaml" in project.auxiliary_resources
+
+
+def test_find_entrypoint_usa_cobra_toml_si_no_hay_main(tmp_path: Path) -> None:
+    from pcobra.cobra_installer import find_entrypoint
+
+    src = tmp_path / "src"
+    src.mkdir()
+    entrypoint = src / "app.cobra"
+    entrypoint.write_text("imprimir('app')\n", encoding="utf-8")
+    (tmp_path / "cobra.toml").write_text('[build]\nentrypoint = "src/app.cobra"\n', encoding="utf-8")
+
+    assert find_entrypoint(tmp_path) == entrypoint
+
+
+def test_find_entrypoint_error_claro_si_hay_ambiguedad(tmp_path: Path) -> None:
+    import pytest
+
+    from pcobra.cobra_installer import CobraInstallerError, find_entrypoint
+
+    (tmp_path / "uno.cobra").write_text("", encoding="utf-8")
+    (tmp_path / "dos.cobra").write_text("", encoding="utf-8")
+
+    with pytest.raises(CobraInstallerError, match="varios archivos .cobra"):
+        find_entrypoint(tmp_path)
+
+
+def test_collect_project_resources_ignora_build_y_dist(tmp_path: Path) -> None:
+    from pcobra.cobra_installer import collect_project_resources
+
+    (tmp_path / "assets").mkdir()
+    (tmp_path / "dist").mkdir()
+    (tmp_path / "dist" / "omitido.co").write_text("", encoding="utf-8")
+    (tmp_path / "mod.co").write_text("", encoding="utf-8")
+    (tmp_path / "manual.rst").write_text("Manual\n", encoding="utf-8")
+
+    resources = collect_project_resources(tmp_path)
+
+    assert resources.assets == (tmp_path / "assets",)
+    assert resources.co_packages == (tmp_path / "mod.co",)
+    assert resources.documentation == (tmp_path / "manual.rst",)
