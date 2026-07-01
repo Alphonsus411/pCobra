@@ -1105,9 +1105,16 @@ cobra build noexiste.co
 cobra mod list
 cobra mod install ruta/al/modulo.co
 cobra mod remove modulo.co
-# Crear e instalar paquetes Cobra
-cobra paquete crear src demo.cobra
-cobra paquete instalar demo.cobra
+# Flujo local moderno de paquetes Cobra .co
+cobra paquete crear src --nombre demo --version 0.1.0
+cobra paquete construir src dist/demo.co
+cobra paquete validar dist/demo.co
+cobra paquete inspeccionar dist/demo.co
+cobra paquete extraer dist/demo.co ./vendor/demo
+# Flujo moderno de CobraHub
+cobra hub publicar dist/demo.co
+cobra hub buscar demo
+cobra hub instalar demo --destino ./vendor/demo
 # Generar documentación HTML y API
 cobra docs
 # Crear un ejecutable independiente
@@ -1142,9 +1149,11 @@ El subcomando `gui` abre el IDLE gráfico principal y requiere tener instalado F
 
 ### Paquetes `.co` y CobraHub
 
-CobraHub funciona ahora como una capa de herramientas independiente para crear, construir, validar, verificar, inspeccionar, extraer, publicar, buscar e instalar paquetes `.co`. Un paquete `.co` es un ZIP con manifiesto `cobra.pkg.json`, checksums SHA-256 y estructura de carpetas conservada; puede contener archivos `.cobra`, documentación Markdown, texto, `Dockerfile` y recursos. `validar` comprueba la estructura y el manifiesto del contenedor, `verificar` expresa de forma explícita la verificación de integridad SHA-256, e `integridad` se conserva como alias legacy. Esta funcionalidad no cambia la sintaxis de Cobra ni requiere tocar Lexer o Parser. Consulta la guía actualizada de paquetes en [`docs/frontend/paquetes.rst`](docs/frontend/paquetes.rst) y el resumen de diseño en [`docs/cobrahub_paquetes.md`](docs/cobrahub_paquetes.md).
+CobraHub funciona ahora como una capa de herramientas independiente para crear, construir, validar, verificar, inspeccionar, extraer, publicar, buscar e instalar paquetes `.co`. Un paquete `.co` es un ZIP con manifiesto `cobra.pkg.json`, checksums SHA-256 y estructura de carpetas conservada; puede contener archivos `.cobra`, documentación Markdown, texto, `Dockerfile` y recursos. `validar` comprueba la estructura y el manifiesto del contenedor, `verificar` expresa de forma explícita la verificación de integridad SHA-256, e `integridad` se conserva como alias legacy. Esta funcionalidad no cambia la sintaxis de Cobra ni requiere tocar Lexer o Parser: el paquete `.co` se detecta como un ZIP con `cobra.pkg.json`, no como sintaxis Cobra. Consulta la guía actualizada de paquetes en [`docs/frontend/paquetes.rst`](docs/frontend/paquetes.rst) y el resumen de diseño en [`docs/cobrahub_paquetes.md`](docs/cobrahub_paquetes.md).
 
-Comandos nuevos:
+Flujo recomendado: `cobra paquete crear|construir|validar|inspeccionar|extraer` cubre el ciclo local moderno; `cobra paquete instalar` queda como alias legacy de extracción/instalación local; y `cobra hub publicar|buscar|instalar` es el flujo moderno de CobraHub. No uses `cobra paquete` → `cobra mod publish` para paquetes `.co` con manifiesto; `cobra modulos publicar|buscar` queda solo como compatibilidad histórica de módulos sueltos.
+
+Comandos recomendados:
 
 ```bash
 cobra paquete crear mi_paquete --nombre demo --version 0.1.0
@@ -1162,8 +1171,8 @@ Los comandos legacy se mantienen por compatibilidad con scripts existentes y no 
 
 | comando legacy | comando recomendado | estado | notas de compatibilidad |
 | --- | --- | --- | --- |
-| `cobra modulos publicar` | `cobra hub publicar` | Compatibilidad | `modulos` conserva el flujo histórico de módulos sueltos; `hub` publica paquetes `.co` validados. |
-| `cobra modulos buscar` | `cobra hub buscar` o `cobra hub instalar` | Compatibilidad | Usa `hub buscar` para descubrir paquetes y `hub instalar` para descargarlos e instalarlos. |
+| `cobra modulos publicar` | `cobra hub publicar` para paquetes `.co` con manifiesto | Compatibilidad | `modulos` conserva el flujo histórico de módulos sueltos; no lo uses como destino de paquetes `.co` con `cobra.pkg.json`. |
+| `cobra modulos buscar` | `cobra hub buscar` o `cobra hub instalar` | Compatibilidad | Usa `hub buscar` para descubrir paquetes CobraHub y `hub instalar` para descargarlos e instalarlos; `modulos buscar` queda para módulos sueltos históricos. |
 | `cobra paquete instalar` | `cobra paquete extraer` | Alias legacy | Alias de extracción/instalación local hacia el destino indicado o `~/.cobra/packages` por defecto. |
 | `cobra paquete crear <fuente> <salida>` | `cobra paquete crear <fuente>` + `cobra paquete construir <fuente> <salida>` | Alias legacy | Mantiene la creación del manifiesto y la construcción del artefacto en una sola invocación. |
 

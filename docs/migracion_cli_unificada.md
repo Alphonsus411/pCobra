@@ -10,6 +10,8 @@ Adoptar el modelo unificado:
 - `cobra build`
 - `cobra test`
 - `cobra mod`
+- `cobra paquete` para empaquetado local de artefactos `.co`
+- `cobra hub` para publicación, búsqueda e instalación en CobraHub
 
 Con backends públicos oficiales:
 
@@ -26,9 +28,9 @@ Con backends públicos oficiales:
 
 | Clase | Comandos |
 |---|---|
-| **Públicos (UI v2)** | `run`, `build`, `test`, `mod` |
+| **Públicos (UI v2)** | `run`, `build`, `test`, `mod`, `paquete`, `hub` |
 | **Internos (UI v2 / development)** | `legacy`, `debug`, `devops` |
-| **Legacy públicos (UI v1, migración)** | `interactive`, `compilar`, `ejecutar`, `modulos`, `verificar`, `docs`, `plugins`, `init`, `crear`, `paquete` |
+| **Legacy públicos (UI v1, migración)** | `interactive`, `compilar`, `ejecutar`, `modulos`, `verificar`, `docs`, `plugins`, `init`, `crear` |
 | **Legacy internos (UI v1)** | `cache`, `contenedor`, `gui`, `jupyter`, `qualia`, `agix` |
 | **Legacy obsoletos (UI v1)** | `dependencias`, `empaquetar`, `bench`, `benchmarks`, `benchmarks2`, `benchtranspilers`, `benchthreads`, `profile`, `transpilar-inverso`, `validar-sintaxis`, `qa-validar` |
 
@@ -45,14 +47,24 @@ Con backends públicos oficiales:
 | `cobra modulos listar` | `cobra mod list` |
 | `cobra modulos instalar ruta/al/modulo.co` | `cobra mod install ruta/al/modulo.co` |
 | `cobra modulos remover modulo.co` | `cobra mod remove modulo.co` |
-| `cobra modulos buscar nombre` | `cobra mod search nombre` |
-| `cobra modulos publicar ruta/al/modulo.co` | `cobra mod publish ruta/al/modulo.co` |
+| `cobra modulos buscar nombre` | `cobra mod search nombre` para módulos sueltos históricos; `cobra hub buscar nombre` para paquetes CobraHub |
+| `cobra modulos publicar ruta/al/modulo.co` | Compatibilidad histórica de módulos sueltos; usa `cobra hub publicar dist/paquete.co` para paquetes `.co` con `cobra.pkg.json` |
 | `cobra interactive archivo.co` | `cobra run archivo.co` |
 | `cobra init` | `cobra mod init` |
 | `cobra crear` | `cobra mod init` |
-| `cobra paquete` | `cobra mod publish` |
+| `cobra paquete crear <dir>` | Flujo local moderno de paquetes: crea `cobra.pkg.json` |
+| `cobra paquete construir <dir> <salida.co>` | Flujo local moderno de paquetes: construye el ZIP `.co` con manifiesto |
+| `cobra paquete validar <salida.co>` | Flujo local moderno de paquetes: valida estructura y manifiesto |
+| `cobra paquete inspeccionar <salida.co>` | Flujo local moderno de paquetes: muestra metadatos y contenido |
+| `cobra paquete extraer <salida.co> <destino>` | Flujo local moderno de paquetes: extracción local explícita |
+| `cobra paquete instalar <salida.co> [destino]` | Alias legacy de `cobra paquete extraer` para extracción/instalación local |
+| `cobra hub publicar <salida.co>` | Flujo moderno de CobraHub para paquetes `.co` con manifiesto |
+| `cobra hub buscar <nombre>` | Flujo moderno de CobraHub para descubrir paquetes |
+| `cobra hub instalar <nombre>` | Flujo moderno de CobraHub para descargar e instalar paquetes |
 
+### Nota sobre paquetes `.co` y Lexer/Parser
 
+No se toca el Lexer ni el Parser para soportar paquetes `.co`: un paquete publicable se detecta en la capa de herramientas como un ZIP legible que contiene `cobra.pkg.json` en la raíz, no como una nueva sintaxis Cobra. Por eso, no migres paquetes `.co` con manifiesto hacia `cobra mod publish`; usa `cobra paquete crear|construir|validar|inspeccionar|extraer` para el ciclo local y `cobra hub publicar|buscar|instalar` para CobraHub. `cobra modulos publicar|buscar` queda reservado a compatibilidad histórica de módulos sueltos.
 
 ## Plan de migración recomendado (paso a paso)
 

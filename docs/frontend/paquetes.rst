@@ -9,8 +9,8 @@ archivos empaquetados.
 Este formato pertenece a la capa de herramientas de empaquetado y CobraHub: no
 modifica la sintaxis del lenguaje ni requiere cambios en el Lexer o el Parser.
 Los archivos fuente Cobra pueden seguir usando ``.cobra`` o ``.co``; cuando
-``.co`` se usa como paquete publicable, la CLI lo trata como un ZIP con
-metadatos.
+``.co`` se usa como paquete publicable, la CLI lo detecta como un ZIP legible
+con ``cobra.pkg.json`` en la raíz, no como sintaxis Cobra.
 
 Fuente de verdad pública
 ------------------------
@@ -126,6 +126,14 @@ Extraer el paquete en una carpeta local:
 
    cobra paquete extraer dist/demo.co ./vendor/demo
 
+Este es el flujo local moderno: ``cobra paquete crear|construir|validar|
+inspeccionar|extraer``. Para interactuar con CobraHub, usa el flujo remoto
+moderno ``cobra hub publicar|buscar|instalar``. ``cobra paquete instalar`` se
+conserva solo como alias legacy de extracción/instalación local, y
+``cobra modulos publicar|buscar`` queda reservado a compatibilidad histórica de
+módulos sueltos. No se recomienda migrar paquetes ``.co`` con manifiesto a
+``cobra mod publish`` ni al flujo histórico de ``modulos``.
+
 Compatibilidad con comandos legacy
 ----------------------------------
 
@@ -143,13 +151,13 @@ nuevos, el formato recomendado es el contenedor ``.co`` con manifiesto
      - estado
      - notas de compatibilidad
    * - ``cobra modulos publicar``
-     - ``cobra hub publicar``
+     - ``cobra hub publicar`` para paquetes ``.co`` con manifiesto
      - Compatibilidad
-     - ``modulos`` conserva el flujo histórico de módulos sueltos; ``hub`` publica paquetes ``.co`` validados.
+     - ``modulos`` conserva el flujo histórico de módulos sueltos; no es el destino recomendado para paquetes ``.co`` con ``cobra.pkg.json``.
    * - ``cobra modulos buscar``
      - ``cobra hub buscar`` o ``cobra hub instalar``
      - Compatibilidad
-     - Usa ``hub buscar`` para descubrimiento y ``hub instalar`` para descarga e instalación de paquetes CobraHub.
+     - Usa ``hub buscar`` para descubrimiento y ``hub instalar`` para descarga e instalación de paquetes CobraHub; ``modulos buscar`` queda para módulos sueltos históricos.
    * - ``cobra paquete instalar``
      - ``cobra paquete extraer``
      - Alias legacy
