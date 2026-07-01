@@ -1184,7 +1184,7 @@ La entrada recomendada para el entorno gráfico interactivo es `cobra gui`, que 
 
 El IDLE gráfico (`cobra gui`) incluye un editor con estado de archivo activo: muestra la ruta seleccionada, detecta cambios sin guardar con un asterisco y conserva el contenido cargado para comparar modificaciones. La barra de archivo expone las acciones **Nuevo**, **Abrir**, **Guardar**, **Guardar como** y **Recargar**.
 
-El panel lateral lista carpetas y archivos Cobra (`.co` para scripts y `.cobra` para paquetes) desde el directorio de trabajo actual. Al seleccionar un archivo del árbol, su contenido se carga directamente en el editor y se actualiza la ruta activa. Las operaciones de guardado escriben el texto normalizado del editor tal como está, sin pasar por el lexer ni por el parser. Los errores de permisos, rutas inexistentes o codificación se muestran con el formato homogéneo de errores de la GUI.
+El panel lateral lista carpetas y archivos Cobra desde el directorio de trabajo actual. Por compatibilidad histórica, tanto `.cobra` como `.co` pueden ser archivos fuente Cobra de texto y se tratan como código editable cuando no son paquetes. Un `.co` solo es paquete si es un ZIP legible con `cobra.pkg.json` en la raíz; en ese caso el IDLE debe tratarlo como artefacto de empaquetado y no como código fuente editable. Al seleccionar un archivo fuente del árbol, su contenido se carga directamente en el editor y se actualiza la ruta activa. Las operaciones de guardado escriben el texto normalizado del editor tal como está, sin pasar por el lexer ni por el parser. Los errores de permisos, rutas inexistentes o codificación se muestran con el formato homogéneo de errores de la GUI.
 
 ## Conversión desde otros lenguajes a Cobra
 
