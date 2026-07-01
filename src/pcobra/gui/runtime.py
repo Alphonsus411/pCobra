@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any
 
 from pcobra.cobra.architecture.backend_policy import PUBLIC_BACKENDS
+from pcobra.cobra.packaging import es_paquete_cobra
 from pcobra.corelibs.archivo import _resolver_ruta as resolver_ruta_sandbox
 
 
@@ -82,6 +83,7 @@ def _local_import_action(module_name: str, symbol_name: str) -> str:
 
 
 TIPO_ARCHIVO_COBRA = "cobra"
+TIPO_ARCHIVO_PAQUETE_COBRA = "paquete_cobra"
 TIPO_ARCHIVO_MARKDOWN = "markdown"
 TIPO_ARCHIVO_TEXTO = "texto"
 TIPO_ARCHIVO_CONFIG = "config"
@@ -99,6 +101,10 @@ ACCION_TOKENS = "tokens"
 ACCION_AST = "ast"
 ACCION_SUGERENCIAS = "sugerencias"
 ACCION_CORRECCION = "correccion"
+ACCION_ABRIR_PAQUETE = "abrir_paquete"
+ACCION_VALIDAR_PAQUETE = "validar_paquete"
+ACCION_CONSTRUIR_PAQUETE = "construir_paquete"
+ACCION_PUBLICAR_PAQUETE = "publicar_paquete"
 
 ACCIONES_ARCHIVO_BASE: frozenset[str] = frozenset(
     {ACCION_EDITAR, ACCION_GUARDAR, ACCION_RECARGAR, ACCION_BORRAR}
@@ -116,6 +122,16 @@ ACCIONES_ARCHIVO_COBRA: frozenset[str] = ACCIONES_ARCHIVO_BASE | frozenset(
 )
 """Acciones disponibles para archivos Cobra."""
 
+ACCIONES_PAQUETE_COBRA: frozenset[str] = frozenset(
+    {
+        ACCION_ABRIR_PAQUETE,
+        ACCION_VALIDAR_PAQUETE,
+        ACCION_CONSTRUIR_PAQUETE,
+        ACCION_PUBLICAR_PAQUETE,
+    }
+)
+"""Acciones disponibles para paquetes Cobra ``.co``."""
+
 COBRA_FILE_EXTENSIONS: tuple[str, ...] = (".cobra", ".co")
 """Extensiones Cobra aceptadas y priorizadas para el explorador del IDLE."""
 
@@ -130,6 +146,7 @@ ENV_EXAMPLE_FILE_NAMES: frozenset[str] = frozenset({".env.example"})
 
 CAPACIDADES_POR_TIPO: dict[str, frozenset[str]] = {
     TIPO_ARCHIVO_COBRA: ACCIONES_ARCHIVO_COBRA,
+    TIPO_ARCHIVO_PAQUETE_COBRA: ACCIONES_PAQUETE_COBRA,
     TIPO_ARCHIVO_MARKDOWN: ACCIONES_ARCHIVO_BASE,
     TIPO_ARCHIVO_TEXTO: ACCIONES_ARCHIVO_BASE,
     TIPO_ARCHIVO_CONFIG: ACCIONES_ARCHIVO_BASE,
@@ -142,6 +159,7 @@ CAPACIDADES_POR_TIPO: dict[str, frozenset[str]] = {
 
 ETIQUETAS_TIPO_ARCHIVO: dict[str, str] = {
     TIPO_ARCHIVO_COBRA: "Archivo Cobra",
+    TIPO_ARCHIVO_PAQUETE_COBRA: "Paquete Cobra",
     TIPO_ARCHIVO_MARKDOWN: "Archivo Markdown",
     TIPO_ARCHIVO_TEXTO: "Archivo de texto",
     TIPO_ARCHIVO_CONFIG: "Archivo de configuración",
@@ -310,6 +328,8 @@ def detectar_tipo_archivo(path: str | Path) -> str:
 
     if nombre == "Dockerfile" or nombre.startswith("Dockerfile.") or nombre == "docker-compose.yml":
         return TIPO_ARCHIVO_DOCKER
+    if extension == ".co" and es_paquete_cobra(ruta):
+        return TIPO_ARCHIVO_PAQUETE_COBRA
     if extension in COBRA_FILE_EXTENSIONS:
         return TIPO_ARCHIVO_COBRA
     if extension in MARKDOWN_FILE_EXTENSIONS:
@@ -351,6 +371,12 @@ def es_archivo_cobra(path: str | Path) -> bool:
     """Indica si una ruta parece contener código Cobra editable."""
 
     return detectar_tipo_archivo(path) == TIPO_ARCHIVO_COBRA
+
+
+def es_paquete_cobra_gui(path: str | Path) -> bool:
+    """Indica si una ruta es un paquete Cobra ``.co`` no editable como texto."""
+
+    return detectar_tipo_archivo(path) == TIPO_ARCHIVO_PAQUETE_COBRA
 
 
 def resolver_ruta_archivo_en_project_root(
@@ -819,7 +845,17 @@ def cargar_archivo_desde_arbol(
             "indica un archivo de texto del proyecto."
         )
 
-    if detectar_tipo_archivo(origen) not in TIPOS_ARCHIVO_TEXTO_IDLE:
+    tipo_archivo = detectar_tipo_archivo(origen)
+    if tipo_archivo == TIPO_ARCHIVO_PAQUETE_COBRA:
+        estado.ruta = origen
+        estado.contenido_cargado = ""
+        estado.cambios_sin_guardar = False
+        return "", (
+            f"Paquete Cobra seleccionado: {origen}. "
+            "Usa Abrir paquete, Validar paquete o Publicar CobraHub."
+        )
+
+    if tipo_archivo not in TIPOS_ARCHIVO_TEXTO_IDLE:
         raise ValueError("Selecciona un archivo de texto del proyecto.")
 
     return abrir_archivo_desde_ruta_validada(origen, estado)

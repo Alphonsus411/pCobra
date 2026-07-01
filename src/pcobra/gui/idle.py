@@ -820,6 +820,29 @@ def main(page: "ft.Page"):
         if archivo_activo_permite_accion_cobra(runtime.ACCION_CORRECCION):
             correccion_runtime_handler(e)
 
+    def archivo_visible_permite_accion_paquete(accion: str) -> bool:
+        """Valida que la ruta visible apunte a un paquete Cobra para acciones de paquete."""
+
+        texto = (ruta_input.value or "").strip()
+        ruta = Path(texto) if texto else estado.ruta
+        if ruta is None:
+            salida.value = "Indica la ruta del paquete .co en el campo de ruta."
+            page.update()
+            return False
+
+        tipo_archivo = runtime.detectar_tipo_archivo(ruta)
+        if tipo_archivo != runtime.TIPO_ARCHIVO_PAQUETE_COBRA:
+            salida.value = "Esta acción solo está disponible para paquetes Cobra .co."
+            page.update()
+            return False
+
+        if runtime.archivo_permite_accion(ruta, accion):
+            return True
+
+        salida.value = "Esta acción no está disponible para este paquete Cobra."
+        page.update()
+        return False
+
 
     def crear_paquete_handler(e):
         if project_root is None:
@@ -831,21 +854,26 @@ def main(page: "ft.Page"):
         actualizar_pagina()
 
     def abrir_paquete_handler(e):
+        if not archivo_visible_permite_accion_paquete(runtime.ACCION_ABRIR_PAQUETE):
+            return
         try:
-            if ruta_input.value:
+            paquete = Path(ruta_input.value) if ruta_input.value else estado.ruta
+            if paquete is None:
+                salida.value = "Indica la ruta del paquete .co en el campo de ruta."
+            else:
                 destino = project_root or runtime.resolver_workspace_root_idle()
-                runtime.idle_abrir_paquete(Path(ruta_input.value), destino)
+                runtime.idle_abrir_paquete(paquete, destino)
                 salida.value = f"Paquete abierto en: {destino}"
                 reconstruir_arbol()
-            else:
-                salida.value = "Indica la ruta del paquete .co en el campo de ruta."
         except Exception as exc:
             salida.value = f"Error abriendo paquete: {exc}"
         actualizar_pagina()
 
     def validar_paquete_handler(e):
+        if not archivo_visible_permite_accion_paquete(runtime.ACCION_VALIDAR_PAQUETE):
+            return
         try:
-            paquete = Path(ruta_input.value) if ruta_input.value else None
+            paquete = Path(ruta_input.value) if ruta_input.value else estado.ruta
             if paquete is None:
                 salida.value = "Indica la ruta del paquete .co en el campo de ruta."
             else:
@@ -867,8 +895,10 @@ def main(page: "ft.Page"):
         actualizar_pagina()
 
     def publicar_paquete_handler(e):
+        if not archivo_visible_permite_accion_paquete(runtime.ACCION_PUBLICAR_PAQUETE):
+            return
         try:
-            paquete = Path(ruta_input.value) if ruta_input.value else None
+            paquete = Path(ruta_input.value) if ruta_input.value else estado.ruta
             if paquete is None:
                 salida.value = "Indica la ruta del paquete .co en el campo de ruta."
             else:
