@@ -888,8 +888,18 @@ def main(page: "ft.Page"):
             if project_root is None:
                 salida.value = "Abre o crea un proyecto antes de construir un paquete."
             else:
-                paquete = runtime.idle_construir_paquete(project_root)
-                salida.value = f"Paquete construido: {paquete}"
+                destino_paquete: Path | None = None
+                ruta_visible = (ruta_input.value or "").strip()
+                if ruta_visible:
+                    ruta_destino = Path(ruta_visible).expanduser()
+                    if ruta_destino.suffix.lower() == ".co":
+                        destino_paquete = (
+                            ruta_destino
+                            if ruta_destino.is_absolute()
+                            else Path(project_root) / ruta_destino
+                        )
+                paquete = runtime.idle_construir_paquete(project_root, destino_paquete)
+                salida.value = f"Paquete construido: {paquete.resolve()}"
         except Exception as exc:
             salida.value = f"Error construyendo paquete: {exc}"
         actualizar_pagina()
