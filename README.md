@@ -213,7 +213,7 @@ cobra hub cache validar
 El IDLE gráfico expone un flujo de empaquetado pensado para operar sobre el proyecto activo y sobre la ruta visible del campo **Ruta**. Las acciones disponibles son:
 
 - **Crear paquete**: inicializa el manifiesto `cobra.pkg.json` en el proyecto activo y prepara la estructura mínima del paquete. Si no hay proyecto activo, el IDLE muestra un mensaje indicando que primero debe abrirse o crearse uno.
-- **Abrir paquete**: extrae un paquete `.co` indicado en el campo **Ruta** hacia el proyecto activo o, si no hay proyecto activo, hacia la raíz de trabajo del IDLE.
+- **Abrir paquete**: extrae el contenido completo de un paquete `.co` indicado en el campo **Ruta** dentro del proyecto activo; si no hay proyecto activo, lo extrae en la raíz de trabajo o workspace del IDLE. No abre el `.co` como texto editable.
 - **Validar paquete**: inspecciona el paquete `.co` indicado en **Ruta** y muestra si es válido; los errores estructurales del paquete se presentan como mensajes visibles de paquete inválido.
 - **Construir paquete**: genera el archivo `.co` del proyecto activo usando su manifiesto `cobra.pkg.json`. Si falta el manifiesto, la construcción se detiene para que el usuario lo cree explícitamente antes.
 - **Publicar CobraHub**: publica el paquete `.co` indicado en **Ruta** mediante el cliente de CobraHub y muestra un mensaje visible si la publicación falla.

@@ -90,6 +90,11 @@ contra CobraHub:
 
       cobra paquete extraer dist/demo.co salida/demo
 
+   En el IDLE gráfico, la acción **Abrir paquete** aplica esta misma operación
+   sobre el ``.co`` indicado en el campo **Ruta**: extrae su contenido en el
+   proyecto activo y, si no hay proyecto activo, en la raíz del workspace. No
+   carga el contenedor ``.co`` como fuente editable.
+
 7. Publicar el paquete en CobraHub:
 
    .. code-block:: bash
