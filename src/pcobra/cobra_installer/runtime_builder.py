@@ -8,7 +8,7 @@ from pathlib import Path
 from .manifest import create_manifest
 from .project import BuildOptions, BuildResult, CobraInstallerError
 from .spec_writer import write_spec
-from .validator import discover_entrypoint, validate_project
+from .validator import discover_entrypoint, validate_build_options
 
 
 def build_project(options: BuildOptions | None = None, **overrides: object) -> BuildResult:
@@ -21,7 +21,7 @@ def build_project(options: BuildOptions | None = None, **overrides: object) -> B
     base = options or BuildOptions()
     if overrides:
         base = replace(base, **overrides)
-    normalized = validate_project(base)
+    normalized = validate_build_options(base)
     entrypoint = normalized.entrypoint or discover_entrypoint(Path(normalized.project_root))
     if entrypoint is None:
         raise CobraInstallerError(
