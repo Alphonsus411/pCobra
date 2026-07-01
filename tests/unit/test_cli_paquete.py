@@ -101,6 +101,88 @@ def test_paquete_validar_construir_inspeccionar_extraer_formato_moderno(tmp_path
     assert (destino / "m.co").read_text(encoding="utf-8") == "var x = 1"
 
 
+def test_paquete_integridad_alias_de_verificar_valida_paquete_co(tmp_path):
+    src, _modulo = _crear_fuente(tmp_path)
+    pkg = tmp_path / "paquete.co"
+
+    with patch("sys.stdout", new_callable=StringIO):
+        codigo_crear = main(
+            ["paquete", "construir", str(src), str(pkg), "--nombre=demo"]
+        )
+
+    assert codigo_crear == 0
+    assert pkg.exists()
+
+    with patch("sys.stdout", new_callable=StringIO) as stdout:
+        codigo = main(["paquete", "integridad", str(pkg)])
+
+    salida = stdout.getvalue()
+    assert codigo == 0
+    assert "Integridad" in salida
+    assert str(pkg) in salida
+
+
+def test_paquete_instalar_alias_extrae_localmente_con_destino(tmp_path):
+    src, _modulo = _crear_fuente(tmp_path)
+    pkg = tmp_path / "paquete.co"
+    destino = tmp_path / "destino"
+
+    with patch("sys.stdout", new_callable=StringIO):
+        codigo_crear = main(
+            ["paquete", "construir", str(src), str(pkg), "--nombre=demo"]
+        )
+
+    assert codigo_crear == 0
+
+    with patch("sys.stdout", new_callable=StringIO) as stdout:
+        codigo = main(["paquete", "instalar", str(pkg), "--destino", str(destino)])
+
+    salida = stdout.getvalue()
+    assert codigo == 0
+    assert "Paquete instalado" in salida
+    assert str(destino) in salida
+    assert (destino / "m.co").read_text(encoding="utf-8") == "var x = 1"
+
+
+def test_paquete_crear_legacy_combina_crear_y_construir_co(tmp_path):
+    src, _modulo = _crear_fuente(tmp_path)
+    pkg = tmp_path / "salida.co"
+
+    with patch("sys.stdout", new_callable=StringIO) as stdout:
+        codigo = main(["paquete", "crear", str(src), str(pkg), "--nombre=demo"])
+
+    salida = stdout.getvalue()
+    assert codigo == 0
+    assert "Paquete creado" in salida
+    assert str(pkg) in salida
+    assert (src / "cobra.pkg.json").exists()
+    assert (src / "README.md").exists()
+    assert pkg.exists()
+    data = _leer_manifest(pkg)
+    assert data["format"] == "cobra-package-v1"
+    assert data["name"] == "demo"
+    assert data["files"] == ["README.md", "m.co"]
+
+
+def test_paquete_crear_legacy_mantiene_extension_cobra(tmp_path):
+    src, _modulo = _crear_fuente(tmp_path)
+    pkg = tmp_path / "salida.cobra"
+
+    with patch("sys.stdout", new_callable=StringIO) as stdout:
+        codigo = main(["paquete", "crear", str(src), str(pkg), "--nombre=demo"])
+
+    salida = stdout.getvalue()
+    assert codigo == 0
+    assert "Paquete creado" in salida
+    assert str(pkg) in salida
+    assert (src / "cobra.pkg.json").exists()
+    assert pkg.exists()
+    data = _leer_manifest(pkg)
+    assert data["format"] == "cobra-package-v1"
+    assert data["name"] == "demo"
+    assert data["files"] == ["README.md", "m.co"]
+
+
 def test_paquete_help_documenta_verificar_e_integridad_legacy(capsys):
     with patch("sys.stdout", new_callable=StringIO) as stdout:
         codigo = main(["paquete", "--help"])
