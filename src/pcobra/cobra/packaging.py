@@ -9,6 +9,7 @@ import hashlib
 import json
 import re
 import shutil
+import stat
 import zipfile
 from dataclasses import dataclass
 from pathlib import Path
@@ -365,13 +366,39 @@ def inspeccionar_paquete(package: str | Path) -> PackageInspection:
 
 
 def _normalizar_ruta_paquete(name: str) -> str:
-    normalized = Path(str(name).replace("\\", "/"))
-    if normalized.is_absolute() or ".." in normalized.parts:
-        raise ValueError(f"Ruta insegura en paquete: {name}")
-    normalized_name = normalized.as_posix()
-    if not normalized_name or normalized_name == ".":
+    raw_name = str(name)
+    if not raw_name:
         raise ValueError(f"Ruta inválida en paquete: {name}")
-    return normalized_name
+    if "\\" in raw_name:
+        raise ValueError(f"Ruta insegura en paquete: {name}")
+    if raw_name.startswith("/") or re.match(r"^[A-Za-z]:", raw_name):
+        raise ValueError(f"Ruta insegura en paquete: {name}")
+
+    parts = raw_name.split("/")
+    if any(part in {"", ".", ".."} for part in parts):
+        raise ValueError(f"Ruta insegura en paquete: {name}")
+    return "/".join(parts)
+
+
+def _zipinfo_es_symlink(info: zipfile.ZipInfo) -> bool:
+    return stat.S_ISLNK((info.external_attr >> 16) & 0o170000)
+
+
+def _validar_entrada_zip(info: zipfile.ZipInfo) -> str:
+    if _zipinfo_es_symlink(info):
+        raise ValueError(f"Symlink no permitido en paquete: {info.filename}")
+    filename = info.filename.rstrip("/") if info.is_dir() else info.filename
+    return _normalizar_ruta_paquete(filename)
+
+
+def _validar_entradas_zip(zf: zipfile.ZipFile) -> dict[str, zipfile.ZipInfo]:
+    entries: dict[str, zipfile.ZipInfo] = {}
+    for info in zf.infolist():
+        normalized_name = _validar_entrada_zip(info)
+        if normalized_name in entries:
+            raise ValueError(f"Entrada duplicada en paquete: {normalized_name}")
+        entries[normalized_name] = info
+    return entries
 
 
 def _normalizar_lista_archivos(values: Any, *, field: str) -> set[str]:
@@ -415,10 +442,11 @@ def validar_paquete(package: str | Path) -> PackageInspection:
     checksums = _normalizar_checksums(manifest.checksums)
 
     with zipfile.ZipFile(inspection.path) as zf:
+        entries = _validar_entradas_zip(zf)
         real_files = {
-            _normalizar_ruta_paquete(info.filename)
-            for info in zf.infolist()
-            if not info.is_dir() and info.filename != MANIFEST_NAME
+            name
+            for name, info in entries.items()
+            if not info.is_dir() and name != MANIFEST_NAME
         }
         extra_files = real_files - declared_files
         if extra_files:
@@ -446,7 +474,7 @@ def validar_paquete(package: str | Path) -> PackageInspection:
             )
 
         for name in sorted(declared_files):
-            actual = _sha256_bytes(zf.read(name))
+            actual = _sha256_bytes(zf.read(entries[name]))
             if actual != checksums[name]:
                 raise ValueError(f"Integridad fallida para {name}")
     return inspection
@@ -463,14 +491,15 @@ def extraer_paquete(package: str | Path, destination: str | Path) -> Path:
     dest = Path(destination).resolve()
     dest.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(inspection.path) as zf:
-        for name in inspection.files:
+        entries = _validar_entradas_zip(zf)
+        for name, info in entries.items():
             target = (dest / name).resolve()
             target.relative_to(dest)
-            if name.endswith("/"):
+            if info.is_dir():
                 target.mkdir(parents=True, exist_ok=True)
             else:
                 target.parent.mkdir(parents=True, exist_ok=True)
-                with zf.open(name) as src, target.open("wb") as out:
+                with zf.open(info) as src, target.open("wb") as out:
                     shutil.copyfileobj(src, out)
     return dest
 

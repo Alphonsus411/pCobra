@@ -1,6 +1,7 @@
 import ast
 import hashlib
 import json
+import stat
 import zipfile
 from pathlib import Path
 
@@ -215,6 +216,106 @@ def _crear_zip_con_manifest(
 
 def _sha256(content: bytes) -> str:
     return hashlib.sha256(content).hexdigest()
+
+
+def _crear_zip_moderno_con_infos(
+    tmp_path: Path, entries: list[tuple[zipfile.ZipInfo | str, bytes]]
+) -> Path:
+    paquete = tmp_path / "manual-infos.co"
+    with zipfile.ZipFile(paquete, "w", zipfile.ZIP_DEFLATED) as zf:
+        for info_or_name, content in entries:
+            zf.writestr(info_or_name, content)
+    return paquete
+
+
+def _manifest_moderno(files: list[str], payloads: dict[str, bytes]) -> dict:
+    return {
+        "format": "cobra-package-v1",
+        "name": "demo",
+        "version": "1.0.0",
+        "files": files,
+        "checksums": {name: _sha256(payloads[name]) for name in files},
+    }
+
+
+def test_validar_paquete_moderno_rechaza_entrada_duplicada(tmp_path: Path):
+    contenido = b"imprimir('hola')\n"
+    manifest = _manifest_moderno(["src/main.cobra"], {"src/main.cobra": contenido})
+    paquete = _crear_zip_moderno_con_infos(
+        tmp_path,
+        [
+            (MANIFEST_NAME, json.dumps(manifest, ensure_ascii=False).encode()),
+            ("src/main.cobra", contenido),
+            ("src/main.cobra", contenido),
+        ],
+    )
+
+    with pytest.raises(ValueError, match="Entrada duplicada"):
+        validar_paquete(paquete)
+
+
+def test_validar_paquete_moderno_rechaza_symlink_por_external_attr(tmp_path: Path):
+    link = zipfile.ZipInfo("src/link.co")
+    link.external_attr = (stat.S_IFLNK | 0o777) << 16
+    contenido = b"destino.co"
+    manifest = _manifest_moderno(["src/link.co"], {"src/link.co": contenido})
+    paquete = _crear_zip_moderno_con_infos(
+        tmp_path,
+        [
+            (MANIFEST_NAME, json.dumps(manifest, ensure_ascii=False).encode()),
+            (link, contenido),
+        ],
+    )
+
+    with pytest.raises(ValueError, match="Symlink no permitido"):
+        validar_paquete(paquete)
+
+
+def test_validar_paquete_moderno_rechaza_ruta_parent_traversal(tmp_path: Path):
+    contenido = b"pwn"
+    manifest = _manifest_moderno(["../evil.co"], {"../evil.co": contenido})
+    paquete = _crear_zip_moderno_con_infos(
+        tmp_path,
+        [
+            (MANIFEST_NAME, json.dumps(manifest, ensure_ascii=False).encode()),
+            ("../evil.co", contenido),
+        ],
+    )
+
+    with pytest.raises(ValueError, match="Ruta insegura"):
+        validar_paquete(paquete)
+
+
+def test_validar_paquete_moderno_rechaza_ruta_absoluta(tmp_path: Path):
+    contenido = b"pwn"
+    manifest = _manifest_moderno(["/tmp/evil.co"], {"/tmp/evil.co": contenido})
+    paquete = _crear_zip_moderno_con_infos(
+        tmp_path,
+        [
+            (MANIFEST_NAME, json.dumps(manifest, ensure_ascii=False).encode()),
+            ("/tmp/evil.co", contenido),
+        ],
+    )
+
+    with pytest.raises(ValueError, match="Ruta insegura"):
+        validar_paquete(paquete)
+
+
+def test_extraer_paquete_moderno_rechaza_ruta_windows_con_traversal(tmp_path: Path):
+    contenido = b"pwn"
+    ruta = r"src\..\evil.co"
+    manifest = _manifest_moderno([ruta], {ruta: contenido})
+    paquete = _crear_zip_moderno_con_infos(
+        tmp_path,
+        [
+            (MANIFEST_NAME, json.dumps(manifest, ensure_ascii=False).encode()),
+            (ruta, contenido),
+        ],
+    )
+
+    with pytest.raises(ValueError, match="Ruta insegura"):
+        extraer_paquete(paquete, tmp_path / "destino")
+    assert not (tmp_path / "evil.co").exists()
 
 
 def test_validar_paquete_rechaza_manifest_incompleto(tmp_path: Path):
