@@ -214,3 +214,56 @@ def test_collect_project_resources_ignora_build_y_dist(tmp_path: Path) -> None:
     assert resources.assets == (tmp_path / "assets",)
     assert resources.co_packages == (tmp_path / "mod.co",)
     assert resources.documentation == (tmp_path / "manual.rst",)
+
+
+def test_validate_project_acumula_errores_para_idle(tmp_path: Path) -> None:
+    from pcobra.cobra_installer import CobraProject, validate_project
+
+    source = tmp_path / "main.co"
+    source.write_text("imprimir('hola')\n", encoding="utf-8")
+    (tmp_path / "cobra.toml").write_text("[sin_cierre\n", encoding="utf-8")
+    outside_doc = tmp_path.parent / "manual.md"
+
+    result = validate_project(
+        CobraProject(
+            project_root=tmp_path,
+            entrypoint=source,
+            documentation=(outside_doc,),
+            config={"build": {"executable_name": "bad/name", "icon": "assets/missing.bmp"}},
+        )
+    )
+
+    codes = {error.code for error in result.errors}
+    assert not result.is_valid
+    assert "entrypoint_extension_invalid" in codes
+    assert "cobra_toml_syntax_invalid" in codes
+    assert "documentation_outside_project" in codes
+    assert "documentation_not_found" in codes
+    assert "executable_name_invalid" in codes
+    assert "icon_not_found" in codes
+    assert "icon_extension_invalid" in codes
+
+
+def test_validate_project_acepta_proyecto_cobra_minimo(tmp_path: Path) -> None:
+    from pcobra.cobra_installer import CobraProject, validate_project
+
+    entrypoint = tmp_path / "main.cobra"
+    entrypoint.write_text("imprimir('hola')\n", encoding="utf-8")
+    (tmp_path / "cobra.toml").write_text('[project]\nname = "demo"\n', encoding="utf-8")
+    (tmp_path / "cobra.lock").write_text('version = "1"\n', encoding="utf-8")
+    assets = tmp_path / "assets"
+    assets.mkdir()
+    icon = assets / "logo.png"
+    icon.write_bytes(b"png")
+
+    result = validate_project(
+        CobraProject(
+            project_root=tmp_path,
+            entrypoint=entrypoint,
+            assets=(assets,),
+            config={"project": {"executable_name": "demo-app", "icon": "assets/logo.png"}},
+        )
+    )
+
+    assert result.is_valid
+    assert result.errors == ()

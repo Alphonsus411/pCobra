@@ -19,6 +19,7 @@ from .project import (
     find_entrypoint,
 )
 from .targets import BuildMode, TargetOS
+from .validator import ValidationErrorDetail, ValidationResult, validate_project
 from .runtime_builder import build_project, package_current_project
 
 __all__ = [
@@ -34,6 +35,9 @@ __all__ = [
     "find_entrypoint",
     "DependencyInfo",
     "TargetOS",
+    "ValidationErrorDetail",
+    "ValidationResult",
     "build_project",
+    "validate_project",
     "package_current_project",
 ]
