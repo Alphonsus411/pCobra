@@ -652,7 +652,7 @@ class _PackageStreamingResponse:
         raise AssertionError("La instalación debe descargar el paquete en streaming")
 
 
-def _paquete_cobra_bytes(label: str = "demo") -> bytes:
+def _paquete_cobra_bytes(label: str = "demo", extra_manifest=None) -> bytes:
     payload = f"imprimir('{label}')\n".encode("utf-8")
     checksum = hashlib.sha256(payload).hexdigest()
     manifest = {
@@ -662,6 +662,8 @@ def _paquete_cobra_bytes(label: str = "demo") -> bytes:
         "files": ["src/main.cobra"],
         "checksums": {"src/main.cobra": checksum},
     }
+    if extra_manifest:
+        manifest.update(extra_manifest)
     buffer = BytesIO()
     with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as zf:
         zf.writestr("cobra.pkg.json", json.dumps(manifest, ensure_ascii=False))
@@ -695,6 +697,11 @@ def test_buscar_paquetes_normaliza_metadatos_disponibles(monkeypatch):
                         "sha256": "abc123",
                         "url": "https://example.test/demo-2.0.0.co",
                         "id": "pkg-1",
+                        "description": "Descripción corta",
+                        "authors": ["Ada", 7],
+                        "license": "Apache-2.0",
+                        "homepage": "https://example.test/demo",
+                        "dependencies": {"cobra-core": "^1.0.0", "util": 2},
                     }
                 ]
             }
@@ -719,8 +726,60 @@ def test_buscar_paquetes_normaliza_metadatos_disponibles(monkeypatch):
             "checksum": "abc123",
             "download_url": "https://example.test/demo-2.0.0.co",
             "remote_id": "pkg-1",
+            "description": "Descripción corta",
+            "authors": ["Ada", "7"],
+            "license": "Apache-2.0",
+            "homepage": "https://example.test/demo",
+            "dependencies": {"cobra-core": "^1.0.0", "util": "2"},
         }
     ]
+
+
+@pytest.mark.timeout(5)
+def test_publicar_paquete_preserva_manifiesto_enriquecido(tmp_path, monkeypatch):
+    cache_dir = tmp_path / "cache"
+    monkeypatch.setenv("COBRAHUB_CACHE_DIR", str(cache_dir))
+
+    manifest_extra = {
+        "name": "Demo Enriquecido",
+        "description": "Paquete de ejemplo con metadatos opcionales",
+        "authors": ["Ada Lovelace", 42],
+        "license": "MIT",
+        "homepage": "https://example.test/demo",
+        "dependencies": {"cobra-core": "^1.0.0", "util": 2},
+    }
+    paquete = tmp_path / "demo-enriquecido.co"
+    contenido = _paquete_cobra_bytes("demo-enriquecido", manifest_extra)
+    paquete.write_bytes(contenido)
+
+    client = cobrahub_client.CobraHubClient()
+    response = MagicMock()
+    response.__enter__.return_value = response
+    response.__exit__.return_value = False
+    response.raise_for_status.return_value = None
+    client.session.post = MagicMock(return_value=response)
+
+    assert client.publicar_paquete(str(paquete))
+
+    client.session.post.assert_called_once()
+    metadata = json.loads(client.session.post.call_args.kwargs["data"]["metadata"])
+    assert metadata == {
+        "format": "cobra-package-v1",
+        "name": "demo-enriquecido",
+        "version": "1.0.0",
+        "files": ["src/main.cobra"],
+        "checksums": metadata["checksums"],
+        "description": "Paquete de ejemplo con metadatos opcionales",
+        "authors": ["Ada Lovelace", "42"],
+        "license": "MIT",
+        "homepage": "https://example.test/demo",
+        "dependencies": {"cobra-core": "^1.0.0", "util": "2"},
+    }
+    assert (cache_dir / paquete.name).read_bytes() == contenido
+
+    from pcobra.cobra.cli.cobrahub_packages import CobraHubPackages
+
+    assert CobraHubPackages(client).leer_metadatos(paquete) == metadata
 
 
 @pytest.mark.timeout(5)
