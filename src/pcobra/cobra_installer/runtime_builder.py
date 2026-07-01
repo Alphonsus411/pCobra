@@ -39,6 +39,11 @@ def build_project(options: BuildOptions | None = None, **overrides: object) -> B
         project_root=Path(normalized.project_root),
         output_dir=output_dir,
         target=normalized.target,
+        architecture=normalized.architecture,
+        mode=normalized.mode,
+        executable_name=name,
+        temp_dir=Path(normalized.temp_dir) if normalized.temp_dir is not None else None,
+        dist_dir=output_dir,
         metadata={"entrypoint": str(entrypoint), "manifest": str(manifest_path), "name": name},
         logs=("Proyecto preparado para empaquetado.",),
     )

@@ -7,13 +7,20 @@ puente delgado de :mod:`pcobra.cobra_installer.idle_bridge`.
 
 from __future__ import annotations
 
-from .project import BuildOptions, BuildResult, CobraInstallerError
+from .manifest import BuildManifest, DependencyInfo
+from .project import BuildOptions, BuildResult, CobraInstallerError, CobraProject
+from .targets import BuildMode, TargetOS
 from .runtime_builder import build_project, package_current_project
 
 __all__ = [
+    "BuildManifest",
+    "BuildMode",
     "BuildOptions",
     "BuildResult",
+    "CobraProject",
     "CobraInstallerError",
+    "DependencyInfo",
+    "TargetOS",
     "build_project",
     "package_current_project",
 ]
