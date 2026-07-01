@@ -1684,5 +1684,6 @@ def idle_abrir_paquete(paquete: str | Path, destino: str | Path) -> Path:
 
 def idle_publicar_paquete(paquete: str | Path) -> bool:
     from pcobra.cobra.cli.cobrahub_client import CobraHubClient
+    from pcobra.cobra.cli.cobrahub_packages import CobraHubPackages
 
-    return CobraHubClient().publicar_paquete(str(paquete))
+    return CobraHubPackages(CobraHubClient()).publicar_paquete(str(paquete))

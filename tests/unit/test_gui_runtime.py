@@ -1184,7 +1184,7 @@ def test_idle_publicar_paquete_expone_fallo_de_publicacion(
         return False
 
     monkeypatch.setattr(
-        "pcobra.cobra.cli.cobrahub_client.CobraHubClient.publicar_paquete",
+        "pcobra.cobra.cli.cobrahub_packages.CobraHubPackages.publicar_paquete",
         publicar_mock,
     )
 
@@ -1230,7 +1230,7 @@ def test_botones_idle_de_paquetes_delegan_solo_en_helpers_runtime() -> None:
             assert all(alias.name not in forbidden_imports for alias in node.names)
 
 
-def test_idle_publicar_paquete_usa_cliente_mockeado_sin_red(
+def test_idle_publicar_paquete_delega_en_cobrahub_packages_sin_red(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     project_root = _crear_proyecto_cobra_minimo(tmp_path)
@@ -1243,13 +1243,41 @@ def test_idle_publicar_paquete_usa_cliente_mockeado_sin_red(
         return True
 
     monkeypatch.setattr(
-        "pcobra.cobra.cli.cobrahub_client.CobraHubClient.publicar_paquete",
+        "pcobra.cobra.cli.cobrahub_packages.CobraHubPackages.publicar_paquete",
         publicar_mock,
     )
 
     assert runtime.idle_publicar_paquete(paquete) is True
     assert llamadas == [str(paquete)]
 
+
+def test_idle_publicar_paquete_no_delega_en_metodo_legacy_del_cliente(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    paquete = tmp_path / "paquete.co"
+    paquete.write_text("contenido", encoding="utf-8")
+    llamadas: list[str] = []
+
+    def publicar_packages_mock(self, ruta: str) -> bool:
+        llamadas.append(ruta)
+        return True
+
+    def publicar_cliente_legacy_mock(self, ruta: str) -> bool:
+        raise AssertionError(
+            "El IDLE no debe publicar mediante CobraHubClient.publicar_paquete"
+        )
+
+    monkeypatch.setattr(
+        "pcobra.cobra.cli.cobrahub_packages.CobraHubPackages.publicar_paquete",
+        publicar_packages_mock,
+    )
+    monkeypatch.setattr(
+        "pcobra.cobra.cli.cobrahub_client.CobraHubClient.publicar_paquete",
+        publicar_cliente_legacy_mock,
+    )
+
+    assert runtime.idle_publicar_paquete(paquete) is True
+    assert llamadas == [str(paquete)]
 
 def test_helpers_idle_de_paquetes_no_importan_lexer_ni_parser_y_delegan_en_packaging(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
