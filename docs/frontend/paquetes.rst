@@ -12,6 +12,13 @@ Los archivos fuente Cobra pueden seguir usando ``.cobra`` o ``.co``; cuando
 ``.co`` se usa como paquete publicable, la CLI lo detecta como un ZIP legible
 con ``cobra.pkg.json`` en la raíz, no como sintaxis Cobra.
 
+Contrato arquitectónico
+-----------------------
+
+Los paquetes ``.co`` son contenedores ZIP con manifiesto ``cobra.pkg.json``. La detección usa ``zipfile`` y la presencia de ``cobra.pkg.json`` en la raíz del contenedor; los archivos ``.cobra`` o ``.co`` internos permanecen como recursos hasta que el usuario decida ejecutarlos o editarlos explícitamente.
+
+El soporte vive en ``pcobra.cobra.packaging`` como capa independiente de empaquetado y distribución. No añade palabras clave ni cambios gramaticales, de modo que no requiere modificar ``src/pcobra/core/lexer.py``, ``src/pcobra/core/parser.py`` ni los módulos canónicos bajo ``src/pcobra/cobra/core/``.
+
 Fuente de verdad pública
 ------------------------
 

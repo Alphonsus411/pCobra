@@ -180,8 +180,17 @@ def test_crear_y_construir_paquete_normalizan_identidad_consistentemente(
     assert paquete.name == "paquete-demo-2.0.0.co"
 
 
-def test_packaging_no_importa_lexer_parser():
+def test_packaging_es_capa_arquitectonica_independiente_de_lexer_parser():
+    """Documenta que ``pcobra.cobra.packaging`` es una capa independiente.
+
+    Los paquetes ``.co`` se detectan como ZIPs con ``cobra.pkg.json`` usando
+    ``zipfile``; los fuentes internos son recursos hasta que otro flujo los
+    ejecute o edite. Esta capa no debe depender de lexer/parser ni de módulos
+    canónicos de ``pcobra.cobra.core``.
+    """
     import pcobra.cobra.packaging as packaging
+
+    assert packaging.__name__ == "pcobra.cobra.packaging"
 
     tree = ast.parse(Path(packaging.__file__).read_text(encoding="utf-8"))
     imported_modules = {
@@ -196,12 +205,22 @@ def test_packaging_no_importa_lexer_parser():
         if isinstance(node, ast.ImportFrom) and node.module is not None
     )
 
+    assert "zipfile" in imported_modules
+
     forbidden_modules = {
         module
         for module in imported_modules
         if module
-        in {"pcobra.cobra.core", "pcobra.cobra.core.lexer", "pcobra.cobra.core.parser"}
+        in {
+            "pcobra.core",
+            "pcobra.core.lexer",
+            "pcobra.core.parser",
+            "pcobra.cobra.core",
+            "pcobra.cobra.core.lexer",
+            "pcobra.cobra.core.parser",
+        }
         or module.endswith((".lexer", ".parser"))
+        or module.startswith("pcobra.cobra.core.")
     }
 
     assert forbidden_modules == set()

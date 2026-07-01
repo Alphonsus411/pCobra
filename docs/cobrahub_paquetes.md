@@ -3,6 +3,12 @@
 La guía de uso actualizada para crear, construir, validar, inspeccionar y extraer paquetes está en [`docs/frontend/paquetes.rst`](frontend/paquetes.rst).
 
 
+## Arquitectura sin cambios gramaticales
+
+Los paquetes `.co` son contenedores ZIP con manifiesto `cobra.pkg.json`. La detección usa `zipfile` y comprueba la presencia de `cobra.pkg.json` en la raíz del contenedor; los archivos `.cobra` o `.co` incluidos dentro del ZIP se tratan como recursos hasta que el usuario decida ejecutarlos o editarlos explícitamente.
+
+Esta capacidad vive en `pcobra.cobra.packaging` como capa independiente de empaquetado y distribución. No introduce palabras clave, tokens ni reglas gramaticales nuevas; por tanto no se modifica `src/pcobra/core/lexer.py`, `src/pcobra/core/parser.py` ni los módulos canónicos bajo `src/pcobra/cobra/core/`.
+
 ## Fuente de verdad del empaquetado `.co`
 
 `pcobra.cobra.packaging` es el contrato público y la fuente de verdad para paquetes Cobra `.co`. Las funciones públicas son `crear_paquete`, `validar_paquete`, `construir_paquete`, `extraer_paquete`, `inspeccionar_paquete`, `verificar_integridad` y `es_paquete_cobra`; CLI, IDLE y CobraHub deben importarlas y delegar en ellas en vez de duplicar la lógica de ZIP, manifiestos o checksums.
