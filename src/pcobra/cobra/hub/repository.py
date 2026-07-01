@@ -22,6 +22,8 @@ from typing import TYPE_CHECKING, Any, Protocol
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.packaging import (
     PackageSearchResult,
+    manifest_from_dict,
+    manifest_to_dict,
     normalizar_nombre_paquete,
     validar_version_paquete,
 )
@@ -75,6 +77,7 @@ class HttpCobraHubRepository:
     ) -> bool:
         """Publica un paquete .co mediante la API HTTP de CobraHub."""
         ruta = Path(package_path)
+        metadata = _normalizar_metadatos_paquete(metadata)
         with ruta.open("rb") as f:
             with self.client.session.post(
                 f"{self.client.base_url}/paquetes",
@@ -178,7 +181,28 @@ class HttpCobraHubRepository:
                 "No es un paquete Cobra: debe ser ZIP y contener cobra.pkg.json"
             )
         info = validar_paquete(package_path)
-        return dict(info.manifest)
+        return _normalizar_metadatos_paquete(info.manifest)
+
+
+def _normalizar_metadatos_paquete(metadata: dict[str, Any]) -> dict[str, Any]:
+    """Devuelve metadatos canónicos preservando campos opcionales soportados."""
+    return manifest_to_dict(manifest_from_dict(dict(metadata)))
+
+
+def _normalizar_lista_str(value: Any) -> list[str] | None:
+    if value is None:
+        return None
+    if isinstance(value, list):
+        return [str(item) for item in value]
+    return [str(value)]
+
+
+def _normalizar_dependencias(value: Any) -> dict[str, str] | None:
+    if value is None:
+        return None
+    if not isinstance(value, dict):
+        return None
+    return {str(name): str(version) for name, version in value.items()}
 
 
 def _normalizar_resultado_paquete(item: Any) -> PackageSearchResult:
@@ -206,6 +230,17 @@ def _normalizar_resultado_paquete(item: Any) -> PackageSearchResult:
             item.get("download_url") or item.get("url") or item.get("href")
         ),
         remote_id=_optional_str(item.get("remote_id") or item.get("id")),
+        description=_optional_str(item.get("description") or item.get("descripcion")),
+        authors=_normalizar_lista_str(
+            item["authors"] if "authors" in item else item.get("autores")
+        ),
+        license=_optional_str(item.get("license") or item.get("licencia")),
+        homepage=_optional_str(
+            item.get("homepage") or item.get("home_page") or item.get("project_url")
+        ),
+        dependencies=_normalizar_dependencias(
+            item["dependencies"] if "dependencies" in item else item.get("dependencias")
+        ),
     )
 
 

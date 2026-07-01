@@ -146,8 +146,13 @@ class PackageSearchResult:
     checksum: str | None = None
     download_url: str | None = None
     remote_id: str | None = None
+    description: str | None = None
+    authors: list[str] | None = None
+    license: str | None = None
+    homepage: str | None = None
+    dependencies: dict[str, str] | None = None
 
-    def as_dict(self) -> dict[str, str]:
+    def as_dict(self) -> dict[str, Any]:
         """Devuelve solo los campos disponibles para mantener compatibilidad JSON."""
         values = {
             "name": self.name,
@@ -156,6 +161,11 @@ class PackageSearchResult:
             "checksum": self.checksum,
             "download_url": self.download_url,
             "remote_id": self.remote_id,
+            "description": self.description,
+            "authors": self.authors,
+            "license": self.license,
+            "homepage": self.homepage,
+            "dependencies": self.dependencies,
         }
         return {key: value for key, value in values.items() if value is not None}
 
