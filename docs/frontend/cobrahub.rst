@@ -9,6 +9,42 @@ las notas de diseño consulta :doc:`paquetes` y el documento
 mínimo provisional para ``POST /paquetes``, ``GET /paquetes?q=consulta`` y
 ``GET /paquetes/{nombre}``, compatible con una futura infraestructura tipo PyPI.
 
+
+Contrato ``PackageRepository``
+-----------------------------
+
+La CLI de CobraHub no acopla la publicación, búsqueda, descarga ni lectura de
+metadatos a una implementación concreta. Esas operaciones se expresan mediante
+el contrato ``PackageRepository``:
+
+* ``publish(package_path, metadata, checksum)``: publica un paquete ``.co``
+  local ya validado, enviando los metadatos normalizados y el checksum esperado
+  del artefacto.
+* ``search(query)``: busca paquetes a partir de una consulta textual y devuelve
+  resultados normalizados.
+* ``download(name, version=None)``: descarga un paquete por nombre; ``version``
+  es opcional y, si se omite, el repositorio puede resolver la versión por
+  defecto o más reciente según su política.
+* ``read_metadata(package_path)``: lee metadatos de un paquete local tras
+  comprobar que el archivo es un paquete Cobra válido.
+
+La implementación HTTP actual usa endpoints provisionales:
+
+* ``POST /paquetes`` para publicar paquetes.
+* ``GET /paquetes?q=...`` para buscar paquetes.
+* ``GET /paquetes/{nombre}`` para descargar paquetes, con ``version`` como
+  parámetro opcional cuando se necesita una versión concreta.
+
+``read_metadata(package_path)`` no usa la red: opera sobre el archivo local y
+reutiliza la validación del paquete.
+
+Por ahora quedan fuera de alcance la resolución transitiva de dependencias, la
+autenticación compleja, las firmas criptográficas, un índice global completo, el
+yanking o deprecación de versiones y los mirrors. Mantener este contrato separado
+permite evolucionar CobraHub hacia un repositorio tipo PyPI sin tocar Lexer ni
+Parser, porque el empaquetado y el transporte siguen viviendo en capas externas
+a la sintaxis del lenguaje.
+
 Flujo recomendado de paquetes
 -----------------------------
 

@@ -13,6 +13,28 @@ La guía de uso actualizada para crear, construir, validar, inspeccionar y extra
 - **Ruta recomendada para paquetes:** `src/pcobra/cobra/cli/cobrahub_packages.py` concentra la API de paquetes publicables `.co`: publicación, búsqueda, instalación, caché local y lectura de metadatos. El comando `cobra hub publicar|buscar|instalar` usa esta capa.
 - **Compatibilidad:** los métodos `publicar_paquete`, `buscar_paquetes` e `instalar_paquete` siguen disponibles en `CobraHubClient`, pero delegan en `CobraHubPackages`. El código nuevo debería importar `CobraHubPackages` directamente.
 
+
+## Contrato `PackageRepository`
+
+`PackageRepository` es el contrato interno que desacopla las operaciones de repositorio de paquetes del transporte concreto y del resto del lenguaje. La capa de comandos de CobraHub delega en esta interfaz para publicar, buscar, descargar y leer metadatos de paquetes `.co`, mientras Lexer y Parser permanecen ajenos al formato de distribución.
+
+La interfaz actual expone cuatro operaciones:
+
+- `publish(package_path, metadata, checksum)`: publica un paquete local ya validado. `package_path` apunta al artefacto `.co`, `metadata` contiene los metadatos normalizados que se indexarán y `checksum` identifica el contenido esperado para verificar integridad durante la publicación.
+- `search(query)`: busca paquetes a partir de una consulta textual y devuelve resultados normalizados para que la CLI pueda mostrarlos o usarlos en flujos posteriores.
+- `download(name, version=None)`: descarga un paquete por nombre canónico. `version` es opcional; si no se proporciona, el repositorio puede resolver la versión por defecto o más reciente según su política actual.
+- `read_metadata(package_path)`: lee y normaliza los metadatos de un paquete `.co` local, validando que sea un paquete Cobra antes de exponer su manifiesto.
+
+La implementación HTTP actual (`HttpCobraHubRepository`) usa endpoints provisionales mientras el servicio evoluciona:
+
+- `POST /paquetes` para `publish(package_path, metadata, checksum)`.
+- `GET /paquetes?q=...` para `search(query)`.
+- `GET /paquetes/{nombre}` para `download(name, version=None)`, con `version` como parámetro opcional cuando se quiere una versión concreta.
+
+`read_metadata(package_path)` es una operación local: reutiliza la validación del paquete `.co` y no requiere endpoint HTTP.
+
+Quedan fuera de alcance por ahora la resolución transitiva de dependencias, la autenticación compleja, las firmas criptográficas, un índice global completo, el yanking o deprecación de versiones y los mirrors. Esas capacidades podrán incorporarse detrás de nuevas implementaciones de `PackageRepository` o de extensiones compatibles del contrato, sin cambiar el Lexer ni el Parser. Esta separación permite evolucionar CobraHub hacia un repositorio tipo PyPI manteniendo estable la sintaxis del lenguaje y aislando el formato de distribución en la capa de empaquetado/repositorio.
+
 ## Contrato HTTP mínimo
 
 Esta especificación define el contrato HTTP mínimo que debe implementar un
