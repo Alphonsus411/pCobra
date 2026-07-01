@@ -132,6 +132,19 @@ La funcionalidad se implementa en `pcobra.cobra.packaging`, una capa independien
 6. Añadir acciones del IDLE que reutilizan la misma lógica de empaquetado.
 7. Añadir pruebas unitarias de construcción, validación, inspección y extracción.
 
+
+## Contrato de validación e integridad CLI
+
+- `cobra paquete validar <artefacto.co>` comprueba que el archivo sea un paquete
+  Cobra válido: ZIP legible con `cobra.pkg.json`, manifiesto completo, lista de
+  archivos coherente y checksums declarados para el contenido.
+- `cobra paquete verificar <artefacto.co>` es el alias explícito para integridad:
+  recalcula y compara los hashes SHA-256 de los archivos declarados en el
+  manifiesto antes de publicar, instalar o confiar en el artefacto.
+- `cobra paquete integridad <artefacto.co>` se conserva como alias legacy de
+  `verificar` para no romper scripts existentes; el código nuevo debe preferir
+  `verificar`.
+
 ## Regla de detección de paquetes `.co`
 
 Un archivo `.co` solo se considera paquete Cobra cuando cumple ambas condiciones estructurales:
