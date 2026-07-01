@@ -19,6 +19,7 @@ from .project import (
     find_entrypoint,
 )
 from .targets import BuildMode, TargetOS
+from .transpile import TranspileResult, transpile_project
 from .validator import ValidationErrorDetail, ValidationResult, validate_project
 from .runtime_builder import build_project, package_current_project
 
@@ -35,6 +36,8 @@ __all__ = [
     "find_entrypoint",
     "DependencyInfo",
     "TargetOS",
+    "TranspileResult",
+    "transpile_project",
     "ValidationErrorDetail",
     "ValidationResult",
     "build_project",
