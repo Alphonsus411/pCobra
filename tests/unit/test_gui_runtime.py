@@ -1168,6 +1168,24 @@ def test_idle_validar_paquete_muestra_error_para_paquete_invalido(tmp_path: Path
         runtime.idle_validar_paquete(paquete)
 
 
+def test_idle_abrir_paquete_delega_en_extraer_paquete(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    paquete = tmp_path / "paquete.co"
+    paquete.write_bytes(b"contenido de prueba")
+    destino = tmp_path / "destino"
+    destino.mkdir()
+    llamadas: list[tuple[Path, Path]] = []
+
+    def fake_extraer_paquete(paquete_arg, destino_arg):
+        llamadas.append((paquete_arg, destino_arg))
+        return Path(destino_arg)
+
+    monkeypatch.setattr("pcobra.cobra.packaging.extraer_paquete", fake_extraer_paquete)
+
+    assert runtime.idle_abrir_paquete(paquete, destino) == destino
+    assert llamadas == [(paquete, destino)]
+
 def test_idle_abrir_paquete_falla_si_destino_no_existe(tmp_path: Path) -> None:
     project_root = _crear_proyecto_cobra_minimo(tmp_path)
     runtime.idle_crear_paquete(project_root, "paquete-demo", version="1.0.0")

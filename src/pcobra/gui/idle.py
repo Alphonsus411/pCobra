@@ -863,7 +863,7 @@ def main(page: "ft.Page"):
             else:
                 destino = project_root or runtime.resolver_workspace_root_idle()
                 runtime.idle_abrir_paquete(paquete, destino)
-                salida.value = f"Paquete abierto en: {destino}"
+                salida.value = f"Paquete extraído/abierto en: {destino}"
                 reconstruir_arbol()
         except Exception as exc:
             salida.value = f"Error abriendo paquete: {exc}"
