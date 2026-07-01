@@ -99,3 +99,24 @@ def test_paquete_validar_construir_inspeccionar_extraer_formato_moderno(tmp_path
         main(["paquete", "extraer", str(pkg), str(destino)])
     assert "Paquete extraído" in stdout.getvalue()
     assert (destino / "m.co").read_text(encoding="utf-8") == "var x = 1"
+
+
+def test_paquete_help_documenta_verificar_e_integridad_legacy(capsys):
+    with patch("sys.stdout", new_callable=StringIO) as stdout:
+        codigo = main(["paquete", "--help"])
+
+    assert codigo == 0
+    salida = stdout.getvalue()
+    assert "verificar" in salida
+    assert "integridad" in salida
+
+
+def test_paquete_verificar_help_expone_alias_integridad(capsys):
+    with patch("sys.stdout", new_callable=StringIO) as stdout:
+        codigo = main(["paquete", "verificar", "--help"])
+
+    assert codigo == 0
+    salida = stdout.getvalue()
+    assert "verificar" in salida
+    assert "integridad" in salida
+    assert "paquete" in salida

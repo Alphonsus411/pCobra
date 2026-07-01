@@ -84,14 +84,19 @@ Construir el contenedor publicable ``.co``:
 
    cobra paquete construir mi_paquete dist/demo.co
 
-Validar checksums y manifiesto:
+Validar estructura y manifiesto del contenedor:
 
 .. code-block:: bash
 
    cobra paquete validar dist/demo.co
 
-Verificar explícitamente la integridad del paquete antes de publicarlo o
-instalarlo; el alias ``integridad`` es equivalente:
+Verificación de integridad
+--------------------------
+
+Antes de publicar o instalar un paquete, usa ``verificar`` para expresar de
+forma explícita la comprobación de integridad SHA-256 de los archivos declarados
+en ``cobra.pkg.json``. El comando ``integridad`` se mantiene como alias legacy
+para scripts existentes y es equivalente a ``verificar``.
 
 .. code-block:: bash
 

@@ -57,6 +57,10 @@ class PaqueteCommand(BaseCommand):
             "verificar",
             aliases=["integridad"],
             help=_("Verifica la integridad de un paquete .co"),
+            description=_(
+                "Verifica la integridad SHA-256 de un paquete .co; "
+                "integridad es un alias legacy equivalente."
+            ),
         )
         verificar.add_argument("paquete", type=Path)
 

@@ -1142,7 +1142,7 @@ El subcomando `gui` abre el IDLE gráfico principal y requiere tener instalado F
 
 ### Paquetes `.co` y CobraHub
 
-CobraHub funciona ahora como una capa de herramientas independiente para crear, construir, validar, inspeccionar, extraer, publicar, buscar e instalar paquetes `.co`. Un paquete `.co` es un ZIP con manifiesto `cobra.pkg.json`, checksums SHA-256 y estructura de carpetas conservada; puede contener archivos `.cobra`, documentación Markdown, texto, `Dockerfile` y recursos. Esta funcionalidad no cambia la sintaxis de Cobra ni requiere tocar Lexer o Parser. Consulta la guía actualizada de paquetes en [`docs/frontend/paquetes.rst`](docs/frontend/paquetes.rst) y el resumen de diseño en [`docs/cobrahub_paquetes.md`](docs/cobrahub_paquetes.md).
+CobraHub funciona ahora como una capa de herramientas independiente para crear, construir, validar, verificar, inspeccionar, extraer, publicar, buscar e instalar paquetes `.co`. Un paquete `.co` es un ZIP con manifiesto `cobra.pkg.json`, checksums SHA-256 y estructura de carpetas conservada; puede contener archivos `.cobra`, documentación Markdown, texto, `Dockerfile` y recursos. `validar` comprueba la estructura y el manifiesto del contenedor, `verificar` expresa de forma explícita la verificación de integridad SHA-256, e `integridad` se conserva como alias legacy. Esta funcionalidad no cambia la sintaxis de Cobra ni requiere tocar Lexer o Parser. Consulta la guía actualizada de paquetes en [`docs/frontend/paquetes.rst`](docs/frontend/paquetes.rst) y el resumen de diseño en [`docs/cobrahub_paquetes.md`](docs/cobrahub_paquetes.md).
 
 Comandos nuevos:
 
