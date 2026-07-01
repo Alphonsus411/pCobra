@@ -11,7 +11,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from pcobra.cobra.hub.repository import PackageRepository, package_cache_dir
+from pcobra.cobra.hub.repository import PackageRepository
+from pcobra.cobra_installer.cache import CobraInstallerCache
 from pcobra.cobra.packaging import (
     es_paquete_cobra,
     inspeccionar_paquete,
@@ -49,10 +50,8 @@ class CobraHubResolver:
         cache_dir: str | Path | None = None,
     ) -> None:
         self.repository = repository
-        self.cache_dir = (
-            Path(cache_dir).expanduser() if cache_dir else package_cache_dir()
-        )
-        self.cache_dir.mkdir(parents=True, exist_ok=True)
+        self.cache = CobraInstallerCache(cache_dir=cache_dir)
+        self.cache_dir = self.cache.cache_dir
 
     def resolve(
         self,
@@ -78,16 +77,15 @@ class CobraHubResolver:
 
         for candidate in candidates:
             if candidate.is_file():
+                cache_entry = self.cache.validate(
+                    candidate, normalized_name, normalized_version
+                )
                 return self._inspect_candidate(
                     candidate,
                     normalized_name,
                     normalized_version,
                     expected_sha256=expected_sha256,
-                    source=(
-                        "cache"
-                        if candidate.parent == self.cache_dir
-                        else str(candidate)
-                    ),
+                    source=cache_entry.source if cache_entry else str(candidate),
                 )
 
         if self.repository is None:
@@ -111,10 +109,7 @@ class CobraHubResolver:
         )
 
     def _cache_candidates(self, name: str, version: str) -> list[Path]:
-        return [
-            self.cache_dir / f"{name}-{version}.co",
-            self.cache_dir / f"{name}.co",
-        ]
+        return self.cache.candidates(name, version)
 
     def _inspect_candidate(
         self,
