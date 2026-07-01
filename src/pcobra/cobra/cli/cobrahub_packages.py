@@ -38,10 +38,12 @@ def listar_cache() -> list[Path]:
 
 def _coincide_nombre_cache(path: Path, nombre: str) -> bool:
     """Indica si una entrada cacheada corresponde al nombre solicitado."""
-    from pcobra.cobra.packaging import normalizar_nombre_paquete
-
-    objetivo = nombre[:-3] if nombre.endswith(".co") else nombre
-    objetivo = normalizar_nombre_paquete(objetivo)
+    objetivo = (
+        (nombre[:-3] if nombre.endswith(".co") else nombre)
+        .strip()
+        .lower()
+        .replace(" ", "-")
+    )
     stem = path.stem
     return stem == objetivo or stem.startswith(f"{objetivo}-")
 
@@ -147,30 +149,18 @@ class CobraHubPackages:
         self, nombre: str, destino: str | None = None, version: str | None = None
     ) -> bool:
         """Descarga, cachea e instala un paquete desde CobraHub."""
-        from pcobra.cobra.packaging import (
-            es_paquete_cobra,
-            extraer_paquete,
-            normalizar_nombre_paquete,
-            validar_version_paquete,
-        )
+        from pcobra.cobra.packaging import es_paquete_cobra, extraer_paquete
 
         cache_path: Path | None = None
-        try:
-            normalized_name = normalizar_nombre_paquete(nombre)
-            normalized_version = (
-                validar_version_paquete(version) if version is not None else None
-            )
-        except ValueError as e:
-            _mostrar_error(str(e))
-            return False
-        if (
-            not self.client._validar_nombre_modulo(normalized_name)
-            or not self.client._validar_url()
-        ):
+        if not self.client._validar_url():
             return False
         try:
-            downloaded = self.repository.download(normalized_name, normalized_version)
+            downloaded = self.repository.download(nombre, version)
             cache_path = downloaded.path
+            if not self.client._validar_nombre_modulo(downloaded.name):
+                if cache_path.exists():
+                    os.unlink(cache_path)
+                return False
 
             if not es_paquete_cobra(cache_path):
                 os.unlink(cache_path)
@@ -180,7 +170,7 @@ class CobraHubPackages:
             install_path = (
                 Path(destino).expanduser()
                 if destino
-                else install_dir() / normalized_name
+                else install_dir() / downloaded.name
             )
             extraer_paquete(cache_path, install_path)
             _mostrar_info(_("Paquete instalado en {dest}").format(dest=install_path))

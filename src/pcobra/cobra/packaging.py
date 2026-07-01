@@ -27,6 +27,16 @@ _SIMPLE_SEMVER_RE = re.compile(
     r"(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$"
 )
 
+__all__ = [
+    "crear_paquete",
+    "validar_paquete",
+    "construir_paquete",
+    "extraer_paquete",
+    "inspeccionar_paquete",
+    "verificar_integridad",
+    "es_paquete_cobra",
+]
+
 
 @dataclass(frozen=True)
 class PackageManifest:
@@ -220,7 +230,13 @@ def _iter_package_files(source: Path) -> list[Path]:
 
 
 def crear_paquete(source: str | Path, *, nombre: str, version: str = "0.1.0") -> Path:
-    """Crea una estructura base de paquete Cobra en ``source``."""
+    """API pública: crea una estructura base de paquete Cobra en ``source``.
+
+    Genera el directorio raíz, ``src/`` y un manifiesto ``cobra.pkg.json``
+    mínimo cuando todavía no existe. CLI, IDLE e integraciones externas deben
+    usar esta función como único punto de entrada para inicializar paquetes
+    ``.co``.
+    """
     root = Path(source)
     root.mkdir(parents=True, exist_ok=True)
     (root / "src").mkdir(exist_ok=True)
@@ -251,7 +267,12 @@ def construir_paquete(
     nombre: str | None = None,
     version: str | None = None,
 ) -> Path:
-    """Construye un archivo ``.co`` ZIP con manifiesto e integridad."""
+    """API pública: construye un archivo ``.co`` ZIP con manifiesto e integridad.
+
+    Recorre el directorio fuente, regenera ``files`` y ``checksums`` en el
+    manifiesto y escribe un contenedor publicable. Esta función es la fuente de
+    verdad para crear artefactos ``.co`` desde CLI, IDLE y CobraHub.
+    """
     root = Path(source).resolve()
     if not root.is_dir():
         raise ValueError("La fuente del paquete debe ser un directorio")
@@ -304,7 +325,7 @@ def construir_paquete(
 
 
 def es_paquete_cobra(path: str | Path) -> bool:
-    """Indica si ``path`` es un paquete Cobra ``.co`` ZIP con manifiesto.
+    """API pública: indica si ``path`` es un paquete Cobra ``.co`` ZIP con manifiesto.
 
     La detección es deliberadamente estructural y barata: no usa Lexer ni Parser,
     solo comprueba que el archivo sea un ZIP legible y que contenga
@@ -321,6 +342,11 @@ def es_paquete_cobra(path: str | Path) -> bool:
 
 
 def inspeccionar_paquete(package: str | Path) -> PackageInspection:
+    """API pública: devuelve manifiesto, entradas y SHA-256 del paquete ``.co``.
+
+    Realiza la comprobación estructural básica del contenedor antes de leer sus
+    metadatos, sin extraer archivos ni invocar Lexer/Parser.
+    """
     pkg = Path(package)
     if not pkg.exists():
         raise FileNotFoundError(f"Paquete no encontrado: {pkg}")
@@ -377,6 +403,11 @@ def _normalizar_checksums(values: Any) -> dict[str, str]:
 
 
 def validar_paquete(package: str | Path) -> PackageInspection:
+    """API pública: valida manifiesto, rutas declaradas y checksums del ``.co``.
+
+    Es el contrato canónico que deben usar CLI, IDLE y CobraHub antes de
+    publicar, instalar o confiar en un paquete Cobra.
+    """
     inspection = inspeccionar_paquete(package)
     manifest = manifest_from_dict(inspection.manifest)
 
@@ -422,6 +453,12 @@ def validar_paquete(package: str | Path) -> PackageInspection:
 
 
 def extraer_paquete(package: str | Path, destination: str | Path) -> Path:
+    """API pública: valida y extrae un paquete ``.co`` en ``destination``.
+
+    Todas las rutas internas se normalizan y se comprueba que permanezcan bajo
+    el destino para evitar traversal durante la instalación o apertura desde
+    herramientas de usuario.
+    """
     inspection = validar_paquete(package)
     dest = Path(destination).resolve()
     dest.mkdir(parents=True, exist_ok=True)
@@ -439,5 +476,10 @@ def extraer_paquete(package: str | Path, destination: str | Path) -> Path:
 
 
 def verificar_integridad(package: str | Path) -> bool:
+    """API pública: confirma que la integridad SHA-256 del ``.co`` es válida.
+
+    Devuelve ``True`` cuando ``validar_paquete`` finaliza sin errores; propaga
+    la excepción de validación cuando el artefacto está corrupto o incompleto.
+    """
     validar_paquete(package)
     return True
