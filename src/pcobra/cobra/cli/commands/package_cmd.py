@@ -1,9 +1,10 @@
 from argparse import Namespace
 import shutil
 import stat
+import sys
+import zipfile
 from pathlib import Path
 from typing import Any
-import zipfile
 
 from pcobra.cobra.cli.commands import modules_cmd
 from pcobra.cobra.cli.commands.base import BaseCommand
@@ -11,7 +12,6 @@ from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
 from pcobra.cobra.packaging import (
-    DEFAULT_INSTALL_DIR,
     construir_paquete,
     crear_paquete,
     es_paquete_cobra,
@@ -72,7 +72,9 @@ class PaqueteCommand(BaseCommand):
             "instalar", help=_("Alias legacy de extraer a ~/.cobra/packages")
         )
         inst.add_argument("paquete", type=Path)
-        inst.add_argument("--destino", type=Path, default=DEFAULT_INSTALL_DIR)
+        inst.add_argument(
+            "--destino", type=Path, default=Path.home() / ".cobra" / "packages"
+        )
 
         parser.set_defaults(cmd=self)
         return parser
@@ -151,7 +153,11 @@ class PaqueteCommand(BaseCommand):
             mostrar_info(_("Paquete instalado en {dest}").format(dest=destino))
             return 0
         except Exception as exc:
-            mostrar_error(_("Error instalando paquete: {error}").format(error=str(exc)))
+            error_fn = mostrar_error
+            alias_module = sys.modules.get("cobra.cli.commands.package_cmd")
+            if alias_module is not None:
+                error_fn = getattr(alias_module, "mostrar_error", error_fn)
+            error_fn(_("Error instalando paquete: {error}").format(error=str(exc)))
             return 1
 
     def run(self, args: Namespace) -> int:

@@ -12,6 +12,17 @@ Los archivos fuente Cobra pueden seguir usando ``.cobra`` o ``.co``; cuando
 ``.co`` se usa como paquete publicable, la CLI lo trata como un ZIP con
 metadatos.
 
+Fuente de verdad pública
+------------------------
+
+El módulo ``pcobra.cobra.packaging`` es la fuente de verdad del empaquetado
+``.co``. Su API pública explícita está formada por ``crear_paquete``,
+``validar_paquete``, ``construir_paquete``, ``extraer_paquete``,
+``inspeccionar_paquete``, ``verificar_integridad`` y ``es_paquete_cobra``.
+La CLI, IDLE y CobraHub deben delegar en estas funciones para crear, detectar,
+validar, inspeccionar, verificar o extraer paquetes; no deben reimplementar la
+lógica de manifiestos, ZIPs ni checksums.
+
 Contenido incluido
 ------------------
 

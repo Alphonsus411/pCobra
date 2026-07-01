@@ -2,6 +2,11 @@
 
 La guía de uso actualizada para crear, construir, validar, inspeccionar y extraer paquetes está en [`docs/frontend/paquetes.rst`](frontend/paquetes.rst).
 
+
+## Fuente de verdad del empaquetado `.co`
+
+`pcobra.cobra.packaging` es el contrato público y la fuente de verdad para paquetes Cobra `.co`. Las funciones públicas son `crear_paquete`, `validar_paquete`, `construir_paquete`, `extraer_paquete`, `inspeccionar_paquete`, `verificar_integridad` y `es_paquete_cobra`; CLI, IDLE y CobraHub deben importarlas y delegar en ellas en vez de duplicar la lógica de ZIP, manifiestos o checksums.
+
 ## APIs CobraHub: legacy y recomendada
 
 - **Legacy de módulos:** `src/pcobra/cobra/cli/cobrahub_client.py` mantiene el cliente HTTP base y la fachada compatible para publicar/descargar módulos sueltos con los endpoints `/modulos`. El comando `modulos` sigue apuntando a este flujo para no romper scripts existentes.
@@ -115,7 +120,7 @@ Cabeceras esperadas en la respuesta:
 
 ## Diseño
 
-La funcionalidad se implementa en `pcobra.cobra.packaging`, una capa independiente que no importa ni ejecuta Lexer/Parser. El paquete `.co` es un archivo ZIP con:
+La funcionalidad se implementa en `pcobra.cobra.packaging`, una capa independiente que no importa ni ejecuta Lexer/Parser y que actúa como fuente de verdad del formato. El paquete `.co` es un archivo ZIP con:
 
 - `cobra.pkg.json` como manifiesto.
 - Lista de archivos conservando carpetas.
