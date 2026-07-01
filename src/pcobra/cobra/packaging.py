@@ -59,7 +59,11 @@ def manifest_from_dict(data: dict[str, Any]) -> PackageManifest:
     """Convierte un diccionario JSON en un manifiesto Cobra validado.
 
     Mantiene compatibilidad con manifiestos históricos que solo declaran
-    ``format``, ``name``, ``version``, ``files`` y ``checksums``.
+    ``format``, ``name``, ``version``, ``files`` y ``checksums``. Las
+    dependencias se normalizan con la misma política que los nombres de
+    paquete y, por ahora, solo aceptan versiones exactas SemVer; los rangos
+    no están soportados hasta que exista una política de resolución
+    documentada.
     """
     package_format = data.get("format")
     if package_format is None:
@@ -90,6 +94,8 @@ def manifest_from_dict(data: dict[str, Any]) -> PackageManifest:
     if dependencies is not None and not isinstance(dependencies, dict):
         raise ValueError("El manifiesto debe declarar dependencies como objeto")
 
+    normalized_dependencies = _validar_dependencias_manifest(dependencies)
+
     return PackageManifest(
         format=str(package_format),
         name=normalizar_nombre_paquete(str(name)),
@@ -102,12 +108,36 @@ def manifest_from_dict(data: dict[str, Any]) -> PackageManifest:
         authors=None if authors is None else [str(author) for author in authors],
         license=None if data.get("license") is None else str(data.get("license")),
         homepage=None if data.get("homepage") is None else str(data.get("homepage")),
-        dependencies=(
-            None
-            if dependencies is None
-            else {str(name): str(value) for name, value in dependencies.items()}
-        ),
+        dependencies=normalized_dependencies,
     )
+
+
+def _validar_dependencias_manifest(
+    dependencies: dict[Any, Any] | None,
+) -> dict[str, str] | None:
+    """Normaliza y valida las dependencias declaradas en un manifiesto.
+
+    Cobra todavía no define semántica para resolver rangos de versiones, por
+    lo que cada dependencia debe apuntar a una versión exacta SemVer simple.
+    """
+    if dependencies is None:
+        return None
+
+    normalized_dependencies: dict[str, str] = {}
+    for raw_name, raw_version in dependencies.items():
+        name = normalizar_nombre_paquete(str(raw_name))
+        if name in normalized_dependencies:
+            raise ValueError(f"Dependencia duplicada tras normalizar: {name}")
+        try:
+            version = validar_version_paquete(str(raw_version))
+        except ValueError as exc:
+            raise ValueError(
+                f"Versión de dependencia inválida para {name}: "
+                "solo se aceptan versiones exactas SemVer"
+            ) from exc
+        normalized_dependencies[name] = version
+
+    return normalized_dependencies
 
 
 def manifest_to_dict(manifest: PackageManifest) -> dict[str, Any]:

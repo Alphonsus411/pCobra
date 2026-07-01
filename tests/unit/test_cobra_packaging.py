@@ -54,7 +54,7 @@ def test_package_manifest_acepta_campos_extra_permitidos():
         "authors": ["Equipo Cobra"],
         "license": "MIT",
         "homepage": "https://example.test/demo",
-        "dependencies": {"stdlib": ">=1.0"},
+        "dependencies": {"Std Lib": "1.2.3"},
     }
 
     manifest = manifest_from_dict(data)
@@ -63,8 +63,54 @@ def test_package_manifest_acepta_campos_extra_permitidos():
     assert manifest.authors == ["Equipo Cobra"]
     assert manifest.license == "MIT"
     assert manifest.homepage == "https://example.test/demo"
-    assert manifest.dependencies == {"stdlib": ">=1.0"}
-    assert manifest_to_dict(manifest) == data
+    assert manifest.dependencies == {"std-lib": "1.2.3"}
+    expected = {**data, "dependencies": {"std-lib": "1.2.3"}}
+    assert manifest_to_dict(manifest) == expected
+
+
+def test_package_manifest_normaliza_dependencias_validas():
+    manifest = manifest_from_dict(
+        {
+            "format": "cobra-package-v1",
+            "name": "demo",
+            "version": "1.0.0",
+            "files": [],
+            "checksums": {},
+            "dependencies": {
+                "  Paquete Demo ": " 1.2.3 ",
+                "util.core": "2.0.0-beta.1+build.5",
+            },
+        }
+    )
+
+    assert manifest.dependencies == {
+        "paquete-demo": "1.2.3",
+        "util.core": "2.0.0-beta.1+build.5",
+    }
+
+
+@pytest.mark.parametrize(
+    ("dependencies", "match"),
+    [
+        ({"demo/evil": "1.0.0"}, "Nombre de paquete inválido"),
+        ({"demo": ">=1.0.0"}, "solo se aceptan versiones exactas SemVer"),
+        ({"demo": "1.0"}, "solo se aceptan versiones exactas SemVer"),
+        ({"demo": "v1.0.0"}, "solo se aceptan versiones exactas SemVer"),
+        ([], "dependencies como objeto"),
+    ],
+)
+def test_package_manifest_rechaza_dependencias_invalidas(dependencies, match):
+    with pytest.raises(ValueError, match=match):
+        manifest_from_dict(
+            {
+                "format": "cobra-package-v1",
+                "name": "demo",
+                "version": "1.0.0",
+                "files": [],
+                "checksums": {},
+                "dependencies": dependencies,
+            }
+        )
 
 
 def test_package_manifest_rechaza_formato_no_soportado():
