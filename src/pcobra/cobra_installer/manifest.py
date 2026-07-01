@@ -52,6 +52,8 @@ class BuildManifest:
             "config": dict(project.config),
             "co_packages": [_stringify(path) for path in project.co_packages],
             "documentation": [_stringify(path) for path in project.documentation],
+            "config_dirs": [_stringify(path) for path in project.config_dirs],
+            "auxiliary_resources": [_stringify(path) for path in project.auxiliary_resources],
             "executable_name": self.executable_name,
             "target": _enum_value(self.target),
             "architecture": self.architecture,
