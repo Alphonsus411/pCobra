@@ -1129,6 +1129,17 @@ def test_idle_construir_y_validar_paquete_incluye_archivos_del_proyecto_minimo(
     assert "assets/recurso.txt" in inspection.files
 
 
+def test_idle_construir_paquete_respeta_salida_indicada(tmp_path: Path) -> None:
+    project_root = _crear_proyecto_cobra_minimo(tmp_path)
+    runtime.idle_crear_paquete(project_root, "paquete-demo", version="1.0.0")
+    salida = tmp_path / "artefactos" / "destino-personalizado.co"
+
+    paquete = runtime.idle_construir_paquete(project_root, salida)
+
+    assert paquete == salida
+    assert paquete.is_file()
+
+
 def test_idle_abrir_paquete_extrae_proyecto_minimo(tmp_path: Path) -> None:
     project_root = _crear_proyecto_cobra_minimo(tmp_path)
     runtime.idle_crear_paquete(project_root, "paquete-demo", version="1.0.0")
@@ -1172,6 +1183,25 @@ def test_idle_construir_paquete_falla_si_falta_manifest(tmp_path: Path) -> None:
 
     with pytest.raises(FileNotFoundError, match="Usa 'Crear paquete' antes de construir"):
         runtime.idle_construir_paquete(project_root)
+
+
+def test_idle_construir_paquete_exige_cobra_pkg_json_antes_de_delegar(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    project_root = _crear_proyecto_cobra_minimo(tmp_path)
+    salida = tmp_path / "no-debe-crearse.co"
+
+    def construir_paquete_mock(*_args, **_kwargs):
+        raise AssertionError("No debe construir sin cobra.pkg.json")
+
+    monkeypatch.setattr(
+        "pcobra.cobra.packaging.construir_paquete", construir_paquete_mock
+    )
+
+    with pytest.raises(FileNotFoundError, match="falta cobra\\.pkg\\.json"):
+        runtime.idle_construir_paquete(project_root, salida)
+
+    assert not salida.exists()
 
 
 def test_idle_publicar_paquete_expone_fallo_de_publicacion(

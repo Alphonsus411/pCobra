@@ -1667,9 +1667,14 @@ def idle_validar_paquete(paquete: str | Path):
 
 
 def idle_construir_paquete(project_root: str | Path, salida: str | Path | None = None) -> Path:
-    from pcobra.cobra.packaging import construir_paquete
+    from pcobra.cobra.packaging import MANIFEST_NAME, construir_paquete
 
     root = validar_project_root_idle(project_root)
+    manifest = root / MANIFEST_NAME
+    if not manifest.is_file():
+        raise FileNotFoundError(
+            "Usa 'Crear paquete' antes de construir: falta cobra.pkg.json"
+        )
     return construir_paquete(root, salida)
 
 
