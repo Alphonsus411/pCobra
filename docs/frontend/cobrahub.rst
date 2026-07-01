@@ -81,9 +81,14 @@ contra CobraHub:
       cobra hub cache limpiar
       cobra hub cache validar
 
-Los comandos ``cobra paquete`` gestionan el ciclo de vida local del artefacto.
-Los comandos ``cobra hub`` usan ese artefacto para publicar, buscar e instalar
-paquetes mediante la API recomendada de CobraHub.
+Los comandos ``cobra paquete crear|construir|validar|inspeccionar|extraer``
+gestionan el ciclo de vida local moderno del artefacto. ``cobra paquete
+instalar`` se conserva como alias legacy de extracción/instalación local. Los
+comandos ``cobra hub publicar|buscar|instalar`` usan ese artefacto para publicar,
+buscar e instalar paquetes mediante la API recomendada de CobraHub. No se
+recomienda enviar paquetes ``.co`` con ``cobra.pkg.json`` al flujo
+``cobra paquete`` → ``cobra mod publish``; ``cobra modulos publicar|buscar`` se
+mantiene solo como compatibilidad histórica de módulos sueltos.
 
 
 Caché local de CobraHub
@@ -144,13 +149,13 @@ deprecación explícita.
      - estado
      - notas de compatibilidad
    * - ``cobra modulos publicar``
-     - ``cobra hub publicar``
+     - ``cobra hub publicar`` para paquetes ``.co`` con manifiesto
      - Compatibilidad
-     - ``modulos`` publica módulos sueltos mediante el flujo histórico; ``hub`` publica paquetes ``.co`` con manifiesto.
+     - ``modulos`` publica módulos sueltos mediante el flujo histórico; no debe usarse como destino recomendado de paquetes ``.co`` con ``cobra.pkg.json``.
    * - ``cobra modulos buscar``
      - ``cobra hub buscar`` o ``cobra hub instalar``
      - Compatibilidad
-     - Para código nuevo, busca paquetes con ``hub buscar`` e instálalos con ``hub instalar``.
+     - Para código nuevo, busca paquetes con ``hub buscar`` e instálalos con ``hub instalar``; ``modulos buscar`` queda para módulos sueltos históricos.
    * - ``cobra paquete instalar``
      - ``cobra paquete extraer``
      - Alias legacy
@@ -162,8 +167,9 @@ deprecación explícita.
 
 Este flujo legacy usa el subcomando ``modulos`` y la configuración histórica de
 CobraHub, incluida la variable de entorno ``COBRAHUB_URL`` cuando aplique. Para
-código nuevo se recomienda usar el flujo de paquetes con ``cobra paquete`` y
-``cobra hub``.
+código nuevo se recomienda usar el flujo local de paquetes con ``cobra paquete
+crear|construir|validar|inspeccionar|extraer`` y el flujo remoto con ``cobra hub
+publicar|buscar|instalar``.
 
 Diálogo asistido desde la terminal
 ---------------------------------
@@ -186,7 +192,9 @@ Relación con Lexer y Parser
 ---------------------------
 
 Lexer y Parser no se modifican para soportar paquetes ``.co`` porque el
-empaquetado no forma parte de la sintaxis del lenguaje. La construcción,
+empaquetado no forma parte de la sintaxis del lenguaje: un paquete ``.co`` se
+detecta como un ZIP legible con ``cobra.pkg.json`` en la raíz, no como sintaxis
+Cobra. La construcción,
 validación, inspección, extracción, publicación e instalación de paquetes viven
 en ``pcobra.cobra.packaging`` y tratan los archivos fuente como contenido del ZIP
 hasta que el usuario decida ejecutarlos con los comandos habituales.
