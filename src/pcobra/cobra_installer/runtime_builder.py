@@ -5,10 +5,11 @@ from __future__ import annotations
 import shutil
 from dataclasses import dataclass, field, replace
 from pathlib import Path
-from typing import Callable, Mapping, Sequence
+from typing import Mapping, Sequence
 
 import pcobra
 
+from .logger import BuildLogger, emit_many
 from .dependency_resolver import (
     DependencyResolutionResult,
     resolve_project_dependencies,
@@ -191,14 +192,16 @@ def build_project(
     if overrides:
         base = replace(base, **overrides)
     normalized = validate_build_options(base)
-    logger = _CallbackLogger(normalized.log_callback)
+    logger = BuildLogger(legacy_callback=normalized.log_callback)
     logs: list[str] = []
 
-    def step(message: str) -> None:
-        logs.append(message)
-        logger.info(message)
+    total_steps = 10
 
-    step("1/12 Descubriendo proyecto Cobra...")
+    def step(stage: str, message: str, number: int) -> None:
+        logs.append(message)
+        logger.step(message, stage=stage, step=number, total_steps=total_steps)
+
+    step("deteccion_proyecto", "1/12 Descubriendo proyecto Cobra...", 1)
     project = discover_project(Path(normalized.project_root))
     if normalized.entrypoint and project.entrypoint != normalized.entrypoint:
         project = CobraProject(
@@ -214,19 +217,21 @@ def build_project(
             auxiliary_resources=project.auxiliary_resources,
         ).normalized()
 
-    step("2/12 Validando estructura del proyecto...")
+    step("validacion", "Validando estructura del proyecto...", 2)
     validation = validate_project(project)
     if not validation.is_valid:
         detail = "; ".join(error.message for error in validation.errors)
         raise CobraInstallerError(f"La estructura del proyecto no es válida: {detail}")
 
-    step("3/12 Leyendo cobra.toml...")
+    logger.info("Leyendo cobra.toml...", stage="validacion")
     config = dict(project.config)
     normalized = replace(normalized, config={**config, **dict(normalized.config)})
 
-    step("4/12 Leyendo o generando cobra.lock...")
-    step("5/12 Detectando imports Cobra no declarados...")
-    step("6/12 Resolviendo dependencias CobraHub...")
+    logger.info("Leyendo o generando cobra.lock...", stage="resolucion_dependencias")
+    logger.info(
+        "Detectando imports Cobra no declarados...", stage="resolucion_dependencias"
+    )
+    step("resolucion_dependencias", "Resolviendo dependencias CobraHub...", 3)
     dependencies = None
     if normalized.include_dependencies:
         dependencies = resolve_project_dependencies(Path(project.project_root))
@@ -234,28 +239,32 @@ def build_project(
             project = replace(
                 project, cobra_lock=dependencies.lockfile_path
             ).normalized()
-            step(f"cobra.lock generado en {dependencies.lockfile_path}.")
+            logger.info(
+                f"cobra.lock generado en {dependencies.lockfile_path}.",
+                stage="descarga_cache_cobrahub",
+            )
+    step("descarga_cache_cobrahub", "Descarga/cache CobraHub preparada.", 4)
 
     build_dir = Path(normalized.temp_dir or Path(normalized.project_root) / "build")
     if normalized.clean and build_dir.exists():
         shutil.rmtree(build_dir)
 
-    step("7/12 Preparando carpeta temporal...")
+    logger.info("Preparando carpeta temporal...", stage="preparacion_runtime")
     build_dir.mkdir(parents=True, exist_ok=True)
 
-    step("8/12 Transpilando con el backend Python oficial...")
+    step("transpilacion", "Transpilando con el backend Python oficial...", 5)
     transpiled = transpile_project(project, build_dir, normalized)
     logs.extend(transpiled.logs)
-    _emit_many(logger, transpiled.logs)
+    emit_many(logger, transpiled.logs, stage="transpilacion")
 
-    step("9/12 Ensamblando runtime Cobra...")
+    step("preparacion_runtime", "Preparando runtime Cobra...", 6)
     runtime = _runtime_from_transpile(transpiled)
 
     output_dir = Path(normalized.output_dir or Path(normalized.project_root) / "dist")
     output_dir.mkdir(parents=True, exist_ok=True)
     name = normalized.name or Path(project.entrypoint or transpiled.generated_code).stem
 
-    step("10/12 Generando especificación .spec de PyInstaller...")
+    step("generacion_spec", "Generando especificación .spec de PyInstaller...", 7)
     spec_path = write_spec(
         SpecBuildContext(
             options=normalized,
@@ -265,14 +274,18 @@ def build_project(
         )
     )
 
-    step("11/12 Ejecutando PyInstaller...")
+    step("ejecucion_pyinstaller", "Ejecutando PyInstaller...", 8)
     pyinstaller = run_pyinstaller(spec_path, normalized, logger)
 
-    step("12/12 Generando manifiesto de build...")
+    step("escritura_manifiesto", "Escribiendo manifiesto de build...", 9)
     manifest_path = create_manifest(
         normalized, Path(project.entrypoint), output_dir, name
     )
     logs.append(f"Manifiesto generado en {manifest_path}.")
+    logger.info(
+        f"Manifiesto generado en {manifest_path}.", stage="escritura_manifiesto"
+    )
+    step("finalizacion", "Build Cobra finalizado correctamente.", 10)
 
     return BuildResult(
         success=True,
@@ -307,28 +320,6 @@ def package_current_project(
 
     options = BuildOptions(project_root=project_root or Path.cwd(), **kwargs)
     return build_project(options)
-
-
-class _CallbackLogger:
-    """Logger mínimo compatible con callbacks y con pyinstaller_runner."""
-
-    def __init__(self, callback: Callable[[str], None] | None = None) -> None:
-        self._callback = callback
-
-    def info(self, message: str) -> None:
-        self._emit(message)
-
-    def error(self, message: str) -> None:
-        self._emit(message)
-
-    def _emit(self, message: str) -> None:
-        if self._callback is not None:
-            self._callback(message)
-
-
-def _emit_many(logger: _CallbackLogger, messages: Sequence[str]) -> None:
-    for message in messages:
-        logger.info(message)
 
 
 def _runtime_from_transpile(transpile: TranspileResult) -> RuntimePreparationResult:
