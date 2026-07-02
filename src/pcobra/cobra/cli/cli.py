@@ -165,6 +165,7 @@ class AppConfig:
         CommandClassRoute("pcobra.cobra.cli.commands_v2.build_cmd", "BuildCommandV2"),
         CommandClassRoute("pcobra.cobra.cli.commands_v2.test_cmd", "TestCommandV2"),
         CommandClassRoute("pcobra.cobra.cli.commands_v2.mod_cmd", "ModCommandV2"),
+        CommandClassRoute("pcobra.cobra.cli.commands_v2.installer_cmd", "InstallerCommandV2"),
         CommandClassRoute("pcobra.cobra.cli.commands.package_cmd", "PaqueteCommand"),
         CommandClassRoute("pcobra.cobra.cli.commands.hub_cmd", "HubCommand"),
         # `repl` forma parte del contrato público oficial de CLI v2 (no alias legacy).

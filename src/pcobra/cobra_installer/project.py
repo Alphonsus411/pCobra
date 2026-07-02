@@ -109,6 +109,7 @@ class BuildOptions:
     include_dependencies: bool = True
     extra_args: Sequence[str] = field(default_factory=tuple)
     log_callback: Callable[[str], None] | None = None
+    install_pyinstaller: bool = False
 
     def normalized(self) -> "BuildOptions":
         """Devuelve una copia con rutas absolutas y valores derivados."""
@@ -139,6 +140,7 @@ class BuildOptions:
             include_dependencies=self.include_dependencies,
             extra_args=tuple(self.extra_args),
             log_callback=self.log_callback,
+            install_pyinstaller=self.install_pyinstaller,
         )
 
 
