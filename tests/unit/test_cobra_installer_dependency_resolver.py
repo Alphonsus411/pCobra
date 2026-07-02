@@ -190,3 +190,104 @@ def test_detecta_conflicto_transitivo(tmp_path):
         resolve_project_dependencies(
             tmp_path, resolver=CobraHubResolver(cache_dir=cache)
         )
+
+
+class MultiDependencyProjectFixture:
+    def __init__(self, tmp_path):
+        self.project_root = tmp_path / "project"
+        self.project_root.mkdir()
+        self.cache_dir = tmp_path / "cache"
+        self.cache_dir.mkdir()
+        self.remote_dir = tmp_path / "remote"
+        self.remote_dir.mkdir()
+
+        cached_package = _package(tmp_path, name="dep-cache", version="1.2.3")
+        remote_package = _package(tmp_path, name="dep-remota", version="2.0.0")
+        self.cached_path = self.cache_dir / "dep-cache-1.2.3.co"
+        self.cached_path.write_bytes(cached_package.read_bytes())
+        self.remote_path = self.remote_dir / "dep-remota-2.0.0.co"
+        self.remote_path.write_bytes(remote_package.read_bytes())
+        self.hashes = {
+            "dep-cache": CobraHubResolver._sha256_file(self.cached_path),
+            "dep-remota": CobraHubResolver._sha256_file(self.remote_path),
+        }
+        self.repository = _FakeCobraHubRepository(
+            {("dep-remota", "2.0.0"): self.remote_path}
+        )
+        (self.project_root / "cobra.toml").write_text(
+            '[dependencies]\ndep-cache = "1.2.3"\n\n'
+            '[cobra.dependencies]\ndep-remota = "2.0.0"\n',
+            encoding="utf-8",
+        )
+        (self.project_root / "main.cobra").write_text(
+            "import 'dep-cache.modulo'\nimport 'dep-remota.api'\n",
+            encoding="utf-8",
+        )
+
+    @property
+    def resolver(self):
+        return CobraHubResolver(repository=self.repository, cache_dir=self.cache_dir)
+
+
+@pytest.fixture
+def multi_dependency_project(tmp_path):
+    return MultiDependencyProjectFixture(tmp_path)
+
+
+def test_resuelve_proyecto_con_multiples_dependencias_hash_ruta_y_origen(
+    multi_dependency_project,
+):
+    fixture = multi_dependency_project
+
+    result = resolve_project_dependencies(
+        fixture.project_root, resolver=fixture.resolver
+    )
+
+    assert result.lockfile_created is True
+    assert result.used_imports == {"dep-cache", "dep-remota"}
+    assert set(result.declared) == {"dep-cache", "dep-remota"}
+    assert fixture.repository.downloads == [("dep-remota", "2.0.0")]
+    assert {
+        name: {
+            "name": resolution.name,
+            "version": resolution.version,
+            "hash": resolution.sha256,
+            "path": resolution.path,
+            "source": resolution.source,
+        }
+        for name, resolution in result.resolved.items()
+    } == {
+        "dep-cache": {
+            "name": "dep-cache",
+            "version": "1.2.3",
+            "hash": fixture.hashes["dep-cache"],
+            "path": fixture.cached_path,
+            "source": "installer-cache",
+        },
+        "dep-remota": {
+            "name": "dep-remota",
+            "version": "2.0.0",
+            "hash": fixture.hashes["dep-remota"],
+            "path": fixture.remote_path,
+            "source": "cobrahub",
+        },
+    }
+
+    lock = json.loads((fixture.project_root / "cobra.lock").read_text(encoding="utf-8"))
+    assert lock == {
+        "version": 1,
+        "packages": [
+            {
+                "name": "dep-cache",
+                "sha256": fixture.hashes["dep-cache"],
+                "source": "installer-cache",
+                "version": "1.2.3",
+            },
+            {
+                "name": "dep-remota",
+                "sha256": fixture.hashes["dep-remota"],
+                "source": "cobrahub",
+                "version": "2.0.0",
+            },
+        ],
+    }
