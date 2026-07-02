@@ -19,7 +19,17 @@ from .project import (
     discover_project,
     find_entrypoint,
 )
-from .targets import BuildMode, TargetOS
+from .targets import (
+    BuildMode,
+    Builder,
+    BuilderConfig,
+    ExpectedArtifact,
+    TargetOS,
+    detect_host_os,
+    expected_artifact_for,
+    normalize_target,
+    validate_target,
+)
 from .transpile import TranspileResult, transpile_project
 from .validator import ValidationErrorDetail, ValidationResult, validate_project
 from .runtime_builder import (
@@ -32,6 +42,8 @@ from .runtime_builder import (
 __all__ = [
     "BuildManifest",
     "BuildMode",
+    "Builder",
+    "BuilderConfig",
     "BuildOptions",
     "BuildResult",
     "CobraProject",
@@ -41,7 +53,11 @@ __all__ = [
     "discover_project",
     "find_entrypoint",
     "DependencyInfo",
+    "ExpectedArtifact",
     "TargetOS",
+    "detect_host_os",
+    "expected_artifact_for",
+    "normalize_target",
     "TranspileResult",
     "transpile_project",
     "ValidationErrorDetail",
@@ -50,6 +66,7 @@ __all__ = [
     "SpecBuildContext",
     "build_project",
     "validate_project",
+    "validate_target",
     "package_current_project",
     "prepare_runtime",
     "write_spec",
