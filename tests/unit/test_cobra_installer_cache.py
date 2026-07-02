@@ -69,3 +69,19 @@ def test_variable_entorno_dirige_cache_instalador(monkeypatch, tmp_path):
     assert entry is not None
     assert entry.path == configured / "dep-1.2.3.co"
     assert cache.get("dep", "1.2.3", expected_sha256=hub_hash) is None
+
+
+def test_get_reutiliza_paquete_cacheado_si_version_y_hash_coinciden(tmp_path):
+    hub_cache = tmp_path / "hub"
+    cache = CobraInstallerCache(hub_cache_dir=hub_cache)
+    artifact_hash = _write(cache.cache_dir / "dep-1.2.3.co", b"cached-package")
+
+    entry = cache.get("dep", "1.2.3", expected_sha256=f"sha256:{artifact_hash}")
+
+    assert entry is not None
+    assert entry.name == "dep"
+    assert entry.version == "1.2.3"
+    assert entry.sha256 == artifact_hash
+    assert entry.path == cache.cache_dir / "dep-1.2.3.co"
+    assert entry.source == "installer-cache"
+    assert cache.get("dep", "1.2.4", expected_sha256=artifact_hash) is None

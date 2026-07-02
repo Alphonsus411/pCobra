@@ -73,6 +73,39 @@ def test_resuelve_desde_cache_y_genera_lock(tmp_path):
     assert len(lock["packages"][0]["sha256"]) == 64
 
 
+def test_resuelve_dependencia_cacheada_sin_cliente_remoto_y_lock_indica_cache(tmp_path):
+    package = _package(tmp_path, name="dep-cache", version="1.2.3")
+    cache = tmp_path / "cache"
+    cache.mkdir()
+    cached = cache / "dep-cache-1.2.3.co"
+    cached.write_bytes(package.read_bytes())
+    repo = _FakeCobraHubRepository({})
+    (tmp_path / "cobra.toml").write_text(
+        '[dependencies]\ndep-cache = "1.2.3"\n', encoding="utf-8"
+    )
+    (tmp_path / "main.cobra").write_text(
+        "usar dep-cache.modulo\n", encoding="utf-8"
+    )
+
+    result = resolve_project_dependencies(
+        tmp_path, resolver=CobraHubResolver(repository=repo, cache_dir=cache)
+    )
+
+    assert repo.downloads == []
+    assert result.resolved["dep-cache"].path == cached
+    assert result.resolved["dep-cache"].version == "1.2.3"
+    assert result.resolved["dep-cache"].source == "installer-cache"
+    lock = json.loads((tmp_path / "cobra.lock").read_text(encoding="utf-8"))
+    assert lock["packages"] == [
+        {
+            "name": "dep-cache",
+            "version": "1.2.3",
+            "sha256": result.resolved["dep-cache"].sha256,
+            "source": "installer-cache",
+        }
+    ]
+
+
 class _FakeCobraHubRepository:
     def __init__(self, packages):
         self.packages = packages
