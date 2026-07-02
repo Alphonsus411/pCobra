@@ -160,3 +160,24 @@ def test_hub_resolver_resuelve_multiples_paquetes_cache_y_remoto_sin_red(
         },
     }
     assert remote_result.dependencies == {"dep-cache": "1.2.3"}
+
+
+def test_hub_resolver_reutiliza_cache_con_repo_configurado_sin_descargar(tmp_path):
+    package = _package(tmp_path, name="dep-cache", version="1.2.3")
+    cache = tmp_path / "cache"
+    cache.mkdir()
+    cached = cache / "dep-cache-1.2.3.co"
+    cached.write_bytes(package.read_bytes())
+    expected_hash = CobraHubResolver._sha256_file(cached)
+    repo = FakeCobraHubRepository({})
+
+    result = CobraHubResolver(repository=repo, cache_dir=cache).resolve(
+        "dep-cache", "1.2.3", expected_sha256=f"sha256:{expected_hash}"
+    )
+
+    assert repo.downloads == []
+    assert result.name == "dep-cache"
+    assert result.version == "1.2.3"
+    assert result.sha256 == expected_hash
+    assert result.path == cached
+    assert result.source == "installer-cache"
