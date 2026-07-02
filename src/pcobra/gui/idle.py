@@ -1,6 +1,10 @@
 """IDLE gráfico principal para editar, ejecutar e inspeccionar código Cobra."""
 
+import os
 import re
+import subprocess
+import sys
+import threading
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -206,7 +210,9 @@ def main(page: "ft.Page"):
                         return runtime.resolver_ruta_texto_en_project_root(
                             ruta_path, project_root
                         )
-                return runtime.resolver_ruta_archivo_en_project_root(ruta_path, project_root)
+                return runtime.resolver_ruta_archivo_en_project_root(
+                    ruta_path, project_root
+                )
 
             return runtime.resolver_ruta_texto_en_project_root(ruta_path, project_root)
         except (
@@ -820,6 +826,161 @@ def main(page: "ft.Page"):
         if archivo_activo_permite_accion_cobra(runtime.ACCION_CORRECCION):
             correccion_runtime_handler(e)
 
+    def resolver_ruta_empaquetado_activa() -> Path | None:
+        """Detecta el proyecto abierto o, si procede, la ruta activa del editor."""
+
+        if hay_proyecto_activo() and project_root.resolve() != workspace_root.resolve():
+            return project_root
+
+        if estado.ruta is not None:
+            return estado.ruta.parent if estado.ruta.is_file() else estado.ruta
+
+        texto = (ruta_input.value or "").strip()
+        if texto:
+            candidata = Path(texto).expanduser()
+            if not candidata.is_absolute():
+                candidata = project_root / candidata
+            return (
+                candidata.resolve().parent if candidata.suffix else candidata.resolve()
+            )
+
+        salida.value = "Abre un proyecto o indica una ruta activa antes de empaquetar."
+        page.update()
+        return None
+
+    def abrir_carpeta_dist(dist_dir: Path) -> None:
+        """Abre la carpeta dist de forma tolerante entre plataformas."""
+
+        try:
+            if hasattr(page, "launch_url"):
+                page.launch_url(dist_dir.resolve().as_uri())
+                return
+            if sys.platform.startswith("win"):
+                os.startfile(dist_dir)  # type: ignore[attr-defined]
+            elif sys.platform == "darwin":
+                subprocess.Popen(["open", str(dist_dir)])
+            else:
+                subprocess.Popen(["xdg-open", str(dist_dir)])
+        except Exception as exc:  # pragma: no cover - depende del escritorio local
+            salida.value += f"\nNo se pudo abrir automáticamente dist: {exc}"
+            page.update()
+
+    def empaquetar_handler(_e):
+        """Abre el diálogo permanente de empaquetado para el proyecto actual."""
+
+        proyecto_detectado = resolver_ruta_empaquetado_activa()
+        if proyecto_detectado is None:
+            return
+
+        selector_so = runtime.flet_dropdown(
+            ft,
+            label="Sistema operativo destino",
+            options=[
+                runtime.flet_dropdown_option(ft, "current"),
+                runtime.flet_dropdown_option(ft, "windows"),
+                runtime.flet_dropdown_option(ft, "linux"),
+                runtime.flet_dropdown_option(ft, "macos"),
+            ],
+            value="current",
+        )
+        selector_modo = runtime.flet_dropdown(
+            ft,
+            label="Formato",
+            options=[
+                runtime.flet_dropdown_option(ft, "onedir"),
+                runtime.flet_dropdown_option(ft, "onefile"),
+            ],
+            value="onedir",
+        )
+        nombre_input = runtime.flet_text_field(
+            ft, label="Nombre del ejecutable", value=proyecto_detectado.name
+        )
+        icono_input = runtime.flet_text_field(
+            ft, label="Icono opcional (.ico/.icns/.png)", value=""
+        )
+        progreso = runtime.flet_text(
+            ft, value=f"Proyecto detectado: {proyecto_detectado}"
+        )
+
+        def cerrar_dialogo(_ev=None) -> None:
+            dialog.open = False
+            page.update()
+
+        def ejecutar_empaquetado(_ev=None) -> None:
+            nombre = (nombre_input.value or "").strip() or proyecto_detectado.name
+            icono = (icono_input.value or "").strip() or None
+            target = selector_so.value or "current"
+            mode = selector_modo.value or "onedir"
+            dialog.open = False
+            salida.value = "Iniciando empaquetado..."
+            page.update()
+
+            def log_callback(mensaje: str) -> None:
+                salida.value += f"\n{mensaje}"
+                page.update()
+
+            def worker() -> None:
+                try:
+                    from pcobra.cobra_installer.idle_bridge import (
+                        package_current_project,
+                    )
+
+                    result = package_current_project(
+                        proyecto_detectado,
+                        name=nombre,
+                        target=target,
+                        mode=mode,
+                        icon=icono,
+                        log_callback=log_callback,
+                    )
+                except Exception as exc:
+                    salida.value += f"\nError al empaquetar: {exc}"
+                    page.update()
+                    return
+
+                dist_dir = Path(
+                    result.dist_dir or result.output_dir or proyecto_detectado / "dist"
+                )
+                artifact = result.artifact_path or dist_dir
+                salida.value += f"\nEmpaquetado finalizado: {artifact}"
+                page.update()
+                abrir_carpeta_dist(dist_dir)
+
+            threading.Thread(target=worker, daemon=True).start()
+
+        dialog_factory = getattr(ft, "AlertDialog", None)
+        if dialog_factory is None:
+            salida.value = (
+                "La versión instalada de Flet no permite abrir diálogos de empaquetado."
+            )
+            page.update()
+            return
+
+        dialog = dialog_factory(
+            modal=True,
+            title=runtime.flet_text(ft, value="Empaquetar proyecto"),
+            content=runtime.flet_column(
+                ft,
+                controls=[
+                    progreso,
+                    selector_so,
+                    selector_modo,
+                    nombre_input,
+                    icono_input,
+                ],
+                tight=True,
+            ),
+            actions=[
+                runtime.flet_text_button(ft, "Cancelar", on_click=cerrar_dialogo),
+                runtime.flet_elevated_button(
+                    ft, "Empaquetar", on_click=ejecutar_empaquetado
+                ),
+            ],
+        )
+        page.dialog = dialog
+        dialog.open = True
+        page.update()
+
     def archivo_visible_permite_accion_paquete(accion: str) -> bool:
         """Valida que la ruta visible apunte a un paquete Cobra para acciones de paquete."""
 
@@ -842,7 +1003,6 @@ def main(page: "ft.Page"):
         salida.value = "Esta acción no está disponible para este paquete Cobra."
         page.update()
         return False
-
 
     def crear_paquete_handler(e):
         if project_root is None:
@@ -913,7 +1073,11 @@ def main(page: "ft.Page"):
                 salida.value = "Indica la ruta del paquete .co en el campo de ruta."
             else:
                 ok = runtime.idle_publicar_paquete(paquete)
-                salida.value = "Paquete publicado en CobraHub." if ok else "No se pudo publicar el paquete."
+                salida.value = (
+                    "Paquete publicado en CobraHub."
+                    if ok
+                    else "No se pudo publicar el paquete."
+                )
         except Exception as exc:
             salida.value = f"Error publicando paquete: {exc}"
         actualizar_pagina()
@@ -965,11 +1129,22 @@ def main(page: "ft.Page"):
             runtime.flet_elevated_button(
                 ft, "Crear carpeta", on_click=crear_carpeta_handler
             ),
-            runtime.flet_elevated_button(ft, "Crear paquete", on_click=crear_paquete_handler),
-            runtime.flet_elevated_button(ft, "Abrir paquete", on_click=abrir_paquete_handler),
-            runtime.flet_elevated_button(ft, "Validar paquete", on_click=validar_paquete_handler),
-            runtime.flet_elevated_button(ft, "Construir paquete", on_click=construir_paquete_handler),
-            runtime.flet_elevated_button(ft, "Publicar CobraHub", on_click=publicar_paquete_handler),
+            runtime.flet_elevated_button(
+                ft, "Crear paquete", on_click=crear_paquete_handler
+            ),
+            runtime.flet_elevated_button(
+                ft, "Abrir paquete", on_click=abrir_paquete_handler
+            ),
+            runtime.flet_elevated_button(
+                ft, "Validar paquete", on_click=validar_paquete_handler
+            ),
+            runtime.flet_elevated_button(
+                ft, "Construir paquete", on_click=construir_paquete_handler
+            ),
+            runtime.flet_elevated_button(
+                ft, "Publicar CobraHub", on_click=publicar_paquete_handler
+            ),
+            runtime.flet_elevated_button(ft, "Empaquetar", on_click=empaquetar_handler),
             runtime.flet_elevated_button(
                 ft, "Eliminar proyecto", on_click=eliminar_proyecto_handler
             ),
