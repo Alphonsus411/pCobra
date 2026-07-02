@@ -8,6 +8,7 @@ puente delgado de :mod:`pcobra.cobra_installer.idle_bridge`.
 from __future__ import annotations
 
 from .manifest import BuildManifest, DependencyInfo
+from .spec_writer import SpecBuildContext, write_spec
 from .project import (
     BuildOptions,
     BuildResult,
@@ -46,8 +47,10 @@ __all__ = [
     "ValidationErrorDetail",
     "ValidationResult",
     "RuntimePreparationResult",
+    "SpecBuildContext",
     "build_project",
     "validate_project",
     "package_current_project",
     "prepare_runtime",
+    "write_spec",
 ]
