@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ast
 from pathlib import Path
 
 from pcobra.cobra_installer import BuildMode, BuildOptions
@@ -101,3 +102,90 @@ def test_write_spec_onefile_incluye_icono_y_sin_collect(tmp_path: Path) -> None:
     assert "coll = COLLECT" not in content
     assert f"icon='{icon}'" in content
     assert "name='demo_onefile'" in content
+
+
+def test_write_spec_con_fixture_imports_dinamicos_declara_hiddenimports(tmp_path: Path) -> None:
+    """El spec debe declarar imports que PyInstaller no infiere estáticamente.
+
+    El fixture modela un proyecto Cobra con imports dinámicos o equivalentes:
+    - corelibs usadas desde Cobra (`pcobra.corelibs.numero` y `texto`).
+    - dependencias CobraHub empaquetadas como paquetes Python importables.
+    - módulos Python generados por transpilación y cargados con `importlib`.
+
+    El test no ejecuta PyInstaller; solo valida el `.spec` generado por
+    `write_spec`.
+    """
+
+    project_root = tmp_path / "proyecto_dinamico"
+    project_root.mkdir()
+    (project_root / "main.cobra").write_text(
+        "usar core.numero\nusar remoto.herramienta\n", encoding="utf-8"
+    )
+
+    runtime = _runtime_tree(tmp_path)
+    generated_python_dir = runtime.build_dir / "python"
+    generated_package = generated_python_dir / "cobra_generado"
+    generated_package.mkdir(parents=True)
+    (generated_package / "__init__.py").write_text("", encoding="utf-8")
+    (generated_package / "main.py").write_text(
+        "from importlib import import_module\n"
+        "import_module('pcobra.corelibs.numero')\n"
+        "import_module('pcobra.corelibs.texto')\n"
+        "import_module('cobrahub_remoto.herramienta')\n"
+        "import_module('cobra_generado.modulo_transpilado')\n",
+        encoding="utf-8",
+    )
+    (generated_package / "modulo_transpilado.py").write_text(
+        "VALOR = 1\n", encoding="utf-8"
+    )
+
+    cobrahub_package = runtime.packages_dir / "cobrahub_remoto"
+    cobrahub_package.mkdir()
+    (cobrahub_package / "__init__.py").write_text("", encoding="utf-8")
+    (cobrahub_package / "herramienta.py").write_text(
+        "def ejecutar():\n    return 'ok'\n", encoding="utf-8"
+    )
+
+    spec_path = write_spec(
+        SpecBuildContext(
+            options=BuildOptions(project_root=project_root, mode=BuildMode.ONEDIR),
+            runtime=runtime,
+            output_dir=tmp_path / "dist",
+            executable_name="demo_dinamico",
+            hidden_imports=(
+                "pcobra.corelibs.numero",
+                "pcobra.corelibs.texto",
+                "cobrahub_remoto",
+                "cobrahub_remoto.herramienta",
+                "cobra_generado",
+                "cobra_generado.main",
+                "cobra_generado.modulo_transpilado",
+                "pcobra.corelibs.numero",
+            ),
+        )
+    )
+
+    content = spec_path.read_text(encoding="utf-8")
+    assert "a = Analysis(" in content
+    assert "run_pyinstaller" not in content
+    assert "COLLECT" in content
+
+    hiddenimports_line = next(
+        line for line in content.splitlines() if line.strip().startswith("hiddenimports=")
+    )
+    hiddenimports = ast.literal_eval(hiddenimports_line.split("=", 1)[1].rstrip(","))
+
+    assert "pcobra" in hiddenimports
+    assert "pcobra.core" in hiddenimports
+    assert "pcobra.corelibs" in hiddenimports
+    assert "pcobra.standard_library" in hiddenimports
+    assert "pcobra.cobra.cli.cli" in hiddenimports
+    assert "pcobra.cobra.transpilers.transpiler.to_python" in hiddenimports
+    assert "pcobra.corelibs.numero" in hiddenimports
+    assert "pcobra.corelibs.texto" in hiddenimports
+    assert "cobrahub_remoto" in hiddenimports
+    assert "cobrahub_remoto.herramienta" in hiddenimports
+    assert "cobra_generado" in hiddenimports
+    assert "cobra_generado.main" in hiddenimports
+    assert "cobra_generado.modulo_transpilado" in hiddenimports
+    assert hiddenimports.count("pcobra.corelibs.numero") == 1
