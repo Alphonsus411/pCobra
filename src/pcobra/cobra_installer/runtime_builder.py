@@ -11,8 +11,8 @@ import pcobra
 
 from .dependency_resolver import DependencyResolutionResult, resolve_project_dependencies
 from .manifest import create_manifest
-from .project import BuildOptions, BuildResult, CobraInstallerError, CobraProject
-from .spec_writer import write_spec
+from .project import BuildOptions, BuildResult, CobraInstallerError, CobraProject, discover_project
+from .spec_writer import SpecBuildContext, write_spec
 from .validator import discover_entrypoint, validate_build_options
 
 __all__ = [
@@ -166,7 +166,34 @@ def build_project(options: BuildOptions | None = None, **overrides: object) -> B
     output_dir.mkdir(parents=True, exist_ok=True)
     name = normalized.name or entrypoint.stem
     manifest_path = create_manifest(normalized, entrypoint, output_dir, name)
-    spec_path = write_spec(normalized, entrypoint, output_dir, name)
+    project = discover_project(Path(normalized.project_root))
+    if project.entrypoint != entrypoint:
+        project = CobraProject(
+            project_root=project.project_root,
+            entrypoint=entrypoint,
+            cobra_toml=project.cobra_toml,
+            cobra_lock=project.cobra_lock,
+            assets=project.assets,
+            config=project.config,
+            co_packages=project.co_packages,
+            documentation=project.documentation,
+            config_dirs=project.config_dirs,
+            auxiliary_resources=project.auxiliary_resources,
+        )
+    runtime = prepare_runtime(
+        Path(normalized.temp_dir or Path(normalized.project_root) / "build"),
+        project,
+        None,
+        normalized,
+    )
+    spec_path = write_spec(
+        SpecBuildContext(
+            options=normalized,
+            runtime=runtime,
+            output_dir=output_dir,
+            executable_name=name,
+        )
+    )
     return BuildResult(
         success=True,
         artifact_path=spec_path,
