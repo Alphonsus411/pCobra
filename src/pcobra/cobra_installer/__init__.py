@@ -21,7 +21,12 @@ from .project import (
 from .targets import BuildMode, TargetOS
 from .transpile import TranspileResult, transpile_project
 from .validator import ValidationErrorDetail, ValidationResult, validate_project
-from .runtime_builder import build_project, package_current_project
+from .runtime_builder import (
+    RuntimePreparationResult,
+    build_project,
+    package_current_project,
+    prepare_runtime,
+)
 
 __all__ = [
     "BuildManifest",
@@ -40,7 +45,9 @@ __all__ = [
     "transpile_project",
     "ValidationErrorDetail",
     "ValidationResult",
+    "RuntimePreparationResult",
     "build_project",
     "validate_project",
     "package_current_project",
+    "prepare_runtime",
 ]
