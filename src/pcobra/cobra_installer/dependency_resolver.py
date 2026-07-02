@@ -120,31 +120,51 @@ def resolve_project_dependencies(
     hub = resolver or CobraHubResolver()
     resolved: dict[str, CobraHubResolution] = {}
     requested_versions = {name: dep.version for name, dep in declared.items()}
+    dependency_chains = {
+        name: f"proyecto -> {name}=={dep.version}"
+        for name, dep in declared.items()
+    }
+    pending = sorted(requested_versions.items())
 
-    for name, dep in sorted(declared.items()):
+    while pending:
+        name, version = pending.pop(0)
+        if name in resolved:
+            continue
         lock_entry = locked.get(name)
         resolution = hub.resolve(
             name,
-            dep.version,
+            version,
             expected_sha256=lock_entry.sha256 if lock_entry else None,
             source=lock_entry.source if lock_entry else None,
         )
-        if resolution.version != dep.version:
+        if resolution.version != version:
             raise CobraDependencyError(
-                f"Conflicto de versión para {name}: cobra.toml pide {dep.version}, "
-                f"pero CobraHub resolvió {resolution.version}."
+                f"Conflicto de versión para {name}: se pidió {version}, "
+                f"pero CobraHub resolvió {resolution.version}. "
+                f"Cadena: {dependency_chains[name]}."
             )
         resolved[name] = resolution
 
-        for transitive_name, transitive_version in resolution.dependencies.items():
-            if (
-                transitive_name in requested_versions
-                and requested_versions[transitive_name] != transitive_version
-            ):
+        for transitive_name, transitive_version in sorted(
+            resolution.dependencies.items()
+        ):
+            chain = (
+                f"{dependency_chains[name]} -> "
+                f"{transitive_name}=={transitive_version}"
+            )
+            requested = requested_versions.get(transitive_name)
+            if requested is not None and requested != transitive_version:
+                previous_chain = dependency_chains[transitive_name]
                 raise CobraDependencyError(
-                    f"Conflicto de versiones: {name} requiere {transitive_name}=={transitive_version}, "
-                    f"pero el proyecto declara {transitive_name}=={requested_versions[transitive_name]}."
+                    f"Conflicto de versiones para {transitive_name}: "
+                    f"se requieren versiones incompatibles {requested} y {transitive_version}. "
+                    f"Cadena existente: {previous_chain}. "
+                    f"Cadena nueva: {chain}."
                 )
+            if requested is None:
+                requested_versions[transitive_name] = transitive_version
+                dependency_chains[transitive_name] = chain
+                pending.append((transitive_name, transitive_version))
 
     created = False
     if not lock_path.exists():

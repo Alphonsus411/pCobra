@@ -137,7 +137,9 @@ def test_installer_build_mensajes_claros(
     monkeypatch.setattr(cobra_installer, "build_project", fake_build_project)
     command = InstallerCommandV2()
     parser = _registered_parser(command)
-    args = parser.parse_args(["installer", "build", str(tmp_path), "--target", "linux"])
+    args = parser.parse_args(
+        ["installer", "build", str(tmp_path), "--target", "linux"]
+    )
 
     assert command.run(args) == 1
     assert expected in capsys.readouterr().out
@@ -150,3 +152,31 @@ def _registered_parser(command):
     subparsers = root.add_subparsers(dest="command")
     command.register_subparser(subparsers)
     return root
+
+
+def test_installer_build_muestra_conflicto_transitivo_con_cadena(
+    monkeypatch, tmp_path, capsys
+):
+    import pcobra.cobra_installer as cobra_installer
+
+    def fake_build_project(project_path, options):
+        raise CobraInstallerError(
+            "Conflicto de versiones para compartida: se requieren versiones "
+            "incompatibles 1.0.0 y 2.0.0. Cadena existente: proyecto -> "
+            "dep-a==1.0.0 -> compartida==1.0.0. Cadena nueva: proyecto -> "
+            "dep-b==1.0.0 -> compartida==2.0.0."
+        )
+
+    monkeypatch.setattr(cobra_installer, "build_project", fake_build_project)
+    command = InstallerCommandV2()
+    parser = _registered_parser(command)
+    args = parser.parse_args(
+        ["installer", "build", str(tmp_path), "--target", "linux"]
+    )
+
+    assert command.run(args) == 1
+    output = capsys.readouterr().out
+    assert "Conflicto de versiones" in output
+    assert "compartida" in output
+    assert "Cadena existente" in output
+    assert "Cadena nueva" in output
