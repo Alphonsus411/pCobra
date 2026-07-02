@@ -15,6 +15,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--output-dir")
     parser.add_argument("--name")
     parser.add_argument("--target", default="current")
+    parser.add_argument(
+        "--builder",
+        choices=("local", "docker", "vm", "ci", "remote"),
+        default="local",
+        help="Builder futuro para aislar builds no nativos; solo local está implementado todavía.",
+    )
     return parser
 
 
@@ -27,6 +33,7 @@ def main(argv: list[str] | None = None) -> int:
             output_dir=args.output_dir,
             name=args.name,
             target=args.target,
+            builder=args.builder,
         )
     except CobraInstallerError as exc:
         print(f"Error: {exc}")

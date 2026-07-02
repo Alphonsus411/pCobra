@@ -9,9 +9,18 @@ from typing import Mapping, Sequence
 
 import pcobra
 
-from .dependency_resolver import DependencyResolutionResult, resolve_project_dependencies
+from .dependency_resolver import (
+    DependencyResolutionResult,
+    resolve_project_dependencies,
+)
 from .manifest import create_manifest
-from .project import BuildOptions, BuildResult, CobraInstallerError, CobraProject, discover_project
+from .project import (
+    BuildOptions,
+    BuildResult,
+    CobraInstallerError,
+    CobraProject,
+    discover_project,
+)
 from .spec_writer import SpecBuildContext, write_spec
 from .validator import discover_entrypoint, validate_build_options
 
@@ -95,7 +104,9 @@ def prepare_runtime(
 
     copied_hub_packages = _copy_hub_packages(dependency_resolution, packages_dir)
     copied_explicit_packages = _copy_dependency_paths(dependencies, packages_dir, root)
-    copied_project_packages = _copy_many(normalized_project.co_packages, packages_dir, root)
+    copied_project_packages = _copy_many(
+        normalized_project.co_packages, packages_dir, root
+    )
     copied_assets = _copy_many(
         (*normalized_project.assets, *normalized_options.assets), assets_dir, root
     )
@@ -130,7 +141,11 @@ def prepare_runtime(
         entrypoint=entrypoint,
         copied_resources={
             "runtime": runtime_copies,
-            "packages": (*copied_hub_packages, *copied_explicit_packages, *copied_project_packages),
+            "packages": (
+                *copied_hub_packages,
+                *copied_explicit_packages,
+                *copied_project_packages,
+            ),
             "assets": copied_assets,
             "config": copied_config,
             "documentation": copied_docs,
@@ -145,7 +160,9 @@ def prepare_runtime(
     )
 
 
-def build_project(options: BuildOptions | None = None, **overrides: object) -> BuildResult:
+def build_project(
+    options: BuildOptions | None = None, **overrides: object
+) -> BuildResult:
     """Construye un proyecto Cobra usando una API programática estable.
 
     La implementación inicial prepara directorios, manifiesto y especificación
@@ -156,7 +173,9 @@ def build_project(options: BuildOptions | None = None, **overrides: object) -> B
     if overrides:
         base = replace(base, **overrides)
     normalized = validate_build_options(base)
-    entrypoint = normalized.entrypoint or discover_entrypoint(Path(normalized.project_root))
+    entrypoint = normalized.entrypoint or discover_entrypoint(
+        Path(normalized.project_root)
+    )
     if entrypoint is None:
         raise CobraInstallerError(
             f"No se encontró un punto de entrada Cobra en {normalized.project_root}"
@@ -201,16 +220,24 @@ def build_project(options: BuildOptions | None = None, **overrides: object) -> B
         output_dir=output_dir,
         target=normalized.target,
         architecture=normalized.architecture,
+        builder=normalized.builder,
+        builder_config=normalized.builder_config,
         mode=normalized.mode,
         executable_name=name,
         temp_dir=Path(normalized.temp_dir) if normalized.temp_dir is not None else None,
         dist_dir=output_dir,
-        metadata={"entrypoint": str(entrypoint), "manifest": str(manifest_path), "name": name},
+        metadata={
+            "entrypoint": str(entrypoint),
+            "manifest": str(manifest_path),
+            "name": name,
+        },
         logs=("Proyecto preparado para empaquetado.",),
     )
 
 
-def package_current_project(project_root: str | Path | None = None, **kwargs: object) -> BuildResult:
+def package_current_project(
+    project_root: str | Path | None = None, **kwargs: object
+) -> BuildResult:
     """Empaqueta el proyecto actual; punto único que debe llamar el IDLE."""
 
     options = BuildOptions(project_root=project_root or Path.cwd(), **kwargs)
@@ -341,7 +368,9 @@ def _existing_optional_paths(*paths: Path | str | None) -> tuple[Path | str, ...
     return tuple(path for path in paths if path is not None and Path(path).exists())
 
 
-def _pyinstaller_entrypoint_code(source_entrypoint: Path | None, build_dir: Path) -> str:
+def _pyinstaller_entrypoint_code(
+    source_entrypoint: Path | None, build_dir: Path
+) -> str:
     source_literal = str(source_entrypoint) if source_entrypoint is not None else ""
     return (
         '"""Entrypoint estable generado por cobra_installer para PyInstaller."""\n'

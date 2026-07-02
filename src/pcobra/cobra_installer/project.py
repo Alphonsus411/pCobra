@@ -12,7 +12,7 @@ try:  # pragma: no cover - Python < 3.11 compatibility path
 except ModuleNotFoundError:  # pragma: no cover
     tomllib = None  # type: ignore[assignment]
 
-from .targets import BuildMode, TargetOS
+from .targets import BuildMode, Builder, BuilderConfig, TargetOS, normalize_target
 
 
 class CobraInstallerError(RuntimeError):
@@ -37,8 +37,12 @@ class ProjectResources:
             assets=tuple(_normalize_path(path, root) for path in self.assets),
             config_dirs=tuple(_normalize_path(path, root) for path in self.config_dirs),
             co_packages=tuple(_normalize_path(path, root) for path in self.co_packages),
-            documentation=tuple(_normalize_path(path, root) for path in self.documentation),
-            auxiliary_resources=tuple(_normalize_path(path, root) for path in self.auxiliary_resources),
+            documentation=tuple(
+                _normalize_path(path, root) for path in self.documentation
+            ),
+            auxiliary_resources=tuple(
+                _normalize_path(path, root) for path in self.auxiliary_resources
+            ),
         )
 
 
@@ -64,14 +68,22 @@ class CobraProject:
         return CobraProject(
             project_root=root,
             entrypoint=_normalize_optional_path(self.entrypoint, root),
-            cobra_toml=_normalize_optional_path(self.cobra_toml or root / "cobra.toml", root),
-            cobra_lock=_normalize_optional_path(self.cobra_lock or root / "cobra.lock", root),
+            cobra_toml=_normalize_optional_path(
+                self.cobra_toml or root / "cobra.toml", root
+            ),
+            cobra_lock=_normalize_optional_path(
+                self.cobra_lock or root / "cobra.lock", root
+            ),
             assets=tuple(_normalize_path(path, root) for path in self.assets),
             config=dict(self.config),
             co_packages=tuple(_normalize_path(path, root) for path in self.co_packages),
-            documentation=tuple(_normalize_path(path, root) for path in self.documentation),
+            documentation=tuple(
+                _normalize_path(path, root) for path in self.documentation
+            ),
             config_dirs=tuple(_normalize_path(path, root) for path in self.config_dirs),
-            auxiliary_resources=tuple(_normalize_path(path, root) for path in self.auxiliary_resources),
+            auxiliary_resources=tuple(
+                _normalize_path(path, root) for path in self.auxiliary_resources
+            ),
         )
 
 
@@ -85,6 +97,8 @@ class BuildOptions:
     name: str | None = None
     target: str | TargetOS = "current"
     architecture: str = "native"
+    builder: Builder | str = Builder.LOCAL
+    builder_config: BuilderConfig | None = None
     mode: BuildMode | str = BuildMode.ONEDIR
     temp_dir: Path | str | None = None
     dist_dir: Path | str | None = None
@@ -100,15 +114,20 @@ class BuildOptions:
 
         root = Path(self.project_root).expanduser().resolve()
         entrypoint = _normalize_optional_path(self.entrypoint, root)
-        output_dir = _normalize_optional_path(self.output_dir or self.dist_dir or root / "dist", root)
+        output_dir = _normalize_optional_path(
+            self.output_dir or self.dist_dir or root / "dist", root
+        )
         temp_dir = _normalize_optional_path(self.temp_dir or root / "build", root)
         return BuildOptions(
             project_root=root,
             entrypoint=entrypoint,
             output_dir=output_dir,
             name=self.name,
-            target=self.target,
+            target=normalize_target(self.target),
             architecture=self.architecture,
+            builder=Builder.from_value(self.builder),
+            builder_config=self.builder_config
+            or BuilderConfig.from_value(self.builder),
             mode=BuildMode.from_value(self.mode),
             temp_dir=temp_dir,
             dist_dir=output_dir,
@@ -131,6 +150,8 @@ class BuildResult:
     output_dir: Path | None = None
     target: str | TargetOS = "current"
     architecture: str = "native"
+    builder: Builder | str = Builder.LOCAL
+    builder_config: BuilderConfig | None = None
     mode: BuildMode = BuildMode.ONEDIR
     executable_name: str | None = None
     temp_dir: Path | None = None
@@ -201,7 +222,9 @@ def collect_project_resources(project_root: Path) -> ProjectResources:
 
     root = Path(project_root).expanduser().resolve()
     if not root.is_dir():
-        raise CobraInstallerError(f"La raíz del proyecto no existe o no es un directorio: {root}")
+        raise CobraInstallerError(
+            f"La raíz del proyecto no existe o no es un directorio: {root}"
+        )
 
     assets: list[Path] = []
     config_dirs: list[Path] = []
@@ -242,7 +265,11 @@ def _discover_project_root(path: Path) -> Path:
         raise CobraInstallerError(f"La ruta del proyecto no existe: {candidate}")
 
     for current in (start, *start.parents):
-        if (current / "main.cobra").is_file() or (current / "cobra.toml").is_file() or (current / "cobra.lock").is_file():
+        if (
+            (current / "main.cobra").is_file()
+            or (current / "cobra.toml").is_file()
+            or (current / "cobra.lock").is_file()
+        ):
             return current
     return start
 
@@ -258,7 +285,9 @@ def _configured_entrypoints(root: Path) -> list[Path]:
             continue
         seen.add(path)
         if not path.is_file():
-            raise CobraInstallerError(f"El entrypoint configurado en cobra.toml no existe: {path}")
+            raise CobraInstallerError(
+                f"El entrypoint configurado en cobra.toml no existe: {path}"
+            )
         resolved.append(path)
     return resolved
 
@@ -267,7 +296,9 @@ def _read_cobra_toml(path: Path) -> dict[str, object]:
     if not path.is_file():
         return {}
     if tomllib is None:
-        raise CobraInstallerError("No se puede leer cobra.toml: tomllib no está disponible en esta versión de Python.")
+        raise CobraInstallerError(
+            "No se puede leer cobra.toml: tomllib no está disponible en esta versión de Python."
+        )
     try:
         return tomllib.loads(path.read_text(encoding="utf-8"))
     except tomllib.TOMLDecodeError as exc:  # type: ignore[union-attr]
@@ -315,5 +346,24 @@ _IGNORED_DIRS = {
     "venv",
 }
 _DOCUMENTATION_SUFFIXES = {".md", ".rst", ".txt"}
-_AUXILIARY_SUFFIXES = {".json", ".yaml", ".yml", ".ini", ".cfg", ".env", ".ico", ".png", ".jpg", ".jpeg", ".svg"}
-_AUXILIARY_FILE_NAMES = {"cobra.toml", "cobra.lock", "pyproject.toml", "requirements.txt", "LICENSE", "NOTICE"}
+_AUXILIARY_SUFFIXES = {
+    ".json",
+    ".yaml",
+    ".yml",
+    ".ini",
+    ".cfg",
+    ".env",
+    ".ico",
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".svg",
+}
+_AUXILIARY_FILE_NAMES = {
+    "cobra.toml",
+    "cobra.lock",
+    "pyproject.toml",
+    "requirements.txt",
+    "LICENSE",
+    "NOTICE",
+}
