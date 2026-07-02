@@ -38,6 +38,7 @@ def test_public_commands_contract_oficial_v2_no_incluye_alias_legacy():
         "build",
         "test",
         "mod",
+        "installer",
         "repl",
         "paquete",
         "hub",
