@@ -44,7 +44,10 @@ class TranspileResult:
 
 
 def transpile_project(
-    project: CobraProject, build_dir: Path, options: BuildOptions
+    project: CobraProject,
+    build_dir: Path,
+    options: BuildOptions,
+    dependency_resolution: DependencyResolutionResult | None = None,
 ) -> TranspileResult:
     """Transpila ``project`` a Python y prepara sus recursos en ``build_dir``.
 
@@ -62,6 +65,9 @@ def transpile_project(
     )
     if not entrypoint.is_file():
         raise CobraInstallerError(f"El entrypoint Cobra no existe: {entrypoint}")
+
+    if normalized_options.include_dependencies and dependency_resolution is None:
+        dependency_resolution = resolve_project_dependencies(root)
 
     target = Path(build_dir).expanduser().resolve()
     if normalized_options.clean and target.exists():
@@ -99,10 +105,8 @@ def transpile_project(
     final_entrypoint.write_text(_entrypoint_code(generated_path.name), encoding="utf-8")
 
     copied_runtime = _copy_runtime(runtime_dir)
-    dependency_resolution = None
     copied_packages: tuple[Path, ...] = ()
-    if normalized_options.include_dependencies:
-        dependency_resolution = resolve_project_dependencies(root)
+    if normalized_options.include_dependencies and dependency_resolution is not None:
         copied_packages = _copy_hub_packages(dependency_resolution, packages_dir)
 
     copied_assets = _copy_many(

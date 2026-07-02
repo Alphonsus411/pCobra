@@ -324,3 +324,33 @@ def test_resuelve_proyecto_con_multiples_dependencias_hash_ruta_y_origen(
             },
         ],
     }
+
+
+class _MissingCobraHubRepository:
+    def __init__(self):
+        self.downloads = []
+
+    def download(self, name, version=None):
+        self.downloads.append((name, version))
+        raise FileNotFoundError(f"paquete no publicado: {name}=={version}")
+
+
+def test_dependencia_declarada_inexistente_en_cobrahub_falla_controlado(tmp_path):
+    repo = _MissingCobraHubRepository()
+    (tmp_path / "cobra.toml").write_text(
+        '[dependencies]\ndep-fantasma = "9.9.9"\n', encoding="utf-8"
+    )
+    (tmp_path / "main.cobra").write_text("usar dep-fantasma.modulo\n", encoding="utf-8")
+
+    with pytest.raises(CobraInstallerError) as exc_info:
+        resolve_project_dependencies(
+            tmp_path,
+            resolver=CobraHubResolver(repository=repo, cache_dir=tmp_path / "cache"),
+        )
+
+    assert isinstance(exc_info.value, CobraInstallerError)
+    message = str(exc_info.value)
+    assert "dep-fantasma" in message
+    assert "9.9.9" in message
+    assert "CobraHub" in message
+    assert repo.downloads == [("dep-fantasma", "9.9.9")]

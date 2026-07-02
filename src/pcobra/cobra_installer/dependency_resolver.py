@@ -15,11 +15,8 @@ from pathlib import Path
 from typing import Any, Mapping, Sequence
 
 from pcobra.cobra.packaging import normalizar_nombre_paquete, validar_version_paquete
-from pcobra.cobra_installer.hub_resolver import (
-    CobraHubResolution,
-    CobraHubResolver,
-    CobraInstallerError,
-)
+from pcobra.cobra_installer.hub_resolver import CobraHubResolution, CobraHubResolver
+from pcobra.cobra_installer.project import CobraInstallerError
 
 __all__ = [
     "CobraDependencyError",

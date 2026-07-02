@@ -13,6 +13,7 @@ from typing import Any
 
 from pcobra.cobra.hub.repository import PackageRepository
 from pcobra.cobra_installer.cache import CobraInstallerCache
+from pcobra.cobra_installer.project import CobraInstallerError
 from pcobra.cobra.packaging import (
     es_paquete_cobra,
     inspeccionar_paquete,
@@ -22,10 +23,6 @@ from pcobra.cobra.packaging import (
 )
 
 __all__ = ["CobraInstallerError", "CobraHubResolution", "CobraHubResolver"]
-
-
-class CobraInstallerError(RuntimeError):
-    """Excepción controlada con mensaje claro para CLI e IDLE."""
 
 
 @dataclass(frozen=True)
