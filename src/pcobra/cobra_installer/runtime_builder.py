@@ -253,7 +253,7 @@ def build_project(
     build_dir.mkdir(parents=True, exist_ok=True)
 
     step("transpilacion", "Transpilando con el backend Python oficial...", 5)
-    transpiled = transpile_project(project, build_dir, normalized)
+    transpiled = transpile_project(project, build_dir, normalized, dependencies)
     logs.extend(transpiled.logs)
     emit_many(logger, transpiled.logs, stage="transpilacion")
 
