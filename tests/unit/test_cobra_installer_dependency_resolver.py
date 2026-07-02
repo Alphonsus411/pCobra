@@ -73,6 +73,68 @@ def test_resuelve_desde_cache_y_genera_lock(tmp_path):
     assert len(lock["packages"][0]["sha256"]) == 64
 
 
+class _FakeCobraHubRepository:
+    def __init__(self, packages):
+        self.packages = packages
+        self.downloads = []
+
+    def download(self, name, version=None):
+        from pcobra.cobra.hub.repository import DownloadedPackage
+
+        self.downloads.append((name, version))
+        path = self.packages[(name, version)]
+        sha256 = CobraHubResolver._sha256_file(path)
+        return DownloadedPackage(path=path, name=name, version=version, checksum=sha256)
+
+
+def test_resuelve_multiples_dependencias_desde_cache_y_cobrahub_sin_red(tmp_path):
+    cached_package = _package(tmp_path, name="dep-cache", version="1.2.3")
+    remote_package = _package(tmp_path, name="dep-remota", version="2.0.0")
+    cache = tmp_path / "cache"
+    cache.mkdir()
+    cached = cache / "dep-cache-1.2.3.co"
+    cached.write_bytes(cached_package.read_bytes())
+    remote = tmp_path / "remote" / "dep-remota-2.0.0.co"
+    remote.parent.mkdir()
+    remote.write_bytes(remote_package.read_bytes())
+    repo = _FakeCobraHubRepository({("dep-remota", "2.0.0"): remote})
+    (tmp_path / "cobra.toml").write_text(
+        '[dependencies]\ndep-cache = "1.2.3"\ndep-remota = "2.0.0"\n',
+        encoding="utf-8",
+    )
+    (tmp_path / "main.cobra").write_text(
+        "import 'dep-cache.modulo'\nimport 'dep-remota.api'\n", encoding="utf-8"
+    )
+
+    result = resolve_project_dependencies(
+        tmp_path, resolver=CobraHubResolver(repository=repo, cache_dir=cache)
+    )
+
+    assert result.used_imports == {"dep-cache", "dep-remota"}
+    assert set(result.declared) == {"dep-cache", "dep-remota"}
+    assert set(result.resolved) == {"dep-cache", "dep-remota"}
+    assert repo.downloads == [("dep-remota", "2.0.0")]
+    assert result.resolved["dep-cache"].name == "dep-cache"
+    assert result.resolved["dep-cache"].version == "1.2.3"
+    assert result.resolved["dep-cache"].path == cached
+    assert len(result.resolved["dep-cache"].sha256) == 64
+    assert result.resolved["dep-cache"].source == "installer-cache"
+    assert result.resolved["dep-remota"].name == "dep-remota"
+    assert result.resolved["dep-remota"].version == "2.0.0"
+    assert result.resolved["dep-remota"].path == remote
+    assert len(result.resolved["dep-remota"].sha256) == 64
+    assert result.resolved["dep-remota"].source == "cobrahub"
+    lock = json.loads((tmp_path / "cobra.lock").read_text(encoding="utf-8"))
+    assert [package["name"] for package in lock["packages"]] == [
+        "dep-cache",
+        "dep-remota",
+    ]
+    assert {package["source"] for package in lock["packages"]} == {
+        "installer-cache",
+        "cobrahub",
+    }
+
+
 def test_falla_si_import_no_esta_declarado(tmp_path):
     (tmp_path / "cobra.toml").write_text("", encoding="utf-8")
     (tmp_path / "main.cobra").write_text("usar dep.modulo\n", encoding="utf-8")
