@@ -11,7 +11,11 @@ from pcobra.cobra_installer import (
     DependencyInfo,
     TargetOS,
 )
-from pcobra.cobra_installer.manifest import create_manifest
+from pcobra.cobra_installer.manifest import (
+    BUILD_MANIFEST_NAME,
+    create_manifest,
+    write_manifest_json,
+)
 
 
 def test_cobra_project_normaliza_recursos_desde_raiz(tmp_path: Path) -> None:
@@ -85,7 +89,11 @@ def test_build_manifest_serializa_campos_del_build(tmp_path: Path) -> None:
         hashes={"main.co": "sha256:abc"},
         cobra_version="1.2.3",
         pyinstaller_version="6.0.0",
-        dependencies=(DependencyInfo(name="pyinstaller", version="6.0.0", hashes={"wheel": "sha256:def"}),),
+        dependencies=(
+            DependencyInfo(
+                name="pyinstaller", version="6.0.0", hashes={"wheel": "sha256:def"}
+            ),
+        ),
     )
 
     payload = manifest.to_dict()
@@ -121,7 +129,9 @@ def test_build_manifest_serializa_campos_del_build(tmp_path: Path) -> None:
     ]
 
 
-def test_create_manifest_mantiene_compatibilidad_y_agrega_campos(tmp_path: Path) -> None:
+def test_create_manifest_mantiene_compatibilidad_y_agrega_campos(
+    tmp_path: Path,
+) -> None:
     output_dir = tmp_path / "dist"
     output_dir.mkdir()
     options = BuildOptions(
@@ -148,11 +158,74 @@ def test_create_manifest_mantiene_compatibilidad_y_agrega_campos(tmp_path: Path)
     assert payload["include_dependencies"] is False
 
 
-def test_discover_project_prefiere_main_cobra_y_recolecta_recursos(tmp_path: Path) -> None:
+def test_create_manifest_genera_cobra_build_manifest_estable(tmp_path: Path) -> None:
+    output_dir = tmp_path / "dist"
+    output_dir.mkdir()
+    entrypoint = tmp_path / "main.cobra"
+    entrypoint.write_text("imprimir('hola')\n", encoding="utf-8")
+    asset = tmp_path / "assets" / "logo.txt"
+    asset.parent.mkdir()
+    asset.write_text("logo", encoding="utf-8")
+    options = BuildOptions(
+        project_root=tmp_path,
+        target=TargetOS.LINUX,
+        architecture="x86_64",
+        mode=BuildMode.ONEFILE,
+        assets=(asset,),
+        config={
+            "project": {"name": "demo", "version": "1.2.3"},
+            "build": {"backend": "python"},
+        },
+        include_dependencies=True,
+    ).normalized()
+
+    manifest_path = create_manifest(options, entrypoint, output_dir, "demo-bin")
+    payload = json.loads(manifest_path.read_text(encoding="utf-8"))
+
+    assert manifest_path == output_dir / BUILD_MANIFEST_NAME
+    assert (output_dir / "cobra-installer-manifest.json").is_file()
+    assert payload["project"] == "demo"
+    assert payload["version"] == "1.2.3"
+    assert payload["backend"] == "python"
+    assert payload["target"] == "linux"
+    assert payload["architecture"] == "x86_64"
+    assert payload["build_mode"] == "onefile"
+    assert payload["cobra_version"] is None or isinstance(payload["cobra_version"], str)
+    assert "pyinstaller_version" in payload
+    assert payload["cobrahub_dependencies"] == []
+    assert str(entrypoint) in payload["hashes"]
+    assert payload["generated_at"].endswith("Z")
+    assert payload["build_duration_seconds"] == 0.0
+    assert payload["runtime_included"] is False
+    assert payload["assets_included"] == [str(asset)]
+    assert payload["final_size_bytes"] is None
+    assert payload["executable_path"] == str(output_dir / "demo-bin")
+
+
+def test_write_manifest_json_ordena_claves_para_comparaciones_estables(
+    tmp_path: Path,
+) -> None:
+    manifest_path = tmp_path / "manifest.json"
+
+    write_manifest_json(manifest_path, {"z": 1, "a": {"b": 2, "a": 1}})
+
+    assert manifest_path.read_text(encoding="utf-8").splitlines()[:4] == [
+        "{",
+        '  "a": {',
+        '    "a": 1,',
+        '    "b": 2',
+    ]
+
+
+def test_discover_project_prefiere_main_cobra_y_recolecta_recursos(
+    tmp_path: Path,
+) -> None:
     from pcobra.cobra_installer import discover_project
 
     (tmp_path / "main.cobra").write_text("imprimir('hola')\n", encoding="utf-8")
-    (tmp_path / "cobra.toml").write_text('[project]\nentrypoint = "otro.cobra"\n', encoding="utf-8")
+    (tmp_path / "cobra.toml").write_text(
+        '[project]\nentrypoint = "otro.cobra"\n', encoding="utf-8"
+    )
     (tmp_path / "cobra.lock").write_text("# lock\n", encoding="utf-8")
     (tmp_path / "assets").mkdir()
     (tmp_path / "assets" / "logo.png").write_bytes(b"png")
@@ -183,7 +256,9 @@ def test_find_entrypoint_usa_cobra_toml_si_no_hay_main(tmp_path: Path) -> None:
     src.mkdir()
     entrypoint = src / "app.cobra"
     entrypoint.write_text("imprimir('app')\n", encoding="utf-8")
-    (tmp_path / "cobra.toml").write_text('[build]\nentrypoint = "src/app.cobra"\n', encoding="utf-8")
+    (tmp_path / "cobra.toml").write_text(
+        '[build]\nentrypoint = "src/app.cobra"\n', encoding="utf-8"
+    )
 
     assert find_entrypoint(tmp_path) == entrypoint
 
@@ -229,7 +304,9 @@ def test_validate_project_acumula_errores_para_idle(tmp_path: Path) -> None:
             project_root=tmp_path,
             entrypoint=source,
             documentation=(outside_doc,),
-            config={"build": {"executable_name": "bad/name", "icon": "assets/missing.bmp"}},
+            config={
+                "build": {"executable_name": "bad/name", "icon": "assets/missing.bmp"}
+            },
         )
     )
 
@@ -261,7 +338,9 @@ def test_validate_project_acepta_proyecto_cobra_minimo(tmp_path: Path) -> None:
             project_root=tmp_path,
             entrypoint=entrypoint,
             assets=(assets,),
-            config={"project": {"executable_name": "demo-app", "icon": "assets/logo.png"}},
+            config={
+                "project": {"executable_name": "demo-app", "icon": "assets/logo.png"}
+            },
         )
     )
 
