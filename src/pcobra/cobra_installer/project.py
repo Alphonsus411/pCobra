@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Mapping, Sequence
+from typing import Callable, Mapping, Sequence
 
 try:  # pragma: no cover - Python < 3.11 compatibility path
     import tomllib
@@ -108,6 +108,7 @@ class BuildOptions:
     clean: bool = False
     include_dependencies: bool = True
     extra_args: Sequence[str] = field(default_factory=tuple)
+    log_callback: Callable[[str], None] | None = None
 
     def normalized(self) -> "BuildOptions":
         """Devuelve una copia con rutas absolutas y valores derivados."""
@@ -137,6 +138,7 @@ class BuildOptions:
             clean=self.clean,
             include_dependencies=self.include_dependencies,
             extra_args=tuple(self.extra_args),
+            log_callback=self.log_callback,
         )
 
 
