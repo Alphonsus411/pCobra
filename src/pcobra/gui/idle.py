@@ -911,11 +911,12 @@ def main(page: "ft.Page"):
             icono = (icono_input.value or "").strip() or None
             target = selector_so.value or "current"
             mode = selector_modo.value or "onedir"
-            dialog.open = False
             salida.value = "Iniciando empaquetado..."
+            progreso.value = "Iniciando empaquetado..."
             page.update()
 
             def log_callback(mensaje: str) -> None:
+                progreso.value = mensaje
                 salida.value += f"\n{mensaje}"
                 page.update()
 
@@ -927,13 +928,16 @@ def main(page: "ft.Page"):
 
                     result = package_current_project(
                         proyecto_detectado,
-                        name=nombre,
-                        target=target,
-                        mode=mode,
-                        icon=icono,
-                        log_callback=log_callback,
+                        {
+                            "name": nombre,
+                            "target": target,
+                            "mode": mode,
+                            "icon": icono,
+                        },
+                        progress_callback=log_callback,
                     )
                 except Exception as exc:
+                    progreso.value = f"Error al empaquetar: {exc}"
                     salida.value += f"\nError al empaquetar: {exc}"
                     page.update()
                     return
@@ -942,6 +946,7 @@ def main(page: "ft.Page"):
                     result.dist_dir or result.output_dir or proyecto_detectado / "dist"
                 )
                 artifact = result.artifact_path or dist_dir
+                progreso.value = f"Empaquetado finalizado: {artifact}"
                 salida.value += f"\nEmpaquetado finalizado: {artifact}"
                 page.update()
                 abrir_carpeta_dist(dist_dir)

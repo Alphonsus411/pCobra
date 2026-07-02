@@ -34,6 +34,7 @@ def main(argv: list[str] | None = None) -> int:
             name=args.name,
             target=args.target,
             builder=args.builder,
+            log_callback=print,
         )
     except CobraInstallerError as exc:
         print(f"Error: {exc}")
