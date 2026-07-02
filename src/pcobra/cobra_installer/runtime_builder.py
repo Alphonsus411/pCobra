@@ -199,16 +199,19 @@ def _copy_pcobra_runtime(destination_root: Path) -> tuple[Path, ...]:
             destination = destination_root / filename
             _copy_path(source, destination)
             copied.append(destination)
-    for name in ("core", "corelibs", "standard_library"):
+    for name in ("_stubs", "core", "corelibs", "standard_library"):
         source = pcobra_root / name
         if source.exists():
             destination = destination_root / name
             _copy_path(source, destination)
             copied.append(destination)
+    source_layout = _create_runtime_source_layout(destination_root)
+    if source_layout is not None:
+        copied.append(source_layout)
     cobra_root = destination_root / "cobra"
     cobra_root.mkdir(parents=True, exist_ok=True)
     cobra_source = pcobra_root / "cobra"
-    for filename in ("__init__.py", "packaging.py", "usar_loader.py"):
+    for filename in ("__init__.py", "packaging.py", "usar_loader.py", "usar_policy.py"):
         source = cobra_source / filename
         if source.is_file():
             destination = cobra_root / filename
@@ -221,6 +224,25 @@ def _copy_pcobra_runtime(destination_root: Path) -> tuple[Path, ...]:
             _copy_path(source, destination)
             copied.append(destination)
     return tuple(copied)
+
+
+def _create_runtime_source_layout(destination_root: Path) -> Path | None:
+    """Crea la ruta ``src/pcobra`` esperada por contratos de arranque.
+
+    Algunos contratos internos validan rutas históricas ``src/pcobra/...`` en
+    tiempo de importación. En el árbol de PyInstaller el paquete vive bajo
+    ``runtime/pcobra``; por eso se crea una réplica mínima y filtrada solo de
+    las bibliotecas canónicas consultadas por esos contratos.
+    """
+
+    source_layout = destination_root.parent.parent / "src" / "pcobra"
+    copied = False
+    for name in ("corelibs", "standard_library"):
+        source = destination_root / name
+        if source.exists():
+            _copy_path(source, source_layout / name)
+            copied = True
+    return source_layout if copied else None
 
 
 def _copy_hub_packages(
@@ -318,10 +340,17 @@ def _pyinstaller_entrypoint_code(source_entrypoint: Path | None, build_dir: Path
 
 
 _RUNTIME_COBRA_SUBPACKAGES = (
+    # Importados por pcobra.__init__ y por las rutas de resolución/transpilación
+    # usadas por `pcobra.cobra.cli.cli ejecutar`.
+    "architecture",
+    "backends",
     "bindings",
+    "build",
     "cli",
+    "config",
     "core",
     "imports",
+    "macro",
     "semantico",
     "stdlib_contract",
     "transpilers",
@@ -344,4 +373,4 @@ _IGNORED_NAMES = {
     "tests",
     "venv",
 }
-_IGNORED_SUFFIXES = {".pyc", ".pyo"}
+_IGNORED_SUFFIXES = {".md", ".pyc", ".pyo"}
