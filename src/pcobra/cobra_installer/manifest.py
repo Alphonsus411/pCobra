@@ -116,7 +116,7 @@ def create_manifest(
 
     output_dir.mkdir(parents=True, exist_ok=True)
     path = output_dir / BUILD_MANIFEST_NAME
-    executable_path = _default_executable_path(output_dir, name, options)
+    executable_path = expected_artifact_path(output_dir, name, options)
     project = CobraProject(
         project_root=options.project_root,
         entrypoint=entrypoint,
@@ -196,9 +196,8 @@ def _sha256_path(path: Path) -> str:
     return digest.hexdigest()
 
 
-def _default_executable_path(
-    output_dir: Path, name: str, options: BuildOptions
-) -> Path:
+def expected_artifact_path(output_dir: Path, name: str, options: BuildOptions) -> Path:
+    """Devuelve la ruta del artefacto final esperada para el modo de build."""
     suffix = ".exe" if _enum_value(options.target) == TargetOS.WINDOWS.value else ""
     executable = f"{name}{suffix}"
     if BuildMode.from_value(options.mode) is BuildMode.ONEDIR:
@@ -318,5 +317,6 @@ __all__ = [
     "BuildManifest",
     "DependencyInfo",
     "create_manifest",
+    "expected_artifact_path",
     "write_manifest_json",
 ]

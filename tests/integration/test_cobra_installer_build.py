@@ -3,7 +3,9 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from pcobra.cobra_installer import BuildOptions, build_project
+import pytest
+
+from pcobra.cobra_installer import BuildMode, BuildOptions, build_project
 from pcobra.cobra_installer.pyinstaller_runner import PyInstallerRunResult
 
 
@@ -21,8 +23,27 @@ def _create_minimal_cobra_project(root: Path) -> tuple[Path, Path]:
     return entrypoint, manifest
 
 
-def test_installer_build_transpila_y_genera_dist_manifest_sin_pyinstaller_real(
-    tmp_path: Path, monkeypatch
+@pytest.mark.parametrize(
+    ("mode", "expected_artifact", "spec_assertions"),
+    (
+        (
+            BuildMode.ONEDIR,
+            Path("dist/main/main"),
+            ("coll = COLLECT(", "exclude_binaries=True", "    a.binaries,"),
+        ),
+        (
+            BuildMode.ONEFILE,
+            Path("dist/main"),
+            ("    a.binaries,", "    a.zipfiles,", "    a.datas,"),
+        ),
+    ),
+)
+def test_installer_build_parametriza_modo_y_genera_manifest_sin_pyinstaller_real(
+    tmp_path: Path,
+    monkeypatch,
+    mode: BuildMode,
+    expected_artifact: Path,
+    spec_assertions: tuple[str, ...],
 ) -> None:
     import pcobra.cobra_installer.runtime_builder as runtime_builder
 
@@ -38,6 +59,9 @@ def test_installer_build_transpila_y_genera_dist_manifest_sin_pyinstaller_real(
 
     def fake_run_pyinstaller(spec_path, options, logger):
         pyinstaller_calls.append(Path(spec_path))
+        artifact = tmp_path / expected_artifact
+        artifact.parent.mkdir(parents=True, exist_ok=True)
+        artifact.write_text("binario mock", encoding="utf-8")
         logger.info("PyInstaller mockeado: no se genera ejecutable real")
         return PyInstallerRunResult(
             success=True,
@@ -51,7 +75,7 @@ def test_installer_build_transpila_y_genera_dist_manifest_sin_pyinstaller_real(
 
     result = build_project(
         tmp_path,
-        BuildOptions(project_root=tmp_path, include_dependencies=False),
+        BuildOptions(project_root=tmp_path, include_dependencies=False, mode=mode),
     )
 
     dist_dir = tmp_path / "dist"
@@ -63,9 +87,21 @@ def test_installer_build_transpila_y_genera_dist_manifest_sin_pyinstaller_real(
     assert dist_dir.is_dir()
     assert manifest_path.is_file()
     assert transpile_calls == [(entrypoint, tmp_path / "build")]
-    assert pyinstaller_calls == [dist_dir / "main.spec"]
+    spec_path = dist_dir / "main.spec"
+    spec_text = spec_path.read_text(encoding="utf-8")
+
+    assert pyinstaller_calls == [spec_path]
     assert result.metadata["manifest"] == str(manifest_path)
+    assert result.metadata["spec"] == str(spec_path)
     assert result.pyinstaller_version == "6.mock"
+    assert result.mode is mode
+    assert result.artifact_path == tmp_path / expected_artifact
     assert manifest_payload["project"] == "demo-build"
     assert manifest_payload["backend"] == "python"
-    assert manifest_payload["executable_path"] == str(dist_dir / "main" / "main")
+    assert manifest_payload["mode"] == mode.value
+    assert manifest_payload["build_mode"] == mode.value
+    assert manifest_payload["executable_path"] == str(tmp_path / expected_artifact)
+    for assertion in spec_assertions:
+        assert assertion in spec_text
+    if mode is BuildMode.ONEFILE:
+        assert "coll = COLLECT(" not in spec_text
