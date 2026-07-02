@@ -45,7 +45,9 @@ def test_repl_v2_parsea_comando_publico_y_flags_soportadas():
     command.register_subparser(subparsers)
 
     parser = subparsers.choices[command.name]
-    parsed = parser.parse_args(["--sandbox", "--sandbox-docker", "python", "--memory-limit", "256"])
+    parsed = parser.parse_args(
+        ["--sandbox", "--sandbox-docker", "python", "--memory-limit", "256"]
+    )
 
     assert parsed.cmd is command
     assert parsed.sandbox is True
@@ -154,7 +156,7 @@ def test_build_v2_muestra_reason_solo_en_debug(monkeypatch):
     assert any("Resolución de backend (debug):" in message for message in messages)
 
 
-def test_build_v2_help_no_expone_flags_backend():
+def test_build_v2_help_expone_solo_alias_installer_y_no_flags_backend_legacy():
     subparsers = _build_subparsers()
     command = BuildCommandV2()
     command.register_subparser(subparsers)
@@ -163,11 +165,11 @@ def test_build_v2_help_no_expone_flags_backend():
 
     assert "--tipo" not in help_text
     assert "--backend" not in help_text
-    assert "--target" not in help_text
+    assert "--installer" in help_text
     assert "--tipos" not in help_text
 
 
-def test_build_v2_parser_publico_registra_solo_file_posicional():
+def test_build_v2_parser_publico_registra_file_y_alias_installer():
     subparsers = _build_subparsers()
     command = BuildCommandV2()
     command.register_subparser(subparsers)
@@ -179,10 +181,16 @@ def test_build_v2_parser_publico_registra_solo_file_posicional():
         if not any(option in ("-h", "--help") for option in action.option_strings)
     ]
 
-    assert [(action.dest, tuple(action.option_strings)) for action in public_actions] == [
-        ("file", ()),
+    assert ("file", ()) in [
+        (action.dest, tuple(action.option_strings)) for action in public_actions
+    ]
+    assert ("installer", ("--installer",)) in [
+        (action.dest, tuple(action.option_strings)) for action in public_actions
     ]
     assert parser.parse_args(["programa.co"]).file == "programa.co"
+    alias_args = parser.parse_args(["--installer", "."])
+    assert alias_args.installer is True
+    assert alias_args.file == "."
 
     with pytest.raises(SystemExit):
         parser.parse_args(["programa.co", "--target", "python"])
@@ -203,9 +211,14 @@ def test_run_v2_valida_seguridad_por_ruta_binding(monkeypatch):
         lambda _file, _hints: type("R", (), {"reason_for": lambda self, debug: "ok"})(),
     )
 
-
     status = command.run(
-        argparse.Namespace(file="programa.co", debug=False, sandbox=False, container="rust", modo="mixto")
+        argparse.Namespace(
+            file="programa.co",
+            debug=False,
+            sandbox=False,
+            container="rust",
+            modo="mixto",
+        )
     )
 
     assert status == 0
@@ -221,7 +234,8 @@ def test_test_v2_valida_seguridad_por_ruta_binding(monkeypatch):
     monkeypatch.setattr(
         command._runtime_manager,
         "validate_command_runtime",
-        lambda language, **kwargs: calls.append((language, kwargs)) or ("1.0", object(), object()),
+        lambda language, **kwargs: calls.append((language, kwargs))
+        or ("1.0", object(), object()),
     )
     monkeypatch.setattr(
         "cobra.cli.commands_v2.test_cmd.backend_pipeline.resolve_backend",
@@ -230,12 +244,15 @@ def test_test_v2_valida_seguridad_por_ruta_binding(monkeypatch):
     monkeypatch.setattr(command._legacy, "run", lambda _args: 0)
 
     status = command.run(
-        argparse.Namespace(file="programa.co", debug=False, langs=["python", "javascript", "rust"], modo="mixto")
+        argparse.Namespace(
+            file="programa.co",
+            debug=False,
+            langs=["python", "javascript", "rust"],
+            modo="mixto",
+        )
     )
 
     assert status == 0
     assert calls[0][0] == "python" and calls[0][1]["sandbox"] is True
     assert calls[1][0] == "javascript" and calls[1][1]["containerized"] is True
     assert calls[2][0] == "rust" and calls[2][1]["containerized"] is True
-
-

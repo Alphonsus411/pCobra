@@ -32,35 +32,7 @@ class InstallerCommandV2(BaseCommand):
             "build",
             help="Construye un artefacto con PyInstaller",
         )
-        build_parser.add_argument(
-            "project_path",
-            nargs="?",
-            default=".",
-            help="Ruta del proyecto Cobra a empaquetar",
-        )
-        build_parser.add_argument(
-            "--target", choices=("windows", "linux", "macos"), required=True
-        )
-        build_parser.add_argument(
-            "--mode", choices=("onefile", "onedir"), default="onedir"
-        )
-        build_parser.add_argument("--name", dest="name")
-        build_parser.add_argument("--icon", dest="icon", type=Path)
-        build_parser.add_argument(
-            "--builder",
-            choices=("local", "docker", "vm", "ci", "remote"),
-            default="local",
-        )
-        build_parser.add_argument(
-            "--install-pyinstaller",
-            action="store_true",
-            help="Permite instalar PyInstaller automáticamente si no está disponible",
-        )
-        build_parser.add_argument(
-            "--no-open-dist",
-            action="store_true",
-            help="No abre la carpeta dist al terminar (comportamiento por defecto en CLI)",
-        )
+        register_installer_build_arguments(build_parser)
         build_parser.set_defaults(cmd=self)
         return parser
 
@@ -69,30 +41,70 @@ class InstallerCommandV2(BaseCommand):
             raise CobraInstallerError(
                 "Acción de installer no soportada. Usa: cobra installer build ."
             )
+        return run_installer_build(args)
 
-        options = BuildOptions(
-            project_root=args.project_path,
-            target=args.target,
-            mode=args.mode,
-            name=args.name,
-            icon=args.icon,
-            builder=args.builder,
-            install_pyinstaller=bool(args.install_pyinstaller),
-            log_callback=print,
+
+def register_installer_build_arguments(
+    parser: argparse.ArgumentParser, *, include_project_path: bool = True
+) -> None:
+    """Registra las opciones canónicas de ``installer build`` en un parser."""
+
+    if include_project_path:
+        parser.add_argument(
+            "project_path",
+            nargs="?",
+            default=".",
+            help="Ruta del proyecto Cobra a empaquetar",
         )
-        try:
-            with warnings.catch_warnings(record=True) as caught:
-                warnings.simplefilter("always", RuntimeWarning)
-                result = cobra_installer.build_project(args.project_path, options)
-            for warning in caught:
-                print(f"Aviso: {_friendly_installer_error(str(warning.message))}")
-        except CobraInstallerError as exc:
-            print(f"Error: {_friendly_installer_error(str(exc))}")
-            return 1
+    parser.add_argument(
+        "--target", choices=("current", "windows", "linux", "macos"), default="current"
+    )
+    parser.add_argument("--mode", choices=("onefile", "onedir"), default="onedir")
+    parser.add_argument("--name", dest="name")
+    parser.add_argument("--icon", dest="icon", type=Path)
+    parser.add_argument(
+        "--builder",
+        choices=("local", "docker", "vm", "ci", "remote"),
+        default="local",
+    )
+    parser.add_argument(
+        "--install-pyinstaller",
+        action="store_true",
+        help="Permite instalar PyInstaller automáticamente si no está disponible",
+    )
+    parser.add_argument(
+        "--no-open-dist",
+        action="store_true",
+        help="No abre la carpeta dist al terminar (comportamiento por defecto en CLI)",
+    )
 
-        artifact = result.artifact_path or result.output_dir or result.dist_dir
-        print(f"Build completado correctamente: {artifact}")
-        return 0
+
+def run_installer_build(args: Any) -> int:
+    """Ejecuta la construcción de instaladores reutilizada por aliases CLI."""
+
+    options = BuildOptions(
+        project_root=args.project_path,
+        target=args.target,
+        mode=args.mode,
+        name=args.name,
+        icon=args.icon,
+        builder=args.builder,
+        install_pyinstaller=bool(args.install_pyinstaller),
+        log_callback=print,
+    )
+    try:
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always", RuntimeWarning)
+            result = cobra_installer.build_project(args.project_path, options)
+        for warning in caught:
+            print(f"Aviso: {_friendly_installer_error(str(warning.message))}")
+    except CobraInstallerError as exc:
+        print(f"Error: {_friendly_installer_error(str(exc))}")
+        return 1
+
+    artifact = result.artifact_path or result.output_dir or result.dist_dir
+    print(f"Build completado correctamente: {artifact}")
+    return 0
 
 
 def _friendly_installer_error(message: str) -> str:
@@ -106,7 +118,11 @@ def _friendly_installer_error(message: str) -> str:
         or "no se encontró entrypoint" in lowered
     ):
         return f"Proyecto inválido: {text}"
-    if "no existe" in lowered or "no es un directorio" in lowered or "no es una carpeta" in lowered:
+    if (
+        "no existe" in lowered
+        or "no es un directorio" in lowered
+        or "no es una carpeta" in lowered
+    ):
         return f"Dependencia o ruta inexistente: {text}"
     if "hash" in lowered or "sha256" in lowered or "checksum" in lowered:
         return f"Hash incorrecto: {text}"
