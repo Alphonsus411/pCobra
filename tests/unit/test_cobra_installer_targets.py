@@ -39,16 +39,56 @@ def test_normalize_target_acepta_aliases(raw, expected):
     assert normalize_target(raw) is expected
 
 
-def test_expected_artifact_for_declara_formatos_finales():
-    assert expected_artifact_for("windows").extension == ".exe"
-    assert expected_artifact_for("linux").description == "binario ELF"
-    assert expected_artifact_for("macos").bundle_extension == ".app"
+@pytest.mark.parametrize(
+    ("target", "expected", "attribute", "value"),
+    [
+        ("windows", TargetOS.WINDOWS, "extension", ".exe"),
+        ("linux", TargetOS.LINUX, "description", "binario ELF"),
+        ("macos", TargetOS.MACOS, "bundle_extension", ".app"),
+    ],
+)
+def test_targets_principales_declaran_artefacto_esperado(
+    target, expected, attribute, value
+):
+    assert normalize_target(target) is expected
+    artifact = expected_artifact_for(target)
+    assert getattr(artifact, attribute) == value
 
 
-def test_validate_target_advierte_en_cross_compilation(monkeypatch):
-    monkeypatch.setattr(platform, "system", lambda: "Linux")
+@pytest.mark.parametrize(
+    ("host_system", "target", "expected"),
+    [
+        ("Windows", "windows", TargetOS.WINDOWS),
+        ("Linux", "linux", TargetOS.LINUX),
+        ("Darwin", "macos", TargetOS.MACOS),
+    ],
+)
+def test_validate_target_no_advierte_si_target_es_igual_al_host(
+    monkeypatch, host_system, target, expected
+):
+    monkeypatch.setattr(platform, "system", lambda: host_system)
+    with warnings.catch_warnings(record=True) as captured:
+        warnings.simplefilter("always")
+        assert validate_target(target) is expected
+    assert captured == []
+
+
+@pytest.mark.parametrize(
+    ("host_system", "target", "expected"),
+    [
+        ("Linux", "windows", TargetOS.WINDOWS),
+        ("Windows", "linux", TargetOS.LINUX),
+        ("Linux", "macos", TargetOS.MACOS),
+    ],
+)
+def test_validate_target_advierte_si_target_es_diferente_al_host(
+    monkeypatch, host_system, target, expected
+):
+    monkeypatch.setattr(platform, "system", lambda: host_system)
+
     with pytest.warns(RuntimeWarning) as captured:
-        assert validate_target("windows") is TargetOS.WINDOWS
+        assert validate_target(target) is expected
+
     message = str(captured[0].message)
     assert "PyInstaller no soporta cross-compilation de forma nativa" in message
     assert "Docker" in message
@@ -57,12 +97,14 @@ def test_validate_target_advierte_en_cross_compilation(monkeypatch):
     assert "builder remoto" in message
 
 
-def test_validate_target_no_advierte_en_host_actual(monkeypatch):
-    monkeypatch.setattr(platform, "system", lambda: "Linux")
-    with warnings.catch_warnings(record=True) as captured:
-        warnings.simplefilter("always")
-        assert validate_target("linux") is TargetOS.LINUX
-    assert captured == []
+@pytest.mark.parametrize("invalid_target", ["freebsd", "", "windows-arm64"])
+def test_normalize_target_rechaza_target_invalido(invalid_target):
+    with pytest.raises(ValueError) as excinfo:
+        normalize_target(invalid_target)
+
+    message = str(excinfo.value)
+    assert f"Target no soportado: {invalid_target!r}" in message
+    assert "windows, linux, macos, current" in message
 
 
 def test_builder_config_prepara_opciones_futuras():
