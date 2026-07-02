@@ -5,7 +5,7 @@ from __future__ import annotations
 import shutil
 from dataclasses import dataclass, field, replace
 from pathlib import Path
-from typing import Mapping, Sequence
+from typing import Callable, Mapping, Sequence
 
 import pcobra
 
@@ -21,8 +21,10 @@ from .project import (
     CobraProject,
     discover_project,
 )
+from .pyinstaller_runner import run_pyinstaller
 from .spec_writer import SpecBuildContext, write_spec
-from .validator import discover_entrypoint, validate_build_options
+from .transpile import TranspileResult, transpile_project
+from .validator import validate_build_options, validate_project
 
 __all__ = [
     "RuntimePreparationResult",
@@ -161,35 +163,47 @@ def prepare_runtime(
 
 
 def build_project(
-    options: BuildOptions | None = None, **overrides: object
+    project_path: Path | str | BuildOptions | None = None,
+    options: BuildOptions | None = None,
+    **overrides: object,
 ) -> BuildResult:
-    """Construye un proyecto Cobra usando una API programática estable.
+    """Construye un proyecto Cobra completo y devuelve la ruta de ``dist``.
 
-    La implementación inicial prepara directorios, manifiesto y especificación
-    mínima para que PyInstaller/CLI puedan integrarse sin acoplar lógica al IDLE.
+    El flujo orquesta las piezas públicas del instalador: descubre el proyecto,
+    valida su estructura, lee ``cobra.toml``, lee o genera ``cobra.lock`` al
+    resolver dependencias CobraHub, transpila con el backend Python oficial,
+    ensambla runtime, genera ``.spec``, ejecuta PyInstaller y escribe el
+    manifiesto final. El progreso se emite en tiempo real mediante
+    ``BuildOptions.log_callback`` para que CLI e IDLE puedan mostrarlo sin
+    acoplarse a esta implementación.
+
+    Por compatibilidad, el primer argumento puede seguir siendo un
+    ``BuildOptions``. La forma recomendada es
+    ``build_project(project_path, options)``.
     """
 
-    base = options or BuildOptions()
+    if isinstance(project_path, BuildOptions) and options is None:
+        base = project_path
+    else:
+        base = options or BuildOptions(project_root=project_path or Path.cwd())
+        if project_path is not None:
+            base = replace(base, project_root=project_path)
     if overrides:
         base = replace(base, **overrides)
     normalized = validate_build_options(base)
-    entrypoint = normalized.entrypoint or discover_entrypoint(
-        Path(normalized.project_root)
-    )
-    if entrypoint is None:
-        raise CobraInstallerError(
-            f"No se encontró un punto de entrada Cobra en {normalized.project_root}"
-        )
+    logger = _CallbackLogger(normalized.log_callback)
+    logs: list[str] = []
 
-    output_dir = Path(normalized.output_dir or Path(normalized.project_root) / "dist")
-    output_dir.mkdir(parents=True, exist_ok=True)
-    name = normalized.name or entrypoint.stem
-    manifest_path = create_manifest(normalized, entrypoint, output_dir, name)
+    def step(message: str) -> None:
+        logs.append(message)
+        logger.info(message)
+
+    step("1/12 Descubriendo proyecto Cobra...")
     project = discover_project(Path(normalized.project_root))
-    if project.entrypoint != entrypoint:
+    if normalized.entrypoint and project.entrypoint != normalized.entrypoint:
         project = CobraProject(
             project_root=project.project_root,
-            entrypoint=entrypoint,
+            entrypoint=normalized.entrypoint,
             cobra_toml=project.cobra_toml,
             cobra_lock=project.cobra_lock,
             assets=project.assets,
@@ -198,13 +212,50 @@ def build_project(
             documentation=project.documentation,
             config_dirs=project.config_dirs,
             auxiliary_resources=project.auxiliary_resources,
-        )
-    runtime = prepare_runtime(
-        Path(normalized.temp_dir or Path(normalized.project_root) / "build"),
-        project,
-        None,
-        normalized,
-    )
+        ).normalized()
+
+    step("2/12 Validando estructura del proyecto...")
+    validation = validate_project(project)
+    if not validation.is_valid:
+        detail = "; ".join(error.message for error in validation.errors)
+        raise CobraInstallerError(f"La estructura del proyecto no es válida: {detail}")
+
+    step("3/12 Leyendo cobra.toml...")
+    config = dict(project.config)
+    normalized = replace(normalized, config={**config, **dict(normalized.config)})
+
+    step("4/12 Leyendo o generando cobra.lock...")
+    step("5/12 Detectando imports Cobra no declarados...")
+    step("6/12 Resolviendo dependencias CobraHub...")
+    dependencies = None
+    if normalized.include_dependencies:
+        dependencies = resolve_project_dependencies(Path(project.project_root))
+        if dependencies.lockfile_created:
+            project = replace(
+                project, cobra_lock=dependencies.lockfile_path
+            ).normalized()
+            step(f"cobra.lock generado en {dependencies.lockfile_path}.")
+
+    build_dir = Path(normalized.temp_dir or Path(normalized.project_root) / "build")
+    if normalized.clean and build_dir.exists():
+        shutil.rmtree(build_dir)
+
+    step("7/12 Preparando carpeta temporal...")
+    build_dir.mkdir(parents=True, exist_ok=True)
+
+    step("8/12 Transpilando con el backend Python oficial...")
+    transpiled = transpile_project(project, build_dir, normalized)
+    logs.extend(transpiled.logs)
+    _emit_many(logger, transpiled.logs)
+
+    step("9/12 Ensamblando runtime Cobra...")
+    runtime = _runtime_from_transpile(transpiled)
+
+    output_dir = Path(normalized.output_dir or Path(normalized.project_root) / "dist")
+    output_dir.mkdir(parents=True, exist_ok=True)
+    name = normalized.name or Path(project.entrypoint or transpiled.generated_code).stem
+
+    step("10/12 Generando especificación .spec de PyInstaller...")
     spec_path = write_spec(
         SpecBuildContext(
             options=normalized,
@@ -213,9 +264,19 @@ def build_project(
             executable_name=name,
         )
     )
+
+    step("11/12 Ejecutando PyInstaller...")
+    pyinstaller = run_pyinstaller(spec_path, normalized, logger)
+
+    step("12/12 Generando manifiesto de build...")
+    manifest_path = create_manifest(
+        normalized, Path(project.entrypoint), output_dir, name
+    )
+    logs.append(f"Manifiesto generado en {manifest_path}.")
+
     return BuildResult(
         success=True,
-        artifact_path=spec_path,
+        artifact_path=output_dir,
         project_root=Path(normalized.project_root),
         output_dir=output_dir,
         target=normalized.target,
@@ -224,14 +285,18 @@ def build_project(
         builder_config=normalized.builder_config,
         mode=normalized.mode,
         executable_name=name,
-        temp_dir=Path(normalized.temp_dir) if normalized.temp_dir is not None else None,
+        temp_dir=build_dir,
         dist_dir=output_dir,
+        pyinstaller_version=pyinstaller.version,
         metadata={
-            "entrypoint": str(entrypoint),
+            "entrypoint": str(project.entrypoint),
+            "generated_code": str(transpiled.generated_code),
             "manifest": str(manifest_path),
+            "spec": str(spec_path),
             "name": name,
+            "pyinstaller_command": list(pyinstaller.command),
         },
-        logs=("Proyecto preparado para empaquetado.",),
+        logs=tuple(logs),
     )
 
 
@@ -242,6 +307,47 @@ def package_current_project(
 
     options = BuildOptions(project_root=project_root or Path.cwd(), **kwargs)
     return build_project(options)
+
+
+class _CallbackLogger:
+    """Logger mínimo compatible con callbacks y con pyinstaller_runner."""
+
+    def __init__(self, callback: Callable[[str], None] | None = None) -> None:
+        self._callback = callback
+
+    def info(self, message: str) -> None:
+        self._emit(message)
+
+    def error(self, message: str) -> None:
+        self._emit(message)
+
+    def _emit(self, message: str) -> None:
+        if self._callback is not None:
+            self._callback(message)
+
+
+def _emit_many(logger: _CallbackLogger, messages: Sequence[str]) -> None:
+    for message in messages:
+        logger.info(message)
+
+
+def _runtime_from_transpile(transpile: TranspileResult) -> RuntimePreparationResult:
+    return RuntimePreparationResult(
+        build_dir=transpile.build_dir,
+        runtime_dir=transpile.runtime_dir,
+        corelibs_dir=transpile.corelibs_dir,
+        standard_library_dir=transpile.runtime_dir / "standard_library",
+        cobra_dir=transpile.runtime_dir / "cobra",
+        packages_dir=transpile.packages_dir,
+        assets_dir=transpile.assets_dir,
+        config_dir=transpile.config_dir,
+        documentation_dir=transpile.documentation_dir,
+        auxiliary_dir=transpile.auxiliary_dir,
+        entrypoint=transpile.entrypoint,
+        copied_resources=transpile.copied_resources,
+        dependency_resolution=transpile.dependency_resolution,
+        logs=transpile.logs,
+    )
 
 
 def _copy_pcobra_runtime(destination_root: Path) -> tuple[Path, ...]:

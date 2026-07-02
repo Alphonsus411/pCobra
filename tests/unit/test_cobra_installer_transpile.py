@@ -81,3 +81,49 @@ def test_transpile_project_permite_omitir_resolucion_cobrahub(tmp_path: Path) ->
 
     assert result.generated_code.is_file()
     assert result.dependency_resolution is None
+
+
+def test_build_project_orquesta_flujo_completo_con_callback(
+    tmp_path: Path, monkeypatch
+) -> None:
+    from pcobra.cobra_installer import build_project
+    from pcobra.cobra_installer.pyinstaller_runner import PyInstallerRunResult
+    import pcobra.cobra_installer.runtime_builder as runtime_builder
+
+    project_root = tmp_path / "app"
+    project_root.mkdir()
+    entrypoint = project_root / "main.cobra"
+    entrypoint.write_text("imprimir('hola build')\n", encoding="utf-8")
+    (project_root / "cobra.toml").write_text(
+        '[project]\nname = "demo"\n', encoding="utf-8"
+    )
+
+    calls: list[Path] = []
+
+    def fake_run_pyinstaller(spec_path, options, logger):
+        calls.append(Path(spec_path))
+        logger.info("pyinstaller simulado")
+        return PyInstallerRunResult(
+            success=True,
+            version="6.test",
+            returncode=0,
+            command=("python", "-m", "PyInstaller", str(spec_path)),
+        )
+
+    monkeypatch.setattr(runtime_builder, "run_pyinstaller", fake_run_pyinstaller)
+    progress: list[str] = []
+
+    result = build_project(
+        project_root,
+        BuildOptions(project_root=project_root, log_callback=progress.append),
+    )
+
+    assert result.success is True
+    assert result.artifact_path == project_root / "dist"
+    assert result.dist_dir == project_root / "dist"
+    assert result.pyinstaller_version == "6.test"
+    assert (project_root / "cobra.lock").is_file()
+    assert calls and calls[0].name == "main.spec"
+    assert any("1/12 Descubriendo" in item for item in progress)
+    assert "pyinstaller simulado" in progress
+    assert (project_root / "dist" / "cobra_build_manifest.json").is_file()
