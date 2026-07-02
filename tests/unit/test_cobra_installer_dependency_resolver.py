@@ -354,3 +354,47 @@ def test_dependencia_declarada_inexistente_en_cobrahub_falla_controlado(tmp_path
     assert "9.9.9" in message
     assert "CobraHub" in message
     assert repo.downloads == [("dep-fantasma", "9.9.9")]
+
+
+def test_detecta_conflicto_entre_dependencias_transitivas_y_explica_cadenas(tmp_path):
+    dep_a = _package(
+        tmp_path,
+        name="dep-a",
+        version="1.0.0",
+        dependencies={"compartida": "1.0.0"},
+    )
+    dep_b = _package(
+        tmp_path,
+        name="dep-b",
+        version="1.0.0",
+        dependencies={"compartida": "2.0.0"},
+    )
+    cache = tmp_path / "cache"
+    cache.mkdir()
+    (cache / "dep-a-1.0.0.co").write_bytes(dep_a.read_bytes())
+    (cache / "dep-b-1.0.0.co").write_bytes(dep_b.read_bytes())
+    (tmp_path / "cobra.toml").write_text(
+        '[dependencies]\ndep-a = "1.0.0"\ndep-b = "1.0.0"\n',
+        encoding="utf-8",
+    )
+    (tmp_path / "main.cobra").write_text(
+        "usar dep-a.api\nusar dep-b.api\n", encoding="utf-8"
+    )
+
+    with pytest.raises(CobraDependencyError) as exc_info:
+        resolve_project_dependencies(
+            tmp_path, resolver=CobraHubResolver(cache_dir=cache)
+        )
+
+    message = str(exc_info.value)
+    assert "Conflicto de versiones para compartida" in message
+    assert "versiones incompatibles 1.0.0 y 2.0.0" in message
+    assert (
+        "Cadena existente: proyecto -> dep-a==1.0.0 -> compartida==1.0.0"
+        in message
+    )
+    assert (
+        "Cadena nueva: proyecto -> dep-b==1.0.0 -> compartida==2.0.0"
+        in message
+    )
+    assert not (tmp_path / "cobra.lock").exists()

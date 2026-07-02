@@ -95,7 +95,9 @@ def test_package_current_project_traduce_error_controlado(monkeypatch, tmp_path:
     monkeypatch.setattr(idle_bridge, "build_project", fake_build_project)
 
     with pytest.raises(RuntimeError, match="No se pudo empaquetar"):
-        idle_bridge.package_current_project(tmp_path, {}, error_callback=errors.append)
+        idle_bridge.package_current_project(
+            tmp_path, {}, error_callback=errors.append
+        )
 
     assert errors == [
         "No se pudo empaquetar el proyecto Cobra: no existe main.cobra"
@@ -114,4 +116,33 @@ def test_package_from_idle_es_alias_compatible_con_kwargs(monkeypatch, tmp_path:
     result = idle_bridge.package_from_idle(tmp_path, {"nombre": "demo"}, objetivo="linux")
 
     assert result.dist_dir == tmp_path / "dist"
-    assert captured == [(tmp_path, {"nombre": "demo", "objetivo": "linux"}, None, None)]
+    assert captured == [
+        (tmp_path, {"nombre": "demo", "objetivo": "linux"}, None, None)
+    ]
+
+
+def test_package_current_project_muestra_conflicto_transitivo_comprensible(
+    monkeypatch, tmp_path: Path
+) -> None:
+    errors = []
+
+    def fake_build_project(_project_path, _options):
+        raise CobraInstallerError(
+            "Conflicto de versiones para compartida: se requieren versiones "
+            "incompatibles 1.0.0 y 2.0.0. Cadena existente: proyecto -> "
+            "dep-a==1.0.0 -> compartida==1.0.0. Cadena nueva: proyecto -> "
+            "dep-b==1.0.0 -> compartida==2.0.0."
+        )
+
+    monkeypatch.setattr(idle_bridge, "build_project", fake_build_project)
+
+    with pytest.raises(RuntimeError) as exc_info:
+        idle_bridge.package_current_project(
+            tmp_path, {}, error_callback=errors.append
+        )
+
+    message = str(exc_info.value)
+    assert "No se pudo empaquetar el proyecto Cobra" in message
+    assert "Conflicto de versiones para compartida" in message
+    assert "Cadena existente" in message
+    assert errors == [message]
