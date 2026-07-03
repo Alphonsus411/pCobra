@@ -163,6 +163,7 @@ def test_boton_empaquetar_detecta_proyecto_pide_opciones_y_muestra_progreso(
         "target": "current",
         "mode": "onefile",
         "icon": None,
+        "install_pyinstaller": False,
     }
     assert callable(progress_callback)
     assert (
@@ -181,6 +182,61 @@ def test_boton_empaquetar_detecta_proyecto_pide_opciones_y_muestra_progreso(
         in salida.value
     )
     assert page.launched_urls == [(project / "dist").resolve().as_uri()]
+
+
+def test_idle_pide_confirmacion_antes_de_instalar_pyinstaller(monkeypatch, tmp_path):
+    workspace = tmp_path / "workspace"
+    project = workspace / "proyecto_activo"
+    project.mkdir(parents=True)
+    active_file = project / "programa.cobra"
+    active_file.write_text("imprimir('hola')", encoding="utf-8")
+
+    package_calls = []
+
+    def fake_package_current_project(project_path, ui_options, progress_callback=None):
+        package_calls.append((Path(project_path), dict(ui_options), progress_callback))
+        dist_dir = Path(project_path) / "dist"
+        return SimpleNamespace(dist_dir=dist_dir, artifact_path=dist_dir / "demo")
+
+    monkeypatch.setattr(runtime, "require_flet", lambda: FakeFlet)
+    monkeypatch.setattr(runtime, "resolver_workspace_root_idle", lambda: workspace)
+    monkeypatch.setattr(runtime, "listar_directorio_idle", lambda _root: [])
+    monkeypatch.setattr(threading, "Thread", ImmediateThread)
+    monkeypatch.setattr(
+        idle_bridge, "package_current_project", fake_package_current_project
+    )
+
+    page = FakePage()
+    idle.main(page)
+    root = SimpleNamespace(controls=page.controls)
+    ruta_input = next(
+        control
+        for control in walk_controls(root)
+        if getattr(control, "label", None) == "Ruta"
+    )
+    ruta_input.value = str(active_file)
+
+    find_button(root, "Empaquetar").on_click(None)
+    opciones_dialog = page.dialog
+    instalar_switch = next(
+        control
+        for control in walk_controls(opciones_dialog)
+        if getattr(control, "label", None) == "Instalar PyInstaller si falta"
+    )
+    instalar_switch.value = True
+
+    find_button(opciones_dialog, "Empaquetar").on_click(None)
+
+    assert package_calls == []
+    confirm_dialog = page.dialog
+    assert confirm_dialog is not opciones_dialog
+    assert confirm_dialog.open is True
+    assert "Confirmar instalación" in confirm_dialog.title.value
+
+    find_button(confirm_dialog, "Instalar PyInstaller y empaquetar").on_click(None)
+
+    assert len(package_calls) == 1
+    assert package_calls[0][1]["install_pyinstaller"] is True
 
 
 def test_idle_no_importa_modulos_internos_de_cobra_installer():

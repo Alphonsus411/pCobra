@@ -898,6 +898,11 @@ def main(page: "ft.Page"):
         icono_input = runtime.flet_text_field(
             ft, label="Icono opcional (.ico/.icns/.png)", value=""
         )
+        instalar_pyinstaller_switch = runtime.flet_switch(
+            ft,
+            label="Instalar PyInstaller si falta",
+            value=False,
+        )
         progreso = runtime.flet_text(
             ft, value=f"Proyecto detectado: {proyecto_detectado}"
         )
@@ -906,7 +911,15 @@ def main(page: "ft.Page"):
             dialog.open = False
             page.update()
 
-        def ejecutar_empaquetado(_ev=None) -> None:
+        def ejecutar_empaquetado(
+            _ev=None, *, instalacion_confirmada: bool = False
+        ) -> None:
+            install_pyinstaller = bool(
+                getattr(instalar_pyinstaller_switch, "value", False)
+            )
+            if install_pyinstaller and not instalacion_confirmada:
+                pedir_confirmacion_instalacion_pyinstaller()
+                return
             nombre = (nombre_input.value or "").strip() or proyecto_detectado.name
             icono = (icono_input.value or "").strip() or None
             target = selector_so.value or "current"
@@ -933,6 +946,7 @@ def main(page: "ft.Page"):
                             "target": target,
                             "mode": mode,
                             "icon": icono,
+                            "install_pyinstaller": install_pyinstaller,
                         },
                         progress_callback=log_callback,
                     )
@@ -953,6 +967,39 @@ def main(page: "ft.Page"):
 
             threading.Thread(target=worker, daemon=True).start()
 
+        def pedir_confirmacion_instalacion_pyinstaller() -> None:
+            confirm_dialog = dialog_factory(
+                modal=True,
+                title=runtime.flet_text(ft, value="Confirmar instalación"),
+                content=runtime.flet_text(
+                    ft,
+                    value=(
+                        "PyInstaller no se instalará sin confirmación. "
+                        "Si falta, Cobra ejecutará pip para instalarlo en este entorno."
+                    ),
+                ),
+                actions=[
+                    runtime.flet_text_button(
+                        ft,
+                        "Cancelar",
+                        on_click=lambda _ev=None: (
+                            setattr(page.dialog, "open", False),
+                            page.update(),
+                        ),
+                    ),
+                    runtime.flet_elevated_button(
+                        ft,
+                        "Instalar PyInstaller y empaquetar",
+                        on_click=lambda _ev=None: ejecutar_empaquetado(
+                            _ev, instalacion_confirmada=True
+                        ),
+                    ),
+                ],
+            )
+            page.dialog = confirm_dialog
+            confirm_dialog.open = True
+            page.update()
+
         dialog_factory = getattr(ft, "AlertDialog", None)
         if dialog_factory is None:
             salida.value = (
@@ -972,6 +1019,7 @@ def main(page: "ft.Page"):
                     selector_modo,
                     nombre_input,
                     icono_input,
+                    instalar_pyinstaller_switch,
                 ],
                 tight=True,
             ),
