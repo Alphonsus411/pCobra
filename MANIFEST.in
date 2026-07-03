@@ -24,5 +24,8 @@ recursive-include src/pcobra *.md
 recursive-include src/pcobra *.txt
 recursive-include src/pcobra *.html
 
+# Recursos no Python específicos de cobra_installer necesarios para runtime/spec/templates.
+recursive-include src/pcobra/cobra_installer *.toml *.yaml *.yml *.json *.ini *.cfg *.md *.txt *.html *.j2 *.template
+
 recursive-include notebooks *
 recursive-include docs/frontend *
