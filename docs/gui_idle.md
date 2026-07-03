@@ -71,3 +71,9 @@ Al seleccionar un archivo visible, el IDLE llama a `runtime.cargar_archivo_desde
 
 - **Flet:** Flet es una dependencia opcional de la GUI. Importar módulos CLI no debe requerir Flet; abrir el IDLE sí requiere instalarlo. Si Flet no está disponible, la aplicación CLI debe poder seguir funcionando y el intento de iniciar la GUI debe informar la dependencia faltante en lugar de romper flujos no gráficos.
 - **Motor IA de sugerencias:** las sugerencias dependen del motor IA declarado por el proyecto (`agix`). Si la dependencia opcional no está disponible, el botón de sugerencias aparece deshabilitado o muestra el motivo por el que no se pueden generar recomendaciones. La ejecución, los tokens, el AST, la transpilación y las acciones de archivo no deben depender de ese motor IA.
+
+## Empaquetar proyectos desde el IDLE
+
+El botón **Empaquetar** construye un artefacto instalable del proyecto activo usando la misma capa que `cobra installer build .`. El usuario debe abrir o crear un proyecto, pulsar **Empaquetar**, seleccionar `onedir` o `onefile` y confirmar. `onedir` genera una carpeta distribuible; `onefile` genera un ejecutable único con extracción temporal al arrancar.
+
+Si no hay proyecto o ruta activa, el IDLE muestra un aviso antes de invocar el build. Para detalles de CLI, cross-compilation, Docker/VM/CI, manifiesto `cobra_build_manifest.json` y solución de errores, consulta [`docs/cobra_installer.md`](cobra_installer.md).

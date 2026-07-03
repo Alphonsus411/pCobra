@@ -159,6 +159,7 @@ cobra hub cache validar
 - Arquitectura del compilador
 - Architecture Overview
 - [Especificación del IDLE gráfico](docs/gui_idle_especificacion.md)
+- [Cobra Installer y empaquetado de ejecutables](docs/cobra_installer.md)
 - Ecosistema unificado Cobra
 - Anexos internos (NO PÚBLICO)
 - Instalación
@@ -519,21 +520,21 @@ más reciente y ejecútalo directamente.
 Crear un tag `vX.Y.Z` en GitHub desencadena la publicación automática del
 paquete en PyPI y la actualización de la imagen Docker.
 
-Si prefieres generar el ejecutable manualmente ejecuta desde la raíz del
-repositorio en tu sistema (Windows, macOS o Linux):
+Si prefieres generar un ejecutable de un proyecto Cobra manualmente, el flujo recomendado es Cobra Installer desde la raíz del proyecto:
 
 ```bash
-pip install pyinstaller
-cobra empaquetar --output dist
+cobra installer build .
+cobra build --installer .
+cobra installer build . --target windows
+cobra installer build . --target linux
+cobra installer build . --target macos
 ```
-El nombre del binario puede ajustarse con la opción `--name`. También puedes
-usar un archivo `.spec` propio o agregar datos adicionales mediante
-``--spec`` y ``--add-data``:
 
-```bash
-cobra empaquetar --spec build/cobra.spec \
-  --add-data "all-bytes.dat;all-bytes.dat" --output dist
-```
+El botón **Empaquetar** del IDLE gráfico (`cobra gui`) usa la misma capa de `pcobra.cobra_installer`: abre un proyecto, pulsa **Empaquetar**, elige `onedir` u `onefile` y revisa el progreso en el panel de salida. `onedir` genera una carpeta distribuible con ejecutable y recursos; `onefile` genera un único ejecutable que extrae recursos al arrancar. Consulta la guía completa en [`docs/cobra_installer.md`](docs/cobra_installer.md).
+
+PyInstaller no ofrece cross-compilation general entre sistemas operativos: para publicar binarios de Windows, Linux y macOS debes construir en cada sistema objetivo, o usar Docker/VM/CI/builder remoto según corresponda. Cada build genera `dist/cobra_build_manifest.json` con entrypoint, target, modo, versiones, hashes, rutas y recursos incluidos para auditoría.
+
+El comando histórico `cobra empaquetar --output dist` sigue documentado para empaquetar la CLI de Cobra, pero no es el flujo recomendado para empaquetar proyectos de usuario.
 
 ## Crear un ejecutable con PyInstaller
 
@@ -1117,8 +1118,12 @@ cobra hub buscar demo
 cobra hub instalar demo --destino ./vendor/demo
 # Generar documentación HTML y API
 cobra docs
-# Crear un ejecutable independiente
-cobra empaquetar --output dist
+# Crear un ejecutable/instalador de un proyecto Cobra
+cobra installer build .
+cobra build --installer .
+cobra installer build . --target windows
+cobra installer build . --target linux
+cobra installer build . --target macos
 # Perfilar un programa y guardar los resultados
 cobra profile programa.co --output salida.prof
 # O mostrar el perfil directamente en pantalla
