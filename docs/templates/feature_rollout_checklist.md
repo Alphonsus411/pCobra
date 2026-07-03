@@ -53,6 +53,25 @@ Usa esta plantilla para cualquier feature nueva (`<feature_id>`).
   - Documentación:
   - Ejemplo mínimo en `examples/features/<feature_id>/minimal.co`:
 
+
+## Selección de regresión por área
+
+Marca los tests o jobs existentes que se ejecutaron para demostrar que el cambio no rompe cada área. Si un área no aplica al cambio, deja constancia explícita en la columna `Resultado / motivo`.
+
+| Área | Pruebas o jobs existentes recomendados | Resultado / motivo |
+| --- | --- | --- |
+| Lexer | `pytest tests/test_lexer.py tests/test_lexer_parser_contract.py` | |
+| Parser | `pytest tests/test_parser.py tests/test_lexer_parser_contract.py` | |
+| AST | `pytest tests/test_parser.py tests/test_lexer_parser_contract.py tests/performance/test_transpile_time.py` | |
+| Runtime | `pytest tests/cli/test_runtime_imports_contract.py tests/cli/test_repl_script_parity_contract.py tests/cli/test_repl_error_recovery_contract.py` | |
+| Corelibs | `pytest tests/test_usar_public_exports_snapshot.py tests/cli/test_runtime_imports_contract.py` | |
+| Transpiladores | `pytest tests/integration/transpilers/test_official_backends_tier2.py tests/integration/transpilers/test_decoradores_contract.py tests/performance/test_transpile_time.py` | |
+| CobraHub | `pytest tests/cli/test_public_v2_commands_contract.py tests/cli/test_cli_alias_registration.py tests/cli/test_packaging_smoke.py` | |
+| IDLE | `pytest tests/gui/test_app_import.py tests/gui/test_idle_packaging.py tests/gui/test_idle_path_guards.py tests/gui/test_runtime_file_helpers.py tests/gui/test_auto_suggestion_parser_contract.py` | |
+
+- Si se toca un módulo compartido, añadir una prueba específica que confirme que el comportamiento previo sigue funcionando y enlazarla en `Resumen de pruebas añadidas`.
+- No modificar gramática, tokens, nodos AST ni transpiladores salvo que una prueba específica falle y demuestre la necesidad; documentar esa prueba y la justificación en `Resultado de comandos ejecutados`.
+
 ## Validaciones manuales no ejecutadas
 
 - `<validación>`: `<motivo>`
