@@ -178,6 +178,53 @@ Usos recomendados:
 | Build para otro SO no produce binario nativo | Limitación de cross-compilation de PyInstaller. | Construye en el mismo SO mediante Docker Linux, VM, CI o builder remoto. |
 | El ejecutable tarda en arrancar | Modo `onefile` extrae datos temporalmente. | Usa `--mode onedir` para distribución interna o depuración. |
 
+## Checklist de aceptación QA
+
+Este checklist valida que Cobra Installer funciona de extremo a extremo sin exponer detalles internos de PyInstaller al usuario final y sin introducir regresiones en otros subsistemas. Debe ejecutarse antes de cerrar una entrega funcional del empaquetador o de publicar artefactos generados por `cobra installer`.
+
+### Entradas de usuario y puentes
+
+- [ ] `cobra installer build .` construye correctamente un artefacto desde la raíz de un proyecto Cobra válido.
+- [ ] `cobra build --installer .` funciona como alias público y produce el mismo resultado observable que `cobra installer build .`.
+- [ ] El botón **Empaquetar** del IDLE invoca el puente `pcobra.cobra_installer.idle_bridge.package_current_project()` y no llama directamente a PyInstaller ni duplica lógica de manifiesto.
+- [ ] PyInstaller queda oculto para el usuario: los flujos CLI e IDLE hablan de empaquetado Cobra, muestran errores accionables y no requieren que el usuario conozca el `.spec` ni el comando interno de PyInstaller salvo en logs técnicos o metadatos de diagnóstico.
+
+### Proyectos y recursos
+
+- [ ] Un proyecto mínimo con `main.cobra` o `cobra.toml` empaqueta correctamente.
+- [ ] Un proyecto con assets, configuración, documentación o recursos auxiliares empaqueta correctamente y conserva esos recursos en el artefacto final.
+- [ ] Las dependencias CobraHub declaradas se resuelven, se copian al runtime preparado y quedan reflejadas en el manifiesto.
+- [ ] La caché del instalador se usa cuando contiene un paquete CobraHub válido, evitando descargas innecesarias.
+- [ ] El lockfile `cobra.lock` se genera cuando no existe o se valida cuando ya existe.
+- [ ] Un paquete CobraHub con hash incorrecto falla con el código/diagnóstico público de hash incorrecto.
+- [ ] Un conflicto de versiones directo o transitivo falla con el código/diagnóstico público de conflicto de versiones.
+
+### Modos de salida, targets y manifiesto
+
+- [ ] `--mode onefile` genera un artefacto OneFile ejecutable en el sistema operativo objetivo.
+- [ ] `--mode onedir` genera una carpeta OneDir ejecutable con sus bibliotecas y recursos.
+- [ ] Un intento de cross-compilation muestra una advertencia clara indicando la limitación de PyInstaller y recomendando construir en el sistema operativo objetivo o en un builder nativo.
+- [ ] Se genera `dist/cobra_build_manifest.json` y contiene, como mínimo, entrypoint, target, modo, versión de Cobra, versión de PyInstaller, hashes disponibles, recursos incluidos y dependencias resueltas.
+
+### Regresión de subsistemas Cobra
+
+- [ ] Lexer sigue pasando sus pruebas existentes.
+- [ ] Parser sigue pasando sus pruebas existentes.
+- [ ] AST sigue pasando sus pruebas existentes.
+- [ ] Runtime sigue pasando sus pruebas existentes.
+- [ ] Corelibs/standard library siguen pasando sus pruebas existentes.
+- [ ] Transpiladores siguen pasando sus pruebas existentes.
+- [ ] CobraHub sigue pasando sus pruebas existentes.
+- [ ] IDLE sigue pasando sus pruebas existentes, incluido el flujo del botón **Empaquetar**.
+
+### Evidencia mínima sugerida
+
+- [ ] Adjuntar salida de `cobra installer build .` sobre un proyecto mínimo.
+- [ ] Adjuntar salida de `cobra build --installer .` sobre el mismo proyecto o un fixture equivalente.
+- [ ] Adjuntar rutas del artefacto OneFile, artefacto OneDir y `dist/cobra_build_manifest.json`.
+- [ ] Adjuntar evidencia de cache hit, generación/validación de `cobra.lock`, hash incorrecto y conflicto de versiones.
+- [ ] Adjuntar lista de comandos de regresión ejecutados para Lexer, Parser, AST, runtime, corelibs, transpiladores, CobraHub e IDLE.
+
 ## Checklist rápido antes de publicar
 
 - Ejecuta el artefacto en una máquina limpia del mismo sistema operativo objetivo.
