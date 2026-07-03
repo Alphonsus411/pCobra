@@ -7,6 +7,12 @@ puente delgado de :mod:`pcobra.cobra_installer.idle_bridge`.
 
 from __future__ import annotations
 
+from .builders import (
+    BuildBackend,
+    BuilderKind,
+    LocalPyInstallerBuilder,
+    resolve_build_backend,
+)
 from .logger import BuildLogger, ProgressEvent
 from .manifest import BuildManifest, DependencyInfo
 from .spec_writer import SpecBuildContext, write_spec
@@ -45,12 +51,15 @@ __all__ = [
     "BuildManifest",
     "BuildMode",
     "Builder",
+    "BuilderKind",
+    "BuildBackend",
     "BuilderConfig",
     "BuildOptions",
     "BuildResult",
     "CobraProject",
     "CobraInstallerError",
     "ProgressEvent",
+    "LocalPyInstallerBuilder",
     "ProjectResources",
     "collect_project_resources",
     "discover_project",
@@ -72,5 +81,6 @@ __all__ = [
     "validate_target",
     "package_current_project",
     "prepare_runtime",
+    "resolve_build_backend",
     "write_spec",
 ]
