@@ -101,6 +101,25 @@ include-package-data = true
 # de distribución/publicación en PyPI.
 package-dir = {"" = "src"}
 
+
+[tool.setuptools.package-data]
+# Recursos internos de cobra_installer usados en runtime/spec/templates.
+# Aunque hoy el paquete solo contiene Python, estos patrones aseguran que
+# futuros recursos no Python bajo src/pcobra/cobra_installer/ entren en wheels.
+"pcobra.cobra_installer" = [
+    "**/*.toml",
+    "**/*.yaml",
+    "**/*.yml",
+    "**/*.json",
+    "**/*.ini",
+    "**/*.cfg",
+    "**/*.md",
+    "**/*.txt",
+    "**/*.html",
+    "**/*.j2",
+    "**/*.template",
+]
+
 [tool.setuptools.exclude-package-data]
 "*" = [
     "docs/historico/*",
