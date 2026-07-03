@@ -9,6 +9,7 @@ from typing import Any
 
 import pcobra.cobra_installer as cobra_installer
 from pcobra.cobra.cli.commands.base import BaseCommand
+from pcobra.cobra.cli.exit_codes import CobraExitCode
 from pcobra.cobra_installer import BuildOptions, CobraInstallerError
 
 
@@ -57,7 +58,9 @@ def register_installer_build_arguments(
             help="Ruta del proyecto Cobra a empaquetar",
         )
     parser.add_argument(
-        "--target", choices=("current", "windows", "linux", "macos"), default="current"
+        "--target",
+        default="current",
+        help="Sistema operativo objetivo: current, windows, linux o macos",
     )
     parser.add_argument("--mode", choices=("onefile", "onedir"), default="onedir")
     parser.add_argument("--name", dest="name")
@@ -99,12 +102,17 @@ def run_installer_build(args: Any) -> int:
         for warning in caught:
             print(f"Aviso: {_friendly_installer_error(str(warning.message))}")
     except CobraInstallerError as exc:
-        print(f"Error: {_friendly_installer_error(str(exc))}")
-        return 1
+        message = str(exc)
+        print(f"Error: {_friendly_installer_error(message)}")
+        return int(_installer_exit_code(message))
+    except Exception as exc:  # pragma: no cover - salvaguarda de frontera CLI
+        message = str(exc).strip() or "fallo interno inesperado del instalador."
+        print(f"Error: Error interno inesperado: {message}")
+        return int(CobraExitCode.UNEXPECTED_INTERNAL_ERROR)
 
     artifact = result.artifact_path or result.output_dir or result.dist_dir
     print(f"Build completado correctamente: {artifact}")
-    return 0
+    return int(CobraExitCode.SUCCESS)
 
 
 def _friendly_installer_error(message: str) -> str:
@@ -112,6 +120,8 @@ def _friendly_installer_error(message: str) -> str:
 
     text = message.strip() or "fallo desconocido del instalador."
     lowered = text.lower()
+    if _is_invalid_target_error(lowered):
+        return f"Target inválido: {text}"
     if (
         "no es válida" in lowered
         or "no es válido" in lowered
@@ -126,7 +136,7 @@ def _friendly_installer_error(message: str) -> str:
         return f"Dependencia o ruta inexistente: {text}"
     if "hash" in lowered or "sha256" in lowered or "checksum" in lowered:
         return f"Hash incorrecto: {text}"
-    if "conflicto de versiones" in lowered or "version conflict" in lowered:
+    if _is_version_conflict_error(lowered):
         return f"Conflicto de versiones: {text}"
     if (
         "pyinstaller no está instalado" in lowered
@@ -136,3 +146,69 @@ def _friendly_installer_error(message: str) -> str:
     if "cross-compilation" in lowered or "cross compilation" in lowered:
         return f"Cross-compilation solicitada: {text}"
     return text
+
+
+def _installer_exit_code(message: str) -> CobraExitCode:
+    """Clasifica errores controlados del instalador en códigos de salida estables."""
+
+    lowered = (message or "").strip().lower()
+    if _is_invalid_target_error(lowered):
+        return CobraExitCode.INVALID_TARGET
+    if _is_pyinstaller_unavailable_error(lowered):
+        return CobraExitCode.PYINSTALLER_UNAVAILABLE
+    if _is_hash_mismatch_error(lowered):
+        return CobraExitCode.HASH_MISMATCH
+    if _is_version_conflict_error(lowered):
+        return CobraExitCode.VERSION_CONFLICT
+    if _is_missing_dependency_error(lowered):
+        return CobraExitCode.MISSING_DEPENDENCY
+    if _is_invalid_project_error(lowered):
+        return CobraExitCode.INVALID_PROJECT
+    return CobraExitCode.UNEXPECTED_INTERNAL_ERROR
+
+
+def _is_invalid_project_error(lowered: str) -> bool:
+    return (
+        "no es válida" in lowered
+        or "no es válido" in lowered
+        or "no se encontró entrypoint" in lowered
+    )
+
+
+def _is_missing_dependency_error(lowered: str) -> bool:
+    return (
+        "dependencia cobra no encontrada" in lowered
+        or "no existe" in lowered
+        or "no es un directorio" in lowered
+        or "no es una carpeta" in lowered
+    )
+
+
+def _is_hash_mismatch_error(lowered: str) -> bool:
+    return "hash" in lowered or "sha256" in lowered or "checksum" in lowered
+
+
+def _is_version_conflict_error(lowered: str) -> bool:
+    return (
+        "conflicto de versiones" in lowered
+        or "conflicto de versión" in lowered
+        or "version conflict" in lowered
+        or "versión incorrecta" in lowered
+    )
+
+
+def _is_pyinstaller_unavailable_error(lowered: str) -> bool:
+    return (
+        "pyinstaller no está instalado" in lowered
+        or "no está instalado o no es importable" in lowered
+    )
+
+
+def _is_invalid_target_error(lowered: str) -> bool:
+    return (
+        "target inválido" in lowered
+        or "target invalid" in lowered
+        or "target seleccionado" in lowered
+        or "target" in lowered and "no soport" in lowered
+        or "invalid target" in lowered
+    )

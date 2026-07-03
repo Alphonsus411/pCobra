@@ -147,6 +147,22 @@ Usos recomendados:
 - Diagnosticar qué entrypoint, recursos y versiones participaron en la construcción.
 - Validar hashes antes de redistribuir binarios.
 
+
+## Códigos de salida CLI
+
+`cobra installer build` y el alias `cobra build --installer` comparten la misma implementación de la capa CLI, por lo que devuelven los mismos códigos de salida para los mismos fallos. Los códigos públicos son:
+
+| Código | Nombre | Significado |
+|---:|---|---|
+| `0` | éxito | El artefacto se generó correctamente. |
+| `10` | proyecto inválido | La estructura del proyecto, `cobra.toml` o el entrypoint no son válidos. |
+| `11` | dependencia inexistente | Falta una ruta, recurso, paquete CobraHub o dependencia requerida. |
+| `12` | conflicto de versiones | Versiones declaradas, transitivas o bloqueadas son incompatibles. |
+| `13` | hash incorrecto | Un hash, checksum o SHA-256 no coincide con el valor esperado. |
+| `14` | PyInstaller no disponible | PyInstaller no está instalado o no puede importarse en el Python activo. |
+| `15` | target inválido | El sistema operativo objetivo solicitado no es válido o no está soportado. |
+| `70` | error interno inesperado | Fallo no clasificado en la frontera CLI del instalador. |
+
 ## Errores comunes y solución
 
 | Error o síntoma | Causa habitual | Solución |

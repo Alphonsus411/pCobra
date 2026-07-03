@@ -4,6 +4,7 @@ import pytest
 
 from pcobra.cobra.cli.commands_v2.build_cmd import BuildCommandV2
 from pcobra.cobra.cli.commands_v2.installer_cmd import InstallerCommandV2
+from pcobra.cobra.cli.exit_codes import CobraExitCode
 from pcobra.cobra_installer import BuildMode, Builder, CobraInstallerError, TargetOS
 from pcobra.cobra_installer.project import BuildResult
 
@@ -105,29 +106,47 @@ def test_build_installer_alias_equivale_en_error(monkeypatch, tmp_path, capsys):
     alias_status = build_command.run(alias_args)
     alias_output = capsys.readouterr().out
 
-    assert installer_status == alias_status == 1
+    assert installer_status == alias_status == int(CobraExitCode.MISSING_DEPENDENCY)
     assert installer_output == alias_output
 
 
 @pytest.mark.parametrize(
-    ("message", "expected"),
+    ("message", "expected", "exit_code"),
     [
         (
             "La estructura del proyecto no es válida: falta main.cobra",
             "Proyecto inválido",
+            CobraExitCode.INVALID_PROJECT,
         ),
-        ("La ruta del proyecto no existe: demo", "Dependencia o ruta inexistente"),
-        ("sha256 esperado no coincide", "Hash incorrecto"),
-        ("Conflicto de versiones para dep", "Conflicto de versiones"),
-        ("PyInstaller no está instalado", "PyInstaller no disponible"),
         (
-            "PyInstaller no soporta cross-compilation de forma nativa",
-            "Cross-compilation solicitada",
+            "La ruta del proyecto no existe: demo",
+            "Dependencia o ruta inexistente",
+            CobraExitCode.MISSING_DEPENDENCY,
+        ),
+        (
+            "sha256 esperado no coincide",
+            "Hash incorrecto",
+            CobraExitCode.HASH_MISMATCH,
+        ),
+        (
+            "Conflicto de versiones para dep",
+            "Conflicto de versiones",
+            CobraExitCode.VERSION_CONFLICT,
+        ),
+        (
+            "PyInstaller no está instalado",
+            "PyInstaller no disponible",
+            CobraExitCode.PYINSTALLER_UNAVAILABLE,
+        ),
+        (
+            "Target inválido: solaris",
+            "Target inválido",
+            CobraExitCode.INVALID_TARGET,
         ),
     ],
 )
 def test_installer_build_mensajes_claros(
-    monkeypatch, tmp_path, capsys, message, expected
+    monkeypatch, tmp_path, capsys, message, expected, exit_code
 ):
     import pcobra.cobra_installer as cobra_installer
 
@@ -141,7 +160,7 @@ def test_installer_build_mensajes_claros(
         ["installer", "build", str(tmp_path), "--target", "linux"]
     )
 
-    assert command.run(args) == 1
+    assert command.run(args) == int(exit_code)
     assert expected in capsys.readouterr().out
 
 
@@ -174,7 +193,7 @@ def test_installer_build_muestra_conflicto_transitivo_con_cadena(
         ["installer", "build", str(tmp_path), "--target", "linux"]
     )
 
-    assert command.run(args) == 1
+    assert command.run(args) == int(CobraExitCode.VERSION_CONFLICT)
     output = capsys.readouterr().out
     assert "Conflicto de versiones" in output
     assert "compartida" in output
