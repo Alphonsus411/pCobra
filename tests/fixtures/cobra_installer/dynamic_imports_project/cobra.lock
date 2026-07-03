@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "packages": [
+    {
+      "name": "plugin-dinamico",
+      "version": "0.9.0",
+      "sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+      "source": "cobrahub://plugin-dinamico/0.9.0"
+    }
+  ]
+}

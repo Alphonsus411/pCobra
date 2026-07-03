@@ -1,0 +1,7 @@
+version = 1
+
+[[packages]]
+name = "texto-utils"
+version = "1.0.0"
+sha256 = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+source = "cobrahub://texto-utils/1.0.0"

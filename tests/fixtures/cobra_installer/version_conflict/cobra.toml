@@ -1,0 +1,5 @@
+[project]
+name = "version_conflict"
+version = "0.1.0"
+entrypoint = "main.cobra"
+dependencies = ["paquete-conflictivo==2.0.0"]
