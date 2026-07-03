@@ -9,6 +9,7 @@ from typing import Mapping, Sequence
 
 import pcobra
 
+from .builders import LocalPyInstallerBuilder, resolve_build_backend
 from .logger import BuildLogger, emit_many
 from .dependency_resolver import (
     DependencyResolutionResult,
@@ -192,6 +193,9 @@ def build_project(
     if overrides:
         base = replace(base, **overrides)
     normalized = validate_build_options(base)
+    build_backend = resolve_build_backend(normalized.builder)
+    if isinstance(build_backend, LocalPyInstallerBuilder):
+        build_backend = LocalPyInstallerBuilder(runner=run_pyinstaller)
     logger = BuildLogger(legacy_callback=normalized.log_callback)
     logs: list[str] = []
 
@@ -275,7 +279,7 @@ def build_project(
     )
 
     step("ejecucion_pyinstaller", "Ejecutando PyInstaller...", 8)
-    pyinstaller = run_pyinstaller(spec_path, normalized, logger)
+    pyinstaller = build_backend.run_pyinstaller(spec_path, normalized, logger)
 
     step("escritura_manifiesto", "Escribiendo manifiesto de build...", 9)
     manifest_path = create_manifest(

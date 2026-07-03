@@ -67,8 +67,8 @@ class TargetOS(StrEnum):
         return EXPECTED_ARTIFACTS[self]
 
 
-class Builder(StrEnum):
-    """Builders futuros para aislar builds no nativos."""
+class BuilderKind(StrEnum):
+    """Tipos de builder soportados o reservados para aislar builds."""
 
     LOCAL = "local"
     DOCKER = "docker"
@@ -77,7 +77,7 @@ class Builder(StrEnum):
     REMOTE = "remote"
 
     @classmethod
-    def from_value(cls, value: "Builder | str | None") -> "Builder":
+    def from_value(cls, value: "BuilderKind | str | None") -> "BuilderKind":
         """Normaliza la selección de builder sin activar implementaciones futuras."""
 
         if value is None:
@@ -87,11 +87,15 @@ class Builder(StrEnum):
         return cls(str(value).strip().lower())
 
 
+# Alias de compatibilidad: la API pública histórica exportaba ``Builder``.
+Builder = BuilderKind
+
+
 @dataclass(frozen=True, slots=True)
 class BuilderConfig:
     """Esqueleto de configuración para builders futuros."""
 
-    builder: Builder = Builder.LOCAL
+    builder: BuilderKind = BuilderKind.LOCAL
     image: str | None = None
     vm_name: str | None = None
     ci_runner: str | None = None
@@ -99,13 +103,13 @@ class BuilderConfig:
 
     @classmethod
     def from_value(
-        cls, value: "BuilderConfig | Builder | str | None"
+        cls, value: "BuilderConfig | BuilderKind | str | None"
     ) -> "BuilderConfig":
         """Crea una configuración mínima desde un builder o cadena."""
 
         if isinstance(value, cls):
             return value
-        return cls(builder=Builder.from_value(value))
+        return cls(builder=BuilderKind.from_value(value))
 
 
 @dataclass(frozen=True, slots=True)
@@ -177,6 +181,7 @@ def expected_artifact_for(target: TargetOS | str) -> ExpectedArtifact:
 __all__ = [
     "BuildMode",
     "Builder",
+    "BuilderKind",
     "BuilderConfig",
     "CROSS_COMPILATION_WARNING",
     "EXPECTED_ARTIFACTS",

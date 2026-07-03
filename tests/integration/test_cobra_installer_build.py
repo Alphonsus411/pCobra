@@ -51,9 +51,11 @@ def test_installer_build_parametriza_modo_y_genera_manifest_sin_pyinstaller_real
     transpile_calls: list[tuple[Path, Path]] = []
     real_transpile_project = runtime_builder.transpile_project
 
-    def spy_transpile_project(project, build_dir, options):
+    def spy_transpile_project(project, build_dir, options, dependency_resolution=None):
         transpile_calls.append((Path(project.entrypoint), Path(build_dir)))
-        return real_transpile_project(project, build_dir, options)
+        return real_transpile_project(
+            project, build_dir, options, dependency_resolution
+        )
 
     pyinstaller_calls: list[Path] = []
 
