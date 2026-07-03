@@ -14,6 +14,18 @@ if TYPE_CHECKING:
     import flet as ft
 
 
+def abrir_carpeta_dist(dist_dir: str | Path) -> None:
+    """Abre la carpeta ``dist`` con la herramienta nativa del sistema operativo."""
+
+    ruta_dist = Path(dist_dir)
+    if sys.platform.startswith("win"):
+        os.startfile(str(ruta_dist))  # type: ignore[attr-defined]
+    elif sys.platform == "darwin":
+        subprocess.Popen(["open", str(ruta_dist)])
+    else:
+        subprocess.Popen(["xdg-open", str(ruta_dist)])
+
+
 def resolver_ruta_en_project_root(ruta: str | Path, project_root: str | Path) -> Path:
     """Resuelve ``ruta`` de forma canónica y exige que quede bajo ``project_root``."""
 
@@ -848,23 +860,6 @@ def main(page: "ft.Page"):
         page.update()
         return None
 
-    def abrir_carpeta_dist(dist_dir: Path) -> None:
-        """Abre la carpeta dist de forma tolerante entre plataformas."""
-
-        try:
-            if hasattr(page, "launch_url"):
-                page.launch_url(dist_dir.resolve().as_uri())
-                return
-            if sys.platform.startswith("win"):
-                os.startfile(dist_dir)  # type: ignore[attr-defined]
-            elif sys.platform == "darwin":
-                subprocess.Popen(["open", str(dist_dir)])
-            else:
-                subprocess.Popen(["xdg-open", str(dist_dir)])
-        except Exception as exc:  # pragma: no cover - depende del escritorio local
-            salida.value += f"\nNo se pudo abrir automáticamente dist: {exc}"
-            page.update()
-
     def empaquetar_handler(_e):
         """Abre el diálogo permanente de empaquetado para el proyecto actual."""
 
@@ -963,7 +958,16 @@ def main(page: "ft.Page"):
                 progreso.value = f"Empaquetado finalizado: {artifact}"
                 salida.value += f"\nEmpaquetado finalizado: {artifact}"
                 page.update()
-                abrir_carpeta_dist(dist_dir)
+                try:
+                    abrir_carpeta_dist(dist_dir)
+                except (
+                    Exception
+                ) as exc:  # pragma: no cover - depende del escritorio local
+                    salida.value += (
+                        "\nAdvertencia: no se pudo abrir automáticamente "
+                        f"la carpeta dist ({dist_dir}): {exc}"
+                    )
+                    page.update()
 
             threading.Thread(target=worker, daemon=True).start()
 

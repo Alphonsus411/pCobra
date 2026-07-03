@@ -122,6 +122,9 @@ def test_boton_empaquetar_detecta_proyecto_pide_opciones_y_muestra_progreso(
         idle_bridge, "package_current_project", fake_package_current_project
     )
 
+    opened_dist_dirs = []
+    monkeypatch.setattr(idle, "abrir_carpeta_dist", opened_dist_dirs.append)
+
     page = FakePage()
     idle.main(page)
 
@@ -181,7 +184,82 @@ def test_boton_empaquetar_detecta_proyecto_pide_opciones_y_muestra_progreso(
         f"Empaquetado finalizado: {project / 'dist' / 'proyecto_activo'}"
         in salida.value
     )
-    assert page.launched_urls == [(project / "dist").resolve().as_uri()]
+    assert opened_dist_dirs == [project / "dist"]
+
+
+def test_abrir_carpeta_dist_usa_lanzador_del_sistema(monkeypatch, tmp_path):
+    dist_dir = tmp_path / "dist"
+
+    calls = []
+
+    monkeypatch.setattr(idle.sys, "platform", "win32")
+    monkeypatch.setattr(
+        idle.os, "startfile", lambda path: calls.append(path), raising=False
+    )
+    idle.abrir_carpeta_dist(dist_dir)
+    assert calls == [str(dist_dir)]
+
+    calls.clear()
+    monkeypatch.setattr(idle.sys, "platform", "darwin")
+    monkeypatch.setattr(idle.subprocess, "Popen", lambda args: calls.append(args))
+    idle.abrir_carpeta_dist(dist_dir)
+    assert calls == [["open", str(dist_dir)]]
+
+    calls.clear()
+    monkeypatch.setattr(idle.sys, "platform", "linux")
+    idle.abrir_carpeta_dist(dist_dir)
+    assert calls == [["xdg-open", str(dist_dir)]]
+
+
+def test_idle_advierte_si_no_puede_abrir_dist(monkeypatch, tmp_path):
+    workspace = tmp_path / "workspace"
+    project = workspace / "proyecto_activo"
+    project.mkdir(parents=True)
+    active_file = project / "programa.cobra"
+    active_file.write_text("imprimir('hola')", encoding="utf-8")
+
+    def fake_package_current_project(project_path, ui_options, progress_callback=None):
+        dist_dir = Path(project_path) / "dist"
+        return SimpleNamespace(
+            dist_dir=dist_dir, output_dir=None, artifact_path=dist_dir / "demo"
+        )
+
+    def fake_abrir_carpeta_dist(_dist_dir):
+        raise OSError("sin entorno gráfico")
+
+    monkeypatch.setattr(runtime, "require_flet", lambda: FakeFlet)
+    monkeypatch.setattr(runtime, "resolver_workspace_root_idle", lambda: workspace)
+    monkeypatch.setattr(runtime, "listar_directorio_idle", lambda _root: [])
+    monkeypatch.setattr(threading, "Thread", ImmediateThread)
+    monkeypatch.setattr(
+        idle_bridge, "package_current_project", fake_package_current_project
+    )
+    monkeypatch.setattr(idle, "abrir_carpeta_dist", fake_abrir_carpeta_dist)
+
+    page = FakePage()
+    idle.main(page)
+    root = SimpleNamespace(controls=page.controls)
+    ruta_input = next(
+        control
+        for control in walk_controls(root)
+        if getattr(control, "label", None) == "Ruta"
+    )
+    ruta_input.value = str(active_file)
+
+    find_button(root, "Empaquetar").on_click(None)
+    find_button(page.dialog, "Empaquetar").on_click(None)
+
+    salida = next(
+        control
+        for control in walk_controls(root)
+        if getattr(control, "selectable", None) is True
+    )
+    assert "Empaquetado finalizado" in salida.value
+    assert (
+        f"Advertencia: no se pudo abrir automáticamente la carpeta dist ({project / 'dist'})"
+        in salida.value
+    )
+    assert "sin entorno gráfico" in salida.value
 
 
 def test_idle_pide_confirmacion_antes_de_instalar_pyinstaller(monkeypatch, tmp_path):
