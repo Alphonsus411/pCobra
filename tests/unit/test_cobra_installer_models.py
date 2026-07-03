@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pcobra.cobra_installer.manifest as manifest_module
+
 from pcobra.cobra_installer import (
     BuildManifest,
     BuildMode,
@@ -129,6 +131,93 @@ def test_build_manifest_serializa_campos_del_build(tmp_path: Path) -> None:
     ]
 
 
+def test_build_manifest_serializa_todos_los_campos_auditables_de_forma_determinista(
+    tmp_path: Path,
+) -> None:
+    """Valida el contrato auditable completo sin depender del reloj ni del FS."""
+
+    project = CobraProject(
+        project_root=tmp_path,
+        entrypoint="src/app.cobra",
+        cobra_toml="cobra.toml",
+        cobra_lock="cobra.lock",
+        assets=("assets/z.png", "assets/a.png"),
+        config={"project": {"name": "cobra-demo", "version": "2.4.6"}},
+    )
+    manifest = BuildManifest(
+        project=project,
+        executable_name="cobra-demo-bin",
+        backend="python",
+        target=TargetOS.LINUX,
+        architecture="x86_64",
+        mode=BuildMode.ONEFILE,
+        hashes={"z.bin": "sha256:zzz", "a.bin": "sha256:aaa"},
+        cobra_version="9.8.7",
+        pyinstaller_version="6.14.1",
+        dependencies=(
+            DependencyInfo(
+                name="pyinstaller",
+                version="6.14.1",
+                source="pypi",
+                path=tmp_path / "wheels" / "pyinstaller.whl",
+                hashes={"wheel": "sha256:pyinstaller"},
+            ),
+        ),
+        cobrahub_dependencies=(
+            DependencyInfo(
+                name="ui-kit",
+                version="1.0.0",
+                source="cobrahub",
+                path=tmp_path / "packages" / "ui-kit.co",
+                hashes={"sha256": "hub-hash"},
+            ),
+        ),
+        generated_at="2026-07-03T10:15:30Z",
+        build_duration_seconds=12.5,
+        runtime_included=True,
+        included_assets=("assets/runtime.dat", "assets/a.png"),
+        final_size_bytes=4096,
+        executable_path=tmp_path / "dist" / "cobra-demo-bin",
+    )
+
+    payload = manifest.to_dict()
+
+    assert payload["project"] == "cobra-demo"
+    assert payload["version"] == "2.4.6"
+    assert payload["backend"] == "python"
+    assert payload["target"] == "linux"
+    assert payload["architecture"] == "x86_64"
+    assert payload["build_mode"] == "onefile"
+    assert payload["mode"] == "onefile"
+    assert payload["cobra_version"] == "9.8.7"
+    assert payload["pyinstaller_version"] == "6.14.1"
+    assert payload["dependencies"] == [
+        {
+            "name": "pyinstaller",
+            "version": "6.14.1",
+            "source": "pypi",
+            "path": str(tmp_path / "wheels" / "pyinstaller.whl"),
+            "hashes": {"wheel": "sha256:pyinstaller"},
+        }
+    ]
+    assert payload["cobrahub_dependencies"] == [
+        {
+            "name": "ui-kit",
+            "version": "1.0.0",
+            "source": "cobrahub",
+            "path": str(tmp_path / "packages" / "ui-kit.co"),
+            "hashes": {"sha256": "hub-hash"},
+        }
+    ]
+    assert payload["hashes"] == {"a.bin": "sha256:aaa", "z.bin": "sha256:zzz"}
+    assert payload["generated_at"] == "2026-07-03T10:15:30Z"
+    assert payload["build_duration_seconds"] == 12.5
+    assert payload["runtime_included"] is True
+    assert payload["assets_included"] == ["assets/a.png", "assets/runtime.dat"]
+    assert payload["final_size_bytes"] == 4096
+    assert payload["executable_path"] == str(tmp_path / "dist" / "cobra-demo-bin")
+
+
 def test_create_manifest_mantiene_compatibilidad_y_agrega_campos(
     tmp_path: Path,
 ) -> None:
@@ -200,6 +289,70 @@ def test_create_manifest_genera_cobra_build_manifest_estable(tmp_path: Path) -> 
     assert payload["assets_included"] == [str(asset)]
     assert payload["final_size_bytes"] is None
     assert payload["executable_path"] == str(output_dir / "demo-bin")
+
+
+def test_create_manifest_calcula_hashes_runtime_y_tamano_final_deterministas(
+    tmp_path: Path, monkeypatch
+) -> None:
+    output_dir = tmp_path / "dist"
+    output_dir.mkdir()
+    build_dir = tmp_path / "build"
+    (build_dir / "runtime").mkdir(parents=True)
+    entrypoint = tmp_path / "main.cobra"
+    entrypoint.write_text("imprimir('determinista')\n", encoding="utf-8")
+    (tmp_path / "cobra.toml").write_text(
+        "[project]\nname = 'demo-create'\nversion = '1.0.0'\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "cobra.lock").write_text("lock-v1\n", encoding="utf-8")
+    asset = tmp_path / "assets" / "logo.txt"
+    asset.parent.mkdir()
+    asset.write_text("asset-v1", encoding="utf-8")
+    executable_path = output_dir / "demo-create" / "demo-create"
+    executable_path.parent.mkdir()
+    executable_path.write_bytes(b"123456789")
+    mocked_versions = {"pcobra": "3.2.1", "pyinstaller": "6.1.0"}
+    monkeypatch.setattr(
+        manifest_module,
+        "_installed_version",
+        lambda name: mocked_versions[name],
+    )
+
+    manifest_path = create_manifest(
+        BuildOptions(
+            project_root=tmp_path,
+            target=TargetOS.LINUX,
+            architecture="arm64",
+            mode=BuildMode.ONEDIR,
+            temp_dir=build_dir,
+            assets=(asset,),
+            config={"project": {"name": "demo-create", "version": "1.0.0"}},
+        ).normalized(),
+        entrypoint,
+        output_dir,
+        "demo-create",
+    )
+
+    payload = json.loads(manifest_path.read_text(encoding="utf-8"))
+
+    assert payload["project"] == "demo-create"
+    assert payload["version"] == "1.0.0"
+    assert payload["target"] == "linux"
+    assert payload["architecture"] == "arm64"
+    assert payload["build_mode"] == "onedir"
+    assert payload["cobra_version"] == "3.2.1"
+    assert payload["pyinstaller_version"] == "6.1.0"
+    assert payload["runtime_included"] is True
+    assert payload["assets_included"] == [str(asset)]
+    assert payload["final_size_bytes"] == 9
+    assert set(payload["hashes"]) == {
+        str(entrypoint),
+        str(tmp_path / "cobra.toml"),
+        str(tmp_path / "cobra.lock"),
+        str(asset),
+        str(executable_path),
+    }
+    assert all(value.startswith("sha256:") for value in payload["hashes"].values())
 
 
 def test_write_manifest_json_ordena_claves_para_comparaciones_estables(
