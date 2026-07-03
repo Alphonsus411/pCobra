@@ -1,0 +1,12 @@
+[project]
+name = "complex_project"
+version = "1.2.3"
+entrypoint = "main.cobra"
+dependencies = ["texto-utils==1.0.0"]
+
+[installer]
+assets = ["assets/banner.txt"]
+config_dirs = ["config"]
+documentation = ["docs/README.md"]
+mode = "onedir"
+target = "current"

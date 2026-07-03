@@ -1,0 +1,7 @@
+[project]
+name = "invalid_hash"
+version = "0.1.0"
+entrypoint = "main.cobra"
+
+[dependencies]
+paquete-con-hash = "1.0.0"

@@ -1,0 +1,7 @@
+version = 1
+
+[[packages]]
+name = "paquete-conflictivo"
+version = "1.0.0"
+sha256 = "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+source = "cobrahub://paquete-conflictivo/1.0.0"

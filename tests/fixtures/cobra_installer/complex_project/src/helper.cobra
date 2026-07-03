@@ -1,0 +1,3 @@
+func saludar(nombre):
+    imprimir("Hola " + nombre)
+fin

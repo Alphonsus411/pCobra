@@ -1,0 +1,11 @@
+version = 1
+
+[packages.red]
+version = "2.1.0"
+sha256 = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+source = "cobrahub://red/2.1.0"
+
+[packages.json-tools]
+version = "1.4.2"
+sha256 = "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+source = "cobrahub://json-tools/1.4.2"

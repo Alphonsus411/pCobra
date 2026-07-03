@@ -1,0 +1,7 @@
+[project]
+name = "invalid_missing_dependency"
+version = "0.1.0"
+entrypoint = "main.cobra"
+
+[dependencies]
+paquete-ausente = "9.9.9"

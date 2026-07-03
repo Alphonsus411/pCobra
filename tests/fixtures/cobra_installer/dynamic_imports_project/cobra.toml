@@ -1,0 +1,11 @@
+[project]
+name = "dynamic_imports_project"
+version = "0.4.0"
+entrypoint = "main.cobra"
+
+[installer]
+hidden_imports = ["json", "pathlib"]
+include_dependencies = true
+
+[dependencies]
+plugin-dinamico = "0.9.0"

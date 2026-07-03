@@ -1,0 +1,9 @@
+[project]
+name = "assets_project"
+version = "0.2.0"
+entrypoint = "main.cobra"
+
+[installer]
+assets = ["assets/data.txt", "assets/images/logo.txt"]
+config_dirs = ["config"]
+documentation = ["docs/usage.md"]
