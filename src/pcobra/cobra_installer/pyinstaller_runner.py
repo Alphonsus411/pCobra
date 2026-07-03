@@ -63,7 +63,9 @@ def detect_pyinstaller(
     resultado ``available=False`` para que el llamador decida si puede instalar.
     """
 
-    commands: list[tuple[str, ...]] = [(sys.executable, "-m", "PyInstaller", "--version")]
+    commands: list[tuple[str, ...]] = [
+        (sys.executable, "-m", "PyInstaller", "--version")
+    ]
     executable = which("pyinstaller")
     if executable:
         commands.append((executable, "--version"))
@@ -114,8 +116,9 @@ def install_pyinstaller_if_allowed(
         "auto_install_pyinstaller",
     ):
         raise CobraInstallerError(
-            "PyInstaller no está instalado. Habilita la instalación automática "
-            "en las opciones del build o instala la dependencia en el entorno."
+            "PyInstaller no está instalado. Instala la dependencia con "
+            "'python -m pip install pyinstaller' o vuelve a ejecutar el build "
+            "con '--install-pyinstaller' para permitir la instalación automática."
         )
 
     _log(logger, "info", "PyInstaller no está disponible; instalando con pip...")
@@ -136,6 +139,11 @@ def install_pyinstaller_if_allowed(
         raise CobraInstallerError(
             "PyInstaller se instaló, pero no se pudo verificar su versión."
         )
+    _log(
+        logger,
+        "info",
+        f"PyInstaller instalado correctamente (versión {detected.version or 'desconocida'}).",
+    )
     return detected
 
 
@@ -173,7 +181,9 @@ def run_pyinstaller(
     returncode = process.wait()
     if returncode != 0:
         message = _translate_pyinstaller_error(stderr or stdout)
-        raise CobraInstallerError(f"PyInstaller falló con código {returncode}: {message}")
+        raise CobraInstallerError(
+            f"PyInstaller falló con código {returncode}: {message}"
+        )
 
     return PyInstallerRunResult(
         success=True,
@@ -185,7 +195,9 @@ def run_pyinstaller(
     )
 
 
-def _stream_process_output(process: subprocess.Popen[str], logger: Any) -> tuple[str, str]:
+def _stream_process_output(
+    process: subprocess.Popen[str], logger: Any
+) -> tuple[str, str]:
     events: queue.Queue[tuple[str, str]] = queue.Queue()
 
     def reader(name: str, stream: Iterable[str] | None) -> None:

@@ -36,8 +36,12 @@ class FakeProcess:
         return self._returncode
 
 
-def completed(args: list[str], returncode: int = 0, stdout: str = "6.14.0\n", stderr: str = ""):
-    return subprocess.CompletedProcess(args=args, returncode=returncode, stdout=stdout, stderr=stderr)
+def completed(
+    args: list[str], returncode: int = 0, stdout: str = "6.14.0\n", stderr: str = ""
+):
+    return subprocess.CompletedProcess(
+        args=args, returncode=returncode, stdout=stdout, stderr=stderr
+    )
 
 
 def test_detect_pyinstaller_usa_python_module_y_devuelve_version() -> None:
@@ -55,11 +59,21 @@ def test_detect_pyinstaller_usa_python_module_y_devuelve_version() -> None:
 
 
 def test_install_pyinstaller_rechaza_instalacion_no_habilitada() -> None:
-    def fake_run(args, **kwargs):
-        return completed(args, returncode=1, stdout="", stderr="No module named PyInstaller")
+    calls: list[list[str]] = []
 
-    with pytest.raises(CobraInstallerError, match="Habilita la instalación automática"):
+    def fake_run(args, **kwargs):
+        calls.append(args)
+        return completed(
+            args, returncode=1, stdout="", stderr="No module named PyInstaller"
+        )
+
+    with pytest.raises(CobraInstallerError) as exc_info:
         install_pyinstaller_if_allowed(SimpleNamespace(), run_factory=fake_run)
+
+    message = str(exc_info.value)
+    assert "python -m pip install pyinstaller" in message
+    assert "--install-pyinstaller" in message
+    assert not any(call[1:4] == ["-m", "pip", "install"] for call in calls)
 
 
 def test_install_pyinstaller_si_opcion_lo_permite() -> None:
@@ -70,19 +84,24 @@ def test_install_pyinstaller_si_opcion_lo_permite() -> None:
         nonlocal installed
         calls.append(args)
         if args[1:3] == ["-m", "PyInstaller"] and not installed:
-            return completed(args, returncode=1, stdout="", stderr="No module named PyInstaller")
+            return completed(
+                args, returncode=1, stdout="", stderr="No module named PyInstaller"
+            )
         if args[1:4] == ["-m", "pip", "install"]:
             installed = True
             return completed(args, stdout="installed\n")
         return completed(args, stdout="6.14.0\n")
 
+    logger = Logger()
+
     info = install_pyinstaller_if_allowed(
-        SimpleNamespace(install_pyinstaller=True), run_factory=fake_run
+        SimpleNamespace(install_pyinstaller=True), logger=logger, run_factory=fake_run
     )
 
     assert info.available is True
     assert info.version == "6.14.0"
     assert any(call[1:4] == ["-m", "pip", "install"] for call in calls)
+    assert any("PyInstaller instalado correctamente" in item for item in logger.infos)
 
 
 def test_run_pyinstaller_streaming_y_resultado(tmp_path: Path) -> None:
