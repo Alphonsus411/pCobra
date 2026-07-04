@@ -1,40 +1,29 @@
 # `standard_library.cripto`
 
-## Checklist funcional (cripto)
+## Propósito
 
-- [x] Exportaciones canónicas en español via `__all__` únicamente.
-- [x] Semántica alineada al runtime de Cobra (validaciones y tipos de retorno).
-- [x] Sin alias en inglés expuestos por wildcard export.
-- [x] Ejemplo de uso con `usar "cripto"`.
+`cripto` agrupa ayudantes criptográficos básicos para calcular resúmenes, generar tokens y comparar secretos reduciendo filtraciones triviales por temporización.
 
-### Ejemplo Cobra
+## Funciones públicas
 
-```cobra
-usar "cripto"
-# invoca funciones públicas del módulo
-```
+- `sha256(datos)`: calcula el resumen SHA-256.
+- `sha512(datos)`: calcula el resumen SHA-512.
+- `comparar_seguro(a, b)`: compara secretos con una rutina resistente a diferencias de tiempo simples.
+- `token_seguro(tamano=32)`: genera bytes o texto aleatorio seguro según la implementación del runtime.
+- `token_hexadecimal(tamano=32)`: genera un token hexadecimal seguro.
 
-# `standard_library.cripto`
-
-## Criptografía práctica
-
-Ayudantes de uso común para generar tokens, calcular resúmenes y comparar secretos sin filtraciones triviales.
-
-## API pública principal
-
-- `token_seguro(longitud=32)`
-- `hash_sha256(datos)`
-- `hash_sha512(datos)`
-- `comparar_seguro(a, b)`
-
-## Uso rápido
+## Ejemplo mínimo
 
 ```cobra
 usar "cripto"
+
+token = cripto.token_hexadecimal(16)
+resumen = cripto.sha256("mensaje")
+si cripto.comparar_seguro(resumen, cripto.sha256("mensaje")):
+    imprimir(token)
 ```
 
-Nombres públicos en español (fuente prevista: `__all__`).
+## Notas de error y degradación segura
 
-## Nota de seguridad
-
-Los tokens deben generarse con fuentes criptográficamente seguras y las comparaciones de secretos deben usar comparación segura para reducir filtraciones por temporización.
+- Los tamaños de token deben ser positivos; valores inválidos deben rechazarse de forma explícita.
+- No usar estas funciones como sustituto de protocolos criptográficos completos; para cifrado, firmas o gestión de claves se requiere una biblioteca especializada.

@@ -1,40 +1,29 @@
 # `standard_library.configuracion`
 
-## Checklist funcional (configuracion)
+## Propósito
 
-- [x] Exportaciones canónicas en español via `__all__` únicamente.
-- [x] Semántica alineada al runtime de Cobra (validaciones y tipos de retorno).
-- [x] Sin alias en inglés expuestos por wildcard export.
-- [x] Ejemplo de uso con `usar "configuracion"`.
+`configuracion` carga archivos de configuración en formatos simples y permite detectar capacidades disponibles del runtime, especialmente soporte TOML.
 
-### Ejemplo Cobra
+## Funciones públicas
 
-```cobra
-usar "configuracion"
-# invoca funciones públicas del módulo
-```
+- `leer_toml(ruta)`: lee configuración TOML desde un archivo.
+- `leer_ini(ruta)`: lee configuración INI.
+- `toml_disponible()`: indica si el runtime tiene parser TOML disponible.
+- `leer_configuracion(ruta)`: lee configuración según la extensión soportada.
 
-# `standard_library.configuracion`
-
-## Configuración de aplicaciones
-
-Carga de configuración estructurada desde archivos y acceso con valores por defecto.
-
-## API pública principal
-
-- `cargar(ruta)`
-- `cargar_toml(ruta)`
-- `obtener(config, clave, defecto=None)`
-- `requerir(config, clave)`
-
-## Uso rápido
+## Ejemplo mínimo
 
 ```cobra
 usar "configuracion"
+
+si configuracion.toml_disponible():
+    cfg = configuracion.leer_toml("pyproject.toml")
+sino:
+    cfg = configuracion.leer_ini("app.ini")
 ```
 
-Nombres públicos en español (fuente prevista: `__all__`).
+## Notas de error y degradación segura
 
-## Nota de seguridad
-
-El soporte TOML depende de `tomllib`; en versiones de Python sin `tomllib` se requiere un backend compatible.
+- `leer_toml` depende de `tomllib`; si no está disponible, debe fallar con un mensaje claro o permitir usar `leer_ini`/otro backend compatible como alternativa.
+- `leer_configuracion` debe rechazar extensiones no soportadas en lugar de interpretar formatos desconocidos de forma ambigua.
+- Validar valores obligatorios después de cargar el archivo y aplicar valores por defecto para claves opcionales.
