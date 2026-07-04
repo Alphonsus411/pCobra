@@ -499,7 +499,7 @@ Las herramientas de GUI, asistentes de IA o acciones de corrección automática 
 1. **Validación de entrada:** el código original se tokeniza con `Lexer` y se parsea con `Parser`. Si el fragmento de entrada no puede validarse, la herramienta debe informar el error en vez de inventar una corrección sintáctica.
 2. **Sintaxis existente:** la sugerencia no debe introducir tokens, palabras reservadas, operadores o construcciones ausentes del parser vigente. Si una forma no aparece en el índice de sintaxis ni es aceptada por `Parser`, queda fuera de las recomendaciones automáticas.
 3. **Trazabilidad al Libro:** cada recomendación debe mapearse a una regla concreta de este Libro, citando la sección aplicable (por ejemplo, `§3.3 Sentencias`, `§3.4 Funciones` o `§3.6 Módulos`).
-4. **Regresión obligatoria:** por cada recomendación nueva se añade un caso válido y uno inválido en `tests/gui/` o `tests/integration/`; además, el fragmento sugerido debe tener una prueba que confirme que `Parser` lo acepta.
+4. **Regresión obligatoria:** por cada recomendación nueva se añade un caso válido y un caso de contraste en `tests/gui/` o `tests/integration/`; el contraste puede ser una forma inválida o una forma aceptada pero no recomendada/no canónica. Además, el fragmento sugerido debe tener una prueba que confirme que `Parser` lo acepta.
 
 Motor real de sugerencias: Cobra mantiene `agix` como dependencia oficial y único nombre canónico para esta integración. Cualquier cambio de motor requiere una ADR aprobada que justifique el cambio de arquitectura. La fachada pública estable es `pcobra.ia.analizador_sugerencias`, que delega en `pcobra.ia.analizador_agix` y conserva el contrato de validación previa y posterior con `Lexer(codigo).tokenizar()` y `Parser(tokens).parsear()` antes de exponer sugerencias aplicables.
 
@@ -507,9 +507,9 @@ La salida visible de GUI/IA separa dos planos. **Errores de Lexer/Parser** son b
 
 Recomendaciones autorizadas actualmente:
 
-| Recomendación | Regla del Libro | Fragmento sugerido que debe aceptar `Parser` | Forma inválida cubierta por regresión |
+| Recomendación | Regla del Libro | Fragmento sugerido que debe aceptar `Parser` | Forma no recomendada o inválida cubierta por regresión |
 |---|---|---|---|
-| Usar `retorno` dentro de funciones. | `§3.3 Sentencias` y `§3.4 Funciones`. | `func saludar(nombre): retorno nombre fin` | `retornar nombre` |
+| Preferir `retorno` dentro de funciones como forma canónica. | `§3.3 Sentencias` y `§3.4 Funciones`. | `func saludar(nombre): retorno nombre fin` | `retornar nombre` como forma aceptada/no canónica |
 | Usar `usar` sin alias `como` y con importación plana. | `§3.6 Módulos`. | `usar "numero"` seguido de `es_finito(10)` | `usar "numero" como numero` |
 | Declarar funciones con `func` o `definir`. | `§3.4 Funciones`. | `func calcular_total(a, b): retorno a + b fin` | `funcion calcular_total(a, b): ...` |
 
