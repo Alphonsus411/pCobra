@@ -1,37 +1,28 @@
 # `standard_library.registro`
 
-## Checklist funcional (registro)
+## Propósito
 
-- [x] Exportaciones canónicas en español via `__all__` únicamente.
-- [x] Semántica alineada al runtime de Cobra (validaciones y tipos de retorno).
-- [x] Sin alias en inglés expuestos por wildcard export.
-- [x] Ejemplo de uso con `usar "registro"`.
+`registro` centraliza la emisión de mensajes de diagnóstico con niveles consistentes para scripts, pruebas y aplicaciones pequeñas.
 
-### Ejemplo Cobra
+## Funciones públicas
 
-```cobra
-usar "registro"
-# invoca funciones públicas del módulo
-```
+- `configurar(nivel="info", archivo=None)`: configura nivel y destino del registro.
+- `debug(mensaje)`: emite un mensaje de depuración.
+- `info(mensaje)`: emite un mensaje informativo.
+- `aviso(mensaje)`: emite una advertencia.
+- `error(mensaje)`: emite un mensaje de error.
+- `obtener_registrador(nombre=None)`: devuelve el registrador configurado.
 
-# `standard_library.registro`
-
-## Registro de eventos
-
-Funciones simples para emitir mensajes de diagnóstico con niveles consistentes.
-
-## API pública principal
-
-- `configurar(nivel="info")`
-- `depurar(mensaje)`
-- `info(mensaje)`
-- `advertencia(mensaje)`
-- `error(mensaje)`
-
-## Uso rápido
+## Ejemplo mínimo
 
 ```cobra
 usar "registro"
+
+registro.configurar("info")
+registro.info("aplicación iniciada")
 ```
 
-Nombres públicos en español (fuente prevista: `__all__`).
+## Notas de error y degradación segura
+
+- Un nivel no reconocido debe rechazarse con un error claro.
+- Si se configura salida a archivo, pueden aparecer errores de permisos o rutas inexistentes; usar salida estándar como alternativa segura cuando no sea posible escribir en disco.

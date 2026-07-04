@@ -1,36 +1,30 @@
 # `standard_library.serializacion`
 
-## Checklist funcional (serializacion)
+## Propósito
 
-- [x] Exportaciones canónicas en español via `__all__` únicamente.
-- [x] Semántica alineada al runtime de Cobra (validaciones y tipos de retorno).
-- [x] Sin alias en inglés expuestos por wildcard export.
-- [x] Ejemplo de uso con `usar "serializacion"`.
+`serializacion` permite convertir datos entre estructuras Cobra y formatos interoperables como JSON y CSV, además de leerlos o escribirlos en archivos.
 
-### Ejemplo Cobra
+## Funciones públicas
 
-```cobra
-usar "serializacion"
-# invoca funciones públicas del módulo
-```
+- `codificar_json(valor)`: serializa un valor compatible a texto JSON.
+- `decodificar_json(texto)`: interpreta texto JSON y devuelve la estructura correspondiente.
+- `leer_json(ruta)`: lee un archivo JSON.
+- `escribir_json(ruta, valor)`: escribe un valor como JSON.
+- `leer_csv(ruta)`: lee filas desde un archivo CSV.
+- `escribir_csv(ruta, filas)`: escribe filas en un archivo CSV.
 
-# `standard_library.serializacion`
-
-## Serialización de datos
-
-Conversión entre estructuras Cobra y representaciones textuales interoperables como JSON.
-
-## API pública principal
-
-- `a_json(valor)`
-- `desde_json(texto)`
-- `guardar_json(ruta, valor)`
-- `cargar_json(ruta)`
-
-## Uso rápido
+## Ejemplo mínimo
 
 ```cobra
 usar "serializacion"
+
+datos = serializacion.decodificar_json("{\"activo\": true}")
+texto = serializacion.codificar_json(datos)
+imprimir(texto)
 ```
 
-Nombres públicos en español (fuente prevista: `__all__`).
+## Notas de error y degradación segura
+
+- `decodificar_json` debe fallar de forma explícita cuando el texto no sea JSON válido.
+- Las operaciones de archivo pueden fallar por permisos, rutas inexistentes o datos que no sean serializables; capturar esos errores en programas que procesen entradas externas.
+- Para CSV, normalizar encabezados y codificación cuando el archivo provenga de terceros.

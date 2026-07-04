@@ -1,37 +1,26 @@
 # `standard_library.temporal`
 
-## Checklist funcional (temporal)
+## Propósito
 
-- [x] Exportaciones canónicas en español via `__all__` únicamente.
-- [x] Semántica alineada al runtime de Cobra (validaciones y tipos de retorno).
-- [x] Sin alias en inglés expuestos por wildcard export.
-- [x] Ejemplo de uso con `usar "temporal"`.
+`temporal` gestiona archivos y directorios temporales para pruebas, scripts y tareas intermedias que requieren almacenamiento efímero.
 
-### Ejemplo Cobra
+## Funciones públicas
 
-```cobra
-usar "temporal"
-# invoca funciones públicas del módulo
-```
+- `archivo_temporal(prefijo=None, sufijo=None)`: crea o reserva un archivo temporal.
+- `directorio_temporal(prefijo=None)`: crea un directorio temporal.
+- `limpiar(ruta)`: elimina de forma controlada un recurso temporal creado previamente.
 
-# `standard_library.temporal`
-
-## Fechas, horas e intervalos
-
-Utilidades temporales orientadas a marcas de tiempo, duraciones e intervalos de ejecución.
-
-## API pública principal
-
-- `ahora()`
-- `utc()`
-- `medir(funcion)`
-- `duracion(segundos)`
-- `formatear(instante, formato)`
-
-## Uso rápido
+## Ejemplo mínimo
 
 ```cobra
 usar "temporal"
+
+ruta_tmp = temporal.archivo_temporal("cobra-", ".txt")
+# escribir datos temporales aquí
+temporal.limpiar(ruta_tmp)
 ```
 
-Nombres públicos en español (fuente prevista: `__all__`).
+## Notas de error y degradación segura
+
+- `limpiar` debe rechazar rutas vacías para evitar borrados accidentales.
+- Usar directorios temporales del sistema y limpiar al terminar para no dejar archivos residuales con datos sensibles.

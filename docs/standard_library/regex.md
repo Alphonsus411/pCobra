@@ -1,36 +1,28 @@
 # `standard_library.regex`
 
-## Checklist funcional (regex)
+## Propósito
 
-- [x] Exportaciones canónicas en español via `__all__` únicamente.
-- [x] Semántica alineada al runtime de Cobra (validaciones y tipos de retorno).
-- [x] Sin alias en inglés expuestos por wildcard export.
-- [x] Ejemplo de uso con `usar "regex"`.
+`regex` expone operaciones frecuentes con expresiones regulares para buscar, validar, reemplazar, dividir y enumerar coincidencias en texto.
 
-### Ejemplo Cobra
+## Funciones públicas
 
-```cobra
-usar "regex"
-# invoca funciones públicas del módulo
-```
+- `buscar(patron, texto)`: busca la primera coincidencia.
+- `coincidir(patron, texto)`: comprueba coincidencia desde el inicio del texto.
+- `reemplazar(patron, sustituto, texto)`: reemplaza coincidencias.
+- `dividir(patron, texto)`: divide texto usando un patrón.
+- `encontrar_todos(patron, texto)`: devuelve todas las coincidencias.
 
-# `standard_library.regex`
-
-## Expresiones regulares
-
-Búsqueda, validación y reemplazo de texto mediante patrones regulares.
-
-## API pública principal
-
-- `coincide(patron, texto)`
-- `buscar(patron, texto)`
-- `encontrar_todos(patron, texto)`
-- `reemplazar(patron, sustituto, texto)`
-
-## Uso rápido
+## Ejemplo mínimo
 
 ```cobra
 usar "regex"
+
+si regex.coincidir("^[a-z]+$", "cobra"):
+    palabras = regex.encontrar_todos("[a-z]+", "cobra lang")
+    imprimir(palabras)
 ```
 
-Nombres públicos en español (fuente prevista: `__all__`).
+## Notas de error y degradación segura
+
+- Patrones inválidos deben traducirse a errores claros, no a fallos silenciosos.
+- Evitar patrones de complejidad excesiva con entradas no confiables para reducir riesgos de consumo elevado de CPU.

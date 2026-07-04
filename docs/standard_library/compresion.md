@@ -1,40 +1,26 @@
 # `standard_library.compresion`
 
-## Checklist funcional (compresion)
+## Propósito
 
-- [x] Exportaciones canónicas en español via `__all__` únicamente.
-- [x] Semántica alineada al runtime de Cobra (validaciones y tipos de retorno).
-- [x] Sin alias en inglés expuestos por wildcard export.
-- [x] Ejemplo de uso con `usar "compresion"`.
+`compresion` cubre operaciones básicas con archivos ZIP: crear paquetes, extraerlos y listar su contenido.
 
-### Ejemplo Cobra
+## Funciones públicas
 
-```cobra
-usar "compresion"
-# invoca funciones públicas del módulo
-```
+- `crear_zip(destino, rutas)`: crea un archivo ZIP con una o varias rutas.
+- `extraer_zip(ruta_zip, destino)`: extrae un ZIP en un directorio destino.
+- `listar_zip(ruta_zip)`: devuelve los nombres incluidos en un ZIP.
 
-# `standard_library.compresion`
-
-## Compresión y archivos ZIP
-
-Compresión de datos y empaquetado o extracción de archivos en formatos comunes.
-
-## API pública principal
-
-- `comprimir(datos)`
-- `descomprimir(datos)`
-- `crear_zip(ruta_destino, archivos)`
-- `extraer_zip(ruta_zip, destino)`
-
-## Uso rápido
+## Ejemplo mínimo
 
 ```cobra
 usar "compresion"
+
+compresion.crear_zip("salida.zip", ["datos/entrada.txt"])
+entradas = compresion.listar_zip("salida.zip")
+imprimir(entradas)
 ```
 
-Nombres públicos en español (fuente prevista: `__all__`).
+## Notas de error y degradación segura
 
-## Nota de seguridad
-
-La extracción ZIP debe validar rutas de entrada para impedir escritura fuera del directorio destino (protección contra Zip Slip).
+- `extraer_zip` debe validar las rutas internas para impedir escritura fuera del directorio destino (protección contra Zip Slip).
+- Archivos corruptos, rutas inexistentes o permisos insuficientes deben tratarse como errores controlados.

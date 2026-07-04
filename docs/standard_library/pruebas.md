@@ -1,36 +1,27 @@
 # `standard_library.pruebas`
 
-## Checklist funcional (pruebas)
+## Propósito
 
-- [x] Exportaciones canónicas en español via `__all__` únicamente.
-- [x] Semántica alineada al runtime de Cobra (validaciones y tipos de retorno).
-- [x] Sin alias en inglés expuestos por wildcard export.
-- [x] Ejemplo de uso con `usar "pruebas"`.
+`pruebas` proporciona aserciones pequeñas para ejemplos, scripts y suites ligeras sin depender de un framework externo.
 
-### Ejemplo Cobra
+## Funciones públicas
 
-```cobra
-usar "pruebas"
-# invoca funciones públicas del módulo
-```
+- `igual(actual, esperado, mensaje=None)`: comprueba igualdad.
+- `verdadero(valor, mensaje=None)`: comprueba que un valor sea verdadero.
+- `falso(valor, mensaje=None)`: comprueba que un valor sea falso.
+- `contiene(contenedor, elemento, mensaje=None)`: comprueba pertenencia.
+- `lanza_error(funcion, error=None)`: verifica que una función lance un error esperado.
 
-# `standard_library.pruebas`
-
-## Pruebas y aserciones
-
-Ayudantes mínimos para expresar verificaciones en ejemplos, scripts y suites de prueba.
-
-## API pública principal
-
-- `afirmar(condicion, mensaje=None)`
-- `igual(actual, esperado, mensaje=None)`
-- `lanza(funcion, error=None)`
-- `ejecutar_pruebas()`
-
-## Uso rápido
+## Ejemplo mínimo
 
 ```cobra
 usar "pruebas"
+
+pruebas.igual(2 + 2, 4)
+pruebas.verdadero("cobra" contiene "co")
 ```
 
-Nombres públicos en español (fuente prevista: `__all__`).
+## Notas de error y degradación segura
+
+- Las aserciones deben fallar con mensajes breves y accionables para facilitar depuración.
+- `lanza_error` es útil para documentar fallos esperados y evitar que errores controlados parezcan regresiones.

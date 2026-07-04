@@ -1,40 +1,28 @@
 # `standard_library.proceso`
 
-## Checklist funcional (proceso)
+## Propósito
 
-- [x] Exportaciones canónicas en español via `__all__` únicamente.
-- [x] Semántica alineada al runtime de Cobra (validaciones y tipos de retorno).
-- [x] Sin alias en inglés expuestos por wildcard export.
-- [x] Ejemplo de uso con `usar "proceso"`.
+`proceso` ofrece una capa breve para ejecutar procesos externos, capturar su salida y revisar códigos de finalización sin acoplar el código Cobra directamente a detalles del runtime anfitrión.
 
-### Ejemplo Cobra
+## Funciones públicas
 
-```cobra
-usar "proceso"
-# invoca funciones públicas del módulo
-```
+- `ejecutar(comando, argumentos=None, shell=False)`: ejecuta un comando y devuelve el resultado del proceso.
+- `capturar(comando, argumentos=None)`: ejecuta un comando capturando salida estándar y errores.
+- `codigo_salida(resultado)`: extrae el código de salida de un resultado.
+- `salida(resultado)`: obtiene la salida estándar capturada.
+- `errores(resultado)`: obtiene la salida de error capturada.
 
-# `standard_library.proceso`
-
-## Procesos externos
-
-Ejecución controlada de comandos y captura de salida, código de salida y errores.
-
-## API pública principal
-
-- `ejecutar(comando, argumentos=None, shell=False)`
-- `capturar(comando, argumentos=None)`
-- `codigo_salida(resultado)`
-- `entorno(nombre, valor=None)`
-
-## Uso rápido
+## Ejemplo mínimo
 
 ```cobra
 usar "proceso"
+
+resultado = proceso.capturar("python", ["--version"])
+si proceso.codigo_salida(resultado) == 0:
+    imprimir(proceso.salida(resultado))
 ```
 
-Nombres públicos en español (fuente prevista: `__all__`).
+## Notas de error y degradación segura
 
-## Nota de seguridad
-
-`shell=False` debe ser el comportamiento por defecto para evitar interpolación accidental de comandos; solo activar shell explícitamente cuando sea indispensable y con entradas confiables.
+- Mantener `shell=False` salvo que sea imprescindible; activar shell con entradas no confiables puede permitir inyección de comandos.
+- Comandos inexistentes, permisos insuficientes o límites del entorno deben tratarse como fallos controlados revisando `codigo_salida` y `errores`.
