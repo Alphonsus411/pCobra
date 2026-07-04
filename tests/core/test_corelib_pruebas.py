@@ -1,13 +1,18 @@
 from __future__ import annotations
 
+import importlib
 import pytest
 
 import pcobra.corelibs.pruebas as pruebas
 
 
 def test_import_directo_y_all_presente() -> None:
+    modulo = importlib.import_module("pcobra.corelibs.pruebas")
+
+    assert modulo is pruebas
     assert isinstance(pruebas.__all__, list)
     assert "igual" in pruebas.__all__
+    assert callable(getattr(pruebas, "igual"))
 
 
 def test_aserciones_principales_exitosas() -> None:

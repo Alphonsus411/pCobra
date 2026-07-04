@@ -1,13 +1,18 @@
 from __future__ import annotations
 
+import importlib
 import pytest
 
 import pcobra.corelibs.ruta as ruta
 
 
 def test_import_directo_y_all_presente() -> None:
+    modulo = importlib.import_module("pcobra.corelibs.ruta")
+
+    assert modulo is ruta
     assert isinstance(ruta.__all__, list)
     assert "unir" in ruta.__all__
+    assert callable(getattr(ruta, "unir"))
 
 
 def test_unir_y_relativa_multiplataforma(tmp_path) -> None:

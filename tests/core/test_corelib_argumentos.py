@@ -1,13 +1,18 @@
 from __future__ import annotations
 
+import importlib
 import pytest
 
 import pcobra.corelibs.argumentos as argumentos
 
 
 def test_import_directo_y_all_presente() -> None:
+    modulo = importlib.import_module("pcobra.corelibs.argumentos")
+
+    assert modulo is argumentos
     assert isinstance(argumentos.__all__, list)
     assert "parsear_pares" in argumentos.__all__
+    assert callable(getattr(argumentos, "parsear_pares"))
 
 
 def test_parsear_pares_y_obtener_opcion_exitoso() -> None:

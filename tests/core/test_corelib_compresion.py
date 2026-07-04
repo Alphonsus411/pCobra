@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib
 from zipfile import ZipFile
 
 import pytest
@@ -8,8 +9,12 @@ import pcobra.corelibs.compresion as compresion
 
 
 def test_import_directo_y_all_presente() -> None:
+    modulo = importlib.import_module("pcobra.corelibs.compresion")
+
+    assert modulo is compresion
     assert isinstance(compresion.__all__, list)
     assert "crear_zip" in compresion.__all__
+    assert callable(getattr(compresion, "crear_zip"))
 
 
 def test_crear_listar_y_extraer_zip_con_tmp_path(tmp_path) -> None:

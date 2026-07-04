@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib
 from pathlib import Path
 
 import pytest
@@ -8,8 +9,12 @@ import pcobra.corelibs.temporal as temporal
 
 
 def test_import_directo_y_all_presente() -> None:
+    modulo = importlib.import_module("pcobra.corelibs.temporal")
+
+    assert modulo is temporal
     assert isinstance(temporal.__all__, list)
     assert "limpiar" in temporal.__all__
+    assert callable(getattr(temporal, "limpiar"))
 
 
 def test_archivo_y_directorio_temporal_se_limpian() -> None:

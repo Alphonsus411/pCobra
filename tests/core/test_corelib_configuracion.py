@@ -1,13 +1,18 @@
 from __future__ import annotations
 
+import importlib
 import pytest
 
 import pcobra.corelibs.configuracion as configuracion
 
 
 def test_import_directo_y_all_presente() -> None:
+    modulo = importlib.import_module("pcobra.corelibs.configuracion")
+
+    assert modulo is configuracion
     assert isinstance(configuracion.__all__, list)
     assert "leer_configuracion" in configuracion.__all__
+    assert callable(getattr(configuracion, "leer_configuracion"))
 
 
 def test_leer_ini_y_configuracion_con_tmp_path(tmp_path) -> None:

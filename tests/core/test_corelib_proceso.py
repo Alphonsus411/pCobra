@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib
 import sys
 
 import pytest
@@ -8,8 +9,12 @@ import pcobra.corelibs.proceso as proceso
 
 
 def test_import_directo_y_all_presente() -> None:
+    modulo = importlib.import_module("pcobra.corelibs.proceso")
+
+    assert modulo is proceso
     assert isinstance(proceso.__all__, list)
     assert "ejecutar" in proceso.__all__
+    assert callable(getattr(proceso, "ejecutar"))
 
 
 def test_ejecutar_python_portable_ok() -> None:
