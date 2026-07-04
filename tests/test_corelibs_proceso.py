@@ -1,3 +1,4 @@
+import subprocess
 import sys
 
 import pytest
@@ -60,3 +61,18 @@ def test_timeout_devuelve_error_determinista() -> None:
 def test_rechaza_argumentos_texto_plano() -> None:
     with pytest.raises(TypeError, match="argumentos debe ser una secuencia explícita"):
         proceso.ejecutar(sys.executable, argumentos="--version")
+
+
+def test_ejecutar_usa_shell_false_por_defecto_y_shell_true_explicito(monkeypatch) -> None:
+    llamadas = []
+
+    def fake_run(*args, **kwargs):
+        llamadas.append(kwargs["shell"])
+        return subprocess.CompletedProcess(args[0], 0, "", "")
+
+    monkeypatch.setattr(proceso.subprocess, "run", fake_run)
+
+    proceso.ejecutar("python")
+    proceso.ejecutar("echo ok", shell=True)
+
+    assert llamadas == [False, True]
