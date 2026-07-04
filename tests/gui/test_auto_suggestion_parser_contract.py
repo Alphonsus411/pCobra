@@ -26,8 +26,9 @@ func saludar(nombre):
     retornar nombre
 fin
 """,
-        "Libro §3.3 Sentencias y §3.4 Funciones: usar `retorno`, no `retornar`.",
-        id="retorno-en-funciones",
+        "Libro §3.3 Sentencias y §3.4 Funciones: preferir retorno como forma canónica; "
+        "retornar queda aceptado como forma no canónica.",
+        id="retorno-en-funciones-prefiere-forma-canonica",
     ),
     pytest.param(
         "usar_importacion_con_cadena",
@@ -60,6 +61,19 @@ fin
 ]
 
 
+RECOMENDACIONES_GUI_INVALIDAS = [
+    caso
+    for caso in RECOMENDACIONES_GUI
+    if caso.id in {"usar-sin-alias-como", "func-no-funcion"}
+]
+
+RECOMENDACIONES_GUI_ACEPTADAS_NO_RECOMENDADAS = [
+    caso
+    for caso in RECOMENDACIONES_GUI
+    if caso.id == "retorno-en-funciones-prefiere-forma-canonica"
+]
+
+
 def _parsear(codigo: str):
     tokens = Lexer(codigo).tokenizar()
     return Parser(tokens).parsear()
@@ -83,7 +97,7 @@ def test_recomendaciones_gui_solo_proponen_fragmentos_aceptados_por_parser(
 
 @pytest.mark.parametrize(
     ("nombre", "fragmento_sugerido", "fragmento_invalido", "regla_libro"),
-    RECOMENDACIONES_GUI,
+    RECOMENDACIONES_GUI_INVALIDAS,
 )
 def test_recomendaciones_gui_cubren_ejemplos_invalidos_sin_ampliar_parser(
     nombre: str,
@@ -96,6 +110,23 @@ def test_recomendaciones_gui_cubren_ejemplos_invalidos_sin_ampliar_parser(
     assert regla_libro
     with pytest.raises(ParserError):
         _parsear(fragmento_invalido)
+
+
+@pytest.mark.parametrize(
+    ("nombre", "fragmento_sugerido", "fragmento_no_recomendado", "regla_libro"),
+    RECOMENDACIONES_GUI_ACEPTADAS_NO_RECOMENDADAS,
+)
+def test_recomendaciones_gui_cubren_casos_aceptados_no_recomendados(
+    nombre: str,
+    fragmento_sugerido: str,
+    fragmento_no_recomendado: str,
+    regla_libro: str,
+) -> None:
+    assert nombre == "retorno_en_funciones"
+    assert "preferir retorno" in regla_libro
+    assert "retornar queda aceptado" in regla_libro
+    assert _parsear(fragmento_sugerido)
+    assert _parsear(fragmento_no_recomendado)
 
 
 @pytest.mark.parametrize(
@@ -228,45 +259,54 @@ def test_reglas_libro_programacion_declaran_fragmentos_soportados_por_parser() -
         assert isinstance(regla.aplicable_automaticamente, bool)
 
 
-@pytest.mark.parametrize(
-    ("rule_id", "fragmento_valido", "fragmento_invalido"),
-    [
-        pytest.param(
-            "LP-3.3-RETORNO-CANONICO",
-            """
+def test_regla_retorno_canonico_acepta_retorno_y_retornar_pero_prefiere_retorno() -> None:
+    from pcobra.ia.reglas_libro_programacion import REGLAS_LIBRO_PROGRAMACION
+
+    fragmento_retorno = """
 func saludar(nombre):
     retorno nombre
 fin
-""",
-            """
+"""
+    fragmento_retornar = """
 func saludar(nombre):
     retornar nombre
 fin
-""",
-            id="regla-retorno-no-retornar",
-        ),
-        pytest.param(
-            "LP-3.9-FUNCIONES-CON-FUNC",
-            """
+"""
+
+    regla = next(
+        regla
+        for regla in REGLAS_LIBRO_PROGRAMACION
+        if regla.id == "LP-3.3-RETORNO-CANONICO"
+    )
+
+    assert regla.fragmento_valido.strip() == fragmento_retorno.strip()
+    assert regla.fragmento_no_recomendado is not None
+    assert regla.fragmento_no_recomendado.strip() == fragmento_retornar.strip()
+    assert "retorno" in regla.descripcion
+    assert "retornar" in regla.fragmento_no_recomendado
+    assert _parsear(fragmento_retorno)
+    assert _parsear(fragmento_retornar)
+
+
+def test_regla_funciones_con_func_cubre_caso_invalido_real() -> None:
+    from pcobra.ia.reglas_libro_programacion import REGLAS_LIBRO_PROGRAMACION
+
+    fragmento_valido = """
 func calcular_total(subtotal, impuesto):
     retorno subtotal + impuesto
 fin
-""",
-            """
+"""
+    fragmento_invalido = """
 funcion calcular_total(subtotal, impuesto):
     retorno subtotal + impuesto
 fin
-""",
-            id="regla-func-no-funcion",
-        ),
-    ],
-)
-def test_reglas_libro_programacion_nuevas_cubren_casos_validos_e_invalidos(
-    rule_id: str, fragmento_valido: str, fragmento_invalido: str
-) -> None:
-    from pcobra.ia.reglas_libro_programacion import REGLAS_LIBRO_PROGRAMACION
+"""
 
-    regla = next(regla for regla in REGLAS_LIBRO_PROGRAMACION if regla.id == rule_id)
+    regla = next(
+        regla
+        for regla in REGLAS_LIBRO_PROGRAMACION
+        if regla.id == "LP-3.9-FUNCIONES-CON-FUNC"
+    )
     assert regla.fragmento_valido.strip() == fragmento_valido.strip()
     assert regla.fragmento_no_recomendado is not None
     assert regla.fragmento_no_recomendado.strip() == fragmento_invalido.strip()
