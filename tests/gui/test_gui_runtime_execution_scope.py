@@ -33,3 +33,16 @@ def test_ejecutar_codigo_carga_exports_de_datos_sin_importerror():
         pytest.fail(f'No se esperaba ImportError al cargar datos: {exc}')
 
     assert "datos cargado" in salida
+
+
+def test_ejecutar_codigo_usar_datos_expone_longitud_para_listas():
+    codigo = '''usar "datos"
+
+numeros = [1, 2, 3, 4]
+imprimir(longitud(numeros))
+'''
+
+    salida = runtime.ejecutar_codigo(codigo)
+
+    assert "No se encontraron símbolos exportables" not in salida
+    assert "4" in salida
