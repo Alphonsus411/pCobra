@@ -512,6 +512,7 @@ def _obtener_modulo_cobra_oficial_compat(nombre: str):
         and getattr(wrapper_oficial, "__module__", "") != "pcobra.core.usar_loader"
     ):
         modulo = wrapper_oficial(nombre)
+        return modulo
     else:
         modulo = obtener_modulo_cobra_oficial(nombre)
 
@@ -591,6 +592,14 @@ def obtener_modulo(nombre: str, *, permitir_instalacion: bool = True):
 
     resolver_cls = imports_resolver.CobraImportResolver
     resolver_parcheado = getattr(resolver_cls, "__module__", "") != "pcobra.cobra.imports.resolver"
+    if nombre in USAR_COBRA_PUBLIC_MODULES:
+        try:
+            return _obtener_modulo_cobra_oficial_compat(nombre)
+        except ModuleNotFoundError as oficial_exc:
+            raise ImportError(
+                f"No se pudo resolver el módulo Cobra permitido '{nombre}' en runtime."
+            ) from oficial_exc
+
     if nombre not in USAR_COBRA_PUBLIC_MODULES and resolver_parcheado:
         _resolution, modulo = resolver_cls().load_module(nombre, fallback_backend="python")
         return modulo
@@ -602,14 +611,6 @@ def obtener_modulo(nombre: str, *, permitir_instalacion: bool = True):
             _resolution, modulo = resolver_cls().load_module(nombre, fallback_backend="python")
             return modulo
         except Exception:
-            if nombre in USAR_COBRA_PUBLIC_MODULES:
-                try:
-                    return _obtener_modulo_cobra_oficial_compat(nombre)
-                except ModuleNotFoundError as oficial_exc:
-                    raise ImportError(
-                        f"No se pudo resolver el módulo Cobra permitido '{nombre}' en runtime."
-                    ) from oficial_exc
-
             if not permitir_instalacion or os.environ.get("COBRA_USAR_INSTALL") != "1":
                 raise RuntimeError(
                     f"Módulo '{nombre}' no instalado y la instalación automática está deshabilitada."
