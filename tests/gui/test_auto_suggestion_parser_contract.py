@@ -38,10 +38,9 @@ imprimir(es_finito(10))
 """,
         """
 usar "numero" como numero
-imprimir(numero.es_finito(10))
 """,
         "Libro §3.6 Módulos: `usar` no acepta alias `como`; usar importación plana.",
-        id="usar-sin-alias-como",
+        id="regla-usar-sin-alias-como",
     ),
     pytest.param(
         "funciones_con_func",
@@ -56,7 +55,7 @@ funcion calcular_total(subtotal, impuesto):
 fin
 """,
         "Libro §3.4 Funciones: el parser implementa `func`/`definir`.",
-        id="func-no-funcion",
+        id="regla-func-no-funcion",
     ),
 ]
 
@@ -64,7 +63,7 @@ fin
 RECOMENDACIONES_GUI_INVALIDAS = [
     caso
     for caso in RECOMENDACIONES_GUI
-    if caso.id in {"usar-sin-alias-como", "func-no-funcion"}
+    if caso.id in {"regla-usar-sin-alias-como", "regla-func-no-funcion"}
 ]
 
 RECOMENDACIONES_GUI_ACEPTADAS_NO_RECOMENDADAS = [
@@ -105,9 +104,12 @@ def test_recomendaciones_gui_cubren_ejemplos_invalidos_sin_ampliar_parser(
     fragmento_invalido: str,
     regla_libro: str,
 ) -> None:
+    """GUI/Libro no amplían el parser ni sugieren sintaxis no soportada."""
+
     assert nombre
     assert fragmento_sugerido != fragmento_invalido
     assert regla_libro
+    assert "retornar" not in fragmento_invalido
     with pytest.raises(ParserError):
         _parsear(fragmento_invalido)
 
