@@ -11,6 +11,7 @@ from pcobra.cobra.usar_policy import (
     USAR_COBRA_PUBLIC_MODULES,
     validar_contrato_modulos_canonicos_usar,
 )
+from pcobra.cobra.usar_loader import usar_modulo
 from pcobra.core.ast_nodes import NodoUsar
 from pcobra.core.interpreter import InterpretadorCobra
 
@@ -106,3 +107,10 @@ def test_repl_resuelve_nueva_corelib_con_nodo_usar_sin_parser_lexer(alias: str) 
     exportes = tuple(getattr(modulo, "__all__", ()))
     assert exportes
     assert any(nombre in interprete.variables for nombre in exportes)
+
+
+def test_usar_datos_expone_filtrar_callable_sin_callback_cobra() -> None:
+    exports = usar_modulo("datos")
+
+    assert "filtrar" in exports
+    assert callable(exports["filtrar"])
