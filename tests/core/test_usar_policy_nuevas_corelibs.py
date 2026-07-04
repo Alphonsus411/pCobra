@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 
 from pcobra.cobra.usar_policy import (
+    CANONICAL_MODULE_SURFACE_CONTRACTS,
     REPL_COBRA_MODULE_INTERNAL_PATH_MAP,
     USAR_COBRA_PUBLIC_MODULES,
     validar_contrato_modulos_canonicos_usar,
@@ -41,7 +42,9 @@ def _nombre_import_desde_ruta_interna(ruta_relativa: str) -> str:
 
 
 @pytest.mark.parametrize("alias", ALIASES_NUEVAS_CORELIBS)
-def test_alias_nueva_corelib_cumple_contrato_publico_y_modulo_importable(alias: str) -> None:
+def test_alias_nueva_corelib_cumple_contrato_publico_y_modulo_importable(
+    alias: str,
+) -> None:
     validar_contrato_modulos_canonicos_usar()
 
     assert alias in USAR_COBRA_PUBLIC_MODULES
@@ -49,11 +52,25 @@ def test_alias_nueva_corelib_cumple_contrato_publico_y_modulo_importable(alias: 
 
     ruta_relativa = REPL_COBRA_MODULE_INTERNAL_PATH_MAP[alias]
     ruta_interna = RAIZ_REPO / ruta_relativa
-    assert ruta_interna.exists(), f"No existe la ruta interna para usar {alias}: {ruta_relativa}"
+    assert (
+        ruta_interna.exists()
+    ), f"No existe la ruta interna para usar {alias}: {ruta_relativa}"
 
     modulo = importlib.import_module(_nombre_import_desde_ruta_interna(ruta_relativa))
     exportes = getattr(modulo, "__all__", None)
     assert exportes, f"El módulo {alias} debe definir __all__ no vacío"
+
+
+@pytest.mark.parametrize("alias", ALIASES_NUEVAS_CORELIBS)
+def test_contrato_superficie_nueva_corelib_coincide_exactamente_con_all(
+    alias: str,
+) -> None:
+    ruta_relativa = REPL_COBRA_MODULE_INTERNAL_PATH_MAP[alias]
+    modulo = importlib.import_module(_nombre_import_desde_ruta_interna(ruta_relativa))
+
+    assert tuple(CANONICAL_MODULE_SURFACE_CONTRACTS[alias].required_functions) == tuple(
+        modulo.__all__
+    )
 
 
 @pytest.mark.parametrize("alias", ALIASES_NUEVAS_CORELIBS)
