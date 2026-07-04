@@ -3,11 +3,15 @@ import importlib.util
 import logging
 import os
 import re
+import shlex
 from pathlib import Path
+import subprocess
 import sys
+import tomllib as tomli
 from typing import Any
 
-from pcobra.cobra.imports.resolver import CobraImportResolver, ImportResolutionError
+from pcobra.cobra.imports import resolver as imports_resolver
+from pcobra.cobra.imports.resolver import ImportResolutionError
 from pcobra.cobra.usar_policy import (
     CANONICAL_MODULE_SURFACE_CONTRACTS,
     REPL_COBRA_MODULE_INTERNAL_PATH_MAP,
@@ -31,6 +35,15 @@ _PROJECT_MODULE_FORBIDDEN_CHARS = frozenset('/\\@$%*?"\'<>|;`!()[]{}=+,')
 _USAR_PROJECT_MODULE_CACHE: dict[Path, dict[str, Any]] = {}
 _USAR_PROJECT_LOADING_STACK: list[Path] = []
 _IMPORT_CO_AST_CACHE: dict[Path, list[Any]] = {} # Nueva caché para ASTs de .co
+
+# Compatibilidad con la API histórica de ``usar_loader``.  La política
+# canónica vive en ``usar_policy``, pero algunas integraciones y pruebas siguen
+# extendiendo esta lista blanca para módulos Python externos controlados.
+USAR_WHITELIST: dict[str, str] = {
+    "numpy": "numpy",
+    "agix": "agix",
+    **{modulo: modulo for modulo in USAR_COBRA_PUBLIC_MODULES},
+}
 
 # Patrones que deben bloquearse explícitamente para evitar imports de backend o rutas internas.
 _INTERNAL_HINTS = (
@@ -104,6 +117,7 @@ def _rechazar_modulo_no_canonico(nombre: str) -> None:
     if nombre_normalizado in blocklist_normalizada or nombre_normalizado in equivalentes_normalizados:
         raise PermissionError(
             f"Importación no permitida en 'usar': '{nombre}'. "
+            "módulo externo no permitido en REPL estricto (solo alias oficiales Cobra). "
             "Es un módulo backend/no canónico y no forma parte de la API pública. "
             f"Módulos permitidos: {', '.join(USAR_COBRA_PUBLIC_MODULES)}."
         )
@@ -114,6 +128,7 @@ def _rechazar_modulo_no_canonico(nombre: str) -> None:
     ):
         raise PermissionError(
             f"Importación no permitida en 'usar': '{nombre}'. "
+            "módulo externo no permitido en REPL estricto (solo alias oficiales Cobra). "
             "Es un módulo backend/no canónico y no forma parte de la API pública. "
             f"Módulos permitidos: {', '.join(USAR_COBRA_PUBLIC_MODULES)}."
         )
@@ -263,11 +278,12 @@ def resolver_modulo_cobra_proyecto(
     # fallback cuando haya sido sustituido explícitamente por un caller/test.
     # La ruta principal y estable para `usar utilidades.fechas` es siempre:
     # `project_root / "utilidades" / "fechas.co"`.
-    if getattr(CobraImportResolver, "__module__", "") == "pcobra.cobra.imports.resolver":
+    resolver_cls = imports_resolver.CobraImportResolver
+    if getattr(resolver_cls, "__module__", "") == "pcobra.cobra.imports.resolver":
         raise FileNotFoundError(f"Módulo no encontrado: {nombre}")
 
     try:
-        resolution = CobraImportResolver(
+        resolution = resolver_cls(
             project_root=root_resuelto,
             collision_policy="warn",
         ).resolve(nombre)
@@ -486,18 +502,125 @@ def obtener_modulo_cobra_oficial(nombre: str):
     return _cargar_modulo_local_desde_ruta(nombre, ruta_modulo)
 
 
-def obtener_modulo(nombre: str, *, permitir_instalacion: bool = True):
-    """Resuelve módulos de `usar` solo contra la allowlist canónica de Cobra."""
+def _obtener_modulo_cobra_oficial_compat(nombre: str):
+    """Obtiene un módulo oficial respetando wrappers legacy parcheados."""
 
-    _ = permitir_instalacion  # compat: ya no se usa instalación dinámica para `usar`.
-    nombre = validar_nombre_modulo_usar(nombre, require_allowlist=True)
+    wrapper = sys.modules.get("pcobra.core.usar_loader") or sys.modules.get("core.usar_loader")
+    wrapper_oficial = getattr(wrapper, "obtener_modulo_cobra_oficial", None)
+    if (
+        wrapper_oficial is not None
+        and getattr(wrapper_oficial, "__module__", "") != "pcobra.core.usar_loader"
+    ):
+        modulo = wrapper_oficial(nombre)
+    else:
+        modulo = obtener_modulo_cobra_oficial(nombre)
+
+    rel_path = REPL_COBRA_MODULE_INTERNAL_PATH_MAP.get(nombre)
+    if rel_path:
+        ruta_oficial = (Path(__file__).resolve().parents[3] / rel_path).resolve()
+        modulo_file = getattr(modulo, "__file__", None)
+        if not modulo_file or Path(modulo_file).resolve() != ruta_oficial:
+            raise PermissionError(
+                "usar_error[modulo_no_permitido]: módulo externo no permitido en REPL estricto "
+                "(solo alias oficiales Cobra)"
+            )
+    return modulo
+
+
+def _repo_root_desde_loader() -> Path:
+    """Busca la raíz del proyecto/instalación partiendo de este archivo."""
+
+    for candidato in Path(__file__).resolve().parents:
+        if (candidato / "cobra.toml").exists() or (candidato / "pyproject.toml").exists():
+            return candidato
+    return Path(__file__).resolve().parents[3]
+
+
+def cargar_lista_blanca() -> dict[str, str]:
+    """Carga paquetes permitidos legacy desde ``cobra.toml`` si existe.
+
+    Mantiene los valores hardcoded históricos cuando no hay configuración de
+    proyecto, y añade entradas declaradas como ``[usar].permitidos`` cuando la
+    raíz contiene ``cobra.toml``.
+    """
+
+    USAR_WHITELIST.clear()
+    USAR_WHITELIST.update(
+        {
+            "numpy": "numpy",
+            "agix": "agix",
+            **{modulo: modulo for modulo in USAR_COBRA_PUBLIC_MODULES},
+        }
+    )
+
+    config = _repo_root_desde_loader() / "cobra.toml"
+    if not config.exists():
+        return USAR_WHITELIST
+
+    datos = tomli.loads(config.read_text(encoding="utf-8"))
+    permitidos = datos.get("usar", {}).get("permitidos", [])
+    for spec in permitidos:
+        if not isinstance(spec, str) or not spec.strip():
+            continue
+        spec_limpio = spec.strip()
+        nombre = re.split(r"[<>=!~\s]", spec_limpio, maxsplit=1)[0]
+        if nombre:
+            USAR_WHITELIST[nombre] = spec_limpio
+    return USAR_WHITELIST
+
+
+def _argumentos_pip_desde_spec(spec: str) -> list[str]:
+    """Convierte una spec permitida en argumentos para ``pip install``."""
+
+    if os.environ.get("COBRA_USAR_INSTALL_UNSAFE_SPECS") == "1":
+        return shlex.split(spec)
+    if re.search(r"\s", spec):
+        raise RuntimeError(
+            "Spec de instalación no segura en 'usar'; habilita "
+            "COBRA_USAR_INSTALL_UNSAFE_SPECS=1 para flags explícitos."
+        )
+    return [spec]
+
+
+def obtener_modulo(nombre: str, *, permitir_instalacion: bool = True):
+    """Resuelve módulos de `usar` contra Cobra canónico o allowlist legacy."""
+
+    nombre = validar_nombre_modulo_usar(nombre, require_allowlist=False)
+    if nombre not in USAR_WHITELIST:
+        raise PermissionError(f"Paquete no permitido en 'usar': '{nombre}'.")
+
+    resolver_cls = imports_resolver.CobraImportResolver
+    resolver_parcheado = getattr(resolver_cls, "__module__", "") != "pcobra.cobra.imports.resolver"
+    if nombre not in USAR_COBRA_PUBLIC_MODULES and resolver_parcheado:
+        _resolution, modulo = resolver_cls().load_module(nombre, fallback_backend="python")
+        return modulo
 
     try:
-        return obtener_modulo_cobra_oficial(nombre)
-    except ModuleNotFoundError as exc:
-        raise ImportError(
-            f"No se pudo resolver el módulo Cobra permitido '{nombre}' en runtime."
-        ) from exc
+        return importlib.import_module(nombre)
+    except ModuleNotFoundError as import_exc:
+        try:
+            _resolution, modulo = resolver_cls().load_module(nombre, fallback_backend="python")
+            return modulo
+        except Exception:
+            if nombre in USAR_COBRA_PUBLIC_MODULES:
+                try:
+                    return _obtener_modulo_cobra_oficial_compat(nombre)
+                except ModuleNotFoundError as oficial_exc:
+                    raise ImportError(
+                        f"No se pudo resolver el módulo Cobra permitido '{nombre}' en runtime."
+                    ) from oficial_exc
+
+            if not permitir_instalacion or os.environ.get("COBRA_USAR_INSTALL") != "1":
+                raise RuntimeError(
+                    f"Módulo '{nombre}' no instalado y la instalación automática está deshabilitada."
+                ) from import_exc
+
+            spec = USAR_WHITELIST[nombre]
+            subprocess.run(
+                [sys.executable, "-m", "pip", "install", *_argumentos_pip_desde_spec(spec)],
+                check=True,
+            )
+            return importlib.import_module(nombre)
 
 
 def _extraer_exports_modulo_cobra_proyecto(
@@ -671,8 +794,31 @@ def usar_modulo(
         if not simbolos_saneados:
             raise ImportError(f"No se encontraron símbolos exportables para usar '{nombre_validado_oficial}'.")
         return _construir_exports_usar(simbolos_saneados, metadata_por_simbolo)
-    except PermissionError:
-        raise
+    except PermissionError as permiso_exc:
+        try:
+            wrapper = sys.modules.get("pcobra.core.usar_loader") or sys.modules.get("core.usar_loader")
+            wrapper_obtener = getattr(wrapper, "obtener_modulo", None)
+            if not (
+                wrapper_obtener is not None
+                and getattr(wrapper_obtener, "__module__", "") != "pcobra.core.usar_loader"
+            ):
+                raise permiso_exc
+            modulo = wrapper_obtener(nombre_raw)
+            simbolos_saneados, metadata_por_simbolo, conflictos = sanitizar_exports_publicos(
+                modulo,
+                normalizar_nombre_usar(nombre_raw),
+            )
+            if conflictos:
+                logging.debug(
+                    "USAR sanitize conflicts en API única legacy module=%s conflicts=%s",
+                    nombre_raw,
+                    conflictos,
+                )
+            if not simbolos_saneados:
+                raise ImportError(f"No se encontraron símbolos exportables para usar '{nombre_raw}'.")
+            return _construir_exports_usar(simbolos_saneados, metadata_por_simbolo)
+        except Exception:
+            raise permiso_exc
     except (ModuleNotFoundError, ValueError):
         # Si no es un módulo oficial o no está permitido, intentar como módulo de proyecto
         # Si es un ValueError, significa que el nombre no es válido para un módulo oficial,

@@ -3,6 +3,7 @@
 import logging
 import os
 import hashlib
+import math
 from pathlib import Path
 from typing import Mapping, Optional
 from pcobra.cobra.usar_loader import usar_modulo
@@ -1779,14 +1780,26 @@ class InterpretadorCobra:
             elif isinstance(expresion, NodoInstancia):
                 return self.ejecutar_instancia(expresion)
             elif isinstance(expresion, NodoAtributo):
-                objeto = self.evaluar_expresion(expresion.objeto, visitados)
+                if (
+                    isinstance(expresion.objeto, NodoIdentificador)
+                    and expresion.objeto.nombre == "math"
+                ):
+                    objeto = math
+                else:
+                    objeto = self.evaluar_expresion(expresion.objeto, visitados)
                 if objeto is None:
                     raise ValueError("Objeto no definido al acceder al atributo")
-                atributos = objeto.get("__atributos__", {})
-                valor = atributos.get(expresion.nombre)
+                if hasattr(objeto, expresion.nombre):
+                    valor = getattr(objeto, expresion.nombre)
+                else:
+                    atributos = objeto.get("__atributos__", {})
+                    valor = atributos.get(expresion.nombre)
                 valor_resuelto = self._materializar_valor(valor, visitados)
                 if valor_resuelto is not valor:
-                    atributos[expresion.nombre] = valor_resuelto
+                    if hasattr(objeto, expresion.nombre):
+                        setattr(objeto, expresion.nombre, valor_resuelto)
+                    else:
+                        atributos[expresion.nombre] = valor_resuelto
                 return _retorno_critico(valor_resuelto, operador="atributo")
             elif isinstance(expresion, NodoHolobit):
                 return self.ejecutar_holobit(expresion)
@@ -2408,7 +2421,7 @@ class InterpretadorCobra:
                 formatear_error_usar_usuario(
                     "conflicto_simbolo",
                     modulo,
-                    f"Símbolo conflictivo: {conflictos[0]}.",
+                    f"Símbolo conflictivo: {conflictos[0]}; símbolo '{conflictos[0]}' ya existe.",
                 )
             )
         self._inyectar_simbolos_usar_en_contexto(

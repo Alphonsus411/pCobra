@@ -9,7 +9,6 @@ from pcobra.cobra.core.lexer import TipoToken, Token
 from .utils import (
     PALABRAS_RESERVADAS,
     ALIAS_METODOS_ESPECIALES,
-    sugerir_palabra_clave,
 )
 
 from pcobra.cobra.core.ast_nodes import (
@@ -346,11 +345,6 @@ class ClassicParser:
             handler = self._factories.get(token.tipo)
             if handler:
                 return handler()
-
-            if token.tipo == TipoToken.IDENTIFICADOR:
-                sugerencia = sugerir_palabra_clave(token.valor)
-                if sugerencia and sugerencia != token.valor:
-                    raise ParserError(f"Token inesperado. ¿Quiso decir '{sugerencia}'?")
 
             # Posibles expresiones o asignaciones/invocaciones
             if token.tipo == TipoToken.ATRIBUTO:
@@ -1652,6 +1646,16 @@ class ClassicParser:
                 siguiente_token = self.token_siguiente()
                 if siguiente_token and siguiente_token.tipo == TipoToken.LPAREN:
                     return self.llamada_funcion()
+                if siguiente_token and siguiente_token.tipo == TipoToken.PUNTO:
+                    objeto = NodoIdentificador(token.valor)
+                    self.comer(TipoToken.IDENTIFICADOR)
+                    while self.token_actual().tipo == TipoToken.PUNTO:
+                        self.comer(TipoToken.PUNTO)
+                        if self.token_actual().tipo != TipoToken.IDENTIFICADOR:
+                            raise ParserError("Se esperaba el nombre del atributo")
+                        objeto = NodoAtributo(objeto, self.token_actual().valor)
+                        self.comer(TipoToken.IDENTIFICADOR)
+                    return objeto
                 self.comer(TipoToken.IDENTIFICADOR)
                 return NodoIdentificador(token.valor)
         elif token.tipo == TipoToken.HOLOBIT:
