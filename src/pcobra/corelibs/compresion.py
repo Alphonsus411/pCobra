@@ -10,7 +10,7 @@ import os
 from pathlib import Path, PurePosixPath
 from zipfile import ZipFile
 
-PathLike = str | Path
+PathLike = str | os.PathLike[str]
 
 __all__ = ["crear_zip", "extraer_zip", "listar_zip"]
 
@@ -34,7 +34,7 @@ def crear_zip(
             raise FileNotFoundError(f"La ruta a comprimir no existe: {ruta}")
 
     base_resuelta = _resolver_base(rutas_normalizadas, base)
-    destino_zip = Path(destino)
+    destino_zip = _validar_ruta(destino, "destino")
     destino_zip.parent.mkdir(parents=True, exist_ok=True)
 
     nombres: list[str] = []
@@ -55,11 +55,11 @@ def extraer_zip(origen: PathLike, destino: PathLike) -> list[str]:
     contra el directorio destino y se rechaza si queda fuera de él.
     """
 
-    origen_zip = Path(origen)
+    origen_zip = _validar_ruta(origen, "origen")
     if not origen_zip.exists():
         raise FileNotFoundError(f"El ZIP de origen no existe: {origen_zip}")
 
-    destino_base = Path(destino).resolve()
+    destino_base = _validar_ruta(destino, "destino").resolve()
     destino_base.mkdir(parents=True, exist_ok=True)
     rutas_extraidas: list[str] = []
 
@@ -83,7 +83,7 @@ def extraer_zip(origen: PathLike, destino: PathLike) -> list[str]:
 def listar_zip(origen: PathLike) -> list[str]:
     """Devuelve la lista simple de nombres incluidos en ``origen``."""
 
-    origen_zip = Path(origen)
+    origen_zip = _validar_ruta(origen, "origen")
     if not origen_zip.exists():
         raise FileNotFoundError(f"El ZIP de origen no existe: {origen_zip}")
 
@@ -91,10 +91,29 @@ def listar_zip(origen: PathLike) -> list[str]:
         return archivo_zip.namelist()
 
 
-def _normalizar_rutas(rutas: PathLike | list[PathLike] | tuple[PathLike, ...]) -> list[Path]:
-    if isinstance(rutas, (str, Path)):
-        return [Path(rutas)]
-    return [Path(ruta) for ruta in rutas]
+def _normalizar_rutas(
+    rutas: PathLike | list[PathLike] | tuple[PathLike, ...],
+) -> list[Path]:
+    if isinstance(rutas, (str, os.PathLike)):
+        return [_validar_ruta(rutas, "rutas")]
+    if not isinstance(rutas, (list, tuple)):
+        raise TypeError("rutas debe ser una ruta o una lista/tupla de rutas")
+    return [
+        _validar_ruta(ruta, f"rutas[{indice}]") for indice, ruta in enumerate(rutas)
+    ]
+
+
+def _validar_ruta(ruta: PathLike, nombre_argumento: str) -> Path:
+    if not isinstance(ruta, (str, os.PathLike)):
+        raise TypeError(
+            f"{nombre_argumento} debe ser una ruta de texto o compatible con os.PathLike"
+        )
+    texto = os.fspath(ruta)
+    if not isinstance(texto, str):
+        raise TypeError(f"{nombre_argumento} debe representar una ruta de texto")
+    if texto == "":
+        raise ValueError(f"{nombre_argumento} no puede estar vacía")
+    return Path(texto)
 
 
 def _resolver_base(rutas: list[Path], base: PathLike | None) -> Path:
@@ -102,7 +121,7 @@ def _resolver_base(rutas: list[Path], base: PathLike | None) -> Path:
         raise ValueError("Debe indicarse al menos una ruta para comprimir")
 
     if base is not None:
-        base_resuelta = Path(base).resolve()
+        base_resuelta = _validar_ruta(base, "base").resolve()
         if not base_resuelta.exists():
             raise FileNotFoundError(f"La base no existe: {base_resuelta}")
         if not base_resuelta.is_dir():

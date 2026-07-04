@@ -6,7 +6,6 @@ import re
 from collections.abc import Callable
 from typing import Any
 
-
 __all__ = [
     "buscar",
     "coincidir",
@@ -16,6 +15,12 @@ __all__ = [
 ]
 
 _Reemplazo = str | Callable[[re.Match[str]], str]
+
+
+def _validar_texto(valor: str, nombre_argumento: str) -> str:
+    if not isinstance(valor, str):
+        raise TypeError(f"{nombre_argumento} debe ser texto")
+    return valor
 
 
 def _error_patron(exc: re.error) -> ValueError:
@@ -28,7 +33,9 @@ def buscar(patron: str, texto: str, *, flags: int = 0) -> str | None:
     """Busca ``patron`` en ``texto`` y devuelve el texto coincidente o ``None``."""
 
     try:
-        coincidencia = re.search(patron, texto, flags)
+        coincidencia = re.search(
+            _validar_texto(patron, "patron"), _validar_texto(texto, "texto"), flags
+        )
     except re.error as exc:
         raise _error_patron(exc) from None
     if coincidencia is None:
@@ -40,7 +47,9 @@ def coincidir(patron: str, texto: str, *, flags: int = 0) -> str | None:
     """Comprueba si ``texto`` empieza con ``patron`` y devuelve la coincidencia."""
 
     try:
-        coincidencia = re.match(patron, texto, flags)
+        coincidencia = re.match(
+            _validar_texto(patron, "patron"), _validar_texto(texto, "texto"), flags
+        )
     except re.error as exc:
         raise _error_patron(exc) from None
     if coincidencia is None:
@@ -59,7 +68,13 @@ def reemplazar(
     """Reemplaza coincidencias de ``patron`` en ``texto`` respetando ``limite``."""
 
     try:
-        return re.sub(patron, reemplazo, texto, count=limite, flags=flags)
+        return re.sub(
+            _validar_texto(patron, "patron"),
+            reemplazo,
+            _validar_texto(texto, "texto"),
+            count=limite,
+            flags=flags,
+        )
     except re.error as exc:
         raise _error_patron(exc) from None
 
@@ -68,7 +83,12 @@ def dividir(patron: str, texto: str, *, maximo: int = 0, flags: int = 0) -> list
     """Divide ``texto`` usando ``patron`` como separador."""
 
     try:
-        return re.split(patron, texto, maxsplit=maximo, flags=flags)
+        return re.split(
+            _validar_texto(patron, "patron"),
+            _validar_texto(texto, "texto"),
+            maxsplit=maximo,
+            flags=flags,
+        )
     except re.error as exc:
         raise _error_patron(exc) from None
 
@@ -77,6 +97,10 @@ def encontrar_todos(patron: str, texto: str, *, flags: int = 0) -> list[Any]:
     """Devuelve una lista con todas las coincidencias de ``patron`` en ``texto``."""
 
     try:
-        return list(re.findall(patron, texto, flags))
+        return list(
+            re.findall(
+                _validar_texto(patron, "patron"), _validar_texto(texto, "texto"), flags
+            )
+        )
     except re.error as exc:
         raise _error_patron(exc) from None
