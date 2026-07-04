@@ -5,6 +5,7 @@ from __future__ import annotations
 import configparser
 import importlib
 import importlib.util
+import os
 from pathlib import Path
 from types import ModuleType
 from typing import Any
@@ -18,6 +19,7 @@ __all__ = [
 
 _TOML_NO_SOPORTADO = "TOML no está soportado en este entorno de Python: falta tomllib"
 _FORMATOS_SOPORTADOS = ".toml, .ini, .cfg"
+PathLike = str | os.PathLike[str]
 
 
 def toml_disponible() -> bool:
@@ -26,7 +28,7 @@ def toml_disponible() -> bool:
     return importlib.util.find_spec("tomllib") is not None
 
 
-def leer_toml(ruta: str | Path) -> dict[str, Any]:
+def leer_toml(ruta: PathLike) -> dict[str, Any]:
     """Lee un archivo TOML desde ``ruta`` usando ``tomllib`` de la biblioteca estándar."""
 
     ruta_configuracion = _validar_archivo_existente(ruta)
@@ -36,7 +38,7 @@ def leer_toml(ruta: str | Path) -> dict[str, Any]:
         return tomllib.load(archivo)
 
 
-def leer_ini(ruta: str | Path) -> dict[str, dict[str, str]]:
+def leer_ini(ruta: PathLike) -> dict[str, dict[str, str]]:
     """Lee un archivo INI/CFG y devuelve sus secciones como diccionarios."""
 
     ruta_configuracion = _validar_archivo_existente(ruta)
@@ -55,7 +57,7 @@ def leer_ini(ruta: str | Path) -> dict[str, dict[str, str]]:
     return configuracion
 
 
-def leer_configuracion(ruta: str | Path) -> dict[str, Any] | dict[str, dict[str, str]]:
+def leer_configuracion(ruta: PathLike) -> dict[str, Any] | dict[str, dict[str, str]]:
     """Lee ``ruta`` eligiendo el parser por extensión: ``.toml``, ``.ini`` o ``.cfg``."""
 
     ruta_configuracion = _validar_archivo_existente(ruta)
@@ -72,10 +74,19 @@ def leer_configuracion(ruta: str | Path) -> dict[str, Any] | dict[str, dict[str,
     )
 
 
-def _validar_archivo_existente(ruta: str | Path) -> Path:
-    ruta_configuracion = Path(ruta)
+def _validar_archivo_existente(ruta: PathLike) -> Path:
+    if not isinstance(ruta, (str, os.PathLike)):
+        raise TypeError("ruta debe ser una ruta de texto o compatible con os.PathLike")
+    texto = os.fspath(ruta)
+    if not isinstance(texto, str):
+        raise TypeError("ruta debe representar una ruta de texto")
+    if texto == "":
+        raise ValueError("ruta no puede estar vacía")
+    ruta_configuracion = Path(texto)
     if not ruta_configuracion.is_file():
-        raise FileNotFoundError(f"Archivo de configuración no encontrado: {ruta_configuracion}")
+        raise FileNotFoundError(
+            f"Archivo de configuración no encontrado: {ruta_configuracion}"
+        )
     return ruta_configuracion
 
 
