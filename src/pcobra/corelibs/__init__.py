@@ -198,6 +198,13 @@ from .sistema import (
     obtener_env,
     listar_dir,
 )
+from .pruebas import (
+    igual,
+    verdadero,
+    falso,
+    contiene,
+    lanza_error,
+)
 from .asincrono import (
     recolectar,
     iterar_completadas,
@@ -412,6 +419,11 @@ __all__ = [
     "proteger_tarea",
     "ejecutar_en_hilo",
     "grupo_tareas",
+    "igual",
+    "verdadero",
+    "falso",
+    "contiene",
+    "lanza_error",
 ]
 
 quitar_prefijo.__doc__ = (
