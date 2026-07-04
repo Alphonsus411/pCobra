@@ -1,13 +1,18 @@
 from __future__ import annotations
 
+import importlib
 import pytest
 
 import pcobra.corelibs.regex as regex
 
 
 def test_import_directo_y_all_presente() -> None:
+    modulo = importlib.import_module("pcobra.corelibs.regex")
+
+    assert modulo is regex
     assert isinstance(regex.__all__, list)
     assert "buscar" in regex.__all__
+    assert callable(getattr(regex, "buscar"))
 
 
 def test_buscar_reemplazar_y_encontrar_todos_exitosos() -> None:
