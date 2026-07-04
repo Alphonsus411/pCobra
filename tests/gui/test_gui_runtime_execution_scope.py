@@ -46,3 +46,12 @@ imprimir(longitud(numeros))
 
     assert "No se encontraron símbolos exportables" not in salida
     assert "4" in salida
+
+
+def test_ejecutar_codigo_usar_numero_expone_es_finito_en_ruta_gui_runtime():
+    codigo = 'usar "numero"\nimprimir(es_finito(10))'
+
+    salida = runtime.ejecutar_codigo(codigo)
+    salida_normalizada = salida.strip().lower()
+
+    assert salida_normalizada == "verdadero" or "verdadero" in salida_normalizada
