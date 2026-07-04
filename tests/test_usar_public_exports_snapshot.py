@@ -4,7 +4,11 @@ import ast
 import json
 from pathlib import Path
 
-from pcobra.cobra.usar_policy import CANONICAL_MODULE_SURFACE_CONTRACTS, USAR_COBRA_PUBLIC_MODULES
+from pcobra.cobra.usar_policy import (
+    CANONICAL_MODULE_SURFACE_CONTRACTS,
+    REPL_COBRA_MODULE_INTERNAL_PATH_MAP,
+    USAR_COBRA_PUBLIC_MODULES,
+)
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SNAPSHOT_PATH = REPO_ROOT / "tests" / "data" / "usar_exports_snapshot.json"
@@ -38,10 +42,12 @@ def _extract_all_from_source(path: Path) -> list[str]:
 def _actual_exports_snapshot() -> dict[str, dict[str, list[str]]]:
     out: dict[str, dict[str, list[str]]] = {"corelibs": {}, "standard_library": {}}
     for module in USAR_COBRA_PUBLIC_MODULES:
-        out["corelibs"][module] = _extract_all_from_source(REPO_ROOT / "src" / "pcobra" / "corelibs" / f"{module}.py")
-        out["standard_library"][module] = _extract_all_from_source(
-            REPO_ROOT / "src" / "pcobra" / "standard_library" / f"{module}.py"
-        )
+        canonical_module_path = REPO_ROOT / REPL_COBRA_MODULE_INTERNAL_PATH_MAP[module]
+        out["corelibs"][module] = _extract_all_from_source(canonical_module_path)
+
+        standard_library_path = REPO_ROOT / "src" / "pcobra" / "standard_library" / f"{module}.py"
+        if standard_library_path.exists():
+            out["standard_library"][module] = _extract_all_from_source(standard_library_path)
     return out
 
 
