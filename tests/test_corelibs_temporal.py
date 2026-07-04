@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 import pytest
@@ -57,3 +58,39 @@ def test_argumentos_invalidos_generan_mensajes_deterministas() -> None:
 
     with pytest.raises(ValueError, match="ruta no puede estar vacía"):
         temporal.limpiar("")
+
+
+def test_archivo_temporal_cierra_descriptor_con_mkstemp_monkeypatch(
+    monkeypatch, tmp_path: Path
+) -> None:
+    ruta = tmp_path / "cerrado.tmp"
+    descriptor = os.open(ruta, os.O_CREAT | os.O_RDWR)
+    cerrar_real = os.close
+    cerrados = []
+
+    def fake_mkstemp(*, prefix=None, suffix=None, text=True):
+        return descriptor, str(ruta)
+
+    def fake_close(fd: int) -> None:
+        cerrados.append(fd)
+        cerrar_real(fd)
+
+    monkeypatch.setattr(temporal.tempfile, "mkstemp", fake_mkstemp)
+    monkeypatch.setattr(temporal.os, "close", fake_close)
+
+    assert temporal.archivo_temporal() == str(ruta)
+    assert cerrados == [descriptor]
+
+
+def test_limpiar_no_falla_si_ruta_desaparece_durante_eliminacion(
+    monkeypatch, tmp_path: Path
+) -> None:
+    archivo = tmp_path / "desaparece.txt"
+    archivo.write_text("cobra", encoding="utf-8")
+
+    def fake_unlink(self):
+        raise FileNotFoundError
+
+    monkeypatch.setattr(Path, "unlink", fake_unlink)
+
+    assert temporal.limpiar(archivo) is False

@@ -24,3 +24,16 @@ def test_hash_y_token_hexadecimal_exitosos() -> None:
 def test_token_rechaza_tamano_no_positivo() -> None:
     with pytest.raises(ValueError):
         cripto.token_seguro(0)
+
+
+def test_comparar_seguro_delega_en_compare_digest(monkeypatch) -> None:
+    llamadas = []
+
+    def fake_compare_digest(a: bytes, b: bytes) -> bool:
+        llamadas.append((a, b))
+        return True
+
+    monkeypatch.setattr(cripto.hmac, "compare_digest", fake_compare_digest)
+
+    assert cripto.comparar_seguro("cobra", b"cobra") is True
+    assert llamadas == [(b"cobra", b"cobra")]

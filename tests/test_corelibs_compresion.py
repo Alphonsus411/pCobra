@@ -43,7 +43,13 @@ def test_validar_origen_para_listar_y_extraer(tmp_path: Path) -> None:
 
 @pytest.mark.parametrize(
     "nombre",
-    ["../escape.txt", "..\\escape.txt", "/tmp/escape.txt", "C:/escape.txt"],
+    [
+        "../escape.txt",
+        "..\\escape.txt",
+        "docs/../escape.txt",
+        "/tmp/escape.txt",
+        "C:/escape.txt",
+    ],
 )
 def test_extraer_zip_rechaza_path_traversal(tmp_path: Path, nombre: str) -> None:
     origen = tmp_path / "malicioso.zip"
