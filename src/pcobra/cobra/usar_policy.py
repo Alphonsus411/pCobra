@@ -42,7 +42,9 @@ USAR_BACKEND_BLOCKLIST: frozenset[str] = frozenset(
     }
 )
 
-REPL_COBRA_MODULE_MAP: dict[str, str] = {modulo: modulo for modulo in USAR_COBRA_PUBLIC_MODULES}
+REPL_COBRA_MODULE_MAP: dict[str, str] = {
+    modulo: modulo for modulo in USAR_COBRA_PUBLIC_MODULES
+}
 USAR_COBRA_FACING_MODULE_FLAGS: dict[str, bool] = {
     modulo: True for modulo in USAR_COBRA_PUBLIC_MODULES
 }
@@ -82,8 +84,9 @@ def _build_repl_cobra_module_internal_path_map() -> dict[str, str]:
 
 
 # Fuente única de verdad: alias canónico `usar` -> ruta interna oficial.
-REPL_COBRA_MODULE_INTERNAL_PATH_MAP: dict[str, str] = _build_repl_cobra_module_internal_path_map()
-
+REPL_COBRA_MODULE_INTERNAL_PATH_MAP: dict[str, str] = (
+    _build_repl_cobra_module_internal_path_map()
+)
 
 
 def validar_contrato_modulos_canonicos_usar() -> None:
@@ -121,7 +124,9 @@ def validar_contrato_modulos_canonicos_usar() -> None:
 
     repo_root = Path(__file__).resolve().parents[3]
     for alias, rel_path in REPL_COBRA_MODULE_INTERNAL_PATH_MAP.items():
-        if not rel_path.startswith(("src/pcobra/corelibs/", "src/pcobra/standard_library/")):
+        if not rel_path.startswith(
+            ("src/pcobra/corelibs/", "src/pcobra/standard_library/")
+        ):
             raise RuntimeError(
                 "[STARTUP CONTRACT] Las rutas internas oficiales de `usar` deben "
                 f"estar en corelibs/standard_library; alias={alias} ruta={rel_path}."
@@ -146,7 +151,14 @@ class CanonicalModuleSurfaceContract:
 
 CANONICAL_MODULE_SURFACE_CONTRACTS: dict[str, CanonicalModuleSurfaceContract] = {
     "numero": CanonicalModuleSurfaceContract(
-        required_functions=("absoluto", "redondear", "es_par", "aleatorio", "factorial", "promedio"),
+        required_functions=(
+            "absoluto",
+            "redondear",
+            "es_par",
+            "aleatorio",
+            "factorial",
+            "promedio",
+        ),
         allowed_aliases={},
         forbidden_symbols=("math", "random"),
     ),
@@ -166,7 +178,12 @@ CANONICAL_MODULE_SURFACE_CONTRACTS: dict[str, CanonicalModuleSurfaceContract] = 
         forbidden_symbols=("inspect", "product"),
     ),
     "asincrono": CanonicalModuleSurfaceContract(
-        required_functions=("proteger_tarea", "limitar_tiempo", "recolectar", "grupo_tareas"),
+        required_functions=(
+            "proteger_tarea",
+            "limitar_tiempo",
+            "recolectar",
+            "grupo_tareas",
+        ),
         allowed_aliases={},
         forbidden_symbols=("asyncio",),
     ),
@@ -186,7 +203,13 @@ CANONICAL_MODULE_SURFACE_CONTRACTS: dict[str, CanonicalModuleSurfaceContract] = 
         forbidden_symbols=("time", "datetime"),
     ),
     "red": CanonicalModuleSurfaceContract(
-        required_functions=("obtener_url", "enviar_post", "obtener_url_async", "obtener_json", "obtener_url_texto"),
+        required_functions=(
+            "obtener_url",
+            "enviar_post",
+            "obtener_url_async",
+            "obtener_json",
+            "obtener_url_texto",
+        ),
         allowed_aliases={"obtener_url_texto": "obtener_url"},
         forbidden_symbols=("requests", "httpx"),
     ),
@@ -206,27 +229,62 @@ CANONICAL_MODULE_SURFACE_CONTRACTS: dict[str, CanonicalModuleSurfaceContract] = 
         forbidden_symbols=("_SDKHolobit", "Holobit", "holobit_sdk"),
     ),
     "ruta": CanonicalModuleSurfaceContract(
-        required_functions=("unir", "normalizar", "nombre", "extension"),
+        required_functions=(
+            "unir",
+            "normalizar",
+            "nombre",
+            "extension",
+            "padre",
+            "existe",
+            "es_absoluta",
+            "absoluta",
+            "relativa",
+        ),
         allowed_aliases={},
         forbidden_symbols=("Path",),
     ),
     "serializacion": CanonicalModuleSurfaceContract(
-        required_functions=("codificar_json", "decodificar_json", "leer_json", "escribir_json"),
+        required_functions=(
+            "codificar_json",
+            "decodificar_json",
+            "leer_json",
+            "escribir_json",
+            "leer_csv",
+            "escribir_csv",
+        ),
         allowed_aliases={},
         forbidden_symbols=("json", "csv"),
     ),
     "proceso": CanonicalModuleSurfaceContract(
-        required_functions=("ejecutar", "capturar", "codigo_salida", "salida"),
+        required_functions=(
+            "ejecutar",
+            "capturar",
+            "codigo_salida",
+            "salida",
+            "errores",
+        ),
         allowed_aliases={},
         forbidden_symbols=("subprocess",),
     ),
     "registro": CanonicalModuleSurfaceContract(
-        required_functions=("configurar", "debug", "info", "aviso", "error"),
+        required_functions=(
+            "configurar",
+            "debug",
+            "info",
+            "aviso",
+            "error",
+            "obtener_registrador",
+        ),
         allowed_aliases={},
         forbidden_symbols=("logging",),
     ),
     "argumentos": CanonicalModuleSurfaceContract(
-        required_functions=("obtener_argumentos", "contiene_flag", "obtener_opcion", "parsear_pares"),
+        required_functions=(
+            "obtener_argumentos",
+            "contiene_flag",
+            "obtener_opcion",
+            "parsear_pares",
+        ),
         allowed_aliases={},
         forbidden_symbols=("sys",),
     ),
@@ -241,12 +299,24 @@ CANONICAL_MODULE_SURFACE_CONTRACTS: dict[str, CanonicalModuleSurfaceContract] = 
         forbidden_symbols=("tempfile",),
     ),
     "cripto": CanonicalModuleSurfaceContract(
-        required_functions=("sha256", "sha512", "comparar_seguro", "token_seguro"),
+        required_functions=(
+            "sha256",
+            "sha512",
+            "comparar_seguro",
+            "token_seguro",
+            "token_hexadecimal",
+        ),
         allowed_aliases={},
         forbidden_symbols=("hashlib", "secrets", "hmac"),
     ),
     "regex": CanonicalModuleSurfaceContract(
-        required_functions=("buscar", "coincidir", "reemplazar", "dividir", "encontrar_todos"),
+        required_functions=(
+            "buscar",
+            "coincidir",
+            "reemplazar",
+            "dividir",
+            "encontrar_todos",
+        ),
         allowed_aliases={},
         forbidden_symbols=("re",),
     ),
@@ -256,7 +326,12 @@ CANONICAL_MODULE_SURFACE_CONTRACTS: dict[str, CanonicalModuleSurfaceContract] = 
         forbidden_symbols=("zipfile",),
     ),
     "configuracion": CanonicalModuleSurfaceContract(
-        required_functions=("leer_toml", "leer_ini", "toml_disponible", "leer_configuracion"),
+        required_functions=(
+            "leer_toml",
+            "leer_ini",
+            "toml_disponible",
+            "leer_configuracion",
+        ),
         allowed_aliases={},
         forbidden_symbols=("configparser", "tomllib"),
     ),
@@ -465,7 +540,9 @@ def validar_paridad_superficie_publica_modulos_canonicos() -> None:
 
     canonicos = tuple(USAR_COBRA_PUBLIC_MODULES)
     if set(CANONICAL_MODULE_SURFACE_CONTRACTS) != set(canonicos):
-        raise RuntimeError("[STARTUP CONTRACT] Contratos de superficie incompletos o con módulos extra")
+        raise RuntimeError(
+            "[STARTUP CONTRACT] Contratos de superficie incompletos o con módulos extra"
+        )
 
     for module_name in canonicos:
         contract = CANONICAL_MODULE_SURFACE_CONTRACTS[module_name]
@@ -474,7 +551,9 @@ def validar_paridad_superficie_publica_modulos_canonicos() -> None:
         module = obtener_modulo_cobra_oficial(module_name)
         exports = tuple(getattr(module, "__all__", ()))
         if not exports:
-            raise RuntimeError(f"[STARTUP CONTRACT] {module_name} debe declarar __all__")
+            raise RuntimeError(
+                f"[STARTUP CONTRACT] {module_name} debe declarar __all__"
+            )
 
         expected_exports = USAR_RUNTIME_EXPORT_OVERRIDES.get(module_name)
         if expected_exports is not None and tuple(exports) != tuple(expected_exports):
@@ -482,19 +561,27 @@ def validar_paridad_superficie_publica_modulos_canonicos() -> None:
                 f"[STARTUP CONTRACT] {module_name} debe exportar exactamente {expected_exports} y en ese orden"
             )
 
-        missing_required = [name for name in contract.required_functions if name not in exports]
+        missing_required = [
+            name for name in contract.required_functions if name not in exports
+        ]
         if missing_required:
             raise RuntimeError(
                 f"[STARTUP CONTRACT] {module_name} no exporta funciones requeridas: {missing_required}"
             )
 
         missing_aliases = [
-            alias for alias, target in contract.allowed_aliases.items() if alias not in exports or target not in exports
+            alias
+            for alias, target in contract.allowed_aliases.items()
+            if alias not in exports or target not in exports
         ]
         if missing_aliases:
-            raise RuntimeError(f"[STARTUP CONTRACT] {module_name} aliases inválidos: {missing_aliases}")
+            raise RuntimeError(
+                f"[STARTUP CONTRACT] {module_name} aliases inválidos: {missing_aliases}"
+            )
 
-        leaked_forbidden = [name for name in contract.forbidden_symbols if name in exports]
+        leaked_forbidden = [
+            name for name in contract.forbidden_symbols if name in exports
+        ]
         if leaked_forbidden:
             raise RuntimeError(
                 f"[STARTUP CONTRACT] {module_name} exporta símbolos prohibidos: {leaked_forbidden}"
@@ -503,27 +590,37 @@ def validar_paridad_superficie_publica_modulos_canonicos() -> None:
         leaked_internal = [
             name
             for name in exports
-            if name.startswith("_") or "sdk" in name.lower() or "internal" in name.lower()
+            if name.startswith("_")
+            or "sdk" in name.lower()
+            or "internal" in name.lower()
         ]
         if leaked_internal:
             raise RuntimeError(
                 f"[STARTUP CONTRACT] {module_name} filtra símbolos internos en __all__: {leaked_internal}"
             )
 
-        leaked_class_like = [name for name in exports if isinstance(name, str) and name[:1].isupper()]
+        leaked_class_like = [
+            name for name in exports if isinstance(name, str) and name[:1].isupper()
+        ]
         if leaked_class_like:
             raise RuntimeError(
                 f"[STARTUP CONTRACT] {module_name} no debe exportar clases en __all__: {leaked_class_like}"
             )
 
-        stdlib_path = Path(__file__).resolve().parents[1] / "standard_library" / f"{module_name}.py"
+        stdlib_path = (
+            Path(__file__).resolve().parents[1]
+            / "standard_library"
+            / f"{module_name}.py"
+        )
         if stdlib_path.exists():
             std_mod = importlib.import_module(f"pcobra.standard_library.{module_name}")
             std_exports = tuple(getattr(std_mod, "__all__", ()))
             if std_exports:
                 combined_exports = set(exports) | set(std_exports)
                 missing_required_combined = [
-                    name for name in contract.required_functions if name not in combined_exports
+                    name
+                    for name in contract.required_functions
+                    if name not in combined_exports
                 ]
                 if missing_required_combined:
                     raise RuntimeError(
