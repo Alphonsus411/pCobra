@@ -54,7 +54,9 @@ _USAR_CANONICAL_INTERNAL_PATHS: dict[str, str] = {
     "numero": "src/pcobra/corelibs/numero.py",
     # `texto` expone su API Cobra-facing desde corelibs para evitar inicializar agregadores.
     "texto": "src/pcobra/standard_library/texto.py",
-    # `datos` mantiene su API pública desde standard_library.
+    # `datos` mantiene la misma estrategia que `numero`: el alias público se
+    # resuelve por la ruta interna canónica declarada aquí.  En este caso el
+    # contrato runtime apunta explícitamente a standard_library.
     "datos": "src/pcobra/standard_library/datos.py",
     "logica": "src/pcobra/corelibs/logica.py",
     "asincrono": "src/pcobra/corelibs/asincrono.py",
@@ -168,7 +170,7 @@ CANONICAL_MODULE_SURFACE_CONTRACTS: dict[str, CanonicalModuleSurfaceContract] = 
         forbidden_symbols=("codecs", "re"),
     ),
     "datos": CanonicalModuleSurfaceContract(
-        required_functions=("filtrar", "mapear", "agregar", "longitud"),
+        required_functions=("filtrar", "mapear", "reducir", "longitud"),
         allowed_aliases={},
         forbidden_symbols=("itertools",),
     ),
