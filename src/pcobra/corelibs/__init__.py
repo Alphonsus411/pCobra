@@ -198,6 +198,12 @@ from .sistema import (
     obtener_env,
     listar_dir,
 )
+from .configuracion import (
+    leer_toml,
+    leer_ini,
+    toml_disponible,
+    leer_configuracion,
+)
 from .pruebas import (
     igual,
     verdadero,
@@ -419,6 +425,10 @@ __all__ = [
     "proteger_tarea",
     "ejecutar_en_hilo",
     "grupo_tareas",
+    "leer_toml",
+    "leer_ini",
+    "toml_disponible",
+    "leer_configuracion",
     "igual",
     "verdadero",
     "falso",
