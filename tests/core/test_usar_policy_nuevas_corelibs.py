@@ -15,6 +15,10 @@ from pcobra.core.ast_nodes import NodoUsar
 from pcobra.core.interpreter import InterpretadorCobra
 
 RAIZ_REPO = Path(__file__).resolve().parents[2]
+RUTAS_BASE_CORELIBS_USAR = (
+    RAIZ_REPO / "src/pcobra/corelibs",
+    RAIZ_REPO / "src/pcobra/standard_library",
+)
 
 ALIASES_NUEVAS_CORELIBS = (
     "ruta",
@@ -41,6 +45,26 @@ def _nombre_import_desde_ruta_interna(ruta_relativa: str) -> str:
     raise AssertionError(f"Ruta interna no soportada por el contrato: {ruta_relativa}")
 
 
+def _assert_ruta_interna_es_modulo_soportado(alias: str, ruta_relativa: str) -> Path:
+    """Valida que la ruta canónica apunte a un módulo Python permitido."""
+
+    ruta_interna = RAIZ_REPO / ruta_relativa
+    assert ruta_interna.exists(), (
+        f"No existe la ruta interna para usar {alias}: {ruta_relativa}"
+    )
+    assert ruta_interna.is_file(), (
+        f"La ruta interna para usar {alias} debe ser un archivo: {ruta_relativa}"
+    )
+    assert ruta_interna.suffix == ".py", (
+        f"La ruta interna para usar {alias} debe ser un módulo Python: {ruta_relativa}"
+    )
+    assert any(ruta_interna.is_relative_to(base) for base in RUTAS_BASE_CORELIBS_USAR), (
+        f"La ruta interna para usar {alias} debe estar bajo corelibs/ o "
+        f"standard_library/: {ruta_relativa}"
+    )
+    return ruta_interna
+
+
 @pytest.mark.parametrize("alias", ALIASES_NUEVAS_CORELIBS)
 def test_alias_nueva_corelib_cumple_contrato_publico_y_modulo_importable(
     alias: str,
@@ -51,10 +75,7 @@ def test_alias_nueva_corelib_cumple_contrato_publico_y_modulo_importable(
     assert alias in REPL_COBRA_MODULE_INTERNAL_PATH_MAP
 
     ruta_relativa = REPL_COBRA_MODULE_INTERNAL_PATH_MAP[alias]
-    ruta_interna = RAIZ_REPO / ruta_relativa
-    assert (
-        ruta_interna.exists()
-    ), f"No existe la ruta interna para usar {alias}: {ruta_relativa}"
+    _assert_ruta_interna_es_modulo_soportado(alias, ruta_relativa)
 
     modulo = importlib.import_module(_nombre_import_desde_ruta_interna(ruta_relativa))
     exportes = getattr(modulo, "__all__", None)
