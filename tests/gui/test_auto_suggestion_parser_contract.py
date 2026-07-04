@@ -205,6 +205,57 @@ def test_reporte_sugerencias_codigo_valido_agrupa_por_categorias_del_libro(
         assert f"  - {sugerencia}" in reporte
 
 
+@pytest.mark.parametrize(
+    ("regla_id", "fragmento_no_recomendado_parsea"),
+    [
+        pytest.param(
+            "LP-3.3-RETORNO-CANONICO",
+            True,
+            id="regla-retorno-prefiere-retorno-sobre-retornar",
+        ),
+        pytest.param(
+            "LP-3.9-FUNCIONES-CON-FUNC",
+            False,
+            id="regla-funciones-no-funcion",
+        ),
+        pytest.param(
+            "LP-3.6-USAR-SIN-ALIAS",
+            False,
+            id="regla-usar-sin-alias-como",
+        ),
+    ],
+)
+def test_reglas_libro_programacion_nuevas_cubren_casos_validos_e_invalidos(
+    regla_id: str, fragmento_no_recomendado_parsea: bool
+) -> None:
+    """Las reglas nuevas distinguen formas no canónicas de sintaxis inválida."""
+    from pcobra.ia.reglas_libro_programacion import REGLAS_LIBRO_PROGRAMACION
+
+    reglas = {regla.id: regla for regla in REGLAS_LIBRO_PROGRAMACION}
+    regla = reglas[regla_id]
+
+    assert regla.fragmento_valido.strip(), regla.id
+    if regla.id == "LP-3.3-RETORNO-CANONICO":
+        assert "retorno" in regla.fragmento_valido
+        assert "retornar" not in regla.fragmento_valido
+
+    ast_valido = _parsear(regla.fragmento_valido)
+    assert ast_valido, regla.id
+
+    assert regla.fragmento_no_recomendado is not None
+    assert regla.fragmento_no_recomendado.strip(), regla.id
+    assert regla.fragmento_no_recomendado.strip() != regla.fragmento_valido.strip()
+
+    if fragmento_no_recomendado_parsea:
+        assert regla.id == "LP-3.3-RETORNO-CANONICO"
+        assert "retornar" in regla.fragmento_no_recomendado
+        ast_no_recomendado = _parsear(regla.fragmento_no_recomendado)
+        assert ast_no_recomendado, regla.id
+    else:
+        with pytest.raises(ParserError):
+            _parsear(regla.fragmento_no_recomendado)
+
+
 def test_reglas_libro_programacion_declaran_fragmentos_soportados_por_parser() -> None:
     """Cada regla interna debe exponer metadatos mínimos y un fragmento parseable."""
     from pcobra.ia.reglas_libro_programacion import REGLAS_LIBRO_PROGRAMACION
