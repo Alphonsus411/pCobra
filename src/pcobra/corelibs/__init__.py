@@ -198,6 +198,10 @@ from .sistema import (
     obtener_env,
     listar_dir,
 )
+from .ruta import unir as unir_ruta
+from .serializacion import leer_json as leer_json_serializacion
+from .proceso import ejecutar as ejecutar_proceso
+from .registro import info as info_registro
 from .configuracion import (
     leer_toml,
     leer_ini,
@@ -412,6 +416,10 @@ __all__ = [
     "ejecutar_stream",
     "obtener_env",
     "listar_dir",
+    "unir_ruta",
+    "leer_json_serializacion",
+    "ejecutar_proceso",
+    "info_registro",
     "recolectar",
     "iterar_completadas",
     "recolectar_resultados",
