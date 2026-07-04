@@ -109,6 +109,21 @@ def test_repl_resuelve_nueva_corelib_con_nodo_usar_sin_parser_lexer(alias: str) 
     assert any(nombre in interprete.variables for nombre in exportes)
 
 
+def test_usar_modulo_inexistente_falla_con_excepcion_controlada() -> None:
+    assert "modulo_inexistente" not in USAR_COBRA_PUBLIC_MODULES
+
+    with pytest.raises((PermissionError, ValueError, FileNotFoundError, ImportError)) as excinfo:
+        usar_modulo("modulo_inexistente")
+
+    mensaje = str(excinfo.value).lower()
+    assert (
+        "fuera del catálogo" in mensaje
+        or "fuera del catalogo" in mensaje
+        or "no permitido" in mensaje
+        or "no encontrado" in mensaje
+    )
+
+
 def test_usar_datos_expone_filtrar_callable_sin_callback_cobra() -> None:
     exports = usar_modulo("datos")
 
