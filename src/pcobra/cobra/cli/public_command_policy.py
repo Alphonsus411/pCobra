@@ -6,12 +6,12 @@ from os import environ
 from typing import Iterable
 
 # `repl` es comando público oficial en UI v2; no debe tratarse como alias legacy.
-PUBLIC_COMMANDS_CONTRACT: tuple[str, ...] = ("run", "build", "test", "mod", "installer", "repl", "paquete", "hub")
+PUBLIC_COMMANDS_CONTRACT: tuple[str, ...] = ("run", "build", "test", "mod", "repl")
 PUBLIC_COMMANDS: tuple[str, ...] = PUBLIC_COMMANDS_CONTRACT
 if PUBLIC_COMMANDS != PUBLIC_COMMANDS_CONTRACT:
     raise RuntimeError(
         "Contrato público inválido: PUBLIC_COMMANDS debe mantenerse en "
-        "('run', 'build', 'test', 'mod', 'installer', 'repl', 'paquete', 'hub')."
+        "('run', 'build', 'test', 'mod', 'repl')."
     )
 INTERNAL_COMMANDS: tuple[str, ...] = (
     "legacy",
@@ -23,8 +23,9 @@ INTERNAL_COMMANDS: tuple[str, ...] = (
 
 COMMAND_VISIBILITY_MATRIX_MARKDOWN = """| Clase | Comandos |
 |---|---|
-| Públicos (UI v2) | run, build, test, mod, installer, repl, paquete, hub |
-| Internos (UI v2 / development) | legacy, debug, devops |
+| Públicos (UI v2) | run, build, test, mod, repl |
+| Extendidos/compatibles de desarrollo | installer, paquete |
+| Internos (UI v2 / development) | legacy, debug, devops, hub |
 | Legacy públicos (UI v1) | *(ninguno; reservado a `development`)* |
 | Legacy internos (UI v1) | *(ninguno)* |
 | Legacy obsoletos (UI v1) | *(ninguno)* |
