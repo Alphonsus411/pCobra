@@ -24,8 +24,8 @@ INTERNAL_COMMANDS: tuple[str, ...] = (
 COMMAND_VISIBILITY_MATRIX_MARKDOWN = """| Clase | Comandos |
 |---|---|
 | Públicos (UI v2) | run, build, test, mod, repl |
-| Extendidos/compatibles de desarrollo | installer, paquete |
-| Internos (UI v2 / development) | legacy, debug, devops, hub |
+| Desarrollo (visibles solo con perfil `development`) | installer, paquete, hub |
+| Internos (UI v2 / development) | legacy, debug, devops |
 | Legacy públicos (UI v1) | *(ninguno; reservado a `development`)* |
 | Legacy internos (UI v1) | *(ninguno)* |
 | Legacy obsoletos (UI v1) | *(ninguno)* |
@@ -56,7 +56,11 @@ def resolve_command_profile(default: str = PROFILE_PUBLIC) -> str:
 
 
 def filter_commands_for_profile(command_names: Iterable[str], profile: str) -> set[str]:
-    """Devuelve el subconjunto de comandos visibles para `profile`."""
+    """Devuelve comandos visibles para `profile`.
+
+    - `public`: solo la intersección entre `command_names` y `PUBLIC_COMMANDS`.
+    - `development`: todos los comandos disponibles recibidos en `command_names`.
+    """
 
     normalized_profile = str(profile).strip().lower() or PROFILE_PUBLIC
     names = {name.strip().lower() for name in command_names}
