@@ -646,13 +646,18 @@ def seleccionar_columnas(tabla: Iterable[Registro], columnas: Sequence[str]) -> 
     return resultado
 
 
-def filtrar(tabla: Iterable[Registro], condicion: Callable[[Registro], bool]) -> Tabla:
-    filas = _materializar_tabla(tabla)
-    resultado: Tabla = []
+def filtrar(tabla: Iterable[Any], condicion: Callable[[Any], bool]) -> list[Any]:
+    try:
+        filas = _materializar_tabla(tabla)
+    except TypeError:
+        if isinstance(tabla, Mapping) or not isinstance(tabla, Iterable):
+            raise
+        filas = list(tabla)
+    resultado: list[Any] = []
     for fila in filas:
         try:
             if condicion(fila):
-                resultado.append(dict(fila))
+                resultado.append(dict(fila) if isinstance(fila, Mapping) else fila)
         except Exception as exc:  # pragma: no cover - errores usuario
             raise ValueError(f"La condición de filtrado falló: {exc}") from exc
     return resultado

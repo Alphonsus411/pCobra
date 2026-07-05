@@ -78,6 +78,47 @@ imprimir(filtrar)
     assert "function filtrar" in salida
 
 
+def test_core_data_filter_callback_001_llamada_directa_a_funcion_cobra():
+    codigo = '''func doble(n):
+    retorno n * 2
+fin
+
+imprimir(doble(3))
+'''
+
+    salida = runtime.ejecutar_codigo(codigo)
+
+    assert "6" in salida.splitlines()
+
+
+def test_core_data_filter_callback_001_funcion_cobra_como_valor_callable():
+    codigo = '''func doble(n):
+    retorno n * 2
+fin
+
+f = doble
+imprimir(f(3))
+'''
+
+    salida = runtime.ejecutar_codigo(codigo)
+
+    assert "6" in salida.splitlines()
+
+
+def test_core_data_filter_callback_001_identificador_funcion_no_es_variable_inexistente():
+    codigo = '''func doble(n):
+    retorno n * 2
+fin
+
+imprimir(doble)
+'''
+
+    salida = runtime.ejecutar_codigo(codigo)
+
+    assert "Variable no declarada" not in salida
+    assert "doble" in salida
+
+
 def test_core_data_filter_callback_001_poc_filtrar_con_callback_cobra():
     codigo = '''usar "datos"
 
@@ -90,13 +131,7 @@ resultado = filtrar(numeros, mayor_que_dos)
 imprimir(resultado)
 '''
 
-    try:
-        salida = runtime.ejecutar_codigo(codigo)
-    except (NameError, TypeError, RuntimeError) as exc:
-        pytest.xfail(
-            "CORE_DATA_FILTER_CALLBACK_001: el runtime GUI aún no resuelve "
-            f"o ejecuta callbacks Cobra en datos.filtrar ({exc})"
-        )
+    salida = runtime.ejecutar_codigo(codigo)
 
     assert "[3, 4]" in salida
 
