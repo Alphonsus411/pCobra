@@ -88,6 +88,26 @@ def test_validar_paquete_rechaza_archivo_extra_no_declarado(tmp_path: Path):
         validar_paquete(paquete)
 
 
+def test_validar_paquete_rechaza_entradas_duplicadas_tras_normalizar(tmp_path: Path):
+    contenido_valido = b"imprimir('validado')\n"
+    paquete = _crear_zip_con_manifest(
+        tmp_path,
+        {
+            "format": "cobra-package-v1",
+            "name": "demo",
+            "version": "1.0.0",
+            "files": ["src/main.cobra"],
+            "checksums": {"src/main.cobra": _sha256(contenido_valido)},
+        },
+        {
+            "src/main.cobra": contenido_valido,
+            "src//main.cobra": b"imprimir('sin validar')\n",
+        },
+    )
+
+    with pytest.raises(ValueError, match="Entradas duplicadas"):
+        validar_paquete(paquete)
+
 def test_validar_paquete_rechaza_checksum_ausente(tmp_path: Path):
     contenido = b"imprimir('hola')\n"
     paquete = _crear_zip_con_manifest(
