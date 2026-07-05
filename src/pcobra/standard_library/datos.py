@@ -559,12 +559,22 @@ def agregar(tabla: Iterable[Registro], fila: Registro) -> Tabla:
     return base
 
 
-def mapear(tabla: Iterable[Registro], transformacion: Callable[[Registro], Registro]) -> Tabla:
-    """Aplica ``transformacion`` por fila devolviendo una nueva tabla."""
+def mapear(tabla: Iterable[Any], transformacion: Callable[[Any], Any]) -> list[Any]:
+    """Aplica ``transformacion`` por fila devolviendo una nueva lista."""
 
     if not callable(transformacion):
         raise TypeError("transformacion debe ser callable")
-    return [dict(transformacion(dict(fila))) for fila in _materializar_tabla(tabla)]
+    try:
+        filas = _materializar_tabla(tabla)
+    except TypeError:
+        if isinstance(tabla, Mapping) or not isinstance(tabla, Iterable):
+            raise
+        filas = list(tabla)
+    resultado: list[Any] = []
+    for fila in filas:
+        valor = transformacion(dict(fila) if isinstance(fila, Mapping) else fila)
+        resultado.append(dict(valor) if isinstance(valor, Mapping) else valor)
+    return resultado
 
 
 def reducir(
