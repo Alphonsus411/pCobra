@@ -535,6 +535,19 @@ def leer_archivo_texto(path: str | Path, *, encoding: str = "utf-8") -> str:
     return normalizar_ruta_archivo_gui(path).read_text(encoding=encoding)
 
 
+def _validar_guardado_como_texto(destino: str | Path) -> Path:
+    """Valida que una ruta pueda persistirse desde el editor de texto."""
+
+    ruta = Path(destino).expanduser().resolve()
+    if not archivo_permite_accion(ruta, ACCION_GUARDAR):
+        etiqueta = etiqueta_tipo_archivo(ruta)
+        raise ValueError(
+            f"{etiqueta} no se puede guardar desde el editor de texto. "
+            "Usa las acciones específicas para paquetes Cobra."
+        )
+    return ruta
+
+
 def escribir_archivo_texto(
     path: str | Path, contenido: str | None, *, encoding: str = "utf-8"
 ) -> str:
@@ -542,6 +555,7 @@ def escribir_archivo_texto(
 
     codigo = normalizar_codigo(contenido)
     destino = normalizar_ruta_archivo_gui(path)
+    _validar_guardado_como_texto(destino)
     destino.write_text(codigo, encoding=encoding)
     return codigo
 
@@ -656,6 +670,7 @@ def escribir_archivo_texto_validado(
     """
 
     destino = Path(path).expanduser().resolve()
+    _validar_guardado_como_texto(destino)
     if destino.exists() and destino.is_dir():
         raise NotADirectoryError(
             "La ruta indicada corresponde a un directorio; indica un archivo de texto del proyecto."
