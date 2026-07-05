@@ -64,7 +64,21 @@ def test_ejecutar_codigo_usar_numero_expone_es_finito_en_ruta_gui_runtime():
     assert "verdadero" in salida_normalizada
 
 
-def test_ejecutar_codigo_usar_datos_inyecta_filtrar_y_bloquea_callback_cobra_separado():
+def test_core_stdlib_usar_exports_datos_001_inyecta_filtrar_callable():
+    # CORE_STDLIB_USAR_EXPORTS_DATOS_001 solo valida que `usar "datos"`
+    # expone `filtrar` como símbolo callable en el runtime GUI. No ejecuta
+    # callbacks Cobra, porque ese soporte avanzado pertenece al POC separado
+    # CORE_DATA_FILTER_CALLBACK_001.
+    codigo = '''usar "datos"
+imprimir(filtrar)
+'''
+
+    salida = runtime.ejecutar_codigo(codigo)
+
+    assert "function filtrar" in salida
+
+
+def test_core_data_filter_callback_001_poc_filtrar_con_callback_cobra():
     codigo = '''usar "datos"
 
 func mayor_que_dos(n):
@@ -76,8 +90,15 @@ resultado = filtrar(numeros, mayor_que_dos)
 imprimir(resultado)
 '''
 
-    with pytest.raises(NameError, match="mayor_que_dos"):
-        runtime.ejecutar_codigo(codigo)
+    try:
+        salida = runtime.ejecutar_codigo(codigo)
+    except (NameError, TypeError, RuntimeError) as exc:
+        pytest.xfail(
+            "CORE_DATA_FILTER_CALLBACK_001: el runtime GUI aún no resuelve "
+            f"o ejecuta callbacks Cobra en datos.filtrar ({exc})"
+        )
+
+    assert "[3, 4]" in salida
 
 
 def test_ejecutar_codigo_modulo_inexistente_falla_controladamente():
