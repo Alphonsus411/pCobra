@@ -15,6 +15,8 @@ from pathlib import Path
 from typing import Any, Mapping, Sequence
 
 from pcobra.cobra.packaging import normalizar_nombre_paquete, validar_version_paquete
+from pcobra.cobra.usar_loader import resolver_modulo_cobra_proyecto
+from pcobra.cobra.usar_policy import USAR_COBRA_ALLOWLIST
 from pcobra.cobra_installer.hub_resolver import (
     CobraHubResolution,
     CobraHubResolver,
@@ -306,7 +308,11 @@ def detect_cobra_imports(project_root: str | Path) -> set[str]:
         for match in _IMPORT_RE.finditer(text):
             raw = match.group("usar") or match.group("import") or ""
             module = raw.strip().strip("\"'")
-            if _is_local_import(module):
+            if (
+                _is_local_import(module)
+                or _is_builtin_import(module)
+                or _is_project_import(module, root, file)
+            ):
                 continue
             package = module.split(".", 1)[0]
             imports.add(_normalize_dependency_name(package))
@@ -328,6 +334,32 @@ def _is_local_import(module: str) -> bool:
         or "/" in module
         or "\\" in module
     )
+
+
+def _is_builtin_import(module: str) -> bool:
+    """Indica si ``module`` es un módulo público/core de ``usar``."""
+
+    package = module.split(".", 1)[0].strip().lower().replace("-", "_")
+    return package in USAR_COBRA_ALLOWLIST
+
+
+def _is_project_import(module: str, root: Path, current_file: Path) -> bool:
+    """Indica si ``module`` resuelve a un ``.co`` del proyecto actual."""
+
+    candidates = [module]
+    package = module.split(".", 1)[0]
+    if package != module:
+        candidates.append(package)
+
+    for candidate in candidates:
+        try:
+            resolver_modulo_cobra_proyecto(
+                candidate, project_root=root, current_file=current_file
+            )
+        except (FileNotFoundError, ValueError, OSError):
+            continue
+        return True
+    return False
 
 
 def _normalize_dependency_name(name: str) -> str:
