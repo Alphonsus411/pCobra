@@ -162,11 +162,26 @@ def validar_paquete(package: str | Path) -> PackageInspection:
     checksums = _normalizar_checksums(manifest.get("checksums"))
 
     with zipfile.ZipFile(inspection.path) as zf:
-        real_files = {
-            _normalizar_ruta_paquete(info.filename)
-            for info in zf.infolist()
-            if not info.is_dir() and info.filename != MANIFEST_NAME
-        }
+        real_file_entries: dict[str, str] = {}
+        duplicate_files: dict[str, list[str]] = {}
+        for info in zf.infolist():
+            if info.is_dir() or info.filename == MANIFEST_NAME:
+                continue
+            normalized_name = _normalizar_ruta_paquete(info.filename)
+            previous_name = real_file_entries.get(normalized_name)
+            if previous_name is not None:
+                duplicate_files.setdefault(normalized_name, [previous_name]).append(info.filename)
+                continue
+            real_file_entries[normalized_name] = info.filename
+
+        if duplicate_files:
+            collisions = ", ".join(
+                f"{normalized} ({', '.join(entries)})"
+                for normalized, entries in sorted(duplicate_files.items())
+            )
+            raise ValueError(f"Entradas duplicadas en paquete tras normalizar rutas: {collisions}")
+
+        real_files = set(real_file_entries)
         extra_files = real_files - declared_files
         if extra_files:
             raise ValueError(f"Archivos no declarados en paquete: {', '.join(sorted(extra_files))}")
@@ -185,7 +200,7 @@ def validar_paquete(package: str | Path) -> PackageInspection:
             raise ValueError(f"Faltan checksums para archivos declarados: {', '.join(sorted(missing_checksums))}")
 
         for name in sorted(declared_files):
-            actual = _sha256_bytes(zf.read(name))
+            actual = _sha256_bytes(zf.read(real_file_entries[name]))
             if actual != checksums[name]:
                 raise ValueError(f"Integridad fallida para {name}")
     return inspection
