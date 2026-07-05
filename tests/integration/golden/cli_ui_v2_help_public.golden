@@ -4,22 +4,18 @@ usage: cobra [-h] [--version] [--ayuda] [--format] [--debug] [-v] [--no-safe]
              [--no-color] [--extra-validators EXTRA_VALIDATORS]
              [--legacy-imports] [--dev-ephemeral-key] [--plugins-safe-mode]
              [--plugins-unsafe-mode] [--plugins-allowlist PLUGINS_ALLOWLIST]
-             {run,build,test,mod,installer,paquete,hub,repl} ...
+             {run,build,test,mod,repl} ...
 
 CLI de Cobra para ejecutar e interpretar scripts, transpilar código a otros
 lenguajes o usar ambos flujos según --modo (cobra, transpilar, mixto). Modo
 cobra = solo programar/interpretar Cobra sin codegen.
 
 positional arguments:
-  {run,build,test,mod,installer,paquete,hub,repl}
+  {run,build,test,mod,repl}
     run                 Run a Cobra file
     build               Build/transpile a Cobra file
     test                Validate project output across runtimes
     mod                 Manage Cobra modules
-    installer           Construye instaladores/autoejecutables de proyectos
-                        Cobra
-    paquete             Gestiona paquetes Cobra .co
-    hub                 Gestiona paquetes en CobraHub
     repl                Start Cobra REPL
 
 options:

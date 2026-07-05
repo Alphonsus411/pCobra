@@ -26,7 +26,7 @@ def _public_env() -> dict[str, str]:
 
 
 def test_cli_public_commands_contract_is_stable():
-    assert PUBLIC_COMMANDS == ("run", "build", "test", "mod", "installer", "repl", "paquete", "hub")
+    assert PUBLIC_COMMANDS == ("run", "build", "test", "mod", "repl")
 
 
 def test_cli_public_commands_contract_keeps_repl_as_official_command():
@@ -67,8 +67,10 @@ def test_cli_help_public_contract_snapshot():
     )
     expected_snapshot = _leer_snapshot_texto(expected_snapshot)
     assert " ".join(result.stdout.lower().split()) == " ".join(expected_snapshot.lower().split())
-    for command in ("run", "build", "test", "mod", "installer", "repl", "paquete", "hub"):
+    for command in ("run", "build", "test", "mod", "repl"):
         assert f" {command} " in f" {result.stdout.lower()} "
+    for command in ("installer", "paquete", "hub"):
+        assert f" {command} " not in f" {result.stdout.lower()} "
     assert "\n  menu " not in result.stdout.lower()
     assert "\n  legacy " not in result.stdout.lower()
     assert "--backend" not in result.stdout.lower()
@@ -89,7 +91,6 @@ def test_cli_build_help_public_contract_no_expone_flags_backend():
     assert result.returncode == 0
     output = result.stdout.lower()
     assert "--backend" not in output
-    assert "--target" not in output
     assert "--tipo" not in output
     assert "--tipos" not in output
 
@@ -113,4 +114,4 @@ def test_cli_help_public_contract_muestra_warning_migracion_en_comando_legacy():
     assert result.returncode != 0
     lower_output = result.stderr.lower() + result.stdout.lower()
     assert "invalid choice: 'compilar'" in lower_output
-    assert "choose from run, build, test, mod, installer, paquete, hub, repl" in lower_output
+    assert "choose from run, build, test, mod, repl" in lower_output

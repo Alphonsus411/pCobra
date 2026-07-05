@@ -23,7 +23,7 @@ def test_filter_commands_publico_permite_solo_superficie_v2_publica():
         ),
         PROFILE_PUBLIC,
     )
-    assert visibles == {"run", "build", "test", "mod", "repl", "paquete", "hub"}
+    assert visibles == {"run", "build", "test", "mod", "repl"}
 
 
 def test_filter_commands_development_permite_toda_superficie_v2():
@@ -38,10 +38,7 @@ def test_public_commands_contract_oficial_v2_no_incluye_alias_legacy():
         "build",
         "test",
         "mod",
-        "installer",
         "repl",
-        "paquete",
-        "hub",
     )
     assert "interactive" not in PUBLIC_COMMANDS_CONTRACT
 
