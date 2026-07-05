@@ -44,9 +44,12 @@ from pcobra.cobra.cli.public_command_policy import (
     PROFILE_PUBLIC,
     PUBLIC_COMMANDS,
     PUBLIC_COMMANDS_CONTRACT,
-    filter_commands_for_profile,
+    PUBLIC_V2_HIDDEN_COMPAT_COMMANDS,
     filter_legacy_commands_for_profile,
+    is_public_v2_hidden_compat_command,
+    registered_commands_for_profile,
     resolve_command_profile,
+    visible_commands_for_profile,
 )
 from pcobra.cobra.architecture.overview import USER_ROUTE_BACKEND_ENTRYPOINT
 from pcobra.cobra.cli.plugin import (
@@ -112,7 +115,6 @@ CLI_VERSION = _resolve_cli_version()
 
 assert_public_targets_contract(tuple(PUBLIC_BACKENDS), source="cobra cli bootstrap")
 LANG_CHOICES = tuple(PUBLIC_BACKENDS)
-PUBLIC_V2_HIDDEN_COMPATIBLE_COMMANDS = frozenset({"paquete", "hub"})
 
 
 class CliErrorYaMostrado(Exception):
@@ -262,17 +264,30 @@ class CommandRegistry:
         if normalized_profile != PROFILE_PUBLIC or AppConfig.V2_COMMAND_CLASSES:
             return routes
 
-        public_v2_command_classes = {
-            "RunCommandV2",
-            "BuildCommandV2",
-            "TestCommandV2",
-            "ModCommandV2",
-            "ReplCommandV2",
-            "PaqueteCommand",
-            "HubCommand",
+        route_command_names = {
+            "RunCommandV2": "run",
+            "BuildCommandV2": "build",
+            "TestCommandV2": "test",
+            "ModCommandV2": "mod",
+            "ReplCommandV2": "repl",
+            "InstallerCommandV2": "installer",
+            "PaqueteCommand": "paquete",
+            "HubCommand": "hub",
         }
+        registered_names = registered_commands_for_profile(
+            (
+                command_name
+                for command_name in (
+                    route_command_names.get(route.class_name) for route in routes
+                )
+                if command_name is not None
+            ),
+            normalized_profile,
+        )
         return [
-            route for route in routes if route.class_name in public_v2_command_classes
+            route
+            for route in routes
+            if route_command_names.get(route.class_name) in registered_names
         ]
 
     def _resolve_v1_command_routes(self) -> List[CommandClassRoute]:
@@ -341,20 +356,18 @@ class CommandRegistry:
         all_commands = base_commands + plugin_commands
 
         if ui_effective == "v2":
-            hidden_compatible_names = PUBLIC_V2_HIDDEN_COMPATIBLE_COMMANDS
-            allowed_names = filter_commands_for_profile(
+            registered_names = registered_commands_for_profile(
                 (cmd.name for cmd in all_commands), normalized_profile
             )
-            if normalized_profile == PROFILE_PUBLIC:
-                # Opción A: `paquete` y `hub` permanecen registrados y
-                # ejecutables, pero se ocultan del contrato público visible.
-                allowed_names = set(allowed_names).union(hidden_compatible_names)
-            all_commands = [cmd for cmd in all_commands if cmd.name in allowed_names]
+            visible_names = visible_commands_for_profile(
+                (cmd.name for cmd in all_commands), normalized_profile
+            )
+            all_commands = [cmd for cmd in all_commands if cmd.name in registered_names]
             if normalized_profile == PROFILE_PUBLIC:
                 logging.getLogger(__name__).debug(
                     "Perfil público activo: comandos expuestos=%s; compatibles ocultos=%s",
-                    sorted(set(allowed_names).difference(hidden_compatible_names)),
-                    sorted(hidden_compatible_names),
+                    sorted(visible_names),
+                    sorted(PUBLIC_V2_HIDDEN_COMPAT_COMMANDS),
                 )
             elif normalized_profile == PROFILE_DEVELOPMENT:
                 logging.getLogger(__name__).debug(
@@ -378,15 +391,18 @@ class CommandRegistry:
         self.hidden_compatible_commands = {}
         hidden_compatible_commands = []
         if ui_effective == "v2" and normalized_profile == PROFILE_PUBLIC:
-            hidden_compatible_names = PUBLIC_V2_HIDDEN_COMPATIBLE_COMMANDS
             hidden_compatible_commands = [
-                cmd for cmd in all_commands if cmd.name in hidden_compatible_names
+                cmd
+                for cmd in all_commands
+                if is_public_v2_hidden_compat_command(cmd.name)
             ]
             self.hidden_compatible_commands = {
                 cmd.name: cmd for cmd in hidden_compatible_commands
             }
             all_commands = [
-                cmd for cmd in all_commands if cmd.name not in hidden_compatible_names
+                cmd
+                for cmd in all_commands
+                if not is_public_v2_hidden_compat_command(cmd.name)
             ]
 
         self.commands = {cmd.name: cmd for cmd in all_commands}

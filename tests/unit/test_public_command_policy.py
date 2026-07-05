@@ -4,6 +4,10 @@ from cobra.cli.public_command_policy import (
     PUBLIC_COMMANDS_CONTRACT,
     filter_commands_for_profile,
     filter_legacy_commands_for_profile,
+    is_public_v2_hidden_compat_command,
+    is_public_v2_visible_command,
+    registered_commands_for_profile,
+    visible_commands_for_profile,
 )
 
 
@@ -24,6 +28,22 @@ def test_filter_commands_publico_permite_solo_superficie_v2_publica():
         PROFILE_PUBLIC,
     )
     assert visibles == {"run", "build", "test", "mod", "repl"}
+
+
+def test_capas_publicas_v2_separan_visibles_de_registrados():
+    comandos = ("run", "build", "paquete", "hub", "installer")
+
+    assert visible_commands_for_profile(comandos, PROFILE_PUBLIC) == {"run", "build"}
+    assert registered_commands_for_profile(comandos, PROFILE_PUBLIC) == {
+        "run",
+        "build",
+        "paquete",
+        "hub",
+    }
+    assert is_public_v2_visible_command("run") is True
+    assert is_public_v2_visible_command("paquete") is False
+    assert is_public_v2_hidden_compat_command("paquete") is True
+    assert is_public_v2_hidden_compat_command("installer") is False
 
 
 def test_filter_commands_development_permite_toda_superficie_v2():
