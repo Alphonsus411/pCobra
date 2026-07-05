@@ -61,7 +61,7 @@ def test_ejecutar_codigo_usar_numero_expone_es_finito_en_ruta_gui_runtime():
     salida = runtime.ejecutar_codigo(codigo)
     salida_normalizada = salida.strip().lower()
 
-    assert salida_normalizada == "verdadero" or "verdadero" in salida_normalizada
+    assert "verdadero" in salida_normalizada
 
 
 def test_ejecutar_codigo_usar_datos_inyecta_filtrar_y_bloquea_callback_cobra_separado():
