@@ -27,7 +27,18 @@ def test_filter_commands_publico_permite_solo_superficie_v2_publica():
 
 
 def test_filter_commands_development_permite_toda_superficie_v2():
-    comandos = ("run", "build", "test", "mod", "repl", "legacy", "debug")
+    comandos = (
+        "run",
+        "build",
+        "test",
+        "mod",
+        "repl",
+        "legacy",
+        "debug",
+        "installer",
+        "paquete",
+        "hub",
+    )
     visibles = filter_commands_for_profile(comandos, PROFILE_DEVELOPMENT)
     assert visibles == set(comandos)
 
