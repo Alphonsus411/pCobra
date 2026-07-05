@@ -451,9 +451,8 @@ def listar_directorio_idle(
         if entry.is_dir():
             visibles.append(entry)
             continue
-        tipo_archivo = detectar_tipo_archivo(entry)
-        if tipo_archivo in TIPOS_ARCHIVO_TEXTO_IDLE or (
-            incluir_desconocidos and tipo_archivo == TIPO_ARCHIVO_DESCONOCIDO
+        if es_archivo_texto_visible_idle(
+            entry, incluir_desconocidos=incluir_desconocidos
         ):
             visibles.append(entry)
 
@@ -746,13 +745,26 @@ def recargar_archivo_activo(estado: GuiFileState) -> tuple[str, str]:
     return abrir_archivo_desde_ruta(estado.ruta, estado)
 
 
+def es_archivo_texto_visible_idle(
+    path: str | Path,
+    *,
+    incluir_desconocidos: bool = MOSTRAR_DESCONOCIDOS_COMO_TEXTO_IDLE,
+) -> bool:
+    """Indica si una ruta no directorio entra en la política textual del IDLE."""
+
+    tipo_archivo = detectar_tipo_archivo(path)
+    return tipo_archivo in TIPOS_ARCHIVO_TEXTO_IDLE or (
+        incluir_desconocidos and tipo_archivo == TIPO_ARCHIVO_DESCONOCIDO
+    )
+
+
 def cargar_archivo_desde_arbol(
     ruta: str | Path, estado: GuiFileState
 ) -> tuple[str, str]:
-    """Carga una entrada de árbol si es archivo Cobra y devuelve contenido/mensaje."""
+    """Carga una entrada textual visible del árbol y devuelve contenido/mensaje."""
 
-    if not es_archivo_cobra(ruta):
-        raise ValueError("Selecciona un archivo Cobra (.co o .cobra).")
+    if not es_archivo_texto_visible_idle(ruta):
+        raise ValueError("Selecciona un archivo de texto visible del proyecto.")
     return abrir_archivo_desde_ruta(ruta, estado)
 
 

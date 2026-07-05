@@ -311,12 +311,14 @@ def test_helpers_archivo_cubren_nuevo_abrir_guardar_como_guardar_y_recargar(
     assert estado.cambios_sin_guardar is False
 
 
-def test_cargar_archivo_desde_arbol_reusa_apertura_y_valida_extension(tmp_path: Path):
+def test_cargar_archivo_desde_arbol_reusa_apertura_y_valida_politica_texto(tmp_path: Path):
     estado = runtime.GuiFileState()
     archivo_cobra = tmp_path / "desde_arbol.cobra"
     archivo_cobra.write_text("imprimir('arbol')", encoding="utf-8")
-    archivo_no_cobra = tmp_path / "nota.txt"
-    archivo_no_cobra.write_text("texto", encoding="utf-8")
+    archivo_texto = tmp_path / "README.md"
+    archivo_texto.write_text("# Documentación", encoding="utf-8")
+    archivo_desconocido = tmp_path / "binario.dat"
+    archivo_desconocido.write_text("texto desconocido", encoding="utf-8")
 
     contenido, mensaje = runtime.cargar_archivo_desde_arbol(archivo_cobra, estado)
 
@@ -325,12 +327,19 @@ def test_cargar_archivo_desde_arbol_reusa_apertura_y_valida_extension(tmp_path: 
     assert estado.ruta == archivo_cobra.resolve()
     assert estado.contenido_cargado == "imprimir('arbol')"
 
+    contenido, mensaje = runtime.cargar_archivo_desde_arbol(archivo_texto, estado)
+
+    assert contenido == "# Documentación"
+    assert mensaje == f"Archivo cargado: {archivo_texto.resolve()}"
+    assert estado.ruta == archivo_texto.resolve()
+    assert estado.contenido_cargado == "# Documentación"
+
     try:
-        runtime.cargar_archivo_desde_arbol(archivo_no_cobra, estado)
+        runtime.cargar_archivo_desde_arbol(archivo_desconocido, estado)
     except ValueError as exc:
-        assert "Selecciona un archivo Cobra" in str(exc)
+        assert "archivo de texto visible" in str(exc)
     else:
-        raise AssertionError("El árbol solo debe cargar archivos .co/.cobra")
+        raise AssertionError("El árbol solo debe cargar archivos visibles del IDLE")
 
 
 @pytest.mark.parametrize(
