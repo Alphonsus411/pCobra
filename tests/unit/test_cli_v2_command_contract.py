@@ -166,6 +166,7 @@ def test_build_v2_help_expone_solo_alias_installer_y_no_flags_backend_legacy():
     assert "--tipo" not in help_text
     assert "--backend" not in help_text
     assert "--installer" in help_text
+    assert "--target" not in help_text
     assert "--tipos" not in help_text
 
 
@@ -192,8 +193,13 @@ def test_build_v2_parser_publico_registra_file_y_alias_installer():
     assert alias_args.installer is True
     assert alias_args.file == "."
 
-    with pytest.raises(SystemExit):
-        parser.parse_args(["programa.co", "--target", "python"])
+    alias_args_with_target = parser.parse_args(
+        ["--installer", ".", "--target", "linux"]
+    )
+    assert alias_args_with_target.installer is True
+    assert alias_args_with_target.file == "."
+    assert alias_args_with_target.target == "linux"
+    assert "--target" not in parser.format_help().lower()
 
 
 def test_run_v2_valida_seguridad_por_ruta_binding(monkeypatch):

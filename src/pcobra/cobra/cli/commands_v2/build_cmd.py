@@ -36,7 +36,9 @@ class BuildCommandV2(BaseCommand):
                 "Build an installer using the same options as 'cobra installer build'"
             ),
         )
-        register_installer_build_arguments(parser, include_project_path=False)
+        register_installer_build_arguments(
+            parser, include_project_path=False, hide_target_help=True
+        )
         parser.set_defaults(cmd=self)
         return parser
 
