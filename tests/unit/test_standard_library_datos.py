@@ -138,6 +138,13 @@ def test_mapear_acepta_lista_de_escalares():
     assert mapear([1, 2, 3], lambda x: x * 2) == [2, 4, 6]
 
 
+def test_mapear_preserva_resultados_mapping_como_dict():
+    tabla = [{"valor": 2}]
+    resultado = mapear(tabla, lambda fila: {"valor": fila["valor"] * 3})
+    assert resultado == [{"valor": 6}]
+    assert isinstance(resultado[0], dict)
+
+
 def test_reducir_con_y_sin_acumulador_inicial():
     tabla = _tabla_base()
     total = reducir(tabla, lambda acc, fila: acc + int(fila["valor"]), 0)
