@@ -114,4 +114,8 @@ def test_cli_help_public_contract_muestra_warning_migracion_en_comando_legacy():
     assert result.returncode != 0
     lower_output = result.stderr.lower() + result.stdout.lower()
     assert "invalid choice: 'compilar'" in lower_output
-    assert "choose from run, build, test, mod, repl" in lower_output
+    choices_message = lower_output.split("invalid choice: 'compilar'", 1)[1]
+    for command in ("run", "build", "test", "mod", "repl"):
+        assert command in choices_message
+    for command in ("installer", "paquete", "hub"):
+        assert command not in choices_message
