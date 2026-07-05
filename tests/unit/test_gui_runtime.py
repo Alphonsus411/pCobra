@@ -20,6 +20,12 @@ def _deps_lexer_parser_reales() -> dict[str, object]:
     }
 
 
+def _desactivar_limites_recursos_interprete(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Evita que las pruebas del runtime GUI limiten el proceso de pytest."""
+    monkeypatch.setattr("pcobra.core.interpreter._lim_mem", lambda _mb: None)
+    monkeypatch.setattr("pcobra.core.interpreter._lim_cpu", lambda _segundos: None)
+
+
 @pytest.fixture(autouse=True)
 def _reset_cache(monkeypatch: pytest.MonkeyPatch):
     cache_clear = getattr(runtime.require_gui_dependencies, "cache_clear", None)
@@ -378,7 +384,8 @@ def test_normalizar_codigo_admite_none_y_texto() -> None:
     assert runtime.normalizar_codigo("imprimir('x')") == "imprimir('x')"
 
 
-def test_ejecutar_transpilar_tokens_y_ast() -> None:
+def test_ejecutar_transpilar_tokens_y_ast(monkeypatch: pytest.MonkeyPatch) -> None:
+    _desactivar_limites_recursos_interprete(monkeypatch)
     codigo = "imprimir('Hola')"
     assert runtime.ejecutar_codigo(codigo) == "Hola\n"
     assert runtime.transpilar_codigo(codigo, "python").strip()
