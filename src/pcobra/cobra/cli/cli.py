@@ -1,5 +1,6 @@
 import argparse
 import builtins
+import inspect
 from types import SimpleNamespace
 import logging
 import os
@@ -304,6 +305,51 @@ class CommandRegistry:
             )
         return routes
 
+    @staticmethod
+    def _command_supports_hidden_keyword(command: BaseCommand) -> bool:
+        """Indica si register_subparser acepta el keyword opcional hidden."""
+        try:
+            signature = inspect.signature(command.register_subparser)
+        except (TypeError, ValueError):
+            return False
+        parameter = signature.parameters.get("hidden")
+        if parameter is not None:
+            return parameter.kind in (
+                inspect.Parameter.POSITIONAL_OR_KEYWORD,
+                inspect.Parameter.KEYWORD_ONLY,
+            )
+        return any(
+            param.kind == inspect.Parameter.VAR_KEYWORD
+            for param in signature.parameters.values()
+        )
+
+    @staticmethod
+    def _is_hidden_compatible_command(
+        command: BaseCommand, *, ui_effective: str, profile: str
+    ) -> bool:
+        """Detecta compatibilidad pública v2 oculta a partir del nombre del comando."""
+        normalized_profile = str(profile).strip().lower() or PROFILE_PUBLIC
+        return (
+            ui_effective == "v2"
+            and normalized_profile == PROFILE_PUBLIC
+            and is_public_v2_hidden_compat_command(command.name)
+        )
+
+    def _register_hidden_compatible_subparser(
+        self, command: BaseCommand, subparsers: Any
+    ) -> None:
+        """Registra un subparser compatible oculto sin ampliar BaseCommand."""
+        register_hidden_subparser = getattr(command, "register_hidden_subparser", None)
+        if callable(register_hidden_subparser):
+            register_hidden_subparser(subparsers)
+            return
+
+        if self._command_supports_hidden_keyword(command):
+            command.register_subparser(subparsers, hidden=True)  # type: ignore[call-arg]
+            return
+
+        command.register_subparser(subparsers)
+
     def register_base_commands(
         self,
         subparsers: Any,
@@ -394,7 +440,9 @@ class CommandRegistry:
             hidden_compatible_commands = [
                 cmd
                 for cmd in all_commands
-                if is_public_v2_hidden_compat_command(cmd.name)
+                if self._is_hidden_compatible_command(
+                    cmd, ui_effective=ui_effective, profile=normalized_profile
+                )
             ]
             self.hidden_compatible_commands = {
                 cmd.name: cmd for cmd in hidden_compatible_commands
@@ -416,9 +464,7 @@ class CommandRegistry:
 
         for command in hidden_compatible_commands:
             try:
-                command.register_subparser(
-                    subparsers, hidden=bool(getattr(command, "public_v2_hidden", False))
-                )
+                self._register_hidden_compatible_subparser(command, subparsers)
             except Exception as e:
                 logging.error(
                     f"Failed to register hidden compatible subparser for {command.name}: {e}"

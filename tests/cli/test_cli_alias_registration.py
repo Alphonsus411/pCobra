@@ -23,9 +23,10 @@ def _command_parser(
     return parser, subparsers
 
 
-def test_aliases_legacy_de_paquete_siguen_registrados_en_cli_publica() -> None:
+def test_aliases_legacy_de_paquete_en_parser_oculto_v2_publico() -> None:
     _, comandos = _command_parser()
 
+    assert "paquete" not in comandos.choices.keys()
     paquete = comandos.choices["paquete"]
     acciones_paquete = _subparser_action(paquete)
 
@@ -41,16 +42,19 @@ def test_aliases_legacy_de_paquete_siguen_registrados_en_cli_publica() -> None:
     assert destinos_posicionales == ["fuente", "paquete"]
 
 
-def test_comandos_recomendados_de_hub_siguen_registrados_en_cli_publica() -> None:
+def test_comandos_recomendados_de_hub_en_parser_oculto_v2_publico() -> None:
     _, comandos = _command_parser()
 
+    assert "hub" not in comandos.choices.keys()
     hub = comandos.choices["hub"]
     acciones_hub = _subparser_action(hub)
 
     assert {"publicar", "buscar", "instalar"}.issubset(acciones_hub.choices)
 
 
-def test_comandos_legacy_de_modulos_siguen_registrados_en_perfil_desarrollo_v1() -> None:
+def test_comandos_legacy_de_modulos_siguen_registrados_en_perfil_desarrollo_v1() -> (
+    None
+):
     _, comandos = _command_parser(ui="v1", profile=PROFILE_DEVELOPMENT)
 
     modulos = comandos.choices["modulos"]
