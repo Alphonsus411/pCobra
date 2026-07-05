@@ -134,6 +134,10 @@ def test_funciones_coleccion_basicas_y_bordes():
     assert longitud(tabla) == 3
 
 
+def test_mapear_acepta_lista_de_escalares():
+    assert mapear([1, 2, 3], lambda x: x * 2) == [2, 4, 6]
+
+
 def test_reducir_con_y_sin_acumulador_inicial():
     tabla = _tabla_base()
     total = reducir(tabla, lambda acc, fila: acc + int(fila["valor"]), 0)
