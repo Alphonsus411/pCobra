@@ -25,12 +25,12 @@ def test_ejecutar_codigo_variable_inexistente_sigue_fallando():
 
 
 def test_ejecutar_codigo_carga_exports_de_datos_sin_importerror():
-    codigo = 'usar "datos"\nimprimir("datos cargado")'
-
     try:
-        salida = runtime.ejecutar_codigo(codigo)
+        salida = runtime.ejecutar_codigo('usar "datos"\nimprimir("datos cargado")')
     except ImportError as exc:  # pragma: no cover - mensaje de regresión
-        pytest.fail(f'No se esperaba ImportError al cargar datos: {exc}')
+        if "No se encontraron símbolos exportables" in str(exc):
+            pytest.fail(f'No se esperaba ImportError al cargar datos: {exc}')
+        raise
 
     assert "datos cargado" in salida
 
