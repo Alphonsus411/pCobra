@@ -55,3 +55,24 @@ def test_ejecutar_codigo_usar_numero_expone_es_finito_en_ruta_gui_runtime():
     salida_normalizada = salida.strip().lower()
 
     assert salida_normalizada == "verdadero" or "verdadero" in salida_normalizada
+
+
+def test_ejecutar_codigo_usar_datos_inyecta_filtrar_y_bloquea_callback_cobra_separado():
+    codigo = '''usar "datos"
+
+func mayor_que_dos(n):
+    retorno n > 2
+fin
+
+numeros = [1, 2, 3, 4]
+resultado = filtrar(numeros, mayor_que_dos)
+imprimir(resultado)
+'''
+
+    with pytest.raises(NameError, match="mayor_que_dos"):
+        runtime.ejecutar_codigo(codigo)
+
+
+def test_ejecutar_codigo_modulo_inexistente_falla_controladamente():
+    with pytest.raises(PermissionError, match="modulo_inexistente"):
+        runtime.ejecutar_codigo('usar "modulo_inexistente"')
