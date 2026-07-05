@@ -129,6 +129,8 @@ def test_usar_datos_expone_filtrar_callable_sin_callback_cobra() -> None:
 
     assert "filtrar" in exports
     assert callable(exports["filtrar"])
+    assert "longitud" in exports
+    assert callable(exports["longitud"])
 
 
 def test_usar_datos_apunta_a_standard_library_y_loader_importa_nombre_correcto() -> None:
