@@ -96,6 +96,10 @@ class PaqueteCommand(BaseCommand):
         parser.set_defaults(cmd=self)
         return parser
 
+    def register_hidden_subparser(self, subparsers: Any) -> CustomArgumentParser:
+        """Registra el comando como compatibilidad pública v2 oculta."""
+        return self.register_subparser(subparsers, hidden=True)
+
     @staticmethod
     def _normalizar_nombre_legacy(nombre: str) -> Path:
         ruta = Path(nombre.replace("\\", "/"))

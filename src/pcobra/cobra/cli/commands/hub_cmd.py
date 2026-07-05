@@ -57,6 +57,10 @@ class HubCommand(BaseCommand):
         parser.set_defaults(cmd=self)
         return parser
 
+    def register_hidden_subparser(self, subparsers: Any) -> CustomArgumentParser:
+        """Registra el comando como compatibilidad pública v2 oculta."""
+        return self.register_subparser(subparsers, hidden=True)
+
     def run(self, args: Namespace) -> int:
         packages = CobraHubPackages(CobraHubClient())
         if args.accion == "publicar":
