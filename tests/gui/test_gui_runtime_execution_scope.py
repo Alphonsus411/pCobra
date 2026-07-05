@@ -136,6 +136,23 @@ imprimir(resultado)
     assert "[3, 4]" in salida
 
 
+def test_core_data_mapear_callback_contract_001_poc_mapear_con_callback_cobra():
+    codigo = '''usar "datos"
+
+func doble(n):
+    retorno n * 2
+fin
+
+numeros = [1, 2, 3]
+resultado = mapear(numeros, doble)
+imprimir(resultado)
+'''
+
+    salida = runtime.ejecutar_codigo(codigo)
+
+    assert "[2, 4, 6]" in salida
+
+
 def test_ejecutar_codigo_modulo_inexistente_falla_controladamente():
     with pytest.raises(PermissionError) as excinfo:
         runtime.ejecutar_codigo('usar "modulo_inexistente"')
