@@ -3,6 +3,8 @@ from unittest.mock import patch
 import re
 from pathlib import Path
 
+import pytest
+
 from pcobra.cobra.cli.cobrahub_packages import (
     limpiar_cache,
     listar_cache,
@@ -10,6 +12,11 @@ from pcobra.cobra.cli.cobrahub_packages import (
 )
 from pcobra.cobra.cli.commands.hub_cmd import HubCommand
 from pcobra.cobra.packaging import construir_paquete, crear_paquete
+
+
+@pytest.fixture(autouse=True)
+def _perfil_cli_desarrollo(monkeypatch):
+    monkeypatch.setenv("COBRA_CLI_COMMAND_PROFILE", "development")
 
 
 def _crear_paquete_valido(tmp_path: Path, nombre: str = "demo") -> Path:

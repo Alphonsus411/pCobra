@@ -3,8 +3,15 @@ from io import StringIO
 import zipfile
 from unittest.mock import patch
 
+import pytest
+
 from cobra.cli.cli import main
 from cobra.cli.commands import modules_cmd
+
+
+@pytest.fixture(autouse=True)
+def _perfil_cli_desarrollo(monkeypatch):
+    monkeypatch.setenv("COBRA_CLI_COMMAND_PROFILE", "development")
 
 
 def _crear_fuente(tmp_path):
