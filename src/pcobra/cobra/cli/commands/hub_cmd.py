@@ -1,4 +1,4 @@
-from argparse import Namespace
+from argparse import Namespace, SUPPRESS
 from pathlib import Path
 from typing import Any
 
@@ -19,11 +19,26 @@ class HubCommand(BaseCommand):
     """Publica, busca e instala paquetes en CobraHub."""
 
     name = "hub"
+    public_v2_hidden = True
 
-    def register_subparser(self, subparsers: Any) -> CustomArgumentParser:
-        parser = subparsers.add_parser(
-            self.name, help=_("Gestiona paquetes en CobraHub")
-        )
+    @staticmethod
+    def _ocultar_accion_subparser(subparsers: Any, name: str) -> None:
+        """Evita que un subparser compatible oculto aparezca en la ayuda."""
+        choices_actions = getattr(subparsers, "_choices_actions", None)
+        if choices_actions is not None:
+            choices_actions[:] = [
+                action
+                for action in choices_actions
+                if getattr(action, "dest", None) != name
+            ]
+
+    def register_subparser(
+        self, subparsers: Any, hidden: bool = False
+    ) -> CustomArgumentParser:
+        parser_help = SUPPRESS if hidden else _("Gestiona paquetes en CobraHub")
+        parser = subparsers.add_parser(self.name, help=parser_help)
+        if hidden:
+            self._ocultar_accion_subparser(subparsers, self.name)
         sub = parser.add_subparsers(dest="accion", required=True)
         pub = sub.add_parser("publicar", help=_("Publica un paquete .co"))
         pub.add_argument("paquete", type=Path)
