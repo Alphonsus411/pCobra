@@ -112,6 +112,7 @@ CLI_VERSION = _resolve_cli_version()
 
 assert_public_targets_contract(tuple(PUBLIC_BACKENDS), source="cobra cli bootstrap")
 LANG_CHOICES = tuple(PUBLIC_BACKENDS)
+PUBLIC_V2_HIDDEN_COMPATIBLE_COMMANDS = frozenset({"paquete", "hub"})
 
 
 class CliErrorYaMostrado(Exception):
@@ -225,8 +226,9 @@ class _PublicChoicesDict(dict):
 class CommandRegistry:
     def __init__(self, interpreter: Optional[InterpretadorCobra] = None) -> None:
         self.commands: Dict[str, BaseCommand] = {}
-        # Comandos compatibles cargados en el perfil público, pero no expuestos
-        # como comandos visibles ni registrados como subparsers públicos.
+        # Contrato runtime público (Opción A): comandos compatibles registrados
+        # como subparsers ejecutables, pero ocultos del help y del listado público
+        # de choices.
         self.hidden_compatible_commands: Dict[str, BaseCommand] = {}
         self.interpreter = interpreter
 
@@ -246,8 +248,8 @@ class CommandRegistry:
         # AppConfig.V2_COMMAND_ROUTES. En el perfil público solo retiramos de la
         # resolución temprana los comandos que no forman parte del contrato ni
         # son compatibilidad explícita. Los comandos compatibles ocultos
-        # (`paquete`, `hub`) se cargan y se separan después de construirlos para
-        # que no entren en self.commands ni en subparsers.choices.
+        # (`paquete`, `hub`) se cargan y se registran como subparsers ocultos
+        # para conservar compatibilidad runtime sin exponerlos en help/choices.
         normalized_profile = str(profile).strip().lower() or PROFILE_PUBLIC
         if AppConfig.V2_COMMAND_CLASSES:
             routes = [
@@ -339,14 +341,13 @@ class CommandRegistry:
         all_commands = base_commands + plugin_commands
 
         if ui_effective == "v2":
-            hidden_compatible_names = {"paquete", "hub"}
+            hidden_compatible_names = PUBLIC_V2_HIDDEN_COMPATIBLE_COMMANDS
             allowed_names = filter_commands_for_profile(
                 (cmd.name for cmd in all_commands), normalized_profile
             )
             if normalized_profile == PROFILE_PUBLIC:
-                # `paquete` y `hub` son compatibilidad explícita: se cargan en
-                # el perfil público, pero se separan antes de poblar
-                # self.commands y antes de registrar subparsers visibles.
+                # Opción A: `paquete` y `hub` permanecen registrados y
+                # ejecutables, pero se ocultan del contrato público visible.
                 allowed_names = set(allowed_names).union(hidden_compatible_names)
             all_commands = [cmd for cmd in all_commands if cmd.name in allowed_names]
             if normalized_profile == PROFILE_PUBLIC:
@@ -377,7 +378,7 @@ class CommandRegistry:
         self.hidden_compatible_commands = {}
         hidden_compatible_commands = []
         if ui_effective == "v2" and normalized_profile == PROFILE_PUBLIC:
-            hidden_compatible_names = {"paquete", "hub"}
+            hidden_compatible_names = PUBLIC_V2_HIDDEN_COMPATIBLE_COMMANDS
             hidden_compatible_commands = [
                 cmd for cmd in all_commands if cmd.name in hidden_compatible_names
             ]
