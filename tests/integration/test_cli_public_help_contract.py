@@ -1,5 +1,6 @@
 import argparse
 import os
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -48,8 +49,6 @@ def test_cli_ui_v2_registra_repl_oficial_y_no_alias_interactive_legacy():
     assert "repl" in commands
     assert commands["repl"].__class__.__name__ == "ReplCommandV2"
     assert "interactive" not in commands
-
-
 
 
 def test_cli_public_profile_does_not_register_extended_choices(monkeypatch):
@@ -115,10 +114,27 @@ def test_cli_build_help_public_contract_no_expone_flags_backend():
     assert "--tipos" not in output
 
 
-
-
-
-
+def test_cli_public_invalid_extended_commands_do_not_appear_as_choices():
+    repo_root = Path(__file__).resolve().parents[2]
+    for legacy_command in ("installer", "paquete", "hub"):
+        result = subprocess.run(
+            [sys.executable, "-m", "cobra.cli.cli", legacy_command, "--help"],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            cwd=str(repo_root),
+            env=_public_env(),
+        )
+        assert result.returncode != 0
+        lower_output = result.stderr.lower() + result.stdout.lower()
+        assert f"invalid choice: '{legacy_command}'" in lower_output
+        match = re.search(r"choose from ([^)]+)\)", lower_output)
+        assert match is not None
+        choices_message = match.group(1)
+        for command in PUBLIC_COMMANDS:
+            assert command in choices_message
+        for command in ("installer", "paquete", "hub"):
+            assert command not in choices_message
 
 
 def test_cli_help_public_contract_muestra_warning_migracion_en_comando_legacy():
