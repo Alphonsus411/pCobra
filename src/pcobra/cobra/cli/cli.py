@@ -194,9 +194,12 @@ class CommandRegistry:
             raise
 
     def _resolve_v2_command_routes(self, profile: str) -> List[CommandClassRoute]:
-        # Las rutas compat/de desarrollo permanecen en AppConfig.V2_COMMAND_ROUTES.
-        # La exposición pública se decide en register_base_commands() con
-        # PUBLIC_COMMANDS, después de construir los comandos y conocer sus names.
+        # Las rutas extendidas/compatibles permanecen declaradas en
+        # AppConfig.V2_COMMAND_ROUTES para el perfil de desarrollo. En el perfil
+        # público filtramos antes de construir/registrar subparsers para que
+        # comandos como installer, paquete y hub nunca lleguen a
+        # subparsers.choices ni a self.commands.
+        normalized_profile = str(profile).strip().lower() or PROFILE_PUBLIC
         if AppConfig.V2_COMMAND_CLASSES:
             routes = [
                 CommandClassRoute(cls.__module__, cls.__name__)
@@ -204,7 +207,18 @@ class CommandRegistry:
             ]
         else:
             routes = list(AppConfig.V2_COMMAND_ROUTES)
-        return routes
+
+        if normalized_profile != PROFILE_PUBLIC or AppConfig.V2_COMMAND_CLASSES:
+            return routes
+
+        public_v2_command_classes = {
+            "RunCommandV2",
+            "BuildCommandV2",
+            "TestCommandV2",
+            "ModCommandV2",
+            "ReplCommandV2",
+        }
+        return [route for route in routes if route.class_name in public_v2_command_classes]
 
     def _resolve_v1_command_routes(self) -> List[CommandClassRoute]:
         """Carga comandos v1 y difiere imports GUI/opcionales hasta el registro."""
@@ -394,7 +408,7 @@ class CliApplication:
             ui=selected_ui,
             profile=command_profile,
         )
-        self._enforce_public_startup_guard()
+        self._enforce_public_startup_guard(command_profile=command_profile)
         if command_profile != PROFILE_PUBLIC:
             menu_parser = self._subparsers.add_parser("menu", help=_("Modo interactivo"))
             menu_parser.set_defaults(cmd="menu")
@@ -721,9 +735,9 @@ class CliApplication:
         parsed = self.parser.parse_args(argv)
         return self._normalizar_flags_sesion(parsed)
 
-    def _enforce_public_startup_guard(self) -> None:
+    def _enforce_public_startup_guard(self, *, command_profile: str | None = None) -> None:
         """Bloquea exposición accidental de comandos no públicos ya registrados."""
-        command_profile = resolve_command_profile()
+        command_profile = command_profile or resolve_command_profile()
         selected_ui = getattr(self, "_selected_ui", "v2")
         if command_profile != PROFILE_PUBLIC or selected_ui != "v2":
             return

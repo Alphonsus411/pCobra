@@ -50,6 +50,26 @@ def test_cli_ui_v2_registra_repl_oficial_y_no_alias_interactive_legacy():
     assert "interactive" not in commands
 
 
+
+
+def test_cli_public_profile_does_not_register_extended_choices(monkeypatch):
+    monkeypatch.delenv("COBRA_DEV_MODE", raising=False)
+    monkeypatch.delenv("COBRA_CLI_COMMAND_PROFILE", raising=False)
+
+    app = cli_module.CliApplication()
+    app.initialize()
+    app._ensure_command_structure()
+
+    commands = set(app.command_registry.commands)
+    choices = set(app._subparsers.choices)
+
+    assert commands == set(PUBLIC_COMMANDS)
+    assert choices == set(PUBLIC_COMMANDS)
+    for command in ("installer", "paquete", "hub"):
+        assert command not in commands
+        assert command not in choices
+
+
 def test_cli_help_public_contract_snapshot():
     repo_root = Path(__file__).resolve().parents[2]
     result = subprocess.run(
