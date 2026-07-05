@@ -194,6 +194,9 @@ class CommandRegistry:
             raise
 
     def _resolve_v2_command_routes(self, profile: str) -> List[CommandClassRoute]:
+        # Las rutas compat/de desarrollo permanecen en AppConfig.V2_COMMAND_ROUTES.
+        # La exposición pública se decide en register_base_commands() con
+        # PUBLIC_COMMANDS, después de construir los comandos y conocer sus names.
         if AppConfig.V2_COMMAND_CLASSES:
             routes = [
                 CommandClassRoute(cls.__module__, cls.__name__)
@@ -223,6 +226,7 @@ class CommandRegistry:
         profile: str = PROFILE_PUBLIC,
     ) -> Dict[str, BaseCommand]:
         base_commands = []
+        normalized_profile = str(profile).strip().lower() or PROFILE_PUBLIC
         ui_effective = ui
         if ui == "v2" and AppConfig.BASE_COMMAND_CLASSES:
             logging.getLogger(__name__).debug(
@@ -232,7 +236,7 @@ class CommandRegistry:
             ui_effective = "v1"
         else:
             command_routes = (
-                self._resolve_v2_command_routes(profile)
+                self._resolve_v2_command_routes(normalized_profile)
                 if ui == "v2"
                 else self._resolve_v1_command_routes()
             )
@@ -266,26 +270,30 @@ class CommandRegistry:
         all_commands = base_commands + plugin_commands
 
         if ui_effective == "v2":
-            allowed_names = filter_commands_for_profile((cmd.name for cmd in all_commands), profile)
+            allowed_names = filter_commands_for_profile(
+                (cmd.name for cmd in all_commands), normalized_profile
+            )
             all_commands = [cmd for cmd in all_commands if cmd.name in allowed_names]
-            if profile == PROFILE_PUBLIC:
+            if normalized_profile == PROFILE_PUBLIC:
                 logging.getLogger(__name__).debug(
                     "Perfil público activo: comandos expuestos=%s",
                     sorted(allowed_names),
                 )
-            elif profile == PROFILE_DEVELOPMENT:
+            elif normalized_profile == PROFILE_DEVELOPMENT:
                 logging.getLogger(__name__).debug(
                     "Perfil desarrollo activo: comandos internos habilitados."
                 )
         else:
-            allowed_names = filter_legacy_commands_for_profile((cmd.name for cmd in all_commands), profile)
+            allowed_names = filter_legacy_commands_for_profile(
+                (cmd.name for cmd in all_commands), normalized_profile
+            )
             all_commands = [cmd for cmd in all_commands if cmd.name in allowed_names]
-            if profile == PROFILE_PUBLIC:
+            if normalized_profile == PROFILE_PUBLIC:
                 logging.getLogger(__name__).debug(
                     "Perfil público en CLI v1: comandos legacy visibles=%s",
                     sorted(allowed_names),
                 )
-            elif profile == PROFILE_DEVELOPMENT:
+            elif normalized_profile == PROFILE_DEVELOPMENT:
                 logging.getLogger(__name__).debug(
                     "Perfil desarrollo en CLI v1: comandos internos + obsoletos habilitados."
                 )
