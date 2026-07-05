@@ -128,24 +128,25 @@ def test_cli_build_help_public_contract_no_expone_flags_backend():
 
 def test_cli_public_invalid_extended_commands_do_not_appear_as_choices():
     repo_root = Path(__file__).resolve().parents[2]
-    result = subprocess.run(
-        [sys.executable, "-m", "cobra.cli.cli", "installer", "--help"],
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        cwd=str(repo_root),
-        env=_public_env(),
-    )
-    assert result.returncode != 0
-    lower_output = result.stderr.lower() + result.stdout.lower()
-    assert "invalid choice: 'installer'" in lower_output
-    match = re.search(r"choose from ([^)]+)\)", lower_output)
-    assert match is not None
-    choices_message = match.group(1)
-    for command in PUBLIC_COMMANDS:
-        assert command in choices_message
-    for command in ("installer", "paquete", "hub"):
-        assert command not in choices_message
+    for invalid_command in ("installer", "compilar"):
+        result = subprocess.run(
+            [sys.executable, "-m", "cobra.cli.cli", invalid_command, "--help"],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            cwd=str(repo_root),
+            env=_public_env(),
+        )
+        assert result.returncode != 0
+        lower_output = result.stderr.lower() + result.stdout.lower()
+        assert f"invalid choice: '{invalid_command}'" in lower_output
+        match = re.search(r"choose from ([^)]+)\)", lower_output)
+        assert match is not None
+        choices_message = match.group(1)
+        for command in PUBLIC_COMMANDS:
+            assert command in choices_message
+        for command in ("installer", "compilar", "paquete", "hub"):
+            assert command not in choices_message
 
 
 def test_cli_public_hidden_compat_commands_are_callable_but_not_main_help():
@@ -160,6 +161,9 @@ def test_cli_public_hidden_compat_commands_are_callable_but_not_main_help():
             env=_public_env(),
         )
         assert result.returncode == 0
+        lower_output = result.stderr.lower() + result.stdout.lower()
+        assert "invalid choice" not in lower_output
+        assert "choose from" not in lower_output
         assert f"usage: cobra {legacy_command}" in result.stdout.lower()
 
 
