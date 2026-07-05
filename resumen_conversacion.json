@@ -1,290 +1,224 @@
 {
   "asistente": "Bella",
   "proyecto": "pCobra / Cobra",
-  "version_objetivo": "10.1.1",
-  "fecha_resumen": "2026-06-28",
-  "estado_global": "IDLE grafico avanzado en fase verde con observacion pendiente en datos.filtrar callback",
-  "objetivo_general": "Consolidar el IDLE grafico de Cobra como entorno basico real de proyecto, manteniendo seguridad de rutas, compatibilidad con archivos auxiliares y contrato de modulos Core/stdlib.",
-  "restricciones_permanentes": [
-    "No modificar Lexer",
-    "No modificar Parser",
-    "No modificar gramatica",
-    "No modificar tokens",
-    "No modificar nodos AST",
-    "No modificar transpiladores salvo autorizacion explicita o regresion demostrada",
-    "No cambiar la sintaxis Cobra",
-    "No inventar APIs sin inspeccionar codigo real",
-    "Aplicar parches minimos y localizados",
-    "No guardar ni borrar proyectos de usuario dentro del repositorio pCobra ni bajo src/",
-    "Mantener validaciones contra ../, rutas absolutas fuera del proyecto, workspace_root y project_root"
-  ],
-  "bloques_validados": {
-    "GUI_WORKSPACE_FILES": {
-      "estado": "verde",
-      "descripcion": "Workspace, proyectos independientes y gestion segura de abrir/guardar/recargar archivos."
-    },
-    "GUI_ANALYSIS_ASSISTANCE": {
-      "estado": "verde",
-      "descripcion": "Ejecucion, tokens, AST, Sugerencias del Libro y Correccion no destructiva."
-    },
-    "GUI_DELETE_SAFE_001": {
-      "estado": "verde",
-      "descripcion": "Borrado seguro de archivos, carpetas y proyectos con proteccion de workspace_root, project_root y escapes ../."
-    },
-    "GUI_CLOSE_PROJECT_001": {
-      "estado": "verde",
-      "descripcion": "Cerrar proyecto vuelve al estado sin proyecto activo, sin borrar workspace ni proyecto, y bloquea operaciones posteriores sin proyecto."
-    },
-    "GUI_MULTI_FILE_TYPES_001": {
-      "estado": "verde",
-      "descripcion": "Soporte de archivos auxiliares editables: .txt, .md, Dockerfile, .json, .yml, .yaml, .toml, ignore files y similares, sin enviarlos al pipeline Cobra."
-    },
-    "GUI_CREATE_FOLDER_SAFE_001": {
-      "estado": "verde",
-      "descripcion": "Creacion segura de carpetas dentro del proyecto activo, incluyendo carpetas anidadas y bloqueo de escapes."
-    },
-    "GUI_CONFIG_FILES_SAFE_001": {
-      "estado": "verde",
-      "descripcion": "Archivos config como .json, .yml, .yaml y .toml se crean, abren, editan y guardan como auxiliares, bloqueando acciones Cobra."
-    },
-    "CORE_STDLIB_USAR_CONTRACT_001": {
-      "estado": "verde_con_observacion",
-      "descripcion": "Contrato basico de usar para modulos Core/stdlib validado. usar numero, usar texto y usar datos cargan correctamente. Modulo inexistente falla de forma controlada.",
-      "observacion": "datos.filtrar con callback Cobra queda como caso avanzado pendiente."
-    }
-  },
-  "estructura_actual_proyecto_beta": {
-    "workspace": "C:\\Users\\Adolfo\\CobraProjects",
-    "proyecto": "proyecto_beta",
-    "carpetas_confirmadas": [
-      "docs",
-      "config",
-      "config/env",
-      "src"
-    ],
-    "archivos_confirmados": [
-      "README.md",
-      "notas.txt",
-      "Dockerfile",
-      "docker-compose.yml",
-      "config.json",
-      "config/app.yaml",
-      "pyproject.toml",
-      "docs/nota.md",
-      "src/poc_15f.cobra",
-      "src/poc_16a_numero.cobra",
-      "src/poc_16b_texto.cobra",
-      "src/poc_16c.cobra",
-      "src/poc_16d.cobra"
+  "fecha_resumen": "2026-07-05",
+  "estado_global": "varios bloques Core/GUI cerrados en verde; queda pendiente ajuste fino de compatibilidad CLI para comandos ocultos paquete/hub",
+  "contexto_general": {
+    "objetivo": "Consolidar el runtime del IDLE gráfico, el contrato de usar para corelibs/stdlib, callbacks Cobra en datos.filtrar/mapear y el contrato público CLI v2.",
+    "restricciones_permanentes": [
+      "No modificar Lexer",
+      "No modificar Parser",
+      "No modificar gramatica",
+      "No modificar tokens",
+      "No modificar nodos AST",
+      "No modificar transpiladores salvo regresion demostrada",
+      "No cambiar la sintaxis Cobra",
+      "Aplicar parches minimos y localizados",
+      "Mantener errores controlados para variables no declaradas",
+      "No romper comandos publicos oficiales run/build/test/mod/repl",
+      "No eliminar compatibilidad interna/extendida si existe cobertura de tests"
     ]
   },
-  "pocs_relevantes": {
-    "GUI_CREATE_FOLDER_SAFE_001": [
-      {
-        "id": "POC-14A",
-        "nombre": "Crear carpeta docs",
-        "estado": "verde",
-        "evidencia": "Test-Path \"$HOME\\CobraProjects\\proyecto_beta\\docs\" devolvio True."
-      },
-      {
-        "id": "POC-14B",
-        "nombre": "Crear carpeta anidada config/env",
-        "estado": "verde",
-        "evidencia": "Test-Path para config y config/env devolvio True."
-      },
-      {
-        "id": "POC-14C",
-        "nombre": "Bloquear escape ../ al crear carpeta",
-        "estado": "verde",
-        "evidencia": "Test-Path \"$HOME\\CobraProjects\\escape_folder\" devolvio False."
-      },
-      {
-        "id": "POC-14D",
-        "nombre": "Bloquear crear carpeta sin proyecto activo",
-        "estado": "verde",
-        "evidencia": "Test-Path \"$HOME\\CobraProjects\\carpeta_sin_proyecto\" devolvio False."
-      }
-    ],
-    "GUI_CONFIG_FILES_SAFE_001": [
-      {
-        "id": "POC-15A",
-        "nombre": "Crear y guardar config.json",
-        "estado": "verde",
-        "evidencia": "config.json existe y contiene nombre proyecto_beta y modo idle."
-      },
-      {
-        "id": "POC-15B",
-        "nombre": "Crear y guardar docker-compose.yml",
-        "estado": "verde",
-        "evidencia": "docker-compose.yml existe y contiene services/app/build/command."
-      },
-      {
-        "id": "POC-15C",
-        "nombre": "Crear y guardar config/app.yaml",
-        "estado": "verde",
-        "evidencia": "Test-Path \"$HOME\\CobraProjects\\proyecto_beta\\config\\app.yaml\" devolvio True."
-      },
-      {
-        "id": "POC-15D",
-        "nombre": "Crear y guardar pyproject.toml",
-        "estado": "verde",
-        "evidencia": "Test-Path \"$HOME\\CobraProjects\\proyecto_beta\\pyproject.toml\" devolvio True."
-      },
-      {
-        "id": "POC-15E",
-        "nombre": "Crear y guardar docs/nota.md",
-        "estado": "verde",
-        "evidencia": "docs/nota.md existe y contiene '# Nota interna'."
-      },
-      {
-        "id": "POC-15F",
-        "nombre": "No regresion Cobra",
-        "estado": "verde",
-        "evidencia": "Archivo .cobra ejecuta, tokeniza, genera AST y mantiene sugerencias/correccion."
-      }
-    ],
-    "CORE_STDLIB_USAR_CONTRACT_001": [
-      {
-        "id": "POC-16A",
-        "nombre": "usar numero",
-        "estado": "verde",
-        "evidencia": "usar \"numero\" con es_finito funciona."
-      },
-      {
-        "id": "POC-16B",
-        "nombre": "usar texto",
-        "estado": "verde",
-        "evidencia": "usar \"texto\" con funcion publica actual funciona; no depende de a_snake."
-      },
-      {
-        "id": "POC-16C1",
-        "nombre": "usar datos carga",
-        "estado": "verde",
-        "evidencia": "usar \"datos\" seguido de imprimir(\"datos cargado\") ejecuta correctamente."
-      },
-      {
-        "id": "POC-16C2",
-        "nombre": "datos.filtrar con callback Cobra",
-        "estado": "amarillo",
-        "evidencia": "Errores observados: funcion inline no parseable por DOSPUNTOS, variable no declarada numeros, variable no declarada mayor_que_dos.",
-        "interpretacion": "No parece fallo de usar datos. Parece limitacion de callbacks Cobra, funciones de primera clase o resolucion de funciones declaradas como valores."
-      },
-      {
-        "id": "POC-16D",
-        "nombre": "Modulo inexistente falla controladamente",
-        "estado": "verde",
-        "evidencia": "Error de ejecucion: usar_error[modulo_fuera_catalogo_publico]: modulo fuera del catalogo publico."
-      },
-      {
-        "id": "POC-16E",
-        "nombre": ".cobra con usar sigue siendo Cobra",
-        "estado": "verde",
-        "evidencia": "Acciones Cobra siguen habilitadas en archivos .cobra con usar."
-      },
-      {
-        "id": "POC-16F",
-        "nombre": ".json con texto usar no se ejecuta como Cobra",
-        "estado": "verde",
-        "evidencia": "Archivo config bloquea Ejecutar/Tokens/AST/Sugerencias/Correccion antes de Lexer/Parser."
-      }
-    ]
-  },
-  "tests_y_regresion": {
-    "gui": {
-      "comando": "python -m pytest tests/gui -q",
-      "resultado": "67 tests passed, 1 warning"
-    },
-    "suite_completa": {
-      "comando": "python -m pytest tests -q",
-      "resultado": "Interrumpido por el usuario en una ejecucion previa",
-      "nota": "Pendiente recomendable antes de release o merge mayor."
-    },
-    "archivos_modificados_reportados": [
-      "src/pcobra/gui/idle.py",
-      "src/pcobra/gui/runtime.py",
-      "tests/unit/test_gui_runtime.py"
-    ],
-    "tests_anadidos_o_actualizados": [
-      "Deteccion de tipos de archivo",
-      "Bloqueo de acciones Cobra para archivos config/no-Cobra",
-      "Creacion segura de carpetas",
-      "Contrato publico de usar actualizado frente a expectativas legacy"
-    ]
-  },
-  "problemas_detectados_y_estado": [
-    {
-      "problema": "No habia boton ni flujo visible para crear carpetas",
-      "estado": "resuelto",
-      "bloque": "GUI_CREATE_FOLDER_SAFE_001"
-    },
-    {
-      "problema": ".json, .yml y .yaml no respondian correctamente",
-      "estado": "resuelto",
-      "bloque": "GUI_CONFIG_FILES_SAFE_001"
-    },
-    {
-      "problema": "Tests historicos esperaban a_snake, firmas antiguas de datos.filtrar y mensaje antiguo de modulo externo",
-      "estado": "resuelto_en_tests",
-      "nota": "Se ajustaron expectativas al contrato publico actual."
-    },
-    {
-      "problema": "datos.filtrar no funciona con callback Cobra declarado",
-      "estado": "pendiente",
-      "bloque_sugerido": "CORE_DATA_FILTER_CALLBACK_001",
-      "nota": "Caso avanzado separado. No bloquea CORE_STDLIB_USAR_CONTRACT_001."
-    }
-  ],
-  "prompts_generados": [
-    {
-      "nombre": "GUI_MULTI_FILE_TYPES_001",
-      "objetivo": "Permitir archivos auxiliares editables y bloquear acciones Cobra en no-Cobra."
-    },
-    {
-      "nombre": "GUI_CREATE_FOLDER_SAFE_001 + GUI_CONFIG_FILES_SAFE_001",
-      "objetivo": "Crear carpetas seguras y corregir soporte .json/.yml/.yaml/.toml."
-    },
-    {
-      "nombre": "Regresion GUI IDLE",
-      "objetivo": "Asegurar que nada se haya roto tras cambios del IDLE."
-    },
-    {
-      "nombre": "CORE_STDLIB_USAR_CONTRACT_001",
-      "objetivo": "Validar integridad de modulos Core/stdlib y contrato usar."
-    },
-    {
-      "nombre": "Actualizar tests legacy de usar",
-      "objetivo": "Ajustar expectativas historicas: a_snake, datos.filtrar y mensaje modulo externo."
-    },
-    {
-      "nombre": "CORE_DATA_FILTER_CALLBACK_001",
-      "objetivo": "Investigar y corregir datos.filtrar con callback Cobra declarado."
-    }
-  ],
-  "siguiente_bloque_recomendado": {
-    "id": "CORE_DATA_FILTER_CALLBACK_001",
-    "estado": "pendiente",
-    "objetivo": "Revisar contrato real de datos.filtrar y soporte de callbacks Cobra sin tocar Lexer/Parser/gramatica.",
-    "poc_objetivo": {
-      "archivo": "src/poc_data_filter_callback.cobra",
-      "contenido_esperado_si_firma_lista_predicado": [
-        "usar \"datos\"",
-        "",
-        "func mayor_que_dos(n):",
-        "    retorno n > 2",
-        "fin",
-        "",
-        "imprimir(filtrar([1, 2, 3, 4], mayor_que_dos))"
+  "bloques_cerrados": {
+    "CORE_RUNTIME_GLOBAL_ASSIGNMENT_SCOPE_001": {
+      "estado": "verde",
+      "descripcion": "El runtime GUI ahora conserva asignaciones de nivel superior entre sentencias del mismo fragmento.",
+      "evidencias_poc": [
+        {
+          "codigo": "x = 123\nimprimir(x)",
+          "resultado": "123"
+        },
+        {
+          "codigo": "x = \"hola\"\nimprimir(x)",
+          "resultado": "hola"
+        },
+        {
+          "codigo": "numeros = [1, 2, 3, 4]\nimprimir(numeros)",
+          "resultado": "[1, 2, 3, 4]"
+        },
+        {
+          "codigo": "imprimir(no_existe)",
+          "resultado": "NameError: Variable no declarada: no_existe"
+        }
       ],
-      "salida_esperada": "[3, 4] o equivalente"
+      "tests_validados": [
+        "tests/gui/test_gui_runtime_execution_scope.py: 4 passed inicialmente; luego 13 passed y finalmente 15 passed",
+        "tests/unit/test_gui_runtime.py: 90 passed"
+      ]
+    },
+    "GUI_AUTO_SUGGESTION_PARSER_CONTRACT_001": {
+      "estado": "verde",
+      "descripcion": "Se corrigio la desalineacion entre tests/documentacion y Parser respecto a retorno/retornar.",
+      "diagnostico": "El Parser acepta tanto retorno como retornar. retornar no debe tratarse como ParserError, sino como forma aceptada/no canonica si retorno es la forma recomendada.",
+      "tests_validados": [
+        "tests/gui/test_auto_suggestion_parser_contract.py: 15 passed",
+        "tests/gui: 79 passed inicialmente tras el ajuste"
+      ]
+    },
+    "CORE_STDLIB_USAR_EXPORTS_DATOS_001": {
+      "estado": "verde",
+      "descripcion": "usar \"datos\" ya carga simbolos exportables y expone funciones como longitud y filtrar.",
+      "evidencias_poc": [
+        {
+          "codigo": "usar \"numero\"\nimprimir(es_finito(10))",
+          "resultado": "verdadero"
+        },
+        {
+          "codigo": "usar \"datos\"\nimprimir(\"datos cargado\")",
+          "resultado": "datos cargado"
+        },
+        {
+          "codigo": "usar \"datos\"\nnumeros = [1, 2, 3, 4]\nimprimir(longitud(numeros))",
+          "resultado": "4"
+        }
+      ],
+      "diagnostico_previo": "pcobra.corelibs.datos y pcobra.standard_library.datos tenian __all__ y filtrar, pero el loader/politica de usar no resolvia correctamente datos o filtraba mal sus simbolos."
+    },
+    "CORE_DATA_FILTER_CALLBACK_001": {
+      "estado": "verde",
+      "descripcion": "Funciones Cobra declaradas con func ahora pueden resolverse como valores/callables y pasarse como callback a datos.filtrar.",
+      "diagnostico_previo": "La llamada directa doble(3) funcionaba, pero f = doble y filtrar(numeros, mayor_que_dos) fallaban porque las funciones no eran resolubles como identificadores/valores.",
+      "evidencias_poc": [
+        {
+          "codigo": "func doble(n):\n    retorno n * 2\nfin\n\nimprimir(doble(3))",
+          "resultado": "6"
+        },
+        {
+          "codigo": "func doble(n):\n    retorno n * 2\nfin\n\nf = doble\nimprimir(f(3))",
+          "resultado": "6"
+        },
+        {
+          "codigo": "usar \"datos\"\n\nfunc mayor_que_dos(n):\n    retorno n > 2\nfin\n\nnumeros = [1, 2, 3, 4]\nresultado = filtrar(numeros, mayor_que_dos)\nimprimir(resultado)",
+          "resultado": "[3, 4]"
+        }
+      ]
+    },
+    "CORE_DATA_MAPEAR_CALLBACK_CONTRACT_001": {
+      "estado": "verde",
+      "descripcion": "datos.mapear fue ampliado para soportar listas de escalares con callbacks Cobra, manteniendo compatibilidad con el contrato de datos.",
+      "diagnostico_previo": "standard_library.datos.mapear forzaba dict(transformacion(dict(fila))), por lo que mapear([1,2,3], doble) fallaba con TypeError: 'int' object is not iterable.",
+      "evidencias_poc": [
+        {
+          "codigo": "usar \"datos\"\n\nfunc doble(n):\n    retorno n * 2\nfin\n\nnumeros = [1, 2, 3]\nresultado = mapear(numeros, doble)\nimprimir(resultado)",
+          "resultado": "[2, 4, 6]"
+        },
+        {
+          "codigo": "filtrar([1,2,3,4], mayor_que_dos)",
+          "resultado": "[3, 4]"
+        }
+      ],
+      "tests_validados": [
+        "tests/gui/test_gui_runtime_execution_scope.py: 15 passed",
+        "tests/core: 152 passed, 2 skipped",
+        "tests/gui: 90 passed",
+        "tests/unit/test_gui_runtime.py: 90 passed"
+      ]
+    },
+    "CLI_PUBLIC_V2_CONTRACT_001": {
+      "estado": "verde_focal",
+      "descripcion": "El help publico CLI v2 vuelve a exponer solo run/build/test/mod/repl y cobra build --help ya no expone --target en el contrato publico.",
+      "tests_validados": [
+        "tests/cli/test_public_v2_commands_contract.py: 8 passed",
+        "tests/integration/test_cli_ayuda.py: 4 passed, 1 skipped",
+        "tests/integration/test_cli_public_help_contract.py: 8 passed",
+        "tests/integration/test_cli_ui_v2.py: 4 passed"
+      ],
+      "nota": "La validacion focal paso, pero tests/cli completo revelo un conflicto residual con registro oculto de paquete/hub."
     }
   },
-  "veredicto_final": {
-    "idle_basico_funcional": true,
-    "idle_entorno_proyecto_real": true,
-    "seguridad_rutas": "verde",
-    "archivos_auxiliares": "verde",
-    "core_stdlib_usar": "verde_con_observacion",
-    "pendiente_critico": false,
-    "pendiente_tecnico": "datos.filtrar con callbacks Cobra"
-  }
+  "bloque_pendiente_principal": {
+    "CLI_ALIAS_REGISTRATION_COMPAT_001": {
+      "estado": "rojo",
+      "descripcion": "Los comandos paquete y hub deben seguir registrados en comandos.choices como compatibilidad, pero no deben aparecer en el help publico v2.",
+      "fallos_actuales": [
+        {
+          "test": "tests/cli/test_cli_alias_registration.py::test_aliases_legacy_de_paquete_siguen_registrados_en_cli_publica",
+          "error": "KeyError: 'paquete'"
+        },
+        {
+          "test": "tests/cli/test_cli_alias_registration.py::test_comandos_recomendados_de_hub_siguen_registrados_en_cli_publica",
+          "error": "KeyError: 'hub'"
+        }
+      ],
+      "diagnostico": "El parche de CLI oculto o elimino paquete/hub del parser publico. Sin embargo, los tests de compatibilidad esperan que sigan registrados aunque no sean visibles en el help publico.",
+      "contrato_deseado": [
+        "cobra --help muestra solo run, build, test, mod, repl",
+        "paquete y hub no aparecen en help publico",
+        "paquete y hub existen en subparsers.choices",
+        "los aliases/subcomandos esperados por tests/cli/test_cli_alias_registration.py siguen presentes",
+        "tests de contrato publico v2 siguen pasando"
+      ],
+      "prompt_sugerido_para_codex": "Mantener paquete y hub registrados como comandos compatibles/extendidos ocultos, preferiblemente con help=argparse.SUPPRESS o mecanismo equivalente, sin que sean contados como comandos publicos visibles. Revisar tests/cli/test_cli_alias_registration.py para respetar aliases/subcomandos esperados. Luego ejecutar tests/cli/test_cli_alias_registration.py, tests/cli/test_public_v2_commands_contract.py, tests/integration/test_cli_public_help_contract.py, tests/integration/test_cli_ui_v2.py, tests/cli -q y tests/integration/test_cli*.py -q."
+    }
+  },
+  "suite_completa_actual": {
+    "ultimo_resultado": "5 fallos iniciales CLI public v2 fueron resueltos focalmente; luego tests/cli completo quedo con 2 fallos en alias registration.",
+    "tests_cli_actual": {
+      "resultado": "46 passed, 2 failed, 1 warning",
+      "fallos": [
+        "KeyError: paquete",
+        "KeyError: hub"
+      ]
+    },
+    "tests_integration_cli_actual": {
+      "resultado": "28 passed, 5 skipped, 1 warning"
+    },
+    "ultima_suite_completa_previa": {
+      "resultado": "5 failed, 307 passed, 10 skipped, 3 warnings",
+      "nota": "Ese resultado fue antes del parche CLI_PUBLIC_V2_CONTRACT_001; los 5 fallos focales ya pasaron despues."
+    }
+  },
+  "warnings_recurrentes": [
+    {
+      "warning": "UserWarning de Hypothesis: Skipping collection of '.hypothesis' directory",
+      "interpretacion": "No bloqueante; probablemente norecursedirs reemplaza ignores por defecto en configuracion pytest."
+    },
+    {
+      "warning": "PytestCollectionWarning: TestCommandV2 no coleccionable por __init__",
+      "interpretacion": "No bloqueante en esta sesion."
+    },
+    {
+      "warning": "DeprecationWarning por escape sequence en test_security_sandbox.py",
+      "interpretacion": "Higiene menor pendiente."
+    }
+  ],
+  "comandos_recomendados_para_retomar": {
+    "foco_pendiente": [
+      "python -m pytest tests/cli/test_cli_alias_registration.py -q",
+      "python -m pytest tests/cli/test_public_v2_commands_contract.py -q",
+      "python -m pytest tests/integration/test_cli_public_help_contract.py -q",
+      "python -m pytest tests/integration/test_cli_ui_v2.py -q"
+    ],
+    "validacion_cli_amplia": [
+      "python -m pytest tests/cli -q",
+      "python -m pytest tests/integration/test_cli*.py -q"
+    ],
+    "validacion_core_gui_no_regresion": [
+      "python -m pytest tests/gui/test_gui_runtime_execution_scope.py -q",
+      "python -m pytest tests/core -q",
+      "python -m pytest tests/gui -q",
+      "python -m pytest tests/unit/test_gui_runtime.py -q"
+    ],
+    "suite_final": [
+      "python -m pytest tests -q"
+    ]
+  },
+  "resumen_para_commit_futuro": {
+    "commit_message_sugerido": "Fix GUI runtime scope, stdlib callbacks, and CLI public v2 contract",
+    "bullets": [
+      "Preserve top-level assignments in GUI runtime execution.",
+      "Align GUI suggestion contract with accepted retornar syntax.",
+      "Fix usar datos export injection.",
+      "Resolve Cobra functions as callable values.",
+      "Validate datos.filtrar with Cobra callbacks.",
+      "Extend datos.mapear to support scalar lists with callbacks.",
+      "Clean public CLI v2 help contract while preserving compatibility commands as hidden/internal."
+    ],
+    "nota": "Antes del commit final queda cerrar CLI_ALIAS_REGISTRATION_COMPAT_001."
+  },
+  "observaciones": [
+    "Algunos archivos previos subidos a la conversacion aparecen expirados; para retomar con evidencia completa conviene conservar este JSON y, si hace falta, volver a subir archivos clave.",
+    "El trabajo de Core/GUI esta muy avanzado y validado con POCs y suites focales.",
+    "El unico bloqueo activo al cierre de la sesion esta en la convivencia entre help publico CLI v2 y registro oculto/compat de paquete y hub."
+  ]
 }
