@@ -46,7 +46,10 @@ class InstallerCommandV2(BaseCommand):
 
 
 def register_installer_build_arguments(
-    parser: argparse.ArgumentParser, *, include_project_path: bool = True
+    parser: argparse.ArgumentParser,
+    *,
+    include_project_path: bool = True,
+    hide_target_help: bool = False,
 ) -> None:
     """Registra las opciones canónicas de ``installer build`` en un parser."""
 
@@ -57,10 +60,15 @@ def register_installer_build_arguments(
             default=".",
             help="Ruta del proyecto Cobra a empaquetar",
         )
+    target_help = (
+        argparse.SUPPRESS
+        if hide_target_help
+        else "Sistema operativo objetivo: current, windows, linux o macos"
+    )
     parser.add_argument(
         "--target",
         default="current",
-        help="Sistema operativo objetivo: current, windows, linux o macos",
+        help=target_help,
     )
     parser.add_argument("--mode", choices=("onefile", "onedir"), default="onedir")
     parser.add_argument("--name", dest="name")
