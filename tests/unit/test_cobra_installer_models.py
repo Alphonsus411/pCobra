@@ -235,13 +235,39 @@ def test_validate_project_acumula_errores_para_idle(tmp_path: Path) -> None:
 
     codes = {error.code for error in result.errors}
     assert not result.is_valid
-    assert "entrypoint_extension_invalid" in codes
+    assert "entrypoint_extension_invalid" not in codes
     assert "cobra_toml_syntax_invalid" in codes
     assert "documentation_outside_project" in codes
     assert "documentation_not_found" in codes
     assert "executable_name_invalid" in codes
     assert "icon_not_found" in codes
     assert "icon_extension_invalid" in codes
+
+
+def test_validate_project_acepta_entrypoint_co_fuente_texto(tmp_path: Path) -> None:
+    from pcobra.cobra_installer import CobraProject, validate_project
+
+    entrypoint = tmp_path / "main.co"
+    entrypoint.write_text("imprimir('hola')\n", encoding="utf-8")
+    (tmp_path / "cobra.toml").write_text('[project]\nname = "demo"\n', encoding="utf-8")
+
+    result = validate_project(CobraProject(project_root=tmp_path, entrypoint=entrypoint))
+
+    assert result.is_valid
+    assert result.errors == ()
+
+
+def test_validate_build_options_acepta_entrypoint_co_fuente_texto_descubierto(tmp_path: Path) -> None:
+    from pcobra.cobra_installer import BuildOptions
+    from pcobra.cobra_installer.validator import validate_build_options
+
+    entrypoint = tmp_path / "main.co"
+    entrypoint.write_text("imprimir('hola')\n", encoding="utf-8")
+    (tmp_path / "cobra.toml").write_text('[project]\nname = "demo"\n', encoding="utf-8")
+
+    options = validate_build_options(BuildOptions(project_root=tmp_path))
+
+    assert options.project_root == tmp_path
 
 
 def test_validate_project_acepta_proyecto_cobra_minimo(tmp_path: Path) -> None:
