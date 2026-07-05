@@ -68,7 +68,7 @@ def test_package_manifest_acepta_campos_extra_permitidos():
     assert manifest_to_dict(manifest) == expected
 
 
-def test_package_manifest_normaliza_dependencias_validas():
+def test_package_manifest_normaliza_nombres_y_preserva_specs_de_dependencias():
     manifest = manifest_from_dict(
         {
             "format": "cobra-package-v1",
@@ -77,15 +77,15 @@ def test_package_manifest_normaliza_dependencias_validas():
             "files": [],
             "checksums": {},
             "dependencies": {
-                "  Paquete Demo ": " 1.2.3 ",
-                "util.core": "2.0.0-beta.1+build.5",
+                "  Paquete Demo ": "^1.2.3",
+                "util.core": 2,
             },
         }
     )
 
     assert manifest.dependencies == {
-        "paquete-demo": "1.2.3",
-        "util.core": "2.0.0-beta.1+build.5",
+        "paquete-demo": "^1.2.3",
+        "util.core": "2",
     }
 
 
@@ -93,9 +93,6 @@ def test_package_manifest_normaliza_dependencias_validas():
     ("dependencies", "match"),
     [
         ({"demo/evil": "1.0.0"}, "Nombre de paquete inválido"),
-        ({"demo": ">=1.0.0"}, "solo se aceptan versiones exactas SemVer"),
-        ({"demo": "1.0"}, "solo se aceptan versiones exactas SemVer"),
-        ({"demo": "v1.0.0"}, "solo se aceptan versiones exactas SemVer"),
         ([], "dependencies como objeto"),
     ],
 )

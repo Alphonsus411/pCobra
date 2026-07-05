@@ -61,9 +61,8 @@ def manifest_from_dict(data: dict[str, Any]) -> PackageManifest:
     Mantiene compatibilidad con manifiestos históricos que solo declaran
     ``format``, ``name``, ``version``, ``files`` y ``checksums``. Las
     dependencias se normalizan con la misma política que los nombres de
-    paquete y, por ahora, solo aceptan versiones exactas SemVer; los rangos
-    no están soportados hasta que exista una política de resolución
-    documentada.
+    paquete, preservando literalmente la especificación de versión declarada
+    para mantener compatibilidad con manifiestos CobraHub existentes.
     """
     package_format = data.get("format")
     if package_format is None:
@@ -117,8 +116,9 @@ def _validar_dependencias_manifest(
 ) -> dict[str, str] | None:
     """Normaliza y valida las dependencias declaradas en un manifiesto.
 
-    Cobra todavía no define semántica para resolver rangos de versiones, por
-    lo que cada dependencia debe apuntar a una versión exacta SemVer simple.
+    Solo se valida y normaliza el nombre de cada dependencia. La especificación
+    de versión se preserva literalmente porque CobraHub ya acepta rangos (por
+    ejemplo, ``^1.0.0``) y otros metadatos enriquecidos históricos.
     """
     if dependencies is None:
         return None
@@ -128,14 +128,7 @@ def _validar_dependencias_manifest(
         name = normalizar_nombre_paquete(str(raw_name))
         if name in normalized_dependencies:
             raise ValueError(f"Dependencia duplicada tras normalizar: {name}")
-        try:
-            version = validar_version_paquete(str(raw_version))
-        except ValueError as exc:
-            raise ValueError(
-                f"Versión de dependencia inválida para {name}: "
-                "solo se aceptan versiones exactas SemVer"
-            ) from exc
-        normalized_dependencies[name] = version
+        normalized_dependencies[name] = str(raw_version)
 
     return normalized_dependencies
 
