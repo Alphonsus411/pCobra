@@ -173,11 +173,11 @@ def _validate_entrypoint(project: CobraProject, root: Path, errors: list[Validat
         return
     if not _is_inside_project(entrypoint, root):
         errors.append(ValidationErrorDetail("entrypoint_outside_project", f"El entrypoint está fuera del proyecto: {entrypoint}", entrypoint, "entrypoint"))
-    if entrypoint.suffix.lower() != ".cobra":
+    if entrypoint.suffix.lower() not in COBRA_EXTENSIONS:
         errors.append(
             ValidationErrorDetail(
                 code="entrypoint_extension_invalid",
-                message=f"El entrypoint principal debe usar extensión .cobra: {entrypoint}",
+                message=f"El entrypoint principal debe usar extensión .cobra o .co: {entrypoint}",
                 path=entrypoint,
                 field="entrypoint",
             )
