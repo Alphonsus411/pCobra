@@ -93,7 +93,7 @@ def test_cli_hub_publicar_delega_en_cobrahub_packages_sin_red():
         codigo = HubCommand().run(args)
 
     assert codigo == 0
-    publicar.assert_called_once_with("dist/demo.co")
+    publicar.assert_called_once_with(str(Path("dist/demo.co")))
 
 
 def test_cli_hub_buscar_imprime_resultados_normalizados(capsys):
@@ -184,4 +184,4 @@ def test_main_cobra_cli_hub_publicar_delega_sin_red():
         codigo = main(["hub", "publicar", "dist/demo.co"])
 
     assert codigo == 0
-    publicar.assert_called_once_with("dist/demo.co")
+    publicar.assert_called_once_with(str(Path("dist/demo.co")))
