@@ -85,7 +85,9 @@ def test_cli_help_public_contract_snapshot():
         Path(__file__).parent / "golden" / "cli_ui_v2_help_public.golden"
     )
     expected_snapshot = _leer_snapshot_texto(expected_snapshot)
-    assert " ".join(result.stdout.lower().split()) == " ".join(expected_snapshot.lower().split())
+    assert " ".join(result.stdout.lower().split()) == " ".join(
+        expected_snapshot.lower().split()
+    )
     for command in ("run", "build", "test", "mod", "repl"):
         assert f" {command} " in f" {result.stdout.lower()} "
     for command in ("installer", "paquete", "hub"):
@@ -116,7 +118,29 @@ def test_cli_build_help_public_contract_no_expone_flags_backend():
 
 def test_cli_public_invalid_extended_commands_do_not_appear_as_choices():
     repo_root = Path(__file__).resolve().parents[2]
-    for legacy_command in ("installer", "paquete", "hub"):
+    result = subprocess.run(
+        [sys.executable, "-m", "cobra.cli.cli", "installer", "--help"],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        cwd=str(repo_root),
+        env=_public_env(),
+    )
+    assert result.returncode != 0
+    lower_output = result.stderr.lower() + result.stdout.lower()
+    assert "invalid choice: 'installer'" in lower_output
+    match = re.search(r"choose from ([^)]+)\)", lower_output)
+    assert match is not None
+    choices_message = match.group(1)
+    for command in PUBLIC_COMMANDS:
+        assert command in choices_message
+    for command in ("installer", "paquete", "hub"):
+        assert command not in choices_message
+
+
+def test_cli_public_hidden_compat_commands_are_callable_but_not_main_help():
+    repo_root = Path(__file__).resolve().parents[2]
+    for legacy_command in ("paquete", "hub"):
         result = subprocess.run(
             [sys.executable, "-m", "cobra.cli.cli", legacy_command, "--help"],
             capture_output=True,
@@ -125,16 +149,8 @@ def test_cli_public_invalid_extended_commands_do_not_appear_as_choices():
             cwd=str(repo_root),
             env=_public_env(),
         )
-        assert result.returncode != 0
-        lower_output = result.stderr.lower() + result.stdout.lower()
-        assert f"invalid choice: '{legacy_command}'" in lower_output
-        match = re.search(r"choose from ([^)]+)\)", lower_output)
-        assert match is not None
-        choices_message = match.group(1)
-        for command in PUBLIC_COMMANDS:
-            assert command in choices_message
-        for command in ("installer", "paquete", "hub"):
-            assert command not in choices_message
+        assert result.returncode == 0
+        assert f"usage: cobra {legacy_command}" in result.stdout.lower()
 
 
 def test_cli_help_public_contract_muestra_warning_migracion_en_comando_legacy():

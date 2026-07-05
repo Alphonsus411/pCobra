@@ -8,7 +8,7 @@ import tomllib
 from importlib.metadata import PackageNotFoundError, version as package_version
 from os import environ
 from pathlib import Path
-from typing import List, Dict, Optional, Type, Any, ContextManager
+from typing import List, Dict, Optional, Type, Any, ContextManager, Iterable
 from contextlib import contextmanager
 
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
@@ -24,12 +24,13 @@ from pcobra.cli import (
 )
 
 from pcobra.cobra.cli.commands.base import BaseCommand
-from pcobra.cobra.architecture.backend_policy import PUBLIC_BACKENDS, assert_public_targets_contract
+from pcobra.cobra.architecture.backend_policy import (
+    PUBLIC_BACKENDS,
+    assert_public_targets_contract,
+)
 from pcobra.cobra.core.interpreter import InterpretadorCobra
 from pcobra.cobra.cli.execution_pipeline import construir_interprete_seguro_canonico
 from pcobra.cobra.cli.i18n import _, format_traceback, setup_gettext
-
-
 
 
 from pcobra.cobra.cli.mode_policy import (
@@ -68,6 +69,7 @@ from pcobra.cobra.cli.utils.autocomplete import (
     enable_autocomplete,
     files_completer,
 )
+
 
 # Metadata injected at build time, with package metadata fallback for editable installs.
 def _resolve_pyproject_version() -> Optional[str]:
@@ -112,8 +114,6 @@ assert_public_targets_contract(tuple(PUBLIC_BACKENDS), source="cobra cli bootstr
 LANG_CHOICES = tuple(PUBLIC_BACKENDS)
 
 
-
-
 class CliErrorYaMostrado(Exception):
     """Error de CLI cuya salida al usuario ya fue emitida por el comando."""
 
@@ -131,31 +131,54 @@ class AppConfig:
     DEFAULT_COMMAND = config_data.get("default_command", "run")
     PROGRAM_NAME = config_data.get("program_name", "cobra")
     BASE_COMMAND_ROUTES: List[CommandClassRoute] = [
-        CommandClassRoute("pcobra.cobra.cli.commands.interactive_cmd", "InteractiveCommand"),
+        CommandClassRoute(
+            "pcobra.cobra.cli.commands.interactive_cmd", "InteractiveCommand"
+        ),
         CommandClassRoute("pcobra.cobra.cli.commands.compile_cmd", "CompileCommand"),
         CommandClassRoute("pcobra.cobra.cli.commands.execute_cmd", "ExecuteCommand"),
         CommandClassRoute("pcobra.cobra.cli.commands.modules_cmd", "ModulesCommand"),
-        CommandClassRoute("pcobra.cobra.cli.commands.dependencias_cmd", "DependenciasCommand"),
+        CommandClassRoute(
+            "pcobra.cobra.cli.commands.dependencias_cmd", "DependenciasCommand"
+        ),
         CommandClassRoute("pcobra.cobra.cli.commands.docs_cmd", "DocsCommand"),
-        CommandClassRoute("pcobra.cobra.cli.commands.empaquetar_cmd", "EmpaquetarCommand"),
+        CommandClassRoute(
+            "pcobra.cobra.cli.commands.empaquetar_cmd", "EmpaquetarCommand"
+        ),
         CommandClassRoute("pcobra.cobra.cli.commands.package_cmd", "PaqueteCommand"),
         CommandClassRoute("pcobra.cobra.cli.commands.hub_cmd", "HubCommand"),
         CommandClassRoute("pcobra.cobra.cli.commands.crear_cmd", "CrearCommand"),
         CommandClassRoute("pcobra.cobra.cli.commands.init_cmd", "InitCommand"),
         CommandClassRoute("pcobra.cobra.cli.commands.jupyter_cmd", "JupyterCommand"),
-        CommandClassRoute("pcobra.cobra.cli.commands.container_cmd", "ContainerCommand"),
+        CommandClassRoute(
+            "pcobra.cobra.cli.commands.container_cmd", "ContainerCommand"
+        ),
         CommandClassRoute("pcobra.cobra.cli.commands.bench_cmd", "BenchCommand"),
-        CommandClassRoute("pcobra.cobra.cli.commands.benchmarks_cmd", "BenchmarksCommand"),
-        CommandClassRoute("pcobra.cobra.cli.commands.benchmarks2_cmd", "BenchmarksV2Command"),
-        CommandClassRoute("pcobra.cobra.cli.commands.bench_transpilers_cmd", "BenchTranspilersCommand"),
-        CommandClassRoute("pcobra.cobra.cli.commands.benchthreads_cmd", "BenchThreadsCommand"),
+        CommandClassRoute(
+            "pcobra.cobra.cli.commands.benchmarks_cmd", "BenchmarksCommand"
+        ),
+        CommandClassRoute(
+            "pcobra.cobra.cli.commands.benchmarks2_cmd", "BenchmarksV2Command"
+        ),
+        CommandClassRoute(
+            "pcobra.cobra.cli.commands.bench_transpilers_cmd", "BenchTranspilersCommand"
+        ),
+        CommandClassRoute(
+            "pcobra.cobra.cli.commands.benchthreads_cmd", "BenchThreadsCommand"
+        ),
         CommandClassRoute("pcobra.cobra.cli.commands.profile_cmd", "ProfileCommand"),
         CommandClassRoute("pcobra.cobra.cli.commands.qualia_cmd", "QualiaCommand"),
         CommandClassRoute("pcobra.cobra.cli.commands.cache_cmd", "CacheCommand"),
-        CommandClassRoute("pcobra.cobra.cli.commands.transpilar_inverso_cmd", "TranspilarInversoCommand"),
+        CommandClassRoute(
+            "pcobra.cobra.cli.commands.transpilar_inverso_cmd",
+            "TranspilarInversoCommand",
+        ),
         CommandClassRoute("pcobra.cobra.cli.commands.verify_cmd", "VerifyCommand"),
-        CommandClassRoute("pcobra.cobra.cli.commands.validar_sintaxis_cmd", "ValidarSintaxisCommand"),
-        CommandClassRoute("pcobra.cobra.cli.commands.qa_validar_cmd", "QaValidarCommand"),
+        CommandClassRoute(
+            "pcobra.cobra.cli.commands.validar_sintaxis_cmd", "ValidarSintaxisCommand"
+        ),
+        CommandClassRoute(
+            "pcobra.cobra.cli.commands.qa_validar_cmd", "QaValidarCommand"
+        ),
         CommandClassRoute("pcobra.cobra.cli.commands.plugins_cmd", "PluginsCommand"),
         CommandClassRoute("pcobra.cobra.cli.commands.agix_cmd", "AgixCommand"),
     ]
@@ -166,13 +189,37 @@ class AppConfig:
         CommandClassRoute("pcobra.cobra.cli.commands_v2.build_cmd", "BuildCommandV2"),
         CommandClassRoute("pcobra.cobra.cli.commands_v2.test_cmd", "TestCommandV2"),
         CommandClassRoute("pcobra.cobra.cli.commands_v2.mod_cmd", "ModCommandV2"),
-        CommandClassRoute("pcobra.cobra.cli.commands_v2.installer_cmd", "InstallerCommandV2"),
+        CommandClassRoute(
+            "pcobra.cobra.cli.commands_v2.installer_cmd", "InstallerCommandV2"
+        ),
         CommandClassRoute("pcobra.cobra.cli.commands.package_cmd", "PaqueteCommand"),
         CommandClassRoute("pcobra.cobra.cli.commands.hub_cmd", "HubCommand"),
         # `repl` forma parte del contrato público oficial de CLI v2 (no alias legacy).
         CommandClassRoute("pcobra.cobra.cli.commands_v2.repl_cmd", "ReplCommandV2"),
     ]
     V2_COMMAND_CLASSES: List[Type[BaseCommand]] = []
+
+
+class _PublicChoicesDict(dict):
+    """Dict de subparsers que acepta ocultos pero solo enumera públicos."""
+
+    def __init__(
+        self, visible_names: Iterable[str], all_choices: Dict[str, Any]
+    ) -> None:
+        super().__init__(all_choices)
+        self._visible_names = tuple(visible_names)
+
+    def __iter__(self):  # type: ignore[override]
+        return iter(self._visible_names)
+
+    def keys(self):  # type: ignore[override]
+        return self._visible_names
+
+    def items(self):  # type: ignore[override]
+        return ((name, self[name]) for name in self._visible_names)
+
+    def values(self):  # type: ignore[override]
+        return (self[name] for name in self._visible_names)
 
 
 class CommandRegistry:
@@ -182,8 +229,6 @@ class CommandRegistry:
         # como comandos visibles ni registrados como subparsers públicos.
         self.hidden_compatible_commands: Dict[str, BaseCommand] = {}
         self.interpreter = interpreter
-
-
 
     def create_command(self, command_class: Type[BaseCommand]) -> BaseCommand:
         try:
@@ -224,7 +269,9 @@ class CommandRegistry:
             "PaqueteCommand",
             "HubCommand",
         }
-        return [route for route in routes if route.class_name in public_v2_command_classes]
+        return [
+            route for route in routes if route.class_name in public_v2_command_classes
+        ]
 
     def _resolve_v1_command_routes(self) -> List[CommandClassRoute]:
         """Carga comandos v1 y difiere imports GUI/opcionales hasta el registro."""
@@ -235,7 +282,9 @@ class CommandRegistry:
             ]
         else:
             routes = list(AppConfig.BASE_COMMAND_ROUTES)
-            routes.append(CommandClassRoute("pcobra.cobra.cli.commands.flet_cmd", "FletCommand"))
+            routes.append(
+                CommandClassRoute("pcobra.cobra.cli.commands.flet_cmd", "FletCommand")
+            )
         return routes
 
     def register_base_commands(
@@ -326,6 +375,7 @@ class CommandRegistry:
                 )
 
         self.hidden_compatible_commands = {}
+        hidden_compatible_commands = []
         if ui_effective == "v2" and normalized_profile == PROFILE_PUBLIC:
             hidden_compatible_names = {"paquete", "hub"}
             hidden_compatible_commands = [
@@ -347,7 +397,25 @@ class CommandRegistry:
                 logging.error(f"Failed to register subparser for {command.name}: {e}")
                 del self.commands[command.name]
 
+        for command in hidden_compatible_commands:
+            try:
+                command.register_subparser(
+                    subparsers, hidden=bool(getattr(command, "public_v2_hidden", False))
+                )
+            except Exception as e:
+                logging.error(
+                    f"Failed to register hidden compatible subparser for {command.name}: {e}"
+                )
+                self.hidden_compatible_commands.pop(command.name, None)
+
+        if hidden_compatible_commands:
+            subparsers.metavar = "{" + ",".join(self.commands) + "}"
+            subparsers.choices = _PublicChoicesDict(
+                self.commands, subparsers._name_parser_map
+            )
+
         return self.commands
+
 
 def _is_expected_user_contract_error(exc: Exception) -> bool:
     """Clasifica errores de contrato esperados que deben tratarse como error de usuario."""
@@ -436,7 +504,9 @@ class CliApplication:
         )
         self._enforce_public_startup_guard(command_profile=command_profile)
         if command_profile != PROFILE_PUBLIC:
-            menu_parser = self._subparsers.add_parser("menu", help=_("Modo interactivo"))
+            menu_parser = self._subparsers.add_parser(
+                "menu", help=_("Modo interactivo")
+            )
             menu_parser.set_defaults(cmd="menu")
         self._commands_registered = True
 
@@ -455,14 +525,16 @@ class CliApplication:
     def _is_enabled_env_flag(self, env_name: str) -> bool:
         return env_flag_activado(env_name)
 
-
-
     def _ensure_sqlite_db_key(self, args: argparse.Namespace) -> None:
         command = getattr(args, "cmd", None)
-        command_name = command.name if isinstance(command, BaseCommand) else _("desconocido")
+        command_name = (
+            command.name if isinstance(command, BaseCommand) else _("desconocido")
+        )
         ensure_sqlite_db_key_for_command(
             command_name=command_name,
-            dev_ephemeral_cli_confirmation=bool(getattr(args, "dev_ephemeral_key", False)),
+            dev_ephemeral_cli_confirmation=bool(
+                getattr(args, "dev_ephemeral_key", False)
+            ),
         )
 
     def _configure_cli_options(self, parser: CustomArgumentParser) -> None:
@@ -472,8 +544,9 @@ class CliApplication:
             version=_format_cli_version(),
             help=_("Show version information and exit"),
         )
-        parser.add_argument("--ayuda", action="help",
-                          help=_("Muestra esta ayuda y termina"))
+        parser.add_argument(
+            "--ayuda", action="help", help=_("Muestra esta ayuda y termina")
+        )
         parser.add_argument(
             "--format",
             "--formatear",
@@ -481,10 +554,16 @@ class CliApplication:
             action="store_true",
             help=_("Format file before processing"),
         )
-        parser.add_argument("--debug", action="store_true",
-                          help=_("Show debug messages"))
-        parser.add_argument("-v", "--verbose", action="count", default=0,
-                          help=_("Incrementa el nivel de detalle"))
+        parser.add_argument(
+            "--debug", action="store_true", help=_("Show debug messages")
+        )
+        parser.add_argument(
+            "-v",
+            "--verbose",
+            action="count",
+            default=0,
+            help=_("Incrementa el nivel de detalle"),
+        )
         parser.add_argument(
             "--no-safe",
             "--no-seguro",
@@ -531,18 +610,23 @@ class CliApplication:
             ),
         )
 
-        parser.add_argument("--lang",
-                          default=environ.get(COBRA_LANG_ENV, AppConfig.DEFAULT_LANGUAGE),
-                          help=_("Interface language code"))
-        parser.add_argument("--no-color", action="store_true",
-                          help=_("Disable colored output"))
-        parser.add_argument("--extra-validators",
-                          help=_("Path to custom validators module"),
-                          type=Path)
+        parser.add_argument(
+            "--lang",
+            default=environ.get(COBRA_LANG_ENV, AppConfig.DEFAULT_LANGUAGE),
+            help=_("Interface language code"),
+        )
+        parser.add_argument(
+            "--no-color", action="store_true", help=_("Disable colored output")
+        )
+        parser.add_argument(
+            "--extra-validators", help=_("Path to custom validators module"), type=Path
+        )
         parser.add_argument(
             "--legacy-imports",
             action="store_true",
-            help=_("Habilita temporalmente imports legacy (cobra/core). Migre a pcobra.*"),
+            help=_(
+                "Habilita temporalmente imports legacy (cobra/core). Migre a pcobra.*"
+            ),
         )
         parser.add_argument(
             "--dev-ephemeral-key",
@@ -575,11 +659,18 @@ class CliApplication:
             ),
         )
         parser.set_defaults(
-            plugins_safe_mode=environ.get(PLUGINS_SAFE_MODE_ENV, "1").strip().lower() in {"1", "true", "yes", "on"}
+            plugins_safe_mode=environ.get(PLUGINS_SAFE_MODE_ENV, "1").strip().lower()
+            in {"1", "true", "yes", "on"}
         )
 
     def _is_ci_context(self) -> bool:
-        ci_markers = ("CI", "GITHUB_ACTIONS", "GITLAB_CI", "JENKINS_URL", "BUILD_NUMBER")
+        ci_markers = (
+            "CI",
+            "GITHUB_ACTIONS",
+            "GITLAB_CI",
+            "JENKINS_URL",
+            "BUILD_NUMBER",
+        )
         return any((environ.get(marker) or "").strip() for marker in ci_markers)
 
     def _is_non_interactive_context(self) -> bool:
@@ -652,7 +743,9 @@ class CliApplication:
             )
         )
 
-        if (self._is_ci_context() or self._is_non_interactive_context()) and not allow_insecure_non_interactive:
+        if (
+            self._is_ci_context() or self._is_non_interactive_context()
+        ) and not allow_insecure_non_interactive:
             self._registrar_advertencia_seguridad(
                 event="blocked_insecure_fallback_non_interactive",
                 command_name=command_name,
@@ -698,7 +791,9 @@ class CliApplication:
 
         for action in parser._actions:
             choices = getattr(action, "choices", None)
-            if isinstance(choices, dict) or isinstance(action, argparse._SubParsersAction):
+            if isinstance(choices, dict) or isinstance(
+                action, argparse._SubParsersAction
+            ):
                 if isinstance(choices, dict):
                     for sub in choices.values():
                         self._configure_autocomplete(sub)
@@ -761,7 +856,9 @@ class CliApplication:
         parsed = self.parser.parse_args(argv)
         return self._normalizar_flags_sesion(parsed)
 
-    def _enforce_public_startup_guard(self, *, command_profile: str | None = None) -> None:
+    def _enforce_public_startup_guard(
+        self, *, command_profile: str | None = None
+    ) -> None:
         """Bloquea exposición accidental de comandos no públicos ya registrados."""
         command_profile = command_profile or resolve_command_profile()
         selected_ui = getattr(self, "_selected_ui", "v2")
@@ -773,9 +870,7 @@ class CliApplication:
         # registro no inferimos rutas desde imports/clases para evitar lógica
         # frágil; la validación fuerte permanece centrada en el registry.
         registered_commands = (
-            self.command_registry.commands
-            if self.command_registry is not None
-            else {}
+            self.command_registry.commands if self.command_registry is not None else {}
         )
         if not registered_commands:
             return
@@ -806,8 +901,6 @@ class CliApplication:
                 return index
         return None
 
-
-
     @staticmethod
     def _resolve_reverse_transpile_choices() -> tuple[tuple[str, ...], tuple[str, ...]]:
         try:
@@ -824,7 +917,9 @@ class CliApplication:
             )
             return tuple(), tuple()
 
-    def _handle_execution_error(self, exc: Exception, language: str, debug_activo: bool = False) -> int:
+    def _handle_execution_error(
+        self, exc: Exception, language: str, debug_activo: bool = False
+    ) -> int:
         error_ya_mostrado = isinstance(exc, CliErrorYaMostrado) or bool(
             getattr(exc, "error_ya_mostrado", False)
         )
@@ -861,10 +956,14 @@ class CliApplication:
         try:
             return self._sanear_texto_entrada(input(prompt))
         except EOFError:
-            messages.mostrar_info(_("Entrada finalizada (EOF). Cancelando menú interactivo."))
+            messages.mostrar_info(
+                _("Entrada finalizada (EOF). Cancelando menú interactivo.")
+            )
             return None
         except KeyboardInterrupt:
-            messages.mostrar_info(_("\nInterrupción detectada. Cancelando menú interactivo."))
+            messages.mostrar_info(
+                _("\nInterrupción detectada. Cancelando menú interactivo.")
+            )
             return None
 
     def _leer_opcion_validada(
@@ -874,7 +973,9 @@ class CliApplication:
         campo: str,
         max_intentos: int = 3,
     ) -> tuple[Optional[str], int]:
-        opciones_normalizadas = tuple(opcion.strip().lower() for opcion in opciones_validas)
+        opciones_normalizadas = tuple(
+            opcion.strip().lower() for opcion in opciones_validas
+        )
         opciones_mostrables = ", ".join(opciones_normalizadas)
 
         for intento in range(max_intentos):
@@ -916,7 +1017,9 @@ class CliApplication:
             raise RuntimeError("Command registry not initialized")
         if not sys.stdin.isatty():
             messages.mostrar_error(
-                _("El menú interactivo requiere una terminal (TTY). Ejecuta un comando directo."),
+                _(
+                    "El menú interactivo requiere una terminal (TTY). Ejecuta un comando directo."
+                ),
                 registrar_log=False,
             )
             return 1
@@ -952,7 +1055,9 @@ class CliApplication:
             )
             if modo == "cobra" and accion == "ejecutar":
                 messages.mostrar_info(
-                    _("Modo cobra: flujo directo de ejecutar (sin prompts de transpilación).")
+                    _(
+                        "Modo cobra: flujo directo de ejecutar (sin prompts de transpilación)."
+                    )
                 )
         else:
             print(_("Seleccione una acción:"))
@@ -974,7 +1079,9 @@ class CliApplication:
                 return 0
             ejecutar_cmd = self.command_registry.commands.get("ejecutar")
             if not ejecutar_cmd:
-                messages.mostrar_error(_("Comando 'ejecutar' no disponible"), registrar_log=False)
+                messages.mostrar_error(
+                    _("Comando 'ejecutar' no disponible"), registrar_log=False
+                )
                 return 1
             command_args = argparse.Namespace(
                 archivo=archivo.strip(),
@@ -988,17 +1095,23 @@ class CliApplication:
 
         print(_("Lenguajes destino disponibles:"))
         print(", ".join(LANG_CHOICES))
-        origin_choices, reverse_destino_choices = self._resolve_reverse_transpile_choices()
+        origin_choices, reverse_destino_choices = (
+            self._resolve_reverse_transpile_choices()
+        )
         if not origin_choices or not reverse_destino_choices:
             messages.mostrar_error(
-                _("Comando 'transpilar-inverso' no disponible: contrato de opciones inválido."),
+                _(
+                    "Comando 'transpilar-inverso' no disponible: contrato de opciones inválido."
+                ),
                 registrar_log=False,
             )
             return 1
         print(_("Lenguajes de origen disponibles:"))
         print(", ".join(origin_choices))
 
-        transpilar_desde_cobra = self._leer_input_seguro(_("¿Transpilar desde Cobra a otro lenguaje? (s/n): "))
+        transpilar_desde_cobra = self._leer_input_seguro(
+            _("¿Transpilar desde Cobra a otro lenguaje? (s/n): ")
+        )
         if transpilar_desde_cobra is None:
             return 0
 
@@ -1023,7 +1136,9 @@ class CliApplication:
             )
             compile_cmd = self.command_registry.commands.get("compilar")
             if not compile_cmd:
-                messages.mostrar_error(_("Comando 'compilar' no disponible"), registrar_log=False)
+                messages.mostrar_error(
+                    _("Comando 'compilar' no disponible"), registrar_log=False
+                )
                 return 1
             return compile_cmd.run(command_args)
         else:
@@ -1047,7 +1162,9 @@ class CliApplication:
             archivo = archivo.strip()
             inv_cmd = self.command_registry.commands.get("transpilar-inverso")
             if not inv_cmd:
-                messages.mostrar_error(_("Comando 'transpilar-inverso' no disponible"), registrar_log=False)
+                messages.mostrar_error(
+                    _("Comando 'transpilar-inverso' no disponible"), registrar_log=False
+                )
                 return 1
             command_args = argparse.Namespace(
                 archivo=archivo,
@@ -1057,7 +1174,9 @@ class CliApplication:
             )
             return inv_cmd.run(command_args)
 
-    def execute_command(self, args: argparse.Namespace, debug_activo: bool = False) -> int:
+    def execute_command(
+        self, args: argparse.Namespace, debug_activo: bool = False
+    ) -> int:
         """Ejecuta el comando resuelto desde ``args``.
 
         Pre-requisito recomendado: llamar a ``initialize()`` (o ``run()``) antes de
@@ -1067,7 +1186,7 @@ class CliApplication:
         """
         if not self.command_registry:
             raise RuntimeError("Command registry not initialized")
-            
+
         command = getattr(args, "cmd", None)
         if command == "menu":
             return self.run_menu(args)
@@ -1081,12 +1200,14 @@ class CliApplication:
                 )
                 return 1
             messages.mostrar_error(
-                _("CLI no inicializada completamente: parser no disponible. "
-                  "Ejecute initialize() antes de execute_command()."),
+                _(
+                    "CLI no inicializada completamente: parser no disponible. "
+                    "Ejecute initialize() antes de execute_command()."
+                ),
                 registrar_log=False,
             )
             return 1
-            
+
         try:
             result = command.run(args)
             return 0 if result is None else result
@@ -1111,7 +1232,11 @@ class CliApplication:
                 if "--debug" in argv:
                     args.debug = True
                 command = getattr(args, "cmd", None)
-                command_name = command.name if isinstance(command, BaseCommand) else _("desconocido")
+                command_name = (
+                    command.name
+                    if isinstance(command, BaseCommand)
+                    else _("desconocido")
+                )
                 if self._command_requires_sqlite_db_key(args):
                     self._ensure_sqlite_db_key(args)
                 else:
