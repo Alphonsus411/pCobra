@@ -11,7 +11,7 @@ from pcobra.cobra.usar_policy import (
     USAR_COBRA_PUBLIC_MODULES,
     validar_contrato_modulos_canonicos_usar,
 )
-from pcobra.cobra.usar_loader import usar_modulo
+from pcobra.cobra.usar_loader import obtener_modulo_cobra_oficial, usar_modulo
 from pcobra.core.ast_nodes import NodoUsar
 from pcobra.core.interpreter import InterpretadorCobra
 
@@ -129,3 +129,17 @@ def test_usar_datos_expone_filtrar_callable_sin_callback_cobra() -> None:
 
     assert "filtrar" in exports
     assert callable(exports["filtrar"])
+
+
+def test_usar_datos_apunta_a_standard_library_y_loader_importa_nombre_correcto() -> None:
+    ruta_relativa = REPL_COBRA_MODULE_INTERNAL_PATH_MAP["datos"]
+
+    assert ruta_relativa == "src/pcobra/standard_library/datos.py"
+    assert (RAIZ_REPO / ruta_relativa).is_file()
+
+    modulo = obtener_modulo_cobra_oficial("datos")
+
+    assert modulo.__name__ == "pcobra.standard_library.datos"
+    assert modulo.__name__ != "pcobra.cobra.corelibs.datos"
+    assert getattr(modulo, "__file__", None) is not None
+    assert Path(modulo.__file__).resolve() == (RAIZ_REPO / ruta_relativa).resolve()
