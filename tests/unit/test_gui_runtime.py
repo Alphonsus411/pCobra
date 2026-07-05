@@ -936,7 +936,7 @@ def test_accion_recargar_archivo_activo(
     assert mensaje == f"Archivo cargado: {archivo.resolve()}"
 
 
-def test_accion_cargar_archivo_desde_arbol_filtra_extensiones(
+def test_accion_cargar_archivo_desde_arbol_acepta_texto_visible(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.setenv("COBRA_IO_BASE_DIR", str(tmp_path))
@@ -948,8 +948,16 @@ def test_accion_cargar_archivo_desde_arbol_filtra_extensiones(
 
     assert contenido == "imprimir('arbol')"
     assert mensaje == f"Archivo cargado: {archivo.resolve()}"
-    with pytest.raises(ValueError, match="archivo Cobra"):
-        runtime.cargar_archivo_desde_arbol(tmp_path / "notas.txt", estado)
+    notas = tmp_path / "notas.txt"
+    notas.write_text("apuntes", encoding="utf-8")
+    contenido, mensaje = runtime.cargar_archivo_desde_arbol(notas, estado)
+    assert contenido == "apuntes"
+    assert mensaje == f"Archivo cargado: {notas.resolve()}"
+
+    desconocido = tmp_path / "notas.bin"
+    desconocido.write_text("bin", encoding="utf-8")
+    with pytest.raises(ValueError, match="archivo de texto visible"):
+        runtime.cargar_archivo_desde_arbol(desconocido, estado)
 
 
 def test_require_flet_error_accionable(monkeypatch: pytest.MonkeyPatch) -> None:
