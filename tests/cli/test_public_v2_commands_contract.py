@@ -6,6 +6,26 @@ from pcobra.cobra.architecture.backend_policy import PUBLIC_BACKENDS
 from pcobra.cobra.cli.cli import AppConfig, CommandRegistry
 
 EXPECTED_PUBLIC_V2_COMMANDS = {"run", "build", "test", "mod", "repl"}
+EXPECTED_DEVELOPMENT_COMPAT_COMMANDS = {"installer", "paquete", "hub"}
+
+
+def test_app_config_v2_routes_keep_development_compat_commands() -> None:
+    routes = {
+        (route.module_path, route.class_name) for route in AppConfig.V2_COMMAND_ROUTES
+    }
+
+    assert (
+        "pcobra.cobra.cli.commands_v2.installer_cmd",
+        "InstallerCommandV2",
+    ) in routes
+    assert (
+        "pcobra.cobra.cli.commands.package_cmd",
+        "PaqueteCommand",
+    ) in routes
+    assert (
+        "pcobra.cobra.cli.commands.hub_cmd",
+        "HubCommand",
+    ) in routes
 
 
 def test_app_config_v2_routes_include_repl_command_v2() -> None:
@@ -39,6 +59,20 @@ def test_public_v2_subcommands_match_contract_exactly() -> None:
     )
 
     assert set(commands) == EXPECTED_PUBLIC_V2_COMMANDS
+
+
+def test_development_v2_subcommands_keep_compat_commands() -> None:
+    registry = CommandRegistry()
+    parser = argparse.ArgumentParser()
+    subparsers = parser.add_subparsers(dest="command")
+
+    commands = registry.register_base_commands(
+        subparsers,
+        ui="v2",
+        profile="development",
+    )
+
+    assert EXPECTED_DEVELOPMENT_COMPAT_COMMANDS.issubset(commands)
 
 
 def test_cli_public_backend_policy_is_exact() -> None:
