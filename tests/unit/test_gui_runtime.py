@@ -155,6 +155,53 @@ def test_cargar_archivo_desde_arbol_no_lee_paquete_cobra_zip_como_texto(
     assert not estado.cambios_sin_guardar
 
 
+def test_guardar_archivo_activo_rechaza_paquete_cobra_seleccionado(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("COBRA_IO_BASE_DIR", str(tmp_path))
+    paquete = tmp_path / "paquete.co"
+    with zipfile.ZipFile(paquete, "w") as zf:
+        zf.writestr("cobra.pkg.json", '{"name":"demo","version":"1.0.0"}')
+        zf.writestr("main.co", "imprimir('hola')\n")
+    contenido_original = paquete.read_bytes()
+    estado = runtime.GuiFileState(
+        ruta=paquete.resolve(),
+        contenido_cargado="",
+        cambios_sin_guardar=False,
+    )
+
+    with pytest.raises(ValueError, match="no se puede guardar desde el editor"):
+        runtime.guardar_archivo_activo("", estado)
+
+    assert paquete.read_bytes() == contenido_original
+    assert estado.ruta == paquete.resolve()
+    assert estado.contenido_cargado == ""
+    assert not estado.cambios_sin_guardar
+
+
+def test_guardar_archivo_activo_validado_rechaza_paquete_cobra_seleccionado(
+    tmp_path: Path,
+) -> None:
+    paquete = tmp_path / "paquete.co"
+    with zipfile.ZipFile(paquete, "w") as zf:
+        zf.writestr("cobra.pkg.json", '{"name":"demo","version":"1.0.0"}')
+        zf.writestr("main.co", "imprimir('hola')\n")
+    contenido_original = paquete.read_bytes()
+    estado = runtime.GuiFileState(
+        ruta=paquete.resolve(),
+        contenido_cargado="",
+        cambios_sin_guardar=False,
+    )
+
+    with pytest.raises(ValueError, match="no se puede guardar desde el editor"):
+        runtime.guardar_archivo_activo_validado("", estado)
+
+    assert paquete.read_bytes() == contenido_original
+    assert estado.ruta == paquete.resolve()
+    assert estado.contenido_cargado == ""
+    assert not estado.cambios_sin_guardar
+
+
 def test_detectar_tipo_archivo_clasifica_extensiones_y_nombres_conocidos() -> None:
     casos = {
         "main.cobra": runtime.TIPO_ARCHIVO_COBRA,
