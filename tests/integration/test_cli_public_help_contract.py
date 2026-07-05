@@ -60,13 +60,23 @@ def test_cli_public_profile_does_not_register_extended_choices(monkeypatch):
     app._ensure_command_structure()
 
     commands = set(app.command_registry.commands)
-    choices = set(app._subparsers.choices)
+    choices = app._subparsers.choices
+    visible_help_choices = {
+        action.dest
+        for action in app._subparsers._choices_actions
+        if action.help is not argparse.SUPPRESS
+    }
 
     assert commands == set(PUBLIC_COMMANDS)
-    assert choices == set(PUBLIC_COMMANDS)
+    assert set(choices) == set(PUBLIC_COMMANDS)
+    assert "paquete" in choices
+    assert "hub" in choices
+    assert "installer" not in choices
+    assert visible_help_choices == set(PUBLIC_COMMANDS)
+    assert "paquete" not in visible_help_choices
+    assert "hub" not in visible_help_choices
     for command in ("installer", "paquete", "hub"):
         assert command not in commands
-        assert command not in choices
 
 
 def test_cli_help_public_contract_snapshot():
