@@ -15,6 +15,9 @@ def _env_without_sqlite_db_key() -> dict[str, str]:
     env = os.environ.copy()
     env.pop("SQLITE_DB_KEY", None)
     env.pop("COBRA_DEV_MODE", None)
+    env.pop("COBRA_CLI_COMMAND_PROFILE", None)
+    env.pop("COBRA_INTERNAL_ENABLE_LEGACY_CLI", None)
+    env.pop("COBRA_INTERNAL_LEGACY_TARGETS", None)
     return env
 
 
@@ -92,9 +95,15 @@ def test_cobra_help_snapshot_publico_no_expone_comandos_legacy(monkeypatch):
             main(["--help"])
         assert exc.value.code == 0
 
-    normalized_stdout = " ".join(out.getvalue().split())
+    stdout = out.getvalue()
+    normalized_stdout = " ".join(stdout.split())
     expected_snapshot = (
         Path(__file__).parent / "golden" / "cli_help_public_snapshot.golden"
     ).read_text(encoding="utf-8")
     assert " ".join(normalized_stdout.split()) == " ".join(expected_snapshot.split())
-    assert "\n  legacy " not in result.stdout.lower()
+    lower_stdout = stdout.lower()
+    for command in ("run", "build", "test", "mod", "repl"):
+        assert f" {command} " in f" {lower_stdout} "
+    for command in ("installer", "paquete", "hub"):
+        assert f" {command} " not in f" {lower_stdout} "
+    assert "\n  legacy " not in lower_stdout

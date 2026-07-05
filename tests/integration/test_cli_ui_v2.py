@@ -36,10 +36,14 @@ def test_cli_ui_v2_help_snapshot_publico_no_expone_legacy():
     )
     expected_snapshot = _leer_snapshot_texto(expected_snapshot)
     assert _normalizar(texto) == _normalizar(expected_snapshot.lower())
+    for command in ("run", "build", "test", "mod", "repl"):
+        assert f" {command} " in f" {texto} "
+    for command in ("installer", "paquete", "hub"):
+        assert f" {command} " not in f" {texto} "
     assert "\n  legacy " not in texto
 
 
-def test_cli_ui_v2_help_muestra_legacy_solo_con_flag_interno(monkeypatch):
+def test_cli_ui_v2_help_publico_no_expone_comandos_internos_con_flag_interno(monkeypatch):
     monkeypatch.setenv("COBRA_INTERNAL_ENABLE_LEGACY_CLI", "1")
     for module_name in (
         "cobra.cli.commands_v2",
@@ -52,7 +56,7 @@ def test_cli_ui_v2_help_muestra_legacy_solo_con_flag_interno(monkeypatch):
     registry = cli_reloaded.CommandRegistry()
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(dest="command")
-    commands = registry.register_base_commands(subparsers, ui="v2", profile="development")
+    commands = registry.register_base_commands(subparsers, ui="v2", profile="public")
     assert "legacy" not in commands
     assert set(commands) == {"run", "build", "test", "mod", "repl"}
 
