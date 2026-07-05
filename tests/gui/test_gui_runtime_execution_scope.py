@@ -102,5 +102,14 @@ imprimir(resultado)
 
 
 def test_ejecutar_codigo_modulo_inexistente_falla_controladamente():
-    with pytest.raises(PermissionError, match="modulo_inexistente"):
+    with pytest.raises(PermissionError) as excinfo:
         runtime.ejecutar_codigo('usar "modulo_inexistente"')
+
+    mensaje = str(excinfo.value)
+
+    assert "fuera del catálogo" in mensaje
+    assert (
+        "no permitido" in mensaje
+        or "no encontrado" in mensaje
+        or "modulo_inexistente" in mensaje
+    )
