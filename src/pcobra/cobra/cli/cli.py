@@ -41,6 +41,7 @@ from pcobra.cobra.cli.public_command_policy import (
     COMMAND_VISIBILITY_MATRIX_MARKDOWN,
     PROFILE_DEVELOPMENT,
     PROFILE_PUBLIC,
+    PUBLIC_COMMANDS,
     PUBLIC_COMMANDS_CONTRACT,
     filter_commands_for_profile,
     filter_legacy_commands_for_profile,
@@ -385,6 +386,7 @@ class CliApplication:
             ui=selected_ui,
             profile=command_profile,
         )
+        self._enforce_public_startup_guard()
         if command_profile != PROFILE_PUBLIC:
             menu_parser = self._subparsers.add_parser("menu", help=_("Modo interactivo"))
             menu_parser.set_defaults(cmd="menu")
@@ -712,13 +714,30 @@ class CliApplication:
         return self._normalizar_flags_sesion(parsed)
 
     def _enforce_public_startup_guard(self) -> None:
-        """Bloquea exposición accidental de rutas legacy en perfil público."""
+        """Bloquea exposición accidental de comandos no públicos ya registrados."""
         command_profile = resolve_command_profile()
         selected_ui = getattr(self, "_selected_ui", "v2")
-        if command_profile != PROFILE_PUBLIC:
+        if command_profile != PROFILE_PUBLIC or selected_ui != "v2":
             return
 
-        blocked_routes: list[str] = []
+        # Guardia estática mínima: en este punto la lista efectiva solo existe
+        # después de `CommandRegistry.register_base_commands()`.  Antes de ese
+        # registro no inferimos rutas desde imports/clases para evitar lógica
+        # frágil; la validación fuerte permanece centrada en el registry.
+        registered_commands = (
+            self.command_registry.commands
+            if self.command_registry is not None
+            else {}
+        )
+        if not registered_commands:
+            return
+
+        public_commands = {name.strip().lower() for name in PUBLIC_COMMANDS}
+        blocked_routes = sorted(
+            name
+            for name in registered_commands
+            if name.strip().lower() not in public_commands
+        )
 
         if not blocked_routes:
             return
