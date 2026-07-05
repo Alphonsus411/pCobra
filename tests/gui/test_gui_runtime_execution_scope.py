@@ -36,16 +36,23 @@ def test_ejecutar_codigo_carga_exports_de_datos_sin_importerror():
 
 
 def test_ejecutar_codigo_usar_datos_expone_longitud_para_listas():
+    # Regresión: `usar "datos"` debe inyectar `longitud` en el runtime GUI
+    # sin depender todavía de callbacks Cobra definidos por el usuario.
     codigo = '''usar "datos"
 
 numeros = [1, 2, 3, 4]
 imprimir(longitud(numeros))
 '''
 
-    salida = runtime.ejecutar_codigo(codigo)
+    try:
+        salida = runtime.ejecutar_codigo(codigo)
+    except ImportError as exc:  # pragma: no cover - mensaje de regresión
+        if "No se encontraron símbolos exportables" in str(exc):
+            pytest.fail(f'No se esperaba error de exports al cargar datos: {exc}')
+        raise
 
     assert "No se encontraron símbolos exportables" not in salida
-    assert "4" in salida
+    assert "4" in salida.splitlines()
 
 
 def test_ejecutar_codigo_usar_numero_expone_es_finito_en_ruta_gui_runtime():
