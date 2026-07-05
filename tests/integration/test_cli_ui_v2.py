@@ -38,8 +38,8 @@ def test_cli_ui_v2_help_snapshot_publico_no_expone_legacy():
     assert _normalizar(texto) == _normalizar(expected_snapshot.lower())
     for command in ("run", "build", "test", "mod", "repl"):
         assert f" {command} " in f" {texto} "
-    for command in ("installer", "paquete", "hub"):
-        assert f" {command} " not in f" {texto} "
+    for command in ("installer", "paquete", "hub", "compilar", "ejecutar", "interactive"):
+        assert f"\n  {command} " not in texto
     assert "\n  legacy " not in texto
 
 
@@ -57,7 +57,8 @@ def test_cli_ui_v2_help_publico_no_expone_comandos_internos_con_flag_interno(mon
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(dest="command")
     commands = registry.register_base_commands(subparsers, ui="v2", profile="public")
-    assert "legacy" not in commands
+    for command in ("installer", "paquete", "hub", "compilar", "ejecutar", "interactive", "legacy"):
+        assert command not in commands
     assert set(commands) == {"run", "build", "test", "mod", "repl"}
 
 
