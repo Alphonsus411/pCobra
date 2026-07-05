@@ -315,8 +315,10 @@ def test_cargar_archivo_desde_arbol_reusa_apertura_y_valida_extension(tmp_path: 
     estado = runtime.GuiFileState()
     archivo_cobra = tmp_path / "desde_arbol.cobra"
     archivo_cobra.write_text("imprimir('arbol')", encoding="utf-8")
-    archivo_no_cobra = tmp_path / "nota.txt"
-    archivo_no_cobra.write_text("texto", encoding="utf-8")
+    archivo_texto = tmp_path / "nota.txt"
+    archivo_texto.write_text("texto", encoding="utf-8")
+    archivo_no_clasificado = tmp_path / "imagen.png"
+    archivo_no_clasificado.write_text("binario", encoding="utf-8")
 
     contenido, mensaje = runtime.cargar_archivo_desde_arbol(archivo_cobra, estado)
 
@@ -325,12 +327,17 @@ def test_cargar_archivo_desde_arbol_reusa_apertura_y_valida_extension(tmp_path: 
     assert estado.ruta == archivo_cobra.resolve()
     assert estado.contenido_cargado == "imprimir('arbol')"
 
-    try:
-        runtime.cargar_archivo_desde_arbol(archivo_no_cobra, estado)
-    except ValueError as exc:
-        assert "Selecciona un archivo Cobra" in str(exc)
-    else:
-        raise AssertionError("El árbol solo debe cargar archivos .co/.cobra")
+    contenido, mensaje = runtime.cargar_archivo_desde_arbol(archivo_texto, estado)
+
+    assert runtime.detectar_tipo_archivo(archivo_texto) == runtime.TIPO_ARCHIVO_TEXTO
+    assert not runtime.es_archivo_cobra(archivo_texto)
+    assert contenido == "texto"
+    assert mensaje == f"Archivo cargado: {archivo_texto.resolve()}"
+    assert estado.ruta == archivo_texto.resolve()
+    assert estado.contenido_cargado == "texto"
+
+    with pytest.raises(ValueError, match="archivo de texto del proyecto"):
+        runtime.cargar_archivo_desde_arbol(archivo_no_clasificado, estado)
 
 
 @pytest.mark.parametrize(
