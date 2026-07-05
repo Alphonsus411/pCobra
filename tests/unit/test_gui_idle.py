@@ -994,7 +994,7 @@ def test_main_acciones_publicas_de_archivo(monkeypatch, tmp_path):
     botones["Abrir"].on_click(None)
     assert entrada.value == "imprimir('abrir')"
     assert salida.value == f"Archivo cargado: {archivo_abrir.resolve()}"
-    assert estado_archivo.value == str(archivo_abrir.resolve())
+    assert estado_archivo.value == f"Archivo Cobra: {archivo_abrir.resolve()}"
     assert ruta_input.value == str(archivo_abrir.resolve())
     assert arbol.controls[0].value == _estado_workspace_proyecto(tmp_path)
 
