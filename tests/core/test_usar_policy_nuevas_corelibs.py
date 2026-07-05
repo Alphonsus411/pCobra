@@ -133,6 +133,20 @@ def test_usar_datos_expone_filtrar_callable_sin_callback_cobra() -> None:
     assert callable(exports["longitud"])
 
 
+def test_corelibs_datos_mapear_permanece_wrapper_de_standard_library() -> None:
+    corelibs_datos = importlib.import_module("pcobra.corelibs.datos")
+    standard_datos = importlib.import_module("pcobra.standard_library.datos")
+
+    def doble(numero: int) -> int:
+        return numero * 2
+
+    assert corelibs_datos.mapear([1, 2, 3], doble) == [2, 4, 6]
+    assert corelibs_datos.mapear.__module__ == "pcobra.corelibs.datos"
+    assert corelibs_datos.mapear([1, 2, 3], doble) == standard_datos.mapear(
+        [1, 2, 3], doble
+    )
+
+
 def test_usar_datos_apunta_a_standard_library_y_loader_importa_nombre_correcto() -> None:
     ruta_relativa = REPL_COBRA_MODULE_INTERNAL_PATH_MAP["datos"]
 

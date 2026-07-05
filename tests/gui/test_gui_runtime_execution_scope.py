@@ -153,6 +153,27 @@ imprimir(resultado)
     assert "[2, 4, 6]" in salida
 
 
+def test_core_data_callbacks_mapear_y_filtrar_convivencia_en_gui_runtime():
+    codigo = '''usar "datos"
+
+func doble(n):
+    retorno n * 2
+fin
+
+func mayor_que_dos(n):
+    retorno n > 2
+fin
+
+imprimir(mapear([1, 2, 3], doble))
+imprimir(filtrar([1, 2, 3, 4], mayor_que_dos))
+'''
+
+    salida = runtime.ejecutar_codigo(codigo)
+
+    assert "[2, 4, 6]" in salida.splitlines()
+    assert "[3, 4]" in salida.splitlines()
+
+
 def test_ejecutar_codigo_modulo_inexistente_falla_controladamente():
     with pytest.raises(PermissionError) as excinfo:
         runtime.ejecutar_codigo('usar "modulo_inexistente"')
