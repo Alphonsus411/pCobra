@@ -791,6 +791,31 @@ def test_repl_usar_datos_imprimir_longitud_lista_produce_3(monkeypatch, capsys):
     assert capsys.readouterr().out.strip().splitlines()[-1] == "3"
 
 
+def test_repl_usar_texto_oficial_mayusculas_contrato_actual(capsys):
+    from pcobra.cobra.usar_policy import (
+        REPL_COBRA_MODULE_INTERNAL_PATH_MAP,
+        USAR_RUNTIME_EXPORT_OVERRIDES,
+    )
+
+    modulo_texto = core_usar_loader.obtener_modulo_cobra_oficial("texto")
+
+    assert (
+        REPL_COBRA_MODULE_INTERNAL_PATH_MAP["texto"]
+        == "src/pcobra/standard_library/texto.py"
+    )
+    assert "mayusculas" in modulo_texto.__all__
+    assert "mayusculas" in USAR_RUNTIME_EXPORT_OVERRIDES["texto"]
+    assert "longitud" not in modulo_texto.__all__
+    assert "longitud" not in USAR_RUNTIME_EXPORT_OVERRIDES["texto"]
+
+    interp = InterpretadorCobra()
+    interp.configurar_restriccion_usar_repl({"texto": "texto"})
+
+    _ejecutar_codigo('usar "texto"\nimprimir(mayusculas("hola"))', interp)
+
+    assert capsys.readouterr().out.strip().splitlines()[-1] == "HOLA"
+
+
 def test_usar_texto_expone_superficie_publica_clave(monkeypatch):
     import pcobra.corelibs.texto as modulo_texto
 

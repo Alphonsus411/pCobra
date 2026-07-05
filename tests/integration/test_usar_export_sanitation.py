@@ -113,3 +113,65 @@ def test_colision_en_usar_emite_advertencia_y_no_sobrescribe(monkeypatch):
             interp.ejecutar_usar(_NodoUsar("numero"))
 
     assert interp.contextos[-1].values["es_finito"] == "valor_preexistente"
+
+
+def test_usar_datos_respeta_all_y_no_inyecta_objeto_modulo(monkeypatch):
+    datos = _modulo_stub(
+        "datos",
+        {
+            "longitud": lambda xs: len(xs),
+            "mapear": lambda xs, fn: [fn(x) for x in xs],
+        },
+    )
+    # Existe en el módulo, pero no está en __all__: no debe exportarse por fallback.
+    datos.filtrar = lambda xs, fn: [x for x in xs if fn(x)]
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: datos)
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _nombre: datos)
+
+    interp = InterpretadorCobra()
+    interp.ejecutar_usar(_NodoUsar("datos"))
+    simbolos = set(interp.contextos[-1].values)
+
+    assert {"longitud", "mapear"}.issubset(simbolos)
+    assert "filtrar" not in simbolos
+    assert "datos" not in simbolos
+
+
+def test_sanitizar_datos_reporta_motivos_de_filtrar_descartado(caplog):
+    datos = _modulo_stub("datos", {"filtrar": object()})
+
+    with caplog.at_level("DEBUG"):
+        mapa, _metadata, conflictos = core_usar_loader.sanitizar_exports_publicos(datos, "datos")
+
+    assert "filtrar" not in dict(mapa)
+    assert any(
+        conflicto.get("symbol") == "filtrar"
+        and conflicto.get("code") == "non_callable_not_canonical_public_constant"
+        for conflicto in conflictos
+    )
+    assert any(
+        "USAR_SANITIZE_DEBUG" in record.message
+        and "filtrar" in record.message
+        and "non_callable_not_canonical_public_constant" in record.message
+        for record in caplog.records
+    )
+
+
+def test_sanitizar_datos_reporta_filtrar_missing_export_attr(caplog):
+    datos = ModuleType("datos")
+    datos.__all__ = ["filtrar"]
+
+    with caplog.at_level("DEBUG"):
+        mapa, _metadata, conflictos = core_usar_loader.sanitizar_exports_publicos(datos, "datos")
+
+    assert "filtrar" not in dict(mapa)
+    assert any(
+        conflicto.get("symbol") == "filtrar" and conflicto.get("code") == "missing_export_attr"
+        for conflicto in conflictos
+    )
+    assert any(
+        "USAR_SANITIZE_DEBUG" in record.message
+        and "filtrar" in record.message
+        and "missing_export_attr" in record.message
+        for record in caplog.records
+    )

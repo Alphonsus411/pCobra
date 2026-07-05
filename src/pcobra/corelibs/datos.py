@@ -48,6 +48,10 @@ combinar_tablas = _datos.combinar_tablas
 rellenar_nulos = _datos.rellenar_nulos
 desplegar_tabla = _datos.desplegar_tabla
 pivotar_tabla = _datos.pivotar_tabla
+invertir_tabla = _datos.invertir_tabla
+tomar = _datos.tomar
+
+
 def agregar(tabla, fila):
     """Wrapper público seguro hacia :mod:`pcobra.standard_library.datos`."""
     return _datos.agregar(tabla, fila)
@@ -115,6 +119,8 @@ PUBLIC_API_DATOS: tuple[str, ...] = (
     "valores",
     "longitud",
     "elemento",
+    "invertir_tabla",
+    "tomar",
 )
 
 

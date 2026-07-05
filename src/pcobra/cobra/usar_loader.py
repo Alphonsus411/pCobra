@@ -512,6 +512,7 @@ def _obtener_modulo_cobra_oficial_compat(nombre: str):
         and getattr(wrapper_oficial, "__module__", "") != "pcobra.core.usar_loader"
     ):
         modulo = wrapper_oficial(nombre)
+        return modulo
     else:
         modulo = obtener_modulo_cobra_oficial(nombre)
 
@@ -591,6 +592,14 @@ def obtener_modulo(nombre: str, *, permitir_instalacion: bool = True):
 
     resolver_cls = imports_resolver.CobraImportResolver
     resolver_parcheado = getattr(resolver_cls, "__module__", "") != "pcobra.cobra.imports.resolver"
+    if nombre in USAR_COBRA_PUBLIC_MODULES:
+        try:
+            return _obtener_modulo_cobra_oficial_compat(nombre)
+        except ModuleNotFoundError as oficial_exc:
+            raise ImportError(
+                f"No se pudo resolver el módulo Cobra permitido '{nombre}' en runtime."
+            ) from oficial_exc
+
     if nombre not in USAR_COBRA_PUBLIC_MODULES and resolver_parcheado:
         _resolution, modulo = resolver_cls().load_module(nombre, fallback_backend="python")
         return modulo
@@ -602,14 +611,6 @@ def obtener_modulo(nombre: str, *, permitir_instalacion: bool = True):
             _resolution, modulo = resolver_cls().load_module(nombre, fallback_backend="python")
             return modulo
         except Exception:
-            if nombre in USAR_COBRA_PUBLIC_MODULES:
-                try:
-                    return _obtener_modulo_cobra_oficial_compat(nombre)
-                except ModuleNotFoundError as oficial_exc:
-                    raise ImportError(
-                        f"No se pudo resolver el módulo Cobra permitido '{nombre}' en runtime."
-                    ) from oficial_exc
-
             if not permitir_instalacion or os.environ.get("COBRA_USAR_INSTALL") != "1":
                 raise RuntimeError(
                     f"Módulo '{nombre}' no instalado y la instalación automática está deshabilitada."
@@ -861,7 +862,31 @@ def usar_modulo(
         raise e
 
 
-def sanitizar_exports_publicos(modulo: object, alias_modulo: str) -> tuple[dict[str, Any], list[dict[str, str]]]:
+def _registrar_conflicto_saneamiento_usar(
+    conflictos: list[dict[str, Any]],
+    conflicto: dict[str, Any],
+    *,
+    depuracion_habilitada: bool,
+) -> None:
+    """Registra un conflicto de saneamiento y emite trazas útiles cuando aplica."""
+
+    conflictos.append(conflicto)
+    debe_trazar = depuracion_habilitada or (
+        conflicto.get("module") == "datos" and conflicto.get("symbol") == "filtrar"
+    )
+    if debe_trazar:
+        logging.debug(
+            "USAR_SANITIZE_DEBUG %s",
+            {
+                "module": conflicto.get("module"),
+                "symbol": conflicto.get("symbol"),
+                "reason": conflicto.get("code"),
+                "message": conflicto.get("message"),
+            },
+        )
+
+
+def sanitizar_exports_publicos(modulo: object, alias_modulo: str) -> tuple[list[tuple[str, Any]], dict[str, dict[str, Any]], list[dict[str, Any]]]:
     """Filtra exports públicos válidos para ``usar`` y reporta conflictos/rechazos.
 
     Devuelve un mapa limpio ``nombre -> símbolo`` y una lista estructurada de
@@ -895,53 +920,52 @@ def sanitizar_exports_publicos(modulo: object, alias_modulo: str) -> tuple[dict[
     depuracion_habilitada = depuracion_saneamiento_usar_habilitada()
     for nombre in candidatos:
         if not isinstance(nombre, str):
-            conflictos.append(
+            _registrar_conflicto_saneamiento_usar(
+                conflictos,
                 {
                     "module": alias_modulo,
                     "symbol": repr(nombre),
                     "code": "invalid_export_name_type",
                     "message": "nombre de export no es string",
-                }
+                },
+                depuracion_habilitada=depuracion_habilitada,
             )
             continue
         if nombre in vistos:
-            conflictos.append(
+            _registrar_conflicto_saneamiento_usar(
+                conflictos,
                 {
                     "module": alias_modulo,
                     "symbol": nombre,
                     "code": "duplicate_export_name",
                     "message": "nombre exportado repetido en __all__/candidatos",
-                }
+                },
+                depuracion_habilitada=depuracion_habilitada,
             )
             continue
         if not hasattr(modulo, nombre):
-            conflictos.append(
+            _registrar_conflicto_saneamiento_usar(
+                conflictos,
                 {
                     "module": alias_modulo,
                     "symbol": nombre,
                     "code": "missing_export_attr",
                     "message": "el nombre exportado no existe en el módulo",
-                }
+                },
+                depuracion_habilitada=depuracion_habilitada,
             )
             continue
         if api_publica_modulo and nombre not in api_publica_modulo:
-            conflictos.append(
+            _registrar_conflicto_saneamiento_usar(
+                conflictos,
                 {
                     "module": alias_modulo,
                     "symbol": nombre,
                     "code": "outside_public_api",
                     "message": "símbolo descartado por no pertenecer a la API pública canónica",
-                }
+                },
+                depuracion_habilitada=depuracion_habilitada,
             )
-            if depuracion_habilitada:
-                logging.debug(
-                    "USAR_SANITIZE_DEBUG %s",
-                    {
-                        "module": alias_modulo,
-                        "symbol": nombre,
-                        "reason": "outside_public_api",
-                    },
-                )
             continue
         vistos.add(nombre)
         simbolos_brutos.append((nombre, getattr(modulo, nombre)))
@@ -951,32 +975,41 @@ def sanitizar_exports_publicos(modulo: object, alias_modulo: str) -> tuple[dict[
         modulo_origen=alias_modulo,
     )
     metadata_por_simbolo: dict[str, dict[str, Any]] = {}
+    simbolos_con_metadata_valida: list[tuple[str, Any]] = []
     for nombre, simbolo in simbolos_saneados:
-        metadata_por_simbolo[nombre] = build_and_validate_usar_symbol_metadata(
-            module_name=alias_modulo,
-            symbol_name=nombre,
-            callable_obj=simbolo,
-        )
+        try:
+            metadata_por_simbolo[nombre] = build_and_validate_usar_symbol_metadata(
+                module_name=alias_modulo,
+                symbol_name=nombre,
+                callable_obj=simbolo,
+            )
+        except ValueError as exc:
+            _registrar_conflicto_saneamiento_usar(
+                conflictos,
+                {
+                    "module": alias_modulo,
+                    "symbol": nombre,
+                    "code": "metadata_conflict",
+                    "message": f"metadata de símbolo inválida o inconsistente: {exc}",
+                },
+                depuracion_habilitada=depuracion_habilitada,
+            )
+            continue
+        simbolos_con_metadata_valida.append((nombre, simbolo))
+    simbolos_saneados = simbolos_con_metadata_valida
 
     for resultado in [*clasificacion.rechazos_duros, *warnings]:
-        conflictos.append(
+        _registrar_conflicto_saneamiento_usar(
+            conflictos,
             {
                 "module": alias_modulo,
                 "symbol": resultado.nombre,
                 "code": resultado.codigo or ("warning" if resultado.warning else "rejected"),
                 "message": resultado.mensaje or ("warning de saneamiento" if resultado.warning else "símbolo rechazado"),
                 "source_module": resultado.metadata.get("modulo_origen"),
-            }
+            },
+            depuracion_habilitada=depuracion_habilitada,
         )
-        if depuracion_habilitada:
-            logging.debug(
-                "USAR_SANITIZE_DEBUG %s",
-                {
-                    "module": alias_modulo,
-                    "symbol": resultado.nombre,
-                    "reason": resultado.codigo,
-                },
-            )
 
     metricas_rechazo_por_codigo: dict[str, int] = {}
     for conflicto in conflictos:

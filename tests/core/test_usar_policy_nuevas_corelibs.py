@@ -11,6 +11,7 @@ from pcobra.cobra.usar_policy import (
     USAR_COBRA_PUBLIC_MODULES,
     validar_contrato_modulos_canonicos_usar,
 )
+from pcobra.cobra.usar_loader import obtener_modulo_cobra_oficial, usar_modulo
 from pcobra.core.ast_nodes import NodoUsar
 from pcobra.core.interpreter import InterpretadorCobra
 
@@ -106,3 +107,41 @@ def test_repl_resuelve_nueva_corelib_con_nodo_usar_sin_parser_lexer(alias: str) 
     exportes = tuple(getattr(modulo, "__all__", ()))
     assert exportes
     assert any(nombre in interprete.variables for nombre in exportes)
+
+
+def test_usar_modulo_inexistente_falla_con_excepcion_controlada() -> None:
+    assert "modulo_inexistente" not in USAR_COBRA_PUBLIC_MODULES
+
+    with pytest.raises((PermissionError, ValueError, FileNotFoundError, ImportError)) as excinfo:
+        usar_modulo("modulo_inexistente")
+
+    mensaje = str(excinfo.value).lower()
+    assert (
+        "fuera del catálogo" in mensaje
+        or "fuera del catalogo" in mensaje
+        or "no permitido" in mensaje
+        or "no encontrado" in mensaje
+    )
+
+
+def test_usar_datos_expone_filtrar_callable_sin_callback_cobra() -> None:
+    exports = usar_modulo("datos")
+
+    assert "filtrar" in exports
+    assert callable(exports["filtrar"])
+    assert "longitud" in exports
+    assert callable(exports["longitud"])
+
+
+def test_usar_datos_apunta_a_standard_library_y_loader_importa_nombre_correcto() -> None:
+    ruta_relativa = REPL_COBRA_MODULE_INTERNAL_PATH_MAP["datos"]
+
+    assert ruta_relativa == "src/pcobra/standard_library/datos.py"
+    assert (RAIZ_REPO / ruta_relativa).is_file()
+
+    modulo = obtener_modulo_cobra_oficial("datos")
+
+    assert modulo.__name__ == "pcobra.standard_library.datos"
+    assert modulo.__name__ != "pcobra.cobra.corelibs.datos"
+    assert getattr(modulo, "__file__", None) is not None
+    assert Path(modulo.__file__).resolve() == (RAIZ_REPO / ruta_relativa).resolve()

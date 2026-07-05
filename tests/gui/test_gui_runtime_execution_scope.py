@@ -22,3 +22,94 @@ def test_ejecutar_codigo_permite_asignaciones_en_mismo_fragmento(
 def test_ejecutar_codigo_variable_inexistente_sigue_fallando():
     with pytest.raises(NameError, match="Variable no declarada"):
         runtime.ejecutar_codigo("imprimir(no_existe)")
+
+
+def test_ejecutar_codigo_carga_exports_de_datos_sin_importerror():
+    try:
+        salida = runtime.ejecutar_codigo('usar "datos"\nimprimir("datos cargado")')
+    except ImportError as exc:  # pragma: no cover - mensaje de regresión
+        if "No se encontraron símbolos exportables" in str(exc):
+            pytest.fail(f'No se esperaba ImportError al cargar datos: {exc}')
+        raise
+
+    assert "datos cargado" in salida
+
+
+def test_ejecutar_codigo_usar_datos_expone_longitud_para_listas():
+    # Regresión: `usar "datos"` debe inyectar `longitud` en el runtime GUI
+    # sin depender todavía de callbacks Cobra definidos por el usuario.
+    codigo = '''usar "datos"
+
+numeros = [1, 2, 3, 4]
+imprimir(longitud(numeros))
+'''
+
+    try:
+        salida = runtime.ejecutar_codigo(codigo)
+    except ImportError as exc:  # pragma: no cover - mensaje de regresión
+        if "No se encontraron símbolos exportables" in str(exc):
+            pytest.fail(f'No se esperaba error de exports al cargar datos: {exc}')
+        raise
+
+    assert "No se encontraron símbolos exportables" not in salida
+    assert "4" in salida.splitlines()
+
+
+def test_ejecutar_codigo_usar_numero_expone_es_finito_en_ruta_gui_runtime():
+    codigo = 'usar "numero"\nimprimir(es_finito(10))'
+
+    salida = runtime.ejecutar_codigo(codigo)
+    salida_normalizada = salida.strip().lower()
+
+    assert "verdadero" in salida_normalizada
+
+
+def test_core_stdlib_usar_exports_datos_001_inyecta_filtrar_callable():
+    # CORE_STDLIB_USAR_EXPORTS_DATOS_001 solo valida que `usar "datos"`
+    # expone `filtrar` como símbolo callable en el runtime GUI. No ejecuta
+    # callbacks Cobra, porque ese soporte avanzado pertenece al POC separado
+    # CORE_DATA_FILTER_CALLBACK_001.
+    codigo = '''usar "datos"
+imprimir(filtrar)
+'''
+
+    salida = runtime.ejecutar_codigo(codigo)
+
+    assert "function filtrar" in salida
+
+
+def test_core_data_filter_callback_001_poc_filtrar_con_callback_cobra():
+    codigo = '''usar "datos"
+
+func mayor_que_dos(n):
+    retorno n > 2
+fin
+
+numeros = [1, 2, 3, 4]
+resultado = filtrar(numeros, mayor_que_dos)
+imprimir(resultado)
+'''
+
+    try:
+        salida = runtime.ejecutar_codigo(codigo)
+    except (NameError, TypeError, RuntimeError) as exc:
+        pytest.xfail(
+            "CORE_DATA_FILTER_CALLBACK_001: el runtime GUI aún no resuelve "
+            f"o ejecuta callbacks Cobra en datos.filtrar ({exc})"
+        )
+
+    assert "[3, 4]" in salida
+
+
+def test_ejecutar_codigo_modulo_inexistente_falla_controladamente():
+    with pytest.raises(PermissionError) as excinfo:
+        runtime.ejecutar_codigo('usar "modulo_inexistente"')
+
+    mensaje = str(excinfo.value)
+
+    assert "fuera del catálogo" in mensaje
+    assert (
+        "no permitido" in mensaje
+        or "no encontrado" in mensaje
+        or "modulo_inexistente" in mensaje
+    )
