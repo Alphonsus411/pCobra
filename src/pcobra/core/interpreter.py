@@ -529,6 +529,11 @@ class InterpretadorCobra:
         self.estrategia = self.gestor_memoria.poblacion[0]
         self.op_memoria = 0
         self._eval_stack = set()
+        # Funciones Cobra declaradas en el AST fuente. Se mantiene separada del
+        # entorno de variables para que los optimizadores puedan eliminar nodos
+        # ``NodoFuncion`` sin impedir que sus nombres sigan siendo resolubles
+        # como valores/callbacks en expresiones.
+        self._funciones_declaradas_valor: dict[str, dict[str, object]] = {}
         # Último IR generado a partir del AST ejecutado
         self.ultimo_ir: Optional[InternalIRModule] = None
         # Restricción opcional para `usar` en REPL/evaluador incremental.
@@ -709,7 +714,12 @@ class InterpretadorCobra:
             raise RuntimeError(f"Ciclo de variables detectado en '{nombre}'")
         visitados.add(nombre)
         try:
-            valor = self.contextos[-1].get(nombre)
+            try:
+                valor = self.contextos[-1].get(nombre)
+            except NameError:
+                if nombre in self._funciones_declaradas_valor:
+                    return self._funciones_declaradas_valor[nombre]
+                raise
             self._validar_asignacion_autorreferente(nombre, valor)
             valor_resuelto = self._materializar_valor(
                 valor,
@@ -776,6 +786,25 @@ class InterpretadorCobra:
             "cuerpo": list(nodo.cuerpo),
             "scope_lexico": self.contextos[-1],
         }
+
+    def _registrar_funciones_declaradas_como_valores(self, ast) -> None:
+        """Registra funciones top-level para resolución por identificador.
+
+        Las llamadas directas pueden sobrevivir gracias a la ruta de llamada o
+        al inlining, pero cuando una función aparece como expresión
+        (``f = doble`` o ``filtrar(xs, predicado)``), el identificador debe
+        poder resolverse incluso si ``inline_functions`` eliminó el
+        ``NodoFuncion`` original del AST ejecutable. Esta tabla actúa como
+        fallback de solo funciones; las variables/imports del entorno activo
+        mantienen prioridad.
+        """
+        if not isinstance(ast, list):
+            return
+        for nodo in ast:
+            if isinstance(nodo, NodoFuncion):
+                self._funciones_declaradas_valor[nodo.nombre] = (
+                    self._construir_funcion(nodo)
+                )
 
     def _construir_clase(self, nodo, bases):
         return {
@@ -1463,6 +1492,7 @@ class InterpretadorCobra:
 
         self._asegurar_ast_tipado(ast, "pre_optimizacion")
         self._asegurar_ast_aciclico_por_identidad(ast, "pre_optimizacion")
+        self._registrar_funciones_declaradas_como_valores(ast)
         self._trace_debug("[AST BEFORE OPT]")
         self._trace_debug(self._resumir_ast(ast))
         if self._debug_resumen_ast_habilitado():
