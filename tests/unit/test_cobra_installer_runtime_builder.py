@@ -65,6 +65,7 @@ def test_prepare_runtime_copia_runtime_recursos_y_entrypoint_filtrados(tmp_path:
     assert (result.runtime_dir / "core").is_dir()
     assert result.corelibs_dir.is_dir()
     assert result.standard_library_dir.is_dir()
+    assert (result.cobra_dir / "architecture" / "backend_policy.py").is_file()
     assert (result.cobra_dir / "core" / "parser.py").is_file()
     assert (result.cobra_dir / "cli" / "cli.py").is_file()
     assert not (result.runtime_dir / "cobra" / "benchmarks").exists()
