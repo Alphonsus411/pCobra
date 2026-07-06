@@ -139,11 +139,12 @@ def _collect_datas(
     runtime: "RuntimePreparationResult",
     additional_datas: Sequence[tuple[Path | str, str]],
 ) -> tuple[tuple[str, str], ...]:
-    candidates: list[tuple[Path, str]] = [
+    candidates: list[tuple[Path | None, str]] = [
         (runtime.runtime_dir, "runtime/pcobra"),
         (runtime.corelibs_dir, "runtime/pcobra/corelibs"),
         (runtime.standard_library_dir, "runtime/pcobra/standard_library"),
         (runtime.cobra_dir, "runtime/pcobra/cobra"),
+        (runtime.python_dir, "python"),
         (runtime.packages_dir, "packages"),
         (runtime.assets_dir, "assets"),
         (runtime.config_dir, "config"),

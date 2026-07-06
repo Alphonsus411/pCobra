@@ -61,6 +61,12 @@ def test_prepare_runtime_copia_runtime_recursos_y_entrypoint_filtrados(tmp_path:
 
     assert isinstance(result, RuntimePreparationResult)
     py_compile.compile(str(result.entrypoint), doraise=True)
+    entrypoint_code = result.entrypoint.read_text(encoding="utf-8")
+    assert (result.python_dir / "__main__.py").is_file()
+    assert result.generated_code is not None and result.generated_code.is_file()
+    assert "generated_main = BASE_DIR / 'python' / '__main__.py'" in entrypoint_code
+    assert "cobra_main(['run', str(source_entrypoint)])" in entrypoint_code
+    assert "cobra_main(['ejecutar'" not in entrypoint_code
     assert (result.runtime_dir / "__init__.py").is_file()
     assert (result.runtime_dir / "core").is_dir()
     assert result.corelibs_dir.is_dir()
@@ -99,5 +105,7 @@ def test_prepare_runtime_acepta_dependencias_como_rutas_y_no_resuelve_si_se_omit
         ),
     )
 
+    assert (result.python_dir / "__main__.py").is_file()
+    assert result.generated_code is not None and result.generated_code.is_file()
     assert (result.packages_dir / "manual.co").read_bytes() == b"manual"
     assert result.dependency_resolution is None
