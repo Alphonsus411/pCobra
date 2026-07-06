@@ -58,6 +58,12 @@ def _fake_flet():
     class TextButton(ElevatedButton):
         pass
 
+    class AlertDialog:
+        def __init__(self, **kwargs):
+            self.kwargs = kwargs
+            self.open = kwargs.get("open", False)
+            self.actions = kwargs.get("actions", [])
+
     class Layout:
         def __init__(self, controls=None, **_kwargs):
             self.controls = controls or []
@@ -111,6 +117,7 @@ def _fake_flet():
     class Page:
         def __init__(self):
             self.controls = []
+            self.opened_controls = []
             self.update = MagicMock()
 
         def add(self, *args):
@@ -125,6 +132,15 @@ def _fake_flet():
             for arg in args:
                 _flatten(arg)
 
+        def open(self, control):
+            control.open = True
+            self.opened_controls.append(control)
+            self.update()
+
+        def close(self, control):
+            control.open = False
+            self.update()
+
     return SimpleNamespace(
         TextField=TextField,
         Text=Text,
@@ -132,6 +148,7 @@ def _fake_flet():
         Switch=Switch,
         ElevatedButton=ElevatedButton,
         TextButton=TextButton,
+        AlertDialog=AlertDialog,
         Row=Row,
         Column=Column,
         Container=Container,
@@ -1257,6 +1274,28 @@ def test_guardar_como_resuelve_src_programa_sin_extension_como_cobra(
     assert destino.read_text(encoding="utf-8") == "imprimir('programa')"
     assert salida.value == f"Archivo guardado: {destino}"
     assert ruta_input.value == str(destino)
+
+
+def test_empaquetar_muestra_dialogo_con_page_open(monkeypatch, tmp_path):
+    ft, page, _entrada, ruta_input, _salida, _abrir, _guardar_como = (
+        _preparar_idle_archivos(monkeypatch, tmp_path)
+    )
+    proyecto = idle.runtime.resolver_workspace_root_idle() / "app"
+    proyecto.mkdir(parents=True)
+    ruta_input.value = str(proyecto)
+    empaquetar = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.ElevatedButton) and c.text == "Empaquetar"
+    )
+
+    empaquetar.on_click(None)
+
+    assert len(page.opened_controls) == 1
+    dialog = page.opened_controls[0]
+    assert isinstance(dialog, ft.AlertDialog)
+    assert dialog.open is True
+    assert not hasattr(page, "dialog")
 
 
 def test_guardar_como_desde_dockerfile_conserva_nombre_sin_forzar_cobra(

@@ -903,15 +903,19 @@ def main(page: "ft.Page"):
         )
 
         def cerrar_dialogo(_ev=None) -> None:
-            dialog.open = False
-            page.update()
+            cerrar = getattr(page, "close", None)
+            if callable(cerrar):
+                cerrar(dialog)
+            else:
+                dialog.open = False
+                page.update()
 
         def ejecutar_empaquetado(_ev=None) -> None:
             nombre = (nombre_input.value or "").strip() or proyecto_detectado.name
             icono = (icono_input.value or "").strip() or None
             target = selector_so.value or "current"
             mode = selector_modo.value or "onedir"
-            dialog.open = False
+            cerrar_dialogo()
             salida.value = "Iniciando empaquetado..."
             page.update()
 
@@ -977,9 +981,13 @@ def main(page: "ft.Page"):
                 ),
             ],
         )
-        page.dialog = dialog
-        dialog.open = True
-        page.update()
+        abrir = getattr(page, "open", None)
+        if callable(abrir):
+            abrir(dialog)
+        else:
+            page.dialog = dialog
+            dialog.open = True
+            page.update()
 
     def archivo_visible_permite_accion_paquete(accion: str) -> bool:
         """Valida que la ruta visible apunte a un paquete Cobra para acciones de paquete."""
