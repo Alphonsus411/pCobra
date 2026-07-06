@@ -14,7 +14,7 @@ from .dependency_resolver import (
     DependencyResolutionResult,
     resolve_project_dependencies,
 )
-from .manifest import create_manifest, expected_artifact_path
+from .manifest import create_manifest
 from .project import (
     BuildOptions,
     BuildResult,
@@ -289,7 +289,7 @@ def build_project(
 
     return BuildResult(
         success=True,
-        artifact_path=expected_artifact_path(output_dir, name, normalized),
+        artifact_path=output_dir,
         project_root=Path(normalized.project_root),
         output_dir=output_dir,
         target=normalized.target,

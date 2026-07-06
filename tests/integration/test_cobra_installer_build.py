@@ -95,7 +95,7 @@ def test_installer_build_parametriza_modo_y_genera_manifest_sin_pyinstaller_real
     assert result.metadata["spec"] == str(spec_path)
     assert result.pyinstaller_version == "6.mock"
     assert result.mode is mode
-    assert result.artifact_path == tmp_path / expected_artifact
+    assert result.artifact_path == dist_dir
     assert manifest_payload["project"] == "demo-build"
     assert manifest_payload["backend"] == "python"
     assert manifest_payload["mode"] == mode.value
