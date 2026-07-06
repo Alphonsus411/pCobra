@@ -262,6 +262,7 @@ def build_project(
             runtime=runtime,
             output_dir=output_dir,
             executable_name=name,
+            additional_datas=((transpiled.generated_code, "."),),
         )
     )
 
