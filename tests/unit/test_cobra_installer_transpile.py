@@ -124,6 +124,9 @@ def test_build_project_orquesta_flujo_completo_con_callback(
     assert result.pyinstaller_version == "6.test"
     assert (project_root / "cobra.lock").is_file()
     assert calls and calls[0].name == "main.spec"
+    spec_content = calls[0].read_text(encoding="utf-8")
+    assert str(project_root / "build" / "python" / "main.py") in spec_content
+    assert "'.'" in spec_content
     assert any("1/12 Descubriendo" in item for item in progress)
     assert "pyinstaller simulado" in progress
     assert (project_root / "dist" / "cobra_build_manifest.json").is_file()
