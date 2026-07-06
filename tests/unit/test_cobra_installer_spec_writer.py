@@ -13,6 +13,7 @@ def _runtime_tree(tmp_path: Path) -> RuntimePreparationResult:
     corelibs_dir = runtime_dir / "corelibs"
     standard_library_dir = runtime_dir / "standard_library"
     cobra_dir = runtime_dir / "cobra"
+    python_dir = build_dir / "python"
     packages_dir = build_dir / "packages"
     assets_dir = build_dir / "assets"
     config_dir = build_dir / "config"
@@ -23,6 +24,7 @@ def _runtime_tree(tmp_path: Path) -> RuntimePreparationResult:
         corelibs_dir,
         standard_library_dir,
         cobra_dir,
+        python_dir,
         packages_dir,
         assets_dir,
         config_dir,
@@ -31,6 +33,7 @@ def _runtime_tree(tmp_path: Path) -> RuntimePreparationResult:
     ):
         path.mkdir(parents=True, exist_ok=True)
     entrypoint.write_text("print('entrypoint')\n", encoding="utf-8")
+    (python_dir / "__main__.py").write_text("print('generated')\n", encoding="utf-8")
     return RuntimePreparationResult(
         build_dir=build_dir,
         runtime_dir=runtime_dir,
@@ -43,6 +46,8 @@ def _runtime_tree(tmp_path: Path) -> RuntimePreparationResult:
         documentation_dir=documentation_dir,
         auxiliary_dir=auxiliary_dir,
         entrypoint=entrypoint,
+        python_dir=python_dir,
+        generated_code=python_dir / "main.py",
     )
 
 
@@ -67,6 +72,7 @@ def test_write_spec_onedir_incluye_runtime_recursos_imports_y_nombre(tmp_path: P
     assert str(runtime.entrypoint) in content
     assert "('" in content and "runtime/pcobra" in content
     assert "runtime/pcobra/corelibs" in content
+    assert "python" in content
     assert "packages" in content
     assert "assets" in content
     assert "config" in content

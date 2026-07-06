@@ -9,6 +9,9 @@ from typing import Mapping, Sequence
 
 import pcobra
 
+from pcobra.cobra.backends.python_adapter import PythonAdapter
+from pcobra.cobra.cli.execution_pipeline import prevalidar_y_parsear_codigo
+
 from .dependency_resolver import DependencyResolutionResult, resolve_project_dependencies
 from .manifest import create_manifest
 from .project import BuildOptions, BuildResult, CobraInstallerError, CobraProject, discover_project
@@ -38,6 +41,8 @@ class RuntimePreparationResult:
     documentation_dir: Path
     auxiliary_dir: Path
     entrypoint: Path
+    python_dir: Path | None = None
+    generated_code: Path | None = None
     copied_resources: Mapping[str, tuple[Path, ...]] = field(default_factory=dict)
     dependency_resolution: DependencyResolutionResult | None = None
     logs: tuple[str, ...] = ()
@@ -70,6 +75,7 @@ def prepare_runtime(
 
     runtime_root = target / "runtime"
     pcobra_runtime = runtime_root / "pcobra"
+    python_dir = target / "python"
     packages_dir = target / "packages"
     assets_dir = target / "assets"
     config_dir = target / "config"
@@ -77,6 +83,7 @@ def prepare_runtime(
     auxiliary_dir = target / "resources"
     for directory in (
         pcobra_runtime,
+        python_dir,
         packages_dir,
         assets_dir,
         config_dir,
@@ -110,8 +117,9 @@ def prepare_runtime(
         auxiliary_dir,
         root,
     )
-    entrypoint = target / "pyinstaller_entrypoint.py"
     source_entrypoint = normalized_project.entrypoint or normalized_options.entrypoint
+    generated_code = _write_transpiled_python_entrypoint(source_entrypoint, root, python_dir)
+    entrypoint = target / "pyinstaller_entrypoint.py"
     entrypoint.write_text(
         _pyinstaller_entrypoint_code(source_entrypoint, target), encoding="utf-8"
     )
@@ -128,6 +136,8 @@ def prepare_runtime(
         documentation_dir=documentation_dir,
         auxiliary_dir=auxiliary_dir,
         entrypoint=entrypoint,
+        python_dir=python_dir,
+        generated_code=generated_code,
         copied_resources={
             "runtime": runtime_copies,
             "packages": (*copied_hub_packages, *copied_explicit_packages, *copied_project_packages),
@@ -136,11 +146,13 @@ def prepare_runtime(
             "documentation": copied_docs,
             "auxiliary": copied_auxiliary,
             "entrypoint": (entrypoint,),
+            "python": (python_dir / "__main__.py",) if generated_code is not None else (),
         },
         dependency_resolution=dependency_resolution,
         logs=(
             f"Runtime Cobra copiado en {pcobra_runtime}.",
             f"Entrypoint Python para PyInstaller creado en {entrypoint}.",
+            f"Entrypoint Python transpilado creado en {python_dir / '__main__.py'}.",
         ),
     )
 
@@ -215,6 +227,41 @@ def package_current_project(project_root: str | Path | None = None, **kwargs: ob
 
     options = BuildOptions(project_root=project_root or Path.cwd(), **kwargs)
     return build_project(options)
+
+
+def _write_transpiled_python_entrypoint(
+    source_entrypoint: Path | None, project_root: Path, python_dir: Path
+) -> Path | None:
+    if source_entrypoint is None:
+        return None
+    source = Path(source_entrypoint).expanduser().resolve()
+    if not source.is_file():
+        return None
+
+    ast = prevalidar_y_parsear_codigo(source.read_text(encoding="utf-8"))
+    generated = PythonAdapter().compile(
+        ast,
+        {"source_file": source, "project_root": project_root},
+    )
+    generated_path = python_dir / f"{source.stem}.py"
+    generated_path.write_text(generated, encoding="utf-8")
+    (python_dir / "__main__.py").write_text(
+        _transpiled_entrypoint_code(generated_path.name), encoding="utf-8"
+    )
+    return generated_path
+
+
+def _transpiled_entrypoint_code(module_filename: str) -> str:
+    return (
+        '"""Entrypoint Python generado por cobra_installer."""\n'
+        "from __future__ import annotations\n\n"
+        "import runpy\n"
+        "from pathlib import Path\n\n"
+        "if __name__ == '__main__':\n"
+        "    runpy.run_path(\n"
+        f"        str(Path(__file__).with_name({module_filename!r})), run_name='__main__'\n"
+        "    )\n"
+    )
 
 
 def _copy_pcobra_runtime(destination_root: Path) -> tuple[Path, ...]:
@@ -362,13 +409,13 @@ def _pyinstaller_entrypoint_code(source_entrypoint: Path | None, build_dir: Path
         "    if not source_entrypoint.is_file():\n"
         "        raise SystemExit('No se encontró entrypoint Python generado ni fuente Cobra original.')\n"
         "    from pcobra.cobra.cli.cli import main as cobra_main\n"
-        "    raise SystemExit(cobra_main(['ejecutar', str(source_entrypoint)]))\n"
+        "    raise SystemExit(cobra_main(['run', str(source_entrypoint)]))\n"
     )
 
 
 _RUNTIME_COBRA_SUBPACKAGES = (
     # Importados por pcobra.__init__ y por las rutas de resolución/transpilación
-    # usadas por `pcobra.cobra.cli.cli ejecutar`.
+    # usadas por `pcobra.cobra.cli.cli run`.
     "architecture",
     "backends",
     "bindings",
