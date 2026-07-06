@@ -318,6 +318,7 @@ def _pyinstaller_entrypoint_code(source_entrypoint: Path | None, build_dir: Path
 
 
 _RUNTIME_COBRA_SUBPACKAGES = (
+    "architecture",
     "bindings",
     "cli",
     "core",
