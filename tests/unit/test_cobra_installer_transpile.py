@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import os
 import py_compile
+import subprocess
+import sys
 from pathlib import Path
 
 from pcobra.cobra_installer import (
@@ -50,7 +53,9 @@ def test_transpile_project_prepara_build_python_y_recursos(tmp_path: Path) -> No
     py_compile.compile(str(result.generated_code), doraise=True)
     py_compile.compile(str(result.entrypoint), doraise=True)
     assert (result.runtime_dir / "__init__.py").is_file()
+    assert (result.runtime_dir / "cobra" / "core" / "nativos").is_dir()
     assert result.corelibs_dir.is_dir()
+    assert (result.runtime_dir / "_stubs").is_dir()
     assert (result.runtime_dir / "standard_library").is_dir()
     assert (result.assets_dir / "assets" / "logo.txt").read_text(encoding="utf-8") == "asset"
     assert (result.config_dir / "config" / "settings.json").is_file()
@@ -81,3 +86,33 @@ def test_transpile_project_permite_omitir_resolucion_cobrahub(tmp_path: Path) ->
 
     assert result.generated_code.is_file()
     assert result.dependency_resolution is None
+
+
+def test_transpile_project_runtime_autonomo_ejecuta_codigo_generado(tmp_path: Path) -> None:
+    project_root = tmp_path / "app"
+    project_root.mkdir()
+    entrypoint = project_root / "main.cobra"
+    entrypoint.write_text("imprimir('runtime ok')\n", encoding="utf-8")
+
+    result = transpile_project(
+        CobraProject(project_root=project_root, entrypoint=entrypoint),
+        tmp_path / "build-runtime",
+        BuildOptions(
+            project_root=project_root,
+            entrypoint=entrypoint,
+            include_dependencies=False,
+        ),
+    )
+
+    env = os.environ.copy()
+    env["PYTHONPATH"] = str(result.runtime_dir.parent)
+    completed = subprocess.run(
+        [sys.executable, str(result.entrypoint)],
+        cwd=tmp_path,
+        env=env,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    assert completed.stdout.strip() == "runtime ok"
