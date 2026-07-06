@@ -38,6 +38,27 @@ def test_detecta_imports_cobra_estaticos(tmp_path):
     assert detect_cobra_imports(tmp_path) == {"dep", "otra"}
 
 
+def test_ignora_modulos_core_de_usar(tmp_path):
+    (tmp_path / "main.cobra").write_text(
+        'usar "numero"\nimport "datos"\nusar dep.modulo\n', encoding="utf-8"
+    )
+
+    assert detect_cobra_imports(tmp_path) == {"dep"}
+
+
+def test_ignora_modulos_locales_del_proyecto(tmp_path):
+    (tmp_path / "util.co").write_text("var helper = 1\n", encoding="utf-8")
+    (tmp_path / "utilidades").mkdir()
+    (tmp_path / "utilidades" / "fechas.co").write_text(
+        "var hoy = 1\n", encoding="utf-8"
+    )
+    (tmp_path / "main.cobra").write_text(
+        'usar "util"\nusar utilidades.fechas\nusar dep.modulo\n', encoding="utf-8"
+    )
+
+    assert detect_cobra_imports(tmp_path) == {"dep"}
+
+
 def test_lee_dependencias_de_cobra_toml(tmp_path):
     (tmp_path / "cobra.toml").write_text(
         '[dependencies]\nDep = "1.2.3"\n[project]\ndependencies = ["otra==2.0.0"]\n',
