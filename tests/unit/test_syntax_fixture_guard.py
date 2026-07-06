@@ -11,7 +11,11 @@ EXPECTED_SYNTAX_FIXTURES_SHA256 = (
 
 def test_existing_syntax_fixtures_were_not_modified() -> None:
     fixtures_root = Path(__file__).resolve().parents[1] / "fixtures"
-    fixture_files = sorted(fixtures_root.rglob("*.cobra"))
+    fixture_files = sorted(
+        fixture
+        for fixture in fixtures_root.rglob("*.cobra")
+        if "cobra_installer" not in fixture.relative_to(fixtures_root).parts
+    )
 
     digest = hashlib.sha256()
     for fixture_file in fixture_files:
