@@ -23,6 +23,8 @@ class IdlePackageResult:
 
     executable_path: Path | None
     dist_dir: Path
+    artifact_path: Path | None = None
+    output_dir: Path | None = None
 
 
 def package_current_project(
@@ -30,6 +32,7 @@ def package_current_project(
     ui_options: Mapping[str, Any] | object | None = None,
     progress_callback: ProgressCallback | None = None,
     error_callback: ErrorCallback | None = None,
+    **kwargs: object,
 ) -> IdlePackageResult:
     """Empaqueta el proyecto actual desde IDLE usando la API del instalador.
 
@@ -37,18 +40,31 @@ def package_current_project(
     un objeto simple) y este puente las convierte a :class:`BuildOptions`,
     conecta el callback de progreso al ``log_callback`` del builder y traduce
     errores controlados del instalador a mensajes orientados a usuario.
+
+    También acepta las palabras clave históricas del diálogo IDLE
+    (``name``, ``target``, ``mode``, ``icon`` y ``log_callback``) para mantener
+    compatibilidad con llamadas directas existentes.
     """
 
-    options = _build_options_from_idle(project_path, ui_options, progress_callback)
+    merged_options = _merge_ui_options(ui_options, kwargs)
+    callback = progress_callback or _pop_callback(merged_options, "log_callback")
+    options = _build_options_from_idle(project_path, merged_options, callback)
     try:
-        if progress_callback is not None:
-            progress_callback("Iniciando empaquetado del proyecto Cobra...")
+        if callback is not None:
+            callback("Iniciando empaquetado del proyecto Cobra...")
         result = build_project(project_path, options)
         dist_dir = Path(result.dist_dir or result.output_dir or result.artifact_path)
         executable_path = _resolve_executable_path(result.executable_name, dist_dir)
-        if progress_callback is not None:
-            progress_callback(f"Empaquetado completado en {dist_dir}.")
-        return IdlePackageResult(executable_path=executable_path, dist_dir=dist_dir)
+        artifact_path = result.artifact_path or executable_path
+        output_dir = result.output_dir or dist_dir
+        if callback is not None:
+            callback(f"Empaquetado completado en {dist_dir}.")
+        return IdlePackageResult(
+            executable_path=executable_path,
+            dist_dir=dist_dir,
+            artifact_path=artifact_path,
+            output_dir=output_dir,
+        )
     except CobraInstallerError as exc:
         message = _user_message_from_installer_error(exc)
         if error_callback is not None:
@@ -67,10 +83,7 @@ def package_from_idle(
 
     merged_options = _merge_ui_options(ui_options, kwargs)
     return package_current_project(
-        project_root,
-        merged_options,
-        progress_callback,
-        error_callback,
+        project_root, merged_options, progress_callback, error_callback
     )
 
 
@@ -95,7 +108,9 @@ def _build_options_from_idle(
     )
 
 
-def _ui_options_to_dict(ui_options: Mapping[str, Any] | object | None) -> dict[str, Any]:
+def _ui_options_to_dict(
+    ui_options: Mapping[str, Any] | object | None,
+) -> dict[str, Any]:
     if ui_options is None:
         return {}
     if isinstance(ui_options, Mapping):
@@ -115,7 +130,18 @@ def _merge_ui_options(
     return merged
 
 
-def _resolve_executable_path(executable_name: str | None, dist_dir: Path) -> Path | None:
+def _pop_callback(options: dict[str, Any], name: str) -> ProgressCallback | None:
+    callback = options.pop(name, None)
+    if callback is None:
+        return None
+    if not callable(callback):
+        raise TypeError(f"{name} debe ser callable")
+    return callback
+
+
+def _resolve_executable_path(
+    executable_name: str | None, dist_dir: Path
+) -> Path | None:
     if not executable_name:
         return None
     direct = dist_dir / executable_name

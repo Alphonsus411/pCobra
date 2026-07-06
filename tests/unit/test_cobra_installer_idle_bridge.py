@@ -6,10 +6,16 @@ from types import SimpleNamespace
 import pytest
 
 from pcobra.cobra_installer import idle_bridge
-from pcobra.cobra_installer.project import BuildOptions, BuildResult, CobraInstallerError
+from pcobra.cobra_installer.project import (
+    BuildOptions,
+    BuildResult,
+    CobraInstallerError,
+)
 
 
-def test_package_current_project_convierte_opciones_idle_e_invoca_builder(monkeypatch, tmp_path: Path) -> None:
+def test_package_current_project_convierte_opciones_idle_e_invoca_builder(
+    monkeypatch, tmp_path: Path
+) -> None:
     calls = []
     progress = []
     dist_dir = tmp_path / "dist"
@@ -44,7 +50,9 @@ def test_package_current_project_convierte_opciones_idle_e_invoca_builder(monkey
         progress.append,
     )
 
-    assert result == idle_bridge.IdlePackageResult(executable, dist_dir)
+    assert result == idle_bridge.IdlePackageResult(
+        executable, dist_dir, executable, dist_dir
+    )
     assert len(calls) == 1
     assert calls[0][0] == tmp_path
     options = calls[0][1]
@@ -65,12 +73,16 @@ def test_package_current_project_convierte_opciones_idle_e_invoca_builder(monkey
     ]
 
 
-def test_package_current_project_acepta_objeto_simple_de_opciones(monkeypatch, tmp_path: Path) -> None:
+def test_package_current_project_acepta_objeto_simple_de_opciones(
+    monkeypatch, tmp_path: Path
+) -> None:
     captured = []
 
     def fake_build_project(_project_path, options):
         captured.append(options)
-        return BuildResult(success=True, executable_name="app", dist_dir=tmp_path / "dist")
+        return BuildResult(
+            success=True, executable_name="app", dist_dir=tmp_path / "dist"
+        )
 
     monkeypatch.setattr(idle_bridge, "build_project", fake_build_project)
 
@@ -86,7 +98,9 @@ def test_package_current_project_acepta_objeto_simple_de_opciones(monkeypatch, t
     assert captured[0].install_pyinstaller is True
 
 
-def test_package_current_project_traduce_error_controlado(monkeypatch, tmp_path: Path) -> None:
+def test_package_current_project_traduce_error_controlado(
+    monkeypatch, tmp_path: Path
+) -> None:
     errors = []
 
     def fake_build_project(_project_path, _options):
@@ -97,21 +111,72 @@ def test_package_current_project_traduce_error_controlado(monkeypatch, tmp_path:
     with pytest.raises(RuntimeError, match="No se pudo empaquetar"):
         idle_bridge.package_current_project(tmp_path, {}, error_callback=errors.append)
 
-    assert errors == [
-        "No se pudo empaquetar el proyecto Cobra: no existe main.cobra"
-    ]
+    assert errors == ["No se pudo empaquetar el proyecto Cobra: no existe main.cobra"]
 
 
-def test_package_from_idle_es_alias_compatible_con_kwargs(monkeypatch, tmp_path: Path) -> None:
+def test_package_from_idle_es_alias_compatible_con_kwargs(
+    monkeypatch, tmp_path: Path
+) -> None:
     captured = []
 
-    def fake_package_current_project(project_root, ui_options, progress_callback, error_callback):
+    def fake_package_current_project(
+        project_root, ui_options, progress_callback, error_callback
+    ):
         captured.append((project_root, ui_options, progress_callback, error_callback))
-        return idle_bridge.IdlePackageResult(tmp_path / "dist" / "demo", tmp_path / "dist")
+        return idle_bridge.IdlePackageResult(
+            tmp_path / "dist" / "demo", tmp_path / "dist"
+        )
 
-    monkeypatch.setattr(idle_bridge, "package_current_project", fake_package_current_project)
+    monkeypatch.setattr(
+        idle_bridge, "package_current_project", fake_package_current_project
+    )
 
-    result = idle_bridge.package_from_idle(tmp_path, {"nombre": "demo"}, objetivo="linux")
+    result = idle_bridge.package_from_idle(
+        tmp_path, {"nombre": "demo"}, objetivo="linux"
+    )
 
     assert result.dist_dir == tmp_path / "dist"
     assert captured == [(tmp_path, {"nombre": "demo", "objetivo": "linux"}, None, None)]
+
+
+def test_package_current_project_acepta_kwargs_historicos_del_idle(
+    monkeypatch, tmp_path: Path
+) -> None:
+    captured = []
+    progress = []
+    dist_dir = tmp_path / "dist"
+    artifact = dist_dir / "demo"
+
+    def fake_build_project(project_path, options):
+        captured.append((project_path, options))
+        return BuildResult(
+            success=True,
+            artifact_path=artifact,
+            output_dir=dist_dir,
+            dist_dir=dist_dir,
+            executable_name="demo",
+        )
+
+    monkeypatch.setattr(idle_bridge, "build_project", fake_build_project)
+
+    result = idle_bridge.package_current_project(
+        tmp_path,
+        name="demo",
+        target="current",
+        mode="onedir",
+        icon=None,
+        log_callback=progress.append,
+    )
+
+    assert result.artifact_path == artifact
+    assert result.output_dir == dist_dir
+    assert result.dist_dir == dist_dir
+    assert result.executable_path == dist_dir / "demo"
+    assert captured[0][1].name == "demo"
+    assert captured[0][1].target == "current"
+    assert captured[0][1].mode == "onedir"
+    assert captured[0][1].icon is None
+    assert progress == [
+        "Iniciando empaquetado del proyecto Cobra...",
+        f"Empaquetado completado en {dist_dir}.",
+    ]
