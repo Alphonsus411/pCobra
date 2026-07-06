@@ -166,7 +166,7 @@ def _entrypoint_code(module_filename: str) -> str:
 def _copy_runtime(runtime_dir: Path) -> tuple[Path, ...]:
     pcobra_root = Path(pcobra.__file__).resolve().parent
     copied: list[Path] = []
-    for name in ("corelibs", "standard_library", "core"):
+    for name in ("cobra", "corelibs", "standard_library", "core", "_stubs"):
         source = pcobra_root / name
         if source.exists():
             destination = runtime_dir / name
