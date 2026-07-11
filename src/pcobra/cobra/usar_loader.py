@@ -114,24 +114,21 @@ def _rechazar_modulo_no_canonico(nombre: str) -> None:
     blocklist_normalizada = {normalizar_nombre_usar(item) for item in USAR_BACKEND_BLOCKLIST}
     equivalentes_normalizados = {normalizar_nombre_usar(item) for item in _BACKEND_EQUIVALENTS}
 
+    mensaje_error_no_canonico = (
+        f"Importación no permitida en 'usar': '{nombre}'. "
+        "Es un módulo backend/no canónico y no forma parte de la API pública. "
+        "módulo externo no permitido en REPL estricto (solo alias oficiales Cobra). "
+        f"Módulos permitidos: {', '.join(USAR_COBRA_PUBLIC_MODULES)}."
+    )
+
     if nombre_normalizado in blocklist_normalizada or nombre_normalizado in equivalentes_normalizados:
-        raise PermissionError(
-            f"Importación no permitida en 'usar': '{nombre}'. "
-            "Es un módulo backend/no canónico y no forma parte de la API pública. "
-            "módulo externo no permitido en REPL estricto (solo alias oficiales Cobra). "
-            f"Módulos permitidos: {', '.join(USAR_COBRA_PUBLIC_MODULES)}."
-        )
+        raise PermissionError(mensaje_error_no_canonico)
 
     if any(
         nombre_normalizado == prefijo or nombre_normalizado.startswith(f"{prefijo}_")
         for prefijo in _BACKEND_PREFIXES
     ):
-        raise PermissionError(
-            f"Importación no permitida en 'usar': '{nombre}'. "
-            "Es un módulo backend/no canónico y no forma parte de la API pública. "
-            "módulo externo no permitido en REPL estricto (solo alias oficiales Cobra). "
-            f"Módulos permitidos: {', '.join(USAR_COBRA_PUBLIC_MODULES)}."
-        )
+        raise PermissionError(mensaje_error_no_canonico)
 
 def validar_nombre_modulo_usar(nombre: str, *, require_allowlist: bool = True) -> str:
     """Valida nombre de `usar` y opcionalmente exige contrato canónico exacto."""
