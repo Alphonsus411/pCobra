@@ -117,6 +117,7 @@ def _rechazar_modulo_no_canonico(nombre: str) -> None:
     partes_mensaje_error_no_canonico = [
         f"Importación no permitida en 'usar': '{nombre}'.",
         "Es un módulo backend/no canónico y no forma parte de la API pública.",
+        "usar_error[modulo_fuera_catalogo_publico]: módulo fuera del catálogo público.",
     ]
     detalle_repl_estricto = (
         "módulo externo no permitido en REPL estricto (solo alias oficiales Cobra)."
