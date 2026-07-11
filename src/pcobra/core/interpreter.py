@@ -4,6 +4,7 @@ import logging
 import os
 import hashlib
 import math
+import warnings
 from pathlib import Path
 from typing import Mapping, Optional
 from pcobra.cobra.usar_loader import usar_modulo
@@ -2444,14 +2445,25 @@ class InterpretadorCobra:
             metadata_por_simbolo=metadata_por_simbolo,
         )
         if conflictos:
+            simbolo = conflictos[0]
             modulo = str(
-                metadata_por_simbolo.get(conflictos[0], {}).get("module", "módulo Cobra")
+                metadata_por_simbolo.get(simbolo, {}).get("module", "módulo Cobra")
             )
+
+            if self._usar_collision_policy == USAR_COLLISION_WARN_ALIAS_REQUIRED:
+                warnings.warn(
+                    "Conflicto de nombres en `usar`: "
+                    f"el símbolo '{simbolo}' ya existe y no será sobrescrito.",
+                    RuntimeWarning,
+                    stacklevel=2,
+                )
+
             raise NameError(
                 formatear_error_usar_usuario(
                     "conflicto_simbolo",
                     modulo,
-                    f"Símbolo conflictivo: {conflictos[0]}; símbolo '{conflictos[0]}' ya existe.",
+                    f"Colisión detectada. Símbolo conflictivo: {simbolo}; "
+                    f"símbolo '{simbolo}' ya existe.",
                 )
             )
         self._inyectar_simbolos_usar_en_contexto(
