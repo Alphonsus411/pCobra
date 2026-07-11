@@ -6,6 +6,7 @@ import importlib
 from dataclasses import dataclass
 from pathlib import Path
 
+
 # Fuente única de verdad de módulos canónicos permitidos por `usar`.
 USAR_COBRA_PUBLIC_MODULES: tuple[str, ...] = (
     "numero",
