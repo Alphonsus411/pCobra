@@ -88,6 +88,7 @@ from .import_utils import (
 from .utils import validar_ast_estructural, ErrorEstructuraAST
 from .errors import CondicionNoBooleanaError
 from .usar_symbol_policy import (
+    build_and_validate_usar_symbol_metadata,
     normalizar_metadata_simbolo_usar,
     validate_usar_symbol_metadata,
 )
