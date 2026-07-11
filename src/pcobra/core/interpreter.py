@@ -2449,6 +2449,13 @@ class InterpretadorCobra:
             modulo = str(
                 metadata_por_simbolo.get(simbolo, {}).get("module", "módulo Cobra")
             )
+            detalle = {
+                "code": "symbol_collision",
+                "message": "símbolo ya existe en contexto actual",
+                "symbol": simbolo,
+                "module": modulo,
+                "phase": "preflight",
+            }
 
             if self._usar_collision_policy == USAR_COLLISION_WARN_ALIAS_REQUIRED:
                 warnings.warn(
@@ -2459,12 +2466,8 @@ class InterpretadorCobra:
                 )
 
             raise NameError(
-                formatear_error_usar_usuario(
-                    "conflicto_simbolo",
-                    modulo,
-                    f"Colisión detectada. Símbolo conflictivo: {simbolo}; "
-                    f"símbolo '{simbolo}' ya existe.",
-                )
+                f"No se puede usar el módulo '{modulo}': "
+                f"colisión estructurada={detalle}"
             )
         self._inyectar_simbolos_usar_en_contexto(
             simbolos_saneados,
