@@ -19,7 +19,7 @@ from pcobra.cobra.usar_policy import (
     USAR_COBRA_PUBLIC_MODULES,
     USAR_RUNTIME_EXPORT_OVERRIDES,
 )
-from pcobra.cobra.core.usar_symbol_policy import (
+from pcobra.core.usar_symbol_policy import (
     build_and_validate_usar_symbol_metadata,
     depuracion_saneamiento_usar_habilitada,
     sanear_exportables_para_usar,
