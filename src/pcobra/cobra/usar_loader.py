@@ -893,7 +893,7 @@ def _registrar_conflicto_saneamiento_usar(
         )
 
 
-def sanitizar_exports_publicos(modulo: object, alias_modulo: str) -> tuple[list[tuple[str, Any]], dict[str, dict[str, Any]], list[dict[str, Any]]]:
+def _sanitizar_exports_publicos_detallado(modulo: object, alias_modulo: str) -> tuple[list[tuple[str, Any]], dict[str, dict[str, Any]], list[dict[str, Any]]]:
     """Filtra exports públicos válidos para ``usar`` y reporta conflictos/rechazos.
 
     Devuelve un mapa limpio ``nombre -> símbolo`` y una lista estructurada de
@@ -1032,3 +1032,15 @@ def sanitizar_exports_publicos(modulo: object, alias_modulo: str) -> tuple[list[
         )
 
     return simbolos_saneados, metadata_por_simbolo, conflictos
+
+
+def sanitizar_exports_publicos(
+    modulo: object,
+    alias_modulo: str,
+) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    """Devuelve el mapa público saneado y sus conflictos."""
+
+    simbolos_saneados, _metadata, conflictos = (
+        _sanitizar_exports_publicos_detallado(modulo, alias_modulo)
+    )
+    return dict(simbolos_saneados), conflictos
