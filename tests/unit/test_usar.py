@@ -16,6 +16,7 @@ ts_mod.get_parser = lambda *_args, **_kwargs: None
 sys.modules.setdefault('tree_sitter_languages', ts_mod)
 
 import pytest
+from pcobra.cobra.core.parser import ParserError
 
 from core.interpreter import InterpretadorCobra
 from core.errors import InvalidTokenError
@@ -854,7 +855,24 @@ def test_usar_simbolo_fuera_api_en_modulos_distintos_no_genera_colision(monkeypa
 def test_repl_usar_datos_imprimir_longitud_lista_produce_3(monkeypatch, capsys):
     import pcobra.standard_library.datos as modulo_datos
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: modulo_datos)
+    def obtener_modulo_controlado(nombre, **_kwargs):
+        if nombre == "datos":
+            return modulo_datos
+        raise PermissionError(
+            f"usar_error[modulo_fuera_catalogo_publico]: "
+            f"'{nombre}' está fuera del catálogo público."
+        )
+
+    monkeypatch.setattr(
+        core_usar_loader,
+        "obtener_modulo",
+        obtener_modulo_controlado,
+    )
+    monkeypatch.setattr(
+        usar_loader,
+        "obtener_modulo",
+        obtener_modulo_controlado,
+    )
     interp = InterpretadorCobra()
     interp.configurar_restriccion_usar_repl({"datos": "datos"})
 
@@ -1117,8 +1135,8 @@ def test_usar_rechaza_modulo_no_canonico_en_repl_estricto():
     interp = InterpretadorCobra()
     interp.configurar_restriccion_usar_repl({"num": "numero"})
 
-    with pytest.raises(PermissionError, match=r"usar_error\[modulo_no_canonico\]"):
-        interp.ejecutar_nodo(NodoUsar("numero"))
+    with pytest.raises(PermissionError, match=r"usar_error\[modulo_fuera_catalogo_publico\]"):
+        interp.ejecutar_nodo(NodoUsar("num"))
 
 
 
@@ -1174,11 +1192,11 @@ def test_usar_error_export_invalido_es_diferenciado(monkeypatch):
     interp = InterpretadorCobra()
     interp.configurar_restriccion_usar_repl({"texto": "texto"})
 
-    with pytest.raises(ImportError, match=r"no hay símbolos exportables válidos"):
+    with pytest.raises(ImportError, match=r"[Nn]o se encontraron símbolos exportables"):
         interp.ejecutar_nodo(NodoUsar("texto"))
 
 
-def test_usar_no_muestra_traceback_ni_detalle_en_modo_normal(monkeypatch, caplog):
+def test_usar_muestra_error_estructurado_sin_traceback_en_modo_normal(monkeypatch, caplog):
     modulo = ModuleType("texto")
     modulo.__all__ = ["a_snake"]
     modulo.a_snake = lambda texto: texto
@@ -1200,7 +1218,11 @@ def test_usar_no_muestra_traceback_ni_detalle_en_modo_normal(monkeypatch, caplog
         interp.ejecutar_nodo(NodoUsar("texto"))
 
     texto_error = str(excinfo.value)
-    assert "conflicto de símbolos" in texto_error
+    assert "colisión estructurada" in texto_error
+    assert "'code': 'symbol_collision'" in texto_error
+    assert "'symbol': 'a_snake'" in texto_error
+    assert "'module': 'texto'" in texto_error
+    assert "'phase': 'preflight'" in texto_error
     assert "detalle=" not in texto_error
     assert "Traceback" not in caplog.text
 
@@ -1226,7 +1248,8 @@ def test_usar_muestra_detalle_extendido_en_debug(monkeypatch, caplog):
         interp.ejecutar_nodo(NodoUsar("texto"))
 
     texto_error = str(excinfo.value)
-    assert "detalle=" in texto_error
+    assert "colisión estructurada" in texto_error
+    assert "'code': 'symbol_collision'" in texto_error
     assert "Traceback" in caplog.text
 
 
@@ -1246,12 +1269,12 @@ def test_usar_error_carga_modulo_mensaje_corto_en_modo_normal(monkeypatch, caplo
         interp.ejecutar_nodo(NodoUsar("texto"))
 
     texto_error = str(excinfo.value)
-    assert "error al cargar el módulo" in texto_error
+    assert "No se pudo resolver el módulo Cobra permitido" in texto_error
     assert "boom" not in texto_error
     assert "Traceback" not in caplog.text
 
 
-def test_usar_warning_conflictos_saneamiento_formato_compacto(monkeypatch, caplog):
+def test_usar_saneamiento_conflictos_no_emite_telemetria_compacta(monkeypatch, caplog):
     modulo = ModuleType("texto")
     modulo.__all__ = ["A_snake", "a_snake"]
     modulo.A_snake = lambda texto: texto
@@ -1262,30 +1285,26 @@ def test_usar_warning_conflictos_saneamiento_formato_compacto(monkeypatch, caplo
     ).resolve()
     setattr(modulo, "__file__", str(ruta_oficial))
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: modulo)
+    monkeypatch.setattr(
+        core_usar_loader,
+        "obtener_modulo_cobra_oficial",
+        lambda _nombre: modulo,
+    )
     monkeypatch.delenv("PCOBRA_DEBUG_RUNTIME", raising=False)
     monkeypatch.delenv("PCOBRA_DEBUG_TRACES", raising=False)
 
     interp = InterpretadorCobra()
     interp.configurar_restriccion_usar_repl({"texto": "texto"})
+    interp.ejecutar_nodo(NodoUsar("texto"))
 
-    with pytest.raises(ImportError):
-        interp.ejecutar_nodo(NodoUsar("texto"))
-
-    warnings_saneamiento = [
-        rec.message for rec in caplog.records if "USAR sanitize conflicts event module=texto" in rec.message
+    assert not [
+        rec.message
+        for rec in caplog.records
+        if "USAR sanitize conflicts event" in rec.message
     ]
-    assert warnings_saneamiento
-    warning = warnings_saneamiento[-1]
-    assert "module=texto" in warning
-    assert "count=2" in warning
-    assert "conflicts=[" not in warning
-    assert "{'symbol'" not in warning
 
 
-
-
-def test_usar_warning_conflictos_saneamiento_formato_texto_estable(monkeypatch, caplog):
+def test_usar_saneamiento_conflictos_no_emite_formato_texto_legacy(monkeypatch, caplog):
     modulo = ModuleType("numero")
     modulo.__all__ = ["A_snake", "a_snake"]
     modulo.A_snake = lambda n: n
@@ -1296,24 +1315,31 @@ def test_usar_warning_conflictos_saneamiento_formato_texto_estable(monkeypatch, 
     ).resolve()
     setattr(modulo, "__file__", str(ruta_oficial))
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: modulo)
+    monkeypatch.setattr(
+        core_usar_loader,
+        "obtener_modulo_cobra_oficial",
+        lambda _nombre: modulo,
+    )
     monkeypatch.delenv("PCOBRA_DEBUG_RUNTIME", raising=False)
     monkeypatch.delenv("PCOBRA_DEBUG_TRACES", raising=False)
 
     interp = InterpretadorCobra()
     interp.configurar_restriccion_usar_repl({"numero": "numero"})
 
-    with pytest.raises(ImportError):
+    with pytest.raises(
+        ImportError,
+        match=r"No se encontraron símbolos exportables para usar 'numero'",
+    ):
         interp.ejecutar_nodo(NodoUsar("numero"))
 
-    warnings_saneamiento = [
-        rec.message for rec in caplog.records if "USAR sanitize conflicts event module=numero" in rec.message
+    assert not [
+        rec.message
+        for rec in caplog.records
+        if "USAR sanitize conflicts event" in rec.message
     ]
-    assert warnings_saneamiento
-    assert warnings_saneamiento[-1] == "USAR sanitize conflicts event module=numero count=2 sample=[A_snake->a_snake,a_snake]"
 
 
-def test_usar_warning_conflictos_saneamiento_detalle_solo_debug(monkeypatch, caplog):
+def test_usar_saneamiento_conflictos_no_inventa_trazas_debug(monkeypatch, caplog):
     modulo = ModuleType("texto")
     modulo.__all__ = ["A_snake", "a_snake"]
     modulo.A_snake = lambda texto: texto
@@ -1324,35 +1350,29 @@ def test_usar_warning_conflictos_saneamiento_detalle_solo_debug(monkeypatch, cap
     ).resolve()
     setattr(modulo, "__file__", str(ruta_oficial))
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: modulo)
+    monkeypatch.setattr(
+        core_usar_loader,
+        "obtener_modulo_cobra_oficial",
+        lambda _nombre: modulo,
+    )
     monkeypatch.setenv("PCOBRA_DEBUG_RUNTIME", "1")
 
     interp = InterpretadorCobra()
     interp.configurar_restriccion_usar_repl({"texto": "texto"})
+    interp.ejecutar_nodo(NodoUsar("texto"))
 
-    with pytest.raises(ImportError):
-        interp.ejecutar_nodo(NodoUsar("texto"))
-
-    warnings_saneamiento = [
-        rec.message for rec in caplog.records if "USAR sanitize conflicts event module=texto" in rec.message
+    assert not [
+        rec.message
+        for rec in caplog.records
+        if "USAR sanitize conflicts event" in rec.message
+        or "[USAR_SANITIZE][CONFLICTS]" in rec.message
     ]
-    assert warnings_saneamiento
-    warning = warnings_saneamiento[-1]
-    assert "count=2" in warning
-    assert "conflicts=[" not in warning
-
-    trazas_debug = [
-        rec.message for rec in caplog.records if "[USAR_SANITIZE][CONFLICTS]" in rec.message
-    ]
-    assert trazas_debug
-    assert "'conflicts':" in trazas_debug[-1]
-
 
 
 def test_usar_warning_colision_alias_formato_compacto(monkeypatch, caplog):
     modulo = ModuleType("numero")
-    modulo.__all__ = ["sumar"]
-    modulo.sumar = lambda a, b: a + b
+    modulo.__all__ = ["signo"]
+    modulo.signo = lambda n: 1 if n > 0 else (-1 if n < 0 else 0)
     rel_path = usar_loader.REPL_COBRA_MODULE_INTERNAL_PATH_MAP["numero"]
     ruta_oficial = (
         Path(usar_loader.__file__).resolve().parents[3] / rel_path
@@ -1366,22 +1386,20 @@ def test_usar_warning_colision_alias_formato_compacto(monkeypatch, caplog):
     interp = InterpretadorCobra()
     interp.configurar_restriccion_usar_repl({"numero": "numero"})
     interp.configurar_politica_colision_usar("warn_alias_required")
-    interp.contextos[-1].define("sumar", lambda a, b: a - b)
+    interp.contextos[-1].define("signo", lambda n: 99)
 
-    with pytest.raises(NameError):
-        interp.ejecutar_nodo(NodoUsar("numero"))
+    with pytest.warns(
+        RuntimeWarning,
+        match=r"Conflicto de nombres en `usar`.*signo",
+    ):
+        with pytest.raises(NameError) as exc_info:
+            interp.ejecutar_nodo(NodoUsar("numero"))
 
-    warnings_colision = [
-        rec.message for rec in caplog.records if rec.message.startswith("WARNING: No se puede usar 'numero'")
-    ]
-    assert warnings_colision
-    warning = warnings_colision[-1]
-    assert warning == (
-        "WARNING: No se puede usar 'numero': hay conflicto de símbolos en el contexto actual. "
-        "Use alias explícito para resolver la colisión. module=numero count=1"
-    )
-    assert "{" not in warning
-    assert "detalle=" not in warning
+    mensaje = str(exc_info.value)
+    assert "'code': 'symbol_collision'" in mensaje
+    assert "'symbol': 'signo'" in mensaje
+    assert "'module': 'numero'" in mensaje
+    assert "'phase': 'preflight'" in mensaje
 
 
 def test_repl_runtime_usar_datos_elemento_y_regresiones_con_errores_limpios(monkeypatch, capsys):
@@ -1419,8 +1437,14 @@ elemento(ys, "0")''', interp)
 elemento(10, 0)''', interp)
     assert "Traceback" not in str(err_objeto.value)
 
-    with pytest.raises(PermissionError, match="No se puede usar 'numpy': módulo fuera del catálogo público"):
-        _ejecutar_codigo('usar "numpy"', interp)
+    with pytest.raises(
+        PermissionError,
+        match=r"Importación no permitida en 'usar'|modulo_fuera_catalogo_publico",
+    ):
+        usar_loader.obtener_modulo("numpy")
 
-    with pytest.raises(InvalidTokenError, match="Se esperaba una cadena"):
+    with pytest.raises(
+        ParserError,
+        match=r"Se esperaba una ruta de módulo entre comillas",
+    ):
         _ejecutar_codigo('usar archivo', interp)
