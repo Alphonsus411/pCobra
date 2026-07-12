@@ -122,8 +122,7 @@ def _modulo_datos_publico_stub() -> ModuleType:
     mod.filtrar = lambda tabla, condicion: [fila for fila in tabla if condicion(fila)]
     mod.mapear = lambda valores, fn=None: valores
     mod.reducir = lambda valores, fn=None, inicial=None: inicial if inicial is not None else valores[0]
-    mod.__file__ = "/workspace/pCobra/src/pcobra/corelibs/datos.py"
-    return mod
+    return _marcar_stub_como_oficial(mod, "datos")
 
 
 @pytest.mark.parametrize(
@@ -308,7 +307,10 @@ def test_usar_no_inyecta_simbolos_prohibidos_ni_objetos_backend(monkeypatch):
     mod.ok = lambda: "ok"
     mod.self = mod.append = mod.map = mod.filter = mod.unwrap = mod.expect = lambda *_args, **_kwargs: None
     mod.__danger__ = lambda: "boom"
-    mod.__file__ = "/workspace/pCobra/src/pcobra/corelibs/mod_ext.py"
+    ruta_mod_ext = (
+        Path(usar_loader.__file__).resolve().parents[3] / "src/pcobra/corelibs/mod_ext.py"
+    ).resolve()
+    setattr(mod, "__file__", str(ruta_mod_ext))
 
     simbolos_saneados, conflictos = core_usar_loader.sanitizar_exports_publicos(mod, "mod_ext")
 
