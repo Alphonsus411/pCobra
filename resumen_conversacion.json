@@ -1,224 +1,306 @@
 {
-  "asistente": "Bella",
-  "proyecto": "pCobra / Cobra",
-  "fecha_resumen": "2026-07-05",
-  "estado_global": "varios bloques Core/GUI cerrados en verde; queda pendiente ajuste fino de compatibilidad CLI para comandos ocultos paquete/hub",
-  "contexto_general": {
-    "objetivo": "Consolidar el runtime del IDLE gráfico, el contrato de usar para corelibs/stdlib, callbacks Cobra en datos.filtrar/mapear y el contrato público CLI v2.",
-    "restricciones_permanentes": [
-      "No modificar Lexer",
-      "No modificar Parser",
-      "No modificar gramatica",
-      "No modificar tokens",
-      "No modificar nodos AST",
-      "No modificar transpiladores salvo regresion demostrada",
-      "No cambiar la sintaxis Cobra",
-      "Aplicar parches minimos y localizados",
-      "Mantener errores controlados para variables no declaradas",
-      "No romper comandos publicos oficiales run/build/test/mod/repl",
-      "No eliminar compatibilidad interna/extendida si existe cobertura de tests"
+  "metadata": {
+    "titulo": "Resumen de conversación técnica sobre pCobra",
+    "asistente": "Bella",
+    "usuario": "Adolfo",
+    "proyecto": "pCobra / Cobra",
+    "idioma": "español",
+    "estado": "en progreso",
+    "alcance": "Contratos y compatibilidad de la instrucción `usar`"
+  },
+  "preferencias_de_trabajo": {
+    "enfoque": [
+      "Aplicar correcciones mínimas y localizadas",
+      "Validar cada corrección con tests focales antes de ampliar la suite",
+      "No inventar contratos ni modificar componentes no relacionados"
+    ],
+    "componentes_que_no_deben_tocarse": [
+      "Lexer",
+      "Parser",
+      "Gramática",
+      "Tokens",
+      "AST",
+      "Transpiladores"
+    ],
+    "advertencias": [
+      "No modificar tests salvo que se demuestre que su baseline está desactualizado",
+      "No cambiar allowlists de forma global",
+      "No sustituir APIs incompatibles sin revisar todos los consumidores",
+      "No asumir que un import visualmente subrayado está roto sin comprobarlo en runtime"
     ]
   },
-  "bloques_cerrados": {
-    "CORE_RUNTIME_GLOBAL_ASSIGNMENT_SCOPE_001": {
-      "estado": "verde",
-      "descripcion": "El runtime GUI ahora conserva asignaciones de nivel superior entre sentencias del mismo fragmento.",
-      "evidencias_poc": [
-        {
-          "codigo": "x = 123\nimprimir(x)",
-          "resultado": "123"
-        },
-        {
-          "codigo": "x = \"hola\"\nimprimir(x)",
-          "resultado": "hola"
-        },
-        {
-          "codigo": "numeros = [1, 2, 3, 4]\nimprimir(numeros)",
-          "resultado": "[1, 2, 3, 4]"
-        },
-        {
-          "codigo": "imprimir(no_existe)",
-          "resultado": "NameError: Variable no declarada: no_existe"
-        }
-      ],
-      "tests_validados": [
-        "tests/gui/test_gui_runtime_execution_scope.py: 4 passed inicialmente; luego 13 passed y finalmente 15 passed",
-        "tests/unit/test_gui_runtime.py: 90 passed"
-      ]
-    },
-    "GUI_AUTO_SUGGESTION_PARSER_CONTRACT_001": {
-      "estado": "verde",
-      "descripcion": "Se corrigio la desalineacion entre tests/documentacion y Parser respecto a retorno/retornar.",
-      "diagnostico": "El Parser acepta tanto retorno como retornar. retornar no debe tratarse como ParserError, sino como forma aceptada/no canonica si retorno es la forma recomendada.",
-      "tests_validados": [
-        "tests/gui/test_auto_suggestion_parser_contract.py: 15 passed",
-        "tests/gui: 79 passed inicialmente tras el ajuste"
-      ]
-    },
-    "CORE_STDLIB_USAR_EXPORTS_DATOS_001": {
-      "estado": "verde",
-      "descripcion": "usar \"datos\" ya carga simbolos exportables y expone funciones como longitud y filtrar.",
-      "evidencias_poc": [
-        {
-          "codigo": "usar \"numero\"\nimprimir(es_finito(10))",
-          "resultado": "verdadero"
-        },
-        {
-          "codigo": "usar \"datos\"\nimprimir(\"datos cargado\")",
-          "resultado": "datos cargado"
-        },
-        {
-          "codigo": "usar \"datos\"\nnumeros = [1, 2, 3, 4]\nimprimir(longitud(numeros))",
-          "resultado": "4"
-        }
-      ],
-      "diagnostico_previo": "pcobra.corelibs.datos y pcobra.standard_library.datos tenian __all__ y filtrar, pero el loader/politica de usar no resolvia correctamente datos o filtraba mal sus simbolos."
-    },
-    "CORE_DATA_FILTER_CALLBACK_001": {
-      "estado": "verde",
-      "descripcion": "Funciones Cobra declaradas con func ahora pueden resolverse como valores/callables y pasarse como callback a datos.filtrar.",
-      "diagnostico_previo": "La llamada directa doble(3) funcionaba, pero f = doble y filtrar(numeros, mayor_que_dos) fallaban porque las funciones no eran resolubles como identificadores/valores.",
-      "evidencias_poc": [
-        {
-          "codigo": "func doble(n):\n    retorno n * 2\nfin\n\nimprimir(doble(3))",
-          "resultado": "6"
-        },
-        {
-          "codigo": "func doble(n):\n    retorno n * 2\nfin\n\nf = doble\nimprimir(f(3))",
-          "resultado": "6"
-        },
-        {
-          "codigo": "usar \"datos\"\n\nfunc mayor_que_dos(n):\n    retorno n > 2\nfin\n\nnumeros = [1, 2, 3, 4]\nresultado = filtrar(numeros, mayor_que_dos)\nimprimir(resultado)",
-          "resultado": "[3, 4]"
-        }
-      ]
-    },
-    "CORE_DATA_MAPEAR_CALLBACK_CONTRACT_001": {
-      "estado": "verde",
-      "descripcion": "datos.mapear fue ampliado para soportar listas de escalares con callbacks Cobra, manteniendo compatibilidad con el contrato de datos.",
-      "diagnostico_previo": "standard_library.datos.mapear forzaba dict(transformacion(dict(fila))), por lo que mapear([1,2,3], doble) fallaba con TypeError: 'int' object is not iterable.",
-      "evidencias_poc": [
-        {
-          "codigo": "usar \"datos\"\n\nfunc doble(n):\n    retorno n * 2\nfin\n\nnumeros = [1, 2, 3]\nresultado = mapear(numeros, doble)\nimprimir(resultado)",
-          "resultado": "[2, 4, 6]"
-        },
-        {
-          "codigo": "filtrar([1,2,3,4], mayor_que_dos)",
-          "resultado": "[3, 4]"
-        }
-      ],
-      "tests_validados": [
-        "tests/gui/test_gui_runtime_execution_scope.py: 15 passed",
-        "tests/core: 152 passed, 2 skipped",
-        "tests/gui: 90 passed",
-        "tests/unit/test_gui_runtime.py: 90 passed"
-      ]
-    },
-    "CLI_PUBLIC_V2_CONTRACT_001": {
-      "estado": "verde_focal",
-      "descripcion": "El help publico CLI v2 vuelve a exponer solo run/build/test/mod/repl y cobra build --help ya no expone --target en el contrato publico.",
-      "tests_validados": [
-        "tests/cli/test_public_v2_commands_contract.py: 8 passed",
-        "tests/integration/test_cli_ayuda.py: 4 passed, 1 skipped",
-        "tests/integration/test_cli_public_help_contract.py: 8 passed",
-        "tests/integration/test_cli_ui_v2.py: 4 passed"
-      ],
-      "nota": "La validacion focal paso, pero tests/cli completo revelo un conflicto residual con registro oculto de paquete/hub."
-    }
-  },
-  "bloque_pendiente_principal": {
-    "CLI_ALIAS_REGISTRATION_COMPAT_001": {
-      "estado": "rojo",
-      "descripcion": "Los comandos paquete y hub deben seguir registrados en comandos.choices como compatibilidad, pero no deben aparecer en el help publico v2.",
-      "fallos_actuales": [
-        {
-          "test": "tests/cli/test_cli_alias_registration.py::test_aliases_legacy_de_paquete_siguen_registrados_en_cli_publica",
-          "error": "KeyError: 'paquete'"
-        },
-        {
-          "test": "tests/cli/test_cli_alias_registration.py::test_comandos_recomendados_de_hub_siguen_registrados_en_cli_publica",
-          "error": "KeyError: 'hub'"
-        }
-      ],
-      "diagnostico": "El parche de CLI oculto o elimino paquete/hub del parser publico. Sin embargo, los tests de compatibilidad esperan que sigan registrados aunque no sean visibles en el help publico.",
-      "contrato_deseado": [
-        "cobra --help muestra solo run, build, test, mod, repl",
-        "paquete y hub no aparecen en help publico",
-        "paquete y hub existen en subparsers.choices",
-        "los aliases/subcomandos esperados por tests/cli/test_cli_alias_registration.py siguen presentes",
-        "tests de contrato publico v2 siguen pasando"
-      ],
-      "prompt_sugerido_para_codex": "Mantener paquete y hub registrados como comandos compatibles/extendidos ocultos, preferiblemente con help=argparse.SUPPRESS o mecanismo equivalente, sin que sean contados como comandos publicos visibles. Revisar tests/cli/test_cli_alias_registration.py para respetar aliases/subcomandos esperados. Luego ejecutar tests/cli/test_cli_alias_registration.py, tests/cli/test_public_v2_commands_contract.py, tests/integration/test_cli_public_help_contract.py, tests/integration/test_cli_ui_v2.py, tests/cli -q y tests/integration/test_cli*.py -q."
-    }
-  },
-  "suite_completa_actual": {
-    "ultimo_resultado": "5 fallos iniciales CLI public v2 fueron resueltos focalmente; luego tests/cli completo quedo con 2 fallos en alias registration.",
-    "tests_cli_actual": {
-      "resultado": "46 passed, 2 failed, 1 warning",
-      "fallos": [
-        "KeyError: paquete",
-        "KeyError: hub"
-      ]
-    },
-    "tests_integration_cli_actual": {
-      "resultado": "28 passed, 5 skipped, 1 warning"
-    },
-    "ultima_suite_completa_previa": {
-      "resultado": "5 failed, 307 passed, 10 skipped, 3 warnings",
-      "nota": "Ese resultado fue antes del parche CLI_PUBLIC_V2_CONTRACT_001; los 5 fallos focales ya pasaron despues."
-    }
-  },
-  "warnings_recurrentes": [
+  "bloques_completados": [
     {
-      "warning": "UserWarning de Hypothesis: Skipping collection of '.hypothesis' directory",
-      "interpretacion": "No bloqueante; probablemente norecursedirs reemplaza ignores por defecto en configuracion pytest."
+      "nombre": "CLI pública v2 y aliases ocultos",
+      "estado": "cerrado",
+      "resultados": {
+        "alias_registration": "3 passed",
+        "cli_public_v2_focal": "25 passed, 1 skipped",
+        "tests_cli": "48 passed",
+        "integration_cli": "29 passed, 5 skipped"
+      }
     },
     {
-      "warning": "PytestCollectionWarning: TestCommandV2 no coleccionable por __init__",
-      "interpretacion": "No bloqueante en esta sesion."
+      "nombre": "Corelibs nuevas",
+      "estado": "validado",
+      "modulos": [
+        "argumentos",
+        "compresion",
+        "configuracion",
+        "cripto",
+        "proceso",
+        "pruebas",
+        "regex",
+        "registro",
+        "ruta",
+        "serializacion",
+        "temporal"
+      ],
+      "resultados": {
+        "tests_focales": "34 passed",
+        "tests_core": "152 passed, 2 skipped"
+      }
     },
     {
-      "warning": "DeprecationWarning por escape sequence en test_security_sandbox.py",
-      "interpretacion": "Higiene menor pendiente."
+      "nombre": "Mensaje de módulo no canónico",
+      "estado": "corregido parcialmente",
+      "archivo": "src/pcobra/cobra/usar_loader.py",
+      "funcion": "_rechazar_modulo_no_canonico",
+      "detalle": "Se corrigió anteriormente el orden del mensaje para conservar la frase canónica detrás del nombre del módulo.",
+      "test": "tests/integration/test_usar_canonical_surface_contract.py",
+      "resultado": "26 passed"
+    },
+    {
+      "nombre": "Colisión estructurada durante `usar`",
+      "estado": "cerrado",
+      "archivo": "src/pcobra/core/interpreter.py",
+      "funcion": "InterpretadorCobra._inyectar_exports_modulo_proyecto",
+      "cambio": {
+        "warning_condicional": "RuntimeWarning cuando la política es warn_alias_required",
+        "error": "NameError con payload estructurado compatible con literal_eval",
+        "formato": "No se puede usar el módulo '<modulo>': colisión estructurada=<dict>",
+        "payload": {
+          "code": "symbol_collision",
+          "message": "símbolo ya existe en contexto actual",
+          "symbol": "<simbolo>",
+          "module": "<modulo>",
+          "phase": "preflight"
+        }
+      },
+      "resultado_focal": "2 passed, 1 warning",
+      "tests_validados": [
+        "test_colision_en_usar_emite_advertencia_y_no_sobrescribe",
+        "test_09_colision_reporta_error_estructurado"
+      ]
+    },
+    {
+      "nombre": "Exposición de build_and_validate_usar_symbol_metadata",
+      "estado": "cerrado",
+      "archivo": "src/pcobra/core/interpreter.py",
+      "cambio": "Se añadió build_and_validate_usar_symbol_metadata al import desde .usar_symbol_policy.",
+      "verificacion_runtime": "<function build_and_validate_usar_symbol_metadata ...>",
+      "resultado": "2 passed, 1 warning",
+      "tests_validados": [
+        "test_usar_datos_expone_longitud_y_metadata_canonica",
+        "test_usar_archivo_carga_existe_sin_error_metadata"
+      ]
+    },
+    {
+      "nombre": "Resolución estática del shim usar_symbol_policy",
+      "estado": "aplicado pero no relacionado con los fallos actuales",
+      "modulo_canonico": "src/pcobra/core/usar_symbol_policy.py",
+      "shim": "src/pcobra/cobra/core/usar_symbol_policy.py",
+      "hallazgo": "El módulo bajo pcobra.cobra.core es un shim dinámico que reexporta pcobra.core.usar_symbol_policy.",
+      "cambio_propuesto": "Añadir imports explícitos de tres símbolos en el shim y conservar la reexportación dinámica.",
+      "simbolos": [
+        "build_and_validate_usar_symbol_metadata",
+        "depuracion_saneamiento_usar_habilitada",
+        "sanear_exportables_para_usar"
+      ],
+      "nota": "Los imports funcionan en runtime. Los cinco fallos posteriores no demuestran un problema en el shim."
     }
   ],
-  "comandos_recomendados_para_retomar": {
-    "foco_pendiente": [
-      "python -m pytest tests/cli/test_cli_alias_registration.py -q",
-      "python -m pytest tests/cli/test_public_v2_commands_contract.py -q",
-      "python -m pytest tests/integration/test_cli_public_help_contract.py -q",
-      "python -m pytest tests/integration/test_cli_ui_v2.py -q"
+  "estado_de_tests_actual": {
+    "suite": [
+      "tests/unit/test_usar_symbol_policy.py",
+      "tests/integration/test_usar_export_sanitation.py"
     ],
-    "validacion_cli_amplia": [
-      "python -m pytest tests/cli -q",
-      "python -m pytest tests/integration/test_cli*.py -q"
+    "resultado": "5 failed, 29 passed, 1 warning",
+    "warning_no_bloqueante": "Hypothesis omite .hypothesis porque norecursedirs reemplaza los ignores predeterminados."
+  },
+  "fallos_actuales": [
+    {
+      "grupo": "Módulos oficiales tratados como módulos Cobra de proyecto",
+      "cantidad": 5,
+      "modulos_afectados": [
+        "numero",
+        "texto",
+        "datos"
+      ],
+      "sintoma": "usar_modulo termina buscando numero.co o datos.co en la raíz del proyecto.",
+      "errores": [
+        "Módulo de proyecto no encontrado: numero",
+        "Módulo de proyecto no encontrado: datos"
+      ],
+      "ruta_observada": [
+        "C:\\Users\\Adolfo\\PycharmProjects\\pCobra\\numero.co",
+        "C:\\Users\\Adolfo\\PycharmProjects\\pCobra\\datos.co"
+      ],
+      "efecto_secundario": "El test de colisión no emite warning porque la carga oficial falla antes de llegar a la inyección.",
+      "diagnostico_provisional": "usar_modulo captura u oculta el error de la ruta oficial y activa indebidamente el fallback de módulos .co.",
+      "zona_probable": {
+        "archivo": "src/pcobra/cobra/usar_loader.py",
+        "funcion": "usar_modulo",
+        "lineas_aproximadas": "769-869"
+      },
+      "posibles_causas": [
+        "El bloque except (ModuleNotFoundError, ValueError) captura una excepción interna que no debería activar el fallback de proyecto.",
+        "_obtener_modulo_cobra_oficial_compat no respeta correctamente un monkeypatch del wrapper.",
+        "obtener_modulo oculta la causa original antes de entrar al fallback."
+      ],
+      "accion_pendiente": "Inspeccionar el bloque completo de usar_modulo y el setup de monkeypatches de test_usar_export_sanitation.py antes de modificar código."
+    },
+    {
+      "grupo": "Mensaje de rechazo estricto de numpy",
+      "estado": "pendiente",
+      "test": "test_rechaza_numpy_en_repl_estricto_sin_inyeccion",
+      "problema": "El rechazo ocurre, pero el mensaje no contiene módulo fuera del catálogo público ni modulo_fuera_catalogo_publico.",
+      "archivo": "src/pcobra/cobra/usar_loader.py",
+      "funcion": "_rechazar_modulo_no_canonico",
+      "ajuste_minimo_propuesto": "Añadir usar_error[modulo_fuera_catalogo_publico]: módulo fuera del catálogo público al mensaje sin eliminar el texto canónico existente."
+    },
+    {
+      "grupo": "Contrato de sanitizar_exports_publicos",
+      "estado": "pendiente y con incompatibilidad contractual",
+      "implementacion_actual": {
+        "retornos": 3,
+        "forma": [
+          "simbolos_saneados",
+          "metadata_por_simbolo",
+          "conflictos"
+        ]
+      },
+      "consumidores_de_dos_retornos": [
+        "tests/integration/test_usar_runtime_contract.py",
+        "tests/unit/test_usar_loader_public_api_contract.py",
+        "tests/unit/test_usar_runtime_policy.py"
+      ],
+      "consumidores_de_tres_retornos": [
+        "src/pcobra/cobra/usar_loader.py",
+        "tests/integration/test_usar_export_sanitation.py",
+        "tests/integration/test_usar_public_contract_regression.py",
+        "tests/unit/test_usar.py"
+      ],
+      "problema": "La misma función y los mismos argumentos son desempaquetados tanto en dos como en tres valores.",
+      "solucion_arquitectonica_considerada": {
+        "api_publica": "sanitizar_exports_publicos devuelve mapa y conflictos",
+        "api_detallada": "sanitizar_exports_publicos_con_metadata o helper interno devuelve símbolos, metadata y conflictos"
+      },
+      "restriccion": "No aplicar todavía hasta decidir cuál contrato es el vigente y revisar todos los consumidores."
+    },
+    {
+      "grupo": "Integridad estática de Lexer",
+      "estado": "diagnosticado",
+      "test": "test_integridad_estatica_lexer_y_parser_sin_diff_inesperado",
+      "hash_esperado": "fbd130d88ec6255c1e966752730a7cb2e2311c50125d85df487fc67d55aaf61e",
+      "hash_de_HEAD": "fbd130d88ec6255c1e966752730a7cb2e2311c50125d85df487fc67d55aaf61e",
+      "hash_del_working_tree_observado": "ebad8c3cd406664d81363ebf76819fc8eae002eebd982aa2c309e0e85bcfce08",
+      "git_status": "limpio",
+      "git_diff": "vacío",
+      "diagnostico": "Diferencia probable de finales de línea CRLF en Windows. El contenido versionado en HEAD coincide con el baseline del test.",
+      "decision": "No modificar Lexer ni actualizar el hash esperado.",
+      "correccion_sugerida_para_test": "Normalizar CRLF a LF antes de calcular SHA-256, si se autoriza modificar el test."
+    },
+    {
+      "grupo": "Módulos de proyecto y allowlist",
+      "estado": "pendiente",
+      "tests_afectados_previamente": "tests/integration/test_usar_project_modules.py",
+      "sintomas": [
+        "util y a son rechazados por la allowlist pública",
+        "fallan carga, caché y detección de ciclos directos e indirectos"
+      ],
+      "archivo": "src/pcobra/cobra/usar_loader.py",
+      "zona": "usar_modulo y validar_nombre_modulo_usar",
+      "restriccion": "No cambiar require_allowlist=True a False globalmente."
+    },
+    {
+      "grupo": "Módulo autorizado explícitamente mod_ext",
+      "estado": "pendiente",
+      "test": "test_10_no_inyecta___self_append_map_filter_unwrap_expect",
+      "configuracion": "interp.configurar_restriccion_usar_repl({'mod_ext': 'mod_ext'})",
+      "problema": "mod_ext se rechaza como fuera del catálogo público antes de aplicar la autorización explícita.",
+      "objetivo": "Permitir mod_ext solo cuando esté autorizado por el mapa REPL y seguir filtrando símbolos prohibidos."
+    },
+    {
+      "grupo": "a_snake",
+      "estado": "pendiente",
+      "tests": "tests/integration/test_usar_public_contract_regression.py",
+      "problema": "a_snake('Hola Mundo') devuelve 'Hola Mundo' en lugar de 'hola_mundo'."
+    }
+  ],
+  "ultimo_diagnostico": {
+    "confirmado": [
+      "El shim pcobra.cobra.core.usar_symbol_policy funciona en runtime.",
+      "El cambio visual de imports no explica por sí mismo los cinco fallos.",
+      "Los módulos oficiales están cayendo indebidamente al fallback de proyecto."
     ],
-    "validacion_core_gui_no_regresion": [
-      "python -m pytest tests/gui/test_gui_runtime_execution_scope.py -q",
-      "python -m pytest tests/core -q",
-      "python -m pytest tests/gui -q",
-      "python -m pytest tests/unit/test_gui_runtime.py -q"
-    ],
-    "suite_final": [
-      "python -m pytest tests -q"
+    "no_confirmado": [
+      "Qué excepción exacta se produce en la ruta oficial antes del fallback.",
+      "Si el wrapper pcobra.core.usar_loader está siendo monkeypatcheado y no respetado.",
+      "Si obtener_modulo está ocultando una excepción interna."
     ]
   },
-  "resumen_para_commit_futuro": {
-    "commit_message_sugerido": "Fix GUI runtime scope, stdlib callbacks, and CLI public v2 contract",
-    "bullets": [
-      "Preserve top-level assignments in GUI runtime execution.",
-      "Align GUI suggestion contract with accepted retornar syntax.",
-      "Fix usar datos export injection.",
-      "Resolve Cobra functions as callable values.",
-      "Validate datos.filtrar with Cobra callbacks.",
-      "Extend datos.mapear to support scalar lists with callbacks.",
-      "Clean public CLI v2 help contract while preserving compatibility commands as hidden/internal."
-    ],
-    "nota": "Antes del commit final queda cerrar CLI_ALIAS_REGISTRATION_COMPAT_001."
-  },
-  "observaciones": [
-    "Algunos archivos previos subidos a la conversacion aparecen expirados; para retomar con evidencia completa conviene conservar este JSON y, si hace falta, volver a subir archivos clave.",
-    "El trabajo de Core/GUI esta muy avanzado y validado con POCs y suites focales.",
-    "El unico bloqueo activo al cierre de la sesion esta en la convivencia entre help publico CLI v2 y registro oculto/compat de paquete y hub."
+  "comandos_pendientes_para_diagnostico": [
+    "Get-Content src/pcobra/cobra/usar_loader.py | Select-Object -Skip 768 -First 105",
+    "Get-Content tests/integration/test_usar_export_sanitation.py | Select-Object -First 145",
+    "python -c \"import pcobra.cobra.usar_loader as u; print(u.obtener_modulo('numero')); print(u.obtener_modulo('datos'))\"",
+    "python -c \"import pcobra.core.usar_loader as c, pcobra.cobra.usar_loader as u; print(c.obtener_modulo_cobra_oficial); print(u._obtener_modulo_cobra_oficial_compat); print(c.obtener_modulo_cobra_oficial('numero'))\""
+  ],
+  "orden_recomendado_de_trabajo": [
+    {
+      "paso": 1,
+      "tarea": "Diagnosticar por qué numero, texto y datos caen al cargador de módulos .co."
+    },
+    {
+      "paso": 2,
+      "tarea": "Aplicar un parche mínimo en usar_modulo o en la compatibilidad del wrapper."
+    },
+    {
+      "paso": 3,
+      "tarea": "Revalidar tests/integration/test_usar_export_sanitation.py completo."
+    },
+    {
+      "paso": 4,
+      "tarea": "Resolver el mensaje estricto para numpy."
+    },
+    {
+      "paso": 5,
+      "tarea": "Definir formalmente el contrato de sanitizar_exports_publicos."
+    },
+    {
+      "paso": 6,
+      "tarea": "Resolver mod_ext y módulos Cobra de proyecto sin relajar la allowlist global."
+    },
+    {
+      "paso": 7,
+      "tarea": "Corregir a_snake."
+    },
+    {
+      "paso": 8,
+      "tarea": "Tratar el hash multiplataforma del Lexer sin modificar Lexer."
+    }
+  ],
+  "archivos_principales_implicados": [
+    "src/pcobra/core/interpreter.py",
+    "src/pcobra/core/usar_symbol_policy.py",
+    "src/pcobra/core/usar_loader.py",
+    "src/pcobra/cobra/core/usar_symbol_policy.py",
+    "src/pcobra/cobra/usar_loader.py",
+    "tests/integration/test_usar_export_sanitation.py",
+    "tests/integration/test_usar_core_contract_full.py",
+    "tests/integration/test_usar_runtime_contract.py",
+    "tests/integration/test_usar_project_modules.py",
+    "tests/integration/test_usar_public_contract_regression.py",
+    "tests/unit/test_usar_symbol_policy.py"
   ]
 }
