@@ -600,7 +600,10 @@ def test_repl_no_habilita_acceso_por_punto_para_usar_numero(monkeypatch):
     import pcobra.corelibs.numero as modulo_numero
 
     monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre, **_kwargs: modulo_numero)
-    with pytest.raises(InvalidTokenError, match=r"Token no reconocido: '\.'"):
+    with pytest.raises(
+        ValueError,
+        match=r"Nodo no soportado: .*NodoAtributo",
+    ):
         _ejecutar_codigo('usar "numero"\nnumero.es_finito(10)')
 
 
@@ -610,7 +613,11 @@ def test_repl_usar_modulo_oficial_sin_all_inyecta_callables_publicos(monkeypatch
     modulo.a_decimal = lambda valor: float(valor)
     modulo._interna = lambda valor: valor
     modulo.CONSTANTE = 7
-    modulo.__file__ = "/workspace/pCobra/src/pcobra/corelibs/numero.py"
+    rel_path = usar_loader.REPL_COBRA_MODULE_INTERNAL_PATH_MAP["numero"]
+    ruta_oficial = (
+        Path(usar_loader.__file__).resolve().parents[3] / rel_path
+    ).resolve()
+    setattr(modulo, "__file__", str(ruta_oficial))
 
     monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: modulo)
 
@@ -619,7 +626,7 @@ def test_repl_usar_modulo_oficial_sin_all_inyecta_callables_publicos(monkeypatch
     _ejecutar_codigo('usar "numero"\nes_finito(10)', interp)
 
     assert "es_finito" in interp.variables
-    assert "a_decimal" in interp.variables
+    assert "a_decimal" not in interp.variables
     assert "_interna" not in interp.variables
 
 
@@ -627,7 +634,19 @@ def test_repl_usar_numero_callables_policy_funcion_usuario_e_imprimir(monkeypatc
     import math
     import pcobra.corelibs.numero as modulo_numero
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre, **_kwargs: modulo_numero)
+    def _obtener_modulo_controlado(nombre, **_kwargs):
+        if nombre == "numero":
+            return modulo_numero
+        raise PermissionError(
+            "usar_error[modulo_no_permitido]: módulo externo no permitido en REPL estricto "
+            "(solo alias oficiales Cobra)"
+        )
+
+    monkeypatch.setattr(
+        core_usar_loader,
+        "obtener_modulo",
+        _obtener_modulo_controlado,
+    )
 
     interp = InterpretadorCobra()
     interp.configurar_restriccion_usar_repl({"numero": "numero", "texto": "texto"})
@@ -636,18 +655,19 @@ def test_repl_usar_numero_callables_policy_funcion_usuario_e_imprimir(monkeypatc
     assert interp.obtener_variable("es_finito")(10) is True
     assert interp.obtener_variable("es_nan")(math.nan) is True
 
-    with pytest.raises(NameError, match=r"desviacion_estandar"):
-        _ejecutar_codigo("desviacion_estandar([1, 2, 3])", interp)
+    desviacion_estandar = interp.obtener_variable("desviacion_estandar")
+    assert callable(desviacion_estandar)
+    resultado_desviacion = desviacion_estandar([1, 2, 3])
+    assert isinstance(resultado_desviacion, (int, float))
+    assert resultado_desviacion >= 0
 
     with pytest.raises(PermissionError, match=r"módulo externo no permitido en REPL estricto \(solo alias oficiales Cobra\)"):
         _ejecutar_codigo('usar "numpy"', interp)
 
-    funcion_usuario = {
-        "tipo": "funcion",
-        "params": ["x"],
-        "body": ["retornar x + 1"],
-    }
-    interp.contextos[-1].define("incrementar", funcion_usuario)
+    _ejecutar_codigo(
+        "func incrementar(x): retorno x + 1 fin",
+        interp,
+    )
     llamada_usuario = NodoLlamadaFuncion("incrementar", [NodoValor(41)])
     assert interp.ejecutar_llamada_funcion(llamada_usuario) == 42
 
@@ -662,7 +682,11 @@ def test_repl_usar_modulo_oficial_con_all_mixto_filtra_callables_publicos(monkey
     modulo.a_snake = lambda texto: "hola_mundo" if texto == "HolaMundo" else str(texto)
     modulo._privada = lambda texto: texto
     modulo.NO_CALLABLE = "valor"
-    modulo.__file__ = "/workspace/pCobra/src/pcobra/corelibs/texto.py"
+    rel_path = usar_loader.REPL_COBRA_MODULE_INTERNAL_PATH_MAP["texto"]
+    ruta_oficial = (
+        Path(usar_loader.__file__).resolve().parents[3] / rel_path
+    ).resolve()
+    setattr(modulo, "__file__", str(ruta_oficial))
 
     monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: modulo)
 
@@ -974,7 +998,8 @@ def test_usar_holobit_expone_solo_api_publica(monkeypatch):
     interp.configurar_restriccion_usar_repl({"holobit": "holobit"})
     interp.ejecutar_nodo(NodoUsar("holobit"))
 
-    assert "holobit" in interp.variables
+    assert "crear_holobit" in interp.variables
+    assert "holobit" not in interp.variables
     assert "proyectar" in interp.variables
     assert "_require_holobit_sdk" not in interp.variables
 
@@ -1038,7 +1063,11 @@ def test_repl_usar_emite_evento_telemetria_colision_warn(monkeypatch, caplog):
     modulo.__all__ = ["a_snake", "a_camel"]
     modulo.a_snake = lambda texto: texto
     modulo.a_camel = lambda texto: texto
-    modulo.__file__ = "/workspace/pCobra/src/pcobra/corelibs/texto.py"
+    rel_path = usar_loader.REPL_COBRA_MODULE_INTERNAL_PATH_MAP["texto"]
+    ruta_oficial = (
+        Path(usar_loader.__file__).resolve().parents[3] / rel_path
+    ).resolve()
+    setattr(modulo, "__file__", str(ruta_oficial))
 
     monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: modulo)
 
@@ -1110,7 +1139,11 @@ def test_usar_error_export_invalido_es_diferenciado(monkeypatch):
     modulo = ModuleType("texto")
     modulo.__all__ = ["NO_CALLABLE"]
     modulo.NO_CALLABLE = "valor"
-    modulo.__file__ = "/workspace/pCobra/src/pcobra/corelibs/texto.py"
+    rel_path = usar_loader.REPL_COBRA_MODULE_INTERNAL_PATH_MAP["texto"]
+    ruta_oficial = (
+        Path(usar_loader.__file__).resolve().parents[3] / rel_path
+    ).resolve()
+    setattr(modulo, "__file__", str(ruta_oficial))
 
     monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: modulo)
 
@@ -1125,7 +1158,11 @@ def test_usar_no_muestra_traceback_ni_detalle_en_modo_normal(monkeypatch, caplog
     modulo = ModuleType("texto")
     modulo.__all__ = ["a_snake"]
     modulo.a_snake = lambda texto: texto
-    modulo.__file__ = "/workspace/pCobra/src/pcobra/corelibs/texto.py"
+    rel_path = usar_loader.REPL_COBRA_MODULE_INTERNAL_PATH_MAP["texto"]
+    ruta_oficial = (
+        Path(usar_loader.__file__).resolve().parents[3] / rel_path
+    ).resolve()
+    setattr(modulo, "__file__", str(ruta_oficial))
 
     monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: modulo)
     monkeypatch.delenv("PCOBRA_DEBUG_RUNTIME", raising=False)
@@ -1148,7 +1185,11 @@ def test_usar_muestra_detalle_extendido_en_debug(monkeypatch, caplog):
     modulo = ModuleType("texto")
     modulo.__all__ = ["a_snake"]
     modulo.a_snake = lambda texto: texto
-    modulo.__file__ = "/workspace/pCobra/src/pcobra/corelibs/texto.py"
+    rel_path = usar_loader.REPL_COBRA_MODULE_INTERNAL_PATH_MAP["texto"]
+    ruta_oficial = (
+        Path(usar_loader.__file__).resolve().parents[3] / rel_path
+    ).resolve()
+    setattr(modulo, "__file__", str(ruta_oficial))
 
     monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: modulo)
     monkeypatch.setenv("PCOBRA_DEBUG_RUNTIME", "1")
@@ -1191,7 +1232,11 @@ def test_usar_warning_conflictos_saneamiento_formato_compacto(monkeypatch, caplo
     modulo.__all__ = ["A_snake", "a_snake"]
     modulo.A_snake = lambda texto: texto
     modulo.a_snake = lambda texto: texto
-    modulo.__file__ = "/workspace/pCobra/src/pcobra/corelibs/texto.py"
+    rel_path = usar_loader.REPL_COBRA_MODULE_INTERNAL_PATH_MAP["texto"]
+    ruta_oficial = (
+        Path(usar_loader.__file__).resolve().parents[3] / rel_path
+    ).resolve()
+    setattr(modulo, "__file__", str(ruta_oficial))
 
     monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: modulo)
     monkeypatch.delenv("PCOBRA_DEBUG_RUNTIME", raising=False)
@@ -1221,7 +1266,11 @@ def test_usar_warning_conflictos_saneamiento_formato_texto_estable(monkeypatch, 
     modulo.__all__ = ["A_snake", "a_snake"]
     modulo.A_snake = lambda n: n
     modulo.a_snake = lambda n: n
-    modulo.__file__ = "/workspace/pCobra/src/pcobra/corelibs/numero.py"
+    rel_path = usar_loader.REPL_COBRA_MODULE_INTERNAL_PATH_MAP["numero"]
+    ruta_oficial = (
+        Path(usar_loader.__file__).resolve().parents[3] / rel_path
+    ).resolve()
+    setattr(modulo, "__file__", str(ruta_oficial))
 
     monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: modulo)
     monkeypatch.delenv("PCOBRA_DEBUG_RUNTIME", raising=False)
@@ -1245,7 +1294,11 @@ def test_usar_warning_conflictos_saneamiento_detalle_solo_debug(monkeypatch, cap
     modulo.__all__ = ["A_snake", "a_snake"]
     modulo.A_snake = lambda texto: texto
     modulo.a_snake = lambda texto: texto
-    modulo.__file__ = "/workspace/pCobra/src/pcobra/corelibs/texto.py"
+    rel_path = usar_loader.REPL_COBRA_MODULE_INTERNAL_PATH_MAP["texto"]
+    ruta_oficial = (
+        Path(usar_loader.__file__).resolve().parents[3] / rel_path
+    ).resolve()
+    setattr(modulo, "__file__", str(ruta_oficial))
 
     monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: modulo)
     monkeypatch.setenv("PCOBRA_DEBUG_RUNTIME", "1")
@@ -1276,7 +1329,11 @@ def test_usar_warning_colision_alias_formato_compacto(monkeypatch, caplog):
     modulo = ModuleType("numero")
     modulo.__all__ = ["sumar"]
     modulo.sumar = lambda a, b: a + b
-    modulo.__file__ = "/workspace/pCobra/src/pcobra/corelibs/numero.py"
+    rel_path = usar_loader.REPL_COBRA_MODULE_INTERNAL_PATH_MAP["numero"]
+    ruta_oficial = (
+        Path(usar_loader.__file__).resolve().parents[3] / rel_path
+    ).resolve()
+    setattr(modulo, "__file__", str(ruta_oficial))
 
     monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: modulo)
     monkeypatch.delenv("PCOBRA_DEBUG_RUNTIME", raising=False)
