@@ -293,7 +293,7 @@ def test_usar_no_inyecta_simbolos_prohibidos_ni_objetos_backend(monkeypatch):
     mod.__danger__ = lambda: "boom"
     mod.__file__ = "/workspace/pCobra/src/pcobra/corelibs/mod_ext.py"
 
-    simbolos_saneados, _metadata, conflictos = core_usar_loader.sanitizar_exports_publicos(mod, "mod_ext")
+    simbolos_saneados, conflictos = core_usar_loader.sanitizar_exports_publicos(mod, "mod_ext")
 
     mapa = dict(simbolos_saneados)
     assert "ok" in mapa
@@ -429,7 +429,7 @@ def test_sanitizar_exports_publicos_rechaza_objeto_sdk_accidental_en_holobit():
     mod_holobit.__all__ = [*mod_holobit.__all__, "SDKHolobitAccidental"]
     mod_holobit.SDKHolobitAccidental = _SDKObjetoAccidental
 
-    simbolos_saneados, _metadata, conflictos = core_usar_loader.sanitizar_exports_publicos(mod_holobit, "holobit")
+    simbolos_saneados, conflictos = core_usar_loader.sanitizar_exports_publicos(mod_holobit, "holobit")
     mapa = dict(simbolos_saneados)
 
     assert "SDKHolobitAccidental" not in mapa

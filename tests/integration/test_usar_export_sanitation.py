@@ -141,7 +141,7 @@ def test_sanitizar_datos_reporta_motivos_de_filtrar_descartado(caplog):
     datos = _modulo_stub("datos", {"filtrar": object()})
 
     with caplog.at_level("DEBUG"):
-        mapa, _metadata, conflictos = core_usar_loader.sanitizar_exports_publicos(datos, "datos")
+        mapa, conflictos = core_usar_loader.sanitizar_exports_publicos(datos, "datos")
 
     assert "filtrar" not in dict(mapa)
     assert any(
@@ -162,7 +162,7 @@ def test_sanitizar_datos_reporta_filtrar_missing_export_attr(caplog):
     datos.__all__ = ["filtrar"]
 
     with caplog.at_level("DEBUG"):
-        mapa, _metadata, conflictos = core_usar_loader.sanitizar_exports_publicos(datos, "datos")
+        mapa, conflictos = core_usar_loader.sanitizar_exports_publicos(datos, "datos")
 
     assert "filtrar" not in dict(mapa)
     assert any(

@@ -1046,7 +1046,7 @@ def test_usar_texto_inyecta_a_snake_desde_all_y_no_capitalizar(monkeypatch):
     assert "a_snake" in modulo_texto.__all__
     assert "capitalizar" not in modulo_texto.__all__
 
-    simbolos_saneados, _, conflictos = core_usar_loader.sanitizar_exports_publicos(modulo_texto, "texto")
+    simbolos_saneados, conflictos = core_usar_loader.sanitizar_exports_publicos(modulo_texto, "texto")
     simbolos = dict(simbolos_saneados)
 
     assert "a_snake" in simbolos

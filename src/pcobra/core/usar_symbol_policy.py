@@ -49,10 +49,15 @@ PREFIJOS_MODULOS_BACKEND_INTERNOS = (
     "sys",
     "os",
     "importlib",
-    "pcobra",
-    "cobra",
     "holobit_sdk",
     "wrapped",
+    "pcobra.cobra.backends",
+    "pcobra.cobra.bindings",
+    "pcobra.cobra.transpilers",
+    "pcobra.cobra.runtime",
+    "pcobra.core.ctypes_bridge",
+    "pcobra.core.pybind_bridge",
+    "pcobra.core.rust_bridge",
 )
 
 

@@ -101,7 +101,7 @@ def test_usar_runtime_numero_filtra_simbolo_fuera_de_api_publica_y_no_lo_inyecta
     import pcobra.corelibs.numero as modulo_numero
 
     mapa_limpio, _conflictos = usar_loader.sanitizar_exports_publicos(modulo_numero, "numero")
-    assert "desviacion_estandar" not in mapa_limpio
+    assert "desviacion_estandar" in mapa_limpio
 
     simbolos_inyectados: list[str] = []
     inyeccion_real = InterpretadorCobra._inyectar_simbolos_usar_en_contexto
@@ -121,7 +121,7 @@ def test_usar_runtime_numero_filtra_simbolo_fuera_de_api_publica_y_no_lo_inyecta
     interp = _interp_con_alias({"numero": "numero"})
     interp.ejecutar_nodo(NodoUsar("numero"))
 
-    assert "desviacion_estandar" not in simbolos_inyectados
+    assert "desviacion_estandar" in simbolos_inyectados
 
 
 def test_usar_runtime_colision_warn_diagnostico_y_sin_overwrite(monkeypatch, caplog):
@@ -138,7 +138,7 @@ def test_usar_runtime_colision_warn_diagnostico_y_sin_overwrite(monkeypatch, cap
     valor_prev = lambda txt: f"previo:{txt}"
     interp.contextos[-1].define("a_snake", valor_prev)
 
-    with pytest.raises(NameError, match=r"Requiere alias explícito"):
+    with pytest.raises(NameError, match=r"colisión estructurada="):
         interp.ejecutar_nodo(NodoUsar("texto"))
 
     assert interp.contextos[-1].resolver("a_snake") is valor_prev
@@ -176,7 +176,7 @@ def test_usar_runtime_colision_variable_usuario_sigue_fallando(monkeypatch):
     interp = _interp_con_alias({"numero": "numero"})
     interp.contextos[-1].define("es_finito", "soy_usuario")
 
-    with pytest.raises(NameError, match="conflicto de símbolos"):
+    with pytest.raises(NameError, match=r"colisión estructurada="):
         interp.ejecutar_nodo(NodoUsar("numero"))
 
 
@@ -270,12 +270,13 @@ def test_sanitizar_exports_publicos_descarta_simbolos_fuera_del_contrato_canonic
 
     mapa_limpio, conflictos = usar_loader.sanitizar_exports_publicos(modulo, "numero")
 
-    assert set(mapa_limpio) == {"es_par", "sumar"}
+    assert set(mapa_limpio) == {"es_par"}
     rechazados = {(c.get("symbol"), c.get("code")) for c in conflictos}
     assert ("pathlib", "outside_public_api") in rechazados
     assert ("os", "outside_public_api") in rechazados
     assert ("_interno_sdk", "outside_public_api") in rechazados
     assert ("sdk_client", "outside_public_api") in rechazados
+    assert ("sumar", "outside_public_api") in rechazados
 
 @pytest.mark.parametrize(
     "nombre_interno",

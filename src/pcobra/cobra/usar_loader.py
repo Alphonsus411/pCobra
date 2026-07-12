@@ -789,7 +789,7 @@ def usar_modulo(
     try:
         nombre_validado_oficial = validar_nombre_modulo_usar(nombre_raw, require_allowlist=True)
         modulo = obtener_modulo(nombre_validado_oficial)
-        simbolos_saneados, metadata_por_simbolo, conflictos = sanitizar_exports_publicos(
+        simbolos_saneados, metadata_por_simbolo, conflictos = _sanitizar_exports_publicos_detallado(
             modulo,
             normalizar_nombre_usar(nombre_validado_oficial),
         )
@@ -812,7 +812,7 @@ def usar_modulo(
             ):
                 raise permiso_exc
             modulo = wrapper_obtener(nombre_raw)
-            simbolos_saneados, metadata_por_simbolo, conflictos = sanitizar_exports_publicos(
+            simbolos_saneados, metadata_por_simbolo, conflictos = _sanitizar_exports_publicos_detallado(
                 modulo,
                 normalizar_nombre_usar(nombre_raw),
             )
