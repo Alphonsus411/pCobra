@@ -519,7 +519,6 @@ def _obtener_modulo_cobra_oficial_compat(nombre: str):
         and getattr(wrapper_oficial, "__module__", "") != "pcobra.core.usar_loader"
     ):
         modulo = wrapper_oficial(nombre)
-        return modulo
     else:
         modulo = obtener_modulo_cobra_oficial(nombre)
 

@@ -54,6 +54,7 @@ def test_usar_numero_solo_simbolos_espanoles(factory, executor, get_interp, monk
 )
 def test_usar_texto_solo_simbolos_espanoles(factory, executor, get_interp, monkeypatch):
     mod_texto = _modulo_texto_stub()
+    mod_texto.a_snake = lambda texto: str(texto).lower().replace(" ", "_")
 
     monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: mod_texto)
 
@@ -255,11 +256,12 @@ def test_conflicto_no_overwrite_silencioso_reporta_error_estructurado(monkeypatc
     class _NodoUsar:
         modulo = "datos"
 
-    with pytest.raises(NameError, match=r"No se puede usar 'datos': hay conflicto de símbolos") as excinfo:
+    with pytest.raises(NameError, match=r"colisión estructurada=") as excinfo:
         interp.ejecutar_usar(_NodoUsar())
 
     mensaje = str(excinfo.value)
-    assert "Símbolo conflictivo: filtrar" in mensaje
+    assert "'code': 'symbol_collision'" in mensaje
+    assert "'symbol': 'filtrar'" in mensaje
     assert interp.contextos[-1].get("filtrar")() == "ocupado"
     assert "mapear" not in interp.contextos[-1].values
     assert "reducir" not in interp.contextos[-1].values
@@ -277,8 +279,12 @@ def test_conflictos_abortan_inyeccion_sin_overwrite_silencioso(monkeypatch):
     class _NodoUsar:
         modulo = "datos"
 
-    with pytest.raises(NameError, match=r"Símbolo conflictivo: filtrar"):
+    with pytest.raises(NameError, match=r"colisión estructurada=") as excinfo:
         interp.ejecutar_usar(_NodoUsar())
+
+    mensaje = str(excinfo.value)
+    assert "'code': 'symbol_collision'" in mensaje
+    assert "'symbol': 'filtrar'" in mensaje
 
     assert interp.contextos[-1].get("filtrar")() == "ocupado"
     assert interp.contextos[-1].get("mapear")() == "ocupado"

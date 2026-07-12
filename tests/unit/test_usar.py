@@ -285,6 +285,8 @@ def test_repl_usar_texto_ejecuta_callables_runtime_basicos(monkeypatch):
     assert interp.obtener_variable("quitar_acentos")("canción") == "cancion"
     assert interp.obtener_variable("prefijo_comun")("cobra", "cobre") == "cobr"
     assert interp.obtener_variable("sufijo_comun")("programacion", "nacion") == "acion"
+
+
 def test_repl_usar_detecta_colision_de_simbolo_existente(monkeypatch):
     import pcobra.corelibs.texto as modulo_texto
 
@@ -292,8 +294,12 @@ def test_repl_usar_detecta_colision_de_simbolo_existente(monkeypatch):
     interp = InterpretadorCobra()
     interp.contextos[-1].define("a_snake", lambda x: x)
 
-    with pytest.raises(NameError, match=r"símbolo 'a_snake' ya existe"):
-        interp.ejecutar_nodo(NodoUsar('texto'))
+    with pytest.raises(NameError, match=r"colisión estructurada=") as excinfo:
+        interp.ejecutar_nodo(NodoUsar("texto"))
+
+    mensaje = str(excinfo.value)
+    assert "'code': 'symbol_collision'" in mensaje
+    assert "'symbol': 'a_snake'" in mensaje
 
 
 def test_repl_usar_colision_no_inyecta_ningun_simbolo(monkeypatch):
@@ -310,8 +316,12 @@ def test_repl_usar_colision_no_inyecta_ningun_simbolo(monkeypatch):
     interp = InterpretadorCobra()
     interp.contextos[-1].define("colisiona", lambda x: x)
 
-    with pytest.raises(NameError, match=r"símbolo 'colisiona' ya existe"):
+    with pytest.raises(NameError, match=r"colisión estructurada=") as excinfo:
         interp.ejecutar_nodo(NodoUsar("mi_modulo"))
+
+    mensaje = str(excinfo.value)
+    assert "'code': 'symbol_collision'" in mensaje
+    assert "'symbol': 'colisiona'" in mensaje
 
     assert interp.obtener_variable("colisiona") is not None
     assert "disponible" not in interp.variables
@@ -329,8 +339,12 @@ def test_repl_usar_colision_en_ancestro_no_inyecta_exportables(monkeypatch):
     interp.contextos.append(contexto_hijo)
     interp.mem_contextos.append({})
 
-    with pytest.raises(NameError, match=r"símbolo 'es_finito' ya existe"):
+    with pytest.raises(NameError, match=r"colisión estructurada=") as excinfo:
         interp.ejecutar_nodo(NodoUsar("numero"))
+
+    mensaje = str(excinfo.value)
+    assert "'code': 'symbol_collision'" in mensaje
+    assert "'symbol': 'es_finito'" in mensaje
 
     assert contexto_padre.get("es_finito")("x") == "ocupado"
     assert "es_finito" not in contexto_hijo.values
@@ -407,8 +421,12 @@ def test_repl_usar_texto_colision_en_ancestro_es_atomico(monkeypatch):
     interp.contextos.append(contexto_hijo)
     interp.mem_contextos.append({})
 
-    with pytest.raises(NameError, match=r"símbolo 'a_snake' ya existe"):
+    with pytest.raises(NameError, match=r"colisión estructurada=") as excinfo:
         interp.ejecutar_nodo(NodoUsar("texto"))
+
+    mensaje = str(excinfo.value)
+    assert "'code': 'symbol_collision'" in mensaje
+    assert "'symbol': 'a_snake'" in mensaje
 
     assert contexto_padre.get("a_snake")("Hola") == "ocupado"
     assert "a_snake" not in contexto_hijo.values
