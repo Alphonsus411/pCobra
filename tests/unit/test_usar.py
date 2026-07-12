@@ -585,8 +585,12 @@ def test_repl_semantica_oficial_plana_libro_parser_legacy_colision_es_atomica(mo
     interp = InterpretadorCobra()
     interp.contextos[-1].define("es_finito", lambda _x: "ocupado")
 
-    with pytest.raises(NameError, match=r"símbolo 'es_finito' ya existe"):
+    with pytest.raises(NameError) as exc_info:
         _ejecutar_codigo('usar "numero"', interp)
+
+    mensaje = str(exc_info.value)
+    assert "'code': 'symbol_collision'" in mensaje
+    assert "'symbol': 'es_finito'" in mensaje
 
     assert interp.contextos[-1].get("es_finito")("x") == "ocupado"
     assert "es_infinito" not in interp.contextos[-1].values
