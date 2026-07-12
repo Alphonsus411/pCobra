@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+from pathlib import Path
 from types import ModuleType
 import asyncio
+import importlib
 import logging
 import pytest
 import httpx
@@ -204,7 +206,7 @@ def test_repl_contract_sintaxis_usar_compat_parser_semantica_plana_numpy_restrin
     estado_pre_numpy = dict(interp.contextos[-1].values)
     simbolos_pre = set(interp.contextos[-1].values.keys())
 
-    with pytest.raises(PermissionError, match=r"Importación no permitida en 'usar': 'numpy'. Es un módulo backend/no canónico y no forma parte de la API pública\. Módulos permitidos: numero, texto, datos, logica, asincrono, sistema, archivo, tiempo, red, holobit\."):
+    with pytest.raises(PermissionError, match=r"Importación no permitida en 'usar': 'numpy'.*usar_error\[modulo_fuera_catalogo_publico\]"):
         executor(cmd, 'usar "numpy"')
 
     # Contrato de Cobra: `usar` es plano (sin `.`), no se expone namespace tipo `numero.*`.
@@ -529,7 +531,7 @@ def test_repl_numpy_rechazo_no_deja_estado_parcial(factory, executor, get_interp
     interp = get_interp(cmd)
     estado_pre = dict(interp.contextos[-1].values)
 
-    with pytest.raises(PermissionError, match=r"Importación no permitida en 'usar': 'numpy'. Es un módulo backend/no canónico y no forma parte de la API pública\. Módulos permitidos: numero, texto, datos, logica, asincrono, sistema, archivo, tiempo, red, holobit\."):
+    with pytest.raises(PermissionError, match=r"Importación no permitida en 'usar': 'numpy'.*usar_error\[modulo_fuera_catalogo_publico\]"):
         executor(cmd, 'usar "numpy"')
 
     assert dict(interp.contextos[-1].values) == estado_pre
@@ -571,8 +573,11 @@ def test_logs_usar_conflictos_formato_resumido_sin_diccionario_gigante(caplog, m
     interp = InterpretadorCobra()
     interp.configurar_restriccion_usar_repl({"texto": "texto"})
 
-    with pytest.raises(ImportError, match=r"No se encontraron símbolos exportables para usar 'texto'"):
-        interp.ejecutar_nodo(NodoUsar("texto"))
+    interp.ejecutar_nodo(NodoUsar("texto"))
+
+    assert callable(interp.obtener_variable("a_snake"))
+    with pytest.raises(NameError):
+        interp.obtener_variable("A_snake")
 
     eventos = [rec.message for rec in caplog.records if "USAR_SANITIZE_REJECTION_METRICS" in rec.message]
     assert eventos
@@ -624,6 +629,13 @@ def test_repl_contract_resuelve_usar_datos_y_tiempo(factory, executor, get_inter
 
 def test_repl_contract_seguridad_usar_holobit_restringe_internals_y_saneamiento(monkeypatch):
     mod_holobit = _modulo_holobit_publico_stub()
+    rel_path_holobit = cli_usar_loader.REPL_COBRA_MODULE_INTERNAL_PATH_MAP["holobit"]
+    mod_holobit.__file__ = str(
+        (
+            Path(cli_usar_loader.__file__).resolve().parents[3]
+            / rel_path_holobit
+        ).resolve()
+    )
 
     alias_map = {**REPL_COBRA_MODULE_MAP, "holobit": "holobit"}
 
@@ -658,7 +670,10 @@ def test_repl_contract_seguridad_usar_holobit_restringe_internals_y_saneamiento(
     cmd = InteractiveCommand(InterpretadorCobra())
     cmd.interpretador.configurar_restriccion_usar_repl(alias_map)
     estado_pre = dict(cmd.interpretador.contextos[-1].values)
-    with pytest.raises(PermissionError, match=r"Importación no permitida en 'usar': 'holobit_sdk'. Es un módulo backend/no canónico y no forma parte de la API pública. Módulos permitidos: numero, texto, datos, logica, asincrono, sistema, archivo, tiempo, red, holobit."):
+    with pytest.raises(
+        PermissionError,
+        match=r"Importación no permitida en 'usar': 'holobit_sdk'.*usar_error\[modulo_fuera_catalogo_publico\]",
+    ):
         cmd.ejecutar_codigo('usar "holobit_sdk"')
 
     assert estado_pre == cmd.interpretador.contextos[-1].values
@@ -666,7 +681,22 @@ def test_repl_contract_seguridad_usar_holobit_restringe_internals_y_saneamiento(
 
 def test_repl_contract_seguridad_usar_atomico_holobit_y_datos_sin_overwrite(monkeypatch):
     mod_holobit = _modulo_holobit_publico_stub()
+    rel_path_holobit = cli_usar_loader.REPL_COBRA_MODULE_INTERNAL_PATH_MAP["holobit"]
+    mod_holobit.__file__ = str(
+        (
+            Path(cli_usar_loader.__file__).resolve().parents[3]
+            / rel_path_holobit
+        ).resolve()
+    )
+
     mod_datos = _modulo_datos_stub()
+    rel_path_datos = cli_usar_loader.REPL_COBRA_MODULE_INTERNAL_PATH_MAP["datos"]
+    mod_datos.__file__ = str(
+        (
+            Path(cli_usar_loader.__file__).resolve().parents[3]
+            / rel_path_datos
+        ).resolve()
+    )
     alias_map = {**REPL_COBRA_MODULE_MAP, "holobit": "holobit"}
 
     def _resolver_modulo(nombre: str, **_kwargs):
@@ -684,22 +714,34 @@ def test_repl_contract_seguridad_usar_atomico_holobit_y_datos_sin_overwrite(monk
 
     interp.contextos[-1].define("graficar", lambda _hb: "ocupado")
     estado_pre_holobit = dict(interp.contextos[-1].values)
-    with pytest.raises(NameError, match=r"No se puede usar 'holobit': hay conflicto de símbolos en el contexto actual. Símbolo conflictivo: graficar."):
+    with pytest.raises(NameError) as exc_holobit:
         class _NodoUsarHolobit:
             modulo = "holobit"
 
         interp.ejecutar_usar(_NodoUsarHolobit())
+
+    mensaje_holobit = str(exc_holobit.value)
+    assert "'code': 'symbol_collision'" in mensaje_holobit
+    assert "'symbol': 'graficar'" in mensaje_holobit
+    assert "'module': 'holobit'" in mensaje_holobit
+    assert "'phase': 'preflight'" in mensaje_holobit
     assert estado_pre_holobit == interp.contextos[-1].values
 
     assert interp.obtener_variable("graficar")({}) == "ocupado"
 
     interp.contextos[-1].define("longitud", lambda _v: -1)
     estado_pre_datos = dict(interp.contextos[-1].values)
-    with pytest.raises(NameError, match=r"No se puede usar 'datos': hay conflicto de símbolos en el contexto actual. Símbolo conflictivo: longitud."):
+    with pytest.raises(NameError) as exc_datos:
         class _NodoUsarDatos:
             modulo = "datos"
 
         interp.ejecutar_usar(_NodoUsarDatos())
+
+    mensaje_datos = str(exc_datos.value)
+    assert "'code': 'symbol_collision'" in mensaje_datos
+    assert "'symbol': 'longitud'" in mensaje_datos
+    assert "'module': 'datos'" in mensaje_datos
+    assert "'phase': 'preflight'" in mensaje_datos
     assert estado_pre_datos == interp.contextos[-1].values
 
     assert interp.obtener_variable("longitud")([]) == -1
@@ -847,9 +889,28 @@ def test_repl_contract_pipeline_completo_por_modulo_canonico(monkeypatch, modulo
                 setattr(mod, nombre, lambda funcion, intentos=3, excepciones=(Exception,), retardo_inicial=0.1, factor_backoff=2.0, max_retardo=None, jitter=None: asyncio.Future())
             elif nombre == "grupo_tareas":
                 setattr(mod, nombre, lambda: None)
+    else:
+        # Para el resto del catálogo, reutilizar la API pública canónica
+        # en lugar de mantener listas duplicadas y propensas a quedar obsoletas.
+        modulo_real = importlib.import_module(f"pcobra.corelibs.{modulo}")
+        expected_symbols = list(getattr(modulo_real, "__all__", ()))
+
+        if not expected_symbols:
+            raise AssertionError(
+                f"El módulo canónico {modulo!r} no declara símbolos públicos en __all__"
+            )
+
+        for nombre in expected_symbols:
+            setattr(mod, nombre, getattr(modulo_real, nombre))
 
     mod.__all__ = expected_symbols
-    mod.__file__ = f"/workspace/pCobra/src/pcobra/corelibs/{modulo}.py"
+    rel_path = cli_usar_loader.REPL_COBRA_MODULE_INTERNAL_PATH_MAP[modulo]
+    mod.__file__ = str(
+        (
+            Path(cli_usar_loader.__file__).resolve().parents[3]
+            / rel_path
+        ).resolve()
+    )
 
     def _resolver_modulo(nombre: str, **_kwargs):
         if nombre == modulo:
@@ -1146,7 +1207,7 @@ def test_repl_contrato_cli_superficie_publica_y_error_corto_numpy(capsys):
     assert "_backend" not in simbolos
     assert "__all__" not in simbolos
 
-    with pytest.raises(PermissionError, match=r"Importación no permitida en 'usar': 'numpy'. Es un módulo backend/no canónico y no forma parte de la API pública\. Módulos permitidos: numero, texto, datos, logica, asincrono, sistema, archivo, tiempo, red, holobit\."):
+    with pytest.raises(PermissionError, match=r"Importación no permitida en 'usar': 'numpy'.*usar_error\[modulo_fuera_catalogo_publico\]"):
         cmd._ejecutar_en_modo_normal('usar "numpy"')
     salida_error = capsys.readouterr().out
     assert "Traceback" not in salida_error
@@ -1298,7 +1359,7 @@ def test_repl_ux_error_salida_corta_vs_debug(capsys, caplog):
 
 def test_no_regresion_seguridad_usar_numpy_error_corto_sin_traceback(capsys):
     cmd = ReplCommandV2()
-    with pytest.raises(PermissionError, match=r"Importación no permitida en 'usar': 'numpy'. Es un módulo backend/no canónico y no forma parte de la API pública\. Módulos permitidos: numero, texto, datos, logica, asincrono, sistema, archivo, tiempo, red, holobit\."):
+    with pytest.raises(PermissionError, match=r"Importación no permitida en 'usar': 'numpy'.*usar_error\[modulo_fuera_catalogo_publico\]"):
         cmd._ejecutar_en_modo_normal('usar "numpy"')
 
     salida = capsys.readouterr().out
@@ -1317,7 +1378,7 @@ def test_repl_no_expone_simbolos_no_publicos_modulos_estandar():
 
 def test_no_regresion_seguridad_usar_numpy_fuera_catalogo_publico():
     cmd = ReplCommandV2()
-    with pytest.raises(PermissionError, match=r"Importación no permitida en 'usar': 'numpy'. Es un módulo backend/no canónico y no forma parte de la API pública\. Módulos permitidos: numero, texto, datos, logica, asincrono, sistema, archivo, tiempo, red, holobit\."):
+    with pytest.raises(PermissionError, match=r"Importación no permitida en 'usar': 'numpy'.*usar_error\[modulo_fuera_catalogo_publico\]"):
         cmd._ejecutar_en_modo_normal('usar "numpy"')
 
 
@@ -1422,7 +1483,7 @@ def test_regresion_metadata_usar_none_pre_auditoria(factory, executor, get_inter
         or "Uso de primitiva peligrosa" in combinado_archivo
     )
 
-    with pytest.raises(PermissionError, match=r"Importación no permitida en 'usar': 'numpy'. Es un módulo backend/no canónico y no forma parte de la API pública\. Módulos permitidos: numero, texto, datos, logica, asincrono, sistema, archivo, tiempo, red, holobit\."):
+    with pytest.raises(PermissionError, match=r"Importación no permitida en 'usar': 'numpy'.*usar_error\[modulo_fuera_catalogo_publico\]"):
         executor(cmd, 'usar "numpy"')
 
 

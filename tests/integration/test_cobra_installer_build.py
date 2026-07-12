@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import json
 from pathlib import Path
 
@@ -97,12 +98,15 @@ def test_installer_build_parametriza_modo_y_genera_manifest_sin_pyinstaller_real
     assert result.metadata["spec"] == str(spec_path)
     assert result.pyinstaller_version == "6.mock"
     assert result.mode is mode
-    assert result.artifact_path == tmp_path / expected_artifact
+    expected_path = tmp_path / expected_artifact
+    if os.name == "nt":
+        expected_path = expected_path.with_suffix(".exe")
+    assert result.artifact_path == expected_path
     assert manifest_payload["project"] == "demo-build"
     assert manifest_payload["backend"] == "python"
     assert manifest_payload["mode"] == mode.value
     assert manifest_payload["build_mode"] == mode.value
-    assert manifest_payload["executable_path"] == str(tmp_path / expected_artifact)
+    assert manifest_payload["executable_path"] == str(expected_path)
     for assertion in spec_assertions:
         assert assertion in spec_text
     if mode is BuildMode.ONEFILE:

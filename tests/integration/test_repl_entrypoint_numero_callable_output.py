@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+from pathlib import Path
 from types import ModuleType
 
 import pytest
 
 from pcobra.core import usar_loader as core_usar_loader
+from pcobra.cobra import usar_loader
 from pcobra.core import interpreter as core_interpreter
 from pcobra.cobra.cli.commands_v2.repl_cmd import ReplCommandV2
 
@@ -17,7 +19,10 @@ def _modulo_numero_stub() -> ModuleType:
     mod.signo = lambda valor: -1 if valor < 0 else (1 if valor > 0 else 0)
     mod.desviacion_estandar = lambda _valores: 0.0
     mod._interno = lambda _valor: "oculto"
-    mod.__file__ = "/workspace/pCobra/src/pcobra/corelibs/numero.py"
+    rel_path = usar_loader.REPL_COBRA_MODULE_INTERNAL_PATH_MAP["numero"]
+    mod.__file__ = str(
+        (Path(usar_loader.__file__).resolve().parents[3] / rel_path).resolve()
+    )
     return mod
 
 
@@ -25,7 +30,10 @@ def _modulo_datos_stub() -> ModuleType:
     mod = ModuleType("datos")
     mod.__all__ = ["longitud"]
     mod.longitud = lambda valor: len(valor)
-    mod.__file__ = "/workspace/pCobra/src/pcobra/corelibs/datos.py"
+    rel_path = usar_loader.REPL_COBRA_MODULE_INTERNAL_PATH_MAP["datos"]
+    mod.__file__ = str(
+        (Path(usar_loader.__file__).resolve().parents[3] / rel_path).resolve()
+    )
     return mod
 
 
@@ -94,7 +102,7 @@ def test_entrypoint_repl_real_numero_callable_directo_sin_no_implementada(monkey
     assert "Función 'es_nan' no implementada" not in salida
 
 
-def test_entrypoint_repl_real_rechaza_simbolo_no_exportado_por_superficie_publica(monkeypatch):
+def test_entrypoint_repl_real_expone_desviacion_estandar_publica(monkeypatch, capsys):
     mod_numero = _modulo_numero_stub()
 
     monkeypatch.setattr(
@@ -105,9 +113,11 @@ def test_entrypoint_repl_real_rechaza_simbolo_no_exportado_por_superficie_public
 
     cmd = ReplCommandV2()
     cmd._ejecutar_en_modo_normal('usar "numero"')
+    cmd._ejecutar_en_modo_normal("imprimir(desviacion_estandar([1, 2, 3]))")
 
-    with pytest.raises(NameError, match=r"Variable no declarada: desviacion_estandar"):
-        cmd._ejecutar_en_modo_normal("desviacion_estandar([1, 2, 3])")
+    salida = capsys.readouterr().out
+    assert "0.0" in salida
+    assert callable(cmd._delegate.interpretador.obtener_variable("desviacion_estandar"))
 
 
 def test_entrypoint_repl_real_rechaza_numpy_externo(monkeypatch):

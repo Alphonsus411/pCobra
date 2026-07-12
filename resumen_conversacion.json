@@ -1,225 +1,122 @@
 {
-  "proyecto": {
-    "nombre": "pCobra",
-    "rama": "master",
-    "entorno": "Windows + Git Bash + PyCharm",
-    "area_trabajada": "Resolución de módulos con usar, validación de procedencia, saneamiento de exports, colisiones y contratos de runtime"
+  "asistente": "Bella",
+  "proyecto": "pCobra",
+  "rama": "master",
+  "entorno": {
+    "sistema_operativo": "Windows",
+    "terminal": "Git Bash",
+    "python": "3.11.9",
+    "pytest": "8.4.2",
+    "ide": "PyCharm"
   },
-  "objetivo": {
-    "descripcion": "Estabilizar el comportamiento de usar para módulos Cobra oficiales sin permitir módulos externos ni romper los contratos públicos.",
-    "restricciones": [
-      "Cambios mínimos y localizados",
-      "No modificar lexer, parser, gramática, AST ni transpiladores",
-      "No relajar la validación estricta de procedencia",
-      "No ampliar allowlists globales para satisfacer tests obsoletos",
-      "Ejecutar pruebas en grupos pequeños antes de suites completas"
+  "objetivo": "Alinear los tests del sistema 'usar' con el contrato actual de seguridad, procedencia canónica, saneamiento de símbolos y compatibilidad multiplataforma.",
+  "diagnostico_general": {
+    "produccion": "El comportamiento de producción se consideró correcto en los fallos revisados.",
+    "causa_principal": "Tests desactualizados que asumían rutas Linux, mensajes legacy, exports antiguos o stubs sin procedencia canónica.",
+    "archivos_principales": [
+      "src/pcobra/cobra/usar_loader.py",
+      "src/pcobra/core/interpreter.py",
+      "tests/integration/test_repl_usar_entrypoints_contract.py",
+      "tests/integration/test_cobra_installer_build.py",
+      "tests/integration/test_entrypoint_usar_export_policy_parity.py",
+      "tests/integration/test_repl_entrypoint_numero_callable_output.py"
     ]
   },
-  "cambio_principal_de_produccion": {
-    "archivo": "src/pcobra/cobra/usar_loader.py",
-    "funcion": "_obtener_modulo_cobra_oficial_compat",
-    "problema": "La ruta de wrappers legacy retornaba el módulo antes de validar su procedencia.",
-    "solucion": "Eliminar el retorno anticipado y hacer que tanto la implementación canónica como los wrappers parcheados pasen por la validación común de __file__ y ruta oficial.",
-    "estado": "implementado_y_validado",
-    "garantias_confirmadas": [
-      "Los módulos sin __file__ son rechazados",
-      "Los módulos con ruta externa son rechazados",
-      "Los aliases no permitidos son rechazados",
-      "Los aliases oficiales con ruta canónica son aceptados"
-    ]
+  "cambios_realizados": [
+    {
+      "area": "Procedencia canónica",
+      "detalle": "Los stubs dejaron de usar rutas Linux hardcodeadas como /workspace/pCobra/... y ahora calculan __file__ mediante REPL_COBRA_MODULE_INTERNAL_PATH_MAP y pathlib.Path."
+    },
+    {
+      "area": "Compatibilidad Windows",
+      "detalle": "El test del instalador contempla la extensión .exe en Windows."
+    },
+    {
+      "area": "Rechazo de módulos externos",
+      "detalle": "Las expresiones regulares para numpy y holobit_sdk se desacoplaron del texto completo del catálogo y validan códigos estructurados como modulo_fuera_catalogo_publico."
+    },
+    {
+      "area": "Saneamiento parcial",
+      "detalle": "El test con A_snake y a_snake dejó de esperar ImportError. Ahora comprueba que a_snake se conserva y A_snake se rechaza."
+    },
+    {
+      "area": "Colisiones atómicas",
+      "detalle": "Las expectativas legacy se sustituyeron por validaciones del payload estructurado: code, symbol, module y phase."
+    },
+    {
+      "area": "API pública de numero",
+      "detalle": "Los tests se alinearon con desviacion_estandar como símbolo público."
+    },
+    {
+      "area": "Pipeline parametrizado",
+      "detalle": "La procedencia de todos los módulos canónicos se calcula con el mapa oficial, eliminando rutas específicas de Linux."
+    }
+  ],
+  "resultados_validados": [
+    {
+      "prueba": "Suite focal de usar",
+      "resultado": "176 passed",
+      "advertencias": 2
+    },
+    {
+      "prueba": "tests/unit/test_usar.py",
+      "resultado": "84 passed",
+      "advertencias": 2
+    },
+    {
+      "prueba": "Rechazo de numpy",
+      "resultado": "4 passed, 90 deselected"
+    },
+    {
+      "prueba": "Saneamiento, seguridad holobit y atomicidad",
+      "resultado": "Los tres tests focales quedaron corregidos; el último terminó con 1 passed, 93 deselected."
+    },
+    {
+      "prueba": "Pipeline canónico tras corregir procedencia",
+      "resultado": "Pasaron archivo, asincrono, datos, holobit, logica y numero antes de detenerse por cinco fallos."
+    }
+  ],
+  "advertencias_conocidas": [
+    {
+      "tipo": "Hypothesis",
+      "mensaje": "Skipping collection of '.hypothesis' directory por configuración norecursedirs."
+    },
+    {
+      "tipo": "PytestCollectionWarning",
+      "mensaje": "TestCommandV2 no se recopila como clase de tests porque define __init__."
+    }
+  ],
+  "estado_actual": {
+    "ultimo_test_ejecutado": "pytest -q tests/integration/test_repl_usar_entrypoints_contract.py -k pipeline_completo_por_modulo_canonico -vv",
+    "resultado": {
+      "passed_antes_de_detenerse": 6,
+      "failed": 5,
+      "deselected": 73,
+      "warnings": 1
+    },
+    "fallos": [
+      "argumentos",
+      "compresion",
+      "configuracion",
+      "cripto",
+      "proceso"
+    ],
+    "causa": "El test parametrizado no define expected_symbols para esos módulos. La lista queda vacía y usar lanza ImportError porque no encuentra símbolos exportables."
   },
-  "cambios_en_tests": [
-    {
-      "tipo": "procedencia_de_stubs",
-      "descripcion": "Los módulos ModuleType usados como dobles oficiales ahora reciben un __file__ calculado desde REPL_COBRA_MODULE_INTERNAL_PATH_MAP.",
-      "motivo": "Las rutas Linux hardcodeadas /workspace/pCobra/... fallaban en Windows y los stubs sin __file__ eran correctamente rechazados.",
-      "archivos": [
-        "tests/unit/test_usar.py",
-        "tests/integration/test_usar_public_contract_regression.py"
-      ]
-    },
-    {
-      "tipo": "contrato_de_colisiones",
-      "descripcion": "Las expectativas legacy se sustituyeron por comprobaciones del payload estructurado.",
-      "campos_validados": [
-        "code=symbol_collision",
-        "symbol",
-        "module",
-        "phase=preflight"
-      ]
-    },
-    {
-      "tipo": "atomicidad",
-      "descripcion": "Se mantienen las comprobaciones de que una colisión no produce inyección parcial ni sobrescribe símbolos existentes."
-    },
-    {
-      "tipo": "api_publica_holobit",
-      "descripcion": "La expectativa holobit se actualizó a crear_holobit y se verifica que el alias legacy no se inyecta."
-    },
-    {
-      "tipo": "api_publica_numero",
-      "descripcion": "Se confirmó que desviacion_estandar es un export público operativo de numero."
-    },
-    {
-      "tipo": "saneamiento_sin_all",
-      "descripcion": "Se actualizó el test para reflejar que a_decimal queda fuera cuando no está admitido por el contrato público, mientras es_finito permanece."
-    },
-    {
-      "tipo": "acceso_por_punto",
-      "descripcion": "El test ya espera ValueError por NodoAtributo no soportado, en lugar del antiguo InvalidTokenError del lexer.",
-      "significado": "usar sigue siendo una importación plana y no habilita numero.es_finito."
-    },
-    {
-      "tipo": "funciones_de_usuario",
-      "descripcion": "Una función de usuario legacy representada con body de cadenas se sustituyó por una declaración Cobra parseada realmente."
-    },
-    {
-      "tipo": "stub_indiscriminado",
-      "descripcion": "El stub que devolvía numero para cualquier módulo se limitó a numero y ahora rechaza numpy correctamente."
-    },
-    {
-      "tipo": "simbolos_fuera_de_api",
-      "descripcion": "El antiguo test de colisión entre numero y logica con el símbolo artificial compartido se reformuló.",
-      "contrato_actual": "Los símbolos fuera de la API pública se filtran y no generan colisiones falsas."
-    },
-    {
-      "tipo": "saneamiento_parcial",
-      "descripcion": "Los objetos backend de datos se descartan, pero los exports válidos como longitud se conservan.",
-      "contrato_actual": "Los rechazos individuales de saneamiento no invalidan necesariamente todo el módulo."
-    },
-    {
-      "tipo": "holobit_sdk",
-      "descripcion": "El test acepta PermissionError para el alias base y ValueError para nombres con punto considerados inseguros."
-    },
-    {
-      "tipo": "telemetria_inexistente",
-      "descripcion": "Se eliminaron expectativas sobre eventos de logging usar_sanitize_reject y usar_collision, ya que producción no los emite.",
-      "canales_observables_reales": [
-        "símbolos inyectados o descartados",
-        "PermissionError",
-        "NameError estructurado",
-        "RuntimeWarning para warn_alias_required"
-      ]
-    }
-  ],
-  "validaciones_exitosas": [
-    {
-      "grupo": "rechazo_externo_y_alias_oficial",
-      "resultado": "4 passed",
-      "casos": [
-        "alias_no_permitido",
-        "modulo_sin___file__",
-        "ruta_no_oficial",
-        "alias numero con procedencia oficial"
-      ]
-    },
-    {
-      "grupo": "resolver_y_runtime_policy",
-      "resultado": "3 passed"
-    },
-    {
-      "grupo": "instalacion_y_modo_seguro",
-      "resultado": "3 passed"
-    },
-    {
-      "grupo": "whitelist_y_spec_estricto",
-      "resultado": "3 passed"
-    },
-    {
-      "grupo": "saneamiento_numero_texto_datos",
-      "resultado": "5 passed"
-    },
-    {
-      "grupo": "contrato_publico_integracion",
-      "archivo": "tests/integration/test_usar_public_contract_regression.py",
-      "resultado": "27 passed"
-    },
-    {
-      "grupo": "politica_de_simbolos",
-      "archivo": "tests/unit/test_usar_symbol_policy.py",
-      "resultado": "5 passed"
-    },
-    {
-      "grupo": "colisiones_estructuradas_y_atomicidad",
-      "resultado": "3 passed"
-    },
-    {
-      "grupo": "exports_numero_texto",
-      "resultado": "3 passed"
-    },
-    {
-      "grupo": "acceso_plano_sin_all_funcion_usuario",
-      "resultado": "3 passed"
-    },
-    {
-      "grupo": "numero_texto_holobit",
-      "resultado": "3 passed"
-    },
-    {
-      "grupo": "conflicto_real_simbolo_fuera_api_saneamiento_datos",
-      "resultado": "3 passed"
-    },
-    {
-      "grupo": "holobit_sdk_saneamiento_runtimewarning",
-      "resultado": "3 passed"
-    }
-  ],
-  "ultimo_estado_de_tests_unitarios": {
-    "archivo": "tests/unit/test_usar.py",
-    "ultima_suite_completa_antes_de_los_ultimos_arreglos": {
-      "resultado": "3 failed, 65 passed, 3 warnings",
-      "fallos": [
-        "test_internals_holobit_sdk_no_importables_por_usar_loader",
-        "test_repl_usar_emite_evento_telemetria_saneamiento_rechazado",
-        "test_repl_usar_emite_evento_telemetria_colision_warn"
-      ]
-    },
-    "estado_de_esos_tres_fallos": "corregidos_y_validados_individualmente",
-    "resultado_de_revalidacion": "3 passed, 81 deselected, 1 warning"
+  "ultimo_parche_propuesto": {
+    "objetivo": "Añadir un fallback para módulos sin rama explícita.",
+    "estrategia": [
+      "Importar pcobra.corelibs.<modulo> mediante importlib.",
+      "Leer su __all__ real.",
+      "Copiar los símbolos públicos al ModuleType usado como stub.",
+      "Mantener stubs explícitos para módulos que requieren comportamiento controlado."
+    ],
+    "estado": "Propuesto, pero todavía no se ha mostrado el resultado de su ejecución."
   },
-  "warnings": [
-    {
-      "origen": "_hypothesis_pytestplugin.py",
-      "mensaje": "Skipping collection of '.hypothesis' directory",
-      "estado": "no_bloqueante",
-      "relacion_con_el_parche": "ninguna"
-    },
-    {
-      "origen": "politica warn_alias_required",
-      "tipo": "RuntimeWarning",
-      "estado": "esperado_y_validado",
-      "mensaje": "El símbolo existente no será sobrescrito"
-    }
-  ],
-  "contratos_confirmados": [
-    "La sintaxis pública vigente sigue siendo usar con cadena.",
-    "La importación es plana y no habilita acceso por namespace.",
-    "numero, texto, datos, logica y holobit utilizan rutas oficiales.",
-    "La procedencia se valida mediante __file__ y ruta canónica.",
-    "Los exports se limitan a la API pública canónica.",
-    "Los objetos backend, SDK, wrappers e internals se descartan.",
-    "Las colisiones son atómicas.",
-    "El contrato de colisión vigente usa payload estructurado.",
-    "La reimportación del mismo módulo es idempotente.",
-    "Los símbolos fuera de la API pública no producen colisiones falsas.",
-    "Los módulos externos como numpy, node-fetch, serde y holobit_sdk se rechazan."
-  ],
-  "archivos_modificados_o_relevantes": [
-    "src/pcobra/cobra/usar_loader.py",
-    "src/pcobra/core/usar_symbol_policy.py",
-    "tests/unit/test_usar.py",
-    "tests/unit/test_usar_runtime_policy.py",
-    "tests/unit/test_usar_symbol_policy.py",
-    "tests/integration/test_usar_export_sanitation.py",
-    "tests/integration/test_usar_public_contract_regression.py"
-  ],
   "siguiente_paso": {
-    "descripcion": "Volver a ejecutar tests/unit/test_usar.py completo después de los tres últimos arreglos.",
-    "comando": "pytest -q tests/unit/test_usar.py --maxfail=3 -vv",
-    "despues": "Si pasa, ejecutar la suite focal completa de cinco archivos."
+    "comando_focal": "pytest -q tests/integration/test_repl_usar_entrypoints_contract.py -k \"pipeline_completo_por_modulo_canonico\" -vv",
+    "comando_suite_completa": "pytest -q tests --maxfail=3",
+    "criterio": "Ejecutar primero el pipeline parametrizado tras aplicar el fallback basado en __all__. Si queda verde, relanzar la suite completa."
   },
-  "suite_focal_final_recomendada": {
-    "comando": "pytest -q tests/integration/test_usar_export_sanitation.py tests/integration/test_usar_public_contract_regression.py tests/unit/test_usar.py tests/unit/test_usar_symbol_policy.py tests/unit/test_usar_runtime_policy.py",
-    "criterio_de_cierre": "Cero fallos; solo warnings conocidos y no bloqueantes."
-  }
+  "conclusion": "La migración está avanzada. Los fallos encontrados hasta ahora corresponden principalmente a contratos de tests antiguos, rutas no portables y stubs incompletos. No se identificó la necesidad de modificar el lexer, parser, AST, transpiler ni ampliar las allowlists de producción."
 }
