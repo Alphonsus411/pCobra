@@ -707,7 +707,11 @@ def test_repl_usar_colision_multiple_sin_inyeccion_parcial(monkeypatch):
     modulo.a_snake = lambda texto: texto
     modulo.a_camel = lambda texto: texto
     modulo.quitar_prefijo = lambda texto, prefijo: texto.removeprefix(prefijo)
-    modulo.__file__ = "/workspace/pCobra/src/pcobra/corelibs/texto.py"
+    rel_path = usar_loader.REPL_COBRA_MODULE_INTERNAL_PATH_MAP["texto"]
+    ruta_oficial = (
+        Path(usar_loader.__file__).resolve().parents[3] / rel_path
+    ).resolve()
+    setattr(modulo, "__file__", str(ruta_oficial))
 
     monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: modulo)
 
