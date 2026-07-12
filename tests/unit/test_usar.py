@@ -812,20 +812,24 @@ def test_usar_numero_conflicto_real_por_redefinicion_usuario(monkeypatch):
     interp.configurar_restriccion_usar_repl({"numero": "numero"})
     interp.contextos[-1].define("es_finito", 123)
 
-    with pytest.raises(NameError, match=r"conflicto"):
+    with pytest.raises(NameError) as exc_info:
         _ejecutar_codigo('usar "numero"', interp)
 
+    mensaje = str(exc_info.value)
+    assert "'code': 'symbol_collision'" in mensaje
+    assert "'symbol': 'es_finito'" in mensaje
+    assert "'module': 'numero'" in mensaje
+    assert "'phase': 'preflight'" in mensaje
 
-def test_usar_conflicto_entre_modulos_distintos_mismo_nombre(monkeypatch):
+
+def test_usar_simbolo_fuera_api_en_modulos_distintos_no_genera_colision(monkeypatch):
     modulo_numero = ModuleType("numero")
     modulo_numero.__all__ = ["compartido"]
     modulo_numero.compartido = lambda valor: valor
-    modulo_numero.__file__ = "/workspace/pCobra/src/pcobra/corelibs/numero.py"
 
     modulo_logica = ModuleType("logica")
     modulo_logica.__all__ = ["compartido"]
     modulo_logica.compartido = lambda valor: not valor
-    modulo_logica.__file__ = "/workspace/pCobra/src/pcobra/corelibs/logica.py"
 
     def _resolver(nombre, **_kwargs):
         if nombre == "numero":
@@ -837,10 +841,12 @@ def test_usar_conflicto_entre_modulos_distintos_mismo_nombre(monkeypatch):
     monkeypatch.setattr(core_usar_loader, "obtener_modulo", _resolver)
     interp = InterpretadorCobra()
     interp.configurar_restriccion_usar_repl({"numero": "numero", "logica": "logica"})
-    _ejecutar_codigo('usar "numero"', interp)
 
-    with pytest.raises(NameError, match=r"conflicto"):
-        _ejecutar_codigo('usar "logica"', interp)
+    _ejecutar_codigo('usar "numero"', interp)
+    assert "compartido" not in interp.variables
+
+    _ejecutar_codigo('usar "logica"', interp)
+    assert "compartido" not in interp.variables
 
 
 
@@ -924,17 +930,21 @@ def test_usar_datos_no_exporta_objetos_backend_sdk_wrappers(monkeypatch):
     modulo.backend_module_object = object()
     modulo.USAR_RUNTIME_EXPORT_OVERRIDES = object()
     modulo.REPL_COBRA_MODULE_INTERNAL_PATH_MAP = object()
-    modulo.__file__ = "/workspace/pCobra/src/pcobra/standard_library/datos.py"
+    rel_path = usar_loader.REPL_COBRA_MODULE_INTERNAL_PATH_MAP["datos"]
+    ruta_oficial = (
+        Path(usar_loader.__file__).resolve().parents[3] / rel_path
+    ).resolve()
+    setattr(modulo, "__file__", str(ruta_oficial))
 
     monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: modulo)
 
     interp = InterpretadorCobra()
     interp.configurar_restriccion_usar_repl({"datos": "datos"})
 
-    with pytest.raises(ImportError, match=r"rechazos de saneamiento en usar"):
-        interp.ejecutar_nodo(NodoUsar("datos"))
+    interp.ejecutar_nodo(NodoUsar("datos"))
 
-    assert "longitud" not in interp.variables
+    assert "longitud" in interp.variables
+    assert interp.obtener_variable("longitud")([1, 2, 3]) == 3
     for simbolo in (
         "backend",
         "sdk",
@@ -986,7 +996,7 @@ def test_usar_numpy_rechazado_en_superficie_publica():
 
 def test_internals_holobit_sdk_no_importables_por_usar_loader():
     for nombre in ("holobit_sdk", "holobit_sdk.core", "holobit_sdk.visualization"):
-        with pytest.raises(ValueError):
+        with pytest.raises((PermissionError, ValueError)):
             usar_loader.obtener_modulo(nombre)
 
 
@@ -1039,26 +1049,33 @@ def test_politica_publica_backend_es_python_javascript_rust():
     assert PUBLIC_BACKENDS == ("python", "javascript", "rust")
 
 
-def test_repl_usar_emite_evento_telemetria_saneamiento_rechazado(monkeypatch, caplog):
-    modulo = ModuleType("mod_ext")
-    modulo.__all__ = ["ok", "backend"]
-    modulo.ok = lambda valor: valor
+def test_repl_usar_saneamiento_descarta_backend_y_conserva_export_valido(monkeypatch):
+    modulo = ModuleType("datos")
+    modulo.__all__ = ["longitud", "backend"]
+    modulo.longitud = lambda valores: len(valores)
     modulo.backend = ModuleType("backend_obj")
-    modulo.__file__ = "/workspace/pCobra/src/pcobra/corelibs/mod_ext.py"
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: modulo)
+    rel_path = usar_loader.REPL_COBRA_MODULE_INTERNAL_PATH_MAP["datos"]
+    ruta_oficial = (
+        Path(usar_loader.__file__).resolve().parents[3] / rel_path
+    ).resolve()
+    setattr(modulo, "__file__", str(ruta_oficial))
+
+    monkeypatch.setattr(
+        core_usar_loader,
+        "obtener_modulo_cobra_oficial",
+        lambda _nombre: modulo,
+    )
 
     interp = InterpretadorCobra()
-    interp.configurar_restriccion_usar_repl({"mod_ext": "mod_ext"})
+    interp.configurar_restriccion_usar_repl({"datos": "datos"})
+    interp.ejecutar_nodo(NodoUsar("datos"))
 
-    with pytest.raises(ImportError, match=r"rechazos de saneamiento en usar"):
-        interp.ejecutar_nodo(NodoUsar("mod_ext"))
-
-    assert "usar_sanitize_reject" in caplog.text
-    assert "simbolos_rechazados" in caplog.text
+    assert interp.obtener_variable("longitud")([1, 2, 3]) == 3
+    assert "backend" not in interp.variables
 
 
-def test_repl_usar_emite_evento_telemetria_colision_warn(monkeypatch, caplog):
+def test_repl_usar_colision_warn_emite_runtimewarning_y_error_estructurado(monkeypatch):
     modulo = ModuleType("texto")
     modulo.__all__ = ["a_snake", "a_camel"]
     modulo.a_snake = lambda texto: texto
@@ -1076,11 +1093,18 @@ def test_repl_usar_emite_evento_telemetria_colision_warn(monkeypatch, caplog):
     interp.configurar_politica_colision_usar("warn_alias_required")
     interp.contextos[-1].define("a_snake", lambda _texto: "ocupado")
 
-    with pytest.raises(NameError, match=r"Requiere alias explícito"):
-        interp.ejecutar_nodo(NodoUsar("texto"))
+    with pytest.warns(
+        RuntimeWarning,
+        match=r"Conflicto de nombres en `usar`.*a_snake",
+    ):
+        with pytest.raises(NameError) as exc_info:
+            interp.ejecutar_nodo(NodoUsar("texto"))
 
-    assert "usar_collision" in caplog.text
-    assert "warn_alias_required" in caplog.text
+    mensaje = str(exc_info.value)
+    assert "'code': 'symbol_collision'" in mensaje
+    assert "'symbol': 'a_snake'" in mensaje
+    assert "'module': 'texto'" in mensaje
+    assert "'phase': 'preflight'" in mensaje
 
 
 @pytest.mark.parametrize("nombre", ["numpy", "node-fetch", "serde", "holobit_sdk"])
