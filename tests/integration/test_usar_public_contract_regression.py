@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+from pathlib import Path
 from types import ModuleType
 
 import pytest
 
+from pcobra.cobra import usar_loader
 from pcobra.cobra.architecture.backend_policy import PUBLIC_BACKENDS
 from pcobra.cobra.cli.commands.interactive_cmd import InteractiveCommand
 from pcobra.cobra.cli.commands_v2.repl_cmd import ReplCommandV2
@@ -12,6 +14,15 @@ from pcobra.cobra.usar_policy import REPL_COBRA_MODULE_MAP, USAR_RUNTIME_EXPORT_
 from pcobra.core import usar_loader as core_usar_loader
 
 USAR_RECHAZO_EXTERNO_MATCH = r"usar_error|no permitid[ao]|externo|fuera|no can[oó]nico|cat[aá]logo|m[oó]dulo"
+
+
+def _marcar_stub_como_oficial(modulo: ModuleType, nombre: str) -> ModuleType:
+    rel_path = usar_loader.REPL_COBRA_MODULE_INTERNAL_PATH_MAP[nombre]
+    ruta_oficial = (
+        Path(usar_loader.__file__).resolve().parents[3] / rel_path
+    ).resolve()
+    setattr(modulo, "__file__", str(ruta_oficial))
+    return modulo
 
 
 from tests.integration.test_repl_usar_entrypoints_contract import (
@@ -31,7 +42,7 @@ from tests.integration.test_repl_usar_entrypoints_contract import (
     ],
 )
 def test_usar_numero_solo_simbolos_espanoles(factory, executor, get_interp, monkeypatch):
-    mod_numero = _modulo_numero_stub()
+    mod_numero = _marcar_stub_como_oficial(_modulo_numero_stub(), "numero")
 
     monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: mod_numero)
 
@@ -53,7 +64,7 @@ def test_usar_numero_solo_simbolos_espanoles(factory, executor, get_interp, monk
     ],
 )
 def test_usar_texto_solo_simbolos_espanoles(factory, executor, get_interp, monkeypatch):
-    mod_texto = _modulo_texto_stub()
+    mod_texto = _marcar_stub_como_oficial(_modulo_texto_stub(), "texto")
     mod_texto.a_snake = lambda texto: str(texto).lower().replace(" ", "_")
 
     monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: mod_texto)
@@ -85,7 +96,7 @@ def test_usar_texto_contrato_runtime_overrides_y_poc_funcional(factory, executor
     mod_texto.sufijo_comun = lambda a, b: next((str(a)[len(str(a))-i:] for i in range(min(len(str(a)), len(str(b))), -1, -1) if str(a)[len(str(a))-i:] == str(b)[len(str(b))-i:]), "")
     mod_texto.a_snake = lambda texto: str(texto).lower().replace(" ", "_")
     mod_texto.snake_case = mod_texto.a_snake
-    mod_texto.__file__ = "/workspace/pCobra/src/pcobra/corelibs/texto.py"
+    _marcar_stub_como_oficial(mod_texto, "texto")
     monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: mod_texto)
     monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: mod_texto)
 
@@ -209,7 +220,7 @@ def test_holobit_sdk_internals_no_son_importables(monkeypatch):
 
 
 def test_usar_holobit_expone_solo_api_cobra_facing(monkeypatch):
-    mod_holobit = _modulo_holobit_publico_stub()
+    mod_holobit = _marcar_stub_como_oficial(_modulo_holobit_publico_stub(), "holobit")
     alias_map = {**REPL_COBRA_MODULE_MAP, "holobit": "holobit"}
     monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: mod_holobit if nombre == "holobit" else (_ for _ in ()).throw(ModuleNotFoundError(nombre)))
 
@@ -310,7 +321,7 @@ def test_usar_no_inyecta_simbolos_prohibidos_ni_objetos_backend(monkeypatch):
 
 
 def test_usar_holobit_inyecta_solo_all_y_nombres_en_espanol(monkeypatch):
-    mod_holobit = _modulo_holobit_publico_stub()
+    mod_holobit = _marcar_stub_como_oficial(_modulo_holobit_publico_stub(), "holobit")
     monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: mod_holobit if nombre == "holobit" else (_ for _ in ()).throw(ModuleNotFoundError(nombre)))
 
     interp = InterpretadorCobra()
@@ -409,7 +420,7 @@ def test_binding_usar_sin_dependencia_lexer_parser_para_datos(monkeypatch):
 
 
 def test_binding_usar_holobit_no_expone_internals_directos(monkeypatch):
-    mod_holobit = _modulo_holobit_publico_stub()
+    mod_holobit = _marcar_stub_como_oficial(_modulo_holobit_publico_stub(), "holobit")
     monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: mod_holobit if nombre == "holobit" else (_ for _ in ()).throw(ModuleNotFoundError(nombre)))
 
     interp = InterpretadorCobra()
@@ -444,7 +455,7 @@ def test_sanitizar_exports_publicos_rechaza_objeto_sdk_accidental_en_holobit():
 
 
 def test_usar_holobit_no_filtra_nombres_sdk_accidentales_en_contexto(monkeypatch):
-    mod_holobit = _modulo_holobit_publico_stub()
+    mod_holobit = _marcar_stub_como_oficial(_modulo_holobit_publico_stub(), "holobit")
     alias_map = {**REPL_COBRA_MODULE_MAP, "holobit": "holobit"}
 
     class _SDKObjetoAccidental:
