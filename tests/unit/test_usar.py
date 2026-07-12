@@ -694,8 +694,14 @@ def test_repl_usar_colision_policy_warn_alias_required_no_overwrite(monkeypatch)
     interp.configurar_politica_colision_usar("warn_alias_required")
     interp.contextos[-1].define("a_snake", lambda _texto: "ocupado")
 
-    with pytest.raises(NameError, match=r"Requiere alias explícito"):
+    with pytest.raises(NameError) as exc_info:
         _ejecutar_codigo('usar "texto"', interp)
+
+    mensaje = str(exc_info.value)
+    assert "'code': 'symbol_collision'" in mensaje
+    assert "'symbol': 'a_snake'" in mensaje
+    assert "'module': 'texto'" in mensaje
+    assert "'phase': 'preflight'" in mensaje
 
     assert interp.contextos[-1].get("a_snake")("x") == "ocupado"
     assert "a_camel" not in interp.contextos[-1].values
