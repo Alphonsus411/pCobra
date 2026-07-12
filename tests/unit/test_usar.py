@@ -1,3 +1,4 @@
+from pathlib import Path
 from types import ModuleType
 from unittest.mock import patch
 import sys
@@ -509,6 +510,11 @@ def test_repl_usar_rechazo_externo_emite_mensaje_canonico(monkeypatch, escenario
 
 def test_obtener_modulo_alias_cobra_usa_origen_oficial(monkeypatch):
     modulo_oficial = ModuleType("numero")
+    rel_path = usar_loader.REPL_COBRA_MODULE_INTERNAL_PATH_MAP["numero"]
+    ruta_oficial = (
+        Path(usar_loader.__file__).resolve().parents[3] / rel_path
+    ).resolve()
+    setattr(modulo_oficial, "__file__", str(ruta_oficial))
     modulo_oficial.es_finito = lambda valor: True
     monkeypatch.setitem(usar_loader.USAR_WHITELIST, "numero", "numero")
 
@@ -546,7 +552,7 @@ def test_obtener_modulo_alias_cobra_usa_origen_oficial(monkeypatch):
     modulo = usar_loader.obtener_modulo("numero")
 
     assert modulo is modulo_oficial
-    assert llamadas == {"oficial": 1, "importlib": 1}
+    assert llamadas == {"oficial": 1, "importlib": 0}
 
 
 def test_repl_semantica_oficial_plana_libro_parser_legacy_usar_numero_es_finito(monkeypatch):
