@@ -43,33 +43,18 @@ def _cargar_psutil():
 
 
 def limitar_memoria_mb(mb: int) -> None:
-    """Restringe la memoria máxima del proceso actual."""
-    bytes_ = mb * 1024 * 1024
+    """Valida el límite de memoria sin modificar el proceso anfitrión.
+
+    Los límites efectivos de ejecución Cobra se aplican exclusivamente dentro
+    de procesos hijos descartables. Esta función se conserva por compatibilidad
+    con integraciones existentes, pero no llama a ``setrlimit`` sobre el
+    proceso actual para evitar contaminar CLI, REPL, IDLE o el runner de tests.
+    """
+    if mb <= 0:
+        raise ValueError("mb debe ser un entero positivo")
     if IS_WINDOWS:  # psutil.Process.rlimit no está soportado en Windows.
         _log_windows_skip_once()
-        return
-    try:
-        import resource
-    except ImportError as exc:
-        # Falta 'resource', se intenta 'psutil'.
-        logger.warning(
-            _("El módulo 'resource' no está disponible; se intentará 'psutil'."),
-            exc_info=exc,
-        )
-        _limitar_memoria_psutil(bytes_)
-        return
-    try:
-        resource.setrlimit(resource.RLIMIT_AS, (bytes_, bytes_))
-    except (OSError, ValueError) as exc:
-        # Error de configuración en 'resource'.
-        logger.warning(
-            _(
-                "No se pudo configurar el límite de memoria con 'resource'; "
-                "se intentará 'psutil'."
-            ),
-            exc_info=exc,
-        )
-        _limitar_memoria_psutil(bytes_)
+
 
 
 def _limitar_memoria_psutil(bytes_: int) -> bool:
@@ -111,32 +96,18 @@ def _limitar_memoria_psutil(bytes_: int) -> bool:
 
 
 def limitar_cpu_segundos(segundos: int) -> None:
-    """Limita el tiempo de CPU en segundos para este proceso."""
+    """Valida el límite de CPU sin modificar el proceso anfitrión.
+
+    Los límites efectivos de ejecución Cobra se aplican exclusivamente dentro
+    de procesos hijos descartables. Esta función se conserva por compatibilidad
+    con integraciones existentes, pero no llama a ``setrlimit`` sobre el
+    proceso actual para evitar contaminar CLI, REPL, IDLE o el runner de tests.
+    """
+    if segundos <= 0:
+        raise ValueError("segundos debe ser un entero positivo")
     if IS_WINDOWS:  # psutil.Process.rlimit no está soportado en Windows.
         _log_windows_skip_once()
-        return
-    try:
-        import resource
-    except ImportError as exc:
-        # Falta 'resource', se intenta 'psutil'.
-        logger.warning(
-            _("El módulo 'resource' no está disponible; se intentará 'psutil'."),
-            exc_info=exc,
-        )
-        _limitar_cpu_psutil(segundos)
-        return
-    try:
-        resource.setrlimit(resource.RLIMIT_CPU, (segundos, segundos))
-    except (OSError, ValueError) as exc:
-        # Error de configuración en 'resource'.
-        logger.warning(
-            _(
-                "No se pudo configurar el límite de CPU con 'resource'; "
-                "se intentará 'psutil'."
-            ),
-            exc_info=exc,
-        )
-        _limitar_cpu_psutil(segundos)
+
 
 
 def _limitar_cpu_psutil(segundos: int) -> bool:
