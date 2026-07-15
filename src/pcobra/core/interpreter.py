@@ -516,6 +516,7 @@ class InterpretadorCobra:
         self.estrategia = self.gestor_memoria.poblacion[0]
         self.op_memoria = 0
         self._eval_stack = set()
+        self._call_depth = 0
         # Funciones Cobra declaradas en el AST fuente. Se mantiene separada del
         # entorno de variables para que los optimizadores puedan eliminar nodos
         # ``NodoFuncion`` sin impedir que sus nombres sigan siendo resolubles
@@ -1735,12 +1736,13 @@ class InterpretadorCobra:
         visitados = set() if visitados is None else visitados
         expresion_id = id(expresion)
         self._trace_debug(f"[EVAL] tipo={type(expresion).__name__} id={expresion_id}")
-        if expresion_id in self._eval_stack:
+        expresion_key = (expresion_id, self._call_depth)
+        if expresion_key in self._eval_stack:
             self._trace_debug(
                 f"[RECURSION DETECTED] tipo={type(expresion).__name__} id={expresion_id}"
             )
             raise Exception("Recursive evaluation detected")
-        self._eval_stack.add(expresion_id)
+        self._eval_stack.add(expresion_key)
         try:
             def _retorno_critico(resultado, *, operador=None):
                 return self._asegurar_resultado_no_ast(
@@ -1993,7 +1995,7 @@ class InterpretadorCobra:
             # Siempre limpiar la traza de evaluación, incluso ante errores
             # semánticos o excepciones en ramas internas, para evitar
             # falsos positivos en evaluaciones posteriores.
-            self._eval_stack.discard(expresion_id)
+            self._eval_stack.discard(expresion_key)
 
     def _evaluar_condicion_control(self, condicion):
         """Evalúa una condición y exige que quede materializada.
@@ -2134,12 +2136,16 @@ class InterpretadorCobra:
                 self.mem_contextos[-1][nombre_param] = (indice, 1)
                 self.contextos[-1].define(nombre_param, valor)
 
-            resultado = None
-            for instruccion in cuerpo:
-                resultado = self.ejecutar_nodo(instruccion)
-                if resultado is not None:
-                    break
-            return resultado
+            self._call_depth += 1
+            try:
+                resultado = None
+                for instruccion in cuerpo:
+                    resultado = self.ejecutar_nodo(instruccion)
+                    if resultado is not None:
+                        break
+                return resultado
+            finally:
+                self._call_depth -= 1
         finally:
             memoria_local = self.mem_contextos.pop()
             for idx, tam in memoria_local.values():
@@ -2253,12 +2259,16 @@ class InterpretadorCobra:
             else:
                 preparar_contexto()
                 try:
-                    resultado = None
-                    for instruccion in cuerpo:
-                        resultado = self.ejecutar_nodo(instruccion)
-                        if resultado is not None:
-                            break
-                    return resultado
+                    self._call_depth += 1
+                    try:
+                        resultado = None
+                        for instruccion in cuerpo:
+                            resultado = self.ejecutar_nodo(instruccion)
+                            if resultado is not None:
+                                break
+                        return resultado
+                    finally:
+                        self._call_depth -= 1
                 finally:
                     limpiar_contexto()
 

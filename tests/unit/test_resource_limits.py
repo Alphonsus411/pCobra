@@ -5,6 +5,7 @@ resource = pytest.importorskip("resource")
 
 from pcobra.cobra.cli.execution_pipeline import construir_script_sandbox_canonico
 from pcobra.core.sandbox import _run_in_subprocess, ejecutar_en_sandbox
+from pcobra.core.resource_limits import limitar_cpu_segundos, limitar_memoria_mb
 
 
 def test_limites_bajo_nivel_se_aplican_solo_en_subproceso_hijo():
@@ -50,3 +51,29 @@ def test_programa_cobra_con_limites_no_contamina_proceso_anfitrion():
 def test_limite_cpu_invalido_rechaza_antes_de_crear_subproceso():
     with pytest.raises(ValueError, match="cpu_segundos"):
         _run_in_subprocess("print('no debe ejecutarse')", cpu_segundos=0)
+
+
+def test_limitar_memoria_publica_no_contamina_proceso_anfitrion():
+    original = resource.getrlimit(resource.RLIMIT_AS)
+
+    limitar_memoria_mb(64)
+
+    assert resource.getrlimit(resource.RLIMIT_AS) == original
+
+
+def test_limitar_cpu_publica_no_contamina_proceso_anfitrion():
+    original = resource.getrlimit(resource.RLIMIT_CPU)
+
+    limitar_cpu_segundos(1)
+
+    assert resource.getrlimit(resource.RLIMIT_CPU) == original
+
+
+def test_limitar_memoria_publica_rechaza_valores_no_positivos():
+    with pytest.raises(ValueError):
+        limitar_memoria_mb(0)
+
+
+def test_limitar_cpu_publica_rechaza_valores_no_positivos():
+    with pytest.raises(ValueError):
+        limitar_cpu_segundos(0)
