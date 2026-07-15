@@ -46,63 +46,19 @@ La aplicación de límites estaba acoplada a funciones públicas reutilizables d
 
 ## F-02: recursividad legítima detectada como ciclo
 
-**Prioridad:** 2
-**Estado:** corregido en la rama de trabajo.
-**Área:** análisis/runtime.
+**Prioridad:** 2  
+**Estado:** pendiente.  
+**Área:** análisis/runtime.  
 
-### Hallazgo
-
-El ejemplo oficial `examples/avanzados/funciones/factorial_recursivo.co` fallaba con `Recursive evaluation detected` al ejecutar una recursión legítima.
-
-### Comportamiento esperado
-
-Las funciones Cobra declaradas con `func` y que usan `retorno` deben poder invocarse recursivamente cuando tienen una condición de corte válida, sin que el runtime confunda la reutilización del cuerpo AST con un ciclo estructural.
-
-### Causa raíz
-
-La pila defensiva de evaluación usaba únicamente la identidad del nodo AST. Como el cuerpo de una función Cobra se reutiliza en cada llamada, el mismo nodo de `retorno n * factorial(n - 1)` reaparecía durante la llamada recursiva y se clasificaba erróneamente como ciclo.
-
-### Corrección recomendada
-
-- Mantener la detección de ciclos reales por identidad dentro de una misma invocación.
-- Distinguir invocaciones recursivas legítimas mediante profundidad de llamada del runtime.
-- Probar con el factorial recursivo oficial y conservar una prueba de ciclo AST real.
-
-### Verificación esperada
-
-- `examples/avanzados/funciones/factorial_recursivo.co` imprime `120`.
-- Un AST cíclico construido manualmente sigue lanzando un error controlado sin `RecursionError`.
-- Lexer y Parser permanecen sin cambios.
+La recursividad válida no debe confundirse con ciclos estructurales inválidos del AST o de estructuras internas. Cualquier corrección debe inspeccionar primero la estructura actual producida por el Parser y detenerse si requiere cambios gramaticales.
 
 ## F-05: divergencia semántica entre CLI, REPL e IDLE
 
-**Prioridad:** 3
-**Estado:** corregido parcialmente para la paridad CLI/REPL cubierta por contrato.
-**Área:** ejecución / servicios compartidos.
+**Prioridad:** 3  
+**Estado:** pendiente.  
+**Área:** ejecución / servicios compartidos.  
 
-### Hallazgo
-
-La suite de contrato `tests/unit/test_cli_execution_pipeline_contract.py` fallaba antes de ejecutar los casos de paridad porque el adaptador legacy `ExecuteCommand` ya no exponía `validar_dependencias`, frontera que pruebas e integraciones históricas parchean para comparar script y REPL. Además, el contrato de bloque completo REPL necesitaba conservar una frontera observable estable al despachar bloques multilinea.
-
-### Comportamiento esperado
-
-Los mismos snippets Cobra deben producir salida, errores y estado final equivalentes entre la ruta script (`ExecuteCommand`/`RunService`) y la ruta REPL (`InteractiveCommand`) sin cambiar sintaxis ni gramática. El REPL debe acumular bloques completos antes de ejecutarlos y no parsear parcialmente línea a línea.
-
-### Causa raíz
-
-La migración de `ExecuteCommand` a `RunService` eliminó un símbolo legacy importable usado como frontera de compatibilidad. En la ruta REPL, los tests de contrato requerían comprobar simultáneamente que el texto completo del bloque se entrega a `ejecutar_codigo` y que se conserva el AST preparseado para no duplicar análisis ni romper recuperación de errores.
-
-### Corrección aplicada
-
-- Restaurar `validar_dependencias` como alias de compatibilidad en `execute_cmd` sin añadir una ruta de ejecución paralela.
-- Mantener el despacho REPL de bloques completos con `ast_preparseado` y reforzar la prueba para validar ambas cosas.
-- No tocar Lexer, Parser ni reglas gramaticales.
-
-### Verificación esperada
-
-- `tests/unit/test_cli_execution_pipeline_contract.py` pasa completo.
-- Las pruebas de recuperación REPL que exigen `ast_preparseado` siguen pasando.
-- Lexer y Parser permanecen sin cambios.
+Los mismos programas Cobra deben conservar semántica equivalente entre los distintos frontends de ejecución, reutilizando servicios comunes sin alterar sintaxis.
 
 ## F-06: falta de coherencia entre build y run
 
