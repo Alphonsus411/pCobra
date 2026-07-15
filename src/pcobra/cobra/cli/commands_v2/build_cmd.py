@@ -1,8 +1,11 @@
 from typing import Any
 
+from pcobra.cobra.build import backend_pipeline
 from pcobra.cobra.cli.commands.base import BaseCommand
+from pcobra.cobra.cli.services import build_service as build_service_module
 from pcobra.cobra.cli.services.build_service import BuildService
 from pcobra.cobra.cli.i18n import _
+from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
 from pcobra.cobra.cli.utils.autocomplete import files_completer
 from pcobra.cobra.cli.commands_v2.installer_cmd import (
     register_installer_build_arguments,
@@ -19,6 +22,7 @@ class BuildCommandV2(BaseCommand):
     def __init__(self) -> None:
         super().__init__()
         self._service = BuildService()
+        self._runtime_manager = self._service._runtime_manager
 
     def register_subparser(self, subparsers: Any):
         parser = subparsers.add_parser(
@@ -46,4 +50,13 @@ class BuildCommandV2(BaseCommand):
         if bool(getattr(args, "installer", False)):
             args.project_path = args.file or "."
             return run_installer_build(args)
+
+        # Compatibilidad de frontera pública: las pruebas e integraciones v2
+        # parchean dependencias desde este módulo, pero la implementación
+        # canónica vive en BuildService. Sincronizamos esas referencias antes
+        # de delegar para no duplicar lógica de build.
+        self._service._runtime_manager = self._runtime_manager
+        build_service_module.backend_pipeline = backend_pipeline
+        build_service_module.mostrar_error = mostrar_error
+        build_service_module.mostrar_info = mostrar_info
         return self._service.run(args)

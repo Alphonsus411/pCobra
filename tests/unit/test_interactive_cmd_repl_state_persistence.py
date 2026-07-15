@@ -37,6 +37,7 @@ _jsonschema_mod.ValidationError = Exception
 sys.modules.setdefault("jsonschema", _jsonschema_mod)
 
 from cobra.cli.commands.interactive_cmd import InteractiveCommand
+from core.ast_nodes import NodoAsignacion, NodoImprimir, NodoOperacionBinaria
 from core.interpreter import InterpretadorCobra
 
 
@@ -101,19 +102,20 @@ def test_repl_condicional_con_mutacion_estado_no_hace_echo_automatico() -> None:
 
 def test_fallback_imprimir_top_level_aplica_solo_en_expresiones() -> None:
     cmd = InteractiveCommand(InterpretadorCobra())
-    llamadas: list[str] = []
+    llamadas: list[list[object]] = []
     error = ValueError(
         "Nodo no soportado: <class 'pcobra.core.ast_nodes.NodoOperacionBinaria'>"
     )
 
-    def _fake_ejecutar(codigo: str, validador=None):
+    def _fake_ejecutar(ast: list[object], validador=None):
         del validador
-        llamadas.append(codigo)
-        if codigo == "1 + 2":
+        llamadas.append(ast)
+        nodo = ast[0]
+        if isinstance(nodo, NodoOperacionBinaria):
             raise error
-        if codigo == "imprimir(1 + 2)":
-            return ([object()], None)
-        raise AssertionError(f"Código inesperado en fallback: {codigo}")
+        if isinstance(nodo, NodoImprimir):
+            return (ast, None)
+        raise AssertionError(f"AST inesperado en fallback: {ast!r}")
 
     with patch.object(cmd, "_ejecutar_ast_en_repl", side_effect=_fake_ejecutar), patch.object(
         cmd,
@@ -122,16 +124,18 @@ def test_fallback_imprimir_top_level_aplica_solo_en_expresiones() -> None:
     ), patch.object(cmd, "_imprimir_resultado_repl"):
         cmd.ejecutar_codigo("1 + 2")
 
-    assert llamadas == ["1 + 2", "imprimir(1 + 2)"]
+    assert len(llamadas) == 2
+    assert isinstance(llamadas[0][0], NodoOperacionBinaria)
+    assert isinstance(llamadas[1][0], NodoImprimir)
 
 
 def test_fallback_no_modifica_statements_normales() -> None:
     cmd = InteractiveCommand(InterpretadorCobra())
-    llamadas: list[str] = []
+    llamadas: list[list[object]] = []
 
-    def _fake_ejecutar(codigo: str, validador=None):
+    def _fake_ejecutar(ast: list[object], validador=None):
         del validador
-        llamadas.append(codigo)
+        llamadas.append(ast)
         raise ValueError("Nodo no soportado: <class 'pcobra.core.ast_nodes.NodoAsignacion'>")
 
     with patch.object(cmd, "_ejecutar_ast_en_repl", side_effect=_fake_ejecutar), patch.object(
@@ -142,4 +146,17 @@ def test_fallback_no_modifica_statements_normales() -> None:
         with pytest.raises(ValueError):
             cmd.ejecutar_codigo("var a = 5")
 
-    assert llamadas == ["var a = 5"]
+    assert len(llamadas) == 1
+    assert isinstance(llamadas[0][0], NodoAsignacion)
+
+
+def test_estado_repl_asignado_no_comparte_buffer_mutable_externo() -> None:
+    cmd = InteractiveCommand(InterpretadorCobra())
+    estado_externo = cmd._crear_estado_repl()
+
+    cmd._estado_repl = estado_externo
+    estado_externo["buffer_lineas"].append("si verdadero:")
+    estado_externo["nivel_bloque"] = 1
+
+    assert cmd._estado_repl["buffer_lineas"] == []
+    assert cmd._estado_repl["nivel_bloque"] == 0
