@@ -72,58 +72,34 @@ def test_limitar_cpu_sin_resource_y_psutil_sin_rlimit(monkeypatch, caplog):
 
 
 @pytest.mark.skipif(sys.platform != "linux", reason="resource module is Unix-specific")
-def test_limitar_memoria_sin_psutil_en_linux(monkeypatch, caplog):
+def test_limitar_memoria_no_usa_resource_ni_psutil_en_linux(monkeypatch, caplog):
     import resource
 
     def fail_setrlimit(*args, **kwargs):
-        raise OSError("fail")
+        raise AssertionError("no debe aplicarse setrlimit en el anfitrión")
 
     monkeypatch.setattr(resource, "setrlimit", fail_setrlimit)
     monkeypatch.delitem(sys.modules, "psutil", raising=False)
     monkeypatch.setattr(resource_limits, "IS_WINDOWS", False)
 
     with caplog.at_level(logging.ERROR):
-        with pytest.raises(RuntimeError):
-            resource_limits.limitar_memoria_mb(1)
+        resource_limits.limitar_memoria_mb(1)
 
-    err_record = next(
-        (
-            r
-            for r in caplog.records
-            if (
-                "El módulo 'psutil' no está disponible para limitar la "
-                "memoria." in r.message
-            )
-        ),
-        None,
-    )
-    assert err_record and err_record.levelno == logging.ERROR
+    assert not caplog.records
 
 
 @pytest.mark.skipif(sys.platform != "linux", reason="resource module is Unix-specific")
-def test_limitar_cpu_sin_psutil_en_linux(monkeypatch, caplog):
+def test_limitar_cpu_no_usa_resource_ni_psutil_en_linux(monkeypatch, caplog):
     import resource
 
     def fail_setrlimit(*args, **kwargs):
-        raise OSError("fail")
+        raise AssertionError("no debe aplicarse setrlimit en el anfitrión")
 
     monkeypatch.setattr(resource, "setrlimit", fail_setrlimit)
     monkeypatch.delitem(sys.modules, "psutil", raising=False)
     monkeypatch.setattr(resource_limits, "IS_WINDOWS", False)
 
     with caplog.at_level(logging.ERROR):
-        with pytest.raises(RuntimeError):
-            resource_limits.limitar_cpu_segundos(1)
+        resource_limits.limitar_cpu_segundos(1)
 
-    err_record = next(
-        (
-            r
-            for r in caplog.records
-            if (
-                "El módulo 'psutil' no está disponible para limitar la "
-                "CPU." in r.message
-            )
-        ),
-        None,
-    )
-    assert err_record and err_record.levelno == logging.ERROR
+    assert not caplog.records

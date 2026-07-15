@@ -18,6 +18,11 @@ import sys
 from queue import Empty
 from pathlib import Path
 from typing import Any, Callable
+
+from pcobra.core.resource_limits import (
+    _aplicar_limites_proceso_hijo,
+    _validar_limites_recursos,
+)
 from packaging.version import Version
 
 def cargar_simbolos_restrictedpython() -> tuple[dict[str, Any], bool]:
@@ -558,27 +563,17 @@ def _run_in_subprocess(
     env["PYTHONPATH"] = os.pathsep.join(updated) if updated else ""
 
     preexec_fn: Callable[[], None] | None = None
-    if memoria_mb is not None:
-        if memoria_mb <= 0:
-            raise ValueError("memoria_mb debe ser un entero positivo")
+    if memoria_mb is not None or cpu_segundos is not None:
         if os.name == "nt":
             raise NotImplementedError(
-                "El límite de memoria no está soportado en Windows"
+                "Los límites de recursos no están soportados en Windows"
             )
-
-    if cpu_segundos is not None and cpu_segundos <= 0:
-        raise ValueError("cpu_segundos debe ser un entero positivo")
-
-    if (memoria_mb is not None or cpu_segundos is not None) and os.name != "nt":
+        _validar_limites_recursos(memoria_mb=memoria_mb, cpu_segundos=cpu_segundos)
 
         def limitar_recursos_hijo() -> None:
-            import resource
-
-            if memoria_mb is not None:
-                limite = memoria_mb * 1024 * 1024
-                resource.setrlimit(resource.RLIMIT_AS, (limite, limite))
-            if cpu_segundos is not None:
-                resource.setrlimit(resource.RLIMIT_CPU, (cpu_segundos, cpu_segundos))
+            _aplicar_limites_proceso_hijo(
+                memoria_mb=memoria_mb, cpu_segundos=cpu_segundos
+            )
 
         preexec_fn = limitar_recursos_hijo
 
@@ -610,14 +605,10 @@ def _worker(
 ) -> None:
     """Ejecuta ``code_bytes`` en un proceso aislado y comunica el resultado."""
     try:
-        if (memoria_mb is not None or cpu_segundos is not None) and os.name != "nt":
-            import resource
-
-            if memoria_mb is not None:
-                limite = memoria_mb * 1024 * 1024
-                resource.setrlimit(resource.RLIMIT_AS, (limite, limite))
-            if cpu_segundos is not None:
-                resource.setrlimit(resource.RLIMIT_CPU, (cpu_segundos, cpu_segundos))
+        if memoria_mb is not None or cpu_segundos is not None:
+            _aplicar_limites_proceso_hijo(
+                memoria_mb=memoria_mb, cpu_segundos=cpu_segundos
+            )
 
         builtins_dict = dict(_SANDBOX_BASE_BUILTINS)
         builtins_dict["__import__"] = _safe_import

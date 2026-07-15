@@ -261,6 +261,44 @@ database_module._TABLES_READY = False  # type: ignore[attr-defined]
 sys.modules.setdefault("core.database", database_module)
 
 
+def _marcas_legacy_para_item(
+    ruta_relativa: str,
+    nodeid: str,
+    marcas_existentes: set[str] | None = None,
+) -> tuple[str, ...]:
+    """Clasifica pruebas legacy sin excluirlas ni rebajar sus aserciones."""
+
+    marcas = marcas_existentes or set()
+    ruta_normalizada = ruta_relativa.replace("\\", "/")
+    nodeid_normalizado = nodeid.replace("\\", "/").lower()
+    if "legacy" in marcas:
+        return ()
+    if ruta_normalizada.startswith("tests/legacy/"):
+        return ("legacy",)
+    if "legacy" in ruta_normalizada.lower() or "legacy" in nodeid_normalizado:
+        return ("legacy_contract",)
+    return ()
+
+
+def pytest_collection_modifyitems(config, items):
+    """Marca automáticamente pruebas relacionadas con legacy para selección explícita."""
+
+    del config
+    for item in items:
+        ruta = Path(str(item.fspath)).resolve()
+        try:
+            ruta_relativa = ruta.relative_to(REPO_ROOT).as_posix()
+        except ValueError:
+            ruta_relativa = ruta.as_posix()
+        marcas = {marker.name for marker in item.iter_markers()}
+        for nombre_marca in _marcas_legacy_para_item(
+            ruta_relativa,
+            item.nodeid,
+            marcas,
+        ):
+            item.add_marker(getattr(pytest.mark, nombre_marca))
+
+
 @pytest.fixture
 def ruta_ejemplos() -> Path:
     """Devuelve el directorio donde se guardan los programas ``.cobra`` de prueba."""

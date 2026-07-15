@@ -11,6 +11,7 @@ La clasificación canónica de backends está definida en:
 En particular:
 
 - `PUBLIC_BACKENDS`: backends públicos soportados.
+- Los backends retirados no forman parte del árbol operativo público; cualquier referencia debe quedar limitada a documentos históricos, rutas internas de migración o pruebas de rechazo.
 
 
 ## Clasificación normativa
