@@ -692,11 +692,7 @@ class InteractiveCommand(BaseCommand):
             # introducir pipeline explícito para snippets normales.
             # Invariante antirregresión: conservar este método como "thin wrapper"
             # (prevalidar + delegar a ejecutar_codigo) sin rutas batch adicionales.
-            ejecutar_params = inspect.signature(self.ejecutar_codigo).parameters
-            if "ast_preparseado" in ejecutar_params:
-                self.ejecutar_codigo(codigo, validador, ast_preparseado=ast)
-            else:
-                self.ejecutar_codigo(codigo)
+            self.ejecutar_codigo(codigo, validador, ast_preparseado=ast)
         finally:
             self._fijar_modo_repl(modo_previo)
 
