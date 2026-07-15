@@ -70,15 +70,7 @@ from .semantic_validators import (
     PrimitivaPeligrosaError,
 )
 from .semantico import AnalizadorSemantico
-from .cobra_config import (
-    limite_nodos,
-    limite_memoria_mb,
-    limite_cpu_segundos,
-)
-from .resource_limits import (
-    limitar_memoria_mb as _lim_mem,
-    limitar_cpu_segundos as _lim_cpu,
-)
+from .cobra_config import limite_nodos
 from .import_utils import (
     MODULES_PATH as _DEFAULT_MODULES_PATH,
     IMPORT_WHITELIST,
@@ -411,13 +403,6 @@ class InterpretadorCobra:
             "_unpack_sequence_": rp_symbols["guarded_unpack_sequence"],
         }
         compile_restricted = rp_symbols["compile_restricted"]
-        mem_limit = limite_memoria_mb()
-        cpu_limit = limite_cpu_segundos()
-        if mem_limit is not None:
-            _lim_mem(int(mem_limit))
-        if cpu_limit is not None:
-            _lim_cpu(int(cpu_limit))
-
         try:
             byte_code = compile_restricted(source, ruta_abs, "exec")
         except TimeoutError as e:
@@ -1484,13 +1469,6 @@ class InterpretadorCobra:
         max_nodos = max(limite_nodos(), len(ast) + 1)
         if total > max_nodos:
             raise RuntimeError(f"El AST excede el límite de {max_nodos} nodos")
-
-        mem = limite_memoria_mb()
-        if mem:
-            _lim_mem(mem)
-        cpu = limite_cpu_segundos()
-        if cpu:
-            _lim_cpu(cpu)
 
         self._asegurar_ast_tipado(ast, "pre_optimizacion")
         self._asegurar_ast_aciclico_por_identidad(ast, "pre_optimizacion")
