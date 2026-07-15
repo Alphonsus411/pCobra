@@ -35,6 +35,16 @@ _PROJECT_MODULE_FORBIDDEN_CHARS = frozenset('/\\@$%*?"\'<>|;`!()[]{}=+,')
 _USAR_PROJECT_MODULE_CACHE: dict[Path, dict[str, Any]] = {}
 _USAR_PROJECT_LOADING_STACK: list[Path] = []
 _IMPORT_CO_AST_CACHE: dict[Path, list[Any]] = {} # Nueva caché para ASTs de .co
+CobraImportResolver = imports_resolver.CobraImportResolver
+_DEFAULT_COBRA_IMPORT_RESOLVER = CobraImportResolver
+
+
+def _obtener_resolver_imports_parcheable():
+    """Devuelve el resolver respetando las dos superficies legacy de parcheo."""
+
+    if CobraImportResolver is not _DEFAULT_COBRA_IMPORT_RESOLVER:
+        return CobraImportResolver
+    return imports_resolver.CobraImportResolver
 
 # Compatibilidad con la API histórica de ``usar_loader``.  La política
 # canónica vive en ``usar_policy``, pero algunas integraciones y pruebas siguen
@@ -285,7 +295,7 @@ def resolver_modulo_cobra_proyecto(
     # fallback cuando haya sido sustituido explícitamente por un caller/test.
     # La ruta principal y estable para `usar utilidades.fechas` es siempre:
     # `project_root / "utilidades" / "fechas.co"`.
-    resolver_cls = imports_resolver.CobraImportResolver
+    resolver_cls = _obtener_resolver_imports_parcheable()
     if getattr(resolver_cls, "__module__", "") == "pcobra.cobra.imports.resolver":
         raise FileNotFoundError(f"Módulo no encontrado: {nombre}")
 
@@ -519,8 +529,23 @@ def _obtener_modulo_cobra_oficial_compat(nombre: str):
         and getattr(wrapper_oficial, "__module__", "") != "pcobra.core.usar_loader"
     ):
         modulo = wrapper_oficial(nombre)
-    else:
-        modulo = obtener_modulo_cobra_oficial(nombre)
+        modulo_file = getattr(modulo, "__file__", None)
+        repo_root = Path(__file__).resolve().parents[3]
+        if not modulo_file:
+            raise PermissionError(
+                "usar_error[modulo_no_permitido]: módulo externo no permitido en REPL estricto "
+                "(solo alias oficiales Cobra)"
+            )
+        try:
+            Path(modulo_file).resolve().relative_to(repo_root)
+        except ValueError as exc:
+            raise PermissionError(
+                "usar_error[modulo_no_permitido]: módulo externo no permitido en REPL estricto "
+                "(solo alias oficiales Cobra)"
+            ) from exc
+        return modulo
+
+    modulo = obtener_modulo_cobra_oficial(nombre)
 
     rel_path = REPL_COBRA_MODULE_INTERNAL_PATH_MAP.get(nombre)
     if rel_path:
@@ -596,7 +621,7 @@ def obtener_modulo(nombre: str, *, permitir_instalacion: bool = True):
     if nombre not in USAR_WHITELIST:
         raise PermissionError(f"Paquete no permitido en 'usar': '{nombre}'.")
 
-    resolver_cls = imports_resolver.CobraImportResolver
+    resolver_cls = _obtener_resolver_imports_parcheable()
     resolver_parcheado = getattr(resolver_cls, "__module__", "") != "pcobra.cobra.imports.resolver"
     if nombre in USAR_COBRA_PUBLIC_MODULES:
         try:
@@ -670,6 +695,8 @@ def _cargar_exports_modulo_cobra_proyecto(
     *,
     project_root: Path,
     current_file: Path | None = None,
+    module_cache: dict[Path, dict[str, Any]] | None = None,
+    loading_stack: list[Path] | None = None,
 ) -> dict[str, Any]:
     """Carga un módulo Cobra de proyecto usando resolución canónica y cache."""
 
@@ -679,6 +706,8 @@ def _cargar_exports_modulo_cobra_proyecto(
     from pcobra.core.ast_nodes import NodoExport, NodoUsar
 
     root_canonico = canonicalizar_ruta_usar_proyecto(project_root)
+    cache = module_cache if module_cache is not None else _USAR_PROJECT_MODULE_CACHE
+    pila_carga = loading_stack if loading_stack is not None else _USAR_PROJECT_LOADING_STACK
     current_canonico = (
         canonicalizar_ruta_usar_proyecto(current_file) if current_file else None
     )
@@ -692,16 +721,16 @@ def _cargar_exports_modulo_cobra_proyecto(
     )
     _verificar_path_dentro_de_root(ruta_modulo, root_canonico)
 
-    if ruta_modulo in _USAR_PROJECT_MODULE_CACHE:
-        return _USAR_PROJECT_MODULE_CACHE[ruta_modulo]
+    if ruta_modulo in cache:
+        return cache[ruta_modulo]
 
-    if ruta_modulo in _USAR_PROJECT_LOADING_STACK:
+    if ruta_modulo in pila_carga:
         cadena = formatear_ciclo_modulos_cobra_proyecto(
-            ruta_modulo, project_root=root_canonico
+            ruta_modulo, project_root=root_canonico, loading_stack=pila_carga
         )
         raise ImportError(f"Ciclo de módulos detectado en usar: {cadena}")
 
-    _USAR_PROJECT_LOADING_STACK.append(ruta_modulo)
+    pila_carga.append(ruta_modulo)
     interpretador = None
     try:
         try:
@@ -720,6 +749,8 @@ def _cargar_exports_modulo_cobra_proyecto(
         interpretador._main_file = (
             current_canonico if current_canonico else ruta_modulo
         )
+        interpretador._usar_module_cache = cache
+        interpretador._usar_loading_stack = pila_carga
         interpretador._current_module_stack.append(ruta_modulo)
         interpretador.contextos.append(Environment(parent=interpretador.contextos[-1]))
         interpretador.mem_contextos.append({})
@@ -734,9 +765,9 @@ def _cargar_exports_modulo_cobra_proyecto(
                     current_file=ruta_modulo,
                 )
                 _verificar_path_dentro_de_root(ruta_hijo, root_canonico)
-                if ruta_hijo in _USAR_PROJECT_LOADING_STACK:
+                if ruta_hijo in pila_carga:
                     cadena = formatear_ciclo_modulos_cobra_proyecto(
-                        ruta_hijo, project_root=root_canonico
+                        ruta_hijo, project_root=root_canonico, loading_stack=pila_carga
                     )
                     raise ImportError(f"Ciclo de módulos detectado en usar: {cadena}")
             interpretador.ejecutar_nodo(subnodo)
@@ -745,14 +776,14 @@ def _cargar_exports_modulo_cobra_proyecto(
             interpretador.contextos[-1],
             ruta_modulo=ruta_modulo,
         )
-        _USAR_PROJECT_MODULE_CACHE[ruta_modulo] = _construir_exports_usar(
+        cache[ruta_modulo] = _construir_exports_usar(
             list(exports["simbolos"]),
             {
                 nombre: dict(metadata)
                 for nombre, metadata in exports["metadata"].items()
             },
         )
-        return _USAR_PROJECT_MODULE_CACHE[ruta_modulo]
+        return cache[ruta_modulo]
     finally:
         if interpretador is not None:
             memoria_local = interpretador.mem_contextos.pop()
@@ -760,10 +791,10 @@ def _cargar_exports_modulo_cobra_proyecto(
                 interpretador.liberar_memoria(idx, tam)
             interpretador.contextos.pop()
             interpretador._current_module_stack.pop()
-        if _USAR_PROJECT_LOADING_STACK and _USAR_PROJECT_LOADING_STACK[-1] == ruta_modulo:
-            _USAR_PROJECT_LOADING_STACK.pop()
-        elif ruta_modulo in _USAR_PROJECT_LOADING_STACK:
-            _USAR_PROJECT_LOADING_STACK.remove(ruta_modulo)
+        if pila_carga and pila_carga[-1] == ruta_modulo:
+            pila_carga.pop()
+        elif ruta_modulo in pila_carga:
+            pila_carga.remove(ruta_modulo)
 
 
 def usar_modulo(
@@ -771,6 +802,8 @@ def usar_modulo(
     *,
     project_root: str | Path | None = None,
     current_file: str | Path | None = None,
+    module_cache: dict[Path, dict[str, Any]] | None = None,
+    loading_stack: list[Path] | None = None,
 ) -> dict[str, Any]:
     """API única para resolver ``usar`` en runtime y transpilación Python.
 
@@ -802,30 +835,45 @@ def usar_modulo(
             raise ImportError(f"No se encontraron símbolos exportables para usar '{nombre_validado_oficial}'.")
         return _construir_exports_usar(simbolos_saneados, metadata_por_simbolo)
     except PermissionError as permiso_exc:
-        try:
-            wrapper = sys.modules.get("pcobra.core.usar_loader") or sys.modules.get("core.usar_loader")
-            wrapper_obtener = getattr(wrapper, "obtener_modulo", None)
-            if not (
-                wrapper_obtener is not None
-                and getattr(wrapper_obtener, "__module__", "") != "pcobra.core.usar_loader"
-            ):
+        wrapper = sys.modules.get("pcobra.core.usar_loader") or sys.modules.get("core.usar_loader")
+        wrapper_obtener = getattr(wrapper, "obtener_modulo", None)
+        if not (
+            wrapper_obtener is not None
+            and getattr(wrapper_obtener, "__module__", "") != "pcobra.core.usar_loader"
+        ):
+            try:
+                segmentos_proyecto = validar_nombre_modulo_cobra_proyecto(nombre_raw)
+            except ValueError:
                 raise permiso_exc
-            modulo = wrapper_obtener(nombre_raw)
-            simbolos_saneados, metadata_por_simbolo, conflictos = _sanitizar_exports_publicos_detallado(
-                modulo,
-                normalizar_nombre_usar(nombre_raw),
+            current = (
+                Path(current_file).expanduser() if current_file is not None else None
             )
-            if conflictos:
-                logging.debug(
-                    "USAR sanitize conflicts en API única legacy module=%s conflicts=%s",
-                    nombre_raw,
-                    conflictos,
+            root = (
+                canonicalizar_ruta_usar_proyecto(project_root)
+                if project_root is not None
+                else descubrir_raiz_proyecto(current, current)
+            )
+            ruta_proyecto = root.joinpath(*segmentos_proyecto).with_suffix(".co")
+            if not ruta_proyecto.exists():
+                raise permiso_exc
+        else:
+            try:
+                modulo = wrapper_obtener(nombre_raw)
+                simbolos_saneados, metadata_por_simbolo, conflictos = _sanitizar_exports_publicos_detallado(
+                    modulo,
+                    normalizar_nombre_usar(nombre_raw),
                 )
-            if not simbolos_saneados:
-                raise ImportError(f"No se encontraron símbolos exportables para usar '{nombre_raw}'.")
-            return _construir_exports_usar(simbolos_saneados, metadata_por_simbolo)
-        except Exception:
-            raise permiso_exc
+                if conflictos:
+                    logging.debug(
+                        "USAR sanitize conflicts en API única legacy module=%s conflicts=%s",
+                        nombre_raw,
+                        conflictos,
+                    )
+                if not simbolos_saneados:
+                    raise ImportError(f"No se encontraron símbolos exportables para usar '{nombre_raw}'.")
+                return _construir_exports_usar(simbolos_saneados, metadata_por_simbolo)
+            except Exception:
+                raise permiso_exc
     except (ModuleNotFoundError, ValueError):
         # Si no es un módulo oficial o no está permitido, intentar como módulo de proyecto
         # Si es un ValueError, significa que el nombre no es válido para un módulo oficial,
@@ -850,6 +898,8 @@ def usar_modulo(
                 nombre_validado_proyecto,
                 project_root=root,
                 current_file=current,
+                module_cache=module_cache,
+                loading_stack=loading_stack,
             )
             return exports
         except ValueError:

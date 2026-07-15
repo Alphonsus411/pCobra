@@ -525,7 +525,10 @@ def test_repl_ejecuta_bloque_completo_sin_parseo_parcial_por_linea():
         ret = cmd.run(_args_interactive())
 
     assert ret == 0
-    mock_ejecutar_codigo.assert_called_once_with("si verdadero:\nimprimir(1)\nfin", None)
+    mock_ejecutar_codigo.assert_called_once()
+    args, kwargs = mock_ejecutar_codigo.call_args
+    assert args[:2] == ("si verdadero:\nimprimir(1)\nfin", None)
+    assert "ast_preparseado" in kwargs
 
 
 def test_paridad_repl_script_mientras_con_mutacion_persistente_mismo_entorno():
