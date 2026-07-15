@@ -90,9 +90,11 @@ def limitar_memoria_mb(mb: int) -> None:
     con integraciones existentes, pero no llama a ``setrlimit`` sobre el
     proceso actual para evitar contaminar CLI, REPL, IDLE o el runner de tests.
     """
-    _validar_entero_positivo("mb", mb)
+    if mb <= 0:
+        raise ValueError("mb debe ser un entero positivo")
     if IS_WINDOWS:  # psutil.Process.rlimit no está soportado en Windows.
         _log_windows_skip_once()
+
 
 
 def _limitar_memoria_psutil(bytes_: int) -> bool:
@@ -141,9 +143,11 @@ def limitar_cpu_segundos(segundos: int) -> None:
     con integraciones existentes, pero no llama a ``setrlimit`` sobre el
     proceso actual para evitar contaminar CLI, REPL, IDLE o el runner de tests.
     """
-    _validar_entero_positivo("segundos", segundos)
+    if segundos <= 0:
+        raise ValueError("segundos debe ser un entero positivo")
     if IS_WINDOWS:  # psutil.Process.rlimit no está soportado en Windows.
         _log_windows_skip_once()
+
 
 
 def _limitar_cpu_psutil(segundos: int) -> bool:

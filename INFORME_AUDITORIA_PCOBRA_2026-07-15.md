@@ -46,33 +46,11 @@ La aplicación de límites estaba acoplada a funciones públicas reutilizables d
 
 ## F-02: recursividad legítima detectada como ciclo
 
-**Prioridad:** 2
-**Estado:** corregido en la rama de trabajo.
-**Área:** análisis/runtime.
+**Prioridad:** 2  
+**Estado:** pendiente.  
+**Área:** análisis/runtime.  
 
-### Hallazgo
-
-El ejemplo oficial `examples/avanzados/funciones/factorial_recursivo.co` fallaba con `Recursive evaluation detected` al ejecutar una recursión legítima.
-
-### Comportamiento esperado
-
-Las funciones Cobra declaradas con `func` y que usan `retorno` deben poder invocarse recursivamente cuando tienen una condición de corte válida, sin que el runtime confunda la reutilización del cuerpo AST con un ciclo estructural.
-
-### Causa raíz
-
-La pila defensiva de evaluación usaba únicamente la identidad del nodo AST. Como el cuerpo de una función Cobra se reutiliza en cada llamada, el mismo nodo de `retorno n * factorial(n - 1)` reaparecía durante la llamada recursiva y se clasificaba erróneamente como ciclo.
-
-### Corrección recomendada
-
-- Mantener la detección de ciclos reales por identidad dentro de una misma invocación.
-- Distinguir invocaciones recursivas legítimas mediante profundidad de llamada del runtime.
-- Probar con el factorial recursivo oficial y conservar una prueba de ciclo AST real.
-
-### Verificación esperada
-
-- `examples/avanzados/funciones/factorial_recursivo.co` imprime `120`.
-- Un AST cíclico construido manualmente sigue lanzando un error controlado sin `RecursionError`.
-- Lexer y Parser permanecen sin cambios.
+La recursividad válida no debe confundirse con ciclos estructurales inválidos del AST o de estructuras internas. Cualquier corrección debe inspeccionar primero la estructura actual producida por el Parser y detenerse si requiere cambios gramaticales.
 
 ## F-05: divergencia semántica entre CLI, REPL e IDLE
 
