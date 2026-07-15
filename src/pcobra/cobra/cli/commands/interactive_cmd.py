@@ -312,6 +312,22 @@ class InteractiveCommand(BaseCommand):
         self._configurar_restriccion_usar_repl()
         self._log_runtime_diagnostics()
 
+    @staticmethod
+    def _copiar_estado_repl(estado: dict[str, Any]) -> dict[str, Any]:
+        """Devuelve una copia defensiva del estado mutable del REPL."""
+        return {
+            clave: list(valor) if isinstance(valor, list) else valor
+            for clave, valor in estado.items()
+        }
+
+    @property
+    def _estado_repl(self) -> dict[str, Any]:
+        return self.__estado_repl
+
+    @_estado_repl.setter
+    def _estado_repl(self, estado: dict[str, Any]) -> None:
+        self.__estado_repl = self._copiar_estado_repl(estado)
+
     def _configurar_restriccion_usar_repl(self) -> None:
         """Activa la política estricta de ``usar`` en REPL.
 
@@ -692,11 +708,7 @@ class InteractiveCommand(BaseCommand):
             # introducir pipeline explícito para snippets normales.
             # Invariante antirregresión: conservar este método como "thin wrapper"
             # (prevalidar + delegar a ejecutar_codigo) sin rutas batch adicionales.
-            ejecutar_params = inspect.signature(self.ejecutar_codigo).parameters
-            if "ast_preparseado" in ejecutar_params:
-                self.ejecutar_codigo(codigo, validador, ast_preparseado=ast)
-            else:
-                self.ejecutar_codigo(codigo)
+            self.ejecutar_codigo(codigo, validador, ast_preparseado=ast)
         finally:
             self._fijar_modo_repl(modo_previo)
 
@@ -1129,7 +1141,10 @@ class InteractiveCommand(BaseCommand):
 
     def _manejar_linea_blanca(self, estado: dict[str, Any]) -> None:
         """Aplica política de líneas en blanco en sesión REPL."""
-        if estado["buffer_lineas"]:
+        dentro_de_bloque = bool(estado["buffer_lineas"]) or int(
+            estado.get("nivel_bloque", 0)
+        ) > 0
+        if dentro_de_bloque:
             estado["lineas_blanco_consecutivas"] += 1
             if (
                 estado["lineas_blanco_consecutivas"]
