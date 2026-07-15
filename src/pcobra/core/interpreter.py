@@ -3,6 +3,7 @@
 import logging
 import os
 import hashlib
+import inspect
 import math
 import warnings
 from pathlib import Path
@@ -85,17 +86,35 @@ from .usar_symbol_policy import (
     validate_usar_symbol_metadata,
 )
 from .environment import Environment
-from pcobra.cobra.usar_loader import (
-    descubrir_raiz_proyecto,
-    obtener_cache_modulos_cobra_proyecto,
-    obtener_pila_carga_modulos_cobra_proyecto,
-    obtener_cache_ast_import_co,
-)
+from pcobra.cobra.usar_loader import descubrir_raiz_proyecto
 
 MODULES_PATH = _DEFAULT_MODULES_PATH
 REPL_USAR_EXTERNAL_MODULE_ERROR = (
     "usar_error[modulo_no_permitido]: módulo externo no permitido en REPL estricto (solo alias oficiales Cobra)"
 )
+
+
+def _usar_modulo_con_estado_aislado(
+    nombre: str,
+    *,
+    project_root: Path,
+    current_file: Path | None,
+    module_cache: dict[Path, dict[str, object]],
+    loading_stack: list[Path],
+) -> Mapping[str, object]:
+    """Llama a ``usar_modulo`` pasando estado aislado si la función lo soporta."""
+
+    parametros = inspect.signature(usar_modulo).parameters
+    kwargs = {
+        "project_root": project_root,
+        "current_file": current_file,
+    }
+    if any(param.kind == inspect.Parameter.VAR_KEYWORD for param in parametros.values()) or (
+        "module_cache" in parametros and "loading_stack" in parametros
+    ):
+        kwargs["module_cache"] = module_cache
+        kwargs["loading_stack"] = loading_stack
+    return usar_modulo(nombre, **kwargs)
 USAR_DIRECT_BACKEND_IMPORT_ERROR = (
     "usar_error[backend_import_directo]: import directo de backend no permitido en usar"
 )
@@ -539,8 +558,9 @@ class InterpretadorCobra:
             self._main_file, self._main_file
         )
         self._current_module_stack: list[Path] = []
-        self._usar_module_cache = obtener_cache_modulos_cobra_proyecto()
-        self._usar_loading_stack = obtener_pila_carga_modulos_cobra_proyecto()
+        self._usar_module_cache: dict[Path, dict[str, object]] = {}
+        self._usar_loading_stack: list[Path] = []
+        self._import_ast_cache: dict[Path, list[object]] = {}
         # Debe ejecutarse siempre después de crear _validador y _usar_symbol_metadata.
         self.asegurar_estado_runtime_inicial()
 
@@ -2378,7 +2398,7 @@ class InterpretadorCobra:
             ruta = base / ruta
 
         ruta_canonica = ruta.resolve(strict=False)
-        ast_cache = obtener_cache_ast_import_co()
+        ast_cache = self._import_ast_cache
 
         if ruta_canonica in ast_cache:
             ast = ast_cache[ruta_canonica]
@@ -2414,10 +2434,12 @@ class InterpretadorCobra:
             if self._current_module_stack
             else self._main_file
         )
-        exports = usar_modulo(
+        exports = _usar_modulo_con_estado_aislado(
             nombre_modulo,
             project_root=self._project_root,
             current_file=current_file,
+            module_cache=self._usar_module_cache,
+            loading_stack=self._usar_loading_stack,
         )
         self._inyectar_exports_modulo_proyecto(exports)
 
@@ -2456,7 +2478,7 @@ class InterpretadorCobra:
 
             raise NameError(
                 f"No se puede usar el módulo '{modulo}': "
-                f"colisión estructurada={detalle}"
+                f"conflicto de símbolos; colisión estructurada={detalle}"
             )
         self._inyectar_simbolos_usar_en_contexto(
             simbolos_saneados,
@@ -2479,10 +2501,12 @@ class InterpretadorCobra:
                 if self._current_module_stack
                 else self._main_file
             )
-            exports = usar_modulo(
+            exports = _usar_modulo_con_estado_aislado(
                 nombre_modulo_limpio,
                 project_root=self._project_root,
                 current_file=current_file,
+                module_cache=self._usar_module_cache,
+                loading_stack=self._usar_loading_stack,
             )
             self._inyectar_exports_modulo_proyecto(exports)
         except Exception as exc:
