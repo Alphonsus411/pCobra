@@ -527,13 +527,18 @@ def _safe_import(name: str, globals: Any | None = None, locals: Any | None = Non
 
 
 def _run_in_subprocess(
-    codigo: str, timeout: float | None = None, memoria_mb: int | None = None
+    codigo: str,
+    timeout: float | None = None,
+    memoria_mb: int | None = None,
+    cpu_segundos: int | None = None,
 ) -> str:
     """Ejecuta ``codigo`` en un subproceso de Python sin restricciones.
 
     ``timeout`` define el tiempo máximo de ejecución en segundos. ``memoria_mb``
     establece el límite superior de memoria (en megabytes) utilizando
-    ``resource.RLIMIT_AS`` en sistemas POSIX. En Windows se lanza
+    ``resource.RLIMIT_AS`` y ``resource.RLIMIT_CPU`` en sistemas POSIX mediante
+    ``preexec_fn``, por lo que los límites sólo afectan al proceso hijo. En
+    Windows se lanza
     ``NotImplementedError`` cuando se solicita un límite de memoria y se emite
     ``ValueError`` si el parámetro no es positivo. Se lanza ``TimeoutError`` si
     el subproceso excede el tiempo y ``MemoryError`` si el proceso hijo supera
@@ -561,13 +566,21 @@ def _run_in_subprocess(
                 "El límite de memoria no está soportado en Windows"
             )
 
-        def limitar_memoria() -> None:
+    if cpu_segundos is not None and cpu_segundos <= 0:
+        raise ValueError("cpu_segundos debe ser un entero positivo")
+
+    if (memoria_mb is not None or cpu_segundos is not None) and os.name != "nt":
+
+        def limitar_recursos_hijo() -> None:
             import resource
 
-            limite = memoria_mb * 1024 * 1024
-            resource.setrlimit(resource.RLIMIT_AS, (limite, limite))
+            if memoria_mb is not None:
+                limite = memoria_mb * 1024 * 1024
+                resource.setrlimit(resource.RLIMIT_AS, (limite, limite))
+            if cpu_segundos is not None:
+                resource.setrlimit(resource.RLIMIT_CPU, (cpu_segundos, cpu_segundos))
 
-        preexec_fn = limitar_memoria
+        preexec_fn = limitar_recursos_hijo
 
     try:
         completed = subprocess.run(
@@ -590,15 +603,21 @@ def _run_in_subprocess(
 
 
 def _worker(
-    code_bytes: bytes, queue: multiprocessing.Queue, memoria_mb: int | None
+    code_bytes: bytes,
+    queue: multiprocessing.Queue,
+    memoria_mb: int | None,
+    cpu_segundos: int | None = None,
 ) -> None:
     """Ejecuta ``code_bytes`` en un proceso aislado y comunica el resultado."""
     try:
-        if memoria_mb is not None and os.name != "nt":
+        if (memoria_mb is not None or cpu_segundos is not None) and os.name != "nt":
             import resource
 
-            limite = memoria_mb * 1024 * 1024
-            resource.setrlimit(resource.RLIMIT_AS, (limite, limite))
+            if memoria_mb is not None:
+                limite = memoria_mb * 1024 * 1024
+                resource.setrlimit(resource.RLIMIT_AS, (limite, limite))
+            if cpu_segundos is not None:
+                resource.setrlimit(resource.RLIMIT_CPU, (cpu_segundos, cpu_segundos))
 
         builtins_dict = dict(_SANDBOX_BASE_BUILTINS)
         builtins_dict["__import__"] = _safe_import
@@ -629,13 +648,15 @@ def ejecutar_en_sandbox(
     codigo: str,
     timeout: int = 5,
     memoria_mb: int | None = None,
+    cpu_segundos: int | None = None,
     allow_insecure_fallback: bool = False,
 ) -> str:
     """Ejecuta una cadena de código Python de forma segura.
 
     El código se compila con :func:`compile_restricted` y se ejecuta en un
-    proceso hijo. ``timeout`` especifica el tiempo límite en segundos y
-    ``memoria_mb`` el máximo de memoria en megabytes. Se lanza ``TimeoutError``
+    proceso hijo. ``timeout`` especifica el tiempo límite en segundos,
+    ``memoria_mb`` el máximo de memoria en megabytes y ``cpu_segundos`` el
+    máximo de CPU. Se lanza ``TimeoutError``
     o ``MemoryError`` si se exceden estos límites.
 
     Por defecto no se permite fallback inseguro. Cuando
@@ -656,7 +677,10 @@ def ejecutar_en_sandbox(
                     "reason": "restricted_python_missing",
                 },
             )
-            return _run_in_subprocess(codigo, timeout=timeout, memoria_mb=memoria_mb)
+            kwargs: dict[str, Any] = {"timeout": timeout, "memoria_mb": memoria_mb}
+            if cpu_segundos is not None:
+                kwargs["cpu_segundos"] = cpu_segundos
+            return _run_in_subprocess(codigo, **kwargs)
         raise RuntimeError(
             "La sandbox segura requiere RestrictedPython instalado. "
             "Instálalo o habilita allow_insecure_fallback=True solo en desarrollo."
@@ -669,7 +693,9 @@ def ejecutar_en_sandbox(
 
     code_bytes = marshal.dumps(byte_code)
     queue: multiprocessing.Queue = multiprocessing.Queue()
-    proc = multiprocessing.Process(target=_worker, args=(code_bytes, queue, memoria_mb))
+    proc = multiprocessing.Process(
+        target=_worker, args=(code_bytes, queue, memoria_mb, cpu_segundos)
+    )
     proc.start()
     proc.join(timeout)
 

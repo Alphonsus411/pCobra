@@ -84,8 +84,8 @@ from pcobra.cobra.core.runtime import (
     PrimitivaPeligrosaError,
     ejecutar_en_contenedor,
     ejecutar_en_sandbox,
-    limitar_memoria_mb,
     validar_dependencias,
+    limitar_memoria_mb,  # compatibilidad para tests/plugins; no se invoca en anfitrión
 )
 from pcobra.cobra.usar_policy import REPL_COBRA_MODULE_MAP
 
@@ -890,29 +890,13 @@ class InteractiveCommand(BaseCommand):
         try:
             # Validar y configurar límite de memoria
             memory_limit = getattr(args, "memory_limit", self.MEMORY_LIMIT_MB)
-            ignore_memory_limit = getattr(args, "ignore_memory_limit", False)
             if memory_limit <= 0:
                 mostrar_error(_("El límite de memoria debe ser positivo"))
                 return 1
 
-            try:
-                limitar_memoria_mb(memory_limit)
-            except NotImplementedError as e:
-                mostrar_advertencia(
-                    _("No se pudo aplicar el límite de memoria: {err}").format(err=e)
-                )
-            except RuntimeError as e:
-                if ignore_memory_limit:
-                    mostrar_advertencia(
-                        _("No se pudo aplicar el límite de memoria: {err}").format(
-                            err=e
-                        )
-                    )
-                else:
-                    mostrar_error(
-                        _("Error al establecer límite de memoria: {err}").format(err=e)
-                    )
-                    return 1
+            # El límite de memoria se valida aquí, pero no se aplica al proceso
+            # anfitrión del REPL. Los límites efectivos deben configurarse sólo
+            # dentro de procesos hijos aislados (sandbox/subprocesos).
 
             # Validar dependencias
             validar_dependencias("python", cli_toml_map())

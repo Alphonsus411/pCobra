@@ -25,7 +25,7 @@ from pcobra.cobra.core.runtime import (
     InterpretadorCobra,
     PrimitivaPeligrosaError,
     construir_cadena,
-    limitar_cpu_segundos,
+    limitar_cpu_segundos,  # compatibilidad para tests/plugins; no se invoca en anfitrión
 )
 from pcobra.cobra.core.sandbox import ejecutar_en_contenedor as ejecutar_en_contenedor_docker
 from pcobra.cobra.transpilers import module_map
@@ -134,10 +134,6 @@ class RunService:
         return resolved_path
 
     def limitar_recursos(self, funcion: Any) -> int:
-        try:
-            limitar_cpu_segundos(self.execution_timeout)
-        except RuntimeError as exc:
-            raise TimeoutError(f"No se pudo establecer el límite de CPU: {exc}") from exc
         return funcion()
 
     def ejecutar_en_sandbox(
@@ -180,7 +176,12 @@ class RunService:
         )
 
         try:
-            salida = sandbox_module.ejecutar_en_sandbox(script, allow_insecure_fallback=allow_insecure_fallback)
+            salida = sandbox_module.ejecutar_en_sandbox(
+                script,
+                timeout=self.execution_timeout,
+                cpu_segundos=self.execution_timeout,
+                allow_insecure_fallback=allow_insecure_fallback,
+            )
             if salida:
                 mostrar_info(str(salida))
             return 0
