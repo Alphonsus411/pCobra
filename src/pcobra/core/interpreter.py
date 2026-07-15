@@ -2417,8 +2417,15 @@ class InterpretadorCobra:
             )
             ast_cache[ruta_canonica] = ast
 
-        for subnodo in ast:
-            self.ejecutar_nodo(subnodo)
+        self._import_execution_stack.append(ruta_canonica)
+        self._current_module_stack.append(ruta_canonica)
+        try:
+            for subnodo in ast:
+                self.ejecutar_nodo(subnodo)
+        finally:
+            self._current_module_stack.pop()
+            self._import_execution_stack.pop()
+        self._imported_module_paths.add(ruta_canonica)
 
     def _ejecutar_usar_modulo_proyecto(self, nombre_modulo: str) -> None:
         """Compatibilidad interna: delega directamente en ``usar_modulo``.

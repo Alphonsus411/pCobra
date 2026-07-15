@@ -984,6 +984,80 @@ def test_import_archivo_co_via_nodo_import_usa_flujo_legacy_y_whitelist(
     ]
 
 
+def test_import_archivo_co_duplicado_no_reejecuta_side_effects(monkeypatch, tmp_path):
+    proyecto = tmp_path / "app"
+    proyecto.mkdir()
+    principal = proyecto / "main.co"
+    principal.write_text("", encoding="utf-8")
+    modulo = proyecto / "archivo.co"
+    modulo.write_text("", encoding="utf-8")
+    ejecuciones = []
+
+    def fake_cargar_ast_modulo(_ruta, **_kwargs):
+        return [NodoAsignacion("valor_importado", NodoValor(42), declaracion=True)]
+
+    import pcobra.core.interpreter as interpreter_module
+
+    monkeypatch.setattr(interpreter_module, "MODULES_PATH", proyecto)
+    monkeypatch.setattr(interpreter_module, "IMPORT_WHITELIST", {proyecto})
+    monkeypatch.setattr(
+        "pcobra.core.interpreter.cargar_ast_modulo", fake_cargar_ast_modulo
+    )
+
+    interp = InterpretadorCobra(safe_mode=False, main_file=principal)
+    ejecutar_nodo_original = interp.ejecutar_nodo
+
+    def contar_ejecucion(nodo):
+        ejecuciones.append(nodo)
+        return ejecutar_nodo_original(nodo)
+
+    monkeypatch.setattr(interp, "ejecutar_nodo", contar_ejecucion)
+
+    interp.ejecutar_import(NodoImport(str(modulo)))
+    interp.ejecutar_import(NodoImport(str(modulo)))
+
+    assert interp.variables["valor_importado"] == 42
+    assert len(ejecuciones) == 1
+    assert list(interp._imported_module_paths) == [modulo.resolve(strict=False)]
+
+
+def test_import_archivo_co_detecta_ciclo_de_ejecucion_legacy(monkeypatch, tmp_path):
+    proyecto = tmp_path / "app"
+    proyecto.mkdir()
+    principal = proyecto / "main.co"
+    principal.write_text("", encoding="utf-8")
+    modulo_a = proyecto / "a.co"
+    modulo_b = proyecto / "b.co"
+    modulo_a.write_text("", encoding="utf-8")
+    modulo_b.write_text("", encoding="utf-8")
+
+    def fake_cargar_ast_modulo(ruta, **_kwargs):
+        ruta_resuelta = Path(ruta).resolve(strict=False)
+        if ruta_resuelta == modulo_a.resolve(strict=False):
+            return [NodoImport(str(modulo_b))]
+        if ruta_resuelta == modulo_b.resolve(strict=False):
+            return [NodoImport(str(modulo_a))]
+        raise AssertionError(f"Ruta inesperada: {ruta}")
+
+    import pcobra.core.interpreter as interpreter_module
+
+    monkeypatch.setattr(interpreter_module, "MODULES_PATH", proyecto)
+    monkeypatch.setattr(interpreter_module, "IMPORT_WHITELIST", {proyecto})
+    monkeypatch.setattr(
+        "pcobra.core.interpreter.cargar_ast_modulo", fake_cargar_ast_modulo
+    )
+
+    interp = InterpretadorCobra(safe_mode=False, main_file=principal)
+
+    with pytest.raises(
+        ImportError,
+        match=r"Ciclo de módulos detectado en import: a\.co -> b\.co -> a\.co",
+    ):
+        interp.ejecutar_import(NodoImport(str(modulo_a)))
+    assert interp._import_execution_stack == []
+    assert interp._current_module_stack == []
+
+
 def test_usar_loader_no_altera_semantica_de_nodo_import(monkeypatch, tmp_path):
     """`NodoImport` no delega en `usar_modulo` ni aplica semántica pública de `usar`."""
 
