@@ -18,6 +18,7 @@ from pcobra.cobra.cli.target_policies import (
 )
 from pcobra.cobra.cli.utils.autocomplete import files_completer
 from pcobra.cobra.cli.utils.messages import mostrar_error
+from pcobra.cobra.core.sandbox import validar_dependencias
 
 sys.modules.setdefault("cli.commands.execute_cmd", sys.modules[__name__])
 RUNTIME_MANAGER = RuntimeManager()

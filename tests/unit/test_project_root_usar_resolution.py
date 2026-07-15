@@ -621,7 +621,7 @@ def test_usar_modulo_cachea_referencias_equivalentes_al_mismo_co(monkeypatch, tm
     assert cargas == [(modulo.resolve(), str(proyecto.resolve()))]
     assert list(obtener_cache_modulos_cobra_proyecto()) == [modulo.resolve()]
 
-def test_api_e_interpretador_comparten_cache_por_ruta_canonica(monkeypatch, tmp_path):
+def test_api_e_interpretador_aislan_cache_por_ejecucion_independiente(monkeypatch, tmp_path):
     from pcobra.core.ast_nodes import NodoAsignacion, NodoValor
 
     proyecto = tmp_path / "app"
@@ -650,9 +650,29 @@ def test_api_e_interpretador_comparten_cache_por_ruta_canonica(monkeypatch, tmp_
     interp = InterpretadorCobra(safe_mode=False, main_file=principal)
     interp.ejecutar_usar(SimpleNamespace(modulo="utilidades.fechas"))
 
-    assert interp.variables["hoy"] == 1
-    assert cargas == [modulo.resolve()]
+    assert interp.variables["hoy"] == 2
+    assert cargas == [modulo.resolve(), modulo.resolve()]
     assert list(obtener_cache_modulos_cobra_proyecto()) == [modulo.resolve()]
+    assert list(interp._usar_module_cache) == [modulo.resolve()]
+    assert interp._usar_module_cache is not obtener_cache_modulos_cobra_proyecto()
+
+
+def test_interpretes_independientes_no_comparten_cache_ni_pila_usar(tmp_path):
+    proyecto_a = tmp_path / "a"
+    proyecto_b = tmp_path / "b"
+    proyecto_a.mkdir()
+    proyecto_b.mkdir()
+    principal_a = proyecto_a / "main.co"
+    principal_b = proyecto_b / "main.co"
+    principal_a.write_text("", encoding="utf-8")
+    principal_b.write_text("", encoding="utf-8")
+
+    interp_a = InterpretadorCobra(safe_mode=False, main_file=principal_a)
+    interp_b = InterpretadorCobra(safe_mode=False, main_file=principal_b)
+
+    assert interp_a._usar_module_cache is not interp_b._usar_module_cache
+    assert interp_a._usar_loading_stack is not interp_b._usar_loading_stack
+    assert interp_a._import_ast_cache is not interp_b._import_ast_cache
 
 
 def test_interpretador_usar_proyecto_detecta_ciclo_directo_self(monkeypatch, tmp_path):
