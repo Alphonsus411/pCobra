@@ -2485,7 +2485,7 @@ class InterpretadorCobra:
 
             raise NameError(
                 f"No se puede usar el módulo '{modulo}': "
-                f"conflicto de símbolos; colisión estructurada={detalle}"
+                f"colisión estructurada={detalle}"
             )
         self._inyectar_simbolos_usar_en_contexto(
             simbolos_saneados,
