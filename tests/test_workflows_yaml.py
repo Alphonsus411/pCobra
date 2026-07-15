@@ -48,3 +48,33 @@ def test_workflow_has_smoke_syntax_gate(workflow_filename: str, job_name: str) -
     assert "shell: pwsh" in content
     assert "python scripts/smoke_syntax.py" in content
     assert "python scripts/smoke_transpilers_syntax.py" in content
+
+
+@pytest.mark.parametrize(
+    "workflow_filename",
+    (
+        "build-binaries.yml",
+        "ci.yml",
+        "docker.yml",
+        "pages.yml",
+        "runtime-stabilization-contract.yml",
+    ),
+)
+def test_workflow_branch_triggers_target_default_branch(workflow_filename: str) -> None:
+    """Evita que los workflows críticos vuelvan a apuntar a la rama histórica work."""
+    workflow_path = WORKFLOWS_DIR / workflow_filename
+    content = workflow_path.read_text(encoding="utf-8")
+
+    assert "branches: [ work ]" not in content
+    assert "      - work" not in content
+    assert "branches: [ master ]" in content or "      - master" in content
+
+
+def test_actionlint_installer_does_not_pass_bin_flag_as_version() -> None:
+    """Evita pasar ``-b`` como VERSION al instalador oficial de actionlint."""
+    workflow_path = WORKFLOWS_DIR / "validate-workflows.yml"
+    content = workflow_path.read_text(encoding="utf-8")
+
+    assert "mkdir -p ./bin" in content
+    assert "| bash -s -- -b ./bin" not in content
+    assert "| bash -s -- latest ./bin" in content
