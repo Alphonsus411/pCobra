@@ -42,6 +42,46 @@ def _cargar_psutil():
     return importlib.import_module("psutil")
 
 
+def _validar_entero_positivo(nombre: str, valor: int | None) -> None:
+    if valor is not None and valor <= 0:
+        raise ValueError(f"{nombre} debe ser un entero positivo")
+
+
+def _validar_limites_recursos(
+    *, memoria_mb: int | None = None, cpu_segundos: int | None = None
+) -> None:
+    """Valida límites sin modificar recursos del proceso actual."""
+    _validar_entero_positivo("memoria_mb", memoria_mb)
+    _validar_entero_positivo("cpu_segundos", cpu_segundos)
+
+
+def _aplicar_limites_proceso_hijo(
+    *, memoria_mb: int | None = None, cpu_segundos: int | None = None
+) -> None:
+    """Aplica límites de recursos únicamente en un proceso hijo descartable.
+
+    Esta función debe llamarse desde ``preexec_fn`` o desde el entrypoint de un
+    worker ya aislado. No debe invocarse desde CLI, REPL, IDLE ni desde el
+    proceso anfitrión del runner de pruebas.
+    """
+    _validar_limites_recursos(memoria_mb=memoria_mb, cpu_segundos=cpu_segundos)
+
+    if memoria_mb is None and cpu_segundos is None:
+        return
+    if IS_WINDOWS:
+        raise NotImplementedError(
+            "Los límites de recursos no están soportados en Windows"
+        )
+
+    import resource
+
+    if memoria_mb is not None:
+        limite = memoria_mb * 1024 * 1024
+        resource.setrlimit(resource.RLIMIT_AS, (limite, limite))
+    if cpu_segundos is not None:
+        resource.setrlimit(resource.RLIMIT_CPU, (cpu_segundos, cpu_segundos))
+
+
 def limitar_memoria_mb(mb: int) -> None:
     """Valida el límite de memoria sin modificar el proceso anfitrión.
 
