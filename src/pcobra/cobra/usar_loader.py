@@ -864,7 +864,9 @@ def usar_modulo(
                 else descubrir_raiz_proyecto(current, current)
             )
             ruta_proyecto = root.joinpath(*segmentos_proyecto).with_suffix(".co")
-            if not ruta_proyecto.exists():
+            if not ruta_proyecto.exists() and not str(permiso_exc).startswith(
+                "usar_error[modulo_fuera_catalogo_publico]"
+            ):
                 raise permiso_exc
         else:
             try:
