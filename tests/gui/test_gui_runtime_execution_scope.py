@@ -175,14 +175,10 @@ imprimir(filtrar([1, 2, 3, 4], mayor_que_dos))
 
 
 def test_ejecutar_codigo_modulo_inexistente_falla_controladamente():
-    with pytest.raises(PermissionError) as excinfo:
+    with pytest.raises(FileNotFoundError) as excinfo:
         runtime.ejecutar_codigo('usar "modulo_inexistente"')
 
     mensaje = str(excinfo.value)
 
-    assert "fuera del catálogo" in mensaje
-    assert (
-        "no permitido" in mensaje
-        or "no encontrado" in mensaje
-        or "modulo_inexistente" in mensaje
-    )
+    assert "Módulo de proyecto no encontrado: modulo_inexistente" in mensaje
+    assert "modulo_inexistente.co" in mensaje

@@ -102,7 +102,7 @@ def test_cobra_help_snapshot_publico_no_expone_comandos_legacy(monkeypatch):
     ).read_text(encoding="utf-8")
     assert " ".join(normalized_stdout.split()) == " ".join(expected_snapshot.split())
     lower_stdout = stdout.lower()
-    for command in ("run", "build", "test", "mod", "repl"):
+    for command in ("run", "build", "test", "mod", "repl", "gui"):
         assert f" {command} " in f" {lower_stdout} "
     for command in ("installer", "paquete", "hub"):
         assert f" {command} " not in f" {lower_stdout} "
