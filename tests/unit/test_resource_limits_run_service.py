@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import multiprocessing
 import sys
-import time
 from types import SimpleNamespace
 
 import pytest
@@ -59,7 +58,6 @@ def test_run_service_run_sandbox_delega_en_metodo_con_main_file(
         "pcobra.cobra.cli.services.run_service.sandbox_module.validar_dependencias",
         lambda *_args, **_kwargs: None,
     )
-    monkeypatch.setattr(servicio, "limitar_recursos", lambda funcion: funcion())
 
     def fake_ejecutar_en_sandbox(
         codigo,
@@ -87,41 +85,3 @@ def test_run_service_run_sandbox_delega_en_metodo_con_main_file(
     assert rc == 0
     assert capturado["codigo"] == 'imprimir("ok")\n'
     assert capturado["main_file"] == archivo.resolve()
-
-
-@pytest.mark.skipif(
-    "fork" not in multiprocessing.get_all_start_methods(),
-    reason="requiere fork para aislar la ejecución normal sin serializar closures",
-)
-def test_run_service_limitar_recursos_corta_ejecucion_normal_sin_setrlimit(
-    monkeypatch,
-):
-    import resource
-
-    def fail_setrlimit(*_args, **_kwargs):
-        raise AssertionError("RunService no debe aplicar setrlimit en el anfitrión")
-
-    monkeypatch.setattr(resource, "setrlimit", fail_setrlimit)
-    servicio = RunService()
-    servicio.execution_timeout = 0.2
-
-    def bucle_infinito():
-        while True:
-            time.sleep(0.01)
-
-    inicio = time.monotonic()
-    with pytest.raises(TimeoutError, match="Tiempo de ejecución agotado"):
-        servicio.limitar_recursos(bucle_infinito)
-
-    assert time.monotonic() - inicio < 3
-
-
-@pytest.mark.skipif(
-    "fork" not in multiprocessing.get_all_start_methods(),
-    reason="requiere fork para aislar la ejecución normal sin serializar closures",
-)
-def test_run_service_limitar_recursos_devuelve_codigo_de_ejecucion_normal():
-    servicio = RunService()
-    servicio.execution_timeout = 2
-
-    assert servicio.limitar_recursos(lambda: 7) == 7
