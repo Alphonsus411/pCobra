@@ -10,6 +10,44 @@ features:
       status: full
     rust:
       status: full
+  decorator_support:
+    decorators:
+      dataclase:
+        python: full
+        javascript: full
+        rust: full
+      depreciado:
+        python: full
+        javascript: full
+        rust: full
+      despachar_por_tipo:
+        python: full
+        javascript: full
+        rust: full
+      memoizar:
+        python: full
+        javascript: full
+        rust: full
+      orden_total:
+        python: full
+        javascript: full
+        rust: full
+      reintentar:
+        python: full
+        javascript: full
+        rust: full
+      reintentar_async:
+        python: full
+        javascript: full
+        rust: full
+      sincronizar:
+        python: full
+        javascript: full
+        rust: full
+      temporizar:
+        python: full
+        javascript: full
+        rust: full
 
 
 
