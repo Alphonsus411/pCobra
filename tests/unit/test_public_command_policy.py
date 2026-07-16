@@ -19,6 +19,7 @@ def test_filter_commands_publico_permite_solo_superficie_v2_publica():
             "test",
             "mod",
             "repl",
+            "gui",
             "paquete",
             "hub",
             "interactive",
@@ -27,7 +28,7 @@ def test_filter_commands_publico_permite_solo_superficie_v2_publica():
         ),
         PROFILE_PUBLIC,
     )
-    assert visibles == {"run", "build", "test", "mod", "repl"}
+    assert visibles == {"run", "build", "test", "mod", "repl", "gui"}
 
 
 def test_capas_publicas_v2_separan_visibles_de_registrados():
@@ -70,6 +71,7 @@ def test_public_commands_contract_oficial_v2_no_incluye_alias_legacy():
         "test",
         "mod",
         "repl",
+        "gui",
     )
     assert "interactive" not in PUBLIC_COMMANDS_CONTRACT
 
