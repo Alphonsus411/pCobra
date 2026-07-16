@@ -17,6 +17,15 @@ PUBLIC_BACKENDS: Final[tuple[str, ...]] = (
     "rust",
 )
 
+# Backends históricos conservados únicamente para migración interna controlada.
+INTERNAL_BACKENDS: Final[tuple[str, ...]] = (
+    "go",
+    "cpp",
+    "java",
+    "wasm",
+    "asm",
+)
+
 # Criterio de salida: toda API pública o doc de usuario solo puede listar 3 targets.
 PUBLIC_TARGET_LISTING_LIMIT: Final[int] = 3
 

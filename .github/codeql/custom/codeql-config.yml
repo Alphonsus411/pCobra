@@ -1,8 +1,13 @@
 name: "Custom CodeQL config"
 paths:
-  - backend
-  - frontend
+  - src
+paths-ignore:
+  - 'venv/**'
+  - '.venv/**'
+  - '.venv-release-test/**'
+  - 'venv-testpypi/**'
+  - '**/__pycache__/**'
 queries:
-  - uses: custom/*.ql
-  - uses: custom/missing-codegen-exception.ql
-  - uses: custom/unsafe-eval-exec.ql
+  - uses: ./.github/codeql/custom/ast-no-type-validation.ql
+  - uses: ./.github/codeql/custom/missing-codegen-exception.ql
+  - uses: ./.github/codeql/custom/unsafe-eval-exec.ql
