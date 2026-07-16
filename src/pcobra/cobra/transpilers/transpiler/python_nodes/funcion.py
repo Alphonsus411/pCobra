@@ -90,26 +90,31 @@ def visit_funcion(self, nodo):
             self.codigo += f"{self.obtener_indentacion()}{tp} = TypeVar('{tp}')\n"
     self.codigo += f"{self.obtener_indentacion()}{prefijo} {nodo.nombre}({parametros}):\n"
     self.nivel_indentacion += 1
+    if asincrona:
+        self._async_function_depth += 1
 
-    usa_defer = _contiene_defer(nodo.cuerpo)
-    if not usa_defer:
-        _emitir_cuerpo_funcion(self, nodo.cuerpo)
-        self.nivel_indentacion -= 1
-        return
-
-    nombre_pila = f"__cobra_defer_stack_{self._defer_counter}"
-    self._defer_counter += 1
-    self._defer_stack.append(nombre_pila)
     try:
-        self.usa_contextlib = True
-        self.codigo += (
-            f"{self.obtener_indentacion()}with contextlib.ExitStack() as {nombre_pila}:\n"
-        )
-        self.nivel_indentacion += 1
-        try:
+        usa_defer = _contiene_defer(nodo.cuerpo)
+        if not usa_defer:
             _emitir_cuerpo_funcion(self, nodo.cuerpo)
+            return
+
+        nombre_pila = f"__cobra_defer_stack_{self._defer_counter}"
+        self._defer_counter += 1
+        self._defer_stack.append(nombre_pila)
+        try:
+            self.usa_contextlib = True
+            self.codigo += (
+                f"{self.obtener_indentacion()}with contextlib.ExitStack() as {nombre_pila}:\n"
+            )
+            self.nivel_indentacion += 1
+            try:
+                _emitir_cuerpo_funcion(self, nodo.cuerpo)
+            finally:
+                self.nivel_indentacion -= 1
         finally:
-            self.nivel_indentacion -= 1
+            self._defer_stack.pop()
     finally:
-        self._defer_stack.pop()
+        if asincrona:
+            self._async_function_depth -= 1
         self.nivel_indentacion -= 1

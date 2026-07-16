@@ -154,6 +154,17 @@ cobra = "pcobra.cli:main"
 [tool.black]
 line-length = 88
 target-version = ["py311", "py312", "py313"]
+extend-exclude = '''(?x)(
+  ^docs/frontend/
+  | ^docs/build/
+  | ^venv/
+  | ^\.venv/
+  | ^\.venv-release-test/
+  | ^venv-testpypi/
+  | ^dist/
+  | ^build/
+  | /site-packages/
+)'''
 
 [tool.isort]
 profile = "black"
