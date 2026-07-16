@@ -845,6 +845,25 @@ def test_run_utf8_bom_y_sin_bom_producen_salida_identica(tmp_path, monkeypatch):
 
 
 @pytest.mark.integration
+def test_build_rechaza_programa_semanticamente_invalido_sin_generar_codigo(
+    tmp_path, monkeypatch
+):
+    monkeypatch.setenv("SQLITE_DB_KEY", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=")
+    archivo = tmp_path / "invalido.co"
+    archivo.write_text("imprimir(no_definida)\n", encoding="utf-8")
+
+    out_build, err_build = StringIO(), StringIO()
+    with redirect_stdout(out_build), redirect_stderr(err_build):
+        rc_build = BuildService().run(Namespace(file=str(archivo), debug=False))
+
+    salida_total = out_build.getvalue() + err_build.getvalue()
+    assert rc_build == 1
+    assert "Variable no declarada: no_definida" in salida_total
+    assert "Artefacto Cobra generado" not in salida_total
+    assert "print(no_definida)" not in salida_total
+
+
+@pytest.mark.integration
 def test_build_utf8_bom_y_sin_bom_compilan_sin_token_bom(tmp_path, monkeypatch):
     monkeypatch.setenv("SQLITE_DB_KEY", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=")
     script = 'imprimir("hola")\n'

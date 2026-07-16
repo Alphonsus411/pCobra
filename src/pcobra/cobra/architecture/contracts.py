@@ -14,7 +14,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Final
 
-from pcobra.cobra.architecture.backend_policy import PUBLIC_BACKENDS
+from pcobra.cobra.architecture.backend_policy import INTERNAL_BACKENDS, PUBLIC_BACKENDS
 from pcobra.cobra.bindings.contract import BindingRoute
 
 

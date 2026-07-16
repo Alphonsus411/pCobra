@@ -254,7 +254,7 @@ def test_help_sigue_ruta_de_ayuda_y_lista_comandos_publicos(capsys):
     mock_execute.assert_not_called()
 
     stdout = capsys.readouterr().out.lower()
-    for command in ("run", "build", "test", "mod", "repl"):
+    for command in ("run", "build", "test", "mod", "repl", "gui"):
         assert command in stdout
 
 
