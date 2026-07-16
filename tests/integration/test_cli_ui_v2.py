@@ -36,7 +36,7 @@ def test_cli_ui_v2_help_snapshot_publico_no_expone_legacy():
     )
     expected_snapshot = _leer_snapshot_texto(expected_snapshot)
     assert _normalizar(texto) == _normalizar(expected_snapshot.lower())
-    for command in ("run", "build", "test", "mod", "repl"):
+    for command in ("run", "build", "test", "mod", "repl", "gui"):
         assert f" {command} " in f" {texto} "
     for command in ("installer", "paquete", "hub", "compilar", "ejecutar", "interactive"):
         assert f"\n  {command} " not in texto
@@ -59,7 +59,7 @@ def test_cli_ui_v2_help_publico_no_expone_comandos_internos_con_flag_interno(mon
     commands = registry.register_base_commands(subparsers, ui="v2", profile="public")
     for command in ("installer", "paquete", "hub", "compilar", "ejecutar", "interactive", "legacy"):
         assert command not in commands
-    assert set(commands) == {"run", "build", "test", "mod", "repl"}
+    assert set(commands) == {"run", "build", "test", "mod", "repl", "gui"}
 
 
 def test_cli_ui_v2_sin_flag_no_registra_legacy(monkeypatch):
