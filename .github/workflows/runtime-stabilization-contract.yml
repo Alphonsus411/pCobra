@@ -5,9 +5,9 @@ permissions:
 
 on:
   pull_request:
-    branches: [ work ]
+    branches: [ master ]
   push:
-    branches: [ work ]
+    branches: [ master ]
   workflow_dispatch:
 
 jobs:
