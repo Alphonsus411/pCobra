@@ -140,10 +140,6 @@ def build_legacy_cli_shim_main(ruta_modulo_legacy: str):
 
         from pcobra.cobra.cli.cli import CliApplication
 
-        effective_argv = list(sys.argv[1:] if argv is None else argv)
-        if effective_argv and effective_argv[0] == "repl":
-            return int(import_module("pcobra.cobra.cli.cli").main(argv) or 0)
-
         configure_encoding()
         previous_profile = os.environ.get("COBRA_CLI_COMMAND_PROFILE")
         if previous_profile is None:
