@@ -147,6 +147,14 @@ def resolve_backend_runtime(
     return resolution, runtime_context
 
 
+def _validar_semantica_build(ast: Any) -> None:
+    """Valida semántica estática antes de generar artefactos de build."""
+
+    from pcobra.cobra.semantico import AnalizadorSemantico
+
+    AnalizadorSemantico().analizar(ast)
+
+
 def transpile(
     ast: Any,
     backend: str,
@@ -188,6 +196,7 @@ def build(source: str, hints: dict[str, Any] | None = None) -> dict[str, Any]:
 
     resolution, runtime_context = resolve_backend_runtime(source_file, context)
     ast = obtener_ast(codigo)
+    _validar_semantica_build(ast)
     code = transpile(
         ast,
         resolution.backend,
