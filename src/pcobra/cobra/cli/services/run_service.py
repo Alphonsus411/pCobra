@@ -1,5 +1,7 @@
-import logging
 from argparse import ArgumentTypeError
+import logging
+import multiprocessing
+from queue import Empty
 from pathlib import Path
 from typing import Any
 
@@ -134,7 +136,39 @@ class RunService:
         return resolved_path
 
     def limitar_recursos(self, funcion: Any) -> int:
-        return funcion()
+        if "fork" not in multiprocessing.get_all_start_methods():
+            return funcion()
+
+        contexto = multiprocessing.get_context("fork")
+        resultados = contexto.Queue(maxsize=1)
+
+        def ejecutar_en_hijo() -> None:
+            try:
+                resultados.put(("ok", funcion()))
+            except BaseException as exc:  # pragma: no cover - propagación defensiva
+                resultados.put(("error", exc))
+
+        proceso = contexto.Process(target=ejecutar_en_hijo)
+        proceso.start()
+        proceso.join(self.execution_timeout)
+
+        if proceso.is_alive():
+            proceso.terminate()
+            proceso.join()
+            raise TimeoutError("Tiempo de ejecución agotado")
+
+        try:
+            estado, resultado = resultados.get_nowait()
+        except Empty:
+            if proceso.exitcode == 0:
+                return 0
+            raise RuntimeError(
+                f"El proceso de ejecución terminó con código {proceso.exitcode}"
+            )
+
+        if estado == "error":
+            raise resultado
+        return int(resultado)
 
     def ejecutar_en_sandbox(
         self,
