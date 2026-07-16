@@ -125,14 +125,45 @@ def build_legacy_cli_shim_main(ruta_modulo_legacy: str):
     modulo_pcobra_cli._activar_compatibilidad_legacy_si_corresponde(ruta_modulo_legacy)
 
     modulo_cli_canonico = get_cli_module()
-    modulo_main = import_module("pcobra.cobra.cli.cli").main
     for alias in aliases_extra:
         if alias == "cli":
             sys.modules.setdefault(alias, sys.modules.get(alias, sys.modules[__name__]))
             continue
         if alias == "cli.cli":
             sys.modules.setdefault(alias, modulo_cli_canonico)
-    return modulo_main
+
+    if ruta_modulo_legacy != "cli.cli":
+        return import_module("pcobra.cobra.cli.cli").main
+
+    def _legacy_main(argv: Optional[List[str]] = None) -> int:
+        """Ejecuta wrappers históricos con la superficie v1/development."""
+
+        from pcobra.cobra.cli.cli import CliApplication
+
+        effective_argv = list(sys.argv[1:] if argv is None else argv)
+        if effective_argv and effective_argv[0] == "repl":
+            return int(import_module("pcobra.cobra.cli.cli").main(argv) or 0)
+
+        configure_encoding()
+        previous_profile = os.environ.get("COBRA_CLI_COMMAND_PROFILE")
+        if previous_profile is None:
+            os.environ["COBRA_CLI_COMMAND_PROFILE"] = "development"
+        try:
+            try:
+                configurar_entorno()
+            except RuntimeError as exc:
+                logger.error("%s", exc)
+                return 1
+            application = CliApplication()
+            application._selected_ui = "v1"
+            return int(application.run(argv) or 0)
+        finally:
+            if previous_profile is None:
+                os.environ.pop("COBRA_CLI_COMMAND_PROFILE", None)
+            else:
+                os.environ["COBRA_CLI_COMMAND_PROFILE"] = previous_profile
+
+    return _legacy_main
 
 
 def _bootstrap_path_opt_in_value() -> str:

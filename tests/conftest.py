@@ -22,6 +22,14 @@ for path in (SRC_ROOT, PCOBRA_PATH):
     if path.exists() and str(path) not in sys.path:
         sys.path.insert(0, str(path))
 
+BIN_ROOT = REPO_ROOT / "scripts" / "bin"
+if BIN_ROOT.exists():
+    current_path = os.environ.get("PATH", "")
+    bin_root_str = str(BIN_ROOT)
+    path_entries = current_path.split(os.pathsep) if current_path else []
+    if bin_root_str not in path_entries:
+        os.environ["PATH"] = os.pathsep.join([bin_root_str, *path_entries])
+
 # Carga opcionalmente el paquete principal para mantener compatibilidad
 try:  # nosec B001
     import pcobra  # noqa: F401

@@ -9,6 +9,7 @@ import warnings
 from pathlib import Path
 from typing import Mapping, Optional
 from pcobra.cobra.usar_loader import usar_modulo
+from pcobra.cobra.usar_policy import USAR_COBRA_PUBLIC_MODULES
 
 from .lexer import (
     Token,
@@ -160,6 +161,39 @@ _ERRORES_USUARIO_ELEMENTO: dict[type[Exception], set[str]] = {
 def _usar_detalle_habilitado() -> bool:
     """Determina si `usar` puede exponer detalles extendidos en salida de error."""
     return _runtime_debug_enabled() or InterpretadorCobra._debug_trazas_habilitadas()
+
+
+def _resumir_modulos_permitidos_usar(limite: int = 10) -> str:
+    """Devuelve una lista corta de módulos públicos para errores de usuario."""
+
+    return ", ".join(USAR_COBRA_PUBLIC_MODULES[:limite])
+
+
+def _error_usuario_modulo_fuera_catalogo(
+    modulo: str,
+    detalle: Exception,
+    *,
+    repl_estricto: bool,
+    incluir_detalle: bool,
+) -> PermissionError:
+    """Crea un PermissionError corto y conserva el detalle técnico como nota."""
+
+    if repl_estricto:
+        mensaje = (
+            f"Importación no permitida en 'usar': '{modulo}'. "
+            "Es un módulo backend/no canónico y no forma parte de la API pública. "
+            f"Módulos permitidos: {_resumir_modulos_permitidos_usar()}."
+        )
+    else:
+        mensaje = formatear_error_usar_usuario("modulo_fuera_catalogo", modulo)
+
+    if incluir_detalle:
+        mensaje = f"{mensaje} {USAR_NON_PUBLIC_MODULE_ERROR}. Detalle: {detalle}"
+
+    error = PermissionError(mensaje)
+    if not incluir_detalle:
+        error.add_note(str(detalle))
+    return error
 
 
 def _runtime_debug_enabled() -> bool:
@@ -561,6 +595,8 @@ class InterpretadorCobra:
         self._usar_module_cache: dict[Path, dict[str, object]] = {}
         self._usar_loading_stack: list[Path] = []
         self._import_ast_cache: dict[Path, list[object]] = {}
+        self._import_execution_stack: list[Path] = []
+        self._imported_module_paths: set[Path] = set()
         # Debe ejecutarse siempre después de crear _validador y _usar_symbol_metadata.
         self.asegurar_estado_runtime_inicial()
 
@@ -2400,6 +2436,15 @@ class InterpretadorCobra:
         ruta_canonica = ruta.resolve(strict=False)
         ast_cache = self._import_ast_cache
 
+        if ruta_canonica in self._import_execution_stack:
+            inicio_ciclo = self._import_execution_stack.index(ruta_canonica)
+            ciclo = [*self._import_execution_stack[inicio_ciclo:], ruta_canonica]
+            cadena = " -> ".join(ruta.name for ruta in ciclo)
+            raise ImportError(f"Ciclo de módulos detectado en import: {cadena}")
+
+        if ruta_canonica in self._imported_module_paths:
+            return
+
         if ruta_canonica in ast_cache:
             ast = ast_cache[ruta_canonica]
         else:
@@ -2484,8 +2529,11 @@ class InterpretadorCobra:
                 )
 
             raise NameError(
+                f"No se puede usar '{modulo}': "
+                "hay conflicto de símbolos en el contexto actual. "
+                f"Símbolo conflictivo: {simbolo}. "
                 f"No se puede usar el módulo '{modulo}': "
-                f"conflicto de símbolos; colisión estructurada={detalle}"
+                f"colisión estructurada={detalle}"
             )
         self._inyectar_simbolos_usar_en_contexto(
             simbolos_saneados,
@@ -2518,18 +2566,31 @@ class InterpretadorCobra:
             self._inyectar_exports_modulo_proyecto(exports)
         except Exception as exc:
             detalle_usar_habilitado = _usar_detalle_habilitado()
+            exc_usuario = exc
+            if (
+                isinstance(exc, PermissionError)
+                and "usar_error[modulo_fuera_catalogo_publico]" in str(exc)
+            ):
+                exc_usuario = _error_usuario_modulo_fuera_catalogo(
+                    nombre_modulo_limpio,
+                    exc,
+                    repl_estricto=self._repl_usar_alias_map is not None,
+                    incluir_detalle=detalle_usar_habilitado,
+                )
             if detalle_usar_habilitado:
-                logging.exception("Error al usar el módulo '%s': %s", nodo.modulo, exc)
+                logging.exception("Error al usar el módulo '%s': %s", nodo.modulo, exc_usuario)
             else:
                 logging.debug(
                     "Error esperado al usar módulo %s: %s",
                     nodo.modulo,
-                    exc,
+                    exc_usuario,
                 )
             if isinstance(
                 exc,
                 (ImportError, PermissionError, ValueError, NameError, FileNotFoundError),
             ):
+                if exc_usuario is not exc:
+                    raise exc_usuario from exc
                 raise
             raise ImportError(
                 formatear_error_usar_usuario("carga_modulo_error", nodo.modulo)

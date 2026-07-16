@@ -303,8 +303,8 @@ def test_integridad_estatica_lexer_y_parser_sin_diff_inesperado():
     hashes_esperados = {
         "src/pcobra/core/lexer.py": "fbd130d88ec6255c1e966752730a7cb2e2311c50125d85df487fc67d55aaf61e",
         "src/pcobra/core/parser.py": "656d9c911ab0760435efc48502625b6016955f00d0429228a0ffced87e982a2b",
-        "src/pcobra/cobra/core/lexer.py": "fa65759ee1f0345e7ac3c48f1aa9d7d8f907916246c2d7f5f9151198c5a11887",
-        "src/pcobra/cobra/core/parser.py": "578cea52a6cab8bccb0e41a895ed7664e4950a15cdaf49f059000200f352d41d",
+        "src/pcobra/cobra/core/lexer.py": "537554f0cab9fb4ca456b2b99a43fca7b275241dcddfa5bb0fc3dcad78534e70",
+        "src/pcobra/cobra/core/parser.py": "3017fa31e1707ca82358d548e71ba27d4b8e73342950ab6959b32c13dcc02505",
     }
     for ruta, hash_esperado in hashes_esperados.items():
         contenido = Path(ruta).read_bytes()

@@ -778,7 +778,7 @@ def test_holobit_corelib_exporta_solo_simbolos_canonicos_publicos():
 
 
 @pytest.mark.parametrize("modulo", sorted(REPL_COBRA_MODULE_MAP.keys()))
-def test_repl_contract_pipeline_completo_por_modulo_canonico(monkeypatch, modulo):
+def test_repl_contract_pipeline_completo_por_modulo_canonico(monkeypatch, tmp_path, modulo):
     mod = ModuleType(modulo)
     expected_symbols = []
 
@@ -1012,6 +1012,90 @@ def test_repl_contract_pipeline_completo_por_modulo_canonico(monkeypatch, modulo
             interp.contextos[-1].values[symbol]()
         elif modulo == "tiempo" and symbol == "ahora":
             interp.contextos[-1].values[symbol]()
+        elif modulo == "argumentos" and symbol == "contiene_flag":
+            interp.contextos[-1].values[symbol]("debug", ["--debug"])
+        elif modulo == "argumentos" and symbol == "obtener_opcion":
+            interp.contextos[-1].values[symbol]("salida", ["--salida", "out"])
+        elif modulo == "compresion" and symbol == "crear_zip":
+            fuente = tmp_path / "fuente.txt"
+            fuente.write_text("cobra", encoding="utf-8")
+            interp.contextos[-1].values[symbol](tmp_path / "archivo.zip", [fuente])
+        elif modulo == "compresion" and symbol == "extraer_zip":
+            fuente = tmp_path / "fuente.txt"
+            fuente.write_text("cobra", encoding="utf-8")
+            zip_path = tmp_path / "archivo.zip"
+            interp.contextos[-1].values["crear_zip"](zip_path, [fuente])
+            interp.contextos[-1].values[symbol](zip_path, tmp_path / "extraido")
+        elif modulo == "compresion" and symbol == "listar_zip":
+            fuente = tmp_path / "fuente.txt"
+            fuente.write_text("cobra", encoding="utf-8")
+            zip_path = tmp_path / "archivo.zip"
+            interp.contextos[-1].values["crear_zip"](zip_path, [fuente])
+            interp.contextos[-1].values[symbol](zip_path)
+        elif modulo == "configuracion" and symbol == "leer_toml":
+            config = tmp_path / "cobra.toml"
+            config.write_text("[proyecto]\nnombre = 'cobra'\n", encoding="utf-8")
+            interp.contextos[-1].values[symbol](config)
+        elif modulo == "configuracion" and symbol == "leer_ini":
+            config = tmp_path / "cobra.ini"
+            config.write_text("[proyecto]\nnombre = cobra\n", encoding="utf-8")
+            interp.contextos[-1].values[symbol](config)
+        elif modulo == "configuracion" and symbol == "leer_configuracion":
+            config = tmp_path / "cobra.toml"
+            config.write_text("[proyecto]\nnombre = 'cobra'\n", encoding="utf-8")
+            interp.contextos[-1].values[symbol](config)
+        elif modulo == "cripto" and symbol in {"sha256", "sha512"}:
+            interp.contextos[-1].values[symbol]("cobra")
+        elif modulo == "cripto" and symbol == "comparar_seguro":
+            interp.contextos[-1].values[symbol]("cobra", "cobra")
+        elif modulo == "proceso" and symbol in {"ejecutar", "capturar"}:
+            interp.contextos[-1].values[symbol](["python", "--version"])
+        elif modulo == "proceso" and symbol == "codigo_salida":
+            interp.contextos[-1].values[symbol]({"codigo": 0})
+        elif modulo == "proceso" and symbol == "salida":
+            interp.contextos[-1].values[symbol]({"salida": "cobra"})
+        elif modulo == "proceso" and symbol == "errores":
+            interp.contextos[-1].values[symbol]({"error": ""})
+        elif modulo == "pruebas" and symbol == "igual":
+            interp.contextos[-1].values[symbol](1, 1)
+        elif modulo == "pruebas" and symbol == "verdadero":
+            interp.contextos[-1].values[symbol](True)
+        elif modulo == "pruebas" and symbol == "falso":
+            interp.contextos[-1].values[symbol](False)
+        elif modulo == "pruebas" and symbol == "contiene":
+            interp.contextos[-1].values[symbol]([1], 1)
+        elif modulo == "pruebas" and symbol == "lanza_error":
+            interp.contextos[-1].values[symbol](lambda: (_ for _ in ()).throw(ValueError()), ValueError)
+        elif modulo == "regex" and symbol in {"buscar", "coincidir", "dividir", "encontrar_todos"}:
+            interp.contextos[-1].values[symbol]("co", "cobra")
+        elif modulo == "regex" and symbol == "reemplazar":
+            interp.contextos[-1].values[symbol]("co", "Co", "cobra")
+        elif modulo == "registro" and symbol in {"debug", "info", "aviso", "error"}:
+            interp.contextos[-1].values[symbol]("mensaje")
+        elif modulo == "ruta" and symbol == "unir":
+            interp.contextos[-1].values[symbol]("cobra", "mod")
+        elif modulo == "ruta" and symbol in {"normalizar", "nombre", "extension", "padre", "existe", "es_absoluta", "absoluta", "relativa"}:
+            interp.contextos[-1].values[symbol]("cobra/mod.co")
+        elif modulo == "serializacion" and symbol == "codificar_json":
+            interp.contextos[-1].values[symbol]({"cobra": True})
+        elif modulo == "serializacion" and symbol == "decodificar_json":
+            interp.contextos[-1].values[symbol]('{"cobra": true}')
+        elif modulo == "serializacion" and symbol == "leer_json":
+            ruta_json = tmp_path / "datos.json"
+            ruta_json.write_text('{"cobra": true}', encoding="utf-8")
+            interp.contextos[-1].values[symbol](ruta_json)
+        elif modulo == "serializacion" and symbol == "escribir_json":
+            interp.contextos[-1].values[symbol](tmp_path / "datos.json", {"cobra": True})
+        elif modulo == "serializacion" and symbol == "leer_csv":
+            ruta_csv = tmp_path / "datos.csv"
+            ruta_csv.write_text("nombre\ncobra\n", encoding="utf-8")
+            interp.contextos[-1].values[symbol](ruta_csv)
+        elif modulo == "serializacion" and symbol == "escribir_csv":
+            interp.contextos[-1].values[symbol](tmp_path / "datos.csv", [{"nombre": "cobra"}])
+        elif modulo == "temporal" and symbol == "limpiar":
+            temporal = tmp_path / "temporal.txt"
+            temporal.write_text("cobra", encoding="utf-8")
+            interp.contextos[-1].values[symbol](temporal)
         else:
             # Para funciones sin argumentos o con argumentos por defecto
             interp.contextos[-1].values[symbol]()

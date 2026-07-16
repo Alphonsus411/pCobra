@@ -312,6 +312,12 @@ PARTIAL_CONTRACT_ERROR_MARKERS: Final[dict[str, dict[str, tuple[str, ...]]]] = {
         "graficar": ("runtime de inspección/diagnóstico", "TRAP"),
     },
 }
+
+OFFICIAL_PARTIAL_CONTRACT_ERROR_MARKERS: Final[dict[str, dict[str, tuple[str, ...]]]] = {
+    backend: PARTIAL_CONTRACT_ERROR_MARKERS[backend]
+    for backend in TRANSPILERS
+    if backend in PARTIAL_CONTRACT_ERROR_MARKERS
+}
 RUNTIME_HOOK_EXPECTATIONS: Final[dict[str, tuple[str, ...]]] = {
     "python": ("def cobra_holobit", "def cobra_proyectar", "def cobra_transformar", "def cobra_graficar"),
     "javascript": ("function cobra_holobit", "function cobra_proyectar", "function cobra_transformar", "function cobra_graficar"),

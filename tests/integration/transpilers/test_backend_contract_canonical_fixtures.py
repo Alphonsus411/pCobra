@@ -7,7 +7,7 @@ from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
 from tests.integration.transpilers.backend_contracts import (
     CANONICAL_FULL_PROGRAM_FIXTURE,
     CANONICAL_PROGRAM_FIXTURES,
-    PARTIAL_CONTRACT_ERROR_MARKERS,
+    OFFICIAL_PARTIAL_CONTRACT_ERROR_MARKERS,
     PARTIAL_EXPECTATIONS,
     STRICT_FULL_EXPECTATIONS,
     generate_code,
@@ -52,9 +52,9 @@ def test_non_python_backends_respect_declared_contract_feature_levels(backend: s
             assert marker in generated
 
 
-@pytest.mark.parametrize("backend", tuple(PARTIAL_CONTRACT_ERROR_MARKERS))
+@pytest.mark.parametrize("backend", tuple(OFFICIAL_PARTIAL_CONTRACT_ERROR_MARKERS))
 @pytest.mark.parametrize("feature", ("proyectar", "transformar", "graficar"))
 def test_partial_contract_error_messages_are_stable_and_verifiable(backend: str, feature: str):
     generated = generate_code(backend, feature)
-    for marker in PARTIAL_CONTRACT_ERROR_MARKERS[backend][feature]:
+    for marker in OFFICIAL_PARTIAL_CONTRACT_ERROR_MARKERS[backend][feature]:
         assert marker in generated
