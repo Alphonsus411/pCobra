@@ -83,17 +83,17 @@ def construir_script_sandbox_canonico(
         "from pcobra.cobra.cli.execution_pipeline import prevalidar_y_parsear_codigo\n"
         "from pcobra.cobra.cli.execution_pipeline import construir_interprete_seguro_canonico\n"
         "from pcobra.cobra.core.runtime import InterpretadorCobra\n"
-        f"_ast = prevalidar_y_parsear_codigo({codigo!r})\n"
-        f"_interp = construir_interprete_seguro_canonico(interpretador_cls=InterpretadorCobra{kwargs_fragment})\n"
-        "_resultado = _interp.ejecutar_ast(_ast)\n"
+        f"cobra_ast = prevalidar_y_parsear_codigo({codigo!r})\n"
+        f"cobra_interp = construir_interprete_seguro_canonico(interpretador_cls=InterpretadorCobra{kwargs_fragment})\n"
+        "cobra_resultado = cobra_interp.ejecutar_ast(cobra_ast)\n"
     )
     if imprimir_resultado:
         script += (
-            "if _resultado is not None:\n"
-            "    if isinstance(_resultado, bool):\n"
-            "        print('verdadero' if _resultado else 'falso')\n"
+            "if cobra_resultado is not None:\n"
+            "    if isinstance(cobra_resultado, bool):\n"
+            "        print('verdadero' if cobra_resultado else 'falso')\n"
             "    else:\n"
-            "        print(_resultado)\n"
+            "        print(cobra_resultado)\n"
         )
     return script
 

@@ -831,15 +831,25 @@ def usar_modulo(
                 nombre_validado_oficial,
                 conflictos,
             )
+        _rechazar_conflictos_duros_saneamiento_usar(conflictos)
         if not simbolos_saneados:
             raise ImportError(f"No se encontraron símbolos exportables para usar '{nombre_validado_oficial}'.")
         return _construir_exports_usar(simbolos_saneados, metadata_por_simbolo)
     except PermissionError as permiso_exc:
         wrapper = sys.modules.get("pcobra.core.usar_loader") or sys.modules.get("core.usar_loader")
         wrapper_obtener = getattr(wrapper, "obtener_modulo", None)
-        if not (
+        wrapper_obtener_oficial = getattr(wrapper, "obtener_modulo_cobra_oficial", None)
+        wrapper_legacy = (
             wrapper_obtener is not None
             and getattr(wrapper_obtener, "__module__", "") != "pcobra.core.usar_loader"
+        )
+        wrapper_oficial_legacy = (
+            wrapper_obtener_oficial is not None
+            and getattr(wrapper_obtener_oficial, "__module__", "")
+            != "pcobra.core.usar_loader"
+        )
+        if not (
+            wrapper_legacy or wrapper_oficial_legacy
         ):
             try:
                 segmentos_proyecto = validar_nombre_modulo_cobra_proyecto(nombre_raw)
@@ -854,11 +864,18 @@ def usar_modulo(
                 else descubrir_raiz_proyecto(current, current)
             )
             ruta_proyecto = root.joinpath(*segmentos_proyecto).with_suffix(".co")
-            if not ruta_proyecto.exists():
+            if current is not None and ruta_proyecto.resolve() == current.resolve():
+                raise permiso_exc
+            if not ruta_proyecto.exists() and not str(permiso_exc).startswith(
+                "usar_error[modulo_fuera_catalogo_publico]"
+            ):
                 raise permiso_exc
         else:
             try:
-                modulo = wrapper_obtener(nombre_raw)
+                if wrapper_oficial_legacy:
+                    modulo = wrapper_obtener_oficial(nombre_raw)
+                else:
+                    modulo = wrapper_obtener(nombre_raw)
                 simbolos_saneados, metadata_por_simbolo, conflictos = _sanitizar_exports_publicos_detallado(
                     modulo,
                     normalizar_nombre_usar(nombre_raw),
@@ -869,10 +886,11 @@ def usar_modulo(
                         nombre_raw,
                         conflictos,
                     )
+                _rechazar_conflictos_duros_saneamiento_usar(conflictos)
                 if not simbolos_saneados:
                     raise ImportError(f"No se encontraron símbolos exportables para usar '{nombre_raw}'.")
                 return _construir_exports_usar(simbolos_saneados, metadata_por_simbolo)
-            except Exception:
+            except ModuleNotFoundError:
                 raise permiso_exc
     except (ModuleNotFoundError, ValueError):
         # Si no es un módulo oficial o no está permitido, intentar como módulo de proyecto
@@ -1081,6 +1099,26 @@ def _sanitizar_exports_publicos_detallado(modulo: object, alias_modulo: str) -> 
         )
 
     return simbolos_saneados, metadata_por_simbolo, conflictos
+
+
+def _rechazar_conflictos_duros_saneamiento_usar(
+    conflictos: list[dict[str, Any]],
+) -> None:
+    """Convierte rechazos duros de saneamiento en errores bloqueantes."""
+
+    codigos_bloqueantes = {"cobra_public_equivalent", "private_prefix"}
+    conflictos_bloqueantes = [
+        conflicto
+        for conflicto in conflictos
+        if conflicto.get("code") in codigos_bloqueantes
+    ]
+    if not conflictos_bloqueantes:
+        return
+
+    simbolos = ", ".join(
+        str(conflicto.get("symbol")) for conflicto in conflictos_bloqueantes
+    )
+    raise ImportError(f"rechazos de saneamiento en usar: {simbolos}")
 
 
 def sanitizar_exports_publicos(
