@@ -5,7 +5,7 @@ import argparse
 from pcobra.cobra.architecture.backend_policy import PUBLIC_BACKENDS
 from pcobra.cobra.cli.cli import AppConfig, CommandRegistry
 
-EXPECTED_PUBLIC_V2_COMMANDS = {"run", "build", "test", "mod", "repl"}
+EXPECTED_PUBLIC_V2_COMMANDS = {"run", "build", "test", "mod", "repl", "gui"}
 EXPECTED_DEVELOPMENT_COMPAT_COMMANDS = {"installer", "paquete", "hub"}
 
 

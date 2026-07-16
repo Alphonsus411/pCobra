@@ -252,6 +252,7 @@ class TranspiladorPython(BaseTranspiler):
         self.usa_typing = False
         self.usa_contextlib = False
         self.nivel_indentacion = 0
+        self._async_function_depth = 0
         self._defer_stack: list[str] = []
         self._defer_counter = 0
         self.source_file = self._normalizar_ruta_contexto(source_file)

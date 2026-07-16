@@ -1,3 +1,5 @@
+import pytest
+
 from pcobra.cobra.build import backend_pipeline
 
 
@@ -23,6 +25,7 @@ def test_backend_pipeline_build_expone_contexto_runtime(monkeypatch):
         ),
     )
     monkeypatch.setattr(backend_pipeline, "obtener_ast", lambda _codigo: ["ast"])
+    monkeypatch.setattr(backend_pipeline, "_validar_semantica_build", lambda _ast: None)
     monkeypatch.setattr(backend_pipeline, "_official_transpilers", lambda: {"python": _DummyTranspiler})
 
     result = backend_pipeline.build("imprimir(1)", hints={"preferred_backend": "python"})
@@ -50,6 +53,7 @@ def test_backend_pipeline_build_expone_reason_solo_en_debug(monkeypatch):
         ),
     )
     monkeypatch.setattr(backend_pipeline, "obtener_ast", lambda _codigo: ["ast"])
+    monkeypatch.setattr(backend_pipeline, "_validar_semantica_build", lambda _ast: None)
     monkeypatch.setattr(backend_pipeline, "_official_transpilers", lambda: {"python": _DummyTranspiler})
 
     result = backend_pipeline.build("imprimir(1)", hints={"preferred_backend": "python", "debug": True})
@@ -72,3 +76,25 @@ def test_backend_pipeline_resolve_backend_envia_scope_migracion(monkeypatch):
     )
 
     assert captured["route_scope"] == "internal_migration"
+
+
+def test_backend_pipeline_build_rechaza_programa_semanticamente_invalido(monkeypatch):
+    monkeypatch.setattr(
+        backend_pipeline,
+        "resolve_backend_runtime",
+        lambda source, hints=None: (
+            type("R", (), {"backend": "python", "reason": "test"})(),
+            {"language": "python"},
+        ),
+    )
+
+    def fail_transpile(*_args, **_kwargs):
+        raise AssertionError("build no debe transpilar AST semánticamente inválido")
+
+    monkeypatch.setattr(backend_pipeline, "transpile", fail_transpile)
+
+    with pytest.raises(NameError, match="Variable no declarada: no_definida"):
+        backend_pipeline.build(
+            "imprimir(no_definida)",
+            hints={"preferred_backend": "python"},
+        )

@@ -33,6 +33,7 @@ def test_backend_pipeline_build_lee_archivo_antes_de_obtener_ast(monkeypatch, tm
 
     monkeypatch.setattr(backend_pipeline, "read_cobra_source", fake_read_cobra_source)
     monkeypatch.setattr(backend_pipeline, "obtener_ast", fake_obtener_ast)
+    monkeypatch.setattr(backend_pipeline, "_validar_semantica_build", lambda _ast: None)
     monkeypatch.setattr(
         backend_pipeline,
         "resolve_backend_runtime",
