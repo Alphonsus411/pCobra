@@ -198,8 +198,9 @@ class AppConfig:
         ),
         CommandClassRoute("pcobra.cobra.cli.commands.package_cmd", "PaqueteCommand"),
         CommandClassRoute("pcobra.cobra.cli.commands.hub_cmd", "HubCommand"),
-        # `repl` forma parte del contrato público oficial de CLI v2 (no alias legacy).
+        # `repl` y `gui` son comandos públicos oficiales de CLI v2 (no aliases legacy).
         CommandClassRoute("pcobra.cobra.cli.commands_v2.repl_cmd", "ReplCommandV2"),
+        CommandClassRoute("pcobra.cobra.cli.commands.flet_cmd", "FletCommand"),
     ]
     V2_COMMAND_CLASSES: List[Type[BaseCommand]] = []
 
@@ -271,6 +272,7 @@ class CommandRegistry:
             "TestCommandV2": "test",
             "ModCommandV2": "mod",
             "ReplCommandV2": "repl",
+            "FletCommand": "gui",
             "InstallerCommandV2": "installer",
             "PaqueteCommand": "paquete",
             "HubCommand": "hub",
@@ -891,7 +893,7 @@ class CliApplication:
         if not self.parser or not self.command_registry:
             raise RuntimeError("Application not properly initialized")
 
-        self._selected_ui = "v2"
+        self._selected_ui = getattr(self, "_selected_ui", "v2") or "v2"
         if any(token in {"-h", "--help", "--ayuda"} for token in argv):
             configure_plugin_policy(safe_mode=True, allowlist="")
             self._ensure_command_structure()
@@ -951,7 +953,7 @@ class CliApplication:
         raise RuntimeError(
             "Perfil público bloqueado por rutas legacy/internal migration only: "
             f"{', '.join(blocked_routes)}. "
-            "Use CLI v2 pública (run/build/test/mod/repl) y enrute por "
+            "Use CLI v2 pública (run/build/test/mod/repl/gui) y enrute por "
             f"{USER_ROUTE_BACKEND_ENTRYPOINT}."
         )
 
