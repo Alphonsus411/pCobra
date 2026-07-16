@@ -75,9 +75,14 @@ class BuildOrchestrator:
         )
 
         if normalized_preferred is not None:
+            reason = (
+                "preferencia explícita (migración interna)"
+                if route_scope == "internal_migration"
+                else "preferencia explícita (legacy/CLI)"
+            )
             return BackendResolution(
                 backend=normalized_preferred,
-                reason="preferencia explícita (legacy/CLI)",
+                reason=reason,
             )
 
         ordered_candidates = self._ordered_candidates(
