@@ -2489,6 +2489,9 @@ class InterpretadorCobra:
                 )
 
             raise NameError(
+                f"No se puede usar '{modulo}': "
+                "hay conflicto de símbolos en el contexto actual. "
+                f"Símbolo conflictivo: {simbolo}. "
                 f"No se puede usar el módulo '{modulo}': "
                 f"colisión estructurada={detalle}"
             )
