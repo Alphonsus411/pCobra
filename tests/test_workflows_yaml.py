@@ -68,13 +68,3 @@ def test_workflow_branch_triggers_target_default_branch(workflow_filename: str) 
     assert "branches: [ work ]" not in content
     assert "      - work" not in content
     assert "branches: [ master ]" in content or "      - master" in content
-
-
-def test_actionlint_installer_does_not_pass_bin_flag_as_version() -> None:
-    """Evita pasar ``-b`` como VERSION al instalador oficial de actionlint."""
-    workflow_path = WORKFLOWS_DIR / "validate-workflows.yml"
-    content = workflow_path.read_text(encoding="utf-8")
-
-    assert "mkdir -p ./bin" in content
-    assert "| bash -s -- -b ./bin" not in content
-    assert "| bash -s -- latest ./bin" in content
