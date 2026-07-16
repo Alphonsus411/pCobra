@@ -20,8 +20,9 @@ jobs:
 
       - name: Instalar actionlint
         run: |
+          mkdir -p ./bin
           curl -sSfL https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash \
-            | bash -s -- -b ./bin
+            | bash -s -- latest ./bin
 
       - name: Analizar workflows
         run: ./bin/actionlint -color
