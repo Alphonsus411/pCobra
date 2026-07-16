@@ -113,6 +113,8 @@ class RunService:
             )
 
         try:
+            if contenedor:
+                return ejecutar()
             return self.limitar_recursos(ejecutar)
         except TimeoutError as e:
             mostrar_error(str(e), registrar_log=False)
