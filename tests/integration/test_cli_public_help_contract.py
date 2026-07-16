@@ -27,7 +27,7 @@ def _public_env() -> dict[str, str]:
 
 
 def test_cli_public_commands_contract_is_stable():
-    assert PUBLIC_COMMANDS == ("run", "build", "test", "mod", "repl")
+    assert PUBLIC_COMMANDS == ("run", "build", "test", "mod", "repl", "gui")
 
 
 def test_cli_public_commands_contract_keeps_repl_as_official_command():
@@ -98,7 +98,7 @@ def test_cli_help_public_contract_snapshot():
     assert " ".join(result.stdout.lower().split()) == " ".join(
         expected_snapshot.lower().split()
     )
-    for command in ("run", "build", "test", "mod", "repl"):
+    for command in ("run", "build", "test", "mod", "repl", "gui"):
         assert f" {command} " in f" {result.stdout.lower()} "
     for command in ("installer", "paquete", "hub"):
         assert f" {command} " not in f" {result.stdout.lower()} "
@@ -181,7 +181,7 @@ def test_cli_help_public_contract_muestra_warning_migracion_en_comando_legacy():
     lower_output = result.stderr.lower() + result.stdout.lower()
     assert "invalid choice: 'compilar'" in lower_output
     choices_message = lower_output.split("invalid choice: 'compilar'", 1)[1]
-    for command in ("run", "build", "test", "mod", "repl"):
+    for command in ("run", "build", "test", "mod", "repl", "gui"):
         assert command in choices_message
     for command in ("installer", "paquete", "hub"):
         assert command not in choices_message

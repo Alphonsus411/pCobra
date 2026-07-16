@@ -561,6 +561,8 @@ class InterpretadorCobra:
         self._usar_module_cache: dict[Path, dict[str, object]] = {}
         self._usar_loading_stack: list[Path] = []
         self._import_ast_cache: dict[Path, list[object]] = {}
+        self._import_execution_stack: list[Path] = []
+        self._imported_module_paths: set[Path] = set()
         # Debe ejecutarse siempre después de crear _validador y _usar_symbol_metadata.
         self.asegurar_estado_runtime_inicial()
 
@@ -2400,6 +2402,15 @@ class InterpretadorCobra:
         ruta_canonica = ruta.resolve(strict=False)
         ast_cache = self._import_ast_cache
 
+        if ruta_canonica in self._import_execution_stack:
+            inicio_ciclo = self._import_execution_stack.index(ruta_canonica)
+            ciclo = [*self._import_execution_stack[inicio_ciclo:], ruta_canonica]
+            cadena = " -> ".join(ruta.name for ruta in ciclo)
+            raise ImportError(f"Ciclo de módulos detectado en import: {cadena}")
+
+        if ruta_canonica in self._imported_module_paths:
+            return
+
         if ruta_canonica in ast_cache:
             ast = ast_cache[ruta_canonica]
         else:
@@ -2484,8 +2495,11 @@ class InterpretadorCobra:
                 )
 
             raise NameError(
+                f"No se puede usar '{modulo}': "
+                "hay conflicto de símbolos en el contexto actual. "
+                f"Símbolo conflictivo: {simbolo}. "
                 f"No se puede usar el módulo '{modulo}': "
-                f"conflicto de símbolos; colisión estructurada={detalle}"
+                f"colisión estructurada={detalle}"
             )
         self._inyectar_simbolos_usar_en_contexto(
             simbolos_saneados,
