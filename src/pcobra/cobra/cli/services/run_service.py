@@ -1,10 +1,7 @@
 from argparse import ArgumentTypeError
-import contextlib
-import io
 import logging
 import multiprocessing
 from queue import Empty
-import sys
 from pathlib import Path
 from typing import Any
 
@@ -148,14 +145,10 @@ class RunService:
         resultados = contexto.Queue(maxsize=1)
 
         def ejecutar_en_hijo() -> None:
-            stdout = io.StringIO()
-            stderr = io.StringIO()
             try:
-                with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
-                    resultado = funcion()
-                resultados.put(("ok", resultado, stdout.getvalue(), stderr.getvalue()))
+                resultados.put(("ok", funcion()))
             except BaseException as exc:  # pragma: no cover - propagación defensiva
-                resultados.put(("error", exc, stdout.getvalue(), stderr.getvalue()))
+                resultados.put(("error", exc))
 
         proceso = contexto.Process(target=ejecutar_en_hijo)
         proceso.start()
@@ -167,18 +160,13 @@ class RunService:
             raise TimeoutError("Tiempo de ejecución agotado")
 
         try:
-            estado, resultado, stdout, stderr = resultados.get_nowait()
+            estado, resultado = resultados.get_nowait()
         except Empty:
             if proceso.exitcode == 0:
                 return 0
             raise RuntimeError(
                 f"El proceso de ejecución terminó con código {proceso.exitcode}"
             )
-
-        if stdout:
-            sys.stdout.write(stdout)
-        if stderr:
-            sys.stderr.write(stderr)
 
         if estado == "error":
             raise resultado
