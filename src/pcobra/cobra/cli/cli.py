@@ -893,7 +893,7 @@ class CliApplication:
         if not self.parser or not self.command_registry:
             raise RuntimeError("Application not properly initialized")
 
-        self._selected_ui = "v2"
+        self._selected_ui = getattr(self, "_selected_ui", "v2") or "v2"
         if any(token in {"-h", "--help", "--ayuda"} for token in argv):
             configure_plugin_policy(safe_mode=True, allowlist="")
             self._ensure_command_structure()
