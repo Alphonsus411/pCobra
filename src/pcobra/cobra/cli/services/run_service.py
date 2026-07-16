@@ -97,7 +97,7 @@ class RunService:
 
         def ejecutar() -> int:
             if sandbox:
-                return sandbox_module.ejecutar_en_sandbox(
+                return self.ejecutar_en_sandbox(
                     codigo,
                     seguro,
                     extra_validators,
