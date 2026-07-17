@@ -36,6 +36,12 @@ __all__ = [
     "inspeccionar_paquete",
     "verificar_integridad",
     "es_paquete_cobra",
+    "PackageManifest",
+    "PackageManifestV2",
+    "PackageDistribution",
+    "PackageExtension",
+    "manifest_from_dict",
+    "manifest_to_dict",
 ]
 
 
@@ -55,7 +61,7 @@ class PackageManifest:
     dependencies: dict[str, str] | None = None
 
 
-def manifest_from_dict(data: dict[str, Any]) -> PackageManifest:
+def manifest_from_dict(data: dict[str, Any]) -> PackageManifest | PackageManifestV2:
     """Convierte un diccionario JSON en un manifiesto Cobra validado.
 
     Mantiene compatibilidad con manifiestos históricos que solo declaran
@@ -65,9 +71,13 @@ def manifest_from_dict(data: dict[str, Any]) -> PackageManifest:
     no están soportados hasta que exista una política de resolución
     documentada.
     """
+    if not isinstance(data, dict):
+        raise ValueError("El manifiesto debe ser un objeto JSON")
     package_format = data.get("format")
     if package_format is None:
         raise ValueError("El manifiesto no declara format")
+    if package_format == PACKAGE_FORMAT_V2:
+        return manifest_v2_from_dict(data)
     if package_format != PACKAGE_FORMAT:
         raise ValueError(f"Formato de paquete no soportado: {package_format}")
 
@@ -140,8 +150,10 @@ def _validar_dependencias_manifest(
     return normalized_dependencies
 
 
-def manifest_to_dict(manifest: PackageManifest) -> dict[str, Any]:
+def manifest_to_dict(manifest: PackageManifest | PackageManifestV2) -> dict[str, Any]:
     """Convierte un ``PackageManifest`` en un diccionario JSON-compatible."""
+    if isinstance(manifest, PackageManifestV2):
+        return manifest_v2_to_dict(manifest)
     data: dict[str, Any] = {
         "format": manifest.format,
         "name": manifest.name,
@@ -161,7 +173,9 @@ def manifest_to_dict(manifest: PackageManifest) -> dict[str, Any]:
             data[key] = (
                 list(value)
                 if isinstance(value, list)
-                else dict(value) if isinstance(value, dict) else value
+                else dict(value)
+                if isinstance(value, dict)
+                else value
             )
     return data
 
@@ -321,6 +335,11 @@ def construir_paquete(
     if manifest_path.exists():
         manifest_data = json.loads(manifest_path.read_text(encoding="utf-8"))
         manifest = manifest_from_dict(manifest_data)
+        if isinstance(manifest, PackageManifestV2):
+            raise ValueError(
+                "La construcción de cobra-package-v2 requiere artefactos "
+                "predefinidos; construir_paquete conserva el contrato v1"
+            )
     else:
         manifest = PackageManifest(
             format=PACKAGE_FORMAT,
@@ -442,7 +461,7 @@ def _validar_entradas_zip(zf: zipfile.ZipFile) -> dict[str, zipfile.ZipInfo]:
 
 
 def _normalizar_lista_archivos(values: Any, *, field: str) -> set[str]:
-    if not isinstance(values, list):
+    if not isinstance(values, (list, tuple)):
         raise ValueError(f"El manifiesto debe declarar {field} como lista")
     return {_normalizar_ruta_paquete(str(value)) for value in values}
 
@@ -552,3 +571,16 @@ def verificar_integridad(package: str | Path) -> bool:
     """
     validar_paquete(package)
     return True
+
+
+# Se importa al final para conservar el límite histórico: los proveedores Hub
+# dependen de esta fachada v1, mientras que esta solo usa los modelos de datos
+# v2. No se carga ningún módulo indicado por un entrypoint del manifiesto.
+from pcobra.cobra.hub.models import (  # noqa: E402
+    PACKAGE_FORMAT_V2,
+    PackageDistribution,
+    PackageExtension,
+    PackageManifestV2,
+    manifest_v2_from_dict,
+    manifest_v2_to_dict,
+)
