@@ -15,13 +15,17 @@ from pcobra.cobra.hub.models import (
     LockedDependency,
 )
 from pcobra.cobra.hub.repository import (
+    ArtifactProvider,
     DownloadedPackage,
     HttpCobraHubRepository,
+    PackageIndex,
     PackageRepository,
 )
+from pcobra.cobra.hub.providers import GitHubReleaseProvider, PyPIProvider
 from pcobra.cobra.hub.transport import CobraHubTransport, HttpSession
 
 __all__ = [
+    "ArtifactProvider",
     "CobraHubError",
     "CobraHubResolution",
     "DeclaredDependency",
@@ -29,12 +33,15 @@ __all__ = [
     "LockedDependency",
     "CobraHubTransport",
     "DownloadedPackage",
+    "GitHubReleaseProvider",
     "HttpCobraHubRepository",
     "HttpSession",
     "PackageCompatibilityError",
     "PackageIntegrityError",
     "PackageNotFoundError",
     "PackageProviderError",
+    "PackageIndex",
     "PackageRepository",
+    "PyPIProvider",
     "PackageResolutionError",
 ]
