@@ -212,11 +212,6 @@ class CobraHubResolver:
                 raise PackageCompatibilityError(
                     f"Manifiesto v2 incompatible para {name}: {exc}"
                 ) from exc
-            if distribution.type != "cobra-package":
-                raise PackageCompatibilityError(
-                    f"La distribución compatible de {name} es de tipo "
-                    f"{distribution.type!r}; este tipo todavía no es instalable."
-                )
             metadata = {
                 "package_type": manifest_v2.package_type,
                 "requires_cobra": manifest_v2.requires_cobra,
@@ -245,7 +240,7 @@ class CobraHubResolver:
         platform: str,
         architecture: str,
     ) -> PackageDistribution:
-        """Elige el primer artefacto compatible sin cargar ni ejecutar su código."""
+        """Elige un artefacto compatible e instalable sin ejecutar su código."""
 
         compatible = [
             item
@@ -265,8 +260,25 @@ class CobraHubResolver:
             raise PackageCompatibilityError(
                 "No hay una distribución compatible con la plataforma "
                 f"{platform!r} y la arquitectura {architecture!r}."
+            )
+
+        for distribution in compatible:
+            if distribution.type == "cobra-package":
+                return distribution
+
+        found_types = ", ".join(
+            repr(item)
+            for item in sorted({distribution.type for distribution in compatible})
         )
-        return compatible[0]
+        if len(compatible) == 1:
+            raise PackageCompatibilityError(
+                "La distribución compatible es de tipo "
+                f"{found_types}; este tipo todavía no es instalable."
+            )
+        raise PackageCompatibilityError(
+            f"Las distribuciones compatibles tienen los tipos {found_types}; "
+            "estos tipos todavía no son instalables."
+        )
 
     _sha256_file = staticmethod(sha256_file)
 

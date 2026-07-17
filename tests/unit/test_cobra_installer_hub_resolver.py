@@ -4,6 +4,8 @@ import zipfile
 
 import pytest
 
+from pcobra.cobra.hub.errors import PackageCompatibilityError
+from pcobra.cobra.hub.models import PackageDistribution
 from pcobra.cobra.hub.repository import DownloadedPackage
 from pcobra.cobra.packaging import construir_paquete
 from pcobra.cobra_installer.hub_resolver import CobraHubResolver
@@ -176,6 +178,68 @@ def test_hub_resolver_rechaza_distribuciones_aun_no_instalables(
             platform="linux",
             architecture="x86_64",
         )
+
+
+def test_select_distribution_prioriza_cobra_package_compatible():
+    distributions = (
+        PackageDistribution(
+            type="python-wheel",
+            path="dist/dep.whl",
+            platforms=("linux",),
+            architectures=("x86_64",),
+        ),
+        PackageDistribution(
+            type="cobra-package",
+            path="dist/dep.co",
+            platforms=("linux",),
+            architectures=("x86_64",),
+        ),
+    )
+
+    selected = CobraHubResolver._select_distribution(distributions, "linux", "x86_64")
+
+    assert selected == distributions[1]
+
+
+def test_select_distribution_informa_tipos_compatibles_no_instalables():
+    distributions = (
+        PackageDistribution(type="python-wheel", path="dist/dep.whl"),
+        PackageDistribution(type="wasm", path="dist/dep.wasm"),
+    )
+
+    with pytest.raises(PackageCompatibilityError) as exc_info:
+        CobraHubResolver._select_distribution(distributions, "linux", "x86_64")
+
+    message = str(exc_info.value)
+    assert "'python-wheel'" in message
+    assert "'wasm'" in message
+    assert "no son instalables" in message
+
+
+def test_select_distribution_conserva_error_sin_coincidencia_de_entorno():
+    distributions = (
+        PackageDistribution(
+            type="cobra-package",
+            path="dist/windows.co",
+            platforms=("windows",),
+            architectures=("x86_64",),
+        ),
+        PackageDistribution(
+            type="cobra-package",
+            path="dist/arm.co",
+            platforms=("linux",),
+            architectures=("arm64",),
+        ),
+    )
+
+    with pytest.raises(
+        PackageCompatibilityError,
+        match=(
+            "No hay una distribución compatible con la plataforma 'linux' "
+            "y la arquitectura 'x86_64'\\."
+        ),
+    ):
+        CobraHubResolver._select_distribution(distributions, "linux", "x86_64")
 
 
 def test_hub_resolver_v1_conserva_resultado_historico_sin_metadata(tmp_path):
