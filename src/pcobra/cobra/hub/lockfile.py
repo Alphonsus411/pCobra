@@ -15,7 +15,15 @@ from typing import Any, Mapping, Sequence
 
 from pcobra.cobra.hub.errors import PackageResolutionError
 from pcobra.cobra.hub.integrity import normalize_sha256
-from pcobra.cobra.hub.models import CobraHubResolution, LockedDependency
+from pcobra.cobra.hub.models import (
+    CobraHubResolution,
+    LockedDependency,
+    PackageDistribution,
+    PackageExtension,
+    SUPPORTED_ARCHITECTURES,
+    SUPPORTED_DISTRIBUTION_TYPES,
+    SUPPORTED_PLATFORMS,
+)
 from pcobra.cobra.packaging import normalizar_nombre_paquete, validar_version_paquete
 
 LOCKFILE_V1 = 1
@@ -23,6 +31,25 @@ LOCKFILE_V2 = 2
 _KNOWN_VERSIONS = frozenset({LOCKFILE_V1, LOCKFILE_V2})
 _SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 _PROVIDER_SOURCES = frozenset({"installer-cache", "cobrahub", "cobrahub-cache"})
+_V2_ENTRY_KEYS = frozenset(
+    {
+        "name",
+        "version",
+        "source",
+        "sha256",
+        "package_type",
+        "requires_cobra",
+        "artifact_type",
+        "artifact",
+        "exports",
+        "capabilities",
+        "extensions",
+        "platforms",
+        "architectures",
+        "distributions",
+        "dependencies",
+    }
+)
 
 
 @dataclass(frozen=True)
@@ -101,7 +128,10 @@ def write_lockfile(
         raise PackageResolutionError(
             f"Versión de cobra.lock no soportada: {version!r}."
         )
-    entries = [_entry_from_resolution(item, version) for item in resolved.values()]
+    try:
+        entries = [_entry_from_resolution(item, version) for item in resolved.values()]
+    except (TypeError, ValueError) as exc:
+        raise PackageResolutionError(f"Entrada inválida en cobra.lock: {exc}") from exc
     entries.sort(key=_sort_key)
     payload = {"version": version, "packages": [_entry_dict(item) for item in entries]}
     try:
@@ -156,6 +186,17 @@ def _parse_entry(raw: Any, version: int, base_dir: Path) -> LockfileEntryV1:
         source = _resolve_source(source, base_dir)
         if version == LOCKFILE_V1:
             return LockfileEntryV1(name, package_version, source, sha256)
+        unknown_keys = set(raw) - _V2_ENTRY_KEYS
+        if unknown_keys:
+            raise ValueError(
+                "claves v2 desconocidas: " + ", ".join(sorted(unknown_keys))
+            )
+        artifact_type = _optional_string(raw.get("artifact_type"), "artifact_type")
+        if (
+            artifact_type is not None
+            and artifact_type not in SUPPORTED_DISTRIBUTION_TYPES
+        ):
+            raise ValueError(f"artifact_type no soportado: {artifact_type}")
         return LockfileEntryV2(
             name=name,
             version=package_version,
@@ -165,14 +206,22 @@ def _parse_entry(raw: Any, version: int, base_dir: Path) -> LockfileEntryV1:
             requires_cobra=_optional_string(
                 raw.get("requires_cobra"), "requires_cobra"
             ),
-            artifact_type=_optional_string(raw.get("artifact_type"), "artifact_type"),
-            artifact=_optional_string(raw.get("artifact"), "artifact"),
-            exports=_string_tuple(raw.get("exports", []), "exports"),
-            capabilities=_string_tuple(raw.get("capabilities", []), "capabilities"),
-            extensions=_mapping_tuple(raw.get("extensions", []), "extensions"),
-            platforms=_string_tuple(raw.get("platforms", []), "platforms"),
-            architectures=_string_tuple(raw.get("architectures", []), "architectures"),
-            distributions=_mapping_tuple(raw.get("distributions", []), "distributions"),
+            artifact_type=artifact_type,
+            artifact=_artifact(raw.get("artifact")),
+            exports=_unique_string_tuple(raw.get("exports", []), "exports"),
+            capabilities=_unique_string_tuple(
+                raw.get("capabilities", []), "capabilities"
+            ),
+            extensions=_extensions(raw.get("extensions", [])),
+            platforms=_supported_values(
+                raw.get("platforms", []), "platforms", SUPPORTED_PLATFORMS
+            ),
+            architectures=_supported_values(
+                raw.get("architectures", []),
+                "architectures",
+                SUPPORTED_ARCHITECTURES,
+            ),
+            distributions=_distributions(raw.get("distributions", [])),
             dependencies=_dependencies(raw.get("dependencies", {})),
         )
     except (TypeError, ValueError) as exc:
@@ -204,6 +253,48 @@ def _string_tuple(value: Any, field_name: str) -> tuple[str, ...]:
     if not isinstance(value, list) or not all(isinstance(item, str) for item in value):
         raise ValueError(f"{field_name} debe ser una lista de cadenas")
     return tuple(value)
+
+
+def _unique_string_tuple(value: Any, field_name: str) -> tuple[str, ...]:
+    values = _string_tuple(value, field_name)
+    if not all(values):
+        raise ValueError(f"{field_name} debe contener cadenas no vacías")
+    if len(values) != len(set(values)):
+        raise ValueError(f"{field_name} no admite valores duplicados")
+    return values
+
+
+def _supported_values(
+    value: Any, field_name: str, supported: frozenset[str]
+) -> tuple[str, ...]:
+    values = _unique_string_tuple(value, field_name)
+    invalid = set(values) - supported
+    if invalid:
+        raise ValueError(
+            f"{field_name} contiene valores no soportados: "
+            + ", ".join(sorted(invalid))
+        )
+    return values
+
+
+def _artifact(value: Any) -> str | None:
+    artifact = _optional_string(value, "artifact")
+    if artifact is None:
+        return None
+    # PackageDistribution es el contrato normativo para rutas de artefactos.
+    return PackageDistribution.from_dict(
+        {"type": "cobra-package", "path": artifact}
+    ).path
+
+
+def _extensions(value: Any) -> tuple[Mapping[str, Any], ...]:
+    mappings = _mapping_tuple(value, "extensions")
+    return tuple(PackageExtension.from_dict(item).as_dict() for item in mappings)
+
+
+def _distributions(value: Any) -> tuple[Mapping[str, Any], ...]:
+    mappings = _mapping_tuple(value, "distributions")
+    return tuple(PackageDistribution.from_dict(item).as_dict() for item in mappings)
 
 
 def _mapping_tuple(value: Any, field_name: str) -> tuple[Mapping[str, Any], ...]:
@@ -245,18 +336,32 @@ def _entry_from_resolution(
     )
     if version == LOCKFILE_V1:
         return LockfileEntryV1(**common)
+    artifact_type = _optional_string(metadata.get("artifact_type"), "artifact_type")
+    if artifact_type is not None and artifact_type not in SUPPORTED_DISTRIBUTION_TYPES:
+        raise ValueError(f"artifact_type no soportado: {artifact_type}")
+    artifact = metadata.get("artifact") or getattr(
+        getattr(item, "path", None), "name", None
+    )
     return LockfileEntryV2(
         **common,
         package_type=metadata.get("package_type"),
         requires_cobra=metadata.get("requires_cobra"),
-        artifact_type=metadata.get("artifact_type"),
-        artifact=metadata.get("artifact") or str(getattr(item, "path", "")) or None,
-        exports=tuple(metadata.get("exports", ())),
-        capabilities=tuple(metadata.get("capabilities", ())),
-        extensions=tuple(metadata.get("extensions", ())),
-        platforms=tuple(metadata.get("platforms", ())),
-        architectures=tuple(metadata.get("architectures", ())),
-        distributions=tuple(metadata.get("distributions", ())),
+        artifact_type=artifact_type,
+        artifact=_artifact(artifact),
+        exports=_unique_string_tuple(list(metadata.get("exports", ())), "exports"),
+        capabilities=_unique_string_tuple(
+            list(metadata.get("capabilities", ())), "capabilities"
+        ),
+        extensions=_extensions(list(metadata.get("extensions", ()))),
+        platforms=_supported_values(
+            list(metadata.get("platforms", ())), "platforms", SUPPORTED_PLATFORMS
+        ),
+        architectures=_supported_values(
+            list(metadata.get("architectures", ())),
+            "architectures",
+            SUPPORTED_ARCHITECTURES,
+        ),
+        distributions=_distributions(list(metadata.get("distributions", ()))),
         dependencies=dict(
             getattr(item, "dependencies", metadata.get("dependencies", {}))
         ),
