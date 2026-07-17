@@ -9,6 +9,7 @@ from urllib.parse import urlparse
 
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
+from pcobra.cobra.hub.errors import PackageProviderError
 
 if TYPE_CHECKING:  # pragma: no cover - solo para tipado
     import requests
@@ -62,7 +63,7 @@ class CobraHubClient:
             "COBRAHUB_URL", "https://cobrahub.example.com/api"
         )
         if len(url) > 2048:  # Límite común para URLs
-            raise ValueError(_("URL de CobraHub demasiado larga"))
+            raise PackageProviderError(_("URL de CobraHub demasiado larga"))
         return url
 
     def _configurar_sesion(self) -> "requests.Session":
