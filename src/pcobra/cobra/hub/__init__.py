@@ -21,7 +21,11 @@ from pcobra.cobra.hub.repository import (
     PackageIndex,
     PackageRepository,
 )
-from pcobra.cobra.hub.providers import GitHubReleaseProvider, PyPIProvider
+from pcobra.cobra.hub.providers import (
+    GitHubReleaseProvider,
+    LocalArtifactProvider,
+    PyPIProvider,
+)
 from pcobra.cobra.hub.transport import CobraHubTransport, HttpSession
 
 __all__ = [
@@ -36,6 +40,7 @@ __all__ = [
     "GitHubReleaseProvider",
     "HttpCobraHubRepository",
     "HttpSession",
+    "LocalArtifactProvider",
     "PackageCompatibilityError",
     "PackageIntegrityError",
     "PackageNotFoundError",

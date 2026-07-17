@@ -26,6 +26,7 @@ class DeclaredDependency:
 
     name: str
     version: str
+    source: str | None = None
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
 
