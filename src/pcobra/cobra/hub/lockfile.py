@@ -32,6 +32,7 @@ LOCKFILE_V2 = 2
 _KNOWN_VERSIONS = frozenset({LOCKFILE_V1, LOCKFILE_V2})
 _SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 _PROVIDER_SOURCES = frozenset({"installer-cache", "cobrahub", "cobrahub-cache"})
+_ROOT_KEYS = frozenset({"version", "packages"})
 _V2_ENTRY_KEYS = frozenset(
     {
         "name",
@@ -133,6 +134,14 @@ def write_lockfile(
         entries = [_entry_from_resolution(item, version) for item in resolved.values()]
     except (TypeError, ValueError) as exc:
         raise PackageResolutionError(f"Entrada inválida en cobra.lock: {exc}") from exc
+    normalized_names: set[str] = set()
+    for entry in entries:
+        normalized_name = normalizar_nombre_paquete(entry.name)
+        if normalized_name in normalized_names:
+            raise PackageResolutionError(
+                f"cobra.lock contiene el paquete duplicado {normalized_name}."
+            )
+        normalized_names.add(normalized_name)
     entries.sort(key=_sort_key)
     payload = {"version": version, "packages": [_entry_dict(item) for item in entries]}
     try:
@@ -156,6 +165,13 @@ def _extract_entries(data: Any) -> tuple[int, Sequence[Any]]:
         )
     if "packages" not in data:
         raise PackageResolutionError("cobra.lock no contiene la estructura packages.")
+    if raw_version == LOCKFILE_V2:
+        unknown_keys = set(data) - _ROOT_KEYS
+        if unknown_keys:
+            raise PackageResolutionError(
+                "cobra.lock v2 contiene claves desconocidas: "
+                + ", ".join(sorted(unknown_keys))
+            )
     packages = data["packages"]
     if isinstance(packages, list):
         return raw_version, packages
@@ -319,9 +335,10 @@ def _dependencies(value: Any) -> dict[str, str]:
             raise ValueError(
                 "dependencies debe relacionar nombres y versiones de texto"
             )
-        result[normalizar_nombre_paquete(raw_name)] = validar_version_paquete(
-            raw_version
-        )
+        name = normalizar_nombre_paquete(raw_name)
+        if name in result:
+            raise ValueError(f"dependencies contiene el paquete duplicado {name}")
+        result[name] = validar_version_paquete(raw_version)
     return result
 
 

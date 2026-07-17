@@ -147,6 +147,7 @@ def test_lockfile_v2_serializa_solo_metadata_normalizada_y_permite_lectura_offli
     [
         ({"version": 3, "packages": []}, "no soportada"),
         ({"version": 2, "other": []}, "packages"),
+        ({"version": 2, "packages": [], "future": True}, "desconocidas"),
         (
             {
                 "version": 2,
@@ -181,6 +182,32 @@ def test_rechaza_duplicados_despues_de_normalizar(tmp_path):
 
     with pytest.raises(PackageResolutionError, match="duplicado"):
         read_lockfile(path)
+
+
+def test_rechaza_dependencias_duplicadas_despues_de_normalizar(tmp_path):
+    path = tmp_path / "cobra.lock"
+    path.write_text(
+        json.dumps(
+            _v2_entry(
+                dependencies={"Base_Pkg": "1.0.0", "base_pkg": "1.0.0"}
+            )
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(PackageResolutionError, match="duplicado"):
+        read_lockfile(path)
+
+
+def test_escritura_rechaza_nombres_duplicados_despues_de_normalizar(tmp_path):
+    path = tmp_path / "cobra.lock"
+    entries = {
+        "primero": LockedDependency("Demo_Pkg", "1.0.0", HASH, "cobrahub"),
+        "segundo": LockedDependency("demo_pkg", "2.0.0", HASH, "cobrahub"),
+    }
+
+    with pytest.raises(PackageResolutionError, match="duplicado"):
+        write_lockfile(path, entries)
 
 
 def _v2_entry(**changes):
