@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+import os
+import subprocess
+import sys
+from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
@@ -23,6 +27,52 @@ def _args() -> SimpleNamespace:
         debug=False,
         memory_limit=InteractiveCommand.MEMORY_LIMIT_MB,
     )
+
+
+def test_arranque_unicode_compila_importa_sanea_y_muestra_ayuda():
+    repo_root = Path(__file__).resolve().parents[2]
+    modulo = repo_root / "src/pcobra/cobra/cli/utils/unicode_sanitize.py"
+    compilacion = subprocess.run(
+        [sys.executable, "-m", "py_compile", str(modulo)],
+        cwd=repo_root,
+        capture_output=True,
+        text=True,
+    )
+
+    assert compilacion.returncode == 0, compilacion.stderr
+
+    env = os.environ.copy()
+    env["PYTHONPATH"] = str(repo_root / "src")
+    importacion = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            "from pcobra.cobra.cli.utils.unicode_sanitize import sanitize_input; "
+            "assert sanitize_input('Hola 🌍') == 'Hola 🌍'; "
+            "resultado = sanitize_input(chr(0xD83D)); "
+            "assert resultado == '\\uFFFD'; "
+            "assert all(not (0xD800 <= ord(ch) <= 0xDFFF) for ch in resultado)",
+        ],
+        cwd=repo_root,
+        env=env,
+        capture_output=True,
+        text=True,
+    )
+
+    assert importacion.returncode == 0, importacion.stderr
+
+    env["PATH"] = os.pathsep.join(
+        [str(repo_root / "scripts/bin"), env.get("PATH", "")]
+    )
+    ayuda = subprocess.run(
+        ["cobra", "--help"],
+        cwd=repo_root,
+        env=env,
+        capture_output=True,
+        text=True,
+    )
+
+    assert ayuda.returncode == 0, ayuda.stderr
 
 
 def test_sanitize_input_multilingue_y_emoji_se_conserva():
