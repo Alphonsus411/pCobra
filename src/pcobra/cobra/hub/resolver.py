@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any, Mapping, Sequence
 
 from pcobra.cobra.packaging import normalizar_nombre_paquete, validar_version_paquete
+from pcobra.cobra.hub.errors import PackageResolutionError
 from pcobra.cobra.hub.installation import CobraHubResolver
 from pcobra.cobra.hub.lockfile import read_lockfile, write_lockfile
 from pcobra.cobra.hub.models import (
@@ -21,7 +22,6 @@ from pcobra.cobra.hub.models import (
     DependencyResolutionResult,
     LockedDependency,
 )
-from pcobra.cobra_installer.project import CobraInstallerError
 
 __all__ = [
     "CobraDependencyError",
@@ -36,7 +36,7 @@ __all__ = [
 ]
 
 
-class CobraDependencyError(CobraInstallerError):
+class CobraDependencyError(PackageResolutionError):
     """Error controlado de dependencias apto para CLI e IDLE."""
 
 

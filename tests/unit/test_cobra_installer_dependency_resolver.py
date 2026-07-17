@@ -185,6 +185,19 @@ def test_falla_si_import_no_esta_declarado(tmp_path):
         )
 
 
+def test_adaptador_historico_conserva_error_publico_de_dependencias(tmp_path):
+    from pcobra.cobra_installer.project import CobraInstallerError as PublicError
+
+    (tmp_path / "cobra.toml").write_text("", encoding="utf-8")
+    (tmp_path / "main.cobra").write_text("usar dep.modulo\n", encoding="utf-8")
+
+    with pytest.raises(CobraDependencyError) as exc_info:
+        resolve_project_dependencies(tmp_path)
+
+    assert isinstance(exc_info.value, PublicError)
+    assert exc_info.value.__cause__.__class__.__name__ == "CobraDependencyError"
+
+
 def test_falla_hash_de_lock(tmp_path):
     package = _package(tmp_path, name="dep", version="1.2.3")
     cache = tmp_path / "cache"
