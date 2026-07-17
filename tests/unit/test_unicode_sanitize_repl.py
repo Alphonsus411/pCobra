@@ -125,6 +125,17 @@ def test_sanitize_source_for_tokenizer_no_muta_identificadores_unicode() -> None
     assert saneado == codigo
 
 
+def test_interactive_command_construye_historial_unicode_seguro(tmp_path):
+    if SafeFileHistory is None:
+        return
+
+    cmd = InteractiveCommand(MagicMock())
+
+    historial = cmd._construir_historial(str(tmp_path / ".cobra_history"))
+
+    assert isinstance(historial, SafeFileHistory)
+
+
 def test_interactive_command_sanitiza_surrogate_invalido_y_no_crashea(tmp_path):
     cmd = InteractiveCommand(MagicMock())
     capturado = {"history": [], "validar": []}
