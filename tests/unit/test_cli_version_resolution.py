@@ -2,11 +2,12 @@ import ast
 import tomllib
 from importlib.metadata import PackageNotFoundError
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Optional
 
 
 ROOT = Path(__file__).resolve().parents[2]
-CLI_PATH = ROOT / "src" / "pcobra" / "cobra" / "cli" / "cli.py"
+CLI_PATH = ROOT / "src" / "pcobra" / "cli.py"
 
 
 def _load_version_helpers(tmp_path: Path, env: dict[str, str], package_version):
@@ -23,14 +24,19 @@ def _load_version_helpers(tmp_path: Path, env: dict[str, str], package_version):
         for node in tree.body
         if isinstance(node, ast.FunctionDef) and node.name in wanted
     )
-    fake_cli = tmp_path / "src" / "pcobra" / "cobra" / "cli" / "cli.py"
+    fake_cli = tmp_path / "src" / "pcobra" / "cli.py"
     fake_cli.parent.mkdir(parents=True)
     fake_cli.write_text("", encoding="utf-8")
     namespace = {
         "__file__": str(fake_cli),
         "environ": env,
-        "PackageNotFoundError": PackageNotFoundError,
-        "package_version": package_version,
+        "importlib": SimpleNamespace(
+            metadata=SimpleNamespace(
+                version=package_version,
+                PackageNotFoundError=PackageNotFoundError,
+            )
+        ),
+        "os": type("FakeOs", (), {"environ": env}),
         "Path": Path,
         "tomllib": tomllib,
         "Optional": Optional,
@@ -80,6 +86,17 @@ def test_resolve_cli_version_usa_pyproject_sin_metadata_de_distribucion(tmp_path
 
 
 def test_resolve_cli_version_fallback_dev_si_no_hay_metadata_ni_pyproject(tmp_path):
+    def missing_distribution(_name: str) -> str:
+        raise PackageNotFoundError
+
+    helpers = _load_version_helpers(tmp_path, {}, missing_distribution)
+
+    assert helpers["_resolve_cli_version"]() == "dev"
+
+
+def test_resolve_cli_version_fallback_dev_si_project_no_es_tabla(tmp_path):
+    (tmp_path / "pyproject.toml").write_text('project = "invalid"\n', encoding="utf-8")
+
     def missing_distribution(_name: str) -> str:
         raise PackageNotFoundError
 

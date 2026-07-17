@@ -1,8 +1,63 @@
 from __future__ import annotations
 
 import ast
+import json
+import os
 from pathlib import Path
+import subprocess
+import sys
 import tomllib
+
+
+FORBIDDEN_STARTUP_MODULE_PARTS = (
+    "interpreter",
+    "transpiler",
+    "transpilador",
+)
+FORBIDDEN_STARTUP_ROOTS = {"agix", "numpy", "flet"}
+
+
+def _run_lightweight_global_option(option: str) -> dict[str, object]:
+    probe = f"""
+import contextlib
+import io
+import json
+import sys
+from pcobra import cli
+
+stdout = io.StringIO()
+with contextlib.redirect_stdout(stdout):
+    result = cli.main([{option!r}])
+print(json.dumps({{"result": result, "stdout": stdout.getvalue(), "modules": sorted(sys.modules)}}))
+"""
+    env = os.environ.copy()
+    env["PYTHONPATH"] = str(Path("src").resolve())
+    completed = subprocess.run(
+        [sys.executable, "-c", probe],
+        check=True,
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+    return json.loads(completed.stdout)
+
+
+def _assert_no_heavy_startup_modules(modules: list[str]) -> None:
+    offenders = [
+        module
+        for module in modules
+        if module.split(".", 1)[0] in FORBIDDEN_STARTUP_ROOTS
+        or any(part in module.lower() for part in FORBIDDEN_STARTUP_MODULE_PARTS)
+    ]
+    assert offenders == []
+
+
+def test_opciones_globales_no_cargan_runtime_pesado() -> None:
+    for option in ("--help", "-h", "--version"):
+        probe = _run_lightweight_global_option(option)
+        assert probe["result"] == 0
+        assert probe["stdout"]
+        _assert_no_heavy_startup_modules(probe["modules"])
 
 
 def test_cli_bootstrap_no_importa_comandos_directamente() -> None:
