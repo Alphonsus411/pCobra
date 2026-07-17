@@ -1,8 +1,10 @@
+import importlib.metadata
 import logging
 import os
 import secrets
 import shutil
 import sys
+import tomllib
 from importlib import import_module
 from pathlib import Path
 from typing import Iterable, List, Optional
@@ -39,6 +41,51 @@ _LEGACY_SHIM_ALIAS_CONTRACT = {
     "cli.cli": ("cli", "cli.cli"),
     "cobra.cli.cli": (),
 }
+
+
+def _resolve_pyproject_version() -> Optional[str]:
+    """Obtiene la versión declarada al ejecutar directamente desde fuentes."""
+
+    pyproject_path = Path(__file__).resolve().parents[2] / "pyproject.toml"
+    try:
+        metadata = tomllib.loads(pyproject_path.read_text(encoding="utf-8"))
+    except (OSError, tomllib.TOMLDecodeError):
+        return None
+
+    project = metadata.get("project")
+    if not isinstance(project, dict):
+        return None
+    version = project.get("version")
+    return str(version) if version else None
+
+
+def _resolve_cli_version() -> str:
+    """Resuelve la versión sin cargar la implementación completa de la CLI."""
+
+    env_version = os.environ.get("COBRA_CLI_VERSION")
+    if env_version:
+        return env_version
+
+    try:
+        return importlib.metadata.version("pcobra")
+    except importlib.metadata.PackageNotFoundError:
+        return _resolve_pyproject_version() or "dev"
+
+
+def _resolve_cli_commit() -> Optional[str]:
+    commit = os.environ.get("COBRA_CLI_COMMIT", "").strip()
+    if not commit or commit.lower() == "unknown":
+        return None
+    return commit
+
+
+def _format_cli_version() -> str:
+    commit = _resolve_cli_commit()
+    commit_suffix = f" (commit {commit})" if commit else ""
+    return f"%(prog)s {CLI_VERSION}{commit_suffix}"
+
+
+CLI_VERSION = _resolve_cli_version()
 
 # Habilita imports de submódulos canónicos como ``pcobra.cli.commands`` y
 # ``pcobra.cli.cli`` sin reemplazar ``pcobra.cli`` por otro objeto.
@@ -343,6 +390,25 @@ def _es_ayuda_global_temprana(argv: Optional[List[str]]) -> bool:
     return tokens in (["-h"], ["--help"], ["--ayuda"])
 
 
+def _es_version_global_temprana(argv: Optional[List[str]]) -> bool:
+    """Reconoce exclusivamente ``cobra --version`` y opciones neutrales."""
+
+    if not argv:
+        return False
+
+    opciones_neutras = {"--debug", "-v", "--verbose", "--no-color"}
+    tokens = [
+        token
+        for token in argv
+        if token not in opciones_neutras and not token.startswith("--verbose=")
+    ]
+    return tokens == ["--version"]
+
+
+def _mostrar_version_global_temprana() -> None:
+    print(_format_cli_version().replace("%(prog)s", "cobra", 1))
+
+
 def _mostrar_ayuda_global_temprana() -> None:
     """Imprime ayuda pública mínima sin importar comandos opcionales/runtime."""
 
@@ -407,6 +473,10 @@ def main(argumentos: Optional[List[str]] = None) -> int:
 
     if _es_ayuda_global_temprana(argv):
         _mostrar_ayuda_global_temprana()
+        return 0
+
+    if _es_version_global_temprana(argv):
+        _mostrar_version_global_temprana()
         return 0
 
     if flag_legacy_imports or env_legacy_imports:

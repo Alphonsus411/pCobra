@@ -5,8 +5,6 @@ from types import SimpleNamespace
 import logging
 import os
 import sys
-import tomllib
-from importlib.metadata import PackageNotFoundError, version as package_version
 from os import environ
 from pathlib import Path
 from typing import List, Dict, Optional, Type, Any, ContextManager, Iterable
@@ -20,6 +18,8 @@ from pcobra.cli import (
     COBRA_DEV_MODE_ENV,
     COBRA_LANG_ENV,
     SQLITE_DB_KEY_ENV,
+    CLI_VERSION,
+    _format_cli_version,
     ensure_sqlite_db_key_for_command,
     env_flag_activado,
 )
@@ -74,45 +74,6 @@ from pcobra.cobra.cli.utils.autocomplete import (
     files_completer,
 )
 
-
-# Metadata injected at build time, with package metadata fallback for editable installs.
-def _resolve_pyproject_version() -> Optional[str]:
-    pyproject_path = Path(__file__).resolve().parents[4] / "pyproject.toml"
-    try:
-        metadata = tomllib.loads(pyproject_path.read_text(encoding="utf-8"))
-    except (OSError, tomllib.TOMLDecodeError):
-        return None
-
-    version = metadata.get("project", {}).get("version")
-    return str(version) if version else None
-
-
-def _resolve_cli_version() -> str:
-    env_version = environ.get("COBRA_CLI_VERSION")
-    if env_version:
-        return env_version
-
-    try:
-        return package_version("pcobra")
-    except PackageNotFoundError:
-        pyproject_version = _resolve_pyproject_version()
-        return pyproject_version if pyproject_version else "dev"
-
-
-def _resolve_cli_commit() -> Optional[str]:
-    commit = environ.get("COBRA_CLI_COMMIT", "").strip()
-    if not commit or commit.lower() == "unknown":
-        return None
-    return commit
-
-
-def _format_cli_version() -> str:
-    commit = _resolve_cli_commit()
-    commit_suffix = f" (commit {commit})" if commit else ""
-    return f"%(prog)s {CLI_VERSION}{commit_suffix}"
-
-
-CLI_VERSION = _resolve_cli_version()
 
 assert_public_targets_contract(tuple(PUBLIC_BACKENDS), source="cobra cli bootstrap")
 LANG_CHOICES = tuple(PUBLIC_BACKENDS)
