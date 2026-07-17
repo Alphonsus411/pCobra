@@ -27,7 +27,7 @@ SUPPORTED_PLATFORMS = frozenset(
     {"any", "linux", "windows", "macos", "android", "ios", "freebsd", "browser"}
 )
 SUPPORTED_ARCHITECTURES = frozenset(
-    {"any", "x86", "x86_64", "armv7", "aarch64", "wasm32"}
+    {"any", "x86", "x86_64", "armv7", "arm64", "wasm32"}
 )
 
 _NAME_RE = re.compile(r"^[a-z0-9](?:[a-z0-9_.-]*[a-z0-9])?$")
@@ -36,6 +36,11 @@ _SEMVER_RE = re.compile(
     r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)"
     r"(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?"
     r"(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$"
+)
+_VERSION_CONSTRAINT_RE = re.compile(
+    r"(?:>=|<=|>|<|==|!=)?"
+    r"(?:0|[1-9]\d*)(?:\.(?:0|[1-9]\d*)){0,2}"
+    r"(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?"
 )
 _SHA256_RE = re.compile(r"^[0-9a-fA-F]{64}$")
 _ENTRYPOINT_RE = re.compile(
@@ -82,6 +87,27 @@ def _semver(value: Any, field_name: str) -> str:
     return text
 
 
+def _version_constraint(value: Any, field_name: str) -> str:
+    """Valida una intersección estática de comparadores de versión Cobra."""
+    if not isinstance(value, str) or not value:
+        raise ValueError(f"{field_name} debe ser una restricción de versiones válida")
+    text = value
+    clauses = text.split(",")
+    if not clauses or not all(
+        clause == clause.strip() and _VERSION_CONSTRAINT_RE.fullmatch(clause)
+        for clause in clauses
+    ):
+        raise ValueError(f"{field_name} debe ser una restricción de versiones válida")
+    return text
+
+
+def _namespace(value: Any, field_name: str) -> str:
+    text = _string(value, field_name)
+    if not all(_IDENTIFIER_RE.fullmatch(part) for part in text.split(".")):
+        raise ValueError(f"{field_name} debe ser un namespace válido")
+    return text
+
+
 def _path(value: Any, field_name: str) -> str:
     text = _string(value, field_name)
     parts = text.split("/")
@@ -103,6 +129,22 @@ def _enum_list(value: Any, field_name: str, allowed: frozenset[str]) -> tuple[st
             f"{field_name} contiene valores no soportados: {', '.join(sorted(invalid))}"
         )
     return values
+
+
+def _architectures(value: Any, field_name: str) -> tuple[str, ...]:
+    """Normaliza el alias histórico ``aarch64`` al valor contractual ``arm64``."""
+    values = _string_list(value, field_name)
+    allowed = SUPPORTED_ARCHITECTURES | {"aarch64"}
+    invalid = set(values) - allowed
+    if invalid:
+        raise ValueError(
+            f"{field_name} contiene valores no soportados: "
+            f"{', '.join(sorted(invalid))}"
+        )
+    normalized = tuple("arm64" if item == "aarch64" else item for item in values)
+    if len(normalized) != len(set(normalized)):
+        raise ValueError(f"{field_name} no admite valores duplicados")
+    return normalized
 
 
 @dataclass(frozen=True)
@@ -128,10 +170,8 @@ class PackageDistribution:
                 "distribution.platforms",
                 SUPPORTED_PLATFORMS,
             ),
-            architectures=_enum_list(
-                data.get("architectures", ["any"]),
-                "distribution.architectures",
-                SUPPORTED_ARCHITECTURES,
+            architectures=_architectures(
+                data.get("architectures", ["any"]), "distribution.architectures"
             ),
         )
 
@@ -156,9 +196,7 @@ class PackageExtension:
     @classmethod
     def from_dict(cls, value: Any) -> "PackageExtension":
         data = _object(value, "extension")
-        namespace = _string(data.get("namespace"), "extension.namespace")
-        if not all(_IDENTIFIER_RE.fullmatch(part) for part in namespace.split(".")):
-            raise ValueError("extension.namespace inválido")
+        namespace = _namespace(data.get("namespace"), "extension.namespace")
         provider = _name(data.get("provider"), "extension.provider")
         capabilities = _string_list(data.get("capabilities"), "extension.capabilities")
         if not all(_NAME_RE.fullmatch(item) for item in capabilities):
@@ -222,11 +260,9 @@ class PackageManifestV2:
                 "files y checksums deben declarar exactamente las mismas rutas"
             )
         exports = tuple(
-            _path(item, "exports")
+            _namespace(item, "exports")
             for item in _string_list(data.get("exports"), "exports")
         )
-        if not set(exports) <= set(normalized_files):
-            raise ValueError("exports solo puede contener rutas declaradas en files")
         capabilities = _string_list(data.get("capabilities"), "capabilities")
         if not all(_NAME_RE.fullmatch(item) for item in capabilities):
             raise ValueError("capabilities contiene un nombre inválido")
@@ -248,15 +284,15 @@ class PackageManifestV2:
             name=_name(data.get("name")),
             version=_semver(data.get("version"), "version"),
             package_type=package_type,
-            requires_cobra=_semver(data.get("requires_cobra"), "requires_cobra"),
+            requires_cobra=_version_constraint(
+                data.get("requires_cobra"), "requires_cobra"
+            ),
             exports=exports,
             capabilities=capabilities,
             platforms=_enum_list(
                 data.get("platforms"), "platforms", SUPPORTED_PLATFORMS
             ),
-            architectures=_enum_list(
-                data.get("architectures"), "architectures", SUPPORTED_ARCHITECTURES
-            ),
+            architectures=_architectures(data.get("architectures"), "architectures"),
             dependencies=dependencies,
             distributions=distributions,
             extensions=tuple(

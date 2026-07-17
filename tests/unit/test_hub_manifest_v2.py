@@ -25,11 +25,11 @@ def _manifest() -> dict:
         "name": "demo.extension",
         "version": "1.2.3-beta.1",
         "package_type": "extension",
-        "requires_cobra": "2.0.0",
-        "exports": ["dist/demo.whl"],
+        "requires_cobra": ">=10.1,<11",
+        "exports": ["cobra.demo", "cobra.demo.api"],
         "capabilities": ["transpiler.python"],
         "platforms": ["linux", "windows"],
-        "architectures": ["x86_64", "aarch64"],
+        "architectures": ["x86_64", "arm64"],
         "dependencies": {"cobra.std": "2.0.0"},
         "distributions": [
             {
@@ -77,12 +77,89 @@ def test_manifest_v2_modela_todos_los_campos_y_distribuciones_permitidas():
 
 
 @pytest.mark.parametrize(
+    "constraint",
+    ["10", "10.1", "10.1.0", ">=10.1,<11", ">=10.1.0,!=10.2.0,<11.0.0"],
+)
+def test_manifest_v2_acepta_restricciones_cobra_estaticas(constraint):
+    data = _manifest()
+    data["requires_cobra"] = constraint
+
+    assert manifest_v2_from_dict(data).requires_cobra == constraint
+
+
+@pytest.mark.parametrize(
+    "constraint",
+    ["", "v10.1", ">=10.1,", ">=10.1, <11", ">=10.*", "__import__('os')"],
+)
+def test_manifest_v2_rechaza_restricciones_cobra_invalidas(constraint):
+    data = _manifest()
+    data["requires_cobra"] = constraint
+
+    with pytest.raises(ValueError, match="restricción de versiones"):
+        manifest_v2_from_dict(data)
+
+
+@pytest.mark.parametrize("architecture", ["arm64", "aarch64"])
+def test_manifest_v2_normaliza_arm64_como_representacion_canonica(architecture):
+    data = _manifest()
+    data["architectures"] = [architecture]
+    data["distributions"][0]["architectures"] = [architecture]
+
+    manifest = manifest_v2_from_dict(data)
+
+    assert manifest.architectures == ("arm64",)
+    assert manifest.distributions[0].architectures == ("arm64",)
+    assert manifest.as_dict()["architectures"] == ["arm64"]
+
+
+def test_manifest_v2_exports_son_namespaces_y_no_rutas_de_files():
+    data = _manifest()
+    data["exports"] = ["cobra.demo.api", "cobra_demo.utilidades"]
+
+    manifest = manifest_v2_from_dict(data)
+
+    assert manifest.exports == ("cobra.demo.api", "cobra_demo.utilidades")
+
+
+@pytest.mark.parametrize("export", ["dist/demo.whl", ".cobra", "cobra..demo", "cobra-demo"])
+def test_manifest_v2_rechaza_exports_que_no_son_namespaces(export):
+    data = _manifest()
+    data["exports"] = [export]
+
+    with pytest.raises(ValueError, match="namespace"):
+        manifest_v2_from_dict(data)
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("files", ["../demo.whl"]),
+        ("files", ["/dist/demo.whl"]),
+        ("checksums", {"../dist/demo.whl": "0" * 64}),
+    ],
+)
+def test_manifest_v2_rechaza_rutas_inseguras_de_archivos(field, value):
+    data = _manifest()
+    data[field] = value
+
+    with pytest.raises(ValueError, match="ruta insegura"):
+        manifest_v2_from_dict(data)
+
+
+def test_manifest_v2_rechaza_ruta_insegura_de_distribucion():
+    data = _manifest()
+    data["distributions"][0]["path"] = "../demo.whl"
+
+    with pytest.raises(ValueError, match="ruta insegura"):
+        manifest_v2_from_dict(data)
+
+
+@pytest.mark.parametrize(
     ("field", "value", "match"),
     [
         ("version", "v1.2.3", "SemVer"),
         ("platforms", ["plan9"], "no soportados"),
         ("architectures", ["mips"], "no soportados"),
-        ("files", ["../demo.whl"], "ruta insegura"),
         ("checksums", {"dist/demo.whl": "not-a-hash"}, "SHA-256"),
         ("extensions", [{}], "namespace"),
     ],
