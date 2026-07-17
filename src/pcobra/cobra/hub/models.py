@@ -7,6 +7,8 @@ from pathlib import Path
 import re
 from typing import Any, Mapping
 
+from pcobra.cobra.hub.compatibility import validate_version_constraint
+
 
 PACKAGE_FORMAT_V2 = "cobra-package-v2"
 SUPPORTED_PACKAGE_FORMATS = frozenset({"cobra-package-v1", PACKAGE_FORMAT_V2})
@@ -36,11 +38,6 @@ _SEMVER_RE = re.compile(
     r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)"
     r"(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?"
     r"(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$"
-)
-_VERSION_CONSTRAINT_RE = re.compile(
-    r"(?:>=|<=|>|<|==|!=)?"
-    r"(?:0|[1-9]\d*)(?:\.(?:0|[1-9]\d*)){0,2}"
-    r"(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?"
 )
 _SHA256_RE = re.compile(r"^[0-9a-fA-F]{64}$")
 _ENTRYPOINT_RE = re.compile(
@@ -89,16 +86,7 @@ def _semver(value: Any, field_name: str) -> str:
 
 def _version_constraint(value: Any, field_name: str) -> str:
     """Valida una intersección estática de comparadores de versión Cobra."""
-    if not isinstance(value, str) or not value:
-        raise ValueError(f"{field_name} debe ser una restricción de versiones válida")
-    text = value
-    clauses = text.split(",")
-    if not clauses or not all(
-        clause == clause.strip() and _VERSION_CONSTRAINT_RE.fullmatch(clause)
-        for clause in clauses
-    ):
-        raise ValueError(f"{field_name} debe ser una restricción de versiones válida")
-    return text
+    return validate_version_constraint(value, field_name)
 
 
 def _namespace(value: Any, field_name: str) -> str:

@@ -29,7 +29,9 @@ def _package(tmp_path, name="dep", version="1.2.3", dependencies=None):
     return construir_paquete(root)
 
 
-def _package_v2(tmp_path, distribution_type="cobra-package"):
+def _package_v2(
+    tmp_path, distribution_type="cobra-package", requires_cobra=">=10.0,<11"
+):
     package = tmp_path / f"dep-v2-{distribution_type}.co"
     artifact = b"contenido estatico"
     artifact_path = "dist/dep.co"
@@ -38,7 +40,7 @@ def _package_v2(tmp_path, distribution_type="cobra-package"):
         "name": "dep-v2",
         "version": "2.1.0",
         "package_type": "library",
-        "requires_cobra": ">=10.0,<11",
+        "requires_cobra": requires_cobra,
         "exports": ["dep.api"],
         "capabilities": ["net"],
         "platforms": ["linux"],
@@ -151,6 +153,46 @@ def test_hub_resolver_v2_selecciona_cobra_package_y_normaliza_metadata(
         "artifact": "dist/dep.co",
     }
     assert "malicious.module" not in imported
+
+
+def test_hub_resolver_v2_acepta_version_cobra_compatible(tmp_path, monkeypatch):
+    package = _package_v2(tmp_path, requires_cobra=">=10.1,!=10.2")
+    monkeypatch.setattr(
+        "pcobra.cobra.hub.installation.installed_cobra_version", lambda: "10.1.1"
+    )
+
+    result = CobraHubResolver(cache_dir=tmp_path / "cache").resolve(
+        "dep-v2", "2.1.0", source=str(package), platform="linux", architecture="x86_64"
+    )
+
+    assert result.name == "dep-v2"
+
+
+def test_hub_resolver_v2_rechaza_version_cobra_incompatible(tmp_path, monkeypatch):
+    package = _package_v2(tmp_path, requires_cobra=">=11,<12")
+    monkeypatch.setattr(
+        "pcobra.cobra.hub.installation.installed_cobra_version", lambda: "10.1.1"
+    )
+
+    with pytest.raises(CobraInstallerError) as exc_info:
+        CobraHubResolver(cache_dir=tmp_path / "cache").resolve(
+            "dep-v2", "2.1.0", source=str(package), platform="linux", architecture="x86_64"
+        )
+
+    message = str(exc_info.value)
+    assert "dep-v2" in message
+    assert "10.1.1" in message
+    assert ">=11,<12" in message
+    assert isinstance(exc_info.value.__cause__, PackageCompatibilityError)
+
+
+def test_hub_resolver_v2_rechaza_restriccion_cobra_invalida(tmp_path):
+    package = _package_v2(tmp_path, requires_cobra=">=10 || <11")
+
+    with pytest.raises(CobraInstallerError, match="requires_cobra.*restricción"):
+        CobraHubResolver(cache_dir=tmp_path / "cache").resolve(
+            "dep-v2", "2.1.0", source=str(package), platform="linux", architecture="x86_64"
+        )
 
 
 @pytest.mark.parametrize(
