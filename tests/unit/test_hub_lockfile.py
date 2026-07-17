@@ -35,14 +35,23 @@ def test_snapshot_v2_conserva_metadatos_y_lectura_offline(tmp_path):
         json.dumps(
             {
                 "version": 2,
-                "packages": [{
-                    "name": "demo", "version": "1.0.0", "source": "cobrahub-cache",
-                    "sha256": HASH, "package_type": "library", "artifact_type": "co",
-                    "artifact": "demo.co", "exports": ["demo.api"],
-                    "capabilities": ["net"], "extensions": [{"name": "plug"}],
-                    "platforms": ["linux"], "architectures": ["x86_64"],
+                "packages": [
+                    {
+                        "name": "demo",
+                        "version": "1.0.0",
+                        "source": "cobrahub-cache",
+                        "sha256": HASH,
+                        "package_type": "library",
+                        "artifact_type": "co",
+                        "artifact": "demo.co",
+                        "exports": ["demo.api"],
+                        "capabilities": ["net"],
+                        "extensions": [{"name": "plug"}],
+                        "platforms": ["linux"],
+                        "architectures": ["x86_64"],
                     "dependencies": {"base": "2.0.0"},
-                }],
+                    }
+                ],
             }
         ),
         encoding="utf-8",
@@ -51,10 +60,15 @@ def test_snapshot_v2_conserva_metadatos_y_lectura_offline(tmp_path):
     entry = read_lockfile(path)["demo"]
     assert entry.source == "cobrahub-cache"
     assert entry.metadata == {
-        "package_type": "library", "artifact_type": "co", "artifact": "demo.co",
-        "exports": ["demo.api"], "capabilities": ["net"],
-        "extensions": [{"name": "plug"}], "platforms": ["linux"],
-        "architectures": ["x86_64"], "dependencies": {"base": "2.0.0"},
+        "package_type": "library",
+        "artifact_type": "co",
+        "artifact": "demo.co",
+        "exports": ["demo.api"],
+        "capabilities": ["net"],
+        "extensions": [{"name": "plug"}],
+        "platforms": ["linux"],
+        "architectures": ["x86_64"],
+        "dependencies": {"base": "2.0.0"},
     }
 
 
@@ -73,17 +87,66 @@ def test_reserializacion_v2_es_determinista(tmp_path):
     assert [item["name"] for item in json.loads(first)["packages"]] == ["a", "z"]
 
 
+def test_lockfile_v2_serializa_solo_metadata_normalizada_y_permite_lectura_offline(
+    tmp_path,
+):
+    path = tmp_path / "cobra.lock"
+    entry = LockedDependency(
+        "demo",
+        "1.0.0",
+        HASH,
+        "cobrahub",
+        metadata={
+            "package_type": "library",
+            "requires_cobra": ">=10,<11",
+            "artifact_type": "cobra-package",
+            "artifact": "dist/demo.co",
+            "exports": ["demo.api"],
+            "capabilities": ["net"],
+            "extensions": [],
+            "platforms": ["linux"],
+            "architectures": ["x86_64"],
+            "distributions": [
+                {
+                    "type": "cobra-package",
+                    "path": "dist/demo.co",
+                    "platforms": ["linux"],
+                    "architectures": ["x86_64"],
+                }
+            ],
+            "dependencies": {"base": "2.0.0"},
+            "campo_interno": "no serializar",
+        },
+    )
+    write_lockfile(path, {"demo": entry})
+
+    payload = json.loads(path.read_text())
+    assert "campo_interno" not in payload["packages"][0]
+    offline = read_lockfile(path)["demo"]
+    assert offline.metadata["artifact"] == "dist/demo.co"
+    assert offline.metadata["requires_cobra"] == ">=10,<11"
+    assert offline.metadata["distributions"][0]["type"] == "cobra-package"
+
+
 @pytest.mark.parametrize(
     "payload, message",
     [
         ({"version": 3, "packages": []}, "no soportada"),
         ({"version": 2, "other": []}, "packages"),
-        ({"version": 2, "packages": [{"name": "x", "version": "1.0.0", "sha256": "bad"}]}, "sha256"),
+        (
+            {
+                "version": 2,
+                "packages": [{"name": "x", "version": "1.0.0", "sha256": "bad"}],
+            },
+            "sha256",
+        ),
         ({"version": 2, "packages": [{"name": "x", "version": 1}]}, "version"),
         ({"version": 2, "packages": [{"version": "1.0.0"}]}, "name"),
     ],
 )
-def test_rechaza_esquema_futuro_estructura_y_campos_invalidos(tmp_path, payload, message):
+def test_rechaza_esquema_futuro_estructura_y_campos_invalidos(
+    tmp_path, payload, message
+):
     path = tmp_path / "cobra.lock"
     path.write_text(json.dumps(payload), encoding="utf-8")
     with pytest.raises(PackageResolutionError, match=message):
@@ -92,10 +155,15 @@ def test_rechaza_esquema_futuro_estructura_y_campos_invalidos(tmp_path, payload,
 
 def test_rechaza_duplicados_despues_de_normalizar(tmp_path):
     path = tmp_path / "cobra.lock"
-    path.write_text(json.dumps([
+    path.write_text(
+        json.dumps(
+            [
         {"name": "Demo_Pkg", "version": "1.0.0"},
         {"name": "demo_pkg", "version": "1.0.0"},
-    ]), encoding="utf-8")
+            ]
+        ),
+        encoding="utf-8",
+    )
 
     with pytest.raises(PackageResolutionError, match="duplicado"):
         read_lockfile(path)

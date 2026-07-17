@@ -1,4 +1,6 @@
 import json
+import hashlib
+import zipfile
 
 import pytest
 
@@ -23,6 +25,46 @@ def _package(tmp_path, name="dep", version="1.2.3", dependencies=None):
         manifest["dependencies"] = dependencies
     (root / "cobra.pkg.json").write_text(json.dumps(manifest), encoding="utf-8")
     return construir_paquete(root)
+
+
+def _package_v2(tmp_path, distribution_type="cobra-package"):
+    package = tmp_path / f"dep-v2-{distribution_type}.co"
+    artifact = b"contenido estatico"
+    artifact_path = "dist/dep.co"
+    manifest = {
+        "format": "cobra-package-v2",
+        "name": "dep-v2",
+        "version": "2.1.0",
+        "package_type": "library",
+        "requires_cobra": ">=10.0,<11",
+        "exports": ["dep.api"],
+        "capabilities": ["net"],
+        "platforms": ["linux"],
+        "architectures": ["x86_64"],
+        "dependencies": {"base": "1.0.0"},
+        "distributions": [
+            {
+                "type": distribution_type,
+                "path": artifact_path,
+                "platforms": ["linux"],
+                "architectures": ["x86_64"],
+            }
+        ],
+        "extensions": [
+            {
+                "namespace": "cobra.extensions",
+                "provider": "dep-provider",
+                "capabilities": ["net"],
+                "entrypoint": "malicious.module:run",
+            }
+        ],
+        "files": [artifact_path],
+        "checksums": {artifact_path: hashlib.sha256(artifact).hexdigest()},
+    }
+    with zipfile.ZipFile(package, "w") as archive:
+        archive.writestr("cobra.pkg.json", json.dumps(manifest))
+        archive.writestr(artifact_path, artifact)
+    return package
 
 
 class FakeCobraHubRepository:
@@ -56,6 +98,93 @@ def test_hub_resolver_devuelve_paquete_cacheado_con_hash_ruta_y_origen(tmp_path)
     assert result.sha256 == expected_hash
     assert result.path == cached
     assert result.source == "installer-cache"
+
+
+def test_hub_resolver_v2_selecciona_cobra_package_y_normaliza_metadata(
+    tmp_path, monkeypatch
+):
+    imported = []
+    original_import = __import__
+    monkeypatch.setattr(
+        "builtins.__import__",
+        lambda name, *args, **kwargs: (
+            imported.append(name) or original_import(name, *args, **kwargs)
+        ),
+    )
+    package = _package_v2(tmp_path)
+
+    result = CobraHubResolver(cache_dir=tmp_path / "cache").resolve(
+        "dep-v2",
+        "2.1.0",
+        source=str(package),
+        platform="linux",
+        architecture="x86_64",
+    )
+
+    assert result.dependencies == {"base": "1.0.0"}
+    assert result.metadata == {
+        "package_type": "library",
+        "requires_cobra": ">=10.0,<11",
+        "exports": ["dep.api"],
+        "capabilities": ["net"],
+        "extensions": [
+            {
+                "namespace": "cobra.extensions",
+                "provider": "dep-provider",
+                "capabilities": ["net"],
+                "entrypoint": "malicious.module:run",
+            }
+        ],
+        "platforms": ["linux"],
+        "architectures": ["x86_64"],
+        "distributions": [
+            {
+                "type": "cobra-package",
+                "path": "dist/dep.co",
+                "platforms": ["linux"],
+                "architectures": ["x86_64"],
+            }
+        ],
+        "artifact_type": "cobra-package",
+        "artifact": "dist/dep.co",
+    }
+    assert "malicious.module" not in imported
+
+
+@pytest.mark.parametrize(
+    "distribution_type",
+    [
+        "python-wheel",
+        "python-sdist",
+        "javascript-package",
+        "rust-binary",
+        "wasm",
+        "native-binary",
+    ],
+)
+def test_hub_resolver_rechaza_distribuciones_aun_no_instalables(
+    tmp_path, distribution_type
+):
+    package = _package_v2(tmp_path, distribution_type)
+    with pytest.raises(
+        CobraInstallerError, match=f"{distribution_type!r}.*no es instalable"
+    ):
+        CobraHubResolver(cache_dir=tmp_path / "cache").resolve(
+            "dep-v2",
+            "2.1.0",
+            source=str(package),
+            platform="linux",
+            architecture="x86_64",
+        )
+
+
+def test_hub_resolver_v1_conserva_resultado_historico_sin_metadata(tmp_path):
+    package = _package(tmp_path)
+    result = CobraHubResolver(cache_dir=tmp_path / "cache").resolve(
+        "dep", "1.2.3", source=str(package)
+    )
+    assert result.metadata == {}
+    assert result.dependencies == {}
 
 
 def test_hub_resolver_descarga_desde_repositorio_mock_sin_red(tmp_path):

@@ -20,7 +20,12 @@ from pcobra.cobra.hub.errors import (
 from pcobra.cobra.hub.repository import PackageRepository
 from pcobra.cobra.hub.cache import CobraInstallerCache
 from pcobra.cobra.hub.integrity import normalize_sha256, sha256_file
-from pcobra.cobra.hub.models import CobraHubResolution
+from pcobra.cobra.hub.models import (
+    PACKAGE_FORMAT_V2,
+    CobraHubResolution,
+    PackageDistribution,
+    manifest_v2_from_dict,
+)
 from pcobra.cobra.hub.providers.local import LocalArtifactProvider
 from pcobra.cobra.packaging import (
     es_paquete_cobra,
@@ -53,6 +58,8 @@ class CobraHubResolver:
         *,
         expected_sha256: str | None = None,
         source: str | None = None,
+        platform: str = "any",
+        architecture: str = "any",
     ) -> CobraHubResolution:
         """Localiza/descarga ``name`` y valida versión, formato e integridad."""
 
@@ -83,6 +90,8 @@ class CobraHubResolver:
                 normalized_version,
                 expected_sha256=expected_sha256,
                 source=str(Path(source).expanduser().resolve()),
+                platform=platform,
+                architecture=architecture,
             )
 
         candidates: list[Path] = []
@@ -103,6 +112,8 @@ class CobraHubResolver:
                     normalized_version,
                     expected_sha256=expected_sha256,
                     source=cache_entry.source if cache_entry else str(candidate),
+                    platform=platform,
+                    architecture=architecture,
                 )
 
         if self.repository is None:
@@ -129,6 +140,8 @@ class CobraHubResolver:
             normalized_version,
             expected_sha256=expected_sha256 or downloaded.checksum,
             source="cobrahub",
+            platform=platform,
+            architecture=architecture,
         )
 
     def _cache_candidates(self, name: str, version: str) -> list[Path]:
@@ -142,6 +155,8 @@ class CobraHubResolver:
         *,
         expected_sha256: str | None,
         source: str,
+        platform: str = "any",
+        architecture: str = "any",
     ) -> CobraHubResolution:
         try:
             if not es_paquete_cobra(path):
@@ -184,6 +199,36 @@ class CobraHubResolver:
             if isinstance(raw_deps, dict)
             else {}
         )
+        metadata: dict[str, Any] = {}
+        if manifest.get("format") == PACKAGE_FORMAT_V2:
+            try:
+                manifest_v2 = manifest_v2_from_dict(manifest)
+                distribution = self._select_distribution(
+                    manifest_v2.distributions, platform, architecture
+                )
+            except PackageCompatibilityError:
+                raise
+            except (TypeError, ValueError) as exc:
+                raise PackageCompatibilityError(
+                    f"Manifiesto v2 incompatible para {name}: {exc}"
+                ) from exc
+            if distribution.type != "cobra-package":
+                raise PackageCompatibilityError(
+                    f"La distribución compatible de {name} es de tipo "
+                    f"{distribution.type!r}; este tipo todavía no es instalable."
+                )
+            metadata = {
+                "package_type": manifest_v2.package_type,
+                "requires_cobra": manifest_v2.requires_cobra,
+                "exports": list(manifest_v2.exports),
+                "capabilities": list(manifest_v2.capabilities),
+                "extensions": [item.as_dict() for item in manifest_v2.extensions],
+                "platforms": list(manifest_v2.platforms),
+                "architectures": list(manifest_v2.architectures),
+                "distributions": [item.as_dict() for item in manifest_v2.distributions],
+                "artifact_type": distribution.type,
+                "artifact": distribution.path,
+            }
         return CobraHubResolution(
             name=package_name,
             version=package_version,
@@ -191,7 +236,37 @@ class CobraHubResolver:
             sha256=digest,
             source=source,
             dependencies=dependencies,
+            metadata=metadata,
         )
+
+    @staticmethod
+    def _select_distribution(
+        distributions: tuple[PackageDistribution, ...],
+        platform: str,
+        architecture: str,
+    ) -> PackageDistribution:
+        """Elige el primer artefacto compatible sin cargar ni ejecutar su código."""
+
+        compatible = [
+            item
+            for item in distributions
+            if (
+                platform == "any"
+                or "any" in item.platforms
+                or platform in item.platforms
+            )
+            and (
+                architecture == "any"
+                or "any" in item.architectures
+                or architecture in item.architectures
+            )
+        ]
+        if not compatible:
+            raise PackageCompatibilityError(
+                "No hay una distribución compatible con la plataforma "
+                f"{platform!r} y la arquitectura {architecture!r}."
+        )
+        return compatible[0]
 
     _sha256_file = staticmethod(sha256_file)
 

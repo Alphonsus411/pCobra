@@ -40,6 +40,7 @@ class LockfileEntryV2(LockfileEntryV1):
     """Entrada v2 autocontenida, apta para resolución offline."""
 
     package_type: str | None = None
+    requires_cobra: str | None = None
     artifact_type: str | None = None
     artifact: str | None = None
     exports: tuple[str, ...] = ()
@@ -47,6 +48,7 @@ class LockfileEntryV2(LockfileEntryV1):
     extensions: tuple[Mapping[str, Any], ...] = ()
     platforms: tuple[str, ...] = ()
     architectures: tuple[str, ...] = ()
+    distributions: tuple[Mapping[str, Any], ...] = ()
     dependencies: Mapping[str, str] = field(default_factory=dict)
 
 
@@ -96,7 +98,9 @@ def write_lockfile(
     """Escribe JSON determinista; ``version=1`` habilita compatibilidad legacy."""
 
     if type(version) is not int or version not in _KNOWN_VERSIONS:
-        raise PackageResolutionError(f"Versión de cobra.lock no soportada: {version!r}.")
+        raise PackageResolutionError(
+            f"Versión de cobra.lock no soportada: {version!r}."
+        )
     entries = [_entry_from_resolution(item, version) for item in resolved.values()]
     entries.sort(key=_sort_key)
     payload = {"version": version, "packages": [_entry_dict(item) for item in entries]}
@@ -158,6 +162,9 @@ def _parse_entry(raw: Any, version: int, base_dir: Path) -> LockfileEntryV1:
             source=source,
             sha256=sha256,
             package_type=_optional_string(raw.get("package_type"), "package_type"),
+            requires_cobra=_optional_string(
+                raw.get("requires_cobra"), "requires_cobra"
+            ),
             artifact_type=_optional_string(raw.get("artifact_type"), "artifact_type"),
             artifact=_optional_string(raw.get("artifact"), "artifact"),
             exports=_string_tuple(raw.get("exports", []), "exports"),
@@ -165,6 +172,7 @@ def _parse_entry(raw: Any, version: int, base_dir: Path) -> LockfileEntryV1:
             extensions=_mapping_tuple(raw.get("extensions", []), "extensions"),
             platforms=_string_tuple(raw.get("platforms", []), "platforms"),
             architectures=_string_tuple(raw.get("architectures", []), "architectures"),
+            distributions=_mapping_tuple(raw.get("distributions", []), "distributions"),
             dependencies=_dependencies(raw.get("dependencies", {})),
         )
     except (TypeError, ValueError) as exc:
@@ -199,7 +207,9 @@ def _string_tuple(value: Any, field_name: str) -> tuple[str, ...]:
 
 
 def _mapping_tuple(value: Any, field_name: str) -> tuple[Mapping[str, Any], ...]:
-    if not isinstance(value, list) or not all(isinstance(item, Mapping) for item in value):
+    if not isinstance(value, list) or not all(
+        isinstance(item, Mapping) for item in value
+    ):
         raise ValueError(f"{field_name} debe ser una lista de tablas")
     return tuple(dict(item) for item in value)
 
@@ -210,8 +220,12 @@ def _dependencies(value: Any) -> dict[str, str]:
     result: dict[str, str] = {}
     for raw_name, raw_version in value.items():
         if not isinstance(raw_name, str) or not isinstance(raw_version, str):
-            raise ValueError("dependencies debe relacionar nombres y versiones de texto")
-        result[normalizar_nombre_paquete(raw_name)] = validar_version_paquete(raw_version)
+            raise ValueError(
+                "dependencies debe relacionar nombres y versiones de texto"
+            )
+        result[normalizar_nombre_paquete(raw_name)] = validar_version_paquete(
+            raw_version
+        )
     return result
 
 
@@ -222,22 +236,30 @@ def _resolve_source(source: str | None, base_dir: Path) -> str | None:
     return str((path if path.is_absolute() else base_dir / path).resolve())
 
 
-def _entry_from_resolution(item: CobraHubResolution | LockedDependency, version: int) -> LockfileEntryV1:
+def _entry_from_resolution(
+    item: CobraHubResolution | LockedDependency, version: int
+) -> LockfileEntryV1:
     metadata = dict(item.metadata)
-    common = dict(name=item.name, version=item.version, source=item.source, sha256=item.sha256)
+    common = dict(
+        name=item.name, version=item.version, source=item.source, sha256=item.sha256
+    )
     if version == LOCKFILE_V1:
         return LockfileEntryV1(**common)
     return LockfileEntryV2(
         **common,
         package_type=metadata.get("package_type"),
+        requires_cobra=metadata.get("requires_cobra"),
         artifact_type=metadata.get("artifact_type"),
         artifact=metadata.get("artifact") or str(getattr(item, "path", "")) or None,
         exports=tuple(metadata.get("exports", ())),
         capabilities=tuple(metadata.get("capabilities", ())),
         extensions=tuple(metadata.get("extensions", ())),
-        platforms=tuple(metadata.get("platforms", metadata.get("platform", ()))),
-        architectures=tuple(metadata.get("architectures", metadata.get("architecture", ()))),
-        dependencies=dict(getattr(item, "dependencies", metadata.get("dependencies", {}))),
+        platforms=tuple(metadata.get("platforms", ())),
+        architectures=tuple(metadata.get("architectures", ())),
+        distributions=tuple(metadata.get("distributions", ())),
+        dependencies=dict(
+            getattr(item, "dependencies", metadata.get("dependencies", {}))
+        ),
     )
 
 
@@ -248,26 +270,36 @@ def _entry_dict(entry: LockfileEntryV1) -> dict[str, Any]:
         if value is not None:
             data[key] = value
     if isinstance(entry, LockfileEntryV2):
-        for key in ("package_type", "artifact_type", "artifact"):
+        for key in ("package_type", "requires_cobra", "artifact_type", "artifact"):
             value = getattr(entry, key)
             if value is not None:
                 data[key] = value
         data.update(
-            exports=list(entry.exports), capabilities=list(entry.capabilities),
+            exports=list(entry.exports),
+            capabilities=list(entry.capabilities),
             extensions=[dict(item) for item in entry.extensions],
-            platforms=list(entry.platforms), architectures=list(entry.architectures),
+            platforms=list(entry.platforms),
+            architectures=list(entry.architectures),
             dependencies=dict(sorted(entry.dependencies.items())),
         )
+        if entry.distributions:
+            data["distributions"] = [dict(item) for item in entry.distributions]
     return data
 
 
 def _v2_metadata(entry: LockfileEntryV2) -> dict[str, Any]:
-    return {key: value for key, value in _entry_dict(entry).items() if key not in {"name", "version", "source", "sha256"}}
+    return {
+        key: value
+        for key, value in _entry_dict(entry).items()
+        if key not in {"name", "version", "source", "sha256"}
+    }
 
 
 def _sort_key(entry: LockfileEntryV1) -> tuple[str, ...]:
     return (
-        entry.name, entry.version, entry.source or "",
+        entry.name,
+        entry.version,
+        entry.source or "",
         getattr(entry, "package_type", None) or "",
         getattr(entry, "artifact_type", None) or "",
         getattr(entry, "artifact", None) or "",
@@ -275,6 +307,10 @@ def _sort_key(entry: LockfileEntryV1) -> tuple[str, ...]:
 
 
 __all__ = [
-    "LOCKFILE_V1", "LOCKFILE_V2", "LockfileEntryV1", "LockfileEntryV2",
-    "read_lockfile", "write_lockfile",
+    "LOCKFILE_V1",
+    "LOCKFILE_V2",
+    "LockfileEntryV1",
+    "LockfileEntryV2",
+    "read_lockfile",
+    "write_lockfile",
 ]
