@@ -11,7 +11,7 @@ def sanitize_input(text: str) -> str:
     Ejemplos:
         >>> sanitize_input("Hola, こんにちは, مرحبا 🌍🚀")
         'Hola, こんにちは, مرحبا 🌍🚀'
-        >>> sanitize_input("\ud83d")
+        >>> sanitize_input(chr(0xD83D))
         '�'
     """
     if text is None:
