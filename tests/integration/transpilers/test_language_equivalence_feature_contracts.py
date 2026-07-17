@@ -37,11 +37,6 @@ TRANSPILER_FEATURE_CONSTANTS = {
     "python": ("pcobra.cobra.transpilers.transpiler.to_python", "PYTHON_FEATURE_NODE_SUPPORT"),
     "javascript": ("pcobra.cobra.transpilers.transpiler.to_js", "JAVASCRIPT_FEATURE_NODE_SUPPORT"),
     "rust": ("pcobra.cobra.transpilers.transpiler.to_rust", "RUST_FEATURE_NODE_SUPPORT"),
-    "go": ("pcobra.cobra.transpilers.transpiler.to_go", "GO_FEATURE_NODE_SUPPORT"),
-    "cpp": ("pcobra.cobra.transpilers.transpiler.to_cpp", "CPP_FEATURE_NODE_SUPPORT"),
-    "java": ("pcobra.cobra.transpilers.transpiler.to_java", "JAVA_FEATURE_NODE_SUPPORT"),
-    "wasm": ("pcobra.cobra.transpilers.transpiler.to_wasm", "WASM_FEATURE_NODE_SUPPORT"),
-    "asm": ("pcobra.cobra.transpilers.transpiler.to_asm", "ASM_FEATURE_NODE_SUPPORT"),
 }
 
 
@@ -140,21 +135,18 @@ PHASE1_ACCEPTANCE_MARKERS = {
     ("rust", "decoradores"): ("// @decorador", "// decorador aplicado:"),
     ("rust", "async"): ("async fn obtener_datos", "return fetch().await;"),
     ("rust", "imports_corelibs"): ("use crate::corelibs::*;", "use crate::standard_library::*;"),
-    ("go", "decoradores"): ("// @decorador", "// decorador aplicado:"),
-    ("go", "async"): ("func obtener_datos() any {", "return cobra_await(fetch())"),
-    ("go", "imports_corelibs"): ('"pcobra/corelibs"', '"pcobra/standard_library"'),
 }
 
 
 @pytest.mark.parametrize("backend,feature", tuple(PHASE1_ACCEPTANCE_MARKERS))
-def test_phase1_rust_go_acceptance_markers_are_present(backend: str, feature: str):
+def test_phase1_official_acceptance_markers_are_present(backend: str, feature: str):
     generated = _generate(backend, _feature_nodes(feature))
     for marker in PHASE1_ACCEPTANCE_MARKERS[(backend, feature)]:
         assert marker in generated
 
 
 @pytest.mark.parametrize("backend,feature", tuple(PHASE1_ACCEPTANCE_MARKERS))
-def test_phase1_rust_go_matches_golden_minimum_evidence(backend: str, feature: str):
+def test_phase1_official_matches_golden_minimum_evidence(backend: str, feature: str):
     generated = _generate(backend, _feature_nodes(feature)).strip() + "\n"
     golden = Path(__file__).parent / "golden_phase1" / f"{backend}.{feature}.golden"
     assert golden.exists(), f"Falta evidencia golden para {backend}/{feature}: {golden}"

@@ -38,7 +38,10 @@ CORE_RUNTIME_FEATURES: Final[tuple[str, ...]] = (
 
 OFFICIAL_TRANSPILERS: dict[str, tuple[str, str]] = {
     "python": ("pcobra.cobra.transpilers.transpiler.to_python", "TranspiladorPython"),
-    "javascript": ("pcobra.cobra.transpilers.transpiler.to_javascript", "TranspiladorJavaScript"),
+    "javascript": (
+        "pcobra.cobra.transpilers.transpiler.to_javascript",
+        "TranspiladorJavaScript",
+    ),
     "rust": ("pcobra.cobra.transpilers.transpiler.to_rust", "TranspiladorRust"),
 }
 
@@ -56,7 +59,10 @@ FEATURE_NODES = {
         NodoHolobit("hb", [1, 2, 3]),
         NodoTransformar(NodoIdentificador("hb"), NodoValor("rotar"), [NodoValor(90)]),
     ],
-    "graficar": lambda: [NodoHolobit("hb", [1, 2, 3]), NodoGraficar(NodoIdentificador("hb"))],
+    "graficar": lambda: [
+        NodoHolobit("hb", [1, 2, 3]),
+        NodoGraficar(NodoIdentificador("hb")),
+    ],
     "corelibs": lambda: [NodoLlamadaFuncion("longitud", [NodoValor("cobra")])],
     "standard_library": lambda: [NodoLlamadaFuncion("mostrar", [NodoValor("hola")])],
 }
@@ -83,7 +89,11 @@ PARTIAL_EXPECTATIONS: dict[str, dict[str, tuple[str, ...]]] = {
             "let hb = cobra_holobit([1, 2, 3]);",
             "__cobra_tipo__: 'holobit'",
         ),
-        "proyectar": ("function cobra_proyectar", "case '2d':", "cobra_proyectar(hb, '2d');"),
+        "proyectar": (
+            "function cobra_proyectar",
+            "case '2d':",
+            "cobra_proyectar(hb, '2d');",
+        ),
         "transformar": (
             "function cobra_transformar",
             "operacion === 'rotar'",
@@ -113,14 +123,20 @@ PARTIAL_EXPECTATIONS: dict[str, dict[str, tuple[str, ...]]] = {
             "fn cobra_transformar",
             'cobra_runtime_expect(cobra_transformar(&hb, &format!("{}", "rotar"), &[format!("{}", 90)]));',
         ),
-        "graficar": ("fn cobra_graficar", 'cobra_runtime_expect(cobra_graficar(&hb));'),
-        "corelibs": ('fn longitud<T: ToString>(valor: T) -> usize {', 'longitud("cobra");'),
-        "standard_library": ('fn mostrar<T: Display>(valor: T) {', 'mostrar("hola");'),
+        "graficar": ("fn cobra_graficar", "cobra_runtime_expect(cobra_graficar(&hb));"),
+        "corelibs": (
+            "fn longitud<T: ToString>(valor: T) -> usize {",
+            'longitud("cobra");',
+        ),
+        "standard_library": ("fn mostrar<T: Display>(valor: T) {", 'mostrar("hola");'),
     },
+}
+
+LEGACY_EXPERIMENTAL_PARTIAL_EXPECTATIONS: dict[str, dict[str, tuple[str, ...]]] = {
     "wasm": {
         "holobit": (
             '(import "pcobra:holobit" "cobra_holobit"',
-            '(drop (call $cobra_holobit (i32.const 1)))',
+            "(drop (call $cobra_holobit (i32.const 1)))",
         ),
         "proyectar": (
             "(func $cobra_proyectar",
@@ -134,10 +150,13 @@ PARTIAL_EXPECTATIONS: dict[str, dict[str, tuple[str, ...]]] = {
             "(func $cobra_graficar",
             "(drop (call $cobra_graficar (local.get $hb)))",
         ),
-        "corelibs": ('(import "pcobra:corelibs" "longitud"', '(call $longitud (i32.const 0))'),
+        "corelibs": (
+            '(import "pcobra:corelibs" "longitud"',
+            "(call $longitud (i32.const 0))",
+        ),
         "standard_library": (
             '(import "pcobra:standard_library" "mostrar"',
-            '(call $mostrar (i32.const 0))',
+            "(call $mostrar (i32.const 0))",
         ),
     },
     "go": {
@@ -150,16 +169,28 @@ PARTIAL_EXPECTATIONS: dict[str, dict[str, tuple[str, ...]]] = {
     },
     "cpp": {
         "holobit": ("auto hb = cobra_holobit({ 1, 2, 3 });",),
-        "proyectar": ("inline std::vector<double> cobra_proyectar", 'cobra_proyectar(hb, "2d");'),
-        "transformar": ("inline CobraHolobit cobra_transformar", 'cobra_transformar(hb, "rotar", {cobra_runtime_arg(90)});'),
+        "proyectar": (
+            "inline std::vector<double> cobra_proyectar",
+            'cobra_proyectar(hb, "2d");',
+        ),
+        "transformar": (
+            "inline CobraHolobit cobra_transformar",
+            'cobra_transformar(hb, "rotar", {cobra_runtime_arg(90)});',
+        ),
         "graficar": ("inline std::string cobra_graficar", "cobra_graficar(hb);"),
         "corelibs": ('longitud("cobra");',),
         "standard_library": ('mostrar("hola");',),
     },
     "java": {
         "holobit": ("Object hb = cobra_holobit(new double[]{1, 2, 3});",),
-        "proyectar": ("private static double[] cobra_proyectar", 'cobra_proyectar(hb, "2d")'),
-        "transformar": ("private static CobraHolobit cobra_transformar", 'cobra_transformar(hb, "rotar", 90)'),
+        "proyectar": (
+            "private static double[] cobra_proyectar",
+            'cobra_proyectar(hb, "2d")',
+        ),
+        "transformar": (
+            "private static CobraHolobit cobra_transformar",
+            'cobra_transformar(hb, "rotar", 90)',
+        ),
         "graficar": ("private static String cobra_graficar", "cobra_graficar(hb);"),
         "corelibs": ('longitud("cobra")',),
         "standard_library": ('mostrar("hola")',),
@@ -230,7 +261,9 @@ CANONICAL_FULL_PROGRAM_FIXTURE: Final[dict[str, object]] = {
     ],
 }
 
-PARTIAL_CONTRACT_ERROR_MARKERS: Final[dict[str, dict[str, tuple[str, ...]]]] = {
+OFFICIAL_PARTIAL_CONTRACT_ERROR_MARKERS: Final[
+    dict[str, dict[str, tuple[str, ...]]]
+] = {
     "javascript": {
         "proyectar": (
             "Runtime Holobit JavaScript: feature=${feature}; contrato partial; backend sin holobit_sdk;",
@@ -259,6 +292,11 @@ PARTIAL_CONTRACT_ERROR_MARKERS: Final[dict[str, dict[str, tuple[str, ...]]]] = {
             "cobra_holobit_partial_contract_error(",
         ),
     },
+}
+
+LEGACY_EXPERIMENTAL_PARTIAL_CONTRACT_ERROR_MARKERS: Final[
+    dict[str, dict[str, tuple[str, ...]]]
+] = {
     "go": {
         "proyectar": (
             "Runtime Holobit Go: feature=%s; contrato partial; backend sin holobit_sdk;",
@@ -275,36 +313,45 @@ PARTIAL_CONTRACT_ERROR_MARKERS: Final[dict[str, dict[str, tuple[str, ...]]]] = {
     },
     "cpp": {
         "proyectar": (
-            "Runtime Holobit C++: feature=\" + feature + \"; contrato partial; backend sin holobit_sdk;",
+            'Runtime Holobit C++: feature=" + feature + "; contrato partial; backend sin holobit_sdk;',
             "cobra_holobit_partial_contract_error(",
         ),
         "transformar": (
-            "Runtime Holobit C++: feature=\" + feature + \"; contrato partial; backend sin holobit_sdk;",
+            'Runtime Holobit C++: feature=" + feature + "; contrato partial; backend sin holobit_sdk;',
             "cobra_holobit_partial_contract_error(",
         ),
         "graficar": (
-            "Runtime Holobit C++: feature=\" + feature + \"; contrato partial; backend sin holobit_sdk;",
+            'Runtime Holobit C++: feature=" + feature + "; contrato partial; backend sin holobit_sdk;',
             "cobra_holobit_partial_contract_error(",
         ),
     },
     "java": {
         "proyectar": (
-            "Runtime Holobit Java: feature=\" + feature + \"; contrato partial; backend sin holobit_sdk;",
+            'Runtime Holobit Java: feature=" + feature + "; contrato partial; backend sin holobit_sdk;',
             "cobraHolobitPartialContractError(",
         ),
         "transformar": (
-            "Runtime Holobit Java: feature=\" + feature + \"; contrato partial; backend sin holobit_sdk;",
+            'Runtime Holobit Java: feature=" + feature + "; contrato partial; backend sin holobit_sdk;',
             "cobraHolobitPartialContractError(",
         ),
         "graficar": (
-            "Runtime Holobit Java: feature=\" + feature + \"; contrato partial; backend sin holobit_sdk;",
+            'Runtime Holobit Java: feature=" + feature + "; contrato partial; backend sin holobit_sdk;',
             "cobraHolobitPartialContractError(",
         ),
     },
     "wasm": {
-        "proyectar": ("backend wasm: contrato partial", "depende del host para la semántica completa"),
-        "transformar": ("backend wasm: contrato partial", "depende del host para la semántica completa"),
-        "graficar": ("backend wasm: contrato partial", "depende del host para la semántica completa"),
+        "proyectar": (
+            "backend wasm: contrato partial",
+            "depende del host para la semántica completa",
+        ),
+        "transformar": (
+            "backend wasm: contrato partial",
+            "depende del host para la semántica completa",
+        ),
+        "graficar": (
+            "backend wasm: contrato partial",
+            "depende del host para la semántica completa",
+        ),
     },
     "asm": {
         "proyectar": ("runtime de inspección/diagnóstico", "TRAP"),
@@ -313,30 +360,58 @@ PARTIAL_CONTRACT_ERROR_MARKERS: Final[dict[str, dict[str, tuple[str, ...]]]] = {
     },
 }
 
-OFFICIAL_PARTIAL_CONTRACT_ERROR_MARKERS: Final[dict[str, dict[str, tuple[str, ...]]]] = {
-    backend: PARTIAL_CONTRACT_ERROR_MARKERS[backend]
-    for backend in TRANSPILERS
-    if backend in PARTIAL_CONTRACT_ERROR_MARKERS
-}
 RUNTIME_HOOK_EXPECTATIONS: Final[dict[str, tuple[str, ...]]] = {
-    "python": ("def cobra_holobit", "def cobra_proyectar", "def cobra_transformar", "def cobra_graficar"),
-    "javascript": ("function cobra_holobit", "function cobra_proyectar", "function cobra_transformar", "function cobra_graficar"),
-    "rust": ("fn cobra_holobit", "fn cobra_proyectar", "fn cobra_transformar", "fn cobra_graficar"),
+    "python": (
+        "def cobra_holobit",
+        "def cobra_proyectar",
+        "def cobra_transformar",
+        "def cobra_graficar",
+    ),
+    "javascript": (
+        "function cobra_holobit",
+        "function cobra_proyectar",
+        "function cobra_transformar",
+        "function cobra_graficar",
+    ),
+    "rust": (
+        "fn cobra_holobit",
+        "fn cobra_proyectar",
+        "fn cobra_transformar",
+        "fn cobra_graficar",
+    ),
+}
+
+LEGACY_EXPERIMENTAL_RUNTIME_HOOK_EXPECTATIONS: Final[dict[str, tuple[str, ...]]] = {
     "wasm": (
         "(func $cobra_holobit",
         "(func $cobra_proyectar",
         "(func $cobra_transformar",
         "(func $cobra_graficar",
     ),
-    "go": ("func cobra_holobit", "func cobra_proyectar", "func cobra_transformar", "func cobra_graficar"),
-    "cpp": ("inline CobraHolobit cobra_holobit", "inline std::vector<double> cobra_proyectar", "inline CobraHolobit cobra_transformar", "inline std::string cobra_graficar"),
+    "go": (
+        "func cobra_holobit",
+        "func cobra_proyectar",
+        "func cobra_transformar",
+        "func cobra_graficar",
+    ),
+    "cpp": (
+        "inline CobraHolobit cobra_holobit",
+        "inline std::vector<double> cobra_proyectar",
+        "inline CobraHolobit cobra_transformar",
+        "inline std::string cobra_graficar",
+    ),
     "java": (
         "private static CobraHolobit cobra_holobit",
         "private static double[] cobra_proyectar",
         "private static CobraHolobit cobra_transformar",
         "private static String cobra_graficar",
     ),
-    "asm": ("cobra_holobit:", "cobra_proyectar:", "cobra_transformar:", "cobra_graficar:"),
+    "asm": (
+        "cobra_holobit:",
+        "cobra_proyectar:",
+        "cobra_transformar:",
+        "cobra_graficar:",
+    ),
 }
 
 
