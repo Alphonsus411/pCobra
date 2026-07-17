@@ -1,3 +1,4 @@
+import ast
 import sys
 from pathlib import Path
 
@@ -18,6 +19,8 @@ from pcobra.core.ast_nodes import (
     NodoGarantia,
     NodoRetorno,
     NodoLlamadaFuncion,
+    NodoDecorador,
+    NodoFuncion,
     NodoExport,
     NodoUsar,
 )
@@ -38,6 +41,37 @@ def test_generate_code_asignacion_simple() -> None:
     codigo = transpiler.generate_code([nodo])
     assert "x = 1" in codigo
     assert transpiler.codigo == codigo
+
+
+def test_transpilador_python_funcion_con_decorador_emite_salto_contiguo() -> None:
+    nodo = NodoFuncion(
+        "saludar",
+        ["nombre"],
+        [NodoRetorno(NodoIdentificador("nombre"))],
+        decoradores=[NodoDecorador(NodoIdentificador("traza"))],
+    )
+
+    codigo = TranspiladorPython().generate_code([nodo])
+
+    assert "@traza\ndef saludar(nombre):" in codigo
+    ast.parse(codigo)
+
+
+def test_transpilador_python_funcion_con_dos_decoradores_preserva_orden() -> None:
+    nodo = NodoFuncion(
+        "saludar",
+        ["nombre"],
+        [NodoRetorno(NodoIdentificador("nombre"))],
+        decoradores=[
+            NodoDecorador(NodoIdentificador("traza")),
+            NodoDecorador(NodoIdentificador("medir")),
+        ],
+    )
+
+    codigo = TranspiladorPython().generate_code([nodo])
+
+    assert "@traza\n@medir\ndef saludar(nombre):" in codigo
+    ast.parse(codigo)
 
 
 def test_transpilador_python_usar_invoca_api_canonica() -> None:
