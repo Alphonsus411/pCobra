@@ -346,16 +346,28 @@ def _es_ayuda_global_temprana(argv: Optional[List[str]]) -> bool:
 def _mostrar_ayuda_global_temprana() -> None:
     """Imprime ayuda pública mínima sin importar comandos opcionales/runtime."""
 
+    from pcobra.cobra.cli.public_command_policy import PUBLIC_COMMANDS
+
+    comandos = ",".join(PUBLIC_COMMANDS)
+    descripciones = (
+        "Ejecuta un archivo Cobra.",
+        "Genera salida desde un archivo Cobra.",
+        "Ejecuta pruebas Cobra.",
+        "Gestiona módulos Cobra.",
+        "Inicia el modo interactivo.",
+        "Inicia la interfaz gráfica.",
+    )
+    lista_comandos = "\n".join(
+        f"  {comando:<6} {descripcion}"
+        for comando, descripcion in zip(PUBLIC_COMMANDS, descripciones, strict=True)
+    )
+
     print(
         "uso: cobra [-h] [--version] [--debug] [-v] "
-        "[--modo {cobra,transpilar,mixto}] {run,build,test,mod,repl} ...\n"
+        f"[--modo {{cobra,transpilar,mixto}}] {{{comandos}}} ...\n"
         "\n"
         "Lenguaje Cobra CLI. Comandos públicos:\n"
-        "  run    Ejecuta un archivo Cobra.\n"
-        "  build  Genera salida desde un archivo Cobra.\n"
-        "  test   Ejecuta pruebas Cobra.\n"
-        "  mod    Gestiona módulos Cobra.\n"
-        "  repl   Inicia el modo interactivo.\n"
+        f"{lista_comandos}\n"
         "\n"
         "Opciones:\n"
         "  -h, --help, --ayuda  Muestra esta ayuda y termina.\n"
