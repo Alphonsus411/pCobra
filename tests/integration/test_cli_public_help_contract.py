@@ -3,9 +3,12 @@ import os
 import re
 import subprocess
 import sys
+from io import StringIO
 from pathlib import Path
+from unittest.mock import patch
 
 import cobra.cli.cli as cli_module
+import pcobra.cli as public_cli
 from pcobra.cobra.cli.public_command_policy import PUBLIC_COMMANDS
 
 
@@ -24,6 +27,45 @@ def _public_env() -> dict[str, str]:
     env.pop("COBRA_INTERNAL_ENABLE_LEGACY_CLI", None)
     env.pop("COBRA_INTERNAL_LEGACY_TARGETS", None)
     return env
+
+
+def _comandos_en_ayuda_temprana(output: str) -> tuple[str, ...]:
+    bloque = output.split("Lenguaje Cobra CLI. Comandos públicos:\n", 1)[1]
+    bloque = bloque.split("\n\nOpciones:\n", 1)[0]
+    return tuple(linea.split()[0] for linea in bloque.splitlines())
+
+
+def _comandos_en_linea_de_uso(output: str) -> tuple[str, ...]:
+    coincidencias = re.findall(r"\{([a-z]+(?:,\s*[a-z]+)+)\}", output)
+    comandos = next(grupo for grupo in coincidencias if "run" in grupo.split(","))
+    return tuple(comando.strip() for comando in comandos.split(","))
+
+
+def test_cli_early_global_help_exposes_exact_public_commands():
+    with patch("sys.stdout", new_callable=StringIO) as output:
+        assert public_cli.main(["--help"]) == 0
+
+    ayuda = output.getvalue()
+    assert _comandos_en_ayuda_temprana(ayuda) == PUBLIC_COMMANDS
+    assert _comandos_en_linea_de_uso(ayuda) == PUBLIC_COMMANDS
+
+
+def test_cobra_entrypoint_early_help_exposes_exact_public_commands():
+    repo_root = Path(__file__).resolve().parents[2]
+    env = _public_env()
+    env["PATH"] = f"{repo_root / 'scripts' / 'bin'}{os.pathsep}{env.get('PATH', '')}"
+
+    for help_flag in ("--help", "-h"):
+        result = subprocess.run(
+            ["cobra", help_flag],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            cwd=str(repo_root),
+            env=env,
+        )
+        assert result.returncode == 0
+        assert _comandos_en_linea_de_uso(result.stdout) == PUBLIC_COMMANDS
 
 
 def test_cli_public_commands_contract_is_stable():
