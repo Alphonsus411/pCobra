@@ -9,6 +9,10 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+from pcobra.cobra.hub.compatibility import (
+    cobra_version_satisfies,
+    installed_cobra_version,
+)
 from pcobra.cobra.hub.errors import (
     CobraHubError,
     PackageCompatibilityError,
@@ -203,6 +207,15 @@ class CobraHubResolver:
         if manifest.get("format") == PACKAGE_FORMAT_V2:
             try:
                 manifest_v2 = manifest_v2_from_dict(manifest)
+                cobra_version = installed_cobra_version()
+                if not cobra_version_satisfies(
+                    cobra_version, manifest_v2.requires_cobra
+                ):
+                    raise PackageCompatibilityError(
+                        f"El paquete {package_name} requiere Cobra "
+                        f"{manifest_v2.requires_cobra}, pero la versión instalada "
+                        f"es {cobra_version}."
+                    )
                 distribution = self._select_distribution(
                     manifest_v2.distributions, platform, architecture
                 )
