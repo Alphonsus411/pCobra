@@ -7,8 +7,9 @@ from pathlib import Path
 import re
 from typing import Any, Mapping
 
-from pcobra.cobra.hub.compatibility import validate_version_constraint
-
+from pcobra.cobra.hub.compatibility import (
+    validate_version_constraint as _validate_version_constraint,
+)
 
 PACKAGE_FORMAT_V2 = "cobra-package-v2"
 SUPPORTED_PACKAGE_FORMATS = frozenset({"cobra-package-v1", PACKAGE_FORMAT_V2})
@@ -84,9 +85,9 @@ def _semver(value: Any, field_name: str) -> str:
     return text
 
 
-def _version_constraint(value: Any, field_name: str) -> str:
+def validate_version_constraint(value: Any, field_name: str) -> str:
     """Valida una intersección estática de comparadores de versión Cobra."""
-    return validate_version_constraint(value, field_name)
+    return _validate_version_constraint(value, field_name)
 
 
 def _namespace(value: Any, field_name: str) -> str:
@@ -272,7 +273,7 @@ class PackageManifestV2:
             name=_name(data.get("name")),
             version=_semver(data.get("version"), "version"),
             package_type=package_type,
-            requires_cobra=_version_constraint(
+            requires_cobra=validate_version_constraint(
                 data.get("requires_cobra"), "requires_cobra"
             ),
             exports=exports,

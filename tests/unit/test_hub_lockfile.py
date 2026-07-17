@@ -262,6 +262,53 @@ def test_v1_mantiene_tolerancia_a_claves_historicas(tmp_path):
     assert read_lockfile(path)["demo"].version == "1.0.0"
 
 
+def test_v2_acepta_restriccion_requires_cobra_valida(tmp_path):
+    path = tmp_path / "cobra.lock"
+    path.write_text(json.dumps(_v2_entry(requires_cobra=">=1.2,<2")), encoding="utf-8")
+
+    assert read_lockfile(path)["demo"].metadata["requires_cobra"] == ">=1.2,<2"
+
+
+def test_v2_rechaza_restriccion_requires_cobra_mal_formada(tmp_path):
+    path = tmp_path / "cobra.lock"
+    path.write_text(json.dumps(_v2_entry(requires_cobra=">=1.2, <2")), encoding="utf-8")
+
+    with pytest.raises(PackageResolutionError, match="requires_cobra"):
+        read_lockfile(path)
+
+
+def test_v2_rechaza_requires_cobra_que_no_es_cadena(tmp_path):
+    path = tmp_path / "cobra.lock"
+    path.write_text(json.dumps(_v2_entry(requires_cobra=2)), encoding="utf-8")
+
+    with pytest.raises(PackageResolutionError, match="requires_cobra"):
+        read_lockfile(path)
+
+
+def test_v1_sigue_permitiendo_omitir_requires_cobra(tmp_path):
+    path = tmp_path / "cobra.lock"
+    path.write_text(
+        json.dumps({"version": 1, "packages": [{"name": "demo", "version": "1.0.0"}]}),
+        encoding="utf-8",
+    )
+
+    assert read_lockfile(path)["demo"].metadata == {}
+
+
+def test_v2_escribe_y_lee_restriccion_requires_cobra_determinista(tmp_path):
+    path = tmp_path / "cobra.lock"
+    entry = LockedDependency(
+        "demo", "1.0.0", HASH, "cobrahub", metadata={"requires_cobra": ">=1.2,<2"}
+    )
+
+    write_lockfile(path, {"demo": entry})
+    first = path.read_bytes()
+    write_lockfile(path, {"demo": entry})
+
+    assert path.read_bytes() == first
+    assert read_lockfile(path)["demo"].metadata["requires_cobra"] == ">=1.2,<2"
+
+
 def test_escritura_no_depende_del_directorio_de_trabajo(tmp_path, monkeypatch):
     artifact = tmp_path / "cache" / "demo.co"
     artifact.parent.mkdir()

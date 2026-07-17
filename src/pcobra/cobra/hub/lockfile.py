@@ -23,6 +23,7 @@ from pcobra.cobra.hub.models import (
     SUPPORTED_ARCHITECTURES,
     SUPPORTED_DISTRIBUTION_TYPES,
     SUPPORTED_PLATFORMS,
+    validate_version_constraint,
 )
 from pcobra.cobra.packaging import normalizar_nombre_paquete, validar_version_paquete
 
@@ -203,9 +204,7 @@ def _parse_entry(raw: Any, version: int, base_dir: Path) -> LockfileEntryV1:
             source=source,
             sha256=sha256,
             package_type=_optional_string(raw.get("package_type"), "package_type"),
-            requires_cobra=_optional_string(
-                raw.get("requires_cobra"), "requires_cobra"
-            ),
+            requires_cobra=_optional_version_constraint(raw.get("requires_cobra")),
             artifact_type=artifact_type,
             artifact=_artifact(raw.get("artifact")),
             exports=_unique_string_tuple(raw.get("exports", []), "exports"),
@@ -247,6 +246,12 @@ def _optional_string(value: Any, field_name: str) -> str | None:
     if not isinstance(value, str) or not value:
         raise ValueError(f"{field_name} debe ser una cadena no vacía")
     return value
+
+
+def _optional_version_constraint(value: Any) -> str | None:
+    if value is None:
+        return None
+    return validate_version_constraint(value, "requires_cobra")
 
 
 def _string_tuple(value: Any, field_name: str) -> tuple[str, ...]:
@@ -345,7 +350,7 @@ def _entry_from_resolution(
     return LockfileEntryV2(
         **common,
         package_type=metadata.get("package_type"),
-        requires_cobra=metadata.get("requires_cobra"),
+        requires_cobra=_optional_version_constraint(metadata.get("requires_cobra")),
         artifact_type=artifact_type,
         artifact=_artifact(artifact),
         exports=_unique_string_tuple(list(metadata.get("exports", ())), "exports"),
