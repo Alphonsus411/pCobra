@@ -17,9 +17,17 @@ import urllib.parse
 from dataclasses import dataclass
 from email.message import Message
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Protocol
+from typing import Any, Protocol
 
-from pcobra.cobra.cli.i18n import _
+from pcobra.cobra.hub.errors import (
+    CobraHubError,
+    PackageCompatibilityError,
+    PackageIntegrityError,
+    PackageNotFoundError,
+    PackageProviderError,
+    PackageResolutionError,
+)
+from pcobra.cobra.hub.transport import CobraHubTransport
 from pcobra.cobra.packaging import (
     PackageSearchResult,
     manifest_from_dict,
@@ -27,9 +35,6 @@ from pcobra.cobra.packaging import (
     normalizar_nombre_paquete,
     validar_version_paquete,
 )
-
-if TYPE_CHECKING:  # pragma: no cover - solo para tipado
-    from pcobra.cobra.cli.cobrahub_client import CobraHubClient
 
 logger = logging.getLogger(__name__)
 
@@ -69,7 +74,7 @@ class PackageRepository(Protocol):
 class HttpCobraHubRepository:
     """Repositorio CobraHub respaldado por HTTP usando un ``CobraHubClient``."""
 
-    def __init__(self, client: "CobraHubClient") -> None:
+    def __init__(self, client: CobraHubTransport) -> None:
         self.client = client
 
     def publish(
@@ -77,9 +82,12 @@ class HttpCobraHubRepository:
     ) -> bool:
         """Publica un paquete .co mediante la API HTTP de CobraHub."""
         ruta = Path(package_path)
-        metadata = _normalizar_metadatos_paquete(metadata)
-        with ruta.open("rb") as f:
-            with self.client.session.post(
+        try:
+            metadata = _normalizar_metadatos_paquete(metadata)
+        except (TypeError, ValueError, KeyError) as exc:
+            raise PackageResolutionError(str(exc)) from exc
+        try:
+            with ruta.open("rb") as f, self.client.session.post(
                 f"{self.client.base_url}/paquetes",
                 files={"file": f},
                 data={"metadata": json_dumps(metadata)},
@@ -93,29 +101,43 @@ class HttpCobraHubRepository:
                 ),
             ) as response:
                 response.raise_for_status()
-        cache_path = package_cache_dir() / ruta.name
-        if ruta.resolve() != cache_path.resolve():
-            shutil.copy2(ruta, cache_path)
+            cache_path = package_cache_dir() / ruta.name
+            if ruta.resolve() != cache_path.resolve():
+                shutil.copy2(ruta, cache_path)
+        except CobraHubError:
+            raise
+        except Exception as exc:
+            raise PackageProviderError(str(exc)) from exc
         return True
 
     def search(self, query: str) -> list[PackageSearchResult]:
         """Busca paquetes mediante la API HTTP de CobraHub."""
-        with self.client.session.get(
-            f"{self.client.base_url}/paquetes",
-            params={"q": query},
-            timeout=(self.client.CONNECT_TIMEOUT, self.client.READ_TIMEOUT),
-        ) as response:
-            response.raise_for_status()
-            data = response.json() if hasattr(response, "json") else []
-        items = data.get("results", []) if isinstance(data, dict) else data
-        return [_normalizar_resultado_paquete(item) for item in list(items)]
+        try:
+            with self.client.session.get(
+                f"{self.client.base_url}/paquetes",
+                params={"q": query},
+                timeout=(self.client.CONNECT_TIMEOUT, self.client.READ_TIMEOUT),
+            ) as response:
+                response.raise_for_status()
+                data = response.json() if hasattr(response, "json") else []
+            items = data.get("results", []) if isinstance(data, dict) else data
+            return [_normalizar_resultado_paquete(item) for item in list(items)]
+        except CobraHubError:
+            raise
+        except (TypeError, ValueError, KeyError) as exc:
+            raise PackageResolutionError(str(exc)) from exc
+        except Exception as exc:
+            raise PackageProviderError(str(exc)) from exc
 
     def download(self, name: str, version: str | None = None) -> DownloadedPackage:
         """Descarga un paquete por nombre y versión opcional en la caché local."""
-        normalized_name = normalizar_nombre_paquete(name)
-        normalized_version = (
-            validar_version_paquete(version) if version is not None else None
-        )
+        try:
+            normalized_name = normalizar_nombre_paquete(name)
+            normalized_version = (
+                validar_version_paquete(version) if version is not None else None
+            )
+        except (TypeError, ValueError) as exc:
+            raise PackageResolutionError(str(exc)) from exc
         cache_path = package_cache_dir() / _cache_filename(
             normalized_name, normalized_version
         )
@@ -130,11 +152,21 @@ class HttpCobraHubRepository:
                 timeout=(self.client.CONNECT_TIMEOUT, self.client.READ_TIMEOUT),
                 stream=True,
             ) as response:
-                response.raise_for_status()
+                try:
+                    response.raise_for_status()
+                except Exception as exc:
+                    status = getattr(getattr(exc, "response", None), "status_code", None)
+                    status = status or getattr(response, "status_code", None)
+                    if status == 404:
+                        raise PackageNotFoundError(str(exc)) from exc
+                    raise PackageProviderError(str(exc)) from exc
                 checksum_servidor = response.headers.get("X-Content-Checksum")
                 version_servidor = _version_from_response(response)
                 if version_servidor:
-                    version_servidor = validar_version_paquete(version_servidor)
+                    try:
+                        version_servidor = validar_version_paquete(version_servidor)
+                    except (TypeError, ValueError) as exc:
+                        raise PackageCompatibilityError(str(exc)) from exc
                 if version_servidor and version_servidor != normalized_version:
                     cache_path = package_cache_dir() / _cache_filename(
                         normalized_name, version_servidor
@@ -152,14 +184,16 @@ class HttpCobraHubRepository:
                         if tamaño_total > self.client.MAX_FILE_SIZE:
                             out.close()
                             os.unlink(cache_path)
-                            raise ValueError(_("Archivo descargado demasiado grande"))
+                            raise PackageIntegrityError(
+                                "Archivo descargado demasiado grande"
+                            )
                         sha256.update(chunk)
                         out.write(chunk)
 
             digest = sha256.hexdigest()
             if checksum_servidor and digest != checksum_servidor:
                 os.unlink(cache_path)
-                raise ValueError(_("Verificación de integridad fallida"))
+                raise PackageIntegrityError("Verificación de integridad fallida")
 
             return DownloadedPackage(
                 path=cache_path,
@@ -167,21 +201,30 @@ class HttpCobraHubRepository:
                 version=version_servidor or normalized_version,
                 checksum=checksum_servidor or digest,
             )
-        except Exception:
+        except CobraHubError:
             if cache_path.exists():
                 os.unlink(cache_path)
             raise
+        except Exception as exc:
+            if cache_path.exists():
+                os.unlink(cache_path)
+            raise PackageProviderError(str(exc)) from exc
 
     def read_metadata(self, package_path: str | Path) -> dict[str, Any]:
         """Lee metadatos de un paquete local usando el validador de paquetes Cobra."""
         from pcobra.cobra.packaging import es_paquete_cobra, validar_paquete
 
         if not es_paquete_cobra(package_path):
-            raise ValueError(
+            raise PackageIntegrityError(
                 "No es un paquete Cobra: debe ser ZIP y contener cobra.pkg.json"
             )
-        info = validar_paquete(package_path)
-        return _normalizar_metadatos_paquete(info.manifest)
+        try:
+            info = validar_paquete(package_path)
+            return _normalizar_metadatos_paquete(info.manifest)
+        except CobraHubError:
+            raise
+        except Exception as exc:
+            raise PackageIntegrityError(str(exc)) from exc
 
 
 def _normalizar_metadatos_paquete(metadata: dict[str, Any]) -> dict[str, Any]:

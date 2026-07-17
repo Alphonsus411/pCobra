@@ -13,6 +13,11 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from pcobra.cobra.cli.i18n import _
+from pcobra.cobra.hub.errors import (
+    CobraHubError,
+    PackageIntegrityError,
+    PackageProviderError,
+)
 from pcobra.cobra.hub.repository import (
     HttpCobraHubRepository,
     PackageRepository,
@@ -72,10 +77,12 @@ def validar_cache() -> list[tuple[Path, bool, str | None]]:
     for path in listar_cache():
         try:
             if not es_paquete_cobra(path):
-                raise ValueError(
+                raise PackageIntegrityError(
                     "No es un paquete Cobra: debe ser ZIP y contener cobra.pkg.json"
                 )
             validar_paquete(path)
+        except CobraHubError as exc:
+            resultados.append((path, False, _(str(exc))))
         except Exception as exc:
             resultados.append((path, False, str(exc)))
         else:
@@ -122,13 +129,17 @@ class CobraHubPackages:
             return False
         try:
             if not es_paquete_cobra(ruta):
-                raise ValueError(
+                raise PackageIntegrityError(
                     "No es un paquete Cobra: debe ser ZIP y contener cobra.pkg.json"
                 )
             info = validar_paquete(ruta)
             self.repository.publish(ruta, dict(info.manifest), info.checksum)
             _mostrar_info(_("Paquete publicado correctamente"))
             return True
+        except CobraHubError as e:
+            logger.error(f"Error publicando paquete: {e}")
+            _mostrar_error(_("Error publicando paquete: {err}").format(err=_(str(e))))
+            return False
         except Exception as e:
             logger.error(f"Error publicando paquete: {e}")
             _mostrar_error(_("Error publicando paquete: {err}").format(err=str(e)))
@@ -140,6 +151,10 @@ class CobraHubPackages:
             return []
         try:
             return [result.as_dict() for result in self.repository.search(consulta)]
+        except CobraHubError as e:
+            logger.error(f"Error buscando paquetes: {e}")
+            _mostrar_error(_("Error buscando paquetes: {err}").format(err=_(str(e))))
+            return []
         except Exception as e:
             logger.error(f"Error buscando paquetes: {e}")
             _mostrar_error(_("Error buscando paquetes: {err}").format(err=str(e)))
@@ -164,8 +179,7 @@ class CobraHubPackages:
 
             if not es_paquete_cobra(cache_path):
                 os.unlink(cache_path)
-                _mostrar_error(_("La descarga no es un paquete Cobra válido"))
-                return False
+                raise PackageIntegrityError("La descarga no es un paquete Cobra válido")
 
             install_path = (
                 Path(destino).expanduser()
@@ -175,6 +189,12 @@ class CobraHubPackages:
             extraer_paquete(cache_path, install_path)
             _mostrar_info(_("Paquete instalado en {dest}").format(dest=install_path))
             return True
+        except CobraHubError as e:
+            logger.error(f"Error instalando paquete: {e}")
+            _mostrar_error(_("Error instalando paquete: {err}").format(err=_(str(e))))
+            if cache_path is not None and cache_path.exists():
+                cache_path.unlink(missing_ok=True)
+            return False
         except Exception as e:
             logger.error(f"Error instalando paquete: {e}")
             _mostrar_error(_("Error instalando paquete: {err}").format(err=str(e)))
@@ -187,7 +207,12 @@ class CobraHubPackages:
 
     def leer_metadatos(self, ruta: str | Path) -> dict[str, Any]:
         """Lee y devuelve el manifiesto/metadatos de un paquete local ``.co``."""
-        return self.repository.read_metadata(ruta)
+        try:
+            return self.repository.read_metadata(ruta)
+        except CobraHubError:
+            raise
+        except Exception as exc:
+            raise PackageProviderError(str(exc)) from exc
 
 
 __all__ = [
