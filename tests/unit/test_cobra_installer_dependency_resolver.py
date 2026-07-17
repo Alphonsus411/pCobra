@@ -98,7 +98,14 @@ def test_resuelve_dependencia_cacheada_sin_cliente_remoto_y_lock_indica_cache(tm
     lock = json.loads((tmp_path / "cobra.lock").read_text(encoding="utf-8"))
     assert lock["packages"] == [
         {
+            "architectures": [],
+            "artifact": str(cached),
+            "capabilities": [],
+            "dependencies": {},
+            "exports": [],
+            "extensions": [],
             "name": "dep-cache",
+            "platforms": [],
             "version": "1.2.3",
             "sha256": result.resolved["dep-cache"].sha256,
             "source": "installer-cache",
@@ -308,16 +315,30 @@ def test_resuelve_proyecto_con_multiples_dependencias_hash_ruta_y_origen(
 
     lock = json.loads((fixture.project_root / "cobra.lock").read_text(encoding="utf-8"))
     assert lock == {
-        "version": 1,
+        "version": 2,
         "packages": [
             {
+                "architectures": [],
+                "artifact": str(fixture.cached_path),
+                "capabilities": [],
+                "dependencies": {},
+                "exports": [],
+                "extensions": [],
                 "name": "dep-cache",
+                "platforms": [],
                 "sha256": fixture.hashes["dep-cache"],
                 "source": "installer-cache",
                 "version": "1.2.3",
             },
             {
+                "architectures": [],
+                "artifact": str(fixture.remote_path),
+                "capabilities": [],
+                "dependencies": {},
+                "exports": [],
+                "extensions": [],
                 "name": "dep-remota",
+                "platforms": [],
                 "sha256": fixture.hashes["dep-remota"],
                 "source": "cobrahub",
                 "version": "2.0.0",
