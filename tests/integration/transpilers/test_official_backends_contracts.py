@@ -9,6 +9,7 @@ from pathlib import Path
 import pytest
 
 from pcobra.cobra.transpilers.compatibility_matrix import BACKEND_COMPATIBILITY
+from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
 from pcobra.cobra.architecture.backend_policy import PUBLIC_BACKENDS
 from pcobra.core.ast_nodes import (
     NodoAsignacion,
@@ -20,7 +21,7 @@ from pcobra.core.ast_nodes import (
     NodoTransformar,
     NodoValor,
 )
-from tests.integration.transpilers.backend_contracts import REQUIRED_FEATURES, TRANSPILERS
+from tests.integration.transpilers.backend_contracts import OFFICIAL_TRANSPILERS, REQUIRED_FEATURES, TRANSPILERS
 
 GOLDEN_DIR = Path(__file__).parent / "golden"
 
@@ -60,6 +61,10 @@ def test_public_backend_policy_exact_set_is_enforced() -> None:
     """Política pública exacta: solo python/javascript/rust."""
 
     assert PUBLIC_BACKENDS == ("python", "javascript", "rust")
+    assert OFFICIAL_TARGETS == PUBLIC_BACKENDS
+    assert set(TRANSPILERS) == set(OFFICIAL_TRANSPILERS) == set(OFFICIAL_TARGETS)
+    assert "go" not in OFFICIAL_TARGETS
+    assert "go" not in OFFICIAL_TRANSPILERS
 
 def _generate(language: str, nodes: list[object]) -> str:
     module_name, class_name = TRANSPILERS[language]
