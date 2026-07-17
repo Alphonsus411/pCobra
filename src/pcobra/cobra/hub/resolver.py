@@ -17,7 +17,10 @@ from pcobra.cobra.packaging import normalizar_nombre_paquete, validar_version_pa
 from pcobra.cobra.hub.installation import CobraHubResolver
 from pcobra.cobra.hub.integrity import normalize_sha256
 from pcobra.cobra.hub.models import (
-    CobraHubResolution, DeclaredDependency, DependencyResolutionResult, LockedDependency,
+    CobraHubResolution,
+    DeclaredDependency,
+    DependencyResolutionResult,
+    LockedDependency,
 )
 from pcobra.cobra_installer.project import CobraInstallerError
 
@@ -36,9 +39,6 @@ __all__ = [
 
 class CobraDependencyError(CobraInstallerError):
     """Error controlado de dependencias apto para CLI e IDLE."""
-
-
-
 
 
 _IMPORT_RE = re.compile(
@@ -96,9 +96,9 @@ def resolve_project_dependencies(
     resolved: dict[str, CobraHubResolution] = {}
     requested_versions = {name: dep.version for name, dep in declared.items()}
     dependency_chains = {
-        name: f"proyecto -> {name}=={dep.version}"
-        for name, dep in declared.items()
+        name: f"proyecto -> {name}=={dep.version}" for name, dep in declared.items()
     }
+    requested_sources = {name: dep.source for name, dep in declared.items()}
     pending = sorted(requested_versions.items())
 
     while pending:
@@ -110,7 +110,7 @@ def resolve_project_dependencies(
             name,
             version,
             expected_sha256=lock_entry.sha256 if lock_entry else None,
-            source=lock_entry.source if lock_entry else None,
+            source=(lock_entry.source if lock_entry else requested_sources.get(name)),
         )
         if resolution.version != version:
             raise CobraDependencyError(
@@ -124,8 +124,7 @@ def resolve_project_dependencies(
             resolution.dependencies.items()
         ):
             chain = (
-                f"{dependency_chains[name]} -> "
-                f"{transitive_name}=={transitive_version}"
+                f"{dependency_chains[name]} -> {transitive_name}=={transitive_version}"
             )
             requested = requested_versions.get(transitive_name)
             if requested is not None and requested != transitive_version:
@@ -138,6 +137,12 @@ def resolve_project_dependencies(
                 )
             if requested is None:
                 requested_versions[transitive_name] = transitive_version
+                parent_source = requested_sources.get(name)
+                if parent_source:
+                    parent_path = Path(parent_source)
+                    requested_sources[transitive_name] = str(
+                        parent_path if parent_path.is_dir() else parent_path.parent
+                    )
                 dependency_chains[transitive_name] = chain
                 pending.append((transitive_name, transitive_version))
 
@@ -188,11 +193,12 @@ def read_declared_dependencies(path: str | Path) -> dict[str, DeclaredDependency
     for raw_name, raw_version in raw.items():
         name = _normalize_dependency_name(str(raw_name))
         version = _normalize_version_spec(raw_version, name)
+        source = _dependency_source(raw_version, name, toml_path.parent)
         if name in declared and declared[name].version != version:
             raise CobraDependencyError(
                 f"Conflicto de versiones declaradas para {name}: {declared[name].version} y {version}."
             )
-        declared[name] = DeclaredDependency(name=name, version=version)
+        declared[name] = DeclaredDependency(name=name, version=version, source=source)
     return declared
 
 
@@ -253,12 +259,12 @@ def read_lockfile(path: str | Path) -> dict[str, LockedDependency]:
                 )
         else:
             sha256 = None
-        source = entry.get("source")
+        source = _resolve_local_source(entry.get("source"), lock_path.parent)
         locked[name] = LockedDependency(
             name=name,
             version=version,
             sha256=sha256,
-            source=str(source) if source else None,
+            source=source,
         )
     return locked
 
@@ -349,6 +355,26 @@ def _normalize_version_spec(value: Any, name: str) -> str:
         raise CobraDependencyError(
             f"Versión inválida para {name}: use SemVer exacto MAJOR.MINOR.PATCH."
         ) from exc
+
+
+def _dependency_source(value: Any, name: str, base_dir: Path) -> str | None:
+    if not isinstance(value, Mapping) or value.get("source") is None:
+        return None
+    source = value["source"]
+    if not isinstance(source, str) or not source.strip():
+        raise CobraDependencyError(f"Ruta source inválida para {name}.")
+    return str((base_dir / Path(source).expanduser()).resolve())
+
+
+def _resolve_local_source(value: Any, base_dir: Path) -> str | None:
+    if not value:
+        return None
+    source = str(value)
+    path = Path(source).expanduser()
+    # Los identificadores históricos de proveedor no son rutas locales.
+    if source in {"installer-cache", "cobrahub", "cobrahub-cache"}:
+        return source
+    return str((path if path.is_absolute() else base_dir / path).resolve())
 
 
 def _parse_dependency_list(values: Sequence[Any]) -> dict[str, str]:

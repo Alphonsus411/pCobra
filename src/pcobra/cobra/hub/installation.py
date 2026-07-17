@@ -13,6 +13,7 @@ from pcobra.cobra.hub.repository import PackageRepository
 from pcobra.cobra.hub.cache import CobraInstallerCache
 from pcobra.cobra.hub.integrity import normalize_sha256, sha256_file
 from pcobra.cobra.hub.models import CobraHubResolution
+from pcobra.cobra.hub.providers.local import LocalArtifactProvider
 from pcobra.cobra_installer.project import CobraInstallerError
 from pcobra.cobra.packaging import (
     es_paquete_cobra,
@@ -23,7 +24,6 @@ from pcobra.cobra.packaging import (
 )
 
 __all__ = ["CobraInstallerError", "CobraHubResolution", "CobraHubResolver"]
-
 
 
 class CobraHubResolver:
@@ -53,6 +53,25 @@ class CobraHubResolver:
         normalized_version = self._version(version, normalized_name)
         if expected_sha256:
             expected_sha256 = normalize_sha256(expected_sha256)
+
+        if source and source not in {"installer-cache", "cobrahub", "cobrahub-cache"}:
+            try:
+                artifact = LocalArtifactProvider(
+                    source, cache_dir=self.cache_dir
+                ).acquire(
+                    normalized_name,
+                    normalized_version,
+                    expected_sha256=expected_sha256,
+                )
+            except Exception as exc:  # noqa: BLE001 - error de proveedor a CLI
+                raise CobraInstallerError(str(exc)) from exc
+            return self._inspect_candidate(
+                artifact.path,
+                normalized_name,
+                normalized_version,
+                expected_sha256=expected_sha256,
+                source=str(Path(source).expanduser().resolve()),
+            )
 
         candidates: list[Path] = []
         if source:
