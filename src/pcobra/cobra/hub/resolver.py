@@ -7,7 +7,6 @@ reinventar el formato ``.co`` ni la caché existente bajo ``pcobra.cobra``.
 
 from __future__ import annotations
 
-import json
 import re
 import tomllib
 from pathlib import Path
@@ -15,7 +14,7 @@ from typing import Any, Mapping, Sequence
 
 from pcobra.cobra.packaging import normalizar_nombre_paquete, validar_version_paquete
 from pcobra.cobra.hub.installation import CobraHubResolver
-from pcobra.cobra.hub.integrity import normalize_sha256
+from pcobra.cobra.hub.lockfile import read_lockfile, write_lockfile
 from pcobra.cobra.hub.models import (
     CobraHubResolution,
     DeclaredDependency,
@@ -45,8 +44,6 @@ _IMPORT_RE = re.compile(
     r"^\s*(?:usar\s+(?P<usar>\"[^\"]+\"|'[^']+'|[A-Za-z_][\w]*(?:\.[A-Za-z_][\w]*)+)|import\s+(?P<import>\"[^\"]+\"|'[^']+'))",
     re.MULTILINE,
 )
-_SHA256_RE = re.compile(r"^[0-9a-fA-F]{64}$")
-_LOCK_VERSION = 1
 _IGNORED_DIRS = {
     ".git",
     ".hg",
@@ -200,97 +197,6 @@ def read_declared_dependencies(path: str | Path) -> dict[str, DeclaredDependency
             )
         declared[name] = DeclaredDependency(name=name, version=version, source=source)
     return declared
-
-
-def read_lockfile(path: str | Path) -> dict[str, LockedDependency]:
-    """Lee versiones y hashes desde ``cobra.lock`` JSON o TOML."""
-
-    lock_path = Path(path)
-    try:
-        text = lock_path.read_text(encoding="utf-8")
-    except OSError as exc:
-        raise CobraDependencyError(f"No se pudo leer cobra.lock: {exc}") from exc
-    try:
-        data = json.loads(text)
-    except json.JSONDecodeError:
-        try:
-            data = tomllib.loads(text)
-        except tomllib.TOMLDecodeError as exc:
-            raise CobraDependencyError(
-                f"cobra.lock no es JSON ni TOML válido: {exc}"
-            ) from exc
-
-    packages = data.get("packages") if isinstance(data, Mapping) else None
-    entries: Sequence[Any]
-    if isinstance(packages, list):
-        entries = packages
-    elif isinstance(packages, Mapping):
-        entries = [
-            (
-                {"name": name, **value}
-                if isinstance(value, Mapping)
-                else {"name": name, "version": value}
-            )
-            for name, value in packages.items()
-        ]
-    elif isinstance(data, list):
-        entries = data
-    else:
-        entries = []
-
-    locked: dict[str, LockedDependency] = {}
-    for entry in entries:
-        if (
-            not isinstance(entry, Mapping)
-            or "name" not in entry
-            or "version" not in entry
-        ):
-            raise CobraDependencyError(
-                "cobra.lock contiene una entrada de paquete inválida."
-            )
-        name = _normalize_dependency_name(str(entry["name"]))
-        version = validar_version_paquete(str(entry["version"]))
-        sha256 = entry.get("sha256") or entry.get("checksum") or entry.get("hash")
-        if isinstance(sha256, str):
-            sha256 = normalize_sha256(sha256)
-            if not _SHA256_RE.fullmatch(sha256):
-                raise CobraDependencyError(
-                    f"Hash SHA-256 inválido en cobra.lock para {name}."
-                )
-        else:
-            sha256 = None
-        source = _resolve_local_source(entry.get("source"), lock_path.parent)
-        locked[name] = LockedDependency(
-            name=name,
-            version=version,
-            sha256=sha256,
-            source=source,
-        )
-    return locked
-
-
-def write_lockfile(
-    path: str | Path, resolved: Mapping[str, CobraHubResolution]
-) -> None:
-    """Genera ``cobra.lock`` estable cuando no existe."""
-
-    lock_path = Path(path)
-    payload = {
-        "version": _LOCK_VERSION,
-        "packages": [
-            {
-                "name": item.name,
-                "version": item.version,
-                "sha256": item.sha256,
-                "source": item.source,
-            }
-            for item in sorted(resolved.values(), key=lambda value: value.name)
-        ],
-    }
-    lock_path.write_text(
-        json.dumps(payload, indent=2, ensure_ascii=False, sort_keys=True) + "\n",
-        encoding="utf-8",
-    )
 
 
 def detect_cobra_imports(project_root: str | Path) -> set[str]:

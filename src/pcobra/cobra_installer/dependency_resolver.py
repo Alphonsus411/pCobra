@@ -1,4 +1,13 @@
-"""Adaptador compatible para el resolvedor de grafos de CobraHub."""
+"""Adaptadores compatibles para el resolvedor de grafos de CobraHub."""
+
+from pathlib import Path
+from typing import Mapping
+
+from pcobra.cobra.hub.lockfile import (
+    read_lockfile as _read_lockfile,
+    write_lockfile as _write_lockfile,
+)
+from pcobra.cobra.hub.models import CobraHubResolution, LockedDependency
 
 from pcobra.cobra.hub.resolver import (
     CobraDependencyError,
@@ -7,10 +16,25 @@ from pcobra.cobra.hub.resolver import (
     LockedDependency,
     detect_cobra_imports,
     read_declared_dependencies,
-    read_lockfile,
     resolve_project_dependencies,
-    write_lockfile,
 )
+
+
+def read_lockfile(path: str | Path) -> dict[str, LockedDependency]:
+    """Conserva el punto de entrada histórico del instalador."""
+
+    return _read_lockfile(path)
+
+
+def write_lockfile(
+    path: str | Path,
+    resolved: Mapping[str, CobraHubResolution | LockedDependency],
+    *,
+    legacy_v1: bool = False,
+) -> None:
+    """Escribe v2, o v1 al solicitar explícitamente ``legacy_v1=True``."""
+
+    _write_lockfile(path, resolved, version=1 if legacy_v1 else 2)
 
 __all__ = [
     "CobraDependencyError",
