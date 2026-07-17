@@ -110,6 +110,7 @@ def test_manifest_v2_normaliza_arm64_como_representacion_canonica(architecture):
     assert manifest.architectures == ("arm64",)
     assert manifest.distributions[0].architectures == ("arm64",)
     assert manifest.as_dict()["architectures"] == ["arm64"]
+    assert manifest.as_dict()["distributions"][0]["architectures"] == ["arm64"]
 
 
 def test_manifest_v2_exports_son_namespaces_y_no_rutas_de_files():
@@ -121,7 +122,9 @@ def test_manifest_v2_exports_son_namespaces_y_no_rutas_de_files():
     assert manifest.exports == ("cobra.demo.api", "cobra_demo.utilidades")
 
 
-@pytest.mark.parametrize("export", ["dist/demo.whl", ".cobra", "cobra..demo", "cobra-demo"])
+@pytest.mark.parametrize(
+    "export", ["dist/demo.whl", ".cobra", "cobra..demo", "cobra-demo"]
+)
 def test_manifest_v2_rechaza_exports_que_no_son_namespaces(export):
     data = _manifest()
     data["exports"] = [export]
