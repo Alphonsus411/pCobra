@@ -5,6 +5,7 @@ import pytest
 from pcobra.cobra.hub.repository import DownloadedPackage
 from pcobra.cobra.packaging import construir_paquete
 from pcobra.cobra_installer.hub_resolver import CobraHubResolver
+from pcobra.cobra_installer.project import CobraInstallerError
 
 
 def _package(tmp_path, name="dep", version="1.2.3", dependencies=None):
@@ -181,3 +182,12 @@ def test_hub_resolver_reutiliza_cache_con_repo_configurado_sin_descargar(tmp_pat
     assert result.sha256 == expected_hash
     assert result.path == cached
     assert result.source == "installer-cache"
+
+
+def test_adaptador_historico_traduce_error_hub_a_error_installer(tmp_path):
+    resolver = CobraHubResolver(cache_dir=tmp_path / "cache")
+
+    with pytest.raises(CobraInstallerError, match="no encontrada") as exc_info:
+        resolver.resolve("inexistente", "1.0.0")
+
+    assert exc_info.value.__cause__.__class__.__name__ == "PackageNotFoundError"

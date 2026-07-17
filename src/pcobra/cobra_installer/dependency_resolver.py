@@ -8,16 +8,33 @@ from pcobra.cobra.hub.lockfile import (
     write_lockfile as _write_lockfile,
 )
 from pcobra.cobra.hub.models import CobraHubResolution, LockedDependency
+from pcobra.cobra.hub.errors import CobraHubError
+from pcobra.cobra_installer.project import CobraInstallerError
 
 from pcobra.cobra.hub.resolver import (
-    CobraDependencyError,
+    CobraDependencyError as _HubDependencyError,
     DeclaredDependency,
     DependencyResolutionResult,
     LockedDependency,
     detect_cobra_imports,
     read_declared_dependencies,
-    resolve_project_dependencies,
+    resolve_project_dependencies as _resolve_project_dependencies,
 )
+
+
+class CobraDependencyError(CobraInstallerError):
+    """Excepción histórica de resolución expuesta por CobraInstaller."""
+
+
+def resolve_project_dependencies(*args, **kwargs):
+    """Traduce los fallos de dominio para preservar la API del Installer."""
+
+    try:
+        return _resolve_project_dependencies(*args, **kwargs)
+    except _HubDependencyError as exc:
+        raise CobraDependencyError(str(exc)) from exc
+    except CobraHubError as exc:
+        raise CobraInstallerError(str(exc)) from exc
 
 
 def read_lockfile(path: str | Path) -> dict[str, LockedDependency]:

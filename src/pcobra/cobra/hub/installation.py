@@ -9,12 +9,19 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+from pcobra.cobra.hub.errors import (
+    CobraHubError,
+    PackageCompatibilityError,
+    PackageIntegrityError,
+    PackageNotFoundError,
+    PackageProviderError,
+    PackageResolutionError,
+)
 from pcobra.cobra.hub.repository import PackageRepository
 from pcobra.cobra.hub.cache import CobraInstallerCache
 from pcobra.cobra.hub.integrity import normalize_sha256, sha256_file
 from pcobra.cobra.hub.models import CobraHubResolution
 from pcobra.cobra.hub.providers.local import LocalArtifactProvider
-from pcobra.cobra_installer.project import CobraInstallerError
 from pcobra.cobra.packaging import (
     es_paquete_cobra,
     inspeccionar_paquete,
@@ -23,7 +30,7 @@ from pcobra.cobra.packaging import (
     validar_version_paquete,
 )
 
-__all__ = ["CobraInstallerError", "CobraHubResolution", "CobraHubResolver"]
+__all__ = ["CobraHubResolution", "CobraHubResolver"]
 
 
 class CobraHubResolver:
@@ -52,7 +59,10 @@ class CobraHubResolver:
         normalized_name = self._name(name)
         normalized_version = self._version(version, normalized_name)
         if expected_sha256:
-            expected_sha256 = normalize_sha256(expected_sha256)
+            try:
+                expected_sha256 = normalize_sha256(expected_sha256)
+            except ValueError as exc:
+                raise PackageIntegrityError(str(exc)) from exc
 
         if source and source not in {"installer-cache", "cobrahub", "cobrahub-cache"}:
             try:
@@ -63,8 +73,10 @@ class CobraHubResolver:
                     normalized_version,
                     expected_sha256=expected_sha256,
                 )
-            except Exception as exc:  # noqa: BLE001 - error de proveedor a CLI
-                raise CobraInstallerError(str(exc)) from exc
+            except CobraHubError:
+                raise
+            except Exception as exc:  # noqa: BLE001 - frontera con proveedor externo
+                raise PackageProviderError(str(exc)) from exc
             return self._inspect_candidate(
                 artifact.path,
                 normalized_name,
@@ -94,15 +106,21 @@ class CobraHubResolver:
                 )
 
         if self.repository is None:
-            raise CobraInstallerError(
+            raise PackageNotFoundError(
                 f"Dependencia Cobra no encontrada en caché: {normalized_name}=={normalized_version}. "
                 "Configure CobraHub o precargue el paquete en la caché local."
             )
 
         try:
             downloaded = self.repository.download(normalized_name, normalized_version)
-        except Exception as exc:  # noqa: BLE001 - se traduce a error controlado
-            raise CobraInstallerError(
+        except CobraHubError:
+            raise
+        except FileNotFoundError as exc:
+            raise PackageNotFoundError(
+                f"No se encontró {normalized_name}=={normalized_version} en CobraHub: {exc}"
+            ) from exc
+        except Exception as exc:  # noqa: BLE001 - frontera con repositorio externo
+            raise PackageProviderError(
                 f"No se pudo descargar {normalized_name}=={normalized_version} desde CobraHub: {exc}"
             ) from exc
         return self._inspect_candidate(
@@ -130,8 +148,10 @@ class CobraHubResolver:
                 raise ValueError("el artefacto no es un paquete Cobra .co válido")
             validation = validar_paquete(path)
             inspection = inspeccionar_paquete(path)
-        except Exception as exc:  # noqa: BLE001 - se traduce a error controlado
-            raise CobraInstallerError(
+        except CobraHubError:
+            raise
+        except Exception as exc:  # noqa: BLE001 - valida una distribución externa
+            raise PackageCompatibilityError(
                 f"Paquete Cobra inválido para {name}: {exc}"
             ) from exc
 
@@ -139,17 +159,17 @@ class CobraHubResolver:
         package_name = self._name(str(manifest.get("name", "")))
         package_version = self._version(str(manifest.get("version", "")), package_name)
         if package_name != name:
-            raise CobraInstallerError(
+            raise PackageCompatibilityError(
                 f"Paquete incorrecto: se esperaba {name}, pero el artefacto declara {package_name}."
             )
         if package_version != version:
-            raise CobraInstallerError(
+            raise PackageCompatibilityError(
                 f"Versión incorrecta para {name}: se esperaba {version}, pero el artefacto declara {package_version}."
             )
 
         digest = inspection.checksum or self._sha256_file(path)
         if expected_sha256 and digest.lower() != expected_sha256.lower():
-            raise CobraInstallerError(
+            raise PackageIntegrityError(
                 f"Hash inválido para {name}=={version}: se esperaba {expected_sha256}, se obtuvo {digest}."
             )
 
@@ -180,7 +200,7 @@ class CobraHubResolver:
         try:
             return normalizar_nombre_paquete(name)
         except ValueError as exc:
-            raise CobraInstallerError(
+            raise PackageResolutionError(
                 f"Nombre de paquete Cobra inválido: {name}"
             ) from exc
 
@@ -189,6 +209,6 @@ class CobraHubResolver:
         try:
             return validar_version_paquete(version)
         except ValueError as exc:
-            raise CobraInstallerError(
+            raise PackageResolutionError(
                 f"Versión inválida para {name}: {version}"
             ) from exc
