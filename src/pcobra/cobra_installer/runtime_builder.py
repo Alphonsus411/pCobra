@@ -11,10 +11,9 @@ import pcobra
 
 from .builders import LocalPyInstallerBuilder, resolve_build_backend
 from .logger import BuildLogger, emit_many
-from .dependency_resolver import (
-    DependencyResolutionResult,
-    resolve_project_dependencies,
-)
+from pcobra.cobra.hub.models import DependencyResolutionResult
+
+from .dependency_resolver import resolve_project_dependencies
 from .manifest import create_manifest, expected_artifact_path
 from .project import (
     BuildOptions,

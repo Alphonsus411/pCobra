@@ -8,6 +8,12 @@ from pcobra.cobra.hub.errors import (
     PackageProviderError,
     PackageResolutionError,
 )
+from pcobra.cobra.hub.models import (
+    CobraHubResolution,
+    DeclaredDependency,
+    DependencyResolutionResult,
+    LockedDependency,
+)
 from pcobra.cobra.hub.repository import (
     DownloadedPackage,
     HttpCobraHubRepository,
@@ -17,6 +23,10 @@ from pcobra.cobra.hub.transport import CobraHubTransport, HttpSession
 
 __all__ = [
     "CobraHubError",
+    "CobraHubResolution",
+    "DeclaredDependency",
+    "DependencyResolutionResult",
+    "LockedDependency",
     "CobraHubTransport",
     "DownloadedPackage",
     "HttpCobraHubRepository",
