@@ -39,6 +39,7 @@ class spawn:
     def __init__(
         self,
         command: Union[str, Sequence[str]],
+        args: Optional[Sequence[str]] = None,
         *,
         env: Optional[dict[str, str]] = None,
         encoding: str = "utf-8",
@@ -53,6 +54,11 @@ class spawn:
                 arg.decode(encoding) if isinstance(arg, bytes) else str(arg)
                 for arg in command
             ]
+        if args is not None:
+            cmd.extend(
+                arg.decode(encoding) if isinstance(arg, bytes) else str(arg)
+                for arg in args
+            )
         self._process = subprocess.Popen(
             cmd,
             shell=False,
@@ -144,4 +150,3 @@ class spawn:
 
 
 __all__ = ["EOF", "spawn", "TIMEOUT"]
-
