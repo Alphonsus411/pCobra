@@ -156,13 +156,13 @@ def test_cargar_lista_blanca_sin_cobra_toml_mantiene_hardcoded(monkeypatch, tmp_
 
 @pytest.mark.timeout(5)
 def test_interpreter_usar_registra_modulo(monkeypatch):
-    mod = ModuleType('math')
-    mod.sumar = lambda a, b: a + b
-    mod.__all__ = ['sumar']
-    monkeypatch.setattr(core_usar_loader, 'obtener_modulo', lambda _name, **_kwargs: mod)
+    mod = ModuleType('texto')
+    mod.a_snake = lambda texto: texto.lower()
+    mod.__all__ = ['a_snake']
+    monkeypatch.setattr(core_usar_loader, 'obtener_modulo_cobra_oficial', lambda _name: mod)
     interp = InterpretadorCobra()
-    interp.ejecutar_nodo(NodoUsar('math'))
-    assert interp.obtener_variable('sumar')(1, 2) == 3
+    interp.ejecutar_nodo(NodoUsar('texto'))
+    assert interp.obtener_variable('a_snake')('TEXTO') == 'texto'
 
 
 def test_obtener_modulo_delega_en_nuevo_resolver(monkeypatch):
@@ -305,28 +305,28 @@ def test_repl_usar_detecta_colision_de_simbolo_existente(monkeypatch):
 
 
 def test_repl_usar_colision_no_inyecta_ningun_simbolo(monkeypatch):
-    modulo = ModuleType("mi_modulo")
-    modulo.colisiona = lambda x: x
-    modulo.disponible = lambda x: x
-    modulo.__all__ = ["colisiona", "disponible"]
+    modulo = ModuleType("texto")
+    modulo.a_snake = lambda x: x
+    modulo.separar = lambda x: x
+    modulo.__all__ = ["a_snake", "separar"]
 
     monkeypatch.setattr(
         core_usar_loader,
-        "obtener_modulo",
+        "obtener_modulo_cobra_oficial",
         lambda _nombre, **_kwargs: modulo,
     )
     interp = InterpretadorCobra()
-    interp.contextos[-1].define("colisiona", lambda x: x)
+    interp.contextos[-1].define("a_snake", lambda x: x)
 
     with pytest.raises(NameError, match=r"colisión estructurada=") as excinfo:
-        interp.ejecutar_nodo(NodoUsar("mi_modulo"))
+        interp.ejecutar_nodo(NodoUsar("texto"))
 
     mensaje = str(excinfo.value)
     assert "'code': 'symbol_collision'" in mensaje
-    assert "'symbol': 'colisiona'" in mensaje
+    assert "'symbol': 'a_snake'" in mensaje
 
-    assert interp.obtener_variable("colisiona") is not None
-    assert "disponible" not in interp.variables
+    assert interp.obtener_variable("a_snake") is not None
+    assert "separar" not in interp.variables
 
 
 def test_repl_usar_colision_en_ancestro_no_inyecta_exportables(monkeypatch):
@@ -514,6 +514,31 @@ def test_repl_usar_alias_no_permitido_no_invoca_resolver_oficial(monkeypatch):
 
     with pytest.raises(PermissionError, match=r"módulo externo no permitido en REPL estricto \(solo alias oficiales Cobra\)"):
         interp.ejecutar_nodo(NodoUsar("numpy"))
+
+
+def test_cargador_oficial_sustituible_sanea_module_type_sin_relajar_allowlist(monkeypatch):
+    modulo = ModuleType("texto")
+    bloqueados = ["__self__", "append", "map", "filter", "unwrap", "expect"]
+    modulo.__all__ = ["a_snake", "_privado", *bloqueados]
+    modulo.a_snake = lambda texto: texto
+    modulo._privado = lambda: "privado"
+    for nombre in bloqueados:
+        setattr(modulo, nombre, lambda *_args, **_kwargs: None)
+
+    monkeypatch.setattr(
+        usar_loader,
+        "cargar_modulo_oficial_para_usar",
+        lambda nombre: modulo if nombre == "texto" else None,
+    )
+    monkeypatch.setattr(usar_loader, "USAR_WHITELIST", {})
+
+    exports = usar_loader.usar_modulo("texto")
+
+    assert dict(exports["simbolos"]) == {
+        "a_snake": modulo.a_snake
+    }
+    with pytest.raises(PermissionError, match=r"fuera del catálogo público"):
+        usar_loader.usar_modulo("modulo_python_local")
 
 
 def test_compat_exige_alias_en_mapa_antes_de_invocar_resolver(monkeypatch):

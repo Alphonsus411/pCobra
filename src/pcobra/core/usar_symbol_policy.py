@@ -38,6 +38,9 @@ EQUIVALENCIAS_PROHIBIDAS_A_CANONICAS = {
 }
 
 NOMBRES_PROHIBIDOS_EXPLICITOS = frozenset(EQUIVALENCIAS_PROHIBIDAS_A_CANONICAS)
+NOMBRES_BLOQUEADOS_USAR = frozenset(
+    {"__self__", "append", "map", "filter", "unwrap", "expect"}
+)
 DUNDERS_BLOQUEADOS = frozenset(
     {"__builtins__", "__loader__", "__package__", "__spec__", "__name__"}
 )
@@ -162,6 +165,15 @@ def sanear_simbolo_para_usar(
 
     if nombre == "holobit_sdk":
         return _rechazar(nombre, simbolo, "cobra_public_equivalent", _mensaje_nombre_prohibido(nombre), metadata)
+
+    if nombre in NOMBRES_BLOQUEADOS_USAR:
+        return _rechazar(
+            nombre,
+            simbolo,
+            "explicit_forbidden_name",
+            _mensaje_nombre_prohibido(nombre),
+            metadata,
+        )
 
     if nombre in DUNDERS_BLOQUEADOS:
         return _rechazar(nombre, simbolo, "dunder_name", "dunders Python conocidos no se permiten en usar", metadata)

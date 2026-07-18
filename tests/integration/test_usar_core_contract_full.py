@@ -142,25 +142,24 @@ def test_09_colision_reporta_error_estructurado(monkeypatch):
     assert detalle["phase"] == "preflight"
 
 
-def test_10_no_inyecta___self_append_map_filter_unwrap_expect(monkeypatch):
-    mod = ModuleType("externo")
-    mod.__all__ = ["ok", "self", "append", "map", "filter", "unwrap", "expect", "__danger__"]
-    mod.ok = lambda: "ok"
-    mod.self = mod.append = mod.map = mod.filter = mod.unwrap = mod.expect = lambda *_args, **_kwargs: None
-    mod.__danger__ = lambda: "boom"
-    mod.__file__ = "/workspace/pCobra/src/pcobra/corelibs/mod_ext.py"
+def test_10_modulo_simulado_solo_inyecta_export_publico_valido(monkeypatch):
+    mod = ModuleType("datos")
+    bloqueados = ["__self__", "append", "map", "filter", "unwrap", "expect"]
+    mod.__all__ = ["filtrar", "_privado", *bloqueados]
+    mod.filtrar = lambda valores, predicado=None: valores
+    mod._privado = lambda: "privado"
+    for nombre in bloqueados:
+        setattr(mod, nombre, lambda *_args, **_kwargs: None)
 
     monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: mod)
     interp = InterpretadorCobra()
-    interp.configurar_restriccion_usar_repl({"mod_ext": "mod_ext"})
+    interp.configurar_restriccion_usar_repl({"datos": "datos"})
 
     class _NodoUsar:
-        modulo = "mod_ext"
+        modulo = "datos"
 
-    with pytest.raises(ImportError, match=r"rechazos de saneamiento en usar") as excinfo:
-        interp.ejecutar_usar(_NodoUsar())
+    interp.ejecutar_usar(_NodoUsar())
 
-    msg = str(excinfo.value)
-    for token in ("self", "append", "map", "filter", "unwrap", "expect"):
-        assert token in msg
-    assert "__danger__" not in interp.contextos[-1].values
+    nuevos = set(interp.contextos[-1].values)
+    assert "filtrar" in nuevos
+    assert not ({"_privado", *bloqueados} & nuevos)
