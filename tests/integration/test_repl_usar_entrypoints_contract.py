@@ -160,6 +160,15 @@ def test_repl_entrypoint_numero_es_finito_imprime_verdadero(capsys):
     assert "verdadero" in salida
 
 
+def test_repl_entrypoint_texto_longitud_imprime_cuatro(capsys):
+    cmd = ReplCommandV2()
+    cmd._ejecutar_en_modo_normal('usar "texto"')
+    cmd._ejecutar_en_modo_normal('imprimir(longitud("hola"))')
+
+    salida = [linea.strip() for linea in capsys.readouterr().out.splitlines() if linea.strip()]
+    assert salida == ["4"]
+
+
 def test_repl_entrypoint_archivo_existe_booleano_sin_error_metadata(capsys):
     cmd = ReplCommandV2()
     cmd._ejecutar_en_modo_normal('usar "archivo"')
