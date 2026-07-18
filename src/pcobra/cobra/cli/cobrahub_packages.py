@@ -10,12 +10,10 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.services.cobrahub_service import CobraHubProvider, CobraHubService
 from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
 from pcobra.cobra.hub.errors import (
     CobraHubError,
-    PackageIntegrityError,
     PackageProviderError,
 )
 from pcobra.cobra.hub.repository import (
@@ -28,23 +26,7 @@ from pcobra.cobra.hub.repository import (
 
 def listar_cache() -> list[Path]:
     """Lista los paquetes ``.co`` presentes en la caché local de CobraHub."""
-    return sorted(
-        path
-        for path in package_cache_dir().iterdir()
-        if path.is_file() and path.suffix == ".co"
-    )
-
-
-def _coincide_nombre_cache(path: Path, nombre: str) -> bool:
-    """Indica si una entrada cacheada corresponde al nombre solicitado."""
-    objetivo = (
-        (nombre[:-3] if nombre.endswith(".co") else nombre)
-        .strip()
-        .lower()
-        .replace(" ", "-")
-    )
-    stem = path.stem
-    return stem == objetivo or stem.startswith(f"{objetivo}-")
+    return CobraHubService().listar_cache()
 
 
 def limpiar_cache(nombre: str | None = None) -> int:
@@ -54,34 +36,12 @@ def limpiar_cache(nombre: str | None = None) -> int:
     indica un nombre, se borran tanto ``<nombre>.co`` como variantes
     versionadas ``<nombre>-<version>.co``.
     """
-    borrados = 0
-    for path in listar_cache():
-        if nombre is not None and not _coincide_nombre_cache(path, nombre):
-            continue
-        path.unlink()
-        borrados += 1
-    return borrados
+    return CobraHubService().limpiar_cache(nombre)
 
 
 def validar_cache() -> list[tuple[Path, bool, str | None]]:
     """Valida cada paquete ``.co`` cacheado con los validadores de empaquetado."""
-    from pcobra.cobra.packaging import es_paquete_cobra, validar_paquete
-
-    resultados: list[tuple[Path, bool, str | None]] = []
-    for path in listar_cache():
-        try:
-            if not es_paquete_cobra(path):
-                raise PackageIntegrityError(
-                    "No es un paquete Cobra: debe ser ZIP y contener cobra.pkg.json"
-                )
-            validar_paquete(path)
-        except CobraHubError as exc:
-            resultados.append((path, False, _(str(exc))))
-        except Exception as exc:
-            resultados.append((path, False, str(exc)))
-        else:
-            resultados.append((path, True, None))
-    return resultados
+    return CobraHubService().validar_cache()
 
 
 class CobraHubPackages:
