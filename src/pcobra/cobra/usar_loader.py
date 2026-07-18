@@ -708,7 +708,7 @@ def _cargar_exports_modulo_cobra_proyecto(
     """Carga un módulo Cobra de proyecto usando resolución canónica y cache."""
 
     from pcobra.core.environment import Environment
-    from pcobra.core.import_utils import cargar_ast_modulo
+    from pcobra.core import import_utils
     from pcobra.core.interpreter import InterpretadorCobra
     from pcobra.core.ast_nodes import NodoExport, NodoUsar
 
@@ -741,7 +741,7 @@ def _cargar_exports_modulo_cobra_proyecto(
     interpretador = None
     try:
         try:
-            ast = cargar_ast_modulo(
+            ast = import_utils.cargar_ast_modulo(
                 str(ruta_modulo),
                 modules_path=str(root_canonico),
                 whitelist={root_canonico},

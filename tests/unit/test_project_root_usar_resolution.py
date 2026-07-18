@@ -131,6 +131,39 @@ def test_ejecucion_desde_cwd_externo_resuelve_usar_con_main_file(
     assert setup.interpretador._project_root == proyecto.resolve()
 
 
+def test_usar_proyecto_respeta_superficie_controlada_de_import_utils(
+    monkeypatch, tmp_path
+):
+    import pcobra.core as core_package
+
+    proyecto = tmp_path / "app"
+    proyecto.mkdir()
+    principal = proyecto / "main.co"
+    principal.write_text("", encoding="utf-8")
+    modulo = proyecto / "util.co"
+    modulo.write_text("", encoding="utf-8")
+    cargas = []
+
+    def fake_cargar_ast_modulo(ruta, **_kwargs):
+        cargas.append(Path(ruta))
+        return [NodoAsignacion("valor", NodoValor(7), declaracion=True)]
+
+    superficie_controlada = SimpleNamespace(
+        cargar_ast_modulo=fake_cargar_ast_modulo
+    )
+    monkeypatch.setattr(core_package, "import_utils", superficie_controlada)
+
+    exports = usar_modulo(
+        "util",
+        project_root=proyecto,
+        current_file=principal,
+        contexto_proyecto_verificado=True,
+    )
+
+    assert cargas == [modulo.resolve()]
+    assert exports["valor"] == 7
+
+
 def test_ejecucion_real_desde_cwd_externo_resuelve_usar_en_cobra_toml(
     monkeypatch, tmp_path
 ):
