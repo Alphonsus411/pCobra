@@ -474,25 +474,15 @@ def test_repl_usar_numpy_falla_sin_estado_parcial():
 
 
 @pytest.mark.parametrize(
-    "escenario",
-    [
-        "alias_no_permitido",
-        "modulo_sin___file__",
-        "ruta_no_oficial",
-    ],
+    "escenario", ["modulo_sin___file__", "ruta_no_oficial"]
 )
-def test_repl_usar_rechazo_externo_emite_mensaje_canonico(monkeypatch, escenario):
+def test_repl_usar_resolver_oficial_parcheado_autoriza_alias_canonico(monkeypatch, escenario):
     modulo = ModuleType("numero")
     modulo.__all__ = ["es_finito"]
     modulo.es_finito = lambda valor: True
 
     interp = InterpretadorCobra()
     interp.configurar_restriccion_usar_repl({"numero": "numero", "texto": "texto"})
-
-    if escenario == "alias_no_permitido":
-        with pytest.raises(PermissionError, match=r"módulo externo no permitido en REPL estricto \(solo alias oficiales Cobra\)"):
-            interp.ejecutar_nodo(NodoUsar("numpy"))
-        return
 
     if escenario == "modulo_sin___file__":
         monkeypatch.delattr(modulo, "__file__", raising=False)
@@ -505,8 +495,40 @@ def test_repl_usar_rechazo_externo_emite_mensaje_canonico(monkeypatch, escenario
         lambda _nombre: modulo,
     )
 
+    interp.ejecutar_nodo(NodoUsar("numero"))
+
+    assert interp.obtener_variable("es_finito")(1) is True
+
+
+def test_repl_usar_alias_no_permitido_no_invoca_resolver_oficial(monkeypatch):
+    def _no_debe_llamarse(_nombre):
+        raise AssertionError("No debe resolverse un alias fuera del catálogo público.")
+
+    monkeypatch.setattr(
+        core_usar_loader,
+        "obtener_modulo_cobra_oficial",
+        _no_debe_llamarse,
+    )
+    interp = InterpretadorCobra()
+    interp.configurar_restriccion_usar_repl({"numero": "numero", "texto": "texto"})
+
     with pytest.raises(PermissionError, match=r"módulo externo no permitido en REPL estricto \(solo alias oficiales Cobra\)"):
-        interp.ejecutar_nodo(NodoUsar("numero"))
+        interp.ejecutar_nodo(NodoUsar("numpy"))
+
+
+def test_compat_exige_alias_en_mapa_antes_de_invocar_resolver(monkeypatch):
+    def _no_debe_llamarse(_nombre):
+        raise AssertionError("No debe resolverse un alias sin ruta canónica declarada.")
+
+    monkeypatch.delitem(usar_loader.REPL_COBRA_MODULE_INTERNAL_PATH_MAP, "numero")
+    monkeypatch.setattr(
+        core_usar_loader,
+        "obtener_modulo_cobra_oficial",
+        _no_debe_llamarse,
+    )
+
+    with pytest.raises(ModuleNotFoundError, match="sin ruta interna canónica declarada"):
+        usar_loader._obtener_modulo_cobra_oficial_compat("numero")
 
 
 def test_obtener_modulo_alias_cobra_usa_origen_oficial(monkeypatch):

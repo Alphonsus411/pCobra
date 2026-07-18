@@ -522,28 +522,19 @@ def obtener_modulo_cobra_oficial(nombre: str):
 def _obtener_modulo_cobra_oficial_compat(nombre: str):
     """Obtiene un módulo oficial respetando wrappers legacy parcheados."""
 
+    nombre = validar_nombre_modulo_usar(nombre, require_allowlist=True)
+    if nombre not in REPL_COBRA_MODULE_INTERNAL_PATH_MAP:
+        raise ModuleNotFoundError(
+            f"Módulo oficial Cobra '{nombre}' permitido pero sin ruta interna canónica declarada."
+        )
+
     wrapper = sys.modules.get("pcobra.core.usar_loader") or sys.modules.get("core.usar_loader")
     wrapper_oficial = getattr(wrapper, "obtener_modulo_cobra_oficial", None)
     if (
         wrapper_oficial is not None
         and getattr(wrapper_oficial, "__module__", "") != "pcobra.core.usar_loader"
     ):
-        modulo = wrapper_oficial(nombre)
-        modulo_file = getattr(modulo, "__file__", None)
-        repo_root = Path(__file__).resolve().parents[3]
-        if not modulo_file:
-            raise PermissionError(
-                "usar_error[modulo_no_permitido]: módulo externo no permitido en REPL estricto "
-                "(solo alias oficiales Cobra)"
-            )
-        try:
-            Path(modulo_file).resolve().relative_to(repo_root)
-        except ValueError as exc:
-            raise PermissionError(
-                "usar_error[modulo_no_permitido]: módulo externo no permitido en REPL estricto "
-                "(solo alias oficiales Cobra)"
-            ) from exc
-        return modulo
+        return wrapper_oficial(nombre)
 
     modulo = obtener_modulo_cobra_oficial(nombre)
 
