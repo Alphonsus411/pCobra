@@ -795,6 +795,7 @@ def usar_modulo(
     current_file: str | Path | None = None,
     module_cache: dict[Path, dict[str, Any]] | None = None,
     loading_stack: list[Path] | None = None,
+    permitir_modulos_proyecto: bool | None = None,
 ) -> dict[str, Any]:
     """API única para resolver ``usar`` en runtime y transpilación Python.
 
@@ -808,7 +809,13 @@ def usar_modulo(
     if not nombre_raw:
         raise ValueError("Nombre de módulo vacío en 'usar'.")
 
-    # 1. Intentar cargar como módulo oficial Cobra
+    contexto_proyecto_autorizado = (
+        permitir_modulos_proyecto
+        if permitir_modulos_proyecto is not None
+        else project_root is not None or current_file is not None
+    )
+
+    # Caso 1: alias oficial presente en la superficie pública Cobra.
     try:
         nombre_validado_oficial = validar_nombre_modulo_usar(nombre_raw, require_allowlist=True)
         modulo = obtener_modulo(nombre_validado_oficial)
@@ -827,10 +834,16 @@ def usar_modulo(
             raise ImportError(f"No se encontraron símbolos exportables para usar '{nombre_validado_oficial}'.")
         return _construir_exports_usar(simbolos_saneados, metadata_por_simbolo)
     except PermissionError as permiso_exc:
-        # If we get a PermissionError, only try legacy wrappers or project module
-        # if it's a "modulo fuera catalogo" error; otherwise re-raise
+        # Caso 3: un nombre externo/no canónico no puede convertirse
+        # implícitamente en módulo de proyecto desde el REPL estricto. Se
+        # conserva íntegro el PermissionError contractual de la allowlist.
         if not str(permiso_exc).startswith("usar_error[modulo_fuera_catalogo_publico]"):
             raise permiso_exc
+        if not contexto_proyecto_autorizado:
+            raise permiso_exc
+
+        # Caso 2: sólo un contexto de proyecto autorizado puede continuar al
+        # resolvedor Cobra de proyecto (incluida la compatibilidad legacy).
         wrapper = sys.modules.get("pcobra.core.usar_loader") or sys.modules.get("core.usar_loader")
         wrapper_obtener = getattr(wrapper, "obtener_modulo", None)
         wrapper_obtener_oficial = getattr(wrapper, "obtener_modulo_cobra_oficial", None)
@@ -878,7 +891,11 @@ def usar_modulo(
         # pero podría serlo para un módulo de proyecto (ej. contiene puntos).
         pass
 
-    # 2. Intentar cargar como módulo de proyecto
+    # Caso 2: resolver como módulo Cobra de proyecto únicamente después de
+    # comprobar que el caller aportó/autorizó ese contexto.
+    if not contexto_proyecto_autorizado:
+        validar_nombre_modulo_usar(nombre_raw, require_allowlist=True)
+
     try:
         segmentos_proyecto = validar_nombre_modulo_cobra_proyecto(nombre_raw)
         nombre_validado_proyecto = ".".join(segmentos_proyecto)
