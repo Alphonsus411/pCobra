@@ -2450,6 +2450,12 @@ class InterpretadorCobra:
         if ruta_canonica in self._imported_module_paths:
             return
 
+        if ruta_canonica in self._import_execution_stack:
+            inicio_ciclo = self._import_execution_stack.index(ruta_canonica)
+            ciclo = self._import_execution_stack[inicio_ciclo:] + [ruta_canonica]
+            nombres = " -> ".join(ruta.name for ruta in ciclo)
+            raise ImportError(f"Ciclo de módulos detectado en import: {nombres}")
+
         if ruta_canonica in ast_cache:
             ast = ast_cache[ruta_canonica]
         else:
