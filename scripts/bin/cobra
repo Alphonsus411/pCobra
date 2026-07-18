@@ -1,21 +1,20 @@
 #!/usr/bin/env python3
-"""Punto de entrada de desarrollo para la CLI de Cobra."""
+"""Delega en el punto de entrada instalado de Cobra."""
 
-from pathlib import Path
+from importlib.metadata import distribution
 import sys
 
 
-def _bootstrap_paths() -> None:
-    raiz = Path(__file__).resolve().parents[2]
-    posibles = [raiz, raiz / "src"]
-    for ruta in posibles:
-        ruta_str = str(ruta)
-        if ruta_str not in sys.path:
-            sys.path.insert(0, ruta_str)
+def main() -> int | None:
+    """Carga ``cobra`` desde los metadatos del paquete instalado."""
+
+    entry_point = next(
+        entry_point
+        for entry_point in distribution("pcobra").entry_points
+        if entry_point.group == "console_scripts" and entry_point.name == "cobra"
+    )
+    return entry_point.load()()
 
 
 if __name__ == "__main__":
-    _bootstrap_paths()
-    from pcobra.cli import main as cobra_main
-
-    sys.exit(cobra_main())
+    sys.exit(main())
