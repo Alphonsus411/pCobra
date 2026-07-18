@@ -263,6 +263,29 @@ def test_repl_statement_normal_imprimir_no_duplica_salida():
 
 
 @pytest.mark.integration
+def test_instrucciones_posteriores_a_si_y_llamadas_con_valor_se_ejecutan():
+    resultado_script, resultado_repl = _run_pipeline_and_repl(
+        prelude=(
+            "func valor():\n"
+            "    retorno 7\n"
+            "fin"
+        ),
+        snippet=(
+            "si verdadero:\n"
+            "    valor()\n"
+            '    imprimir("dentro")\n'
+            "fin\n"
+            'imprimir("despues")'
+        ),
+        variables_estado=(),
+    )
+
+    assert resultado_script == resultado_repl
+    assert resultado_script["stderr"] == ""
+    assert resultado_script["stdout"].splitlines() == ["dentro", "despues"]
+
+
+@pytest.mark.integration
 def test_repl_llamada_funcion_auditoria_una_sola_vez_y_retorno_correcto():
     repl = InteractiveCommand(InterpretadorCobra())
     repl._seguro_repl = False
