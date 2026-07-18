@@ -1,9 +1,9 @@
 import json
 import os
 from pathlib import Path
-from cobra.cli.cli import main
 from cobra.cli.commands import benchthreads_cmd
 import tempfile
+from types import SimpleNamespace
 
 orig_ntf = tempfile.NamedTemporaryFile
 import pytest
@@ -45,7 +45,10 @@ def test_benchthreads_generates_json(tmp_path, monkeypatch):
 
     monkeypatch.setattr(benchthreads_cmd.tempfile, "NamedTemporaryFile", fake_tempfile)
     salida = tmp_path / "threads.json"
-    main(["benchthreads", "--output", str(salida)])
+    status = benchthreads_cmd.BenchThreadsCommand().run(
+        SimpleNamespace(output=salida, perfil="avanzado")
+    )
+    assert status == 0
     data = json.loads(salida.read_text())
     modos = {d["modo"] for d in data}
     assert modos == {"cli_hilos"}
@@ -54,4 +57,3 @@ def test_benchthreads_generates_json(tmp_path, monkeypatch):
         assert "cpu" in d and "io" in d
     for p in created:
         assert not p.exists()
-
