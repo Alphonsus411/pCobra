@@ -2,17 +2,15 @@ from argparse import Namespace, SUPPRESS
 from pathlib import Path
 from typing import Any
 
-from pcobra.cobra.cli.cobrahub_client import CobraHubClient
-from pcobra.cobra.cli.cobrahub_packages import (
-    CobraHubPackages,
-    limpiar_cache,
-    listar_cache,
-    validar_cache,
-)
 from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.cli.i18n import _
+from pcobra.cobra.cli.services.cobrahub_service import CobraHubService
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
+
+# Compatibilidad para instrumentación que parcheaba este nombre en el módulo.
+# El alias apunta al contrato de servicio y no atraviesa la fachada histórica.
+CobraHubPackages = CobraHubService
 
 
 class HubCommand(BaseCommand):
@@ -62,11 +60,11 @@ class HubCommand(BaseCommand):
         return self.register_subparser(subparsers, hidden=True)
 
     def run(self, args: Namespace) -> int:
-        packages = CobraHubPackages(CobraHubClient())
+        service = CobraHubService()
         if args.accion == "publicar":
-            return 0 if packages.publicar_paquete(str(args.paquete)) else 1
+            return 0 if service.publicar_paquete(str(args.paquete)) else 1
         if args.accion == "buscar":
-            results = packages.buscar_paquetes(args.consulta)
+            results = service.buscar_paquetes(args.consulta)
             for item in results:
                 nombre = item.get("name", item.get("nombre", "paquete"))
                 mostrar_info(f"{nombre} {item.get('version', '')}".strip())
@@ -75,23 +73,23 @@ class HubCommand(BaseCommand):
             destino = str(args.destino) if args.destino else None
             return (
                 0
-                if packages.instalar_paquete(args.nombre, destino, args.version)
+                if service.instalar_paquete(args.nombre, destino, args.version)
                 else 1
             )
         if args.accion == "cache":
-            return self._run_cache(args)
+            return self._run_cache(args, service)
         mostrar_error(_("Acción de hub no reconocida"))
         return 1
 
-    def _run_cache(self, args: Namespace) -> int:
+    def _run_cache(self, args: Namespace, service: CobraHubService) -> int:
         """Ejecuta las acciones locales de caché sin contactar con CobraHub."""
         if args.cache_accion == "listar":
-            for path in listar_cache():
+            for path in service.listar_cache():
                 mostrar_info(str(path))
             return 0
         if args.cache_accion == "limpiar":
             try:
-                borrados = limpiar_cache(args.nombre)
+                borrados = service.limpiar_cache(args.nombre)
             except ValueError as exc:
                 mostrar_error(str(exc))
                 return 1
@@ -100,7 +98,7 @@ class HubCommand(BaseCommand):
             )
             return 0
         if args.cache_accion == "validar":
-            resultados = validar_cache()
+            resultados = service.validar_cache()
             for path, ok, error in resultados:
                 estado = _("válido") if ok else _("inválido")
                 detalle = f": {error}" if error else ""

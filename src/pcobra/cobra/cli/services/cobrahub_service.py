@@ -29,11 +29,19 @@ class CobraHubService:
 
     def __init__(
         self,
-        provider: CobraHubProvider,
-        repository: PackageRepository,
+        provider: CobraHubProvider | None = None,
+        repository: PackageRepository | None = None,
         error_handler: Callable[[str], None] = mostrar_error,
         info_handler: Callable[[str], None] = mostrar_info,
     ) -> None:
+        if provider is None:
+            from pcobra.cobra.cli.cobrahub_client import CobraHubClient
+
+            provider = CobraHubClient()
+        if repository is None:
+            from pcobra.cobra.hub.repository import HttpCobraHubRepository
+
+            repository = HttpCobraHubRepository(provider)
         self.provider = provider
         self.repository = repository
         self._mostrar_error = error_handler
@@ -120,6 +128,55 @@ class CobraHubService:
         if cache_path is not None:
             cache_path.unlink(missing_ok=True)
         return False
+
+    def listar_cache(self) -> list[Path]:
+        """Lista los paquetes ``.co`` presentes en la caché local."""
+        from pcobra.cobra.hub.repository import package_cache_dir
+
+        return sorted(
+            path
+            for path in package_cache_dir().iterdir()
+            if path.is_file() and path.suffix == ".co"
+        )
+
+    @staticmethod
+    def _coincide_nombre_cache(path: Path, nombre: str) -> bool:
+        """Indica si una entrada cacheada corresponde al nombre solicitado."""
+        objetivo = (
+            (nombre[:-3] if nombre.endswith(".co") else nombre)
+            .strip()
+            .lower()
+            .replace(" ", "-")
+        )
+        return path.stem == objetivo or path.stem.startswith(f"{objetivo}-")
+
+    def limpiar_cache(self, nombre: str | None = None) -> int:
+        """Elimina paquetes cacheados y devuelve el número de borrados."""
+        borrados = 0
+        for path in self.listar_cache():
+            if nombre is not None and not self._coincide_nombre_cache(path, nombre):
+                continue
+            path.unlink()
+            borrados += 1
+        return borrados
+
+    def validar_cache(self) -> list[tuple[Path, bool, str | None]]:
+        """Valida los paquetes cacheados con los validadores de empaquetado."""
+        resultados: list[tuple[Path, bool, str | None]] = []
+        for path in self.listar_cache():
+            try:
+                if not packaging.es_paquete_cobra(path):
+                    raise PackageIntegrityError(
+                        "No es un paquete Cobra: debe ser ZIP y contener cobra.pkg.json"
+                    )
+                packaging.validar_paquete(path)
+            except CobraHubError as exc:
+                resultados.append((path, False, _(str(exc))))
+            except Exception as exc:
+                resultados.append((path, False, str(exc)))
+            else:
+                resultados.append((path, True, None))
+        return resultados
 
 
 __all__ = ["CobraHubProvider", "CobraHubService"]
