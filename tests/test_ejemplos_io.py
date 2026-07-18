@@ -50,12 +50,12 @@ def test_ejecutar_ejemplos(nombre: str, ruta_ejemplos: Path) -> None:
 
 
 @pytest.mark.parametrize("nombre", ejemplos_disponibles())
-def test_transpilar_muestra_fragmentos(nombre: str, ruta_ejemplos: Path) -> None:
-    """Transpila ejemplos y valida que el código contenga fragmentos esperados."""
+def test_build_muestra_fragmentos(nombre: str, ruta_ejemplos: Path) -> None:
+    """Construye ejemplos y valida que el código contenga fragmentos esperados."""
     archivo = ruta_ejemplos / f"{nombre}.cobra"
     if not archivo.exists():
         archivo = ruta_ejemplos / f"{nombre}.co"
-    comando = [sys.executable, "-m", "pcobra.cli", "transpilar", str(archivo)]
+    comando = [sys.executable, "-m", "pcobra.cli", "build", str(archivo)]
     resultado = subprocess.run(
         comando,
         capture_output=True,
@@ -63,7 +63,7 @@ def test_transpilar_muestra_fragmentos(nombre: str, ruta_ejemplos: Path) -> None
     )
     if resultado.returncode != 0:
         mensaje = (
-            f"Transpilación falló para {nombre}\n"
+            f"Build falló para {nombre}\n"
             f"Comando: {' '.join(comando)}\n"
             f"stderr:\n{resultado.stderr.strip() or '<vacío>'}"
         )
@@ -82,7 +82,7 @@ def _extraer_codigo_generado(stdout: str) -> str:
             return "\n".join(lineas[indice:]).strip() + "\n"
     pytest.fail(
         "No se pudo extraer el código transpilado de la salida CLI. "
-        "Asegúrate de que el comando 'transpilar' imprima el código generado."
+        "Asegúrate de que el comando 'build' imprima el código generado."
     )
 
 
@@ -101,12 +101,12 @@ def _resolver_snapshot_esperado(ruta_ejemplos: Path, nombre: str) -> Path:
 
 
 @pytest.mark.parametrize("nombre", ejemplos_disponibles())
-def test_transpilar_coincide_con_archivo(nombre: str, ruta_ejemplos: Path) -> None:
-    """Transpila ejemplos y compara el código generado con el snapshot versionado."""
+def test_build_coincide_con_archivo(nombre: str, ruta_ejemplos: Path) -> None:
+    """Construye ejemplos y compara el código generado con el snapshot versionado."""
     archivo = ruta_ejemplos / f"{nombre}.cobra"
     if not archivo.exists():
         archivo = ruta_ejemplos / f"{nombre}.co"
-    comando = [sys.executable, "-m", "pcobra.cli", "transpilar", str(archivo)]
+    comando = [sys.executable, "-m", "pcobra.cli", "build", str(archivo)]
     resultado = subprocess.run(
         comando,
         capture_output=True,
@@ -114,7 +114,7 @@ def test_transpilar_coincide_con_archivo(nombre: str, ruta_ejemplos: Path) -> No
     )
     if resultado.returncode != 0:
         mensaje = (
-            f"Transpilación falló para {nombre}\n"
+            f"Build falló para {nombre}\n"
             f"Comando: {' '.join(comando)}\n"
             f"stderr:\n{resultado.stderr.strip() or '<vacío>'}"
         )

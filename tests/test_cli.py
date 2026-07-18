@@ -13,13 +13,12 @@ def test_cli_ayuda() -> None:
     assert "cobra" in salida or "uso" in salida or "usage" in salida
 
 
-def test_cli_transpilar_help() -> None:
+def test_cli_build_help() -> None:
     result = subprocess.run(
-        [sys.executable, "-m", "pcobra.cli", "transpilar", "--help"],
+        [sys.executable, "-m", "pcobra.cli", "build", "--help"],
         capture_output=True,
         text=True,
     )
     assert result.returncode == 0
     salida = result.stdout.lower()
-    assert "transpilar" in salida or "uso" in salida or "usage" in salida
-
+    assert "build" in salida or "uso" in salida or "usage" in salida
