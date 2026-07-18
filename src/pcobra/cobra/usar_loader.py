@@ -554,6 +554,18 @@ def _obtener_modulo_cobra_oficial_compat(nombre: str):
     return modulo
 
 
+def cargar_modulo_oficial_para_usar(nombre: str):
+    """Punto de sustitución del cargador oficial usado por ``usar``.
+
+    Las pruebas pueden sustituir esta función con un cargador controlado sin
+    ampliar el catálogo público ni habilitar imports Python arbitrarios. La
+    autorización del alias ocurre antes de invocarla y sus resultados siempre
+    pasan por el saneamiento común de exports.
+    """
+
+    return _obtener_modulo_cobra_oficial_compat(nombre)
+
+
 def _repo_root_desde_loader() -> Path:
     """Busca la raíz del proyecto/instalación partiendo de este archivo."""
 
@@ -613,19 +625,19 @@ def obtener_modulo(nombre: str, *, permitir_instalacion: bool = True):
     """Resuelve módulos de `usar` contra Cobra canónico o allowlist legacy."""
 
     nombre = validar_nombre_modulo_usar(nombre, require_allowlist=False)
-    if nombre not in USAR_WHITELIST:
-        raise PermissionError(f"Paquete no permitido en 'usar': '{nombre}'.")
-
-    resolver_cls = _obtener_resolver_imports_parcheable()
-    resolver_parcheado = getattr(resolver_cls, "__module__", "") != "pcobra.cobra.imports.resolver"
     if nombre in USAR_COBRA_PUBLIC_MODULES:
         try:
-            return _obtener_modulo_cobra_oficial_compat(nombre)
+            return cargar_modulo_oficial_para_usar(nombre)
         except ModuleNotFoundError as oficial_exc:
             raise ImportError(
                 f"No se pudo resolver el módulo Cobra permitido '{nombre}' en runtime."
             ) from oficial_exc
 
+    if nombre not in USAR_WHITELIST:
+        raise PermissionError(f"Paquete no permitido en 'usar': '{nombre}'.")
+
+    resolver_cls = _obtener_resolver_imports_parcheable()
+    resolver_parcheado = getattr(resolver_cls, "__module__", "") != "pcobra.cobra.imports.resolver"
     if nombre not in USAR_COBRA_PUBLIC_MODULES and resolver_parcheado:
         _resolution, modulo = resolver_cls().load_module(nombre, fallback_backend="python")
         return modulo
@@ -842,7 +854,6 @@ def usar_modulo(
                 nombre_validado_oficial,
                 conflictos,
             )
-        _rechazar_conflictos_duros_saneamiento_usar(conflictos)
         if not simbolos_saneados:
             raise ImportError(f"No se encontraron símbolos exportables para usar '{nombre_validado_oficial}'.")
         return _construir_exports_usar(simbolos_saneados, metadata_por_simbolo)
@@ -892,7 +903,6 @@ def usar_modulo(
                         nombre_raw,
                         conflictos,
                     )
-                _rechazar_conflictos_duros_saneamiento_usar(conflictos)
                 if not simbolos_saneados:
                     raise ImportError(f"No se encontraron símbolos exportables para usar '{nombre_raw}'.")
                 return _construir_exports_usar(simbolos_saneados, metadata_por_simbolo)
@@ -1111,26 +1121,6 @@ def _sanitizar_exports_publicos_detallado(modulo: object, alias_modulo: str) -> 
         )
 
     return simbolos_saneados, metadata_por_simbolo, conflictos
-
-
-def _rechazar_conflictos_duros_saneamiento_usar(
-    conflictos: list[dict[str, Any]],
-) -> None:
-    """Convierte rechazos duros de saneamiento en errores bloqueantes."""
-
-    codigos_bloqueantes = {"cobra_public_equivalent", "private_prefix"}
-    conflictos_bloqueantes = [
-        conflicto
-        for conflicto in conflictos
-        if conflicto.get("code") in codigos_bloqueantes
-    ]
-    if not conflictos_bloqueantes:
-        return
-
-    simbolos = ", ".join(
-        str(conflicto.get("symbol")) for conflicto in conflictos_bloqueantes
-    )
-    raise ImportError(f"rechazos de saneamiento en usar: {simbolos}")
 
 
 def sanitizar_exports_publicos(
