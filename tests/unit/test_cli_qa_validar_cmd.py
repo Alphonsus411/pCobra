@@ -44,7 +44,7 @@ def test_qa_validar_exit_code_0_cuando_todo_ok(monkeypatch):
     command = QaValidarCommand()
 
     monkeypatch.setattr(cmd_module, "execute_syntax_validation", lambda **_: _execution(False))
-    monkeypatch.setattr(cmd_module.VerifyCommand, "run", lambda *_: 0)
+    monkeypatch.setattr(cmd_module, "execute_runtime_verification", lambda *_: 0)
 
     rc = command.run(_args(targets="python,javascript"))
 
@@ -55,7 +55,7 @@ def test_qa_validar_exit_code_1_si_falla_runtime(monkeypatch):
     command = QaValidarCommand()
 
     monkeypatch.setattr(cmd_module, "execute_syntax_validation", lambda **_: _execution(False))
-    monkeypatch.setattr(cmd_module.VerifyCommand, "run", lambda *_: 1)
+    monkeypatch.setattr(cmd_module, "execute_runtime_verification", lambda *_: 1)
 
     rc = command.run(_args(targets="python"))
 
@@ -66,8 +66,8 @@ def test_qa_validar_propaga_errores_en_orquestacion(monkeypatch):
     command = QaValidarCommand()
     monkeypatch.setattr(cmd_module, "execute_syntax_validation", lambda **_: _execution(False))
     monkeypatch.setattr(
-        cmd_module.VerifyCommand,
-        "run",
+        cmd_module,
+        "execute_runtime_verification",
         lambda *_: (_ for _ in ()).throw(RuntimeError("fallo runtime interno")),
     )
 
@@ -91,7 +91,7 @@ def test_qa_validar_reporte_json_agregado(monkeypatch, tmp_path: Path):
     output = tmp_path / "qa.json"
 
     monkeypatch.setattr(cmd_module, "execute_syntax_validation", lambda **_: _execution(False))
-    monkeypatch.setattr(cmd_module.VerifyCommand, "run", lambda *_: 0)
+    monkeypatch.setattr(cmd_module, "execute_runtime_verification", lambda *_: 0)
 
     rc = command.run(_args(targets="python", report_json=str(output)))
 
@@ -105,7 +105,7 @@ def test_qa_validar_exporta_feature_gap_report_markdown(monkeypatch, tmp_path: P
     output = tmp_path / "feature-gaps.md"
 
     monkeypatch.setattr(cmd_module, "execute_syntax_validation", lambda **_: _execution(False))
-    monkeypatch.setattr(cmd_module.VerifyCommand, "run", lambda *_: 0)
+    monkeypatch.setattr(cmd_module, "execute_runtime_verification", lambda *_: 0)
     monkeypatch.setattr(
         cmd_module,
         "build_feature_gap_report",
