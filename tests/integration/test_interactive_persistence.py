@@ -1,10 +1,15 @@
+import importlib.util
 import os
 import shlex
 import sys
 from pathlib import Path
 
 import pytest
-from pcobra._stubs import pexpect
+
+if importlib.util.find_spec("pexpect") is not None:
+    import pexpect
+else:
+    from pcobra._stubs import pexpect
 
 ROOT = Path(__file__).resolve().parents[2]
 PATCH_DIR = Path(__file__).parent
@@ -21,7 +26,10 @@ def _spawn(args="repl", extra_env=None):
     if extra_env:
         env.update(extra_env)
     return pexpect.spawn(
-        [sys.executable, "-m", "cli.cli", *shlex.split(args)], env=env, encoding="utf-8"
+        sys.executable,
+        args=["-m", "pcobra", *shlex.split(args)],
+        env=env,
+        encoding="utf-8",
     )
 
 
