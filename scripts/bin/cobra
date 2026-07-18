@@ -16,6 +16,6 @@ def _bootstrap_paths() -> None:
 
 if __name__ == "__main__":
     _bootstrap_paths()
-    from cobra.cli.cli import main as cobra_main
+    from pcobra.cli import main as cobra_main
 
-    cobra_main()
+    sys.exit(cobra_main())
