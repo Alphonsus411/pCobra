@@ -1,4 +1,4 @@
-from pcobra.core.nativos import *
+from pcobra.cobra.core.nativos import *
 import pcobra.corelibs as _pcobra_corelibs
 import pcobra.standard_library as _pcobra_standard_library
 globals().update({name: getattr(_pcobra_corelibs, name) for name in dir(_pcobra_corelibs) if not name.startswith('_')})
@@ -12,8 +12,8 @@ def sumar_matriz():
     b12 = 6
     b21 = 7
     b22 = 8
-    print((NodoIdentificador(a11) + NodoIdentificador(b11)))
-    print((NodoIdentificador(a12) + NodoIdentificador(b12)))
-    print((NodoIdentificador(a21) + NodoIdentificador(b21)))
-    print((NodoIdentificador(a22) + NodoIdentificador(b22)))
+    print(a11 + b11)
+    print(a12 + b12)
+    print(a21 + b21)
+    print(a22 + b22)
 sumar_matriz()

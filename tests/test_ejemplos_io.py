@@ -87,12 +87,12 @@ def test_build_muestra_fragmentos(nombre: str, ruta_ejemplos: Path) -> None:
 
 
 def _extraer_codigo_generado(stdout: str) -> str:
-    """Obtiene el código transpilado a partir de la salida de CLI."""
+    """Obtiene el código generado después del encabezado público de ``build``."""
     salida_limpia = _ANSI_RE.sub("", stdout)
     lineas = salida_limpia.splitlines()
     for indice, linea in enumerate(lineas):
-        if linea.startswith("from core.nativos import *"):
-            return "\n".join(lineas[indice:]).strip() + "\n"
+        if linea.startswith("Ruta de artefacto:"):
+            return "\n".join(lineas[indice + 1 :]).strip() + "\n"
     pytest.fail(
         "No se pudo extraer el código transpilado de la salida CLI. "
         "Asegúrate de que el comando 'build' imprima el código generado."
