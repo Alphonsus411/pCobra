@@ -127,8 +127,10 @@ def _validar_dependencias_manifest(
 ) -> dict[str, str] | None:
     """Normaliza y valida las dependencias declaradas en un manifiesto.
 
-    Cobra todavía no define semántica para resolver rangos de versiones, por
-    lo que cada dependencia debe apuntar a una versión exacta SemVer simple.
+    Para manifiestos, se preservan las cadenas de versión originales (incluyendo
+    rangos como ^1.0.0), solo se normalizan los nombres de paquetes y se
+    convierte las versiones a cadenas. La validación estricta de versiones
+    exactas se reserva para lockfiles.
     """
     if dependencies is None:
         return None
@@ -138,13 +140,7 @@ def _validar_dependencias_manifest(
         name = normalizar_nombre_paquete(str(raw_name))
         if name in normalized_dependencies:
             raise ValueError(f"Dependencia duplicada tras normalizar: {name}")
-        try:
-            version = validar_version_paquete(str(raw_version))
-        except ValueError as exc:
-            raise ValueError(
-                f"Versión de dependencia inválida para {name}: "
-                "solo se aceptan versiones exactas SemVer"
-            ) from exc
+        version = str(raw_version)
         normalized_dependencies[name] = version
 
     return normalized_dependencies
