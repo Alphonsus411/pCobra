@@ -5,11 +5,11 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 import shutil
 
-from cobra.cli.cli import main
 from cobra.transpilers import module_map
 from cobra.cli.commands import benchmarks_cmd
 import cobra.cli.commands.benchmarks2_cmd as b2
@@ -29,7 +29,10 @@ def test_benchmarks2_generates_json(tmp_path, monkeypatch):
         return tmp
     monkeypatch.setattr(b2.tempfile, "NamedTemporaryFile", fake_tmp)
     salida = tmp_path / "res.json"
-    main(["benchmarks2", "--output", str(salida)])
+    status = b2.BenchmarksV2Command().run(
+        SimpleNamespace(output=salida, runs=1, perfil="avanzado")
+    )
+    assert status == 0
     data = json.loads(salida.read_text())
     modos = {d["modo"] for d in data}
     assert {"cobra", "python", "javascript", "sandbox"}.issubset(modos)
@@ -54,7 +57,10 @@ def test_benchmarks2_without_resource(tmp_path, monkeypatch):
 
     monkeypatch.setattr(b2.BenchmarksV2Command, "run", fake_run)
     salida = tmp_path / "res.json"
-    main(["benchmarks2", "--output", str(salida)])
+    status = b2.BenchmarksV2Command().run(
+        SimpleNamespace(output=salida, runs=1, perfil="avanzado")
+    )
+    assert status == 0
     data = json.loads(salida.read_text())
     assert data[0]["modo"] == "cobra"
     assert isinstance(data[0]["memory_kb"], int)
@@ -78,7 +84,10 @@ def test_benchmarks_generates_data_for_all_backends(tmp_path, monkeypatch):
 
     monkeypatch.setattr(benchmarks_cmd.BenchmarksCommand, "run", patched_run)
     salida = tmp_path / "bench.json"
-    main(["benchmarks", "--output", str(salida)])
+    status = benchmarks_cmd.BenchmarksCommand().run(
+        SimpleNamespace(output=salida, perfil="avanzado")
+    )
+    assert status == 0
     data = json.loads(salida.read_text())
     modos = {d["backend"] for d in data}
     assert {"python", "javascript", "rust"}.issubset(modos)

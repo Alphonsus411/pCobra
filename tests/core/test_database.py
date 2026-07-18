@@ -1,5 +1,4 @@
 import importlib
-import sys
 
 import pytest
 
@@ -9,7 +8,6 @@ def database_module(tmp_path, monkeypatch):
     db_path = tmp_path / "core.db"
     monkeypatch.setenv("SQLITE_DB_KEY", str(db_path))
     monkeypatch.setenv("COBRA_DB_PATH", str(db_path))
-    sys.modules.pop("pcobra.core.database", None)
     module = importlib.import_module("pcobra.core.database")
     return importlib.reload(module)
 

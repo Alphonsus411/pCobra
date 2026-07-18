@@ -856,19 +856,8 @@ def usar_modulo(
             wrapper_legacy or wrapper_oficial_legacy
         ):
             try:
-                segmentos_proyecto = validar_nombre_modulo_cobra_proyecto(nombre_raw)
+                validar_nombre_modulo_cobra_proyecto(nombre_raw)
             except ValueError:
-                raise permiso_exc
-            current = (
-                Path(current_file).expanduser() if current_file is not None else None
-            )
-            root = (
-                canonicalizar_ruta_usar_proyecto(project_root)
-                if project_root is not None
-                else descubrir_raiz_proyecto(current, current)
-            )
-            ruta_proyecto = root.joinpath(*segmentos_proyecto).with_suffix(".co")
-            if not ruta_proyecto.exists():
                 raise permiso_exc
         else:
             try:
