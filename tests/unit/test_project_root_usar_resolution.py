@@ -433,6 +433,34 @@ def test_usar_modulo_api_nombre_simple_inexistente_mantiene_error_publico(tmp_pa
         usar_modulo("numpy", current_file=principal)
 
 
+def test_usar_modulo_repl_estricto_no_resuelve_nombre_simple_como_proyecto(
+    monkeypatch, tmp_path
+):
+    proyecto = tmp_path / "app"
+    proyecto.mkdir()
+    (proyecto / "num.co").write_text("", encoding="utf-8")
+
+    def resolver_no_esperado(*_args, **_kwargs):
+        raise AssertionError("el REPL estricto no debe consultar el proyecto")
+
+    monkeypatch.setattr(
+        "pcobra.cobra.usar_loader._cargar_exports_modulo_cobra_proyecto",
+        resolver_no_esperado,
+    )
+
+    with pytest.raises(PermissionError) as excinfo:
+        usar_modulo(
+            "num",
+            project_root=proyecto,
+            permitir_modulos_proyecto=False,
+        )
+
+    assert str(excinfo.value) == (
+        "usar_error[modulo_fuera_catalogo_publico]: "
+        "'num' está fuera del catálogo público."
+    )
+
+
 def test_interpretador_usar_proyecto_misma_carpeta_con_nombre_simple(monkeypatch, tmp_path):
     proyecto = tmp_path / "app"
     proyecto.mkdir()
