@@ -174,11 +174,17 @@ imprimir(filtrar([1, 2, 3, 4], mayor_que_dos))
     assert "[3, 4]" in salida.splitlines()
 
 
-def test_ejecutar_codigo_modulo_inexistente_falla_controladamente():
+def test_ejecutar_codigo_modulo_inexistente_falla_controladamente(tmp_path):
+    archivo_principal = tmp_path / "principal.co"
+    archivo_principal.write_text('usar "modulo_inexistente"', encoding="utf-8")
+
     with pytest.raises(FileNotFoundError) as excinfo:
-        runtime.ejecutar_codigo('usar "modulo_inexistente"')
+        runtime.ejecutar_codigo(
+            'usar "modulo_inexistente"', main_file=archivo_principal
+        )
 
     mensaje = str(excinfo.value)
 
-    assert "Módulo de proyecto no encontrado: modulo_inexistente" in mensaje
+    assert "Módulo no encontrado: modulo_inexistente" in mensaje
     assert "modulo_inexistente.co" in mensaje
+    assert "modulo_fuera_catalogo_publico" not in mensaje

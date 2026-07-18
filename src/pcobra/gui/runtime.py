@@ -1576,8 +1576,12 @@ def _analizar_codigo_gui_con_declaraciones_implicitas(codigo: str) -> Any:
     return ast
 
 
-def ejecutar_codigo(codigo: str) -> str:
-    """Ejecuta código Cobra y captura la salida impresa."""
+def ejecutar_codigo(codigo: str, *, main_file: str | Path | None = None) -> str:
+    """Ejecuta código Cobra y captura la salida impresa.
+
+    ``main_file`` identifica de forma explícita el contexto autorizado del
+    proyecto desde el que se resuelven módulos Cobra locales.
+    """
     from pcobra.cobra.cli.execution_pipeline import (
         PipelineInput,
         ejecutar_pipeline_explicito,
@@ -1586,15 +1590,23 @@ def ejecutar_codigo(codigo: str) -> str:
     deps = require_gui_dependencies()
     buffer = io.StringIO()
     with redirect_stdout(buffer), redirect_stderr(buffer):
-        ejecutar_pipeline_explicito(
-            PipelineInput(
-                codigo=codigo,
-                interpretador_cls=deps["InterpretadorCobra"],
-                safe_mode=True,
-                extra_validators=None,
-            ),
-            analizar_codigo_fn=_analizar_codigo_gui_con_declaraciones_implicitas,
-        )
+        try:
+            ejecutar_pipeline_explicito(
+                PipelineInput(
+                    codigo=codigo,
+                    interpretador_cls=deps["InterpretadorCobra"],
+                    safe_mode=True,
+                    extra_validators=None,
+                    main_file=main_file,
+                ),
+                analizar_codigo_fn=_analizar_codigo_gui_con_declaraciones_implicitas,
+            )
+        except FileNotFoundError as exc:
+            # Sólo presentamos el error contractual de resolución. Cualquier
+            # FileNotFoundError inesperado conserva intactos su tipo y traceback.
+            if str(exc).startswith("Módulo no encontrado:"):
+                raise FileNotFoundError(str(exc)) from exc
+            raise
     return buffer.getvalue()
 
 
