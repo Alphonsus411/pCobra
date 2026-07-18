@@ -102,6 +102,10 @@ class UsarExports(dict):
         return super().__eq__(other)
 
 
+class ModuloFueraCatalogoPublicoError(PermissionError):
+    """Rechazo inequívoco emitido por la política del catálogo de ``usar``."""
+
+
 def _construir_exports_usar(
     simbolos: list[tuple[str, Any]],
     metadata: dict[str, dict[str, Any]],
@@ -142,13 +146,13 @@ def _rechazar_modulo_no_canonico(nombre: str) -> None:
     mensaje_error_no_canonico = " ".join(partes_mensaje_error_no_canonico)
 
     if nombre_normalizado in blocklist_normalizada or nombre_normalizado in equivalentes_normalizados:
-        raise PermissionError(mensaje_error_no_canonico)
+        raise ModuloFueraCatalogoPublicoError(mensaje_error_no_canonico)
 
     if any(
         nombre_normalizado == prefijo or nombre_normalizado.startswith(f"{prefijo}_")
         for prefijo in _BACKEND_PREFIXES
     ):
-        raise PermissionError(mensaje_error_no_canonico)
+        raise ModuloFueraCatalogoPublicoError(mensaje_error_no_canonico)
 
 def validar_nombre_modulo_usar(nombre: str, *, require_allowlist: bool = True) -> str:
     """Valida nombre de `usar` y opcionalmente exige contrato canónico exacto."""
@@ -185,7 +189,7 @@ def validar_nombre_modulo_usar(nombre: str, *, require_allowlist: bool = True) -
             )
 
     if require_allowlist and nombre not in USAR_COBRA_PUBLIC_MODULES:
-        raise PermissionError(
+        raise ModuloFueraCatalogoPublicoError(
             f"usar_error[modulo_fuera_catalogo_publico]: '{nombre}' está fuera del catálogo público."
         )
 
@@ -842,7 +846,7 @@ def usar_modulo(
         if not simbolos_saneados:
             raise ImportError(f"No se encontraron símbolos exportables para usar '{nombre_validado_oficial}'.")
         return _construir_exports_usar(simbolos_saneados, metadata_por_simbolo)
-    except PermissionError as permiso_exc:
+    except ModuloFueraCatalogoPublicoError as permiso_exc:
         # Caso 3: un nombre externo/no canónico no puede convertirse
         # implícitamente en módulo de proyecto desde el REPL estricto. Se
         # conserva íntegro el PermissionError contractual de la allowlist.
@@ -933,7 +937,9 @@ def usar_modulo(
                 *nombre_validado_proyecto.split(".")
             ).with_suffix(".co")
             raise FileNotFoundError(
-                f"Módulo de proyecto no encontrado: {nombre_validado_proyecto}. Ruta buscada: {ruta_buscada}"
+                f"Módulo no encontrado: {nombre_validado_proyecto}. "
+                f"Módulo de proyecto no encontrado: {nombre_validado_proyecto}. "
+                f"Ruta buscada: {ruta_buscada}"
             ) from exc
     except ValueError as e:
         # Si tampoco es un módulo de proyecto válido, entonces el nombre es inválido.

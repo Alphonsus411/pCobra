@@ -8,7 +8,7 @@ import math
 import warnings
 from pathlib import Path
 from typing import Mapping, Optional
-from pcobra.cobra.usar_loader import usar_modulo
+from pcobra.cobra.usar_loader import ModuloFueraCatalogoPublicoError, usar_modulo
 from pcobra.cobra.usar_policy import USAR_COBRA_PUBLIC_MODULES
 
 from .lexer import (
@@ -2575,8 +2575,7 @@ class InterpretadorCobra:
             detalle_usar_habilitado = _usar_detalle_habilitado()
             exc_usuario = exc
             if (
-                isinstance(exc, PermissionError)
-                and "usar_error[modulo_fuera_catalogo_publico]" in str(exc)
+                isinstance(exc, ModuloFueraCatalogoPublicoError)
             ):
                 exc_usuario = _error_usuario_modulo_fuera_catalogo(
                     nombre_modulo_limpio,
