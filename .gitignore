@@ -1,7 +1,8 @@
 # ============= ENTORNOS VIRTUALES =============
 .venv/
-.venv-release-test
+.venv-release-test/
 venv/
+venv-testpypi/
 VENV/
 ENV/
 env/
