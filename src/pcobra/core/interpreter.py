@@ -240,6 +240,14 @@ class _ControlContinuar(Exception):
     """Señal interna para avanzar a la siguiente iteración del bucle."""
 
 
+class _ControlRetorno(Exception):
+    """Señal interna que transporta el valor devuelto por una función."""
+
+    def __init__(self, valor):
+        super().__init__()
+        self.valor = valor
+
+
 class InterpretadorCobra:
     """Interpreta y ejecuta nodos del lenguaje Cobra."""
 
@@ -1700,9 +1708,7 @@ class InterpretadorCobra:
             self.mem_contextos.append({})
             try:
                 for instr in nodo.cuerpo:
-                    resultado = self.ejecutar_nodo(instr)
-                    if resultado is not None:
-                        return resultado
+                    self.ejecutar_nodo(instr)
             finally:
                 memoria_local = self.mem_contextos.pop()
                 for idx, tam in memoria_local.values():
@@ -1715,7 +1721,9 @@ class InterpretadorCobra:
         elif isinstance(nodo, NodoHilo):
             return self.ejecutar_hilo(nodo)
         elif isinstance(nodo, NodoRetorno):
-            return self.evaluar_expresion(nodo.expresion)
+            if self._call_depth == 0:
+                raise RuntimeError("retorno fuera de función")
+            raise _ControlRetorno(self.evaluar_expresion(nodo.expresion))
         elif isinstance(nodo, NodoRomper):
             raise _ControlRomper
         elif isinstance(nodo, NodoContinuar):
@@ -2097,18 +2105,15 @@ class InterpretadorCobra:
 
         if condicion is True:
             for instruccion in bloque_si:
-                resultado = self.ejecutar_nodo(instruccion)
-                if resultado is not None:
-                    return resultado
+                self.ejecutar_nodo(instruccion)
             return None
 
         # Única ruta restante válida: ``False``.
         if bloque_sino is None:
             return None
         for instruccion in bloque_sino:
-            resultado = self.ejecutar_nodo(instruccion)
-            if resultado is not None:
-                return resultado
+            self.ejecutar_nodo(instruccion)
+        return None
 
     def ejecutar_mientras(self, nodo):
         """Ejecuta un bucle ``mientras`` hasta que la condición sea falsa."""
@@ -2119,9 +2124,7 @@ class InterpretadorCobra:
         while self._evaluar_condicion_control(nodo.condicion):
             try:
                 for instruccion in nodo.cuerpo:
-                    resultado = self.ejecutar_nodo(instruccion)
-                    if resultado is not None:
-                        return resultado
+                    self.ejecutar_nodo(instruccion)
             except _ControlContinuar:
                 continue
             except _ControlRomper:
@@ -2132,9 +2135,7 @@ class InterpretadorCobra:
         """Ejecuta un bloque ``try`` con manejo de excepciones Cobra."""
         try:
             for instruccion in nodo.bloque_try:
-                resultado = self.ejecutar_nodo(instruccion)
-                if resultado is not None:
-                    return resultado
+                self.ejecutar_nodo(instruccion)
         except ExcepcionCobra as exc:
             if nodo.nombre_excepcion:
                 contexto_actual = self.contextos[-1]
@@ -2143,14 +2144,10 @@ class InterpretadorCobra:
                 else:
                     contexto_actual.define(nodo.nombre_excepcion, exc.valor)
             for instruccion in nodo.bloque_catch:
-                resultado = self.ejecutar_nodo(instruccion)
-                if resultado is not None:
-                    return resultado
+                self.ejecutar_nodo(instruccion)
         finally:
             for instruccion in nodo.bloque_finally:
-                resultado = self.ejecutar_nodo(instruccion)
-                if resultado is not None:
-                    return resultado
+                self.ejecutar_nodo(instruccion)
 
     def ejecutar_funcion(self, nodo):
         """Registra una función definida por el usuario sin ejecutarla.
@@ -2194,12 +2191,11 @@ class InterpretadorCobra:
 
             self._call_depth += 1
             try:
-                resultado = None
                 for instruccion in cuerpo:
-                    resultado = self.ejecutar_nodo(instruccion)
-                    if resultado is not None:
-                        break
-                return resultado
+                    self.ejecutar_nodo(instruccion)
+                return None
+            except _ControlRetorno as retorno:
+                return retorno.valor
             finally:
                 self._call_depth -= 1
         finally:
@@ -2300,15 +2296,18 @@ class InterpretadorCobra:
 
                 def generador():
                     preparar_contexto()
+                    self._call_depth += 1
                     try:
-                        for instr in cuerpo:
-                            if isinstance(instr, NodoYield):
-                                yield self.evaluar_expresion(instr.expresion)
-                            else:
-                                resultado = self.ejecutar_nodo(instr)
-                                if resultado is not None:
-                                    return
+                        try:
+                            for instr in cuerpo:
+                                if isinstance(instr, NodoYield):
+                                    yield self.evaluar_expresion(instr.expresion)
+                                else:
+                                    self.ejecutar_nodo(instr)
+                        except _ControlRetorno as retorno:
+                            return retorno.valor
                     finally:
+                        self._call_depth -= 1
                         limpiar_contexto()
 
                 return generador()
@@ -2317,12 +2316,11 @@ class InterpretadorCobra:
                 try:
                     self._call_depth += 1
                     try:
-                        resultado = None
                         for instruccion in cuerpo:
-                            resultado = self.ejecutar_nodo(instruccion)
-                            if resultado is not None:
-                                break
-                        return resultado
+                            self.ejecutar_nodo(instruccion)
+                        return None
+                    except _ControlRetorno as retorno:
+                        return retorno.valor
                     finally:
                         self._call_depth -= 1
                 finally:
@@ -2398,12 +2396,15 @@ class InterpretadorCobra:
             self.contextos[-1].define(nombre_param, valor)
 
         try:
-            resultado = None
-            for instruccion in metodo.get("cuerpo", []):
-                resultado = self.ejecutar_nodo(instruccion)
-                if resultado is not None:
-                    break
-            return resultado
+            self._call_depth += 1
+            try:
+                for instruccion in metodo.get("cuerpo", []):
+                    self.ejecutar_nodo(instruccion)
+                return None
+            except _ControlRetorno as retorno:
+                return retorno.valor
+            finally:
+                self._call_depth -= 1
         finally:
             memoria_local = self.mem_contextos.pop()
             for idx, tam in memoria_local.values():
