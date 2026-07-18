@@ -49,6 +49,19 @@ def test_ejecutar_ejemplos(nombre: str, ruta_ejemplos: Path) -> None:
     assert salida == esperado
 
 
+def test_suma_conserva_el_contexto_local_hasta_imprimir(ruta_ejemplos: Path) -> None:
+    """Una asignación local sigue disponible para el resto de la llamada."""
+    archivo = ruta_ejemplos / "suma.cobra"
+    resultado = subprocess.run(
+        [sys.executable, "-m", "pcobra.cli", "ejecutar", str(archivo)],
+        capture_output=True,
+        text=True,
+    )
+
+    assert resultado.returncode == 0, resultado.stderr or resultado.stdout
+    assert resultado.stdout.strip() == "5"
+
+
 @pytest.mark.parametrize("nombre", ejemplos_disponibles())
 def test_build_muestra_fragmentos(nombre: str, ruta_ejemplos: Path) -> None:
     """Construye ejemplos y valida que el código contenga fragmentos esperados."""
