@@ -796,6 +796,7 @@ def usar_modulo(
     module_cache: dict[Path, dict[str, Any]] | None = None,
     loading_stack: list[Path] | None = None,
     permitir_modulos_proyecto: bool | None = None,
+    contexto_proyecto_verificado: bool | None = None,
 ) -> dict[str, Any]:
     """API única para resolver ``usar`` en runtime y transpilación Python.
 
@@ -809,10 +810,18 @@ def usar_modulo(
     if not nombre_raw:
         raise ValueError("Nombre de módulo vacío en 'usar'.")
 
+    # La señal nueva distingue un contexto derivado de un ``main_file``
+    # canonicalizado del mero hecho de recibir rutas. El parámetro histórico se
+    # conserva para callers externos, pero no interviene cuando la señal
+    # verificable está presente.
     contexto_proyecto_autorizado = (
-        permitir_modulos_proyecto
-        if permitir_modulos_proyecto is not None
-        else project_root is not None or current_file is not None
+        contexto_proyecto_verificado
+        if contexto_proyecto_verificado is not None
+        else (
+            permitir_modulos_proyecto
+            if permitir_modulos_proyecto is not None
+            else project_root is not None or current_file is not None
+        )
     )
 
     # Caso 1: alias oficial presente en la superficie pública Cobra.
