@@ -567,27 +567,29 @@ class InteractiveCommand(BaseCommand):
         actual del intérprete de sesión.
         """
 
-        # Contrato: REPL incremental = intérprete; no batch pipeline.
-        if self._seguro_repl:
-            nodos_usar = [
-                nodo
-                for nodo in ast
-                if getattr(nodo, "__class__", type("", (), {})).__name__ == "NodoUsar"
-            ]
-            if nodos_usar:
-                for nodo_usar in nodos_usar:
-                    self.interpretador.ejecutar_nodo(nodo_usar)
-            validar_ast_seguro(
-                ast,
-                validadores_extra=self._extra_validators_repl,
-                interpretador=self.interpretador,
-            )
         resultado = None
         # Evitamos validar dos veces en ejecución para no duplicar side effects
         # de auditoría: ``ejecutar_nodo`` ya aplica la validación con emisión.
 
         for nodo in ast:
+            es_nodo_usar = nodo.__class__.__name__ == "NodoUsar"
+            if self._seguro_repl and not es_nodo_usar:
+                validar_ast_seguro(
+                    [nodo],
+                    validadores_extra=self._extra_validators_repl,
+                    interpretador=self.interpretador,
+                )
             resultado_nodo = self.interpretador.ejecutar_nodo(nodo)
+            if self._seguro_repl and es_nodo_usar:
+                # ``usar`` establece durante su única ejecución los símbolos y
+                # metadatos que necesita la validación segura. Validarlo después
+                # evita una ejecución preparatoria observable y conserva el
+                # mismo intérprete y contexto incremental entre entradas.
+                validar_ast_seguro(
+                    [nodo],
+                    validadores_extra=self._extra_validators_repl,
+                    interpretador=self.interpretador,
+                )
             # El resultado observable del REPL debe ser el valor realmente
             # evaluado por el último nodo ejecutado en el entorno actual.
             resultado = resultado_nodo
