@@ -29,8 +29,8 @@ def test_cli_qa_validar_exporta_feature_gap_report_json_estable(monkeypatch, tmp
 
     monkeypatch.setattr(cmd_module, "execute_syntax_validation", lambda **_: _execution())
     monkeypatch.setattr(pcobra_cmd_module, "execute_syntax_validation", lambda **_: _execution())
-    monkeypatch.setattr(cmd_module.VerifyCommand, "run", lambda *_: 0)
-    monkeypatch.setattr(pcobra_cmd_module.VerifyCommand, "run", lambda *_: 0)
+    monkeypatch.setattr(cmd_module, "execute_runtime_verification", lambda *_: 0)
+    monkeypatch.setattr(pcobra_cmd_module, "execute_runtime_verification", lambda *_: 0)
 
     fake_report = {
         "python": [],
