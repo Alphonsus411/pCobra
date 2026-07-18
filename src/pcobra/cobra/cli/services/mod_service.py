@@ -8,6 +8,7 @@ from typing import Any, Dict, Optional
 from pcobra.cobra.cli.cobrahub_client import CobraHubClient
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.services.contracts import ModRequest, normalize_mod_request
+from pcobra.cobra.cli.utils.module_paths import MODULES_PATH, USER_CONFIG_DIR
 from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
 from pcobra.cobra.cli.utils.semver import es_nueva_version, es_version_valida
 from pcobra.cobra.semantico import mod_validator
@@ -26,8 +27,6 @@ except ModuleNotFoundError:  # pragma: no cover
 logger = logging.getLogger(__name__)
 _client: Optional[CobraHubClient] = None
 
-USER_CONFIG_DIR = Path.home() / ".cobra"
-MODULES_PATH: Path = USER_CONFIG_DIR / "modules"
 LOCK_FILE: Path = USER_CONFIG_DIR / "module_map.toml"
 LOCK_KEY = "lock"
 MODULE_EXTENSION = ".co"

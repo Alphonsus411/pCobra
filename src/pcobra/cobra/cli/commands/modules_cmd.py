@@ -7,7 +7,6 @@ from pcobra.cobra.cli.services.contracts import ModRequest
 from pcobra.cobra.cli.services.mod_service import (
     LOCK_FILE,
     LOCK_KEY,
-    MODULES_PATH,
     MODULE_EXTENSION,
     ModService,
     buscar_modulo,
@@ -23,6 +22,7 @@ from pcobra.cobra.cli.services.mod_service import (
     yaml,
 )
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
+from pcobra.cobra.cli.utils.module_paths import MODULES_PATH
 
 _cobrahub_module = __import__("pcobra.cobra.cli.cobrahub_client", fromlist=["CobraHubClient"])
 _CobraHubClient = _cobrahub_module.CobraHubClient

@@ -6,11 +6,11 @@ import zipfile
 from pathlib import Path
 from typing import Any
 
-from pcobra.cobra.cli.commands import modules_cmd
 from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
+from pcobra.cobra.cli.utils.module_paths import MODULES_PATH
 from pcobra.cobra.packaging import (
     construir_paquete,
     crear_paquete,
@@ -130,11 +130,11 @@ class PaqueteCommand(BaseCommand):
         """Instala paquetes Cobra modernos o ZIP legacy en el directorio de módulos.
 
         Este adaptador conserva el flujo histórico usado por tests y llamadas
-        directas: instala siempre en ``modules_cmd.MODULES_PATH`` y devuelve un
+        directas: instala siempre en ``MODULES_PATH`` y devuelve un
         código de salida en vez de propagar excepciones.
         """
         try:
-            destino = Path(modules_cmd.MODULES_PATH).resolve()
+            destino = Path(MODULES_PATH).resolve()
             if es_paquete_cobra(paquete):
                 extraer_paquete(paquete, destino)
                 mostrar_info(_("Paquete instalado en {dest}").format(dest=destino))

@@ -19,7 +19,7 @@ def test_instalar_paquete_correcto(tmp_path, monkeypatch):
     pkg = _crear_paquete(tmp_path / "demo.cobra", {"modulo.co": "var x = 1"})
     mods_dir = tmp_path / "mods"
     monkeypatch.setattr(modules_cmd, "MODULES_PATH", mods_dir)
-    monkeypatch.setattr(package_cmd.modules_cmd, "MODULES_PATH", mods_dir)
+    monkeypatch.setattr(package_cmd, "MODULES_PATH", mods_dir)
 
     ret = package_cmd.PaqueteCommand._instalar(pkg)
 
@@ -33,7 +33,7 @@ def test_instalar_paquete_destino_symlink(tmp_path, monkeypatch):
     mods_dir = tmp_path / "mods"
     mods_dir.mkdir()
     monkeypatch.setattr(modules_cmd, "MODULES_PATH", mods_dir)
-    monkeypatch.setattr(package_cmd.modules_cmd, "MODULES_PATH", mods_dir)
+    monkeypatch.setattr(package_cmd, "MODULES_PATH", mods_dir)
     dest = mods_dir / "m.co"
     dest.symlink_to(tmp_path / "fuente.co")
 
@@ -49,7 +49,7 @@ def test_instalar_paquete_con_ruta_maliciosa(tmp_path, monkeypatch):
     pkg = _crear_paquete(tmp_path / "demo.cobra", {"../malo.co": "pwn"})
     mods_dir = tmp_path / "mods"
     monkeypatch.setattr(modules_cmd, "MODULES_PATH", mods_dir)
-    monkeypatch.setattr(package_cmd.modules_cmd, "MODULES_PATH", mods_dir)
+    monkeypatch.setattr(package_cmd, "MODULES_PATH", mods_dir)
 
     with patch("cobra.cli.commands.package_cmd.mostrar_error") as err:
         ret = package_cmd.PaqueteCommand._instalar(pkg)
@@ -68,7 +68,7 @@ def test_instalar_paquete_con_cobra_pkg_json_moderno(tmp_path, monkeypatch):
     package_cmd.construir_paquete(src, pkg, nombre="moderno")
     mods_dir = tmp_path / "mods"
     monkeypatch.setattr(modules_cmd, "MODULES_PATH", mods_dir)
-    monkeypatch.setattr(package_cmd.modules_cmd, "MODULES_PATH", mods_dir)
+    monkeypatch.setattr(package_cmd, "MODULES_PATH", mods_dir)
 
     ret = package_cmd.PaqueteCommand._instalar(pkg)
 
