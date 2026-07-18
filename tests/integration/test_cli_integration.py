@@ -35,15 +35,60 @@ def test_ejecutar_modo_normal():
     assert child.exitstatus == 0
 
 
-@pytest.mark.skipif(sys.platform == "win32", reason="pexpect no es compatible con Windows")
-def test_jupyter_command():
-    if not shutil.which("jupyter"):
-        pytest.skip("jupyter no disponible")
-    child = _spawn("jupyter", {"PEXPECT_TESTING": "1"})
-    child.expect("FAKE_RUN")
-    child.expect(pexpect.EOF)
-    child.wait()
-    assert child.exitstatus == 0
+def test_jupyter_command(monkeypatch):
+    import argparse
+    import subprocess
+    import types
+
+    from pcobra.cobra.cli.commands.jupyter_cmd import JupyterCommand
+
+    monkeypatch.setitem(sys.modules, "jupyter", types.ModuleType("jupyter"))
+
+    llamadas = []
+
+    def run_exitoso(args, **kwargs):
+        llamadas.append((args, kwargs))
+        return subprocess.CompletedProcess(args, returncode=0)
+
+    python_resuelto = "/ruta/determinista/python"
+    monkeypatch.setattr(
+        "pcobra.cobra.cli.commands.jupyter_cmd.subprocess.run", run_exitoso
+    )
+    monkeypatch.setattr(
+        JupyterCommand,
+        "_resolver_ejecutable",
+        staticmethod(lambda _ejecutable: python_resuelto),
+    )
+
+    comando = JupyterCommand()
+    argumentos = argparse.Namespace(notebook=None)
+
+    assert comando.run(argumentos) == 0
+    assert llamadas == [
+        (
+            [sys.executable, "-m", "pcobra.jupyter_kernel", "install"],
+            {"check": True, "capture_output": True, "text": True},
+        ),
+        (
+            [
+                python_resuelto,
+                "-m",
+                "jupyter",
+                "notebook",
+                "--KernelManager.default_kernel_name=cobra",
+            ],
+            {"check": True},
+        ),
+    ]
+
+    def run_con_error(args, **kwargs):
+        raise subprocess.CalledProcessError(returncode=1, cmd=args)
+
+    monkeypatch.setattr(
+        "pcobra.cobra.cli.commands.jupyter_cmd.subprocess.run", run_con_error
+    )
+
+    assert comando.run(argumentos) == 1
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="pexpect no es compatible con Windows")
