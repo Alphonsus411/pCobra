@@ -836,6 +836,10 @@ def usar_modulo(
             raise ImportError(f"No se encontraron símbolos exportables para usar '{nombre_validado_oficial}'.")
         return _construir_exports_usar(simbolos_saneados, metadata_por_simbolo)
     except PermissionError as permiso_exc:
+        # If we get a PermissionError, only try legacy wrappers or project module
+        # if it's a "modulo fuera catalogo" error; otherwise re-raise
+        if not str(permiso_exc).startswith("usar_error[modulo_fuera_catalogo_publico]"):
+            raise permiso_exc
         wrapper = sys.modules.get("pcobra.core.usar_loader") or sys.modules.get("core.usar_loader")
         wrapper_obtener = getattr(wrapper, "obtener_modulo", None)
         wrapper_obtener_oficial = getattr(wrapper, "obtener_modulo_cobra_oficial", None)
@@ -864,9 +868,7 @@ def usar_modulo(
                 else descubrir_raiz_proyecto(current, current)
             )
             ruta_proyecto = root.joinpath(*segmentos_proyecto).with_suffix(".co")
-            if not ruta_proyecto.exists() and not str(permiso_exc).startswith(
-                "usar_error[modulo_fuera_catalogo_publico]"
-            ):
+            if not ruta_proyecto.exists():
                 raise permiso_exc
         else:
             try:
