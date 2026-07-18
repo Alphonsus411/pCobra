@@ -8,8 +8,10 @@ from typing import Optional, Tuple, Dict, TYPE_CHECKING
 from urllib.parse import urlparse
 
 from pcobra.cobra.cli.i18n import _
+from pcobra.cobra.cli.services.cobrahub_service import CobraHubService
 from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
 from pcobra.cobra.hub.errors import PackageProviderError
+from pcobra.cobra.hub.repository import HttpCobraHubRepository
 
 if TYPE_CHECKING:  # pragma: no cover - solo para tipado
     import requests
@@ -373,23 +375,23 @@ class CobraHubClient:
 
     def publicar_paquete(self, ruta: str) -> bool:
         """Publica un paquete .co usando la API separada de paquetes."""
-        from pcobra.cobra.cli.cobrahub_packages import CobraHubPackages
-
-        return CobraHubPackages(self).publicar_paquete(ruta)
+        return CobraHubService(
+            self, HttpCobraHubRepository(self), mostrar_error, mostrar_info
+        ).publicar_paquete(ruta)
 
     def buscar_paquetes(self, consulta: str) -> list[dict]:
         """Busca paquetes usando la API separada de paquetes."""
-        from pcobra.cobra.cli.cobrahub_packages import CobraHubPackages
-
-        return CobraHubPackages(self).buscar_paquetes(consulta)
+        return CobraHubService(
+            self, HttpCobraHubRepository(self), mostrar_error, mostrar_info
+        ).buscar_paquetes(consulta)
 
     def instalar_paquete(
         self, nombre: str, destino: str | None = None, version: str | None = None
     ) -> bool:
         """Instala un paquete usando la API separada de paquetes."""
-        from pcobra.cobra.cli.cobrahub_packages import CobraHubPackages
-
-        return CobraHubPackages(self).instalar_paquete(nombre, destino, version)
+        return CobraHubService(
+            self, HttpCobraHubRepository(self), mostrar_error, mostrar_info
+        ).instalar_paquete(nombre, destino, version)
 
 
 # Funciones conveniencia para interacción sencilla con CobraHub.
