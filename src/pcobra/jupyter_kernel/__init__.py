@@ -1,12 +1,15 @@
 """Kernel de Jupyter que permite ejecutar código Cobra en notebooks."""
 
-import sys
-import io
-import os
 import contextlib
 import importlib
+import io
+import json
+import os
+import sys
+import tempfile
 from importlib.metadata import PackageNotFoundError, version
 from ipykernel.kernelbase import Kernel
+from jupyter_client.kernelspec import KernelSpecManager
 
 
 def _importar_modulo_runtime(
@@ -86,9 +89,32 @@ __version__ = _get_version()
 
 def install(user=True):
     """Instala el kernel de Cobra para Jupyter."""
-    from jupyter_client.kernelspec import install as jupyter_install
+    kernel_spec = {
+        "argv": [
+            sys.executable,
+            "-c",
+            (
+                "from ipykernel.kernelapp import IPKernelApp; "
+                "from pcobra.jupyter_kernel import CobraKernel; "
+                "IPKernelApp.launch_instance(kernel_class=CobraKernel)"
+            ),
+            "-f",
+            "{connection_file}",
+        ],
+        "display_name": "Cobra",
+        "language": "cobra",
+    }
 
-    return jupyter_install(user=user, kernel_name="cobra", display_name="Cobra")
+    with tempfile.TemporaryDirectory() as kernelspec_dir:
+        kernel_json = os.path.join(kernelspec_dir, "kernel.json")
+        with open(kernel_json, "w", encoding="utf-8") as spec_file:
+            json.dump(kernel_spec, spec_file, ensure_ascii=False, indent=2)
+
+        return KernelSpecManager().install_kernel_spec(
+            kernelspec_dir,
+            kernel_name="cobra",
+            user=user,
+        )
 
 
 class CobraKernel(Kernel):
