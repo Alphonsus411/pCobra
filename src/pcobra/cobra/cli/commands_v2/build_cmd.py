@@ -7,7 +7,7 @@ from pcobra.cobra.cli.services.build_service import BuildService
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
 from pcobra.cobra.cli.utils.autocomplete import files_completer
-from pcobra.cobra.cli.commands_v2.installer_cmd import (
+from pcobra.cobra.cli.services.installer_build_service import (
     register_installer_build_arguments,
     run_installer_build,
 )
