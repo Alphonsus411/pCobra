@@ -31,12 +31,20 @@ def _modulo_numero_stub() -> ModuleType:
 
 def _modulo_texto_stub() -> ModuleType:
     mod = ModuleType("texto")
-    mod.__all__ = ["a_snake", "mayusculas", "recortar", "repetir", "quitar_acentos"]
+    mod.__all__ = [
+        "a_snake",
+        "mayusculas",
+        "recortar",
+        "repetir",
+        "quitar_acentos",
+        "longitud",
+    ]
     mod.a_snake = lambda texto: "hola_mundo" if texto == "HolaMundo" else str(texto)
     mod.mayusculas = lambda texto: str(texto).upper()
     mod.recortar = lambda texto: str(texto).strip()
     mod.repetir = lambda texto, veces=2: str(texto) * int(veces)
     mod.quitar_acentos = lambda texto: str(texto).translate(str.maketrans("áéíóú", "aeiou"))
+    mod.longitud = len
     mod.__file__ = "/workspace/pCobra/src/pcobra/corelibs/texto.py"
     return mod
 
@@ -160,13 +168,51 @@ def test_repl_entrypoint_numero_es_finito_imprime_verdadero(capsys):
     assert "verdadero" in salida
 
 
-def test_repl_entrypoint_texto_longitud_imprime_cuatro(capsys):
-    cmd = ReplCommandV2()
-    cmd._ejecutar_en_modo_normal('usar "texto"')
-    cmd._ejecutar_en_modo_normal('imprimir(longitud("hola"))')
+def test_repl_entrypoint_texto_conserva_interprete_e_imprime_cuatro(capsys, monkeypatch):
+    mod_texto = _modulo_texto_stub()
+    monkeypatch.setitem(
+        cli_usar_loader.USAR_RUNTIME_EXPORT_OVERRIDES,
+        "texto",
+        (*cli_usar_loader.USAR_RUNTIME_EXPORT_OVERRIDES["texto"], "longitud"),
+    )
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo", lambda _nombre: mod_texto
+    )
+    monkeypatch.setattr(
+        core_usar_loader,
+        "obtener_modulo_cobra_oficial",
+        lambda _nombre: mod_texto,
+    )
+    monkeypatch.setattr(
+        cli_usar_loader, "obtener_modulo", lambda _nombre: mod_texto
+    )
+    monkeypatch.setattr(
+        cli_usar_loader,
+        "obtener_modulo_cobra_oficial",
+        lambda _nombre: mod_texto,
+    )
+    cmd = InteractiveCommand(InterpretadorCobra())
+    interpretador = cmd.interpretador
+    ejecutar_nodo_original = interpretador.ejecutar_nodo
+    nodos_usar_ejecutados: list[NodoUsar] = []
 
-    salida = [linea.strip() for linea in capsys.readouterr().out.splitlines() if linea.strip()]
+    def ejecutar_nodo_una_vez(nodo):
+        if isinstance(nodo, NodoUsar):
+            nodos_usar_ejecutados.append(nodo)
+        return ejecutar_nodo_original(nodo)
+
+    monkeypatch.setattr(interpretador, "ejecutar_nodo", ejecutar_nodo_una_vez)
+
+    cmd.ejecutar_codigo('usar "texto"')
+    cmd.ejecutar_codigo('imprimir(longitud("hola"))')
+
+    captura = capsys.readouterr()
+    salida = [linea.strip() for linea in captura.out.splitlines() if linea.strip()]
     assert salida == ["4"]
+    assert "NameError" not in captura.out
+    assert "NameError" not in captura.err
+    assert cmd.interpretador is interpretador
+    assert len(nodos_usar_ejecutados) == 1
 
 
 def test_repl_entrypoint_archivo_existe_booleano_sin_error_metadata(capsys):
