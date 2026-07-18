@@ -3,6 +3,7 @@ import logging
 import multiprocessing
 from queue import Empty
 from pathlib import Path
+import sys
 from typing import Any
 
 from pcobra.cobra.bindings.runtime_manager import RuntimeManager
@@ -138,6 +139,12 @@ class RunService:
         return resolved_path
 
     def limitar_recursos(self, funcion: Any) -> int:
+        try:
+            sys.stdout.fileno()
+            sys.stderr.fileno()
+        except (AttributeError, OSError):
+            return funcion()
+
         if "fork" not in multiprocessing.get_all_start_methods():
             return funcion()
 

@@ -31,6 +31,7 @@ def test_repl_v2_contrato_llama_prevalidacion_y_pipeline_compartido(monkeypatch)
     entradas = iter(["var x = 1", "exit"])
     parse_calls: list[str] = []
     ejecucion_calls: list[str] = []
+    ast_ejecucion: list[object] = []
     runtime_alternativo_calls: list[str] = []
 
     monkeypatch.setattr("builtins.input", lambda _prompt: next(entradas))
@@ -40,11 +41,11 @@ def test_repl_v2_contrato_llama_prevalidacion_y_pipeline_compartido(monkeypatch)
         return [object()]
 
     monkeypatch.setattr(repl_module, "prevalidar_y_parsear_codigo", _fake_parse)
-    monkeypatch.setattr(
-        command._delegate,
-        "ejecutar_codigo",
-        lambda codigo: ejecucion_calls.append(codigo),
-    )
+    def _fake_ejecutar(codigo, _validador=None, *, ast_preparseado=None):
+        ejecucion_calls.append(codigo)
+        ast_ejecucion.extend(ast_preparseado or [])
+
+    monkeypatch.setattr(command._delegate, "ejecutar_codigo", _fake_ejecutar)
     monkeypatch.setattr(
         command._delegate,
         "_ejecutar_en_sandbox",
@@ -61,6 +62,7 @@ def test_repl_v2_contrato_llama_prevalidacion_y_pipeline_compartido(monkeypatch)
     assert status == 0
     assert parse_calls == ["var x = 1"]
     assert ejecucion_calls == ["var x = 1"]
+    assert len(ast_ejecucion) == 1
     assert runtime_alternativo_calls == []
 
 
@@ -127,7 +129,8 @@ def test_repl_v2_persistencia_estado_var_x_e_imprimir_x(monkeypatch, capsys):
     monkeypatch.setattr(repl_module, "prevalidar_y_parsear_codigo", lambda _codigo: [object()])
     monkeypatch.setattr(repl_module, "mostrar_info", lambda *_args, **_kwargs: None)
 
-    def _fake_delegate(codigo: str):
+    def _fake_delegate(codigo: str, _validador=None, *, ast_preparseado=None):
+        assert ast_preparseado is not None
         interpretador = command._delegate.interpretador or estado
         if codigo == "var x = 10":
             interpretador["x"] = 10
@@ -167,7 +170,7 @@ def test_repl_v2_bloque_anidado_real_mientras_si_fin_fin_acumula_hasta_completar
     monkeypatch.setattr(
         command._delegate,
         "ejecutar_codigo",
-        lambda codigo: ejecucion_calls.append(codigo),
+        lambda codigo, _validador=None, **_kwargs: ejecucion_calls.append(codigo),
     )
 
     status = command.run(_args_repl())
@@ -208,7 +211,7 @@ def test_repl_v2_error_sintactico_real_limpia_buffer_y_repl_sigue(monkeypatch):
     monkeypatch.setattr(
         command._delegate,
         "ejecutar_codigo",
-        lambda codigo: ejecucion_calls.append(codigo),
+        lambda codigo, _validador=None, **_kwargs: ejecucion_calls.append(codigo),
     )
 
     status = command.run(_args_repl())
@@ -324,7 +327,7 @@ def test_repl_v2_bloque_incompleto_no_ejecuta_ni_limpia_hasta_completar(monkeypa
     monkeypatch.setattr(
         command._delegate,
         "ejecutar_codigo",
-        lambda codigo: ejecucion_calls.append(codigo),
+        lambda codigo, _validador=None, **_kwargs: ejecucion_calls.append(codigo),
     )
 
     status = command.run(_args_repl())
