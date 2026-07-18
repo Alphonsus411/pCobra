@@ -1,7 +1,11 @@
 def visit_clase(self, nodo):
     """Genera la definición de una clase aplicando sus decoradores."""
     for decorador in getattr(nodo, "decoradores", []):
-        decorador.aceptar(self)
+        if decorador.__class__.__name__ == "NodoDecorador":
+            decorador.aceptar(self)
+        else:
+            expr = self.obtener_valor(decorador)
+            self.codigo += f"{self.obtener_indentacion()}@{expr}\n"
     metodos = getattr(nodo, "metodos", getattr(nodo, "cuerpo", []))
     bases_lista = list(getattr(nodo, "bases", []))
     if getattr(nodo, "type_params", []):

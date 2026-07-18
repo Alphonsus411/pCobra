@@ -1,6 +1,10 @@
 def visit_metodo(self, nodo):
     for decorador in getattr(nodo, "decoradores", []):
-        decorador.aceptar(self)
+        if decorador.__class__.__name__ == "NodoDecorador":
+            decorador.aceptar(self)
+        else:
+            expr = self.obtener_valor(decorador)
+            self.codigo += f"{self.obtener_indentacion()}@{expr}\n"
     parametros = ", ".join(nodo.parametros)
     asincrona = getattr(nodo, "asincronica", False)
     prefijo = "async def" if asincrona else "def"
