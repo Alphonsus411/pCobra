@@ -431,7 +431,8 @@ def _run_cobra_script(args: list[str], env: dict[str, str], tmp_path: Path) -> s
 
 @pytest.mark.timeout(30)
 def test_cli_dependencias_listar(tmp_path: Path) -> None:
-    env = _create_stub_environment(tmp_path)
+    env = _create_stub_environment(tmp_path).copy()
+    env["COBRA_CLI_COMMAND_PROFILE"] = "development"
     result = _run_cli(["dependencias", "listar"], env)
     assert result.returncode == 0, result.stderr
     stdout = result.stdout
@@ -441,7 +442,8 @@ def test_cli_dependencias_listar(tmp_path: Path) -> None:
 
 @pytest.mark.timeout(30)
 def test_cli_agix_help(tmp_path: Path) -> None:
-    env = _create_stub_environment(tmp_path)
+    env = _create_stub_environment(tmp_path).copy()
+    env["COBRA_CLI_COMMAND_PROFILE"] = "development"
     result = _run_cli(["agix", "--help"], env)
     assert result.returncode == 0, result.stderr
     stdout = result.stdout
