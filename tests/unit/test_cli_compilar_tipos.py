@@ -20,7 +20,15 @@ def test_cli_compilar_con_tipos(tmp_path, monkeypatch):
 
     monkeypatch.setattr(cli_module.AppConfig, "BASE_COMMAND_CLASSES", [compile_module.CompileCommand])
 
+    class DummyValidator:
+        def __init__(self):
+            self._metadata_simbolos_usar = {}
+
     class DummyInterpreter:
+        def __init__(self, *, safe_mode, **_kwargs):
+            self._usar_symbol_metadata = {}
+            self._validador = DummyValidator() if safe_mode else None
+
         def cleanup(self):
             pass
 
@@ -86,7 +94,10 @@ def test_cli_compilar_con_tipos(tmp_path, monkeypatch):
 
     assert exit_code == 0
     salida = out.getvalue()
-    assert "Código generado para Python (python):" in salida
-    assert "Código generado para Javascript (javascript):" in salida
+    assert "Código generado (TranspiladorPython) para Python (python):" in salida
+    assert (
+        "Código generado (TranspiladorJavaScript) para Javascript (javascript):"
+        in salida
+    )
     assert "py" in salida
     assert "js" in salida

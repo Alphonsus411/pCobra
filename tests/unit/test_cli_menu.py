@@ -2,6 +2,8 @@ import argparse
 import sys
 from pathlib import Path
 
+import pytest
+
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 
@@ -76,6 +78,22 @@ for mod, cls in _STUBS.items():
     _stub_command(mod, cls)
 
 from cobra.cli.cli import main
+from pcobra.cobra.cli import cli as cli_module
+from pcobra.cobra.cli.commands.compile_cmd import CompileCommand
+from pcobra.cobra.cli.commands.execute_cmd import ExecuteCommand
+from pcobra.cobra.cli.commands.transpilar_inverso_cmd import TranspilarInversoCommand
+
+
+@pytest.fixture(autouse=True)
+def _development_command_profile(monkeypatch):
+    monkeypatch.setattr(
+        "cobra.cli.cli.resolve_command_profile", lambda: "development"
+    )
+    monkeypatch.setattr(
+        cli_module.AppConfig,
+        "BASE_COMMAND_CLASSES",
+        [CompileCommand, ExecuteCommand, TranspilarInversoCommand],
+    )
 
 
 def _set_tty(monkeypatch, is_tty: bool) -> None:
@@ -91,9 +109,9 @@ def test_menu_no_transpile(monkeypatch):
     def fail_run(self, args):
         raise AssertionError("should not run")
 
-    monkeypatch.setattr("cobra.cli.commands.compile_cmd.CompileCommand.run", fail_run)
-    monkeypatch.setattr("cobra.cli.commands.transpilar_inverso_cmd.TranspilarInversoCommand.run", fail_run)
-    monkeypatch.setattr("cobra.cli.commands.execute_cmd.ExecuteCommand.run", lambda *_: 0)
+    monkeypatch.setattr(CompileCommand, "run", fail_run)
+    monkeypatch.setattr(TranspilarInversoCommand, "run", fail_run)
+    monkeypatch.setattr(ExecuteCommand, "run", lambda *_: 0)
 
     assert main(["menu"]) == 0
 
@@ -109,7 +127,7 @@ def test_menu_compile(monkeypatch):
         called['args'] = args
         return 0
 
-    monkeypatch.setattr("cobra.cli.commands.compile_cmd.CompileCommand.run", fake_run)
+    monkeypatch.setattr(CompileCommand, "run", fake_run)
 
     assert main(["menu"]) == 0
     assert called['args'].archivo == "archivo.cobra"
@@ -127,7 +145,7 @@ def test_menu_transpilar_inverso(monkeypatch):
         called['args'] = args
         return 0
 
-    monkeypatch.setattr("cobra.cli.commands.transpilar_inverso_cmd.TranspilarInversoCommand.run", fake_run)
+    monkeypatch.setattr(TranspilarInversoCommand, "run", fake_run)
 
     assert main(["menu"]) == 0
     assert called['args'].archivo == "archivo.py"
@@ -146,7 +164,7 @@ def test_menu_ejecutar_en_modo_mixto(monkeypatch):
         called["args"] = args
         return 0
 
-    monkeypatch.setattr("cobra.cli.commands.execute_cmd.ExecuteCommand.run", fake_run)
+    monkeypatch.setattr(ExecuteCommand, "run", fake_run)
 
     assert main(["menu"]) == 0
     assert called["args"].archivo == "programa.co"
@@ -195,7 +213,7 @@ def test_menu_compile_reintenta_hasta_destino_valido(monkeypatch):
         called["args"] = args
         return 0
 
-    monkeypatch.setattr("cobra.cli.commands.compile_cmd.CompileCommand.run", fake_run)
+    monkeypatch.setattr(CompileCommand, "run", fake_run)
 
     assert main(["menu"]) == 0
     assert called["args"].tipo == "python"
@@ -209,7 +227,7 @@ def test_menu_compile_finaliza_si_supera_intentos_destino(monkeypatch):
     def fail_run(self, args):
         raise AssertionError("no debe ejecutar compilar")
 
-    monkeypatch.setattr("cobra.cli.commands.compile_cmd.CompileCommand.run", fail_run)
+    monkeypatch.setattr(CompileCommand, "run", fail_run)
 
     assert main(["menu"]) == 1
 
@@ -225,7 +243,7 @@ def test_menu_transpilar_inverso_reintenta_origen_y_destino(monkeypatch):
         called["args"] = args
         return 0
 
-    monkeypatch.setattr("cobra.cli.commands.transpilar_inverso_cmd.TranspilarInversoCommand.run", fake_run)
+    monkeypatch.setattr(TranspilarInversoCommand, "run", fake_run)
 
     assert main(["menu"]) == 0
     assert called["args"].origen == "python"
@@ -271,13 +289,15 @@ def test_menu_modo_cobra_solo_pide_ruta_archivo(monkeypatch):
         return "programa.co"
 
     monkeypatch.setattr("builtins.input", fake_input)
-    monkeypatch.setattr("cobra.cli.commands.execute_cmd.ExecuteCommand.run", lambda *_: 0)
+    monkeypatch.setattr(ExecuteCommand, "run", lambda *_: 0)
     monkeypatch.setattr(
-        "cobra.cli.commands.compile_cmd.CompileCommand.run",
+        CompileCommand,
+        "run",
         lambda *_: (_ for _ in ()).throw(AssertionError("no debe ejecutar compilar en modo cobra")),
     )
     monkeypatch.setattr(
-        "cobra.cli.commands.transpilar_inverso_cmd.TranspilarInversoCommand.run",
+        TranspilarInversoCommand,
+        "run",
         lambda *_: (_ for _ in ()).throw(AssertionError("no debe ejecutar transpilar-inverso en modo cobra")),
     )
 
@@ -294,6 +314,6 @@ def test_menu_solo_cobra_alias_no_pide_prompts_codegen(monkeypatch):
         return "programa.co"
 
     monkeypatch.setattr("builtins.input", fake_input)
-    monkeypatch.setattr("cobra.cli.commands.execute_cmd.ExecuteCommand.run", lambda *_: 0)
+    monkeypatch.setattr(ExecuteCommand, "run", lambda *_: 0)
 
     assert main(["--solo-cobra", "menu"]) == 0
