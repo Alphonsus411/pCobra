@@ -1,5 +1,4 @@
 import importlib
-import json
 from argparse import Namespace
 from pathlib import Path
 from io import StringIO
@@ -8,9 +7,9 @@ from unittest.mock import patch
 import pytest
 import yaml
 
-from pcobra.cobra.cli import cli as cli_module
-from pcobra.cobra.cli.commands import modules_cmd
-from pcobra.cobra.cli.commands.execute_cmd import ExecuteCommand
+from cobra.cli.cli import main
+from cobra.cli.commands import modules_cmd
+from cobra.cli.commands.execute_cmd import ExecuteCommand
 
 
 @pytest.mark.timeout(5)
