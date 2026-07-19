@@ -16,8 +16,12 @@ from cobra.cli.commands.execute_cmd import ExecuteCommand
 def test_cli_ejecutar_imprime(tmp_path):
     archivo = tmp_path / "p.co"
     archivo.write_text("var x = 3\nimprimir(x)")
-    with patch("sys.stdout", new_callable=StringIO) as out:
-        main(["ejecutar", str(archivo)])
+    with (
+        patch.object(cli_module, "resolve_command_profile", return_value="development"),
+        patch.object(cli_module.AppConfig, "BASE_COMMAND_CLASSES", [ExecuteCommand]),
+        patch("sys.stdout", new_callable=StringIO) as out,
+    ):
+        cli_module.main(["ejecutar", str(archivo)])
     assert out.getvalue().strip() == "3"
 
 
@@ -73,11 +77,11 @@ def test_cli_modulos_comandos(tmp_path, monkeypatch):
     modulo.write_text("var d = 1")
 
     with patch("sys.stdout", new_callable=StringIO) as out:
-        main(["modulos", "listar"])
+        cli_module.main(["modulos", "listar"])
     assert "No hay módulos instalados" in out.getvalue().strip()
 
     with patch("sys.stdout", new_callable=StringIO) as out:
-        main(["modulos", "instalar", str(modulo)])
+        cli_module.main(["modulos", "instalar", str(modulo)])
     destino = mods_dir / modulo.name
     assert destino.exists()
     assert f"Módulo instalado en {destino}" in out.getvalue().strip()
@@ -85,18 +89,18 @@ def test_cli_modulos_comandos(tmp_path, monkeypatch):
     assert data["lock"][modulo.name] == "0.1.0"
 
     with patch("sys.stdout", new_callable=StringIO) as out:
-        main(["modulos", "listar"])
+        cli_module.main(["modulos", "listar"])
     assert modulo.name in out.getvalue().strip()
 
     with patch("sys.stdout", new_callable=StringIO) as out:
-        main(["modulos", "remover", modulo.name])
+        cli_module.main(["modulos", "remover", modulo.name])
     assert not destino.exists()
     assert f"Módulo {modulo.name} eliminado" in out.getvalue().strip()
     data = yaml.safe_load(mod_file.read_text())
     assert modulo.name not in data["lock"]
 
     with patch("sys.stdout", new_callable=StringIO) as out:
-        main(["modulos", "listar"])
+        cli_module.main(["modulos", "listar"])
     assert "No hay módulos instalados" in out.getvalue().strip()
 
 
@@ -165,14 +169,14 @@ def test_cli_modulo_version_invalida(tmp_path, monkeypatch):
     modulo = tmp_path / "bad.co"
     modulo.write_text("var d = 1")
     with patch("sys.stdout", new_callable=StringIO) as out:
-        main(["modulos", "instalar", str(modulo)])
+        cli_module.main(["modulos", "instalar", str(modulo)])
     assert "inválida" in out.getvalue().lower()
 
 @pytest.mark.timeout(5)
 def test_cli_crear_archivo(tmp_path):
     ruta = tmp_path / "nuevo"
     with patch("sys.stdout", new_callable=StringIO) as out:
-        main(["crear", "archivo", str(ruta)])
+        cli_module.main(["crear", "archivo", str(ruta)])
     assert (tmp_path / "nuevo.co").exists()
     assert f"Archivo creado: {ruta}.co" in out.getvalue().strip()
 
@@ -181,6 +185,6 @@ def test_cli_crear_archivo(tmp_path):
 def test_cli_crear_proyecto(tmp_path):
     ruta = tmp_path / "proj"
     with patch("sys.stdout", new_callable=StringIO) as out:
-        main(["crear", "proyecto", str(ruta)])
+        cli_module.main(["crear", "proyecto", str(ruta)])
     assert (ruta / "main.co").exists()
     assert "Proyecto Cobra creado" in out.getvalue()
