@@ -9,7 +9,6 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from pcobra.cobra.cli.commands.execute_cmd import ExecuteCommand
 from pcobra.cobra.cli.execution_pipeline import (
     PipelineInput,
     analizar_codigo,
@@ -17,25 +16,34 @@ from pcobra.cobra.cli.execution_pipeline import (
     prevalidar_y_parsear_codigo,
     resolver_interpretador_cls,
 )
-from pcobra.cobra.cli.commands.interactive_cmd import InteractiveCommand
 from pcobra.cobra.core.runtime import InterpretadorCobra
 
 
-_EXECUTE_MODULE = importlib.import_module(ExecuteCommand.__module__)
-_INTERACTIVE_MODULE = importlib.import_module(InteractiveCommand.__module__)
-_RUN_SERVICE_MODULE = importlib.import_module(
-    "pcobra.cobra.cli.services.run_service"
-)
-
-
 @pytest.fixture(autouse=True)
-def _restaurar_modulos_comando_canonicos(monkeypatch):
+def modulos_comando_canonicos(monkeypatch):
+    execute_module = importlib.import_module("pcobra.cobra.cli.commands.execute_cmd")
+    interactive_module = importlib.import_module(
+        "pcobra.cobra.cli.commands.interactive_cmd"
+    )
+    run_service_module = importlib.import_module(
+        "pcobra.cobra.cli.services.run_service"
+    )
     commands_package = importlib.import_module("pcobra.cobra.cli.commands")
-    monkeypatch.setitem(sys.modules, _EXECUTE_MODULE.__name__, _EXECUTE_MODULE)
-    monkeypatch.setitem(sys.modules, _INTERACTIVE_MODULE.__name__, _INTERACTIVE_MODULE)
-    monkeypatch.setattr(commands_package, "execute_cmd", _EXECUTE_MODULE, raising=False)
+    services_package = importlib.import_module("pcobra.cobra.cli.services")
+    monkeypatch.setitem(sys.modules, execute_module.__name__, execute_module)
+    monkeypatch.setitem(sys.modules, interactive_module.__name__, interactive_module)
+    monkeypatch.setitem(sys.modules, run_service_module.__name__, run_service_module)
+    monkeypatch.setattr(commands_package, "execute_cmd", execute_module, raising=False)
     monkeypatch.setattr(
-        commands_package, "interactive_cmd", _INTERACTIVE_MODULE, raising=False
+        commands_package, "interactive_cmd", interactive_module, raising=False
+    )
+    monkeypatch.setattr(
+        services_package, "run_service", run_service_module, raising=False
+    )
+    return SimpleNamespace(
+        execute=execute_module,
+        interactive=interactive_module,
+        run_service=run_service_module,
     )
 
 
@@ -78,24 +86,35 @@ def _run_execute_via_script(
     *,
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
+    modulos_comando_canonicos,
     prelude: str,
     snippet: str,
     variable_persistente: str,
 ) -> dict[str, object]:
     monkeypatch.setattr(
-        _EXECUTE_MODULE, "validar_dependencias", lambda *_args, **_kwargs: None
+        modulos_comando_canonicos.execute,
+        "validar_dependencias",
+        lambda *_args, **_kwargs: None,
     )
     monkeypatch.setattr(
-        _RUN_SERVICE_MODULE, "limitar_cpu_segundos", lambda *_args, **_kwargs: None
+        modulos_comando_canonicos.run_service,
+        "limitar_cpu_segundos",
+        lambda *_args, **_kwargs: None,
     )
     codigo = "\n".join(
-        [linea for linea in [prelude, snippet, f"var __probe = {variable_persistente}"] if linea]
+        [
+            linea
+            for linea in [prelude, snippet, f"var __probe = {variable_persistente}"]
+            if linea
+        ]
     )
     archivo = tmp_path / "matriz_paridad.co"
     archivo.write_text(codigo, encoding="utf-8")
     out, err = StringIO(), StringIO()
     with redirect_stdout(out), redirect_stderr(err):
-        rc = ExecuteCommand().run(_args_execute(str(archivo)))
+        rc = modulos_comando_canonicos.execute.ExecuteCommand().run(
+            _args_execute(str(archivo))
+        )
     salida = out.getvalue()
     errores = err.getvalue()
     return {
@@ -204,8 +223,11 @@ def _run_repl_secuencial(
     *,
     snippets: list[str],
     variables_estado: tuple[str, ...],
+    modulos_comando_canonicos,
 ) -> dict[str, object]:
-    repl = InteractiveCommand(InterpretadorCobra())
+    repl = modulos_comando_canonicos.interactive.InteractiveCommand(
+        InterpretadorCobra()
+    )
     repl._seguro_repl = False
     repl._extra_validators_repl = None
     out, err = StringIO(), StringIO()
@@ -233,8 +255,11 @@ def _run_repl(
     prelude: str,
     snippet: str,
     variable_persistente: str,
+    modulos_comando_canonicos,
 ) -> dict[str, object]:
-    repl = InteractiveCommand(InterpretadorCobra())
+    repl = modulos_comando_canonicos.interactive.InteractiveCommand(
+        InterpretadorCobra()
+    )
     repl._seguro_repl = False
     repl._extra_validators_repl = None
     out, err = StringIO(), StringIO()
@@ -249,7 +274,9 @@ def _run_repl(
     persistente = None
     try:
         persistente = repl.interpretador.contextos[-1].get(variable_persistente)
-    except Exception:  # noqa: BLE001 - el contrato compara estado observable entre rutas
+    except (
+        Exception
+    ):  # noqa: BLE001 - el contrato compara estado observable entre rutas
         persistente = None
     return {
         "stdout": out.getvalue(),
@@ -313,25 +340,28 @@ def _snapshot_context_values(values: dict[str, object] | None) -> dict[str, str]
         ),
         (
             "define_local_en_funcion",
-            (
-                "func localiza():\n"
-                "    var persistente = 33\n"
-                "fin\n"
-                "localiza()"
+            ("func localiza():\n" "    var persistente = 33\n" "fin\n" "localiza()"),
             ),
+        (
+            "funcion",
+            "func incrementar(v):\n    retorno v + 3\nfin\nvar persistente = incrementar(10)",
         ),
-        ("funcion", "func incrementar(v):\n    retorno v + 3\nfin\nvar persistente = incrementar(10)"),
         ("error_semantico", "persistente = persistente + 1"),
     ],
 )
 def test_matriz_minima_paridad_execute_script_vs_repl(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, caso: str, snippet: str
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    modulos_comando_canonicos,
+    caso: str,
+    snippet: str,
 ) -> None:
     prelude = "var persistente = 10"
     variable_persistente = "persistente"
     resultado_execute = _run_execute_via_script(
         tmp_path=tmp_path,
         monkeypatch=monkeypatch,
+        modulos_comando_canonicos=modulos_comando_canonicos,
         prelude=prelude,
         snippet=snippet,
         variable_persistente=variable_persistente,
@@ -340,6 +370,7 @@ def test_matriz_minima_paridad_execute_script_vs_repl(
         prelude=prelude,
         snippet=snippet,
         variable_persistente=variable_persistente,
+        modulos_comando_canonicos=modulos_comando_canonicos,
     )
     resultado_script_pipeline = _run_script_pipeline(
         prelude=prelude,
@@ -347,36 +378,41 @@ def test_matriz_minima_paridad_execute_script_vs_repl(
         variable_persistente=variable_persistente,
     )
 
-    assert resultado_execute["error_kind"] == resultado_repl["error_kind"], (
-        f"{caso}: tipo de error divergente entre rutas"
-    )
-    assert resultado_script_pipeline["error_kind"] == resultado_repl["error_kind"], (
-        f"{caso}: el pipeline explícito debe reflejar el mismo error que REPL"
-    )
+    assert (
+        resultado_execute["error_kind"] == resultado_repl["error_kind"]
+    ), f"{caso}: tipo de error divergente entre rutas"
+    assert (
+        resultado_script_pipeline["error_kind"] == resultado_repl["error_kind"]
+    ), f"{caso}: el pipeline explícito debe reflejar el mismo error que REPL"
     if resultado_repl["error_kind"] is None:
-        assert _normalizar_salida_repl(str(resultado_repl["stdout"])) == str(
-            resultado_execute["stdout"]
-        ).strip(), f"{caso}: salida distinta entre ExecuteCommand (script) y REPL"
-        assert resultado_execute["rc"] == 0, f"{caso}: ExecuteCommand debe finalizar en éxito"
-        assert resultado_repl["persistente"] is not None, (
-            f"{caso}: la variable persistente debe permanecer accesible en REPL"
-        )
-        assert _snapshot_context_values(resultado_script_pipeline["contexto_values"]) == _snapshot_context_values(
+        assert (
+            _normalizar_salida_repl(str(resultado_repl["stdout"]))
+            == str(resultado_execute["stdout"]).strip()
+        ), f"{caso}: salida distinta entre ExecuteCommand (script) y REPL"
+        assert (
+            resultado_execute["rc"] == 0
+        ), f"{caso}: ExecuteCommand debe finalizar en éxito"
+        assert (
+            resultado_repl["persistente"] is not None
+        ), f"{caso}: la variable persistente debe permanecer accesible en REPL"
+        assert _snapshot_context_values(
+            resultado_script_pipeline["contexto_values"]
+        ) == _snapshot_context_values(
             resultado_repl["contexto_values"]
-        ), (
-            f"{caso}: el estado final del entorno debe ser idéntico entre pipeline script y REPL"
-        )
-        assert resultado_script_pipeline["persistente"] == resultado_repl["persistente"], (
-            f"{caso}: valor persistente divergente entre rutas"
-        )
+        ), f"{caso}: el estado final del entorno debe ser idéntico entre pipeline script y REPL"
+        assert (
+            resultado_script_pipeline["persistente"] == resultado_repl["persistente"]
+        ), f"{caso}: valor persistente divergente entre rutas"
     else:
-        assert resultado_execute["rc"] == 1, f"{caso}: ExecuteCommand debe reportar fallo"
-        assert type(resultado_script_pipeline["exc"]) is type(resultado_repl["exc"]), (
-            f"{caso}: tipo de excepción divergente entre pipeline script y REPL"
-        )
-        assert str(resultado_script_pipeline["exc"]) == str(resultado_repl["exc"]), (
-            f"{caso}: mensaje de excepción divergente entre pipeline script y REPL"
-        )
+        assert (
+            resultado_execute["rc"] == 1
+        ), f"{caso}: ExecuteCommand debe reportar fallo"
+        assert type(resultado_script_pipeline["exc"]) is type(
+            resultado_repl["exc"]
+        ), f"{caso}: tipo de excepción divergente entre pipeline script y REPL"
+        assert str(resultado_script_pipeline["exc"]) == str(
+            resultado_repl["exc"]
+        ), f"{caso}: mensaje de excepción divergente entre pipeline script y REPL"
 
 
 def _args_interactive():
@@ -391,14 +427,20 @@ def _args_interactive():
     )
 
 
-def test_contrato_resultado_igual_entre_modo_archivo_y_interactivo():
+def test_contrato_resultado_igual_entre_modo_archivo_y_interactivo(
+    modulos_comando_canonicos,
+):
     codigo = "var x = 5\nimprimir(x)"
 
-    cmd_execute = ExecuteCommand()
+    cmd_execute = modulos_comando_canonicos.execute.ExecuteCommand()
     with patch("sys.stdout", new_callable=StringIO) as out_file:
-        result_file = cmd_execute._service.ejecutar_normal(codigo, seguro=False, extra_validators=None)
+        result_file = cmd_execute._service.ejecutar_normal(
+            codigo, seguro=False, extra_validators=None
+        )
 
-    cmd_interactive = InteractiveCommand(InterpretadorCobra())
+    cmd_interactive = modulos_comando_canonicos.interactive.InteractiveCommand(
+        InterpretadorCobra()
+    )
     with patch("sys.stdout", new_callable=StringIO) as out_repl:
         cmd_interactive.ejecutar_codigo(codigo)
 
@@ -406,10 +448,12 @@ def test_contrato_resultado_igual_entre_modo_archivo_y_interactivo():
     assert out_file.getvalue() == out_repl.getvalue()
 
 
-def test_execute_archivo_no_corta_bloque_principal_en_declaracion_var_smoke_contrato():
+def test_execute_archivo_no_corta_bloque_principal_en_declaracion_var_smoke_contrato(
+    modulos_comando_canonicos,
+):
     codigo = 'imprimir("antes")\nvar x = 3\nimprimir("despues")'
 
-    cmd_execute = ExecuteCommand()
+    cmd_execute = modulos_comando_canonicos.execute.ExecuteCommand()
     out_file, err_file = StringIO(), StringIO()
     with redirect_stdout(out_file), redirect_stderr(err_file):
         result_file = cmd_execute._service.ejecutar_normal(
@@ -428,10 +472,12 @@ def test_execute_archivo_no_corta_bloque_principal_en_declaracion_var_smoke_cont
         ("BUG-001-variable", "variable x := 3"),
     ],
 )
-def test_regresion_bug_001_execute_no_corta_flujo_tras_declaracion(caso, declaracion):
+def test_regresion_bug_001_execute_no_corta_flujo_tras_declaracion(
+    modulos_comando_canonicos, caso, declaracion
+):
     codigo = f'imprimir("antes")\n{declaracion}\nimprimir("despues")'
 
-    cmd_execute = ExecuteCommand()
+    cmd_execute = modulos_comando_canonicos.execute.ExecuteCommand()
     out_file, err_file = StringIO(), StringIO()
     with redirect_stdout(out_file), redirect_stderr(err_file):
         result_file = cmd_execute._service.ejecutar_normal(
@@ -441,11 +487,15 @@ def test_regresion_bug_001_execute_no_corta_flujo_tras_declaracion(caso, declara
     salida = out_file.getvalue().splitlines()
     assert result_file == 0, f"{caso}: la ejecución debe terminar en éxito"
     assert err_file.getvalue() == "", f"{caso}: no debe haber errores en stderr"
-    assert salida.count("antes") == 1, f"{caso}: debe imprimir 'antes' exactamente una vez"
-    assert salida.count("despues") == 1, f"{caso}: debe imprimir 'despues' exactamente una vez"
-    assert salida.index("antes") < salida.index("despues"), (
-        f"{caso}: el flujo no debe cortarse tras la declaración; la sentencia posterior debe ejecutarse"
-    )
+    assert (
+        salida.count("antes") == 1
+    ), f"{caso}: debe imprimir 'antes' exactamente una vez"
+    assert (
+        salida.count("despues") == 1
+    ), f"{caso}: debe imprimir 'despues' exactamente una vez"
+    assert salida.index("antes") < salida.index(
+        "despues"
+    ), f"{caso}: el flujo no debe cortarse tras la declaración; la sentencia posterior debe ejecutarse"
 
 
 @pytest.mark.parametrize(
@@ -465,13 +515,19 @@ def test_regresion_bug_001_execute_no_corta_flujo_tras_declaracion(caso, declara
         ),
     ],
 )
-def test_contrato_salida_y_error_iguales_entre_execute_e_interactive(caso, codigo):
-    cmd_execute = ExecuteCommand()
+def test_contrato_salida_y_error_iguales_entre_execute_e_interactive(
+    modulos_comando_canonicos, caso, codigo
+):
+    cmd_execute = modulos_comando_canonicos.execute.ExecuteCommand()
     out_execute, err_execute = StringIO(), StringIO()
     with redirect_stdout(out_execute), redirect_stderr(err_execute):
-        rc_execute = cmd_execute._service.ejecutar_normal(codigo, seguro=False, extra_validators=None)
+        rc_execute = cmd_execute._service.ejecutar_normal(
+            codigo, seguro=False, extra_validators=None
+        )
 
-    cmd_interactive = InteractiveCommand(InterpretadorCobra())
+    cmd_interactive = modulos_comando_canonicos.interactive.InteractiveCommand(
+        InterpretadorCobra()
+    )
     out_repl, err_repl = StringIO(), StringIO()
     with redirect_stdout(out_repl), redirect_stderr(err_repl):
         cmd_interactive.ejecutar_codigo(codigo)
@@ -481,11 +537,15 @@ def test_contrato_salida_y_error_iguales_entre_execute_e_interactive(caso, codig
     assert err_execute.getvalue() == err_repl.getvalue(), f"{caso}: error divergente"
 
 
-def test_contrato_error_igual_entre_modo_archivo_y_interactivo():
+def test_contrato_error_igual_entre_modo_archivo_y_interactivo(
+    modulos_comando_canonicos,
+):
     codigo_invalido = "si verdadero:\nimprimir(1)"
 
-    cmd_execute = ExecuteCommand()
-    cmd_interactive = InteractiveCommand(InterpretadorCobra())
+    cmd_execute = modulos_comando_canonicos.execute.ExecuteCommand()
+    cmd_interactive = modulos_comando_canonicos.interactive.InteractiveCommand(
+        InterpretadorCobra()
+    )
 
     with pytest.raises(Exception) as err_execute:
         analizar_codigo(codigo_invalido)
@@ -506,10 +566,12 @@ def test_contrato_error_igual_entre_modo_archivo_y_interactivo():
     ],
 )
 def test_contrato_pipeline_error_y_mensaje_entre_no_interactivo_y_repl(
-    codigo_invalido, caso
+    modulos_comando_canonicos, codigo_invalido, caso
 ):
-    cmd_execute = ExecuteCommand()
-    cmd_interactive = InteractiveCommand(InterpretadorCobra())
+    cmd_execute = modulos_comando_canonicos.execute.ExecuteCommand()
+    cmd_interactive = modulos_comando_canonicos.interactive.InteractiveCommand(
+        InterpretadorCobra()
+    )
 
     def _capturar_error_no_interactivo():
         try:
@@ -532,16 +594,20 @@ def test_contrato_pipeline_error_y_mensaje_entre_no_interactivo_y_repl(
     assert str(err_execute) == str(err_repl), f"{caso}: mensaje de error divergente"
 
 
-def test_repl_ejecuta_bloque_completo_sin_parseo_parcial_por_linea():
+def test_repl_ejecuta_bloque_completo_sin_parseo_parcial_por_linea(
+    modulos_comando_canonicos,
+):
     inputs = ["si verdadero:", "imprimir(1)", "fin", "salir"]
-    cmd = InteractiveCommand(MagicMock())
+    cmd = modulos_comando_canonicos.interactive.InteractiveCommand(MagicMock())
 
-    with patch.object(_INTERACTIVE_MODULE, "validar_dependencias"), patch(
-        "prompt_toolkit.PromptSession.prompt", side_effect=inputs
-    ), patch.object(
+    with (
+        patch.object(modulos_comando_canonicos.interactive, "validar_dependencias"),
+        patch("prompt_toolkit.PromptSession.prompt", side_effect=inputs),
+        patch.object(
         cmd,
         "ejecutar_codigo",
-    ) as mock_ejecutar_codigo:
+        ) as mock_ejecutar_codigo,
+    ):
         ret = cmd.run(_args_interactive())
 
     assert ret == 0
@@ -551,25 +617,25 @@ def test_repl_ejecuta_bloque_completo_sin_parseo_parcial_por_linea():
     assert "ast_preparseado" in kwargs
 
 
-def test_paridad_repl_script_mientras_con_mutacion_persistente_mismo_entorno():
-    cmd_execute = ExecuteCommand()
+def test_paridad_repl_script_mientras_con_mutacion_persistente_mismo_entorno(
+    modulos_comando_canonicos,
+):
+    cmd_execute = modulos_comando_canonicos.execute.ExecuteCommand()
     out_script, err_script = StringIO(), StringIO()
     codigo_script = (
-        "var base = 0\n"
-        "mientras falso:\n"
-        "    pasar\n"
-        "fin\n"
-        "var acumulado = 42"
+        "var base = 0\n" "mientras falso:\n" "    pasar\n" "fin\n" "var acumulado = 42"
     )
     with redirect_stdout(out_script), redirect_stderr(err_script):
-        rc_script = cmd_execute._service.ejecutar_normal(codigo_script, seguro=False, extra_validators=None)
+        rc_script = cmd_execute._service.ejecutar_normal(
+            codigo_script, seguro=False, extra_validators=None
+        )
 
-    cmd_interactive = InteractiveCommand(InterpretadorCobra())
+    cmd_interactive = modulos_comando_canonicos.interactive.InteractiveCommand(
+        InterpretadorCobra()
+    )
     out_repl, err_repl = StringIO(), StringIO()
     with redirect_stdout(out_repl), redirect_stderr(err_repl):
-        cmd_interactive.ejecutar_codigo(
-            "var base = 0\nmientras falso:\n    pasar\nfin"
-        )
+        cmd_interactive.ejecutar_codigo("var base = 0\nmientras falso:\n    pasar\nfin")
         cmd_interactive.ejecutar_codigo("var acumulado = 42")
 
     assert rc_script == 0
@@ -579,7 +645,9 @@ def test_paridad_repl_script_mientras_con_mutacion_persistente_mismo_entorno():
     assert cmd_interactive.interpretador.contextos[-1].get("acumulado") == 42
 
 
-def test_contrato_repl_igual_script_estado_final_con_bucles_y_asignaciones():
+def test_contrato_repl_igual_script_estado_final_con_bucles_y_asignaciones(
+    modulos_comando_canonicos,
+):
     codigo = (
         "var base = 0\n"
         "mientras falso:\n"
@@ -598,7 +666,9 @@ def test_contrato_repl_igual_script_estado_final_con_bucles_y_asignaciones():
     )
     contexto_script = setup_script.interpretador.contextos[-1]
 
-    repl = InteractiveCommand(InterpretadorCobra())
+    repl = modulos_comando_canonicos.interactive.InteractiveCommand(
+        InterpretadorCobra()
+    )
     repl._seguro_repl = False
     repl._extra_validators_repl = None
     repl.ejecutar_codigo(codigo)
@@ -615,7 +685,9 @@ def test_contrato_repl_igual_script_estado_final_con_bucles_y_asignaciones():
         ("runtime", "var z = 5 / 0"),
     ],
 )
-def test_contrato_error_semantico_runtime_mismo_tipo_y_mensaje(caso, codigo_erroneo):
+def test_contrato_error_semantico_runtime_mismo_tipo_y_mensaje(
+    modulos_comando_canonicos, caso, codigo_erroneo
+):
     interpretador_cls = resolver_interpretador_cls(
         module_name="pcobra.cobra.cli.services.run_service",
         default_cls=InterpretadorCobra,
@@ -631,18 +703,20 @@ def test_contrato_error_semantico_runtime_mismo_tipo_y_mensaje(caso, codigo_erro
             )
         )
 
-    repl = InteractiveCommand(InterpretadorCobra())
+    repl = modulos_comando_canonicos.interactive.InteractiveCommand(
+        InterpretadorCobra()
+    )
     repl._seguro_repl = False
     repl._extra_validators_repl = None
     with pytest.raises(Exception) as err_repl:  # noqa: BLE001 - contrato explícito
         repl.ejecutar_codigo(codigo_erroneo)
 
-    assert type(err_script.value) is type(err_repl.value), (
-        f"{caso}: tipo de error divergente entre script y REPL"
-    )
-    assert str(err_script.value) == str(err_repl.value), (
-        f"{caso}: mensaje de error divergente entre script y REPL"
-    )
+    assert type(err_script.value) is type(
+        err_repl.value
+    ), f"{caso}: tipo de error divergente entre script y REPL"
+    assert str(err_script.value) == str(
+        err_repl.value
+    ), f"{caso}: mensaje de error divergente entre script y REPL"
 
 
 @pytest.mark.parametrize(
@@ -680,6 +754,7 @@ def test_contrato_error_semantico_runtime_mismo_tipo_y_mensaje(caso, codigo_erro
     ],
 )
 def test_paridad_explicita_repl_vs_script_en_casos_clave(
+    modulos_comando_canonicos,
     caso: str,
     snippets: list[str],
     variables_estado: tuple[str, ...],
@@ -691,16 +766,19 @@ def test_paridad_explicita_repl_vs_script_en_casos_clave(
     resultado_repl = _run_repl_secuencial(
         snippets=snippets,
         variables_estado=variables_estado,
+        modulos_comando_canonicos=modulos_comando_canonicos,
     )
 
     assert resultado_script["exc"] is None, f"{caso}: script no debe fallar"
     assert resultado_repl["exc"] is None, f"{caso}: REPL no debe fallar"
-    assert resultado_script["stderr"] == resultado_repl["stderr"] == "", (
-        f"{caso}: no se esperan errores en stderr"
-    )
-    assert _normalizar_salida_repl(str(resultado_script["stdout"])) == _normalizar_salida_repl(
+    assert (
+        resultado_script["stderr"] == resultado_repl["stderr"] == ""
+    ), f"{caso}: no se esperan errores en stderr"
+    assert _normalizar_salida_repl(
+        str(resultado_script["stdout"])
+    ) == _normalizar_salida_repl(
         str(resultado_repl["stdout"])
     ), f"{caso}: stdout divergente entre rutas"
-    assert resultado_script["estado"] == resultado_repl["estado"], (
-        f"{caso}: estado final de variables divergente entre rutas"
-    )
+    assert (
+        resultado_script["estado"] == resultado_repl["estado"]
+    ), f"{caso}: estado final de variables divergente entre rutas"
