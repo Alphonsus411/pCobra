@@ -1,5 +1,7 @@
 import argparse
 import builtins
+import sys
+import types
 from io import StringIO
 from pathlib import Path
 from unittest.mock import call, patch
@@ -8,12 +10,14 @@ from pcobra.cobra.cli.commands import docs_cmd
 from pcobra.cobra.cli.commands.docs_cmd import DocsCommand
 
 
-def test_cli_docs_invokes_sphinx():
+def test_cli_docs_invokes_sphinx(monkeypatch):
     raiz = Path(__file__).resolve().parents[2]
     source = raiz / "docs" / "frontend"
     build = raiz / "docs" / "build" / "html"
     api = source / "api"
     codigo = raiz / "src"
+    sphinx_stub = types.ModuleType("sphinx")
+    monkeypatch.setitem(sys.modules, "sphinx", sphinx_stub)
 
     with patch.object(docs_cmd.subprocess, "run") as mock_run:
         with patch.object(DocsCommand, "_obtener_raiz", return_value=raiz):
