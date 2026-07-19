@@ -161,6 +161,14 @@ def _create_stub_environment(tmp_path: Path) -> dict[str, str]:
     )
 
     _write_stub(
+        stubs_dir / "prompt_toolkit/auto_suggest.py",
+        """
+        class AutoSuggestFromHistory:
+            pass
+        """,
+    )
+
+    _write_stub(
         stubs_dir / "prompt_toolkit/output/__init__.py",
         """
         class DummyOutput:
