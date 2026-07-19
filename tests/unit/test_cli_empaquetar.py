@@ -3,6 +3,7 @@ from io import StringIO
 from unittest.mock import patch
 
 from pcobra.cobra.cli import cli as cli_module
+from pcobra.cobra.cli.commands import empaquetar_cmd
 from pcobra.cobra.cli.commands.empaquetar_cmd import EmpaquetarCommand
 
 
@@ -15,7 +16,7 @@ def _cli_context():
 
 def test_cli_empaquetar_invoca_pyinstaller(tmp_path):
     profile, commands = _cli_context()
-    with profile, commands, patch("subprocess.run") as mock_run:
+    with profile, commands, patch.object(empaquetar_cmd.subprocess, "run") as mock_run:
         cli_module.main(["empaquetar", f"--output={tmp_path}", "--name", "cobra"])
         raiz = Path(__file__).resolve().parents[2]
         cli_path = raiz / "src" / "cli" / "cli.py"
@@ -37,7 +38,8 @@ def test_cli_empaquetar_invoca_pyinstaller(tmp_path):
 
 def test_cli_empaquetar_sin_pyinstaller(tmp_path):
     profile, commands = _cli_context()
-    with profile, commands, patch("subprocess.run", side_effect=FileNotFoundError), \
+    with profile, commands, \
+            patch.object(empaquetar_cmd.subprocess, "run", side_effect=FileNotFoundError), \
             patch("sys.stdout", new_callable=StringIO) as out:
         cli_module.main(["empaquetar", f"--output={tmp_path}", "--name", "cobra"])
     assert "No se encontró PyInstaller" in out.getvalue()
@@ -47,7 +49,7 @@ def test_cli_empaquetar_con_spec(tmp_path):
     spec = tmp_path / "cobra.spec"
     spec.touch()
     profile, commands = _cli_context()
-    with profile, commands, patch("subprocess.run") as mock_run:
+    with profile, commands, patch.object(empaquetar_cmd.subprocess, "run") as mock_run:
         cli_module.main(["empaquetar", f"--output={tmp_path}", "--spec", str(spec)])
         mock_run.assert_called_once_with(
             [
@@ -68,7 +70,7 @@ def test_cli_empaquetar_con_datos(tmp_path):
     foo.touch()
     spam.touch()
     profile, commands = _cli_context()
-    with profile, commands, patch("subprocess.run") as mock_run:
+    with profile, commands, patch.object(empaquetar_cmd.subprocess, "run") as mock_run:
         cli_module.main([
             "empaquetar",
             f"--output={tmp_path}",
