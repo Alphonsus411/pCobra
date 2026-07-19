@@ -228,7 +228,13 @@ def test_cli_modulo_version_invalida(tmp_path, monkeypatch):
     assert "inválida" in out.getvalue().lower()
 
 @pytest.mark.timeout(5)
-def test_cli_crear_archivo(tmp_path):
+def test_cli_crear_archivo(tmp_path, monkeypatch):
+    monkeypatch.setattr(
+        cli_module, "resolve_command_profile", lambda: "development"
+    )
+    monkeypatch.setattr(
+        cli_module.AppConfig, "BASE_COMMAND_CLASSES", [CrearCommand]
+    )
     ruta = tmp_path / "nuevo"
     with patch("sys.stdout", new_callable=StringIO) as out:
         cli_module.main(["crear", "archivo", str(ruta)])
@@ -237,7 +243,13 @@ def test_cli_crear_archivo(tmp_path):
 
 
 @pytest.mark.timeout(5)
-def test_cli_crear_proyecto(tmp_path):
+def test_cli_crear_proyecto(tmp_path, monkeypatch):
+    monkeypatch.setattr(
+        cli_module, "resolve_command_profile", lambda: "development"
+    )
+    monkeypatch.setattr(
+        cli_module.AppConfig, "BASE_COMMAND_CLASSES", [CrearCommand]
+    )
     ruta = tmp_path / "proj"
     with patch("sys.stdout", new_callable=StringIO) as out:
         cli_module.main(["crear", "proyecto", str(ruta)])
