@@ -2,7 +2,9 @@ from pathlib import Path
 from unittest.mock import patch
 import io
 import tempfile
-from cobra.cli.commands.dependencias_cmd import DependenciasCommand
+from pcobra.cobra.cli.commands import dependencias_cmd
+
+DependenciasCommand = dependencias_cmd.DependenciasCommand
 
 
 def test_cli_dependencias_instalar_invoca_pip(tmp_path):
@@ -20,13 +22,24 @@ def test_cli_dependencias_instalar_invoca_pip(tmp_path):
         created.append(f)
         return f
 
-    with patch("cli.commands.dependencias_cmd.DependenciasCommand._ruta_requirements", return_value=str(req_file)) as mock_req, \
-         patch("cli.commands.dependencias_cmd.DependenciasCommand._ruta_pyproject", return_value=str(py_file)) as mock_proj, \
+    venv_path = tmp_path / ".venv"
+    pip_path = venv_path / ("Scripts" if dependencias_cmd.sys.platform == "win32" else "bin") / ("pip.exe" if dependencias_cmd.sys.platform == "win32" else "pip")
+    pip_path.parent.mkdir(parents=True)
+    pip_path.touch()
+
+    with patch.object(DependenciasCommand, "_ruta_requirements", return_value=req_file) as mock_req, \
+         patch.object(DependenciasCommand, "_ruta_pyproject", return_value=py_file) as mock_proj, \
+         patch.object(DependenciasCommand, "_crear_entorno_virtual", return_value=str(venv_path)), \
          patch("tempfile.NamedTemporaryFile", side_effect=fake_tmp) as mock_tmp, \
-         patch("subprocess.run") as mock_run:
+         patch.object(dependencias_cmd.subprocess, "run") as mock_run:
         DependenciasCommand._instalar_dependencias()
         tmp_path_generated = created[0].name
-        mock_run.assert_called_once_with(["pip", "install", "-r", tmp_path_generated], check=True)
+        mock_run.assert_called_once_with(
+            [str(pip_path), "install", "-r", tmp_path_generated],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
         assert mock_req.called
         assert mock_proj.called
 
@@ -37,8 +50,8 @@ def test_cli_dependencias_listar_muestra_paquetes(tmp_path):
     py_file = tmp_path / "pyproject.toml"
     py_file.write_text("[project]\ndependencies=['paqueteB==2.0']\n")
 
-    with patch("cli.commands.dependencias_cmd.DependenciasCommand._ruta_requirements", return_value=str(req_file)) as mock_req, \
-         patch("cli.commands.dependencias_cmd.DependenciasCommand._ruta_pyproject", return_value=str(py_file)) as mock_proj, \
+    with patch.object(DependenciasCommand, "_ruta_requirements", return_value=req_file) as mock_req, \
+         patch.object(DependenciasCommand, "_ruta_pyproject", return_value=py_file) as mock_proj, \
          patch("sys.stdout", new_callable=io.StringIO) as out:
         DependenciasCommand._listar_dependencias()
         salida = out.getvalue().strip().splitlines()

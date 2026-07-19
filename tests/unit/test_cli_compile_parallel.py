@@ -4,7 +4,8 @@ from unittest.mock import patch
 
 import pytest
 
-from cobra.cli.cli import main
+from pcobra.cobra.cli import cli as cli_module
+from pcobra.cobra.cli.commands.compile_cmd import CompileCommand
 
 
 def _fake_transpile(self, ast):
@@ -36,13 +37,15 @@ def test_cli_compilar_varios_tipos_en_paralelo(tmp_path):
 
             return Result([func(item) for item in iterable])
 
-    with patch("cobra.cli.commands.compile_cmd.multiprocessing.Pool", DummyPool), \
-         patch("cobra.transpilers.transpiler.to_python.TranspiladorPython.transpilar", _fake_transpile), \
-         patch("cobra.transpilers.transpiler.to_js.TranspiladorJavaScript.transpilar", _fake_transpile), \
+    with patch.object(cli_module, "resolve_command_profile", return_value="development"), \
+         patch.object(cli_module.AppConfig, "BASE_COMMAND_CLASSES", [CompileCommand]), \
+         patch("pcobra.cobra.cli.commands.compile_cmd.multiprocessing.Pool", DummyPool), \
+         patch("pcobra.cobra.transpilers.transpiler.to_python.TranspiladorPython.transpilar", _fake_transpile), \
+         patch("pcobra.cobra.transpilers.transpiler.to_js.TranspiladorJavaScript.transpilar", _fake_transpile), \
          patch("sys.stdout", new_callable=StringIO) as out:
-        main(["compilar", str(archivo), "--tipos=python,javascript"])
+        cli_module.main(["compilar", str(archivo), "--tipos=python,javascript"])
 
     lineas = [re.sub(r"\x1b\[[0-9;]*m", "", l) for l in out.getvalue().strip().splitlines()]
     texto = "\n".join(lineas)
     assert "Código generado (TranspiladorPython) para Python (python):" in texto
-    assert "Código generado (TranspiladorJavaScript) para JavaScript (javascript):" in texto
+    assert "Código generado (TranspiladorJavaScript) para Javascript (javascript):" in texto

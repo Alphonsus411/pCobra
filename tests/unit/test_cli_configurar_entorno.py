@@ -136,6 +136,8 @@ def test_configure_encoding_reconfigura_stdout_y_stderr(monkeypatch):
 
 
 def test_main_reconfigura_consola_antes_de_logging_y_cli(monkeypatch):
+    from pcobra.cobra.cli import cli as cli_module
+
     orden: list[str] = []
 
     monkeypatch.setattr(cli, "configure_encoding", lambda: orden.append("utf8"))
@@ -148,7 +150,7 @@ def test_main_reconfigura_consola_antes_de_logging_y_cli(monkeypatch):
             orden.append("cli")
             return 0
 
-    monkeypatch.setattr("pcobra.cobra.cli.cli.CliApplication", _DummyApp)
+    monkeypatch.setattr(cli_module, "CliApplication", _DummyApp)
 
     assert cli.main(["comando-ficticio"]) == 0
     assert orden[:3] == ["utf8", "bootstrap", "logging"]
