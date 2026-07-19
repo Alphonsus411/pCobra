@@ -376,13 +376,19 @@ class CobraHubClient:
     def publicar_paquete(self, ruta: str) -> bool:
         """Publica un paquete .co usando la API separada de paquetes."""
         return CobraHubService(
-            self, HttpCobraHubRepository(self), mostrar_error, mostrar_info
+            provider=self,
+            repository=HttpCobraHubRepository(self),
+            error_handler=mostrar_error,
+            info_handler=mostrar_info,
         ).publicar_paquete(ruta)
 
     def buscar_paquetes(self, consulta: str) -> list[dict]:
         """Busca paquetes usando la API separada de paquetes."""
         return CobraHubService(
-            self, HttpCobraHubRepository(self), mostrar_error, mostrar_info
+            provider=self,
+            repository=HttpCobraHubRepository(self),
+            error_handler=mostrar_error,
+            info_handler=mostrar_info,
         ).buscar_paquetes(consulta)
 
     def instalar_paquete(
@@ -390,7 +396,10 @@ class CobraHubClient:
     ) -> bool:
         """Instala un paquete usando la API separada de paquetes."""
         return CobraHubService(
-            self, HttpCobraHubRepository(self), mostrar_error, mostrar_info
+            provider=self,
+            repository=HttpCobraHubRepository(self),
+            error_handler=mostrar_error,
+            info_handler=mostrar_info,
         ).instalar_paquete(nombre, destino, version)
 
 

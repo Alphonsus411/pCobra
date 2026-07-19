@@ -4,6 +4,7 @@ from typing import Any
 
 from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.cli.i18n import _
+from pcobra.cobra.cli.services.cobrahub_factory import crear_servicio_cobrahub
 from pcobra.cobra.cli.services.cobrahub_service import CobraHubService
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
@@ -60,7 +61,11 @@ class HubCommand(BaseCommand):
         return self.register_subparser(subparsers, hidden=True)
 
     def run(self, args: Namespace) -> int:
-        service = CobraHubService()
+        service = (
+            CobraHubService()
+            if args.accion == "cache"
+            else crear_servicio_cobrahub()
+        )
         if args.accion == "publicar":
             return 0 if service.publicar_paquete(str(args.paquete)) else 1
         if args.accion == "buscar":
