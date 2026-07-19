@@ -2,7 +2,7 @@ import yaml
 from unittest.mock import patch
 import pytest
 
-from cobra.cli.commands import modules_cmd
+from pcobra.cobra.cli.commands import modules_cmd
 
 
 @pytest.mark.timeout(5)
@@ -21,7 +21,7 @@ def test_instalar_modulo_destino_symlink(tmp_path, monkeypatch):
     dest = mods_dir / modulo.name
     dest.symlink_to(modulo)
 
-    with patch("cli.commands.modules_cmd.mostrar_error") as err:
+    with patch.object(modules_cmd, "mostrar_error") as err:
         ret = modules_cmd.ModulesCommand._instalar_modulo(str(modulo))
     assert ret == 1
     err.assert_called_once()

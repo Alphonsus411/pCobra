@@ -11,7 +11,7 @@ def test_cli_interactive():
     with patch("builtins.input", side_effect=inputs), \
             patch("sys.stdout", new_callable=StringIO) as mock_stdout:
         from cobra.cli.cli import main
-        main()
+        main(["repl"])
 
     output = mock_stdout.getvalue().strip().split("\n")
     assert expected_outputs == output[-len(expected_outputs):]
@@ -25,7 +25,7 @@ def test_cli_transpilador():
     with patch("builtins.input", side_effect=inputs), \
             patch("sys.stdout", new_callable=StringIO) as mock_stdout:
         from cobra.cli.cli import main
-        main()
+        main(["repl"])
 
     output = mock_stdout.getvalue().strip().split("\n")
     assert expected_outputs == output[-len(expected_outputs):]
@@ -39,7 +39,7 @@ def test_cli_with_holobit():
     with patch("builtins.input", side_effect=inputs), \
             patch("sys.stdout", new_callable=StringIO) as mock_stdout:
         from cobra.cli.cli import main
-        main()
+        main(["repl"])
 
     output = mock_stdout.getvalue().strip().split("\n")
     assert expected_outputs == output[-len(expected_outputs):]
