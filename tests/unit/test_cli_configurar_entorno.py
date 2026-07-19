@@ -1,4 +1,5 @@
 import io
+import importlib
 import logging
 import os
 import sys
@@ -135,8 +136,6 @@ def test_configure_encoding_reconfigura_stdout_y_stderr(monkeypatch):
 
 
 def test_main_reconfigura_consola_antes_de_logging_y_cli(monkeypatch):
-    from pcobra.cobra.cli import cli as cli_module
-
     orden: list[str] = []
     argumentos_recibidos: list[list[str]] = []
 
@@ -152,6 +151,7 @@ def test_main_reconfigura_consola_antes_de_logging_y_cli(monkeypatch):
             orden.append("cli")
             return 0
 
+    cli_module = importlib.import_module("pcobra.cobra.cli.cli")
     monkeypatch.setattr(cli_module, "CliApplication", _DummyApp)
 
     assert cli.main(["comando-ficticio"]) == 0

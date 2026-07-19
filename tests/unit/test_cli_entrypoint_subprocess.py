@@ -131,61 +131,6 @@ def _create_stub_environment(tmp_path: Path) -> dict[str, str]:
     )
 
     _write_stub(
-        stubs_dir / "prompt_toolkit/__init__.py",
-        """
-        class PromptSession:
-            def __init__(self, *_args, **_kwargs):
-                pass
-
-            def prompt(self, *_args, **_kwargs):
-                return ""
-        """,
-    )
-
-    _write_stub(
-        stubs_dir / "prompt_toolkit/lexers.py",
-        """
-        class PygmentsLexer:
-            def __init__(self, *_args, **_kwargs):
-                pass
-        """,
-    )
-
-    _write_stub(
-        stubs_dir / "prompt_toolkit/history.py",
-        """
-        class FileHistory:
-            def __init__(self, *_args, **_kwargs):
-                pass
-        """,
-    )
-
-    _write_stub(
-        stubs_dir / "prompt_toolkit/auto_suggest.py",
-        """
-        class AutoSuggestFromHistory:
-            pass
-        """,
-    )
-
-    _write_stub(
-        stubs_dir / "prompt_toolkit/output/__init__.py",
-        """
-        class DummyOutput:
-            def __init__(self, *_args, **_kwargs):
-                pass
-        """,
-    )
-
-    _write_stub(
-        stubs_dir / "prompt_toolkit/output/win32.py",
-        """
-        class NoConsoleScreenBufferError(Exception):
-            pass
-        """,
-    )
-
-    _write_stub(
         stubs_dir / "filelock.py",
         """
         class FileLock:
@@ -379,7 +324,17 @@ def _create_stub_environment(tmp_path: Path) -> dict[str, str]:
 
 
 def _run_cli(args: list[str], env: dict[str, str]) -> subprocess.CompletedProcess[str]:
-    cmd = [sys.executable, "-m", "pcobra.cli", *args]
+    cmd = [
+        sys.executable,
+        "-c",
+        (
+            "import sys; "
+            "from pcobra.cli import build_legacy_cli_shim_main; "
+            "main = build_legacy_cli_shim_main('cli.cli'); "
+            "sys.exit(main(sys.argv[1:]))"
+        ),
+        *args,
+    ]
     try:
         return subprocess.run(
             cmd,
