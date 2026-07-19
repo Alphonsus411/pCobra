@@ -1,8 +1,8 @@
 from argparse import Namespace
 from unittest.mock import MagicMock, patch
 
-from cobra.cli.cli import main
-from cobra.cli.commands.agix_cmd import AgixCommand
+from pcobra.cobra.cli import cli as cli_module
+from pcobra.cobra.cli.commands.agix_cmd import AgixCommand
 
 
 def test_cli_agix_generates_suggestion(tmp_path, capsys):
@@ -32,12 +32,20 @@ def test_cli_agix_pad_values(tmp_path, capsys):
     instancia.select_best_model.return_value = {"reason": "Usar nombres descriptivos"}
     with patch("pcobra.ia.analizador_agix.Reasoner", return_value=instancia):
         with patch("pcobra.ia.analizador_agix.PADState") as pad_mock:
-            with patch("cobra.cli.cli.setup_gettext", return_value=lambda s: s):
-                with patch(
-                    "cobra.cli.cli.AppConfig.BASE_COMMAND_CLASSES",
-                    new=[AgixCommand],
+            with patch.object(cli_module, "setup_gettext", return_value=lambda s: s):
+                with (
+                    patch.object(
+                        cli_module,
+                        "resolve_command_profile",
+                        return_value="development",
+                    ),
+                    patch.object(
+                        cli_module.AppConfig,
+                        "BASE_COMMAND_CLASSES",
+                        [AgixCommand],
+                    ),
                 ):
-                    main(
+                    cli_module.main(
                         [
                             "agix",
                             str(archivo),

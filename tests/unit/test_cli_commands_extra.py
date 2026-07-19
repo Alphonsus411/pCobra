@@ -1,4 +1,5 @@
 import importlib
+from argparse import Namespace
 from pathlib import Path
 from io import StringIO
 from unittest.mock import patch
@@ -6,21 +7,21 @@ from unittest.mock import patch
 import pytest
 import yaml
 
-from cobra.cli.cli import main
-from cobra.cli.commands import modules_cmd
-from pcobra.core.semantic_validators.base import ValidadorBase
-
-
-class _DummyValidator(ValidadorBase):
-    pass
+from pcobra.cobra.cli import cli as cli_module
+from pcobra.cobra.cli.commands import modules_cmd
+from pcobra.cobra.cli.commands.execute_cmd import ExecuteCommand
 
 
 @pytest.mark.timeout(5)
 def test_cli_ejecutar_imprime(tmp_path):
     archivo = tmp_path / "p.co"
     archivo.write_text("var x = 3\nimprimir(x)")
-    with patch("sys.stdout", new_callable=StringIO) as out:
-        main(["ejecutar", str(archivo)])
+    with (
+        patch.object(cli_module, "resolve_command_profile", return_value="development"),
+        patch.object(cli_module.AppConfig, "BASE_COMMAND_CLASSES", [ExecuteCommand]),
+        patch("sys.stdout", new_callable=StringIO) as out,
+    ):
+        cli_module.main(["ejecutar", str(archivo)])
     assert out.getvalue().strip() == "3"
 
 
@@ -28,10 +29,16 @@ def test_cli_ejecutar_imprime(tmp_path):
 def test_cli_ejecutar_flag_no_seguro(tmp_path):
     archivo = tmp_path / "p.co"
     archivo.write_text("imprimir(1)")
-    with patch("cli.commands.execute_cmd.InterpretadorCobra") as mock_interp:
-        main(["--no-seguro", "ejecutar", str(archivo)])
-        mock_interp.assert_called_once_with(safe_mode=False)
-        mock_interp.return_value.ejecutar_ast.assert_called_once()
+    command = ExecuteCommand()
+    with patch.object(command._service, "run", return_value=0) as run_service:
+        result = command.run(
+            Namespace(archivo=str(archivo), seguro=False, extra_validators=None)
+        )
+
+    assert result == 0
+    request = run_service.call_args.args[0]
+    assert request.archivo == str(archivo)
+    assert request.seguro is False
 
 
 @pytest.mark.timeout(5)
@@ -40,13 +47,17 @@ def test_cli_validadores_extra(tmp_path):
     archivo.write_text("imprimir(1)")
     ruta = tmp_path / "vals.py"
     ruta.write_text("VALIDADORES_EXTRA = []\n")
-    with patch("cli.commands.execute_cmd.InterpretadorCobra") as mock_interp:
-        mock_interp._cargar_validadores.return_value = [_DummyValidator()]
-        main([f"--extra-validators={ruta}", "ejecutar", str(archivo)])
-        mock_interp.assert_called_once_with(
-            safe_mode=True, extra_validators=mock_interp._cargar_validadores.return_value
+    command = ExecuteCommand()
+    with patch.object(command._service, "run", return_value=0) as run_service:
+        result = command.run(
+            Namespace(archivo=str(archivo), seguro=True, extra_validators=str(ruta))
         )
-        mock_interp.return_value.ejecutar_ast.assert_called_once()
+
+    assert result == 0
+    request = run_service.call_args.args[0]
+    assert request.archivo == str(archivo)
+    assert request.seguro is True
+    assert request.extra_validators == str(ruta)
 
 
 @pytest.mark.timeout(5)
@@ -66,11 +77,11 @@ def test_cli_modulos_comandos(tmp_path, monkeypatch):
     modulo.write_text("var d = 1")
 
     with patch("sys.stdout", new_callable=StringIO) as out:
-        main(["modulos", "listar"])
+        cli_module.main(["modulos", "listar"])
     assert "No hay módulos instalados" in out.getvalue().strip()
 
     with patch("sys.stdout", new_callable=StringIO) as out:
-        main(["modulos", "instalar", str(modulo)])
+        cli_module.main(["modulos", "instalar", str(modulo)])
     destino = mods_dir / modulo.name
     assert destino.exists()
     assert f"Módulo instalado en {destino}" in out.getvalue().strip()
@@ -78,18 +89,18 @@ def test_cli_modulos_comandos(tmp_path, monkeypatch):
     assert data["lock"][modulo.name] == "0.1.0"
 
     with patch("sys.stdout", new_callable=StringIO) as out:
-        main(["modulos", "listar"])
+        cli_module.main(["modulos", "listar"])
     assert modulo.name in out.getvalue().strip()
 
     with patch("sys.stdout", new_callable=StringIO) as out:
-        main(["modulos", "remover", modulo.name])
+        cli_module.main(["modulos", "remover", modulo.name])
     assert not destino.exists()
     assert f"Módulo {modulo.name} eliminado" in out.getvalue().strip()
     data = yaml.safe_load(mod_file.read_text())
     assert modulo.name not in data["lock"]
 
     with patch("sys.stdout", new_callable=StringIO) as out:
-        main(["modulos", "listar"])
+        cli_module.main(["modulos", "listar"])
     assert "No hay módulos instalados" in out.getvalue().strip()
 
 
@@ -158,14 +169,14 @@ def test_cli_modulo_version_invalida(tmp_path, monkeypatch):
     modulo = tmp_path / "bad.co"
     modulo.write_text("var d = 1")
     with patch("sys.stdout", new_callable=StringIO) as out:
-        main(["modulos", "instalar", str(modulo)])
+        cli_module.main(["modulos", "instalar", str(modulo)])
     assert "inválida" in out.getvalue().lower()
 
 @pytest.mark.timeout(5)
 def test_cli_crear_archivo(tmp_path):
     ruta = tmp_path / "nuevo"
     with patch("sys.stdout", new_callable=StringIO) as out:
-        main(["crear", "archivo", str(ruta)])
+        cli_module.main(["crear", "archivo", str(ruta)])
     assert (tmp_path / "nuevo.co").exists()
     assert f"Archivo creado: {ruta}.co" in out.getvalue().strip()
 
@@ -174,6 +185,6 @@ def test_cli_crear_archivo(tmp_path):
 def test_cli_crear_proyecto(tmp_path):
     ruta = tmp_path / "proj"
     with patch("sys.stdout", new_callable=StringIO) as out:
-        main(["crear", "proyecto", str(ruta)])
+        cli_module.main(["crear", "proyecto", str(ruta)])
     assert (ruta / "main.co").exists()
     assert "Proyecto Cobra creado" in out.getvalue()
