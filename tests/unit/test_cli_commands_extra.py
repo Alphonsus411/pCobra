@@ -8,8 +8,8 @@ import pytest
 import yaml
 
 from cobra.cli.cli import main
+from cobra.cli.commands import modules_cmd
 from cobra.cli.commands.execute_cmd import ExecuteCommand
-from pcobra.cobra.cli.commands import modules_cmd
 
 
 @pytest.mark.timeout(5)
