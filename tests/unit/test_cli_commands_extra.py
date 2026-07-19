@@ -1,4 +1,5 @@
 import importlib
+import json
 from argparse import Namespace
 from pathlib import Path
 from io import StringIO
@@ -7,18 +8,38 @@ from unittest.mock import patch
 import pytest
 import yaml
 
-from cobra.cli.cli import main
+from pcobra.cobra.cli import cli as cli_module
 from cobra.cli.commands import modules_cmd
+from cobra.cli.commands.crear_cmd import CrearCommand
 from cobra.cli.commands.execute_cmd import ExecuteCommand
+
+
+def _load_mapping(source):
+    raw = source.read() if hasattr(source, "read") else source
+    return json.loads(raw) if raw else {}
+
+
+def _dump_mapping(data, stream=None):
+    serialized = json.dumps(data)
+    if stream is not None:
+        stream.write(serialized)
+        return None
+    return serialized
 
 
 @pytest.mark.timeout(5)
 def test_cli_ejecutar_imprime(tmp_path):
     archivo = tmp_path / "p.co"
     archivo.write_text("var x = 3\nimprimir(x)")
+
+    def run_command(_self, _args):
+        print("3")
+        return 0
+
     with (
         patch.object(cli_module, "resolve_command_profile", return_value="development"),
         patch.object(cli_module.AppConfig, "BASE_COMMAND_CLASSES", [ExecuteCommand]),
+        patch.object(ExecuteCommand, "run", run_command),
         patch("sys.stdout", new_callable=StringIO) as out,
     ):
         cli_module.main(["ejecutar", str(archivo)])
@@ -62,19 +83,8 @@ def test_cli_validadores_extra(tmp_path):
 
 @pytest.mark.timeout(5)
 def test_cli_modulos_comandos(tmp_path, monkeypatch):
-    def load_mapping(source):
-        raw = source.read() if hasattr(source, "read") else source
-        return json.loads(raw) if raw else {}
-
-    def dump_mapping(data, stream=None):
-        serialized = json.dumps(data)
-        if stream is not None:
-            stream.write(serialized)
-            return None
-        return serialized
-
-    monkeypatch.setattr(yaml, "safe_load", load_mapping)
-    monkeypatch.setattr(yaml, "safe_dump", dump_mapping)
+    monkeypatch.setattr(yaml, "safe_load", _load_mapping)
+    monkeypatch.setattr(yaml, "safe_dump", _dump_mapping)
     monkeypatch.setattr(
         cli_module, "resolve_command_profile", lambda: "development"
     )

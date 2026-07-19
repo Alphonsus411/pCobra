@@ -107,7 +107,7 @@ class EmpaquetarCommand(BaseCommand):
                 name=args.name))
             return 1
 
-        raiz = Path(__file__).resolve().parents[3]
+        raiz = Path(__file__).resolve().parents[5]
         cli_path = raiz / "src" / "cli" / "cli.py"
         output = Path(args.output).resolve()
         nombre = self._get_nombre_ejecutable(args.name)
