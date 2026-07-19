@@ -189,13 +189,35 @@ def test_modulos_operan_en_directorio_de_usuario(tmp_path, monkeypatch):
 
 @pytest.mark.timeout(5)
 def test_cli_modulo_version_invalida(tmp_path, monkeypatch):
+    monkeypatch.setattr(yaml, "safe_load", _load_mapping)
+    monkeypatch.setattr(yaml, "safe_dump", _dump_mapping)
+    monkeypatch.setattr(
+        cli_module, "resolve_command_profile", lambda: "development"
+    )
+    monkeypatch.setattr(
+        cli_module.AppConfig,
+        "BASE_COMMAND_CLASSES",
+        [modules_cmd.ModulesCommand],
+    )
     mods_dir = tmp_path / "mods"
     mods_dir.mkdir()
     monkeypatch.setattr(modules_cmd, "MODULES_PATH", mods_dir)
     mod_file = tmp_path / "module_map.toml"
     bad_py = tmp_path / "bad.py"
+    bad_js = tmp_path / "bad.js"
+    bad_rust = tmp_path / "bad.rs"
     bad_py.write_text("d = 1\n")
-    mod_mapping = {"bad.co": {"version": "abc", "python": str(bad_py)}, "lock": {}}
+    bad_js.write_text("const d = 1;\n")
+    bad_rust.write_text("let d = 1;\n")
+    mod_mapping = {
+        "bad.co": {
+            "version": "abc",
+            "python": str(bad_py),
+            "javascript": str(bad_js),
+            "rust": str(bad_rust),
+        },
+        "lock": {},
+    }
     mod_file.write_text(yaml.safe_dump(mod_mapping))
     monkeypatch.setattr(modules_cmd, "MODULE_MAP_PATH", str(mod_file))
     monkeypatch.setattr(modules_cmd, "LOCK_FILE", mod_file)
