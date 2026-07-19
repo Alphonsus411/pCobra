@@ -9,9 +9,9 @@ import pytest
 import yaml
 
 from pcobra.cobra.cli import cli as cli_module
-from cobra.cli.commands import modules_cmd
-from cobra.cli.commands.crear_cmd import CrearCommand
-from cobra.cli.commands.execute_cmd import ExecuteCommand
+from pcobra.cobra.cli.commands import modules_cmd
+from pcobra.cobra.cli.commands.crear_cmd import CrearCommand
+from pcobra.cobra.cli.commands.execute_cmd import ExecuteCommand
 
 
 def _load_mapping(source):
