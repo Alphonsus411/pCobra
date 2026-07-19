@@ -1,9 +1,8 @@
+import io
 import logging
 import os
-import subprocess
 import sys
 import types
-from pathlib import Path
 
 
 yaml_stub = types.ModuleType("yaml")
@@ -172,22 +171,19 @@ def test_main_devuelve_exit_code_1_si_falla_configuracion_entorno(monkeypatch, c
     assert "Falta SQLITE_DB_KEY en el entorno" in caplog.text
 
 
-def test_smoke_cli_unicode_salida_bytes_utf8():
-    env = os.environ.copy()
-    env.pop("PYTHONIOENCODING", None)
+def test_configure_encoding_unicode_salida_bytes_utf8(monkeypatch):
+    stdout_bytes = io.BytesIO()
+    stderr_bytes = io.BytesIO()
+    stdout = io.TextIOWrapper(stdout_bytes, encoding="latin-1")
+    stderr = io.TextIOWrapper(stderr_bytes, encoding="latin-1")
+    monkeypatch.setattr(sys, "stdout", stdout)
+    monkeypatch.setattr(sys, "stderr", stderr)
+    monkeypatch.delenv("PYTHONIOENCODING", raising=False)
 
-    result = subprocess.run(
-        [
-            sys.executable,
-            "-c",
-            "from pcobra.cli import configure_encoding; "
-            "configure_encoding(); print('después')",
-        ],
-        env=env,
-        capture_output=True,
-        check=True,
-        cwd=str(Path(__file__).resolve().parents[2]),
-    )
+    configure_encoding()
+    print("después")
+    stdout.flush()
 
-    assert result.stdout == "después\n".encode("utf-8")
-    assert result.stdout.decode("utf-8") == "después\n"
+    salida = stdout_bytes.getvalue()
+    assert salida == "después\n".encode("utf-8")
+    assert salida.decode("utf-8") == "después\n"
