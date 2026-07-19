@@ -62,13 +62,46 @@ def test_cli_validadores_extra(tmp_path):
 
 @pytest.mark.timeout(5)
 def test_cli_modulos_comandos(tmp_path, monkeypatch):
+    def load_mapping(source):
+        raw = source.read() if hasattr(source, "read") else source
+        return json.loads(raw) if raw else {}
+
+    def dump_mapping(data, stream=None):
+        serialized = json.dumps(data)
+        if stream is not None:
+            stream.write(serialized)
+            return None
+        return serialized
+
+    monkeypatch.setattr(yaml, "safe_load", load_mapping)
+    monkeypatch.setattr(yaml, "safe_dump", dump_mapping)
+    monkeypatch.setattr(
+        cli_module, "resolve_command_profile", lambda: "development"
+    )
+    monkeypatch.setattr(
+        cli_module.AppConfig,
+        "BASE_COMMAND_CLASSES",
+        [modules_cmd.ModulesCommand],
+    )
     mods_dir = tmp_path / "mods"
     mods_dir.mkdir()
     monkeypatch.setattr(modules_cmd, "MODULES_PATH", mods_dir)
     mod_file = tmp_path / "module_map.toml"
     py_out = tmp_path / "m.py"
+    js_out = tmp_path / "m.js"
+    rust_out = tmp_path / "m.rs"
     py_out.write_text("d = 1\n")
-    mod_mapping = {"m.co": {"version": "0.1.0", "python": str(py_out)}, "lock": {}}
+    js_out.write_text("const d = 1;\n")
+    rust_out.write_text("let d = 1;\n")
+    mod_mapping = {
+        "m.co": {
+            "version": "0.1.0",
+            "python": str(py_out),
+            "javascript": str(js_out),
+            "rust": str(rust_out),
+        },
+        "lock": {},
+    }
     mod_file.write_text(yaml.safe_dump(mod_mapping))
     monkeypatch.setattr(modules_cmd, "MODULE_MAP_PATH", str(mod_file))
     monkeypatch.setattr(modules_cmd, "LOCK_FILE", mod_file)
