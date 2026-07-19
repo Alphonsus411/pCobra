@@ -11,6 +11,7 @@ from pcobra.cobra.cli.cobrahub_packages import (
     validar_cache,
 )
 from pcobra.cobra.cli.commands.hub_cmd import HubCommand
+from pcobra.cobra.cli.services.cobrahub_service import CobraHubService
 from pcobra.cobra.packaging import construir_paquete, crear_paquete
 
 
@@ -24,6 +25,21 @@ def _crear_paquete_valido(tmp_path: Path, nombre: str = "demo") -> Path:
     crear_paquete(proyecto, nombre=nombre, version="1.0.0")
     (proyecto / "src" / "main.cobra").write_text("imprimir('hola')\n", encoding="utf-8")
     return construir_paquete(proyecto, tmp_path / f"{nombre}.co")
+
+
+@pytest.mark.parametrize(
+    ("metodo", "argumentos"),
+    [
+        ("publicar_paquete", ("demo.co",)),
+        ("buscar_paquetes", ("demo",)),
+        ("instalar_paquete", ("demo",)),
+    ],
+)
+def test_operaciones_remotas_requieren_dependencias_explicitas(metodo, argumentos):
+    service = CobraHubService()
+
+    with pytest.raises(RuntimeError, match="proveedor y un repositorio"):
+        getattr(service, metodo)(*argumentos)
 
 
 def test_listar_cache_devuelve_solo_paquetes_co_ordenados(tmp_path: Path, monkeypatch):

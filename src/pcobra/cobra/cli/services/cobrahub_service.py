@@ -34,22 +34,24 @@ class CobraHubService:
         error_handler: Callable[[str], None] = mostrar_error,
         info_handler: Callable[[str], None] = mostrar_info,
     ) -> None:
-        if provider is None:
-            from pcobra.cobra.cli.cobrahub_client import CobraHubClient
-
-            provider = CobraHubClient()
-        if repository is None:
-            from pcobra.cobra.hub.repository import HttpCobraHubRepository
-
-            repository = HttpCobraHubRepository(provider)
         self.provider = provider
         self.repository = repository
         self._mostrar_error = error_handler
         self._mostrar_info = info_handler
 
+    def _dependencias_remotas(self) -> tuple[CobraHubProvider, PackageRepository]:
+        """Devuelve las dependencias requeridas por las operaciones HTTP."""
+        if self.provider is None or self.repository is None:
+            raise RuntimeError(
+                "Las operaciones remotas de CobraHub requieren un proveedor "
+                "y un repositorio"
+            )
+        return self.provider, self.repository
+
     def publicar_paquete(self, ruta: str) -> bool:
         """Publica un paquete validado en el repositorio."""
-        if not self.provider._validar_url():
+        provider, repository = self._dependencias_remotas()
+        if not provider._validar_url():
             return False
         try:
             if not packaging.es_paquete_cobra(ruta):
@@ -57,7 +59,7 @@ class CobraHubService:
                     "No es un paquete Cobra: debe ser ZIP y contener cobra.pkg.json"
                 )
             info = packaging.validar_paquete(ruta)
-            self.repository.publish(ruta, dict(info.manifest), info.checksum)
+            repository.publish(ruta, dict(info.manifest), info.checksum)
             self._mostrar_info(_("Paquete publicado correctamente"))
             return True
         except CobraHubError as exc:
@@ -74,10 +76,11 @@ class CobraHubService:
 
     def buscar_paquetes(self, consulta: str) -> list[dict]:
         """Busca paquetes y adapta los resultados al contrato histórico."""
-        if not self.provider._validar_url():
+        provider, repository = self._dependencias_remotas()
+        if not provider._validar_url():
             return []
         try:
-            return [result.as_dict() for result in self.repository.search(consulta)]
+            return [result.as_dict() for result in repository.search(consulta)]
         except CobraHubError as exc:
             logger.error("Error buscando paquetes: %s", exc)
             self._mostrar_error(
@@ -95,12 +98,13 @@ class CobraHubService:
     ) -> bool:
         """Descarga, valida e instala un paquete desde el repositorio."""
         cache_path: Path | None = None
-        if not self.provider._validar_url():
+        provider, repository = self._dependencias_remotas()
+        if not provider._validar_url():
             return False
         try:
-            downloaded = self.repository.download(nombre, version)
+            downloaded = repository.download(nombre, version)
             cache_path = downloaded.path
-            if not self.provider._validar_nombre_modulo(downloaded.name):
+            if not provider._validar_nombre_modulo(downloaded.name):
                 cache_path.unlink(missing_ok=True)
                 return False
             if not packaging.es_paquete_cobra(cache_path):

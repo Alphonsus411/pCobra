@@ -61,7 +61,10 @@ class CobraHubPackages:
         self.client = client
         self.repository = repository or HttpCobraHubRepository(client)
         self.service = CobraHubService(
-            client, self.repository, mostrar_error, mostrar_info
+            provider=client,
+            repository=self.repository,
+            error_handler=mostrar_error,
+            info_handler=mostrar_info,
         )
 
     def publicar_paquete(self, ruta: str) -> bool:
