@@ -138,14 +138,17 @@ def test_main_reconfigura_consola_antes_de_logging_y_cli(monkeypatch):
     from pcobra.cobra.cli import cli as cli_module
 
     orden: list[str] = []
+    argumentos_recibidos: list[list[str]] = []
 
+    monkeypatch.setenv("COBRA_CLI_COMMAND_PROFILE", "development")
     monkeypatch.setattr(cli, "configure_encoding", lambda: orden.append("utf8"))
     monkeypatch.setattr(cli, "_bootstrap_dev_path_si_opt_in", lambda: orden.append("bootstrap"))
     monkeypatch.setattr(cli, "configure_logging", lambda debug, verbose=0: orden.append("logging"))
     monkeypatch.setattr(cli, "configurar_entorno", lambda: orden.append("entorno"))
 
     class _DummyApp:
-        def run(self, _argv):
+        def run(self, argv):
+            argumentos_recibidos.append(argv)
             orden.append("cli")
             return 0
 
@@ -154,6 +157,7 @@ def test_main_reconfigura_consola_antes_de_logging_y_cli(monkeypatch):
     assert cli.main(["comando-ficticio"]) == 0
     assert orden[:3] == ["utf8", "bootstrap", "logging"]
     assert "cli" in orden
+    assert argumentos_recibidos == [["comando-ficticio"]]
 
 
 def test_main_devuelve_exit_code_1_si_falla_configuracion_entorno(monkeypatch, caplog):
