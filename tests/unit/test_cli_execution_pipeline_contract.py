@@ -1,6 +1,8 @@
 from contextlib import redirect_stderr, redirect_stdout
+import importlib
 from io import StringIO
 from pathlib import Path
+import sys
 from argparse import Namespace
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
@@ -17,6 +19,24 @@ from pcobra.cobra.cli.execution_pipeline import (
 )
 from pcobra.cobra.cli.commands.interactive_cmd import InteractiveCommand
 from pcobra.cobra.core.runtime import InterpretadorCobra
+
+
+_EXECUTE_MODULE = importlib.import_module(ExecuteCommand.__module__)
+_INTERACTIVE_MODULE = importlib.import_module(InteractiveCommand.__module__)
+_RUN_SERVICE_MODULE = importlib.import_module(
+    "pcobra.cobra.cli.services.run_service"
+)
+
+
+@pytest.fixture(autouse=True)
+def _restaurar_modulos_comando_canonicos(monkeypatch):
+    commands_package = importlib.import_module("pcobra.cobra.cli.commands")
+    monkeypatch.setitem(sys.modules, _EXECUTE_MODULE.__name__, _EXECUTE_MODULE)
+    monkeypatch.setitem(sys.modules, _INTERACTIVE_MODULE.__name__, _INTERACTIVE_MODULE)
+    monkeypatch.setattr(commands_package, "execute_cmd", _EXECUTE_MODULE, raising=False)
+    monkeypatch.setattr(
+        commands_package, "interactive_cmd", _INTERACTIVE_MODULE, raising=False
+    )
 
 
 def _args_execute(archivo: str) -> Namespace:
@@ -63,10 +83,10 @@ def _run_execute_via_script(
     variable_persistente: str,
 ) -> dict[str, object]:
     monkeypatch.setattr(
-        "pcobra.cobra.cli.commands.execute_cmd.validar_dependencias", lambda *_args, **_kwargs: None
+        _EXECUTE_MODULE, "validar_dependencias", lambda *_args, **_kwargs: None
     )
     monkeypatch.setattr(
-        "pcobra.cobra.cli.services.run_service.limitar_cpu_segundos", lambda *_args, **_kwargs: None
+        _RUN_SERVICE_MODULE, "limitar_cpu_segundos", lambda *_args, **_kwargs: None
     )
     codigo = "\n".join(
         [linea for linea in [prelude, snippet, f"var __probe = {variable_persistente}"] if linea]
@@ -516,7 +536,7 @@ def test_repl_ejecuta_bloque_completo_sin_parseo_parcial_por_linea():
     inputs = ["si verdadero:", "imprimir(1)", "fin", "salir"]
     cmd = InteractiveCommand(MagicMock())
 
-    with patch("pcobra.cobra.cli.commands.interactive_cmd.validar_dependencias"), patch(
+    with patch.object(_INTERACTIVE_MODULE, "validar_dependencias"), patch(
         "prompt_toolkit.PromptSession.prompt", side_effect=inputs
     ), patch.object(
         cmd,
