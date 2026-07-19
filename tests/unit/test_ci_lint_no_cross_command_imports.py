@@ -39,7 +39,7 @@ def test_detecta_import_entre_comandos(tmp_path: Path) -> None:
     assert any("src/pcobra/cobra/cli/commands/a.py:1" in item for item in violations)
 
 
-def test_no_aplica_regla_en_commands_v2(tmp_path: Path) -> None:
+def test_detecta_import_entre_comandos_en_commands_v2(tmp_path: Path) -> None:
     _write(
         tmp_path / "src" / "pcobra" / "cobra" / "cli" / "commands_v2" / "run_cmd.py",
         "from pcobra.cobra.cli.commands_v2.build_cmd import BuildCommandV2\n",
@@ -47,7 +47,8 @@ def test_no_aplica_regla_en_commands_v2(tmp_path: Path) -> None:
 
     violations = find_violations(tmp_path)
 
-    assert violations == []
+    assert any("import entre comandos no permitido" in item for item in violations)
+    assert any("commands_v2.build_cmd" in item for item in violations)
 
 
 def test_permite_import_desde_base(tmp_path: Path) -> None:

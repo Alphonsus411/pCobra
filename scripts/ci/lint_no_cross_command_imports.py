@@ -2,8 +2,8 @@
 """Lint interno para comandos CLI.
 
 Reglas:
-1) Construye el grafo de imports Python bajo ``cli/commands``.
-2) Prohíbe edges ``commands.X -> commands.Y`` (salvo ``commands.base``).
+1) Construye el grafo de imports Python bajo ``cli/commands{,_v2}``.
+2) Prohíbe edges entre comandos concretos (salvo ``commands.base``).
 3) En imports internos de ``pcobra.cobra.cli.*`` permite solo:
    ``commands.base``, ``services/*``, ``utils/*``, ``i18n``,
    ``target_policies`` y registries dedicados.
@@ -20,12 +20,28 @@ import ast
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-COMMANDS_PACKAGE_PREFIXES = ("pcobra.cobra.cli.commands", "cobra.cli.commands")
+COMMANDS_PACKAGE_PREFIXES = (
+    "pcobra.cobra.cli.commands",
+    "pcobra.cobra.cli.commands_v2",
+    "cobra.cli.commands",
+    "cobra.cli.commands_v2",
+)
 CLI_PACKAGE_PREFIXES = ("pcobra.cobra.cli", "cobra.cli")
 ALLOWED_BASE_IMPORT_MODULES = {
     "pcobra.cobra.cli.commands.base",
     "cobra.cli.commands.base",
 }
+# Debe mantenerse alineado con ALLOWED_LAYER_EDGES de check_import_cycles.py.
+# Esta excepción es una arista contractual concreta, no un permiso general entre
+# los dos paquetes de comandos.
+ALLOWED_COMMAND_EDGES = frozenset(
+    {
+        (
+            "pcobra.cobra.cli.commands_v2.repl_cmd",
+            "pcobra.cobra.cli.commands.interactive_cmd",
+        ),
+    }
+)
 ALLOWED_CLI_IMPORT_PREFIXES = (
     "pcobra.cobra.cli.commands.base",
     "pcobra.cobra.cli.services.",
@@ -104,8 +120,9 @@ def _node_import_targets(path: Path, node: ast.AST, root: Path) -> list[str]:
 
 
 def _build_import_graph(path: Path, root: Path) -> dict[str, set[str]]:
-    source_module = _resolve_relative_module(path, None, 0, root)
-    if not source_module:
+    try:
+        source_module = ".".join(path.relative_to(root / "src").with_suffix("").parts)
+    except ValueError:
         return {}
     graph: dict[str, set[str]] = {source_module: set()}
     tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
@@ -113,6 +130,14 @@ def _build_import_graph(path: Path, root: Path) -> dict[str, set[str]]:
         for target in _node_import_targets(path, node, root):
             graph[source_module].add(target)
     return graph
+
+
+def _is_allowed_command_edge(path: Path, target: str, root: Path) -> bool:
+    try:
+        source = ".".join(path.relative_to(root / "src").with_suffix("").parts)
+    except ValueError:
+        return False
+    return (source, target) in ALLOWED_COMMAND_EDGES
 
 
 def _scan_restricted_command_imports(path: Path, root: Path) -> list[tuple[int, str]]:
@@ -192,7 +217,10 @@ def _is_allowed_cli_dependency(module: str) -> bool:
         return True
     if _is_allowed_cli_registry_module(module):
         return True
-    return any(module == prefix or module.startswith(prefix) for prefix in ALLOWED_CLI_IMPORT_PREFIXES)
+    return any(
+        module == prefix.rstrip(".") or module.startswith(prefix)
+        for prefix in ALLOWED_CLI_IMPORT_PREFIXES
+    )
 
 
 def _scan_cli_dependency_boundaries(path: Path, root: Path) -> list[tuple[int, str]]:
@@ -274,7 +302,10 @@ def _scan_backend_constant_violations(path: Path) -> list[tuple[int, str]]:
 
 def find_violations(root: Path = ROOT) -> list[str]:
     failures: list[str] = []
-    scopes = (root / "src/pcobra/cobra/cli/commands",)
+    scopes = (
+        root / "src/pcobra/cobra/cli/commands",
+        root / "src/pcobra/cobra/cli/commands_v2",
+    )
     for scope in scopes:
         if not scope.exists():
             continue
@@ -283,6 +314,8 @@ def find_violations(root: Path = ROOT) -> list[str]:
             graph = _build_import_graph(path, root)
             if path.name != "__init__.py":
                 for line, target in _scan_restricted_command_imports(path, root):
+                    if _is_allowed_command_edge(path, target, root):
+                        continue
                     failures.append(
                         f"{rel}:{line}: import entre comandos no permitido ({target}); "
                         "solo se permite importar desde `...commands.base`"
@@ -291,21 +324,29 @@ def find_violations(root: Path = ROOT) -> list[str]:
                     for target in sorted(edges):
                         if not _is_forbidden_module_name(target):
                             continue
+                        if (source, target) in ALLOWED_COMMAND_EDGES:
+                            continue
                         failures.append(
                             f"{rel}: edge no permitido en grafo de imports ({source} -> {target}); "
                             "los comandos no deben depender de comandos concretos"
                         )
                 for line, target in _scan_cross_cmd_pattern_imports(path, root):
+                    if _is_allowed_command_edge(path, target, root):
+                        continue
                     failures.append(
                         f"{rel}:{line}: patrón *_cmd no permitido ({target}); "
                         "los comandos no deben importar otros *_cmd.py (solo BaseCommand desde commands.base)"
                     )
                 for line, target in _scan_explicit_cross_command_from_imports(path, root):
+                    if _is_allowed_command_edge(path, target, root):
+                        continue
                     failures.append(
                         f"{rel}:{line}: import explícito from ...commands.<otro_comando> no permitido ({target}); "
                         "los comandos CLI no deben depender de otros comandos (solo commands.base)"
                     )
                 for line, target in _scan_cli_dependency_boundaries(path, root):
+                    if _is_allowed_command_edge(path, target, root):
+                        continue
                     failures.append(
                         f"{rel}:{line}: dependencia CLI no permitida ({target}); "
                         "en commands solo se permite base/services/utils/i18n/target_policies/registries"
