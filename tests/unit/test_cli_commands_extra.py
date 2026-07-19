@@ -1,4 +1,5 @@
 import importlib
+from argparse import Namespace
 from pathlib import Path
 from io import StringIO
 from unittest.mock import patch
@@ -8,11 +9,7 @@ import yaml
 
 from cobra.cli.cli import main
 from cobra.cli.commands import modules_cmd
-from pcobra.core.semantic_validators.base import ValidadorBase
-
-
-class _DummyValidator(ValidadorBase):
-    pass
+from cobra.cli.commands.execute_cmd import ExecuteCommand
 
 
 @pytest.mark.timeout(5)
@@ -28,10 +25,16 @@ def test_cli_ejecutar_imprime(tmp_path):
 def test_cli_ejecutar_flag_no_seguro(tmp_path):
     archivo = tmp_path / "p.co"
     archivo.write_text("imprimir(1)")
-    with patch("cli.commands.execute_cmd.InterpretadorCobra") as mock_interp:
-        main(["--no-seguro", "ejecutar", str(archivo)])
-        mock_interp.assert_called_once_with(safe_mode=False)
-        mock_interp.return_value.ejecutar_ast.assert_called_once()
+    command = ExecuteCommand()
+    with patch.object(command._service, "run", return_value=0) as run_service:
+        result = command.run(
+            Namespace(archivo=str(archivo), seguro=False, extra_validators=None)
+        )
+
+    assert result == 0
+    request = run_service.call_args.args[0]
+    assert request.archivo == str(archivo)
+    assert request.seguro is False
 
 
 @pytest.mark.timeout(5)
@@ -40,13 +43,17 @@ def test_cli_validadores_extra(tmp_path):
     archivo.write_text("imprimir(1)")
     ruta = tmp_path / "vals.py"
     ruta.write_text("VALIDADORES_EXTRA = []\n")
-    with patch("cli.commands.execute_cmd.InterpretadorCobra") as mock_interp:
-        mock_interp._cargar_validadores.return_value = [_DummyValidator()]
-        main([f"--extra-validators={ruta}", "ejecutar", str(archivo)])
-        mock_interp.assert_called_once_with(
-            safe_mode=True, extra_validators=mock_interp._cargar_validadores.return_value
+    command = ExecuteCommand()
+    with patch.object(command._service, "run", return_value=0) as run_service:
+        result = command.run(
+            Namespace(archivo=str(archivo), seguro=True, extra_validators=str(ruta))
         )
-        mock_interp.return_value.ejecutar_ast.assert_called_once()
+
+    assert result == 0
+    request = run_service.call_args.args[0]
+    assert request.archivo == str(archivo)
+    assert request.seguro is True
+    assert request.extra_validators == str(ruta)
 
 
 @pytest.mark.timeout(5)
