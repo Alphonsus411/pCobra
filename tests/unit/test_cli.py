@@ -12,7 +12,7 @@ def test_cli_interactive():
             patch("sys.stdout", new_callable=StringIO) as mock_stdout, \
             patch("cobra.cli.cli.messages.mostrar_logo"):
         from cobra.cli.cli import main
-        main()
+        main(["repl"])
 
     output = mock_stdout.getvalue().strip().split("\n")
     assert output[0] == expected_outputs[0], f"Expected: {expected_outputs}, but got: {output}"
@@ -27,7 +27,7 @@ def test_cli_transpilador():
             patch("sys.stdout", new_callable=StringIO) as mock_stdout, \
             patch("cobra.cli.cli.messages.mostrar_logo"):
         from cobra.cli.cli import main
-        main()
+        main(["repl"])
 
     output = mock_stdout.getvalue().strip().split("\n")
     assert output[0] == expected_outputs[0], f"Expected: {expected_outputs}, but got: {output}"
