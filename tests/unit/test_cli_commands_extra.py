@@ -1,5 +1,4 @@
 import importlib
-import json
 from argparse import Namespace
 from pathlib import Path
 from io import StringIO
@@ -8,22 +7,9 @@ from unittest.mock import patch
 import pytest
 import yaml
 
-from pcobra.cobra.cli import cli as cli_module
-from pcobra.cobra.cli.commands import modules_cmd
-from pcobra.cobra.cli.commands.execute_cmd import ExecuteCommand
-
-
-def _load_mapping(source):
-    raw = source.read() if hasattr(source, "read") else source
-    return json.loads(raw) if raw else {}
-
-
-def _dump_mapping(data, stream=None):
-    serialized = json.dumps(data)
-    if stream is not None:
-        stream.write(serialized)
-        return None
-    return serialized
+from cobra.cli.cli import main
+from cobra.cli.commands import modules_cmd
+from cobra.cli.commands.execute_cmd import ExecuteCommand
 
 
 @pytest.mark.timeout(5)
@@ -76,8 +62,19 @@ def test_cli_validadores_extra(tmp_path):
 
 @pytest.mark.timeout(5)
 def test_cli_modulos_comandos(tmp_path, monkeypatch):
-    monkeypatch.setattr(yaml, "safe_load", _load_mapping)
-    monkeypatch.setattr(yaml, "safe_dump", _dump_mapping)
+    def load_mapping(source):
+        raw = source.read() if hasattr(source, "read") else source
+        return json.loads(raw) if raw else {}
+
+    def dump_mapping(data, stream=None):
+        serialized = json.dumps(data)
+        if stream is not None:
+            stream.write(serialized)
+            return None
+        return serialized
+
+    monkeypatch.setattr(yaml, "safe_load", load_mapping)
+    monkeypatch.setattr(yaml, "safe_dump", dump_mapping)
     monkeypatch.setattr(
         cli_module, "resolve_command_profile", lambda: "development"
     )
