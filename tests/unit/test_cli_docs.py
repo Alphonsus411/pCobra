@@ -4,6 +4,7 @@ from io import StringIO
 from pathlib import Path
 from unittest.mock import call, patch
 
+from pcobra.cobra.cli.commands import docs_cmd
 from pcobra.cobra.cli.commands.docs_cmd import DocsCommand
 
 
@@ -14,7 +15,7 @@ def test_cli_docs_invokes_sphinx():
     api = source / "api"
     codigo = raiz / "src"
 
-    with patch("subprocess.run") as mock_run:
+    with patch.object(docs_cmd.subprocess, "run") as mock_run:
         with patch.object(DocsCommand, "_obtener_raiz", return_value=raiz):
             DocsCommand().run(argparse.Namespace())
         mock_run.assert_has_calls([
