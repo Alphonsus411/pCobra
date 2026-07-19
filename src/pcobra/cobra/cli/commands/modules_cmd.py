@@ -3,9 +3,9 @@ from pathlib import Path
 
 from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.cli.i18n import _
+from pcobra.cobra.cli.services import mod_service as _mod_service
 from pcobra.cobra.cli.services.contracts import ModRequest
 from pcobra.cobra.cli.services.mod_service import (
-    LOCK_FILE,
     LOCK_KEY,
     MODULE_EXTENSION,
     ModService,
@@ -22,14 +22,28 @@ from pcobra.cobra.cli.services.mod_service import (
     yaml,
 )
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
-from pcobra.cobra.cli.utils.module_paths import MODULES_PATH
+from pcobra.cobra.cli.utils.module_paths import modules_path, user_config_dir
+from pcobra.cobra.cli.utils.messages import mostrar_error
 
 _cobrahub_module = __import__("pcobra.cobra.cli.cobrahub_client", fromlist=["CobraHubClient"])
 _CobraHubClient = _cobrahub_module.CobraHubClient
 client = _CobraHubClient.__new__(_CobraHubClient)
 client.base_url = "https://cobrahub.example.com/api"
 client.session = None
+MODULES_PATH = modules_path()
+LOCK_FILE = user_config_dir() / "module_map.toml"
 MODULE_MAP_PATH = str(LOCK_FILE)
+
+
+def _sync_service_state() -> None:
+    """Sincroniza reexportaciones históricas antes de delegar al servicio."""
+
+    _mod_service.MODULES_PATH = MODULES_PATH
+    _mod_service.LOCK_FILE = Path(LOCK_FILE)
+    _mod_service.MODULE_MAP_PATH = MODULE_MAP_PATH
+    _mod_service.yaml = yaml
+    _mod_service._client = client
+    _mod_service.mostrar_error = mostrar_error
 
 
 class ModulesCommand(BaseCommand):
@@ -57,15 +71,32 @@ class ModulesCommand(BaseCommand):
         return parser
 
     def run(self, args: Any) -> int:
-        import pcobra.cobra.cli.services.mod_service as _mod_service
-        _mod_service.MODULES_PATH = MODULES_PATH
-        _mod_service.LOCK_FILE = Path(LOCK_FILE)
-        _mod_service.MODULE_MAP_PATH = MODULE_MAP_PATH
-        _mod_service.yaml = yaml
-        _mod_service._client = client
+        _sync_service_state()
         request = ModRequest(
             accion=getattr(args, "accion", ""),
             ruta=getattr(args, "ruta", None),
             nombre=getattr(args, "nombre", None),
         )
         return self._service.run(request)
+
+    @staticmethod
+    def _instalar_modulo(ruta: str) -> int:
+        """Conserva el adaptador histórico delegando en ``mod_service``."""
+
+        previous_error_handler = _mod_service.mostrar_error
+        try:
+            _sync_service_state()
+            return instalar_modulo(ruta)
+        finally:
+            _mod_service.mostrar_error = previous_error_handler
+
+    @staticmethod
+    def _remover_modulo(nombre: str) -> int:
+        """Conserva el adaptador histórico delegando en ``mod_service``."""
+
+        previous_error_handler = _mod_service.mostrar_error
+        try:
+            _sync_service_state()
+            return remover_modulo(nombre)
+        finally:
+            _mod_service.mostrar_error = previous_error_handler
