@@ -188,3 +188,17 @@ def test_ejecutar_codigo_modulo_inexistente_falla_controladamente(tmp_path):
     assert "Módulo no encontrado: modulo_inexistente" in mensaje
     assert "modulo_inexistente.co" in mensaje
     assert "modulo_fuera_catalogo_publico" not in mensaje
+
+
+def test_ejecutar_codigo_soporta_bucle_para():
+    from pcobra.gui.runtime import ejecutar_codigo
+
+    codigo = """
+    para valor en [1, 2, 3]:
+        imprimir(valor)
+    fin
+    """
+
+    resultado = ejecutar_codigo(codigo)
+
+    assert resultado.strip().splitlines() == ["1", "2", "3"]

@@ -33,6 +33,7 @@ from .ast_nodes import (
     NodoBloque,
     NodoCondicional,
     NodoBucleMientras,
+    NodoPara,
     NodoFuncion,
     NodoLlamadaFuncion,
     NodoLlamadaMetodo,
@@ -1646,6 +1647,8 @@ class InterpretadorCobra:
             return self.ejecutar_condicional(nodo)
         elif isinstance(nodo, NodoBucleMientras):
             return self.ejecutar_mientras(nodo)
+        elif isinstance(nodo, NodoPara):
+            return self.ejecutar_para(nodo)
         elif isinstance(nodo, NodoClase):
             self.ejecutar_clase(nodo)
         elif isinstance(nodo, NodoInstancia):
@@ -2139,6 +2142,43 @@ class InterpretadorCobra:
                 continue
             except _ControlRomper:
                 break
+        return None
+
+    def ejecutar_para(self, nodo):
+        """Ejecuta un bucle ``para`` sobre un iterable."""
+        iterable = self.evaluar_expresion(nodo.iterable)
+        iterable = self._materializar_valor(
+            iterable,
+            origen="bucle_para",
+        )
+
+        try:
+            iterador = iter(iterable)
+        except TypeError as exc:
+            raise TypeError(
+                "El iterable de 'para' no es recorrible: "
+                f"{type(iterable).__name__}"
+            ) from exc
+
+        for valor in iterador:
+            declaracion = not self.contextos[-1].contains(nodo.variable)
+
+            self.ejecutar_asignacion(
+                NodoAsignacion(
+                    nodo.variable,
+                    NodoValor(valor),
+                    declaracion=declaracion,
+                )
+            )
+
+            try:
+                for instruccion in nodo.cuerpo:
+                    self.ejecutar_nodo(instruccion)
+            except _ControlContinuar:
+                continue
+            except _ControlRomper:
+                break
+
         return None
 
     def ejecutar_try_catch(self, nodo):
