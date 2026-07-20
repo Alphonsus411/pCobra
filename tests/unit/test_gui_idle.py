@@ -58,6 +58,21 @@ def _fake_flet():
     class TextButton(ElevatedButton):
         pass
 
+    class AlertDialog:
+        def __init__(
+            self,
+            modal=False,
+            title=None,
+            content=None,
+            actions=None,
+            **_kwargs,
+        ):
+            self.modal = modal
+            self.title = title
+            self.content = content
+            self.actions = actions or []
+            self.open = False
+
     class Layout:
         def __init__(self, controls=None, **_kwargs):
             self.controls = controls or []
@@ -111,7 +126,17 @@ def _fake_flet():
     class Page:
         def __init__(self):
             self.controls = []
+            self.dialog = None
             self.update = MagicMock()
+
+        def open(self, control):
+            self.dialog = control
+            control.open = True
+            self.update()
+
+        def close(self, control):
+            control.open = False
+            self.update()
 
         def add(self, *args):
             def _flatten(control):
@@ -132,6 +157,7 @@ def _fake_flet():
         Switch=Switch,
         ElevatedButton=ElevatedButton,
         TextButton=TextButton,
+        AlertDialog=AlertDialog,
         Row=Row,
         Column=Column,
         Container=Container,
@@ -2015,8 +2041,24 @@ def test_eliminar_proyecto_activo_reinicia_estado_y_vuelve_al_workspace(
     ruta_input.value = "src/main"
     guardar_como.on_click(None)
 
-    ruta_input.value = "proyecto"
     eliminar_proyecto.on_click(None)
+
+    assert page.dialog is not None
+    assert page.dialog.open is True
+
+    confirmacion_input = next(
+        control
+        for control in page.dialog.content.controls
+        if isinstance(control, ft.TextField)
+    )
+    confirmar = next(
+        control
+        for control in page.dialog.actions
+        if control.text == "Eliminar definitivamente"
+    )
+
+    confirmacion_input.value = "proyecto"
+    confirmar.on_click(None)
 
     assert not proyecto.exists()
     assert entrada.value == ""
@@ -2057,19 +2099,37 @@ def test_eliminar_proyecto_exige_nombre_exacto(monkeypatch, tmp_path):
     crear_proyecto.on_click(None)
     proyecto = (idle.runtime.resolver_workspace_root_idle() / "proyecto").resolve()
 
-    ruta_input.value = "Proyecto"
     eliminar_proyecto.on_click(None)
+
+    assert page.dialog is not None
+    assert page.dialog.open is True
+
+    confirmacion_input = next(
+        control
+        for control in page.dialog.content.controls
+        if isinstance(control, ft.TextField)
+    )
+    confirmar = next(
+        control
+        for control in page.dialog.actions
+        if control.text == "Eliminar definitivamente"
+    )
+
+    confirmacion_input.value = "Proyecto"
+    confirmar.on_click(None)
 
     assert proyecto.exists()
     assert salida.value == (
-        "Para eliminar este proyecto escribe su nombre exacto: proyecto"
+        "El nombre no coincide. Escribe exactamente: proyecto"
     )
+    assert page.dialog.open is True
 
-    ruta_input.value = "proyecto"
-    eliminar_proyecto.on_click(None)
+    confirmacion_input.value = "proyecto"
+    confirmar.on_click(None)
 
     assert not proyecto.exists()
     assert salida.value == f"Proyecto eliminado: {proyecto}"
+    assert page.dialog.open is False
 
 
 def test_cerrar_proyecto_reinicia_al_workspace_y_bloquea_archivos(

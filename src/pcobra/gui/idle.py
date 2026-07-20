@@ -478,38 +478,99 @@ def main(page: "ft.Page"):
             return
 
         nombre_proyecto = project_root_resuelto.name
-        confirmacion = ruta_input.value or ""
-        if confirmacion != nombre_proyecto:
+        dialog_factory = getattr(ft, "AlertDialog", None)
+        if dialog_factory is None:
             salida.value = (
-                "Para eliminar este proyecto escribe su nombre exacto: "
-                f"{nombre_proyecto}"
+                "La versión instalada de Flet no permite abrir el diálogo "
+                "seguro de eliminación."
             )
             page.update()
             return
 
-        try:
-            runtime.eliminar_proyecto_validado(
-                project_root_resuelto, workspace_root_resuelto
-            )
-        except (
-            FileNotFoundError,
-            NotADirectoryError,
-            PermissionError,
-            OSError,
-            ValueError,
-        ) as exc:
-            mostrar_error_archivo(exc)
-            page.update()
-            return
+        confirmacion_input = runtime.flet_text_field(
+            ft,
+            label="Nombre exacto del proyecto",
+            value="",
+            autofocus=True,
+        )
 
-        proyecto_eliminado = project_root_resuelto
-        project_root = workspace_root
-        proyecto_cerrado = True
-        limpiar_archivo_activo()
-        reconstruir_arbol()
-        raiz_input.value = str(project_root)
-        salida.value = f"Proyecto eliminado: {proyecto_eliminado}"
-        actualizar_pagina()
+        def cerrar_dialogo(_ev=None) -> None:
+            page.close(dialog)
+
+        def confirmar_eliminacion(_ev=None) -> None:
+            nonlocal project_root, proyecto_cerrado
+
+            confirmacion = confirmacion_input.value or ""
+            if confirmacion != nombre_proyecto:
+                salida.value = (
+                    "El nombre no coincide. Escribe exactamente: "
+                    f"{nombre_proyecto}"
+                )
+                page.update()
+                return
+
+            try:
+                runtime.eliminar_proyecto_validado(
+                    project_root_resuelto, workspace_root_resuelto
+                )
+            except (
+                FileNotFoundError,
+                NotADirectoryError,
+                PermissionError,
+                OSError,
+                ValueError,
+            ) as exc:
+                mostrar_error_archivo(exc)
+                page.update()
+                return
+
+            proyecto_eliminado = project_root_resuelto
+            project_root = workspace_root
+            proyecto_cerrado = True
+            limpiar_archivo_activo()
+            reconstruir_arbol()
+            raiz_input.value = str(project_root)
+            salida.value = f"Proyecto eliminado: {proyecto_eliminado}"
+            page.close(dialog)
+            actualizar_pagina()
+
+        dialog = dialog_factory(
+            modal=True,
+            title=runtime.flet_text(ft, value="Eliminar proyecto"),
+            content=runtime.flet_column(
+                ft,
+                controls=[
+                    runtime.flet_text(
+                        ft,
+                        value=(
+                            f"Se eliminará permanentemente:\n"
+                            f"{project_root_resuelto}\n\n"
+                            f"Escribe exactamente «{nombre_proyecto}» "
+                            "para confirmar."
+                        ),
+                    ),
+                    confirmacion_input,
+                ],
+                tight=True,
+            ),
+            actions=[
+                runtime.flet_text_button(
+                    ft,
+                    "Cancelar",
+                    on_click=cerrar_dialogo,
+                ),
+                runtime.flet_elevated_button(
+                    ft,
+                    "Eliminar definitivamente",
+                    on_click=confirmar_eliminacion,
+                ),
+            ],
+        )
+        salida.value = (
+            "Confirma la eliminación en el diálogo abierto para el proyecto: "
+            f"{nombre_proyecto}"
+        )
+        page.open(dialog)
 
     def nuevo_handler(_e):
         entrada.value, salida.value = runtime.crear_archivo_nuevo_en_editor(estado)
