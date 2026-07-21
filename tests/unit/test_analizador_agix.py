@@ -1,6 +1,6 @@
 import pcobra  # garantiza rutas para submódulos
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import create_autospec, patch
 import tomllib
 
 import pytest
@@ -9,22 +9,37 @@ from pcobra.ia import analizador_agix, analizador_sugerencias
 from pcobra.ia.reglas_libro_programacion import construir_candidatos_desde_reglas
 
 
+def _doble_reasoner():
+    """Crea clase e instancia que respetan el contrato público de AGIX 1.11."""
+    clase = create_autospec(analizador_agix.Reasoner, spec_set=True)
+    return clase, clase.return_value
+
+
+def _doble_pad_state():
+    """Crea un constructor limitado a la firma pública de ``PADState``."""
+    return create_autospec(analizador_agix.PADState, spec_set=True)
+
+
 def test_generar_sugerencias_variable_descriptiva():
     """Verifica que se retorne la sugerencia adecuada."""
-    instancia_falsa = MagicMock()
+    reasoner_cls, instancia_falsa = _doble_reasoner()
     instancia_falsa.select_best_model.return_value = {
         "reason": "Usar nombres descriptivos para variables"
     }
-    with patch.object(analizador_agix, "Reasoner", return_value=instancia_falsa):
+    with patch.object(analizador_agix, "Reasoner", reasoner_cls):
         sugerencias = analizador_agix.generar_sugerencias("var x = 5")
+    reasoner_cls.assert_called_once_with()
+    instancia_falsa.select_best_model.assert_called_once()
+    assert isinstance(sugerencias, list)
     assert sugerencias == ["Usar nombres descriptivos para variables"]
 
 
 def test_generar_sugerencias_modulacion_emocional():
-    instancia = MagicMock()
+    reasoner_cls, instancia = _doble_reasoner()
+    pad_mock = _doble_pad_state()
     instancia.select_best_model.return_value = {"reason": "Usar nombres descriptivos"}
-    with patch.object(analizador_agix, "Reasoner", return_value=instancia):
-        with patch.object(analizador_agix, "PADState") as pad_mock:
+    with patch.object(analizador_agix, "Reasoner", reasoner_cls):
+        with patch.object(analizador_agix, "PADState", pad_mock):
             analizador_agix.generar_sugerencias(
                 "var x = 5", placer=0.1, activacion=0.2, dominancia=-0.3
             )
@@ -100,17 +115,16 @@ def test_import_agix_no_oculta_fallos_inesperados(monkeypatch):
     ],
 )
 def test_generar_sugerencias_valores_fuera_de_rango(param, valor):
-    with patch.object(analizador_agix, "Reasoner", MagicMock()):
+    reasoner_cls, _ = _doble_reasoner()
+    with patch.object(analizador_agix, "Reasoner", reasoner_cls):
         with pytest.raises(ValueError, match=rf"{param} debe estar en el rango"):
             analizador_agix.generar_sugerencias("var x = 5", **{param: valor})
 
 
 def test_error_lexico_o_sintactico_impide_sugerencias_aplicables():
     """No se invoca agix si Lexer/Parser rechazan el fragmento."""
-    razonador = MagicMock()
-    with patch.object(
-        analizador_agix, "Reasoner", return_value=razonador
-    ) as razonador_cls:
+    razonador_cls, razonador = _doble_reasoner()
+    with patch.object(analizador_agix, "Reasoner", razonador_cls):
         with pytest.raises(Exception):
             analizador_agix.generar_sugerencias(
                 "funcion saludar(nombre): retornar nombre"
@@ -129,10 +143,8 @@ def test_error_lexico_o_sintactico_impide_sugerencias_aplicables():
 def test_generar_sugerencias_rechaza_codigo_invalido_antes_de_agix(codigo_invalido):
     """Lexer/Parser deben bloquear Agix tanto para errores léxicos como sintácticos."""
 
-    razonador = MagicMock()
-    with patch.object(
-        analizador_agix, "Reasoner", return_value=razonador
-    ) as razonador_cls:
+    razonador_cls, razonador = _doble_reasoner()
+    with patch.object(analizador_agix, "Reasoner", razonador_cls):
         with pytest.raises(Exception):
             analizador_agix.generar_sugerencias(codigo_invalido)
 
@@ -143,14 +155,14 @@ def test_generar_sugerencias_rechaza_codigo_invalido_antes_de_agix(codigo_invali
 def test_generar_sugerencias_codigo_valido_expone_regla_nombres_descriptivos():
     """Un programa Cobra válido puede activar LP-3.1 tras pasar Lexer/Parser."""
 
-    instancia = MagicMock()
+    reasoner_cls, instancia = _doble_reasoner()
     instancia.select_best_model.side_effect = lambda evaluaciones: next(
         ev
         for ev in evaluaciones
         if ev["rule_id"] == "LP-3.1-NOMBRES-DESCRIPTIVOS"
     )
 
-    with patch.object(analizador_agix, "Reasoner", return_value=instancia):
+    with patch.object(analizador_agix, "Reasoner", reasoner_cls):
         sugerencias = analizador_agix.generar_sugerencias("var x = 5")
 
     assert sugerencias == [
@@ -172,13 +184,13 @@ def test_reglas_libro_programacion_validan_entrada_antes_de_candidatos():
 
 def test_sugerencias_no_inventan_construcciones_fuera_del_parser():
     """Los candidatos salen de reglas validadas y evitan formas no aceptadas."""
-    instancia = MagicMock()
+    reasoner_cls, instancia = _doble_reasoner()
 
     def seleccionar_primero(evaluaciones):
         return evaluaciones[0]
 
     instancia.select_best_model.side_effect = seleccionar_primero
-    with patch.object(analizador_agix, "Reasoner", return_value=instancia):
+    with patch.object(analizador_agix, "Reasoner", reasoner_cls):
         sugerencias = analizador_agix.generar_sugerencias("var x = 5")
 
     texto = "\n".join(sugerencias)
@@ -190,18 +202,38 @@ def test_sugerencias_no_inventan_construcciones_fuera_del_parser():
 
 
 def test_sugerencia_principal_referencia_regla_interna_trazable():
-    instancia = MagicMock()
+    reasoner_cls, instancia = _doble_reasoner()
 
     def seleccionar_primero(evaluaciones):
         return evaluaciones[0]
 
     instancia.select_best_model.side_effect = seleccionar_primero
-    with patch.object(analizador_agix, "Reasoner", return_value=instancia):
+    with patch.object(analizador_agix, "Reasoner", reasoner_cls):
         sugerencias = analizador_agix.generar_sugerencias("var x = 5")
 
     assert len(sugerencias) == 1
     assert "[regla: LP-" in sugerencias[0]
     assert "§3." in sugerencias[0]
+
+
+def test_generar_sugerencias_pasa_argumentos_de_seleccion_y_propaga_error_agix():
+    """Los pesos llegan a AGIX y un fallo concreto del motor no se transforma."""
+    reasoner_cls, instancia = _doble_reasoner()
+    error_agix = ValueError("evaluaciones rechazadas por AGIX")
+    instancia.select_best_model.side_effect = error_agix
+
+    with patch.object(analizador_agix, "Reasoner", reasoner_cls):
+        with pytest.raises(ValueError) as capturado:
+            analizador_agix.generar_sugerencias(
+                "var x = 5", peso_precision=0.5, peso_interpretabilidad=2.0
+            )
+
+    assert capturado.value is error_agix
+    evaluaciones = instancia.select_best_model.call_args.args[0]
+    assert all(0.0 <= evaluacion["accuracy"] <= 0.5 for evaluacion in evaluaciones)
+    assert all(
+        evaluacion["interpretability"] >= 0.0 for evaluacion in evaluaciones
+    )
 
 
 def test_motor_canonico_es_agix_y_no_agi_core():
