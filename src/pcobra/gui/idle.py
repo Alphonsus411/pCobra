@@ -574,7 +574,10 @@ def main(page: "ft.Page"):
 
     def nuevo_handler(_e):
         contenido, salida.value = runtime.crear_archivo_nuevo_en_editor(estado)
-        entrada.establecer_contenido(contenido)
+        if contenido:
+            entrada.establecer_contenido(contenido)
+        else:
+            entrada.limpiar()
         actualizar_pagina()
 
     def abrir_handler(_e):

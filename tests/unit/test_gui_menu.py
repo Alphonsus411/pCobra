@@ -9,6 +9,19 @@ class FakeTextField:
         self.value = kwargs.get("value", "")
 
 
+class FakeCodeEditor:
+    def __init__(self, **kwargs):
+        self.kwargs = kwargs
+        self.value = kwargs.get("value", "")
+        self.selection = kwargs.get("selection")
+        self.on_change = kwargs.get("on_change")
+        self.on_selection_change = kwargs.get("on_selection_change")
+        self.focused = False
+
+    def focus(self):
+        self.focused = True
+
+
 class FakeText:
     def __init__(self, value="", **kwargs):
         self.kwargs = kwargs
@@ -29,9 +42,11 @@ class FakeSwitch:
 
 
 class FakeElevatedButton:
-    def __init__(self, text, on_click=None):
+    def __init__(self, text, on_click=None, **kwargs):
         self.text = text
         self.on_click = on_click
+        self.disabled = kwargs.get("disabled", False)
+        self.tooltip = kwargs.get("tooltip")
 
 
 class FakeTextButton(FakeElevatedButton):
@@ -76,6 +91,8 @@ class FakePage:
 def _fake_flet(*, root_option=None, dropdown_option=None, app=None):
     attrs = {
         "TextField": FakeTextField,
+        "CodeEditor": FakeCodeEditor,
+        "_code_editor_factory": FakeCodeEditor,
         "Text": FakeText,
         "Dropdown": FakeDropdown,
         "Switch": FakeSwitch,
@@ -86,7 +103,9 @@ def _fake_flet(*, root_option=None, dropdown_option=None, app=None):
         "Container": FakeContainer,
         "ListView": FakeLayout,
         "Page": FakePage,
-        "dropdown": SimpleNamespace(Option=dropdown_option or (lambda value: f"dropdown:{value}")),
+        "dropdown": SimpleNamespace(
+            Option=dropdown_option or (lambda value: f"dropdown:{value}")
+        ),
         "app": app or (lambda **kwargs: kwargs),
     }
     if root_option is not None:
@@ -103,17 +122,22 @@ def _prepare_module(monkeypatch, module_name):
     monkeypatch.setattr(
         module.runtime,
         "require_gui_dependencies",
-        lambda: {"TRANSPILERS": {"py": object()}, "LexerError": None, "ParserError": None},
+        lambda: {
+            "TRANSPILERS": {"py": object()},
+            "LexerError": None,
+            "ParserError": None,
+        },
+    )
+    monkeypatch.setattr(
+        module.runtime,
+        "crear_arbol_directorios",
+        lambda *_args, **_kwargs: fake_ft.Column(),
     )
     return module, fake_ft
 
 
 def _run_handler(ft, page, text):
-    entrada = next(
-        c
-        for c in page.controls
-        if isinstance(c, ft.TextField) and c.kwargs.get("multiline")
-    )
+    entrada = next(c for c in page.controls if isinstance(c, ft.CodeEditor))
     selector = next(c for c in page.controls if isinstance(c, ft.Dropdown))
     switch = next(c for c in page.controls if isinstance(c, ft.Switch))
     boton = next(

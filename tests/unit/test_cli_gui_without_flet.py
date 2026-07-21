@@ -1,6 +1,7 @@
 """Pruebas de preflight/errores de import para el comando ``gui``."""
 
 import builtins
+import importlib
 import sys
 from types import SimpleNamespace
 
@@ -35,7 +36,9 @@ def test_cli_gui_reporta_falta_de_flet(monkeypatch):
             raise ModuleNotFoundError("No module named 'flet'", name="flet")
         return real_import(name, globals, locals, fromlist, level)
 
-    monkeypatch.setattr("pcobra.cobra.cli.commands.flet_cmd.mostrar_error", mensajes.append)
+    monkeypatch.setattr(
+        "pcobra.cobra.cli.commands.flet_cmd.mostrar_error", mensajes.append
+    )
     monkeypatch.setattr(builtins, "__import__", _import_fail_flet)
 
     result = cmd.run(_args())
@@ -45,6 +48,25 @@ def test_cli_gui_reporta_falta_de_flet(monkeypatch):
     assert "pip install flet" in mensajes[0]
 
 
+def test_importar_interfaces_no_requiere_flet_ni_editor(monkeypatch):
+    """Los dos paquetes visuales permanecen diferidos hasta ejecutar ``main``."""
+
+    real_import = builtins.__import__
+
+    def _import_fail_gui_packages(
+        name, globals=None, locals=None, fromlist=(), level=0
+    ):
+        if name in {"flet", "flet_code_editor"}:
+            raise ModuleNotFoundError(f"No module named '{name}'", name=name)
+        return real_import(name, globals, locals, fromlist, level)
+
+    monkeypatch.setattr(builtins, "__import__", _import_fail_gui_packages)
+
+    for module_name in ("pcobra.gui.runtime", "pcobra.gui.app", "pcobra.gui.idle"):
+        module = importlib.import_module(module_name)
+        importlib.reload(module)
+
+
 def test_cli_gui_reporta_falta_de_modulo_deps_en_preflight(monkeypatch):
     mensajes: list[str] = []
     cmd = FletCommand()
@@ -52,13 +74,19 @@ def test_cli_gui_reporta_falta_de_modulo_deps_en_preflight(monkeypatch):
 
     def _import_module(name: str):
         if name == "pcobra.cobra.gui.deps":
-            raise ModuleNotFoundError("No module named 'pcobra.cobra.gui.deps'", name=name)
+            raise ModuleNotFoundError(
+                "No module named 'pcobra.cobra.gui.deps'", name=name
+            )
         if name == "pcobra.gui.idle":
             return SimpleNamespace(main=lambda _page: None)
         return _deps_module()
 
-    monkeypatch.setattr("pcobra.cobra.cli.commands.flet_cmd.mostrar_error", mensajes.append)
-    monkeypatch.setattr("pcobra.cobra.cli.commands.flet_cmd.importlib.import_module", _import_module)
+    monkeypatch.setattr(
+        "pcobra.cobra.cli.commands.flet_cmd.mostrar_error", mensajes.append
+    )
+    monkeypatch.setattr(
+        "pcobra.cobra.cli.commands.flet_cmd.importlib.import_module", _import_module
+    )
     monkeypatch.setitem(sys.modules, "flet", fake_flet)
 
     result = cmd.run(_args())
@@ -83,8 +111,12 @@ def test_cli_gui_idle_reporta_simbolo_faltante_con_contexto_accionable(monkeypat
             return SimpleNamespace(main=lambda _page: None)
         return _deps_module()
 
-    monkeypatch.setattr("pcobra.cobra.cli.commands.flet_cmd.mostrar_error", mensajes.append)
-    monkeypatch.setattr("pcobra.cobra.cli.commands.flet_cmd.importlib.import_module", _import_module)
+    monkeypatch.setattr(
+        "pcobra.cobra.cli.commands.flet_cmd.mostrar_error", mensajes.append
+    )
+    monkeypatch.setattr(
+        "pcobra.cobra.cli.commands.flet_cmd.importlib.import_module", _import_module
+    )
     monkeypatch.setitem(sys.modules, "flet", fake_flet)
 
     result = cmd.run(_args("idle"))
@@ -108,8 +140,12 @@ def test_cli_gui_app_reporta_simbolo_faltante_con_contexto_accionable(monkeypatc
             return SimpleNamespace(main=lambda _page: None)
         return _deps_module()
 
-    monkeypatch.setattr("pcobra.cobra.cli.commands.flet_cmd.mostrar_error", mensajes.append)
-    monkeypatch.setattr("pcobra.cobra.cli.commands.flet_cmd.importlib.import_module", _import_module)
+    monkeypatch.setattr(
+        "pcobra.cobra.cli.commands.flet_cmd.mostrar_error", mensajes.append
+    )
+    monkeypatch.setattr(
+        "pcobra.cobra.cli.commands.flet_cmd.importlib.import_module", _import_module
+    )
     monkeypatch.setitem(sys.modules, "flet", fake_flet)
 
     result = cmd.run(_args("app"))
@@ -126,11 +162,17 @@ def test_cli_gui_reporta_error_interno_de_import(monkeypatch):
 
     def _import_module(name: str):
         if name == "pcobra.gui.idle":
-            raise ImportError("cannot import name 'main' from partially initialized module")
+            raise ImportError(
+                "cannot import name 'main' from partially initialized module"
+            )
         return _deps_module()
 
-    monkeypatch.setattr("pcobra.cobra.cli.commands.flet_cmd.mostrar_error", mensajes.append)
-    monkeypatch.setattr("pcobra.cobra.cli.commands.flet_cmd.importlib.import_module", _import_module)
+    monkeypatch.setattr(
+        "pcobra.cobra.cli.commands.flet_cmd.mostrar_error", mensajes.append
+    )
+    monkeypatch.setattr(
+        "pcobra.cobra.cli.commands.flet_cmd.importlib.import_module", _import_module
+    )
     monkeypatch.setitem(sys.modules, "flet", fake_flet)
 
     result = cmd.run(_args())
@@ -158,8 +200,12 @@ def test_cli_gui_reporta_simbolo_faltante_en_preflight(monkeypatch):
             return SimpleNamespace(main=lambda _page: None)
         return _deps_module()
 
-    monkeypatch.setattr("pcobra.cobra.cli.commands.flet_cmd.mostrar_error", mensajes.append)
-    monkeypatch.setattr("pcobra.cobra.cli.commands.flet_cmd.importlib.import_module", _import_module)
+    monkeypatch.setattr(
+        "pcobra.cobra.cli.commands.flet_cmd.mostrar_error", mensajes.append
+    )
+    monkeypatch.setattr(
+        "pcobra.cobra.cli.commands.flet_cmd.importlib.import_module", _import_module
+    )
     monkeypatch.setitem(sys.modules, "flet", fake_flet)
 
     result = cmd.run(_args("idle"))
@@ -180,8 +226,12 @@ def test_cli_gui_importerror_sin_name_extrae_modulo_desde_mensaje(monkeypatch):
             raise err
         return _deps_module()
 
-    monkeypatch.setattr("pcobra.cobra.cli.commands.flet_cmd.mostrar_error", mensajes.append)
-    monkeypatch.setattr("pcobra.cobra.cli.commands.flet_cmd.importlib.import_module", _import_module)
+    monkeypatch.setattr(
+        "pcobra.cobra.cli.commands.flet_cmd.mostrar_error", mensajes.append
+    )
+    monkeypatch.setattr(
+        "pcobra.cobra.cli.commands.flet_cmd.importlib.import_module", _import_module
+    )
     monkeypatch.setitem(sys.modules, "flet", fake_flet)
 
     result = cmd.run(_args())

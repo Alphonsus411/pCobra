@@ -34,6 +34,12 @@ def _fake_flet():
             self.value = _kwargs.get("value", "")
 
     class CodeEditor(TextField):
+        def __init__(self, **kwargs):
+            super().__init__(**kwargs)
+            self.selection = kwargs.get("selection")
+            self.on_change = kwargs.get("on_change")
+            self.on_selection_change = kwargs.get("on_selection_change")
+
         def focus(self):
             return None
 
@@ -384,11 +390,7 @@ def test_main_handlers_smoke(monkeypatch):
     page = ft.Page()
     idle.main(page)
 
-    entrada = next(
-        c
-        for c in page.controls
-        if isinstance(c, ft.CodeEditor)
-    )
+    entrada = next(c for c in page.controls if isinstance(c, ft.CodeEditor))
     selector = next(c for c in page.controls if isinstance(c, ft.Dropdown))
     activar = next(c for c in page.controls if isinstance(c, ft.Switch))
     salida = next(
@@ -433,6 +435,63 @@ def test_main_handlers_smoke(monkeypatch):
     ejecutar_mock.assert_called_once_with("imprimir('x')")
     transpilar_mock.assert_called_once_with("imprimir('x')", "python")
     assert page.update.call_count == 6
+
+
+def test_acciones_de_archivo_y_ejecucion_usan_el_adaptador(monkeypatch, tmp_path):
+    ft = _fake_flet()
+    archivo = tmp_path / "programa.cobra"
+    archivo.write_text("imprimir('abierto')", encoding="utf-8")
+    monkeypatch.setenv("COBRA_PROJECTS_DIR", str(tmp_path))
+    monkeypatch.setattr(idle.runtime, "require_flet", lambda: ft)
+    monkeypatch.setattr(
+        idle.runtime, "detectar_motor_ia_sugerencias", _motor_disponible
+    )
+    monkeypatch.setattr(idle.runtime, "gui_target_choices", lambda: ("python",))
+    monkeypatch.setattr(
+        idle.runtime,
+        "require_gui_dependencies",
+        lambda: {
+            "TRANSPILERS": {"python": object},
+            "LexerError": RuntimeError,
+            "ParserError": ValueError,
+        },
+    )
+
+    control = ft.CodeEditor(value="")
+    adaptador_real = idle.runtime.EditorCodigo(control)
+    adaptador_spy = MagicMock(spec=idle.runtime.EditorCodigo, wraps=adaptador_real)
+    monkeypatch.setattr(idle.runtime, "crear_editor_codigo", lambda _ft: adaptador_spy)
+    ejecutar_spy = MagicMock(return_value="ejecutado")
+    monkeypatch.setattr(idle.runtime, "ejecutar_codigo", ejecutar_spy)
+
+    page = ft.Page()
+    idle.main(page)
+    botones = {c.text: c for c in page.controls if isinstance(c, ft.ElevatedButton)}
+    ruta_input = next(
+        c
+        for c in page.controls
+        if isinstance(c, ft.TextField) and c.kwargs.get("label") == "Ruta"
+    )
+    adaptador_spy.reset_mock()
+
+    ruta_input.value = str(archivo)
+    botones["Abrir"].on_click(None)
+    adaptador_spy.establecer_contenido.assert_called_once_with("imprimir('abierto')")
+
+    control.value = "imprimir('visible al guardar')"
+    botones["Guardar"].on_click(None)
+    adaptador_spy.obtener_contenido.assert_called_once_with()
+    assert archivo.read_text(encoding="utf-8") == "imprimir('visible al guardar')"
+
+    botones["Nuevo"].on_click(None)
+    adaptador_spy.limpiar.assert_called_once_with()
+    assert control.value == ""
+
+    ruta_input.value = str(archivo)
+    botones["Abrir"].on_click(None)
+    control.value = "imprimir('exactamente visible')"
+    botones["Ejecutar"].on_click(None)
+    ejecutar_spy.assert_called_once_with("imprimir('exactamente visible')")
 
 
 def test_main_bloquea_acciones_cobra_en_readme_de_proyecto_activo(
@@ -521,11 +580,7 @@ def test_main_bloquea_acciones_cobra_en_readme_de_proyecto_activo(
     page = ft.Page()
     idle.main(page)
 
-    entrada = next(
-        c
-        for c in page.controls
-        if isinstance(c, ft.CodeEditor)
-    )
+    entrada = next(c for c in page.controls if isinstance(c, ft.CodeEditor))
     ruta_input = next(
         c
         for c in page.controls
@@ -1038,11 +1093,7 @@ def test_main_acciones_publicas_de_archivo(monkeypatch, tmp_path):
     page = ft.Page()
     idle.main(page)
 
-    entrada = next(
-        c
-        for c in page.controls
-        if isinstance(c, ft.CodeEditor)
-    )
+    entrada = next(c for c in page.controls if isinstance(c, ft.CodeEditor))
     ruta_input = next(
         c
         for c in page.controls
@@ -1238,11 +1289,7 @@ def _preparar_idle_archivos(monkeypatch, tmp_path, workspace_root=None):
     )
     page = ft.Page()
     idle.main(page)
-    entrada = next(
-        c
-        for c in page.controls
-        if isinstance(c, ft.CodeEditor)
-    )
+    entrada = next(c for c in page.controls if isinstance(c, ft.CodeEditor))
     ruta_input = next(
         c
         for c in page.controls
@@ -1989,7 +2036,10 @@ def test_eliminar_carpeta_cancela_confirmacion_si_cambia_ruta_visible(
 
     assert carpeta.exists()
     assert otra_carpeta.exists()
-    assert salida.value == f"Pulsa de nuevo Eliminar carpeta para confirmar: {otra_carpeta}"
+    assert (
+        salida.value
+        == f"Pulsa de nuevo Eliminar carpeta para confirmar: {otra_carpeta}"
+    )
 
     eliminar_carpeta.on_click(None)
 
@@ -2125,9 +2175,7 @@ def test_eliminar_proyecto_exige_nombre_exacto(monkeypatch, tmp_path):
     confirmar.on_click(None)
 
     assert proyecto.exists()
-    assert salida.value == (
-        "El nombre no coincide. Escribe exactamente: proyecto"
-    )
+    assert salida.value == ("El nombre no coincide. Escribe exactamente: proyecto")
     assert page.dialog.open is True
 
     confirmacion_input.value = "proyecto"
@@ -2354,14 +2402,18 @@ def test_eliminar_carpeta_mantiene_bloqueos_de_workspace_y_escape(
     eliminar_carpeta.on_click(None)
 
     assert workspace.exists()
-    assert salida.value == "error: La ruta debe estar dentro del proyecto activo: " + str(
-        workspace / "proyecto"
+    assert (
+        salida.value
+        == "error: La ruta debe estar dentro del proyecto activo: "
+        + str(workspace / "proyecto")
     )
 
     ruta_input.value = "../escape"
     eliminar_carpeta.on_click(None)
 
     assert workspace.exists()
-    assert salida.value == "error: La ruta debe estar dentro del proyecto activo: " + str(
-        workspace / "proyecto"
+    assert (
+        salida.value
+        == "error: La ruta debe estar dentro del proyecto activo: "
+        + str(workspace / "proyecto")
     )
