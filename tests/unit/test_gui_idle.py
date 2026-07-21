@@ -33,6 +33,10 @@ def _fake_flet():
             self.kwargs = _kwargs
             self.value = _kwargs.get("value", "")
 
+    class CodeEditor(TextField):
+        def focus(self):
+            return None
+
     class Text:
         def __init__(self, value="", **_kwargs):
             self.kwargs = _kwargs
@@ -152,6 +156,8 @@ def _fake_flet():
 
     return SimpleNamespace(
         TextField=TextField,
+        CodeEditor=CodeEditor,
+        _code_editor_factory=CodeEditor,
         Text=Text,
         Dropdown=Dropdown,
         Switch=Switch,
@@ -381,7 +387,7 @@ def test_main_handlers_smoke(monkeypatch):
     entrada = next(
         c
         for c in page.controls
-        if isinstance(c, ft.TextField) and c.kwargs.get("multiline")
+        if isinstance(c, ft.CodeEditor)
     )
     selector = next(c for c in page.controls if isinstance(c, ft.Dropdown))
     activar = next(c for c in page.controls if isinstance(c, ft.Switch))
@@ -518,7 +524,7 @@ def test_main_bloquea_acciones_cobra_en_readme_de_proyecto_activo(
     entrada = next(
         c
         for c in page.controls
-        if isinstance(c, ft.TextField) and c.kwargs.get("multiline")
+        if isinstance(c, ft.CodeEditor)
     )
     ruta_input = next(
         c
@@ -1035,7 +1041,7 @@ def test_main_acciones_publicas_de_archivo(monkeypatch, tmp_path):
     entrada = next(
         c
         for c in page.controls
-        if isinstance(c, ft.TextField) and c.kwargs.get("multiline")
+        if isinstance(c, ft.CodeEditor)
     )
     ruta_input = next(
         c
@@ -1235,7 +1241,7 @@ def _preparar_idle_archivos(monkeypatch, tmp_path, workspace_root=None):
     entrada = next(
         c
         for c in page.controls
-        if isinstance(c, ft.TextField) and c.kwargs.get("multiline")
+        if isinstance(c, ft.CodeEditor)
     )
     ruta_input = next(
         c

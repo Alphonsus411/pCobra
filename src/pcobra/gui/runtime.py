@@ -872,6 +872,19 @@ def require_flet() -> Any:
     return ft
 
 
+def require_flet_code_editor() -> Any:
+    """Importa el editor de código de forma diferida para preservar la CLI."""
+
+    try:
+        from flet_code_editor import CodeEditor
+    except ModuleNotFoundError as exc:  # pragma: no cover - validado desde CLI
+        raise RuntimeError(
+            "Falta la dependencia 'flet-code-editor'. "
+            "Ejecuta: pip install flet-code-editor."
+        ) from exc
+    return CodeEditor
+
+
 def _flet_attr(ft: Any, attr_name: str, api_name: str) -> Any:
     """Devuelve una API raíz de Flet o falla con un mensaje homogéneo."""
 
@@ -1026,6 +1039,11 @@ class EditorCodigo:
 
         self._control.on_change = callback
 
+    def registrar_callback_seleccion(self, callback: Any) -> None:
+        """Registra el callback público de cambios de selección."""
+
+        self._control.on_selection_change = callback
+
     def obtener_control(self) -> Any:
         """Devuelve el control visual que debe incorporarse al layout."""
 
@@ -1033,11 +1051,79 @@ class EditorCodigo:
 
 
 def crear_editor_codigo(ft: Any, **kwargs: Any) -> EditorCodigo:
-    """Crea el adaptador del editor compartido por la app mínima y el IDLE."""
+    """Crea el adaptador del ``CodeEditor`` compartido por las interfaces."""
 
-    opciones = {"multiline": True, "expand": True}
+    opciones = {"expand": True}
     opciones.update(kwargs)
-    return EditorCodigo(flet_text_field(ft, **opciones))
+    # La fábrica privada solo permite aislar la extensión en dobles de prueba;
+    # la aplicación real siempre obtiene el control del paquete oficial.
+    fabrica = getattr(ft, "_code_editor_factory", None) or require_flet_code_editor()
+    return EditorCodigo(fabrica(**opciones))
+
+
+def ajustar_indentacion_editor(
+    texto: str,
+    inicio: int,
+    fin: int,
+    direccion: str,
+) -> tuple[str, int, int]:
+    """Aplica un nivel de cuatro espacios y devuelve texto y selección.
+
+    ``direccion`` admite ``"indentar"`` y ``"desindentar"``. Los extremos son
+    offsets de caracteres y pueden venir invertidos. Sin selección, indentar
+    inserta exactamente cuatro espacios. Al desindentar se retiran, por cada
+    línea intersectada, hasta cuatro espacios iniciales o un tabulador literal.
+    """
+
+    if direccion not in {"indentar", "desindentar"}:
+        raise ValueError("direccion debe ser 'indentar' o 'desindentar'")
+    if not 0 <= inicio <= len(texto) or not 0 <= fin <= len(texto):
+        raise ValueError("los extremos deben estar dentro del texto")
+
+    if inicio == fin and direccion == "indentar":
+        return texto[:inicio] + "    " + texto[inicio:], inicio + 4, fin + 4
+
+    menor, mayor = sorted((inicio, fin))
+    inicio_linea = texto.rfind("\n", 0, menor) + 1
+    # Una selección que termina justo al comienzo de una línea no la intersecta.
+    limite = mayor - 1 if mayor > menor and texto[mayor - 1 : mayor] == "\n" else mayor
+    inicios = [inicio_linea]
+    posicion = texto.find("\n", inicio_linea, limite)
+    while posicion != -1:
+        inicios.append(posicion + 1)
+        posicion = texto.find("\n", posicion + 1, limite)
+
+    cambios: list[tuple[int, int, str]] = []
+    for posicion in inicios:
+        if direccion == "indentar":
+            cambios.append((posicion, 0, "    "))
+            continue
+        if texto.startswith("\t", posicion):
+            cambios.append((posicion, 1, ""))
+        else:
+            espacios = len(texto[posicion : posicion + 4]) - len(
+                texto[posicion : posicion + 4].lstrip(" ")
+            )
+            if espacios:
+                cambios.append((posicion, espacios, ""))
+
+    def trasladar(extremo: int) -> int:
+        desplazamiento = 0
+        for posicion, eliminados, agregado in cambios:
+            if extremo < posicion:
+                continue
+            if extremo <= posicion + eliminados:
+                return posicion + desplazamiento + len(agregado)
+            desplazamiento += len(agregado) - eliminados
+        return extremo + desplazamiento
+
+    partes: list[str] = []
+    cursor = 0
+    for posicion, eliminados, agregado in cambios:
+        partes.extend((texto[cursor:posicion], agregado))
+        cursor = posicion + eliminados
+    partes.append(texto[cursor:])
+    return "".join(partes), trasladar(inicio), trasladar(fin)
 
 
 def crear_salida_seleccionable(ft: Any, **kwargs: Any) -> Any:
