@@ -1,37 +1,11 @@
 """Módulo que analiza código Cobra usando agix y genera sugerencias."""
 
-import sys
-import types
-
 try:
-    import agix
-
-    # El paquete ``agix`` está pensado para importarse como ``src.agix`` en
-    # algunos entornos. Registramos este alias para mantener compatibilidad
-    # sin modificar la librería original.
-    sys.modules.setdefault("src", types.ModuleType("src"))
-    sys.modules["src.agix"] = agix
-
-    # Nuevas dependencias internas en agix>=1.4 requieren mapear otros
-    # submódulos con el prefijo ``src.agix`` para mantener compatibilidad.
-    # Estos ``imports`` pueden fallar si el paquete cambia en versiones
-    # futuras, por lo que se ignoran las excepciones.
-    try:  # pragma: no cover - solo se ejecuta si existen los módulos
-        import agix.memory as _agix_memory
-        import agix.memory.experiential as _agix_memory_experiential
-
-        sys.modules["src.agix.memory"] = _agix_memory
-        sys.modules["src.agix.memory.experiential"] = _agix_memory_experiential
-    except Exception:  # pragma: no cover - alias opcionales
-        pass
-
     from agix.emotion.emotion_simulator import PADState
-
-    # Alias similar para los módulos de simulación emocional.
-    sys.modules["src.agix.emotion.emotion_simulator"] = agix.emotion.emotion_simulator
-
     from agix.reasoning.basic import Reasoner
-except ImportError:  # pragma: no cover - depende de agix instalado
+except ModuleNotFoundError as exc:  # pragma: no cover - depende de agix instalado
+    if exc.name != "agix":
+        raise
     Reasoner = None
     PADState = None
 from typing import List
