@@ -49,7 +49,7 @@ def test_import_opcional_sin_agix_muestra_mensaje_claro(monkeypatch):
 
     def bloquear_agix(nombre, *args, **kwargs):
         if nombre == "agix" or nombre.startswith("agix."):
-            raise ImportError("agix bloqueado para la prueba")
+            raise ModuleNotFoundError("No module named 'agix'", name="agix")
         return import_original(nombre, *args, **kwargs)
 
     monkeypatch.setattr(builtins, "__import__", bloquear_agix)
@@ -61,6 +61,31 @@ def test_import_opcional_sin_agix_muestra_mensaje_claro(monkeypatch):
             ImportError, match="dependencia opcional 'agix'.*pip install agix"
         ):
             recargado.generar_sugerencias("var x = 5")
+    finally:
+        monkeypatch.setattr(builtins, "__import__", import_original)
+        importlib.reload(analizador_agix)
+
+
+def test_import_agix_no_oculta_fallos_inesperados(monkeypatch):
+    """Un error interno de la distribución conserva su causa original."""
+    import builtins
+    import importlib
+
+    import_original = builtins.__import__
+    fallo_interno = ModuleNotFoundError(
+        "No module named 'dependencia_interna'", name="dependencia_interna"
+    )
+
+    def romper_dependencia_interna(nombre, *args, **kwargs):
+        if nombre == "agix.emotion.emotion_simulator":
+            raise fallo_interno
+        return import_original(nombre, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", romper_dependencia_interna)
+    try:
+        with pytest.raises(ModuleNotFoundError) as capturado:
+            importlib.reload(analizador_agix)
+        assert capturado.value is fallo_interno
     finally:
         monkeypatch.setattr(builtins, "__import__", import_original)
         importlib.reload(analizador_agix)
