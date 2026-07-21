@@ -41,7 +41,7 @@ cobra run ia.co
 También puedes ejecutar el cuaderno `notebooks/casos_reales/inteligencia_artificial.ipynb` para una versión interactiva.
 
 
-Necesitarás `scikit-learn`; para las sugerencias del plugin `analizador_agix`, instala también la dependencia opcional `agix`.
+Necesitarás `scikit-learn`. Las sugerencias de `analizador_agix` usan `agix`, dependencia oficial incluida en la instalación completa de pCobra. Si trabajas con una instalación parcial o un entorno headless donde no está disponible, instala `agix` explícitamente; los demás flujos de Cobra pueden seguir funcionando sin cargar el motor.
 
 El plugin `analizador_agix` soporta modulación emocional mediante los
 parámetros `placer`, `activacion` y `dominancia`, cada uno en el rango

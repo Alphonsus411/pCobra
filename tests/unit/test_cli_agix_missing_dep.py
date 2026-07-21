@@ -20,5 +20,5 @@ def test_cli_agix_sin_agix(tmp_path, capsys):
         exit_code = cmd.run(args)
     salida = capsys.readouterr().out
     assert exit_code == 1
-    assert "dependencia opcional 'agix'" in salida
+    assert "dependencia oficial 'agix'" in salida
     assert "pip install agix" in salida
