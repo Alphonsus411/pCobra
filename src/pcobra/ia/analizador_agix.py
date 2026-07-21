@@ -19,6 +19,18 @@ MENSAJE_DEPENDENCIA_AGIX = (
 )
 
 
+class DependenciaAGIXNoDisponibleError(ImportError):
+    """Indica que la dependencia opcional AGIX no está disponible.
+
+    Hereda de :class:`ImportError` para conservar el contrato histórico de
+    :func:`generar_sugerencias` con sus consumidores.
+    """
+
+
+class FalloMotorAGIXError(RuntimeError):
+    """Indica que AGIX rechazó una invocación válida del analizador."""
+
+
 class RespuestaAGIXInvalidaError(ValueError):
     """Indica que AGIX devolvió una respuesta incompatible con su contrato."""
 
@@ -72,7 +84,7 @@ def generar_sugerencias(
     proporcionan, usando valores en el rango ``[-1.0, 1.0]``.
     """
     if Reasoner is None:
-        raise ImportError(MENSAJE_DEPENDENCIA_AGIX)
+        raise DependenciaAGIXNoDisponibleError(MENSAJE_DEPENDENCIA_AGIX)
 
     # Las reglas internas validan primero la entrada con Lexer/Parser y solo
     # producen candidatos respaldados por fragmentos que el Parser acepta.
@@ -93,10 +105,13 @@ def generar_sugerencias(
         if valor is not None and not -1.0 <= valor <= 1.0:
             raise ValueError(f"{nombre} debe estar en el rango [-1.0, 1.0]")
 
-    razonador = Reasoner()
-    if all(v is not None for v in (placer, activacion, dominancia)):
-        pad = PADState(placer, activacion, dominancia)
-        razonador.modular_por_emocion(pad)
+    try:
+        razonador = Reasoner()
+        if all(v is not None for v in (placer, activacion, dominancia)):
+            pad = PADState(placer, activacion, dominancia)
+            razonador.modular_por_emocion(pad)
 
-    mejor = razonador.select_best_model(evaluaciones)
+        mejor = razonador.select_best_model(evaluaciones)
+    except (RuntimeError, ValueError) as exc:
+        raise FalloMotorAGIXError(f"Falló el motor AGIX: {exc}") from exc
     return _normalizar_respuesta_agix(mejor)

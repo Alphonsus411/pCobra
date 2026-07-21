@@ -1,9 +1,12 @@
 from argparse import Namespace
 from unittest.mock import create_autospec, patch
 
+import pytest
+
 from pcobra.ia import analizador_agix
 from pcobra.cobra.cli import cli as cli_module
 from pcobra.cobra.cli.commands.agix_cmd import AgixCommand
+from pcobra.ia.analizador_agix import FalloMotorAGIXError
 
 
 def _doble_reasoner():
@@ -107,6 +110,46 @@ def test_cli_agix_pasa_argumentos_de_seleccion_y_muestra_error_concreto(
     assert "evaluaciones rechazadas por AGIX" in salida
     evaluaciones = instancia.select_best_model.call_args.args[0]
     assert all(0.0 <= evaluacion["accuracy"] <= 0.75 for evaluacion in evaluaciones)
-    assert all(
-        evaluacion["interpretability"] >= 0.0 for evaluacion in evaluaciones
+    assert all(evaluacion["interpretability"] >= 0.0 for evaluacion in evaluaciones)
+
+
+def test_cli_agix_muestra_fallo_previsto_del_motor(tmp_path, capsys):
+    archivo = tmp_path / "ejemplo.co"
+    archivo.write_text("var x = 5")
+    args = Namespace(
+        archivo=str(archivo),
+        peso_precision=None,
+        peso_interpretabilidad=None,
+        placer=None,
+        activacion=None,
+        dominancia=None,
     )
+
+    with patch(
+        "pcobra.cobra.cli.commands.agix_cmd.generar_sugerencias",
+        side_effect=FalloMotorAGIXError("servicio temporalmente ocupado"),
+    ):
+        resultado = AgixCommand().run(args)
+
+    assert resultado == 1
+    assert "No se pudo ejecutar el motor AGIX" in capsys.readouterr().out
+
+
+def test_cli_agix_no_oculta_errores_de_programacion(tmp_path):
+    archivo = tmp_path / "ejemplo.co"
+    archivo.write_text("var x = 5")
+    args = Namespace(
+        archivo=str(archivo),
+        peso_precision=None,
+        peso_interpretabilidad=None,
+        placer=None,
+        activacion=None,
+        dominancia=None,
+    )
+
+    with patch(
+        "pcobra.cobra.cli.commands.agix_cmd.generar_sugerencias",
+        side_effect=TypeError("fallo de programación"),
+    ):
+        with pytest.raises(TypeError, match="fallo de programación"):
+            AgixCommand().run(args)

@@ -1,15 +1,22 @@
-from argparse import ArgumentParser
 from pathlib import Path
-from typing import Any, Optional, NoReturn
+from typing import Any
+from pcobra.cobra.core import LexerError, ParserError
 from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
 from pcobra.cobra.cli.utils.validators import validar_archivo_existente
-from pcobra.ia.analizador_agix import generar_sugerencias
+from pcobra.ia.analizador_agix import (
+    DependenciaAGIXNoDisponibleError,
+    FalloMotorAGIXError,
+    RespuestaAGIXInvalidaError,
+    generar_sugerencias,
+)
+
 
 class AgixCommand(BaseCommand):
     """Genera sugerencias para código Cobra usando la dependencia opcional agix."""
+
     name = "agix"
 
     def register_subparser(self, subparsers: Any) -> CustomArgumentParser:
@@ -27,24 +34,20 @@ class AgixCommand(BaseCommand):
                 "Analiza un archivo Cobra, sugiere mejoras y permite modulación emocional"
             ),
         )
-        parser.add_argument(
-            "archivo", 
-            help=_("Ruta al archivo a analizar"),
-            type=Path
-        )
+        parser.add_argument("archivo", help=_("Ruta al archivo a analizar"), type=Path)
         parser.add_argument(
             "--peso-precision",
             type=float,
             default=None,
             help=_("Factor de ponderación para la precisión (debe ser positivo)"),
-            metavar="PESO"
+            metavar="PESO",
         )
         parser.add_argument(
             "--peso-interpretabilidad",
             type=float,
             default=None,
             help=_("Factor para la interpretabilidad (debe ser positivo)"),
-            metavar="PESO"
+            metavar="PESO",
         )
         parser.add_argument(
             "--placer",
@@ -124,8 +127,25 @@ class AgixCommand(BaseCommand):
             for sugerencia in sugerencias:
                 mostrar_info(str(sugerencia))
             return 0
-        except Exception as e:
-            mostrar_error(_("Error al generar sugerencias: {error}").format(error=str(e)))
+        except DependenciaAGIXNoDisponibleError as e:
+            mostrar_error(_("AGIX no está disponible: {error}").format(error=str(e)))
+            return 1
+        except RespuestaAGIXInvalidaError as e:
+            mostrar_error(
+                _("AGIX devolvió una respuesta inválida: {error}").format(error=str(e))
+            )
+            return 1
+        except (LexerError, ParserError, ValueError) as e:
+            mostrar_error(
+                _("El código o los parámetros no son válidos: {error}").format(
+                    error=str(e)
+                )
+            )
+            return 1
+        except FalloMotorAGIXError as e:
+            mostrar_error(
+                _("No se pudo ejecutar el motor AGIX: {error}").format(error=str(e))
+            )
             return 1
 
     def _leer_archivo(self, archivo: Path) -> str:
@@ -155,9 +175,13 @@ class AgixCommand(BaseCommand):
             str: Mensaje de error localizado
         """
         if isinstance(error, PermissionError):
-            return _("No hay permisos para leer el archivo '{archivo}'").format(archivo=archivo)
+            return _("No hay permisos para leer el archivo '{archivo}'").format(
+                archivo=archivo
+            )
         elif isinstance(error, UnicodeDecodeError):
-            return _("Error al decodificar el archivo '{archivo}'").format(archivo=archivo)
+            return _("Error al decodificar el archivo '{archivo}'").format(
+                archivo=archivo
+            )
         return _("Error al leer el archivo '{archivo}': {error}").format(
             archivo=archivo, error=str(error)
         )
