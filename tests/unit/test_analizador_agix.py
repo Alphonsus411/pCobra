@@ -21,10 +21,12 @@ def _doble_pad_state():
 
 
 def test_generar_sugerencias_variable_descriptiva():
-    """Verifica que se retorne la sugerencia adecuada."""
+    """Normaliza la respuesta real documentada por AGIX 1.11 a ``list[str]``."""
     reasoner_cls, instancia_falsa = _doble_reasoner()
     instancia_falsa.select_best_model.return_value = {
-        "reason": "Usar nombres descriptivos para variables"
+        "name": "nombres descriptivos",
+        "accuracy": 0.9,
+        "reason": "Usar nombres descriptivos para variables",
     }
     with patch.object(analizador_agix, "Reasoner", reasoner_cls):
         sugerencias = analizador_agix.generar_sugerencias("var x = 5")
@@ -34,10 +36,32 @@ def test_generar_sugerencias_variable_descriptiva():
     assert sugerencias == ["Usar nombres descriptivos para variables"]
 
 
+def test_generar_sugerencias_rechaza_respuesta_agix_incompleta():
+    """Una respuesta sin campos obligatorios se traduce sin filtrar el objeto."""
+    reasoner_cls, instancia = _doble_reasoner()
+    instancia.select_best_model.return_value = {
+        "name": "nombres descriptivos",
+        "accuracy": 0.9,
+    }
+
+    with patch.object(analizador_agix, "Reasoner", reasoner_cls):
+        with pytest.raises(
+            analizador_agix.RespuestaAGIXInvalidaError,
+            match="AGIX devolvió una respuesta inválida.*campos obligatorios",
+        ) as capturado:
+            analizador_agix.generar_sugerencias("var x = 5")
+
+    assert isinstance(capturado.value.__cause__, KeyError)
+
+
 def test_generar_sugerencias_modulacion_emocional():
     reasoner_cls, instancia = _doble_reasoner()
     pad_mock = _doble_pad_state()
-    instancia.select_best_model.return_value = {"reason": "Usar nombres descriptivos"}
+    instancia.select_best_model.return_value = {
+        "name": "nombres descriptivos",
+        "accuracy": 0.9,
+        "reason": "Usar nombres descriptivos",
+    }
     with patch.object(analizador_agix, "Reasoner", reasoner_cls):
         with patch.object(analizador_agix, "PADState", pad_mock):
             analizador_agix.generar_sugerencias(
@@ -216,8 +240,8 @@ def test_sugerencia_principal_referencia_regla_interna_trazable():
     assert "§3." in sugerencias[0]
 
 
-def test_generar_sugerencias_pasa_argumentos_de_seleccion_y_propaga_error_agix():
-    """Los pesos llegan a AGIX y un fallo concreto del motor no se transforma."""
+def test_generar_sugerencias_pasa_argumentos_y_propaga_excepcion_oficial_agix():
+    """Los pesos llegan a AGIX y ``ValueError`` del motor no se transforma."""
     reasoner_cls, instancia = _doble_reasoner()
     error_agix = ValueError("evaluaciones rechazadas por AGIX")
     instancia.select_best_model.side_effect = error_agix
