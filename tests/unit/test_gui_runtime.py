@@ -96,12 +96,68 @@ def test_crear_editor_codigo_encapsula_el_control_visual(monkeypatch) -> None:
 @pytest.mark.parametrize(
     ("texto", "inicio", "fin", "direccion", "esperado"),
     [
-        ("á🐍", 1, 1, "indentar", ("á    🐍", 5, 5)),
-        ("uno\r\ndos\r\n", 0, 8, "indentar", ("    uno\r\n    dos\r\n", 4, 16)),
-        ("uno\n\ndos", 0, 8, "indentar", ("    uno\n    \n    dos", 4, 20)),
-        ("    uno\n  dos\n\ttres", 0, 19, "desindentar", ("uno\ndos\ntres", 0, 12)),
-        (" x\ntexto", 0, 8, "desindentar", ("x\ntexto", 0, 7)),
-        ("abc\ndef", 7, 0, "indentar", ("    abc\n    def", 15, 4)),
+        pytest.param(
+            "abc", 1, 1, "indentar", ("a    bc", 5, 5), id="cursor-sin-seleccion"
+        ),
+        pytest.param(
+            "uno\ndos", 4, 4, "indentar", ("uno\n    dos", 8, 8), id="inicio-de-linea"
+        ),
+        pytest.param("uno\n", 4, 4, "indentar", ("uno\n    ", 8, 8), id="linea-vacia"),
+        pytest.param(
+            "uno\ndos",
+            0,
+            3,
+            "indentar",
+            ("    uno\ndos", 4, 7),
+            id="una-linea-seleccionada",
+        ),
+        pytest.param(
+            "uno\ndos",
+            0,
+            7,
+            "indentar",
+            ("    uno\n    dos", 4, 15),
+            id="seleccion-multilinea-lf",
+        ),
+        pytest.param("á🐍", 1, 1, "indentar", ("á    🐍", 5, 5), id="unicode"),
+        pytest.param(
+            "uno\r\ndos\r\n",
+            0,
+            8,
+            "indentar",
+            ("    uno\r\n    dos\r\n", 4, 16),
+            id="seleccion-multilinea-crlf",
+        ),
+        pytest.param(
+            "uno\n\ndos",
+            0,
+            8,
+            "indentar",
+            ("    uno\n    \n    dos", 4, 20),
+            id="linea-vacia-seleccionada",
+        ),
+        pytest.param(
+            "  uno", 0, 5, "desindentar", ("uno", 0, 3), id="espacios-parciales"
+        ),
+        pytest.param(
+            "\tuno", 0, 4, "desindentar", ("uno", 0, 3), id="tabulador-literal"
+        ),
+        pytest.param(
+            "    uno\n  dos\n\ttres",
+            0,
+            19,
+            "desindentar",
+            ("uno\ndos\ntres", 0, 12),
+            id="desindentar-multilinea-mixta",
+        ),
+        pytest.param(
+            "abc\ndef",
+            7,
+            0,
+            "indentar",
+            ("    abc\n    def", 15, 4),
+            id="seleccion-invertida",
+        ),
     ],
 )
 def test_ajustar_indentacion_editor(texto, inicio, fin, direccion, esperado) -> None:
