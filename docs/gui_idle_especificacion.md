@@ -9,6 +9,27 @@ Esta especificación define el alcance funcional del IDLE gráfico Cobra (`pcobr
 - No es un IDE completo: prioriza flujos simples, verificables y seguros para trabajo local con archivos Cobra.
 - El selector de transpilación del IDLE solo puede mostrar los targets públicos canónicos: `python`, `javascript` y `rust`. No debe exponer aliases, targets legacy ni backends experimentales.
 
+## Contrato del editor
+
+- El control visual escogido es `CodeEditor` de `flet-code-editor` 0.86.1 con
+  Flet 0.86.1; ambas versiones están fijadas como dependencias del proyecto.
+- `runtime.EditorCodigo` es la frontera entre el control y el IDLE. `idle.py` no
+  debe leer ni escribir directamente atributos específicos de `CodeEditor`, sino
+  usar el adaptador para contenido, limpieza, foco y callbacks.
+- Un nivel de indentación equivale exactamente a cuatro espacios.
+- Tab sin selección inserta un nivel en el cursor. Con selección multilínea,
+  Tab indenta todas las líneas intersectadas y conserva una selección equivalente
+  sobre el texto resultante. Si el extremo final está justo al comienzo de otra
+  línea, esa última línea queda fuera de la operación.
+- Shift+Tab desindenta todas las líneas intersectadas: elimina hasta cuatro
+  espacios iniciales o un tabulador literal por línea y nunca elimina texto no
+  indentado. Debe conservar el sentido de selecciones invertidas y funcionar con
+  finales LF y CRLF.
+- El control procesa Tab y Shift+Tab localmente. No se debe añadir además un
+  manejador global de teclado en `Page`, pues una pulsación podría aplicarse dos
+  veces. `runtime.ajustar_indentacion_editor()` define el contrato puro para las
+  pruebas, no un segundo manejador conectado al control.
+
 ## Workspace
 
 - El workspace por defecto es `~/CobraProjects`.
@@ -131,6 +152,39 @@ La seguridad de rutas existente se conserva para todos los tipos soportados: se 
 | POC-13D | Abrir, editar, guardar y recargar archivos Docker (`Dockerfile`, `Dockerfile.*`) y de ignorados (`.gitignore`, `.dockerignore`) sin invocar `Lexer` ni `Parser`. | 🟢 Verde |
 | POC-13E | Abrir, editar, guardar y recargar `.env.example` sin invocar `Lexer` ni `Parser`. | 🟢 Verde |
 | POC-13F | Bloquear **Ejecutar**, **Tokens**, **AST**, **Sugerencias del Libro** y **Corrección** para todo archivo que no sea `.cobra` ni `.co`, conservando las restricciones de rutas existentes. | 🟢 Verde |
+
+## Matriz de validación manual reproducible
+
+Una fila solo puede cambiar a **Verificada** después de ejecutar todos los pasos
+en una sesión gráfica real de ese mismo sistema operativo y de anotar las
+versiones obtenidas, no las meramente previstas. Las pruebas unitarias y un
+entorno sin pantalla no sustituyen esta validación.
+
+Procedimiento por fila:
+
+1. Crear un entorno limpio e instalar el proyecto; registrar `python --version`
+   y las versiones devueltas para `flet` y `flet-code-editor` por
+   `python -c "from importlib.metadata import version; print(version('flet')); print(version('flet-code-editor'))"`.
+2. Ejecutar `cobra gui`, crear o abrir un proyecto y un archivo `.cobra` con
+   `uno` y `dos` en líneas separadas.
+3. Comprobar Tab con el cursor (inserta cuatro espacios), seleccionar ambas
+   líneas y comprobar Tab (indenta ambas) y Shift+Tab (revierte un nivel sin
+   borrar texto). Confirmar que el editor conserva el foco tras cada acción.
+4. Abrir un archivo UTF-8 existente, modificarlo, guardarlo y verificar el
+   contenido en disco; limpiar mediante **Nuevo** y comprobar editor y ruta
+   vacíos; volver a abrirlo, modificar el archivo desde fuera y pulsar
+   **Recargar**.
+5. Abrir un `.cobra` válido, pulsar **Ejecutar** y comprobar que la salida
+   esperada aparece. Registrar cada resultado como `Pasa` o `Falla`, incluyendo
+   una observación para todo fallo.
+
+| Sistema operativo | Python | Flet | Editor (`flet-code-editor`) | Tab | Selección multilínea | Shift+Tab | Foco | Abrir | Guardar | Limpiar | Recargar | Ejecutar | Estado |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Ubuntu 24.04.4 LTS (entorno de documentación, sin sesión gráfica) | 3.12.13 | 0.28.3 instalada en el entorno; objetivo del proyecto 0.86.1 | No instalado; objetivo del proyecto 0.86.1 | No ejecutado | No ejecutado | No ejecutado | No ejecutado | No ejecutado | No ejecutado | No ejecutado | No ejecutado | No ejecutado | No verificada |
+
+No se incluyen filas de Windows ni macOS porque no existe evidencia registrada
+de ejecución manual en esas plataformas. Deben añadirse solo después de aplicar
+el procedimiento completo, con sus versiones y resultados reales.
 
 ## Limitaciones conocidas
 

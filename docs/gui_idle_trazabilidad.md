@@ -4,6 +4,8 @@ Esta matriz documenta únicamente comportamiento existente en el IDLE gráfico c
 
 | Funcionalidad visible | Archivo de implementación | Función/handler | Dependencia Lexer/Parser | Documentación relacionada | Estado |
 | --- | --- | --- | --- | --- | --- |
+| Editor de código, contenido y foco | `src/pcobra/gui/runtime.py` / `src/pcobra/gui/idle.py` | `crear_editor_codigo()` crea `CodeEditor` y devuelve `EditorCodigo`; `idle.py` usa las operaciones de contenido, limpieza y callbacks del adaptador, que además expone `solicitar_foco()` sin filtrar la API del control. | No usa Lexer/Parser para editar. La ejecución y el análisis conservan sus validaciones independientes. | `docs/gui_idle_especificacion.md`, “Contrato del editor”. | Implementado con `flet==0.86.1` y `flet-code-editor==0.86.1`; imports diferidos. |
+| Tab, selección multilínea y Shift+Tab | `flet-code-editor` / `src/pcobra/gui/runtime.py` | `CodeEditor` procesa localmente Tab y Shift+Tab; `ajustar_indentacion_editor()` especifica cuatro espacios, líneas intersectadas, desindentación y ajuste de selección. No hay handler global duplicado en `idle.py`. | No usa Lexer/Parser. | `docs/gui_idle_especificacion.md`, “Contrato del editor” y “Matriz de validación manual reproducible”. | Contrato cubierto programáticamente; validación manual de plataforma pendiente. |
 | Nuevo | `src/pcobra/gui/idle.py` / `src/pcobra/gui/runtime.py` | `nuevo_handler` → `crear_archivo_nuevo_en_editor()` → `nuevo_archivo()` | No usa Lexer/Parser; solo reinicia `GuiFileState` y el contenido del editor. | `docs/LIBRO_PROGRAMACION_COBRA.md`, sección 10.1, “Gestión de archivos / Nuevo”. | Implementado. |
 | Abrir | `src/pcobra/gui/idle.py` / `src/pcobra/gui/runtime.py` | `abrir_handler` → `cargar_archivo()` → `abrir_archivo_desde_ruta()` / `cargar_archivo_desde_arbol()` | No usa Lexer/Parser; valida ruta/sandbox y, desde el árbol, extensión Cobra antes de leer. | `docs/LIBRO_PROGRAMACION_COBRA.md`, sección 10.1, “Gestión de archivos / Abrir” y “Árbol de directorios”. | Implementado. |
 | Guardar | `src/pcobra/gui/idle.py` / `src/pcobra/gui/runtime.py` | `guardar_handler` → `guardar_archivo_activo()` → `guardar_archivo_en_estado()` | No usa Lexer/Parser; escribe el contenido normalizado del editor tras validar la ruta activa. | `docs/LIBRO_PROGRAMACION_COBRA.md`, sección 10.1, “Gestión de archivos / Guardar”. | Implementado. |
@@ -44,6 +46,21 @@ capacidades del archivo activo antes de delegar en los handlers Cobra.
 ## Especificación normativa
 
 La especificación consolidada de acciones soportadas, funciones runtime, validación previa con `Lexer`/`Parser` y restricción del selector de transpilación a `python`, `javascript` y `rust` está en [`docs/gui_idle_especificacion.md`](gui_idle_especificacion.md).
+
+## Evidencia de plataforma
+
+La lógica del adaptador y la transformación de indentación tienen cobertura
+unitaria, pero no hay una sesión gráfica manual completa registrada. El entorno
+usado para actualizar esta documentación es Ubuntu 24.04.4 LTS con Python
+3.12.13; contiene Flet 0.28.3 y no contiene `flet-code-editor`, por lo que no
+cumple las versiones fijadas ni permite validar visualmente el control. En
+consecuencia, Ubuntu queda como **no verificada** y no se declara compatibilidad
+con ella. Tampoco se declara compatibilidad con Windows o macOS sin evidencia.
+
+La matriz y el procedimiento reproducible que exigen resultados explícitos de
+Tab, selección multilínea, Shift+Tab, foco, abrir, guardar, limpiar, recargar y
+ejecutar están en
+[`docs/gui_idle_especificacion.md`](gui_idle_especificacion.md#matriz-de-validación-manual-reproducible).
 
 ## Auditoría CI de reglas derivadas del Libro
 
