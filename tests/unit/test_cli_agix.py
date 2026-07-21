@@ -24,7 +24,11 @@ def test_cli_agix_generates_suggestion(tmp_path, capsys):
         dominancia=None,
     )
     reasoner_cls, instancia = _doble_reasoner()
-    instancia.select_best_model.return_value = {"reason": "Usar nombres descriptivos"}
+    instancia.select_best_model.return_value = {
+        "name": "nombres descriptivos",
+        "accuracy": 0.9,
+        "reason": "Usar nombres descriptivos",
+    }
     with patch("pcobra.ia.analizador_agix.Reasoner", reasoner_cls):
         resultado = cmd.run(args)
     salida = capsys.readouterr().out.strip()
@@ -39,7 +43,11 @@ def test_cli_agix_pad_values(tmp_path, capsys):
     archivo.write_text("var x = 5")
     reasoner_cls, instancia = _doble_reasoner()
     pad_mock = create_autospec(analizador_agix.PADState, spec_set=True)
-    instancia.select_best_model.return_value = {"reason": "Usar nombres descriptivos"}
+    instancia.select_best_model.return_value = {
+        "name": "nombres descriptivos",
+        "accuracy": 0.9,
+        "reason": "Usar nombres descriptivos",
+    }
     with patch("pcobra.ia.analizador_agix.Reasoner", reasoner_cls):
         with patch("pcobra.ia.analizador_agix.PADState", pad_mock):
             with patch.object(cli_module, "setup_gettext", return_value=lambda s: s):

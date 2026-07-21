@@ -8,7 +8,7 @@ except ModuleNotFoundError as exc:  # pragma: no cover - depende de agix instala
         raise
     Reasoner = None
     PADState = None
-from typing import List
+from typing import Dict, List, Optional
 
 from pcobra.ia.reglas_libro_programacion import construir_candidatos_desde_reglas
 
@@ -16,6 +16,42 @@ MENSAJE_DEPENDENCIA_AGIX = (
     "La dependencia opcional 'agix' no está instalada o no se pudo importar. "
     "Instálala con 'pip install agix' para activar las sugerencias de IA."
 )
+
+
+class RespuestaAGIXInvalidaError(ValueError):
+    """Indica que AGIX devolvió una respuesta incompatible con su contrato."""
+
+
+def _normalizar_respuesta_agix(
+    respuesta: Dict[str, Optional[str | float]],
+) -> List[str]:
+    """Convierte el resultado documentado por AGIX 1.11 al contrato de Cobra."""
+    try:
+        if not isinstance(respuesta, dict):
+            raise TypeError("la respuesta no es un diccionario")
+
+        faltantes = {"name", "accuracy", "reason"} - respuesta.keys()
+        if faltantes:
+            raise KeyError(", ".join(sorted(faltantes)))
+
+        nombre = respuesta["name"]
+        precision = respuesta["accuracy"]
+        razon = respuesta["reason"]
+        if nombre is not None and not isinstance(nombre, str):
+            raise TypeError("'name' debe ser texto o None")
+        if precision is not None and (
+            isinstance(precision, bool) or not isinstance(precision, (int, float))
+        ):
+            raise TypeError("'accuracy' debe ser un número o None")
+        if not isinstance(razon, str):
+            raise TypeError("'reason' debe ser texto")
+    except (KeyError, TypeError) as exc:
+        raise RespuestaAGIXInvalidaError(
+            "AGIX devolvió una respuesta inválida: faltan campos obligatorios "
+            "o sus tipos no coinciden con el contrato de AGIX 1.11."
+        ) from exc
+
+    return [razon]
 
 
 def generar_sugerencias(
@@ -62,4 +98,4 @@ def generar_sugerencias(
         razonador.modular_por_emocion(pad)
 
     mejor = razonador.select_best_model(evaluaciones)
-    return [mejor["reason"]]
+    return _normalizar_respuesta_agix(mejor)
