@@ -74,7 +74,7 @@ def test_generar_sugerencias_modulacion_emocional():
 def test_generar_sugerencias_sin_agix():
     with patch.object(analizador_agix, "Reasoner", None):
         with pytest.raises(
-            ImportError, match="dependencia opcional 'agix'.*pip install agix"
+            ImportError, match="dependencia oficial 'agix'.*pip install agix"
         ):
             analizador_agix.generar_sugerencias("var x = 5")
 
@@ -97,7 +97,7 @@ def test_import_opcional_sin_agix_muestra_mensaje_claro(monkeypatch):
     try:
         assert recargado.Reasoner is None
         with pytest.raises(
-            ImportError, match="dependencia opcional 'agix'.*pip install agix"
+            ImportError, match="dependencia oficial 'agix'.*pip install agix"
         ):
             recargado.generar_sugerencias("var x = 5")
     finally:

@@ -13,8 +13,9 @@ from typing import Dict, List, Optional
 from pcobra.ia.reglas_libro_programacion import construir_candidatos_desde_reglas
 
 MENSAJE_DEPENDENCIA_AGIX = (
-    "La dependencia opcional 'agix' no está instalada o no se pudo importar. "
-    "Instálala con 'pip install agix' para activar las sugerencias de IA."
+    "La dependencia oficial 'agix' no está instalada o no se pudo importar. "
+    "Instala la distribución completa de pcobra o ejecuta 'pip install agix' "
+    "para activar las sugerencias de IA."
 )
 
 

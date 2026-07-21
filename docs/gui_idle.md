@@ -31,7 +31,7 @@ El flujo funcional de la interfaz es:
 1. **Editor Cobra:** el usuario escribe o carga código Cobra en el editor principal.
 2. **Lexer:** antes de mostrar tokens, AST, sugerencias o ejecutar acciones que necesitan análisis, el contenido se tokeniza con el lexer del proyecto.
 3. **Parser:** los tokens pasan por el parser para construir la representación sintáctica que consumen las acciones posteriores.
-4. **Ejecución, transpilación o sugerencias:** con el código validado por el lexer y el parser, la GUI puede interpretar el programa, transpilarlo a un backend público o pedir sugerencias al motor IA opcional.
+4. **Ejecución, transpilación o sugerencias:** con el código validado por el lexer y el parser, la GUI puede interpretar el programa, transpilarlo a un backend público o pedir sugerencias al motor IA oficial cuando esté disponible.
 
 La barra de ejecución permite:
 
@@ -39,7 +39,7 @@ La barra de ejecución permite:
 - **Transpilar:** al activar el switch `Transpilar`, genera código únicamente para los backends públicos disponibles: `python`, `javascript` y `rust`.
 - **Tokens:** muestra la tokenización del código actual.
 - **AST:** muestra la representación del árbol sintáctico.
-- **Sugerencias del Libro:** valida primero errores léxicos/sintácticos con `runtime.analizar_codigo`, que ejecuta `Lexer` y `Parser` como punto único de tokenización/parseo para la GUI. Solo si ambos pasos terminan sin errores, `runtime.generar_reporte_sugerencias` consulta el motor IA opcional y muestra sugerencias.
+- **Sugerencias del Libro:** valida primero errores léxicos/sintácticos con `runtime.analizar_codigo`, que ejecuta `Lexer` y `Parser` como punto único de tokenización/parseo para la GUI. Solo si ambos pasos terminan sin errores, `runtime.generar_reporte_sugerencias` consulta el motor IA oficial, si está disponible, y muestra sugerencias.
 
 Estos flujos se crean desde helpers de `runtime.py`: `crear_handler_ejecucion`, `crear_handler_tokens`, `crear_handler_ast` y `crear_handler_sugerencias`. Las acciones nuevas que quieran proponer correcciones tipográficas o sugerencias automáticas deben reutilizar `generar_reporte_sugerencias` —o una fachada equivalente que conserve el mismo prechequeo con `Lexer` y `Parser`— en lugar de llamar directamente al motor IA.
 
@@ -67,10 +67,10 @@ El árbol muestra directorios y archivos de texto del proyecto activo clasificad
 
 Al seleccionar un archivo visible, el IDLE llama a `runtime.cargar_archivo_desde_arbol`, comprueba que sea un archivo de texto soportado y reutiliza el mismo flujo de apertura para cargarlo en el editor. Los archivos auxiliares se pueden abrir, editar, guardar, recargar y borrar como texto dentro del proyecto activo, pero no participan en el análisis Cobra. Solo los archivos Cobra habilitan **Ejecutar**, **Tokens**, **AST**, **Sugerencias del Libro** y **Corrección**; por tanto, el `Lexer` y el `Parser` se usan explícitamente solo con archivos Cobra.
 
-## Dependencias opcionales y degradación
+## Disponibilidad de dependencias y degradación
 
 - **Flet:** Flet es una dependencia opcional de la GUI. Importar módulos CLI no debe requerir Flet; abrir el IDLE sí requiere instalarlo. Si Flet no está disponible, la aplicación CLI debe poder seguir funcionando y el intento de iniciar la GUI debe informar la dependencia faltante en lugar de romper flujos no gráficos.
-- **Motor IA de sugerencias:** las sugerencias dependen del motor IA declarado por el proyecto (`agix`). Si la dependencia opcional no está disponible, el botón de sugerencias aparece deshabilitado o muestra el motivo por el que no se pueden generar recomendaciones. La ejecución, los tokens, el AST, la transpilación y las acciones de archivo no deben depender de ese motor IA.
+- **Motor IA de sugerencias:** `agix` es una dependencia oficial declarada en `[project].dependencies`, no un extra opcional. Su ausencia solo se tolera para instalaciones parciales o entornos headless: en ese caso, el botón de sugerencias aparece deshabilitado o muestra el motivo y la forma de instalarla. La ejecución, los tokens, el AST, la transpilación y las acciones de archivo siguen disponibles porque no deben importar el motor hasta que se soliciten sugerencias.
 
 ## Empaquetar proyectos desde el IDLE
 

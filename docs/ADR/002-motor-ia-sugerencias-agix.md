@@ -11,9 +11,11 @@ Durante la revisión de cambios potenciales del motor IA apareció el nombre
 código vigente muestra que Cobra no usa `agi-core` como dependencia declarada ni
 como API pública de integración:
 
-- `pyproject.toml` declara `agix>=1.9.0,<2` como dependencia del proyecto.
+- `pyproject.toml` declara `agix>=1.11.0,<1.12` dentro de
+  `[project].dependencies`, por lo que forma parte de la distribución oficial y
+  no de un extra opcional.
 - `src/pcobra/gui/runtime.py` define `CANONICAL_SUGGESTION_ENGINE = "agix"` y
-  usa ese nombre para la detección liviana del motor opcional.
+  usa ese nombre para detectar de forma liviana si el motor está disponible.
 - `src/pcobra/ia/analizador_sugerencias.py` es la fachada pública estable y
   delega en `src/pcobra/ia/analizador_agix.py`.
 - `src/pcobra/ia/analizador_agix.py` importa API pública de `agix`, en concreto
@@ -36,6 +38,14 @@ No se debe cambiar `CANONICAL_SUGGESTION_ENGINE = "agix"` ni añadir detección,
 imports o dependencias de `agi-core` sin una ADR nueva que apruebe una migración
 o una integración paralela.
 
+`agix` debe permanecer en `[project].dependencies`: la instalación completa de
+pCobra lo instala como dependencia oficial y no se crea un extra para el motor.
+La carga continúa siendo diferida para tolerar instalaciones parciales o
+entornos headless donde el import no sea posible. Esa tolerancia operativa no
+convierte la dependencia en opcional: al solicitar sugerencias, la fachada debe
+emitir un error claro con instrucciones de instalación, mientras los flujos que
+no usan IA pueden continuar.
+
 ## API pública usada por Cobra
 
 La integración vigente con `agix` usa esta superficie mínima:
@@ -56,6 +66,9 @@ usando esa fachada bajo demanda después de validar el código con `Lexer` y
 
 - `agix` es el único motor soportado para sugerencias mientras esta ADR esté
   vigente.
+- `agix` permanece como dependencia oficial en `[project].dependencies`; solo
+  su disponibilidad en instalaciones parciales o headless se trata de forma
+  tolerante hasta que se intenta usar el servicio.
 - `pcobra.ia.analizador_sugerencias` es la fachada estable para consumidores
   internos y externos del paquete Cobra.
 - `pcobra.ia.analizador_agix` puede contener shims o alias técnicos necesarios
@@ -86,7 +99,8 @@ cubrir como mínimo:
 
 - Se evita introducir una dependencia externa no validada solo por similitud de
   nombre.
-- La GUI conserva una detección liviana y coherente con la dependencia real.
+- La GUI conserva una detección liviana y coherente con la dependencia oficial,
+  sin bloquear entornos parciales o headless que no solicitan sugerencias.
 - Los usuarios reciben instrucciones consistentes: instalar `agix` para activar
   sugerencias IA.
 - Cualquier cambio real de motor queda bloqueado hasta documentar su contrato,
