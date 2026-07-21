@@ -59,24 +59,24 @@ def _fake_flet_buttons():
     return SimpleNamespace(ElevatedButton=ElevatedButton)
 
 
-def test_crear_editor_codigo_encapsula_el_control_visual() -> None:
+def test_crear_editor_codigo_encapsula_el_control_visual(monkeypatch) -> None:
     callback = object()
+    callback_seleccion = object()
 
-    class TextField:
+    class CodeEditor:
         def __init__(self, **kwargs):
             self.value = kwargs.get("value")
-            self.multiline = kwargs["multiline"]
             self.expand = kwargs["expand"]
             self.on_change = None
+            self.on_selection_change = None
             self.focos = 0
 
         def focus(self):
             self.focos += 1
             return "foco solicitado"
 
-    editor = runtime.crear_editor_codigo(
-        SimpleNamespace(TextField=TextField), value=None
-    )
+    monkeypatch.setattr(runtime, "require_flet_code_editor", lambda: CodeEditor)
+    editor = runtime.crear_editor_codigo(SimpleNamespace(), value=None)
     control = editor.obtener_control()
 
     assert editor.obtener_contenido() == ""
@@ -84,12 +84,36 @@ def test_crear_editor_codigo_encapsula_el_control_visual() -> None:
     assert editor.obtener_contenido() == "imprimir('Hola')"
     editor.registrar_callback_cambios(callback)
     assert control.on_change is callback
+    editor.registrar_callback_seleccion(callback_seleccion)
+    assert control.on_selection_change is callback_seleccion
     assert editor.solicitar_foco() == "foco solicitado"
     assert control.focos == 1
     editor.limpiar()
     assert editor.obtener_contenido() == ""
-    assert control.multiline is True
     assert control.expand is True
+
+
+@pytest.mark.parametrize(
+    ("texto", "inicio", "fin", "direccion", "esperado"),
+    [
+        ("á🐍", 1, 1, "indentar", ("á    🐍", 5, 5)),
+        ("uno\r\ndos\r\n", 0, 8, "indentar", ("    uno\r\n    dos\r\n", 4, 16)),
+        ("uno\n\ndos", 0, 8, "indentar", ("    uno\n    \n    dos", 4, 20)),
+        ("    uno\n  dos\n\ttres", 0, 19, "desindentar", ("uno\ndos\ntres", 0, 12)),
+        (" x\ntexto", 0, 8, "desindentar", ("x\ntexto", 0, 7)),
+        ("abc\ndef", 7, 0, "indentar", ("    abc\n    def", 15, 4)),
+    ],
+)
+def test_ajustar_indentacion_editor(texto, inicio, fin, direccion, esperado) -> None:
+    assert runtime.ajustar_indentacion_editor(texto, inicio, fin, direccion) == esperado
+
+
+def test_ajustar_indentacion_editor_no_elimina_texto_no_indentado() -> None:
+    assert runtime.ajustar_indentacion_editor("texto", 2, 2, "desindentar") == (
+        "texto",
+        2,
+        2,
+    )
 
 
 def test_boton_sugerencias_se_habilita_si_motor_canonico_disponible(monkeypatch):
