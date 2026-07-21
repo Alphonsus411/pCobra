@@ -240,19 +240,19 @@ def test_sugerencia_principal_referencia_regla_interna_trazable():
     assert "§3." in sugerencias[0]
 
 
-def test_generar_sugerencias_pasa_argumentos_y_propaga_excepcion_oficial_agix():
-    """Los pesos llegan a AGIX y ``ValueError`` del motor no se transforma."""
+def test_generar_sugerencias_pasa_argumentos_y_clasifica_fallo_oficial_agix():
+    """Los pesos llegan a AGIX y su rechazo se clasifica como fallo del motor."""
     reasoner_cls, instancia = _doble_reasoner()
     error_agix = ValueError("evaluaciones rechazadas por AGIX")
     instancia.select_best_model.side_effect = error_agix
 
     with patch.object(analizador_agix, "Reasoner", reasoner_cls):
-        with pytest.raises(ValueError) as capturado:
+        with pytest.raises(analizador_agix.FalloMotorAGIXError) as capturado:
             analizador_agix.generar_sugerencias(
                 "var x = 5", peso_precision=0.5, peso_interpretabilidad=2.0
             )
 
-    assert capturado.value is error_agix
+    assert capturado.value.__cause__ is error_agix
     evaluaciones = instancia.select_best_model.call_args.args[0]
     assert all(0.0 <= evaluacion["accuracy"] <= 0.5 for evaluacion in evaluaciones)
     assert all(
