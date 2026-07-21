@@ -10,6 +10,11 @@ except ModuleNotFoundError as exc:  # pragma: no cover - depende de agix instala
     PADState = None
 from typing import Dict, List, Optional
 
+from pcobra.ia.excepciones_agix import (
+    DependenciaAGIXNoDisponibleError,
+    FalloMotorAGIXError,
+    RespuestaAGIXInvalidaError,
+)
 from pcobra.ia.reglas_libro_programacion import construir_candidatos_desde_reglas
 
 MENSAJE_DEPENDENCIA_AGIX = (
@@ -17,22 +22,6 @@ MENSAJE_DEPENDENCIA_AGIX = (
     "Instala la distribución completa de pcobra o ejecuta 'pip install agix' "
     "para activar las sugerencias de IA."
 )
-
-
-class DependenciaAGIXNoDisponibleError(ImportError):
-    """Indica que la dependencia opcional AGIX no está disponible.
-
-    Hereda de :class:`ImportError` para conservar el contrato histórico de
-    :func:`generar_sugerencias` con sus consumidores.
-    """
-
-
-class FalloMotorAGIXError(RuntimeError):
-    """Indica que AGIX rechazó una invocación válida del analizador."""
-
-
-class RespuestaAGIXInvalidaError(ValueError):
-    """Indica que AGIX devolvió una respuesta incompatible con su contrato."""
 
 
 def _normalizar_respuesta_agix(
