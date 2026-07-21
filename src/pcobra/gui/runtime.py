@@ -137,9 +137,7 @@ COBRA_FILE_EXTENSIONS: tuple[str, ...] = (".cobra", ".co")
 
 MARKDOWN_FILE_EXTENSIONS: frozenset[str] = frozenset({".md", ".markdown"})
 TEXT_FILE_EXTENSIONS: frozenset[str] = frozenset({".txt"})
-CONFIG_FILE_EXTENSIONS: frozenset[str] = frozenset(
-    {".json", ".yml", ".yaml", ".toml"}
-)
+CONFIG_FILE_EXTENSIONS: frozenset[str] = frozenset({".json", ".yml", ".yaml", ".toml"})
 IGNORE_FILE_NAMES: frozenset[str] = frozenset({".gitignore", ".dockerignore"})
 ENV_EXAMPLE_FILE_NAMES: frozenset[str] = frozenset({".env.example"})
 """Nombres especiales de archivos de entorno de ejemplo."""
@@ -326,7 +324,11 @@ def detectar_tipo_archivo(path: str | Path) -> str:
     nombre_lower = nombre.lower()
     extension = ruta.suffix.lower()
 
-    if nombre == "Dockerfile" or nombre.startswith("Dockerfile.") or nombre == "docker-compose.yml":
+    if (
+        nombre == "Dockerfile"
+        or nombre.startswith("Dockerfile.")
+        or nombre == "docker-compose.yml"
+    ):
         return TIPO_ARCHIVO_DOCKER
     if extension == ".co" and es_paquete_cobra(ruta):
         return TIPO_ARCHIVO_PAQUETE_COBRA
@@ -783,9 +785,7 @@ def eliminar_proyecto_validado(project_root: Path, workspace_root: Path) -> None
     shutil.rmtree(proyecto)
 
 
-def leer_archivo_texto_validado(
-    path: str | Path, *, encoding: str = "utf-8"
-) -> str:
+def leer_archivo_texto_validado(path: str | Path, *, encoding: str = "utf-8") -> str:
     """Lee una ruta ya validada por el IDLE principal."""
 
     origen = Path(path).expanduser().resolve()
@@ -990,12 +990,54 @@ def flet_dropdown_option(ft: Any, value: str) -> Any:
     return option_factory(value)
 
 
-def crear_editor_codigo(ft: Any, **kwargs: Any) -> Any:
-    """Crea el editor de código compartido por la app mínima y el IDLE."""
+class EditorCodigo:
+    """Adapta el control visual usado como editor de código.
+
+    El resto de la GUI depende de estas operaciones y no de los atributos
+    concretos de ``TextField``, lo que permite sustituir el control visual sin
+    propagar detalles de Flet.
+    """
+
+    def __init__(self, control: Any) -> None:
+        self._control = control
+
+    def obtener_contenido(self) -> str:
+        """Devuelve el texto actual del editor, normalizando valores nulos."""
+
+        return normalizar_codigo(self._control.value)
+
+    def establecer_contenido(self, contenido: str | None) -> None:
+        """Reemplaza el texto mostrado por ``contenido``."""
+
+        self._control.value = normalizar_codigo(contenido)
+
+    def limpiar(self) -> None:
+        """Vacía el contenido del editor."""
+
+        self.establecer_contenido("")
+
+    def solicitar_foco(self) -> Any:
+        """Solicita el foco mediante la API del control visual."""
+
+        return self._control.focus()
+
+    def registrar_callback_cambios(self, callback: Any) -> None:
+        """Registra el callback invocado cuando cambia el contenido."""
+
+        self._control.on_change = callback
+
+    def obtener_control(self) -> Any:
+        """Devuelve el control visual que debe incorporarse al layout."""
+
+        return self._control
+
+
+def crear_editor_codigo(ft: Any, **kwargs: Any) -> EditorCodigo:
+    """Crea el adaptador del editor compartido por la app mínima y el IDLE."""
 
     opciones = {"multiline": True, "expand": True}
     opciones.update(kwargs)
-    return flet_text_field(ft, **opciones)
+    return EditorCodigo(flet_text_field(ft, **opciones))
 
 
 def crear_salida_seleccionable(ft: Any, **kwargs: Any) -> Any:
@@ -1101,7 +1143,8 @@ def ejecutar_o_transpilar(
 
 def crear_handler_ejecucion(
     *,
-    entrada: Any,
+    entrada: Any | None = None,
+    leer_codigo: Any | None = None,
     salida: Any,
     selector: Any,
     activar: Any,
@@ -1109,9 +1152,11 @@ def crear_handler_ejecucion(
 ) -> Any:
     """Crea el handler compartido de ejecutar/transpilar para app mínima e IDLE."""
 
+    lector = leer_codigo or (lambda: entrada.value)
+
     def ejecutar_handler(_e: Any) -> None:
         deps = require_gui_dependencies()
-        codigo = normalizar_codigo(entrada.value)
+        codigo = normalizar_codigo(lector())
         try:
             salida.value = ejecutar_o_transpilar(
                 codigo,
@@ -1445,13 +1490,21 @@ def generar_reporte_sugerencias(codigo: str) -> str:
     )
 
 
-def crear_handler_tokens(*, entrada: Any, salida: Any, page: Any) -> Any:
+def crear_handler_tokens(
+    *,
+    entrada: Any | None = None,
+    leer_codigo: Any | None = None,
+    salida: Any,
+    page: Any,
+) -> Any:
     """Crea handler compartido para mostrar tokens Cobra."""
+
+    lector = leer_codigo or (lambda: entrada.value)
 
     def tokens_handler(_e: Any) -> None:
         deps = require_gui_dependencies()
         try:
-            salida.value = mostrar_tokens(normalizar_codigo(entrada.value))
+            salida.value = mostrar_tokens(normalizar_codigo(lector()))
         except Exception as exc:
             salida.value = formatear_error(
                 exc,
@@ -1464,13 +1517,21 @@ def crear_handler_tokens(*, entrada: Any, salida: Any, page: Any) -> Any:
     return tokens_handler
 
 
-def crear_handler_ast(*, entrada: Any, salida: Any, page: Any) -> Any:
+def crear_handler_ast(
+    *,
+    entrada: Any | None = None,
+    leer_codigo: Any | None = None,
+    salida: Any,
+    page: Any,
+) -> Any:
     """Crea handler compartido para mostrar el AST Cobra."""
+
+    lector = leer_codigo or (lambda: entrada.value)
 
     def ast_handler(_e: Any) -> None:
         deps = require_gui_dependencies()
         try:
-            salida.value = mostrar_ast(normalizar_codigo(entrada.value))
+            salida.value = mostrar_ast(normalizar_codigo(lector()))
         except Exception as exc:
             salida.value = formatear_error(
                 exc,
@@ -1484,15 +1545,21 @@ def crear_handler_ast(*, entrada: Any, salida: Any, page: Any) -> Any:
 
 
 def crear_handler_correccion_tipografica(
-    *, entrada: Any, salida: Any, page: Any
+    *,
+    entrada: Any | None = None,
+    leer_codigo: Any | None = None,
+    salida: Any,
+    page: Any,
 ) -> Any:
     """Crea handler para corrección tipográfica validada y no destructiva."""
+
+    lector = leer_codigo or (lambda: entrada.value)
 
     def correccion_handler(_e: Any) -> None:
         deps = require_gui_dependencies()
         try:
             salida.value = generar_reporte_correccion_tipografica(
-                normalizar_codigo(entrada.value)
+                normalizar_codigo(lector())
             )
         except Exception as exc:
             salida.value = formatear_error(
@@ -1506,13 +1573,21 @@ def crear_handler_correccion_tipografica(
     return correccion_handler
 
 
-def crear_handler_sugerencias(*, entrada: Any, salida: Any, page: Any) -> Any:
+def crear_handler_sugerencias(
+    *,
+    entrada: Any | None = None,
+    leer_codigo: Any | None = None,
+    salida: Any,
+    page: Any,
+) -> Any:
     """Crea handler compartido para sugerencias con validación léxica/sintáctica."""
+
+    lector = leer_codigo or (lambda: entrada.value)
 
     def sugerencias_handler(_e: Any) -> None:
         deps = require_gui_dependencies()
         try:
-            salida.value = generar_reporte_sugerencias(normalizar_codigo(entrada.value))
+            salida.value = generar_reporte_sugerencias(normalizar_codigo(lector()))
         except Exception as exc:
             salida.value = formatear_error(
                 exc,
@@ -1663,9 +1738,12 @@ def gui_target_choices() -> tuple[str, ...]:
         )
     return deps["target_cli_choices"](set(PUBLIC_BACKENDS) & set(deps["TRANSPILERS"]))
 
+
 # Acciones de empaquetado CobraHub reutilizadas por CLI e IDLE. Estas funciones
 # son una capa de herramientas sobre archivos, no invocan Lexer ni Parser.
-def idle_crear_paquete(project_root: str | Path, nombre: str, version: str = "0.1.0") -> Path:
+def idle_crear_paquete(
+    project_root: str | Path, nombre: str, version: str = "0.1.0"
+) -> Path:
     from pcobra.cobra.packaging import crear_paquete
 
     root = validar_project_root_idle(project_root)
@@ -1678,7 +1756,9 @@ def idle_validar_paquete(paquete: str | Path):
     return validar_paquete(paquete)
 
 
-def idle_construir_paquete(project_root: str | Path, salida: str | Path | None = None) -> Path:
+def idle_construir_paquete(
+    project_root: str | Path, salida: str | Path | None = None
+) -> Path:
     from pcobra.cobra.packaging import MANIFEST_NAME, construir_paquete
 
     root = validar_project_root_idle(project_root)

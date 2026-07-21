@@ -59,6 +59,39 @@ def _fake_flet_buttons():
     return SimpleNamespace(ElevatedButton=ElevatedButton)
 
 
+def test_crear_editor_codigo_encapsula_el_control_visual() -> None:
+    callback = object()
+
+    class TextField:
+        def __init__(self, **kwargs):
+            self.value = kwargs.get("value")
+            self.multiline = kwargs["multiline"]
+            self.expand = kwargs["expand"]
+            self.on_change = None
+            self.focos = 0
+
+        def focus(self):
+            self.focos += 1
+            return "foco solicitado"
+
+    editor = runtime.crear_editor_codigo(
+        SimpleNamespace(TextField=TextField), value=None
+    )
+    control = editor.obtener_control()
+
+    assert editor.obtener_contenido() == ""
+    editor.establecer_contenido("imprimir('Hola')")
+    assert editor.obtener_contenido() == "imprimir('Hola')"
+    editor.registrar_callback_cambios(callback)
+    assert control.on_change is callback
+    assert editor.solicitar_foco() == "foco solicitado"
+    assert control.focos == 1
+    editor.limpiar()
+    assert editor.obtener_contenido() == ""
+    assert control.multiline is True
+    assert control.expand is True
+
+
 def test_boton_sugerencias_se_habilita_si_motor_canonico_disponible(monkeypatch):
     handler = object()
     monkeypatch.setattr(
@@ -1160,7 +1193,9 @@ def test_idle_abrir_paquete_extrae_proyecto_minimo(tmp_path: Path) -> None:
     ) == "recurso\n"
 
 
-def test_idle_validar_paquete_muestra_error_para_paquete_invalido(tmp_path: Path) -> None:
+def test_idle_validar_paquete_muestra_error_para_paquete_invalido(
+    tmp_path: Path,
+) -> None:
     paquete = tmp_path / "invalido.co"
     paquete.write_text("no es un zip cobra", encoding="utf-8")
 
@@ -1186,6 +1221,7 @@ def test_idle_abrir_paquete_delega_en_extraer_paquete(
     assert runtime.idle_abrir_paquete(paquete, destino) == destino
     assert llamadas == [(paquete, destino)]
 
+
 def test_idle_abrir_paquete_falla_si_destino_no_existe(tmp_path: Path) -> None:
     project_root = _crear_proyecto_cobra_minimo(tmp_path)
     runtime.idle_crear_paquete(project_root, "paquete-demo", version="1.0.0")
@@ -1199,7 +1235,9 @@ def test_idle_abrir_paquete_falla_si_destino_no_existe(tmp_path: Path) -> None:
 def test_idle_construir_paquete_falla_si_falta_manifest(tmp_path: Path) -> None:
     project_root = _crear_proyecto_cobra_minimo(tmp_path)
 
-    with pytest.raises(FileNotFoundError, match="Usa 'Crear paquete' antes de construir"):
+    with pytest.raises(
+        FileNotFoundError, match="Usa 'Crear paquete' antes de construir"
+    ):
         runtime.idle_construir_paquete(project_root)
 
 
@@ -1326,6 +1364,7 @@ def test_idle_publicar_paquete_no_delega_en_metodo_legacy_del_cliente(
 
     assert runtime.idle_publicar_paquete(paquete) is True
     assert llamadas == [str(paquete)]
+
 
 def test_helpers_idle_de_paquetes_no_importan_lexer_ni_parser_y_delegan_en_packaging(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
