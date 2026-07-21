@@ -145,7 +145,7 @@ def main(page: "ft.Page"):
         estado.ruta = None
         estado.contenido_cargado = ""
         estado.cambios_sin_guardar = False
-        entrada.value = ""
+        entrada.limpiar()
         ruta_input.value = ""
 
     def actualizar_pagina() -> None:
@@ -179,10 +179,10 @@ def main(page: "ft.Page"):
     ruta_input.on_change = ruta_visible_cambiada
 
     def marcar_cambios(_e=None) -> None:
-        runtime.marcar_cambios_editor(estado, entrada.value)
+        runtime.marcar_cambios_editor(estado, entrada.obtener_contenido())
         actualizar_pagina()
 
-    entrada.on_change = marcar_cambios
+    entrada.registrar_callback_cambios(marcar_cambios)
 
     def mostrar_error_archivo(exc: Exception) -> None:
         salida.value = runtime.formatear_error(exc)
@@ -259,13 +259,14 @@ def main(page: "ft.Page"):
     def cargar_archivo(ruta: Path, *, desde_arbol: bool = False) -> None:
         try:
             if desde_arbol:
-                entrada.value, salida.value = runtime.cargar_archivo_desde_arbol(
+                contenido, salida.value = runtime.cargar_archivo_desde_arbol(
                     ruta, estado
                 )
             else:
-                entrada.value, salida.value = runtime.abrir_archivo_desde_ruta_validada(
+                contenido, salida.value = runtime.abrir_archivo_desde_ruta_validada(
                     ruta, estado
                 )
+            entrada.establecer_contenido(contenido)
         except (
             FileNotFoundError,
             NotADirectoryError,
@@ -285,7 +286,7 @@ def main(page: "ft.Page"):
     def guardar_en(ruta: Path) -> bool:
         try:
             _contenido, salida.value = runtime.guardar_archivo_como_validado(
-                ruta, entrada.value, estado
+                ruta, entrada.obtener_contenido(), estado
             )
         except (
             FileNotFoundError,
@@ -503,8 +504,7 @@ def main(page: "ft.Page"):
             confirmacion = confirmacion_input.value or ""
             if confirmacion != nombre_proyecto:
                 salida.value = (
-                    "El nombre no coincide. Escribe exactamente: "
-                    f"{nombre_proyecto}"
+                    "El nombre no coincide. Escribe exactamente: " f"{nombre_proyecto}"
                 )
                 page.update()
                 return
@@ -573,7 +573,8 @@ def main(page: "ft.Page"):
         page.open(dialog)
 
     def nuevo_handler(_e):
-        entrada.value, salida.value = runtime.crear_archivo_nuevo_en_editor(estado)
+        contenido, salida.value = runtime.crear_archivo_nuevo_en_editor(estado)
+        entrada.establecer_contenido(contenido)
         actualizar_pagina()
 
     def abrir_handler(_e):
@@ -600,7 +601,7 @@ def main(page: "ft.Page"):
         estado.ruta = ruta_resuelta
         try:
             _contenido, salida.value = runtime.guardar_archivo_activo_validado(
-                entrada.value, estado
+                entrada.obtener_contenido(), estado
             )
         except (
             FileNotFoundError,
@@ -649,9 +650,8 @@ def main(page: "ft.Page"):
             return
         estado.ruta = ruta_resuelta
         try:
-            entrada.value, salida.value = runtime.recargar_archivo_activo_validado(
-                estado
-            )
+            contenido, salida.value = runtime.recargar_archivo_activo_validado(estado)
+            entrada.establecer_contenido(contenido)
         except (
             FileNotFoundError,
             NotADirectoryError,
@@ -864,19 +864,23 @@ def main(page: "ft.Page"):
         return False
 
     ejecutar_runtime_handler = runtime.crear_handler_ejecucion(
-        entrada=entrada, salida=salida, selector=selector, activar=activar, page=page
+        leer_codigo=entrada.obtener_contenido,
+        salida=salida,
+        selector=selector,
+        activar=activar,
+        page=page,
     )
     tokens_runtime_handler = runtime.crear_handler_tokens(
-        entrada=entrada, salida=salida, page=page
+        leer_codigo=entrada.obtener_contenido, salida=salida, page=page
     )
     ast_runtime_handler = runtime.crear_handler_ast(
-        entrada=entrada, salida=salida, page=page
+        leer_codigo=entrada.obtener_contenido, salida=salida, page=page
     )
     sugerencias_runtime_handler = runtime.crear_handler_sugerencias(
-        entrada=entrada, salida=salida, page=page
+        leer_codigo=entrada.obtener_contenido, salida=salida, page=page
     )
     correccion_runtime_handler = runtime.crear_handler_correccion_tipografica(
-        entrada=entrada, salida=salida, page=page
+        leer_codigo=entrada.obtener_contenido, salida=salida, page=page
     )
 
     def ejecutar_handler(e):
@@ -1288,7 +1292,7 @@ def main(page: "ft.Page"):
             estado_archivo,
             ruta_input,
             barra_archivo,
-            entrada,
+            entrada.obtener_control(),
             barra_ejecucion,
             salida,
         ],
