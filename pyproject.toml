@@ -20,13 +20,14 @@ classifiers = [
 ]
 
 # Política Python >=3.11: dependencias compatibles con el ecosistema actual
-# y con agix>=1.9.0,<2. Evitamos rangos inexistentes o demasiado futuros.
+# y con agix 1.11.x. Esta es la primera serie publicada posterior a 1.9.0
+# compatible con Flet 0.86.1; no admitimos otra serie menor sin auditar su API.
 dependencies = [
-    "numpy>=1.26,<2.2",
-    "scipy>=1.14.1,<1.15",
+    "numpy>=2.2.6,<2.3",
+    "scipy>=1.15.3,<1.16",
     "matplotlib>=3.10,<4",
     "pandas>=3.0.3,<4",
-    "agix>=1.9.0,<2",
+    "agix>=1.11.0,<1.12",
     "chardet>=7.4.3,<8",
     "holobit-sdk>=1.0.8,<2",
     "smooth-criminal>=0.8.0,<1",
@@ -36,7 +37,7 @@ dependencies = [
     "python-dotenv>=1.0,<2",
     "pexpect>=4.9,<5",
     "requests>=2.32,<3",
-    "flet>=0.28.3,!=0.29.*,<0.86",
+    "flet>=0.86.1,<0.87",
     "packaging>=26.2,<27",
     "pybind11>=3.0.4,<4",
     "tree-sitter>=0.25,<0.26",
