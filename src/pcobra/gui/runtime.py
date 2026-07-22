@@ -1215,30 +1215,44 @@ def crear_switch_transpilacion(ft: Any, *, lenguajes: list[str] | None = None) -
 
 
 def ejecutar_o_transpilar(
-    codigo: str, *, transpilacion_activa: bool, target: str
+    codigo: str,
+    *,
+    transpilacion_activa: bool,
+    target: str,
+    main_file: str | Path | None = None,
 ) -> str:
-    """Ejecuta o transpila código Cobra; lógica compartida por ambas GUIs."""
+    """Ejecuta o transpila código Cobra desde el contexto del archivo activo.
+
+    ``main_file`` solo interviene en la ejecución. La transpilación conserva
+    su comportamiento actual porque opera sobre el código y el AST recibidos.
+    """
 
     deps = require_gui_dependencies()
     if transpilacion_activa and target not in deps["TRANSPILERS"]:
         return "Selecciona un lenguaje destino para transpilar"
     if transpilacion_activa:
         return transpilar_codigo(codigo, target)
-    return ejecutar_codigo(codigo)
-
+    return ejecutar_codigo(codigo, main_file=main_file)
 
 def crear_handler_ejecucion(
     *,
     entrada: Any | None = None,
     leer_codigo: Any | None = None,
+    obtener_main_file: Any | None = None,
     salida: Any,
     selector: Any,
     activar: Any,
     page: Any,
 ) -> Any:
-    """Crea el handler compartido de ejecutar/transpilar para app mínima e IDLE."""
+    """Crea el handler compartido de ejecutar/transpilar.
+
+    ``obtener_main_file`` se consulta en cada ejecución para usar siempre
+    la ruta activa más reciente. Las GUIs de código en memoria pueden
+    omitirlo y conservar el contexto ``None``.
+    """
 
     lector = leer_codigo or (lambda: entrada.value)
+    lector_main_file = obtener_main_file or (lambda: None)
 
     def ejecutar_handler(_e: Any) -> None:
         deps = require_gui_dependencies()
@@ -1248,6 +1262,7 @@ def crear_handler_ejecucion(
                 codigo,
                 transpilacion_activa=bool(activar.value),
                 target=str(selector.value or ""),
+                main_file=lector_main_file(),
             )
         except Exception as exc:
             salida.value = formatear_error(
@@ -1259,7 +1274,6 @@ def crear_handler_ejecucion(
             page.update()
 
     return ejecutar_handler
-
 
 def _guardar_archivo(
     page: Any, entrada: Any, estado_archivo: GuiFileState, ruta: Path

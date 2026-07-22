@@ -868,6 +868,7 @@ def main(page: "ft.Page"):
 
     ejecutar_runtime_handler = runtime.crear_handler_ejecucion(
         leer_codigo=entrada.obtener_contenido,
+        obtener_main_file=lambda: estado.ruta,
         salida=salida,
         selector=selector,
         activar=activar,
