@@ -5,7 +5,7 @@ Esta matriz documenta únicamente comportamiento existente en el IDLE gráfico c
 | Funcionalidad visible | Archivo de implementación | Función/handler | Dependencia Lexer/Parser | Documentación relacionada | Estado |
 | --- | --- | --- | --- | --- | --- |
 | Editor de código, contenido y foco | `src/pcobra/gui/runtime.py` / `src/pcobra/gui/idle.py` | `crear_editor_codigo()` crea `CodeEditor` y devuelve `EditorCodigo`; `idle.py` usa las operaciones de contenido, limpieza y callbacks del adaptador, que además expone `solicitar_foco()` sin filtrar la API del control. | No usa Lexer/Parser para editar. La ejecución y el análisis conservan sus validaciones independientes. | `docs/gui_idle_especificacion.md`, “Contrato del editor”. | Implementado con `flet==0.86.1` y `flet-code-editor==0.86.1`; imports diferidos. |
-| Tab, selección multilínea y Shift+Tab | `flet-code-editor` / `src/pcobra/gui/runtime.py` | `CodeEditor` procesa localmente Tab y Shift+Tab; `ajustar_indentacion_editor()` especifica cuatro espacios, líneas intersectadas, desindentación y ajuste de selección. No hay handler global duplicado en `idle.py`. | No usa Lexer/Parser. | `docs/gui_idle_especificacion.md`, “Contrato del editor” y “Matriz de validación manual reproducible”. | Contrato cubierto programáticamente; validación manual de plataforma pendiente. |
+| Tab, selección multilínea y Shift+Tab | `flet-code-editor` / `src/pcobra/gui/runtime.py` | `CodeEditor` procesa localmente Tab y Shift+Tab; `ajustar_indentacion_editor()` especifica cuatro espacios, líneas intersectadas, desindentación y ajuste de selección. No hay handler global duplicado en `idle.py`. | No usa Lexer/Parser. | `docs/gui_idle_especificacion.md`, “Contrato del editor” y “Matriz de validación manual reproducible”. | Contrato cubierto programáticamente y validado manualmente en Windows el 2026-07-22: Tab con cursor, Tab sobre selección multilínea, Shift+Tab y conservación del foco correctos. |
 | Nuevo | `src/pcobra/gui/idle.py` / `src/pcobra/gui/runtime.py` | `nuevo_handler` → `crear_archivo_nuevo_en_editor()` → `nuevo_archivo()` | No usa Lexer/Parser; solo reinicia `GuiFileState` y el contenido del editor. | `docs/LIBRO_PROGRAMACION_COBRA.md`, sección 10.1, “Gestión de archivos / Nuevo”. | Implementado. |
 | Abrir | `src/pcobra/gui/idle.py` / `src/pcobra/gui/runtime.py` | `abrir_handler` → `cargar_archivo()` → `abrir_archivo_desde_ruta()` / `cargar_archivo_desde_arbol()` | No usa Lexer/Parser; valida ruta/sandbox y, desde el árbol, extensión Cobra antes de leer. | `docs/LIBRO_PROGRAMACION_COBRA.md`, sección 10.1, “Gestión de archivos / Abrir” y “Árbol de directorios”. | Implementado. |
 | Guardar | `src/pcobra/gui/idle.py` / `src/pcobra/gui/runtime.py` | `guardar_handler` → `guardar_archivo_activo()` → `guardar_archivo_en_estado()` | No usa Lexer/Parser; escribe el contenido normalizado del editor tras validar la ruta activa. | `docs/LIBRO_PROGRAMACION_COBRA.md`, sección 10.1, “Gestión de archivos / Guardar”. | Implementado. |
@@ -49,19 +49,27 @@ La especificación consolidada de acciones soportadas, funciones runtime, valida
 
 ## Evidencia de plataforma
 
-La lógica del adaptador y la transformación de indentación tienen cobertura
-unitaria, pero no hay una sesión gráfica manual completa registrada. El entorno
-usado para actualizar esta documentación es Ubuntu 24.04.4 LTS con Python
-3.12.13; contiene Flet 0.28.3 y no contiene `flet-code-editor`, por lo que no
-cumple las versiones fijadas ni permite validar visualmente el control. En
-consecuencia, Ubuntu queda como **no verificada** y no se declara compatibilidad
-con ella. Tampoco se declara compatibilidad con Windows o macOS sin evidencia.
+El 2026-07-22 se realizó una validación manual completa en la GUI real del IDLE
+sobre Windows, con Python 3.11, `flet==0.86.1` y
+`flet-code-editor==0.86.1`.
 
-La matriz y el procedimiento reproducible que exigen resultados explícitos de
-Tab, selección multilínea, Shift+Tab, foco, abrir, guardar, limpiar, recargar y
-ejecutar están en
-[`docs/gui_idle_especificacion.md`](gui_idle_especificacion.md#matriz-de-validación-manual-reproducible).
+Resultados observados:
 
+| Prueba manual | Resultado |
+| --- | --- |
+| Tab con el cursor sin selección | Correcto: inserta cuatro espacios |
+| Tab con selección multilínea | Correcto: indenta todas las líneas afectadas |
+| Shift+Tab | Correcto: desindenta sin eliminar texto no relacionado |
+| Conservación del foco | Correcto: el foco permanece en el editor |
+
+La lógica del adaptador y la transformación de indentación también están
+respaldadas por pruebas unitarias. La suite GUI relacionada finalizó con
+`204 passed, 1 warning`; el warning corresponde a la configuración de
+Hypothesis y no está relacionado con el editor.
+
+La compatibilidad manual queda verificada para Windows. Ubuntu y macOS continúan
+sin validación gráfica registrada, por lo que no se declara evidencia manual
+para esas plataformas.
 ## Auditoría CI de reglas derivadas del Libro
 
 El flujo de trazabilidad de **Sugerencias del Libro** se protege con el script
