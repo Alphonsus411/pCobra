@@ -39,9 +39,7 @@ RETIRED_REFERENCE_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = (
 )
 
 LEGACY_COBRA_SOURCE_COMMAND_PATTERN = re.compile(
-    r"(?im)(?:\bcobra\s+|\bpython\s+-m\s+"
-    r"(?:pcobra|pcobra\.cobra\.cli\.cli|cobra\.cli\.cli)\s+)"
-    r"(?:run|build|test|ejecutar|compilar|verificar)"
+    r"(?im)\b(?:cobra\s+)?(?:run|build|test|ejecutar|compilar|verificar)"
     r"\s+[^\n]*?\.co\b"
 )
 
@@ -103,12 +101,12 @@ def validate_workflow(path: Path, allowed_targets: set[str]) -> list[str]:
     lines = path.read_text(encoding="utf-8").splitlines()
 
     full_text = "\n".join(lines)
-    for run_line, command in _iter_run_commands(lines):
-        if LEGACY_COBRA_SOURCE_COMMAND_PATTERN.search(command):
-            errors.append(
-                f"{path.relative_to(ROOT).as_posix()}:{run_line}: "
-                "comando de fuente Cobra usa .co; debe usar .cobra"
-            )
+    for match in LEGACY_COBRA_SOURCE_COMMAND_PATTERN.finditer(full_text):
+        line_no = full_text.count("\n", 0, match.start()) + 1
+        errors.append(
+            f"{path.relative_to(ROOT).as_posix()}:{line_no}: "
+            "comando de fuente Cobra usa .co; debe usar .cobra"
+        )
 
     for pattern, label in RETIRED_REFERENCE_PATTERNS:
         for match in pattern.finditer(full_text):

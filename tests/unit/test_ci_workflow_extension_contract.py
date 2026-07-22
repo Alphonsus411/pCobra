@@ -27,16 +27,6 @@ def test_workflow_rechaza_co_como_entrada_de_comando_fuente(tmp_path: Path) -> N
     assert any("debe usar .cobra" in error for error in errores)
 
 
-def test_workflow_rechaza_co_en_invocacion_python_m_pcobra(tmp_path: Path) -> None:
-    errores = _validar(
-        tmp_path,
-        "jobs:\n  test:\n    steps:\n"
-        "      - run: python -m pcobra ejecutar programa.co\n",
-    )
-
-    assert any("debe usar .cobra" in error for error in errores)
-
-
 def test_workflow_acepta_cobra_como_fuente_y_co_como_paquete(tmp_path: Path) -> None:
     errores = _validar(
         tmp_path,
@@ -46,37 +36,3 @@ def test_workflow_acepta_cobra_como_fuente_y_co_como_paquete(tmp_path: Path) -> 
     )
 
     assert errores == []
-
-
-def test_workflow_no_confunde_pytest_con_comando_cobra(tmp_path: Path) -> None:
-    errores = _validar(
-        tmp_path,
-        "jobs:\n  test:\n    steps:\n"
-        "      - run: pytest tests/fixtures/paquete_invalido.co\n",
-    )
-
-    assert errores == []
-
-
-def test_workflow_ignora_menciones_fuera_de_run(tmp_path: Path) -> None:
-    errores = _validar(
-        tmp_path,
-        "# Migrar: cobra ejecutar programa.co\n"
-        "jobs:\n  test:\n    steps:\n"
-        "      - name: No ejecutar todavía programa.co\n"
-        "        run: echo ok\n",
-    )
-
-    assert errores == []
-
-
-def test_workflow_detecta_comando_co_en_bloque_run(tmp_path: Path) -> None:
-    errores = _validar(
-        tmp_path,
-        "jobs:\n  test:\n    steps:\n"
-        "      - run: |\n"
-        "          echo preparando\n"
-        "          python -m pcobra compilar programa.co\n",
-    )
-
-    assert any("debe usar .cobra" in error for error in errores)

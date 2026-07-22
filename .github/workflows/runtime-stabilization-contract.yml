@@ -25,6 +25,9 @@ jobs:
       - name: Install dependencies
         uses: ./.github/actions/install
 
+      - name: Validate CLI source extension in isolated process
+        run: python -m pytest -q tests/unit/test_validate_file.py
+
       - name: Run runtime stabilization contract battery
         run: |
           python -m pytest -q \
