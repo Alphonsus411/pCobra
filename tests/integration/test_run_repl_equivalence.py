@@ -121,7 +121,7 @@ def test_misma_secuencia_semantica_equivale_entre_run_y_repl(tmp_path, monkeypat
         "    romper\n"
         "fin"
     )
-    archivo = tmp_path / "programa.co"
+    archivo = tmp_path / "programa.cobra"
     archivo.write_text(codigo, encoding="utf-8")
 
     out_run, err_run = StringIO(), StringIO()
@@ -472,7 +472,7 @@ def test_anidacion_condicional_bucle_equivale_en_salida_y_estado(tmp_path, monke
         "    fin\n"
         "fin"
     )
-    archivo = tmp_path / "anidado.co"
+    archivo = tmp_path / "anidado.cobra"
     archivo.write_text(codigo, encoding="utf-8")
 
     out_run, err_run = StringIO(), StringIO()
@@ -719,7 +719,7 @@ def test_paridad_funcional_acotada_run_y_repl_en_declaraciones_secuenciales(
     monkeypatch.setattr(
         "pcobra.cobra.cli.services.run_service.limitar_cpu_segundos", lambda *_: None
     )
-    archivo = tmp_path / f"paridad_{caso}.co"
+    archivo = tmp_path / f"paridad_{caso}.cobra"
     archivo.write_text(codigo + "\n", encoding="utf-8")
 
     out_run, err_run = StringIO(), StringIO()
@@ -759,7 +759,7 @@ def test_run_no_corta_sentencias_posteriores_en_bloque_si(tmp_path, monkeypatch)
         "fin\n"
         'imprimir("fin")\n'
     )
-    archivo = tmp_path / "bloque_si.co"
+    archivo = tmp_path / "bloque_si.cobra"
     archivo.write_text(codigo, encoding="utf-8")
 
     out_run, err_run = StringIO(), StringIO()
@@ -776,7 +776,7 @@ def test_run_retorno_fuera_de_funcion_muestra_error_corto_sin_traceback(tmp_path
     monkeypatch.setattr(
         "pcobra.cobra.cli.services.run_service.limitar_cpu_segundos", lambda *_: None
     )
-    archivo = tmp_path / "retornar_top_level.co"
+    archivo = tmp_path / "retornar_top_level.cobra"
     archivo.write_text("retornar 1\n", encoding="utf-8")
 
     out_run, err_run = StringIO(), StringIO()
@@ -807,7 +807,7 @@ def test_run_conservar_control_break_y_continue_en_mientras(tmp_path, monkeypatc
         "    fin\n"
         "fin\n"
     )
-    archivo = tmp_path / "control_break_continue.co"
+    archivo = tmp_path / "control_break_continue.cobra"
     archivo.write_text(codigo, encoding="utf-8")
 
     out_run, err_run = StringIO(), StringIO()
@@ -829,7 +829,7 @@ def test_run_acepta_utf8_bom_en_frontera_de_entrada(tmp_path, monkeypatch, con_b
     if con_bom:
         contenido = "\ufeff" + contenido
 
-    archivo = tmp_path / ("programa_bom.co" if con_bom else "programa_sin_bom.co")
+    archivo = tmp_path / ("programa_bom.cobra" if con_bom else "programa_sin_bom.cobra")
     archivo.write_text(contenido, encoding="utf-8")
 
     out_run, err_run = StringIO(), StringIO()
@@ -848,8 +848,8 @@ def test_run_utf8_bom_y_sin_bom_producen_salida_identica(tmp_path, monkeypatch):
     )
     script = 'imprimir("antes")\nvar x = 3\nimprimir("despues")\n'
 
-    archivo_sin_bom = tmp_path / "script_sin_bom.co"
-    archivo_con_bom = tmp_path / "script_con_bom.co"
+    archivo_sin_bom = tmp_path / "script_sin_bom.cobra"
+    archivo_con_bom = tmp_path / "script_con_bom.cobra"
     archivo_sin_bom.write_text(script, encoding="utf-8")
     archivo_con_bom.write_text("\ufeff" + script, encoding="utf-8")
 
@@ -872,7 +872,7 @@ def test_build_rechaza_programa_semanticamente_invalido_sin_generar_codigo(
     tmp_path, monkeypatch
 ):
     monkeypatch.setenv("SQLITE_DB_KEY", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=")
-    archivo = tmp_path / "invalido.co"
+    archivo = tmp_path / "invalido.cobra"
     archivo.write_text("imprimir(no_definida)\n", encoding="utf-8")
 
     out_build, err_build = StringIO(), StringIO()
@@ -891,8 +891,8 @@ def test_build_utf8_bom_y_sin_bom_compilan_sin_token_bom(tmp_path, monkeypatch):
     monkeypatch.setenv("SQLITE_DB_KEY", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=")
     script = 'imprimir("hola")\n'
 
-    archivo_sin_bom = tmp_path / "build_sin_bom.co"
-    archivo_con_bom = tmp_path / "build_con_bom.co"
+    archivo_sin_bom = tmp_path / "build_sin_bom.cobra"
+    archivo_con_bom = tmp_path / "build_con_bom.cobra"
     archivo_sin_bom.write_text(script, encoding="utf-8")
     archivo_con_bom.write_text("\ufeff" + script, encoding="utf-8")
 
@@ -937,7 +937,7 @@ def test_run_usar_modulos_oficiales_produce_salida_exacta(tmp_path, monkeypatch)
         'imprimir(longitud([1, 2, 3]))\n'
         'imprimir(elemento([10, 20, 30], 1))\n'
     )
-    archivo = tmp_path / "modulos_oficiales.co"
+    archivo = tmp_path / "modulos_oficiales.cobra"
     archivo.write_text(codigo, encoding="utf-8")
 
     out_run, err_run = StringIO(), StringIO()
@@ -968,7 +968,7 @@ def test_run_error_lexico_sigue_siendo_corto_sin_traceback_con_y_sin_bom(tmp_pat
     )
 
     for prefijo in ("", "\ufeff"):
-        archivo = tmp_path / ("error_sin_bom.co" if not prefijo else "error_con_bom.co")
+        archivo = tmp_path / ("error_sin_bom.cobra" if not prefijo else "error_con_bom.cobra")
         archivo.write_text(prefijo + 'imprimir("cadena sin cerrar)\n', encoding="utf-8")
 
         out_run, err_run = StringIO(), StringIO()
@@ -986,7 +986,7 @@ def test_run_usar_numpy_rechaza_sin_traceback_ni_error_duplicado(tmp_path, monke
     monkeypatch.setattr(
         "pcobra.cobra.cli.services.run_service.limitar_cpu_segundos", lambda *_: None
     )
-    archivo = tmp_path / "numpy.co"
+    archivo = tmp_path / "numpy.cobra"
     archivo.write_text('usar "numpy"\n', encoding="utf-8")
 
     out_run, err_run = StringIO(), StringIO()
@@ -1008,7 +1008,7 @@ def test_run_usar_archivo_habilita_existe_readme_local(tmp_path, monkeypatch):
         "pcobra.cobra.cli.services.run_service.limitar_cpu_segundos", lambda *_: None
     )
     codigo = 'usar "archivo"\nimprimir(existe("README.md"))\n'
-    archivo = tmp_path / "programa.co"
+    archivo = tmp_path / "programa.cobra"
     archivo.write_text(codigo, encoding="utf-8")
 
     out_run, err_run = StringIO(), StringIO()
@@ -1026,7 +1026,7 @@ def test_run_usar_archivo_existe_parent_es_falso_por_wrapper_seguro(tmp_path, mo
         "pcobra.cobra.cli.services.run_service.limitar_cpu_segundos", lambda *_: None
     )
     codigo = 'usar "archivo"\nimprimir(existe("../README.md"))\n'
-    archivo = tmp_path / "programa.co"
+    archivo = tmp_path / "programa.cobra"
     archivo.write_text(codigo, encoding="utf-8")
 
     out_run, err_run = StringIO(), StringIO()
@@ -1044,7 +1044,7 @@ def test_run_existe_sin_usar_archivo_permanece_bloqueado(tmp_path, monkeypatch):
         "pcobra.cobra.cli.services.run_service.limitar_cpu_segundos", lambda *_: None
     )
     codigo = 'imprimir(existe("README.md"))\n'
-    archivo = tmp_path / "programa.co"
+    archivo = tmp_path / "programa.cobra"
     archivo.write_text(codigo, encoding="utf-8")
 
     out_run, err_run = StringIO(), StringIO()
@@ -1063,7 +1063,7 @@ def test_run_error_funcion_no_declarada_conserva_identificador_completo(tmp_path
         "pcobra.cobra.cli.services.run_service.limitar_cpu_segundos", lambda *_: None
     )
     codigo = 'usar "numero"\nimprimir(funcion_que_no_existe(1))\n'
-    archivo = tmp_path / "funcion_no_declarada.co"
+    archivo = tmp_path / "funcion_no_declarada.cobra"
     archivo.write_text(codigo, encoding="utf-8")
 
     out_run, err_run = StringIO(), StringIO()

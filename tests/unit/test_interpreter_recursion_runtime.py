@@ -8,7 +8,7 @@ from pcobra.cobra.cli.services.run_service import RunService
 
 
 def test_factorial_recursivo_oficial_ejecuta_sin_falso_ciclo_runtime():
-    ruta = Path("examples/avanzados/funciones/factorial_recursivo.co")
+    ruta = Path("examples/avanzados/funciones/factorial_recursivo.cobra")
     codigo = ruta.read_text(encoding="utf-8")
     servicio = RunService()
     stdout = StringIO()

@@ -54,7 +54,7 @@ def test_transpile_time(tmp_path, monkeypatch):
     num_archivos = 5
     archivos = []
     for i in range(num_archivos):
-        archivo = tmp_path / f"archivo_{i}.co"
+        archivo = tmp_path / f"archivo_{i}.cobra"
         archivo.write_text("imprimir('hola')\n", encoding="utf-8")
         archivos.append(archivo)
 

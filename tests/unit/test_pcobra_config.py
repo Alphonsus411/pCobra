@@ -9,7 +9,7 @@ def _reload_module():
 
 
 def test_cargar_configuracion_python_js(tmp_path, monkeypatch):
-    mod = tmp_path / "m.co"
+    mod = tmp_path / "m.cobra"
     py_out = tmp_path / "m.py"
     js_out = tmp_path / "m.js"
 

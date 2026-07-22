@@ -102,3 +102,14 @@ def test_validate_file_ok(tmp_path):
     archivo = tmp_path / "valido.cobra"
     archivo.write_text("imprimir('hola')\n")
     assert validate_file(str(archivo)) is True
+
+
+@pytest.mark.parametrize("extension", [".co", ".txt", ".py"])
+def test_validate_file_rechaza_archivos_que_no_son_fuente_cobra(
+    tmp_path, extension
+):
+    archivo = tmp_path / f"programa{extension}"
+    archivo.write_text("imprimir('no ejecutar')\n", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="paquete Cobra|extensión \\.cobra"):
+        validate_file(str(archivo))

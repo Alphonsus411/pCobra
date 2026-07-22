@@ -53,11 +53,11 @@ def test_corelibs_y_standard_library_se_mantienen_sin_holobit(transpilador, frag
 
 
 def test_module_map_resuelve_targets_publicos_solo_desde_cobra_toml(tmp_path, monkeypatch):
-    modulo = "biblioteca.co"
+    modulo = "biblioteca.cobra"
     toml_file = tmp_path / "cobra.toml"
     toml_file.write_text(
         "[modulos]\n"
-        "[modulos.'biblioteca.co']\n"
+        "[modulos.'biblioteca.cobra']\n"
         "python = 'biblioteca.py'\n"
         "javascript = 'biblioteca.js'\n"
         "rust = 'biblioteca.rs'\n",
@@ -80,7 +80,7 @@ def test_module_map_falla_si_toml_declara_target_no_publico(tmp_path, monkeypatc
     toml_file = tmp_path / "cobra.toml"
     toml_file.write_text(
         "[modulos]\n"
-        "[modulos.'biblioteca.co']\n"
+        "[modulos.'biblioteca.cobra']\n"
         "go = 'biblioteca.go'\n",
         encoding="utf-8",
     )

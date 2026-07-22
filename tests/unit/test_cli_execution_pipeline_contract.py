@@ -108,7 +108,7 @@ def _run_execute_via_script(
             if linea
         ]
     )
-    archivo = tmp_path / "matriz_paridad.co"
+    archivo = tmp_path / "matriz_paridad.cobra"
     archivo.write_text(codigo, encoding="utf-8")
     out, err = StringIO(), StringIO()
     with redirect_stdout(out), redirect_stderr(err):

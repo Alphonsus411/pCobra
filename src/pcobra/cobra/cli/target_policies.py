@@ -243,7 +243,7 @@ def transpilation_only_targets_text() -> str:
 
 def build_cli_compile_examples(
     *,
-    source_file: str = "programa.co",
+    source_file: str = "programa.cobra",
     command_prefix: str = "cobra compilar",
 ) -> tuple[str, ...]:
     """Construye ejemplos CLI canónicos sin listas hardcodeadas."""

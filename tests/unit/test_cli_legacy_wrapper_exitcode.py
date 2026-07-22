@@ -46,7 +46,7 @@ def _run_legacy_wrapper_file(*args: str) -> subprocess.CompletedProcess[str]:
 
 @pytest.mark.timeout(20)
 def test_wrapper_legacy_y_entrypoints_canonicos_comparten_exitcode_en_error_controlado() -> None:
-    args = ("compilar", "archivo_que_no_existe.co")
+    args = ("compilar", "archivo_que_no_existe.cobra")
 
     canonical = _run_module("pcobra.cli", *args)
     legacy_wrapper = _run_legacy_wrapper_file(*args)
@@ -63,5 +63,5 @@ def test_main_del_wrapper_legacy_devuelve_int() -> None:
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
 
-    resultado = module.main(["compilar", "archivo_que_no_existe.co"])
+    resultado = module.main(["compilar", "archivo_que_no_existe.cobra"])
     assert isinstance(resultado, int)

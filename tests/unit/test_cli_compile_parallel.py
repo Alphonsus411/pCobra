@@ -14,7 +14,7 @@ def _fake_transpile(self, ast):
 
 @pytest.mark.timeout(5)
 def test_cli_compilar_varios_tipos_en_paralelo(tmp_path):
-    archivo = tmp_path / "c.co"
+    archivo = tmp_path / "c.cobra"
     archivo.write_text("var x = 5")
 
     class DummyPool:

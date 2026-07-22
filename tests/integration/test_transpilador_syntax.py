@@ -92,8 +92,8 @@ VALID_SYNTAX_TARGETS = tuple(
 
 @pytest.mark.parametrize("lang", VALID_SYNTAX_TARGETS)
 def test_transpilador_syntax(tmp_path, lang, monkeypatch):
-    archivo = tmp_path / "prog.co"
-    archivo.write_text(Path("tests/data/ejemplo.co").read_text())
+    archivo = tmp_path / "prog.cobra"
+    archivo.write_text(Path("tests/data/ejemplo.cobra").read_text())
 
     monkeypatch.setattr(module_map_src, "get_toml_map", lambda: {})
     monkeypatch.setattr(module_map_backend, "get_toml_map", lambda: {})

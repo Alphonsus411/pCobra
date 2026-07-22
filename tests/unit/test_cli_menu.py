@@ -103,7 +103,7 @@ def _set_tty(monkeypatch, is_tty: bool) -> None:
 
 def test_menu_no_transpile(monkeypatch):
     _set_tty(monkeypatch, True)
-    responses = iter(["1", "programa.co"])
+    responses = iter(["1", "programa.cobra"])
     monkeypatch.setattr("builtins.input", lambda _: next(responses))
 
     def fail_run(self, args):
@@ -155,7 +155,7 @@ def test_menu_transpilar_inverso(monkeypatch):
 
 def test_menu_ejecutar_en_modo_mixto(monkeypatch):
     _set_tty(monkeypatch, True)
-    inputs = iter(["1", "programa.co"])
+    inputs = iter(["1", "programa.cobra"])
     monkeypatch.setattr("builtins.input", lambda _: next(inputs))
 
     called = {}
@@ -167,7 +167,7 @@ def test_menu_ejecutar_en_modo_mixto(monkeypatch):
     monkeypatch.setattr(ExecuteCommand, "run", fake_run)
 
     assert main(["menu"]) == 0
-    assert called["args"].archivo == "programa.co"
+    assert called["args"].archivo == "programa.cobra"
 
 
 def test_menu_no_tty_aborta_con_error(monkeypatch):
@@ -286,7 +286,7 @@ def test_menu_modo_cobra_solo_pide_ruta_archivo(monkeypatch):
 
     def fake_input(prompt: str):
         prompts.append(prompt)
-        return "programa.co"
+        return "programa.cobra"
 
     monkeypatch.setattr("builtins.input", fake_input)
     monkeypatch.setattr(ExecuteCommand, "run", lambda *_: 0)
@@ -311,7 +311,7 @@ def test_menu_solo_cobra_alias_no_pide_prompts_codegen(monkeypatch):
     def fake_input(prompt: str):
         if "Transpilar" in prompt or "Lenguaje" in prompt or "origen" in prompt:
             raise AssertionError(f"prompt de codegen inesperado: {prompt}")
-        return "programa.co"
+        return "programa.cobra"
 
     monkeypatch.setattr("builtins.input", fake_input)
     monkeypatch.setattr(ExecuteCommand, "run", lambda *_: 0)

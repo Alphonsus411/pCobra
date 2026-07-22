@@ -12,7 +12,7 @@ from pcobra.cobra.cli.commands.execute_cmd import ExecuteCommand
 
 
 def test_execute_en_contenedor(tmp_path, monkeypatch):
-    script = tmp_path / "prog.co"
+    script = tmp_path / "prog.cobra"
     script.write_text("imprimir('hola')")
 
     import cobra.transpilers.module_map as module_map

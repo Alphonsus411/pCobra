@@ -840,9 +840,9 @@ class CliApplication:
             ),
             epilog=_(
                 "Ejemplos públicos:\n"
-                "  cobra run <archivo.co>\n"
-                "  cobra build <archivo.co>\n"
-                "  cobra test <archivo.co>\n"
+                "  cobra run <archivo.cobra>\n"
+                "  cobra build <archivo.cobra>\n"
+                "  cobra test <archivo.cobra>\n"
                 "  cobra mod <list|install|remove|publish|search>\n"
                 "  cobra repl"
             ),

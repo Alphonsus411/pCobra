@@ -39,8 +39,8 @@ PROCESS_TIMEOUT = tiempo_max_transpilacion()
 MAX_RETRIES = 3
 
 # Mover códigos de prueba a archivos separados
-SEQUENTIAL_CODE = Path(__file__).parent / "data" / "sequential_code.co"
-THREAD_CODE = Path(__file__).parent / "data" / "thread_code.co"
+SEQUENTIAL_CODE = Path(__file__).parent / "data" / "sequential_code.cobra"
+THREAD_CODE = Path(__file__).parent / "data" / "thread_code.cobra"
 
 def _measure(func) -> Tuple[float, float, int]:
     """Mide tiempo, CPU y operaciones I/O de una función.
@@ -119,7 +119,7 @@ class BenchThreadsCommand(BaseCommand):
         """
         tmp_name = None
         try:
-            with tempfile.NamedTemporaryFile("w", suffix=".co", delete=False) as tmp:
+            with tempfile.NamedTemporaryFile("w", suffix=".cobra", delete=False) as tmp:
                 tmp.write(code)
                 tmp.flush()
                 tmp_name = tmp.name
