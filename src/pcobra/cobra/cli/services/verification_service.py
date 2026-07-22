@@ -5,7 +5,7 @@ from io import StringIO
 from typing import Any
 from unittest.mock import patch
 
-from pcobra.cobra.extensions import COBRA_SOURCE_EXTENSIONS, es_fuente_cobra
+from pcobra.cobra.extensions import COBRA_SOURCE_EXTENSIONS
 from pcobra.cobra.build import backend_pipeline
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.execution_pipeline import construir_interprete_seguro_canonico
@@ -18,7 +18,7 @@ from pcobra.cobra.qa.syntax_validation import SUPPORTED_VALIDATOR_TARGETS
 
 
 MAX_FILE_SIZE = 10 * 1024 * 1024
-VALID_EXTENSIONS = COBRA_SOURCE_EXTENSIONS
+VALID_EXTENSIONS = {".cobra"}
 
 
 @dataclass
