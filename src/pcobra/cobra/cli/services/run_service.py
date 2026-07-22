@@ -136,6 +136,8 @@ class RunService:
                 "El archivo es un paquete Cobra .co, no una fuente ejecutable. "
                 "Instálalo o extráelo con el comando paquete antes de ejecutar."
             )
+        if not es_fuente_cobra(resolved_path):
+            raise ValueError("El archivo fuente Cobra debe usar la extensión .cobra.")
         return resolved_path
 
     def limitar_recursos(self, funcion: Any) -> int:

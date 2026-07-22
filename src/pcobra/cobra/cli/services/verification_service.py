@@ -76,7 +76,7 @@ def execute_runtime_verification(archivo: str, lenguajes: list[str]) -> int:
         )
 
     path = validar_archivo_existente(archivo)
-    if path.suffix not in VALID_EXTENSIONS:
+    if not es_fuente_cobra(path):
         raise ValueError(_("Extensión de archivo no válida. Debe ser: {}").format(", ".join(sorted(VALID_EXTENSIONS))))
     if path.stat().st_size > MAX_FILE_SIZE:
         raise ValueError(_("El archivo es demasiado grande (máximo {} MB)").format(MAX_FILE_SIZE // (1024 * 1024)))

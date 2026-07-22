@@ -101,7 +101,7 @@ class TestService:
 
     def validate_file(self, file_path: str) -> None:
         path = Path(file_path)
-        if path.suffix not in VALID_EXTENSIONS:
+        if not es_fuente_cobra(path):
             raise ValueError(_("Extensión de archivo no válida. Debe ser: {}").format(", ".join(sorted(VALID_EXTENSIONS))))
 
         if path.stat().st_size > MAX_FILE_SIZE:

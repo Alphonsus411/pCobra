@@ -92,6 +92,8 @@ def validate_file(filepath: str) -> bool:
             "El archivo es un paquete Cobra .co, no una fuente transpirable. "
             "Instálalo o extráelo con el comando paquete antes de compilar."
         )
+    if not es_fuente_cobra(path):
+        raise ValueError("El archivo fuente Cobra debe usar la extensión .cobra.")
     return True
 
 def validar_dependencias_con_alias(backend: str, mod_info: dict) -> None:
@@ -329,4 +331,3 @@ class CompileCommand(BaseCommand):
         except Exception as e:
             mostrar_error(str(e))
             return 1
-
