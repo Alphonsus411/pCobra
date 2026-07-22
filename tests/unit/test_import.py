@@ -54,7 +54,7 @@ def test_import_interpreter(tmp_path):
 
 
 @pytest.mark.timeout(5)
-def test_import_cobra_carga_unica(tmp_path):
+def test_import_co_carga_unica(tmp_path):
     mod_path = tmp_path / "mod_contador.cobra"
     # Cambiar el contenido para evitar la auto-referencia
     mod_path.write_text("var _contador_interno = 0\nfunc incrementar_contador() { _contador_interno = _contador_interno + 1 }\nincrementar_contador()")
@@ -76,7 +76,7 @@ def test_import_cobra_carga_unica(tmp_path):
 
 
 @pytest.mark.timeout(5)
-def test_import_cobra_ciclo_directo(tmp_path):
+def test_import_co_ciclo_directo(tmp_path):
     mod_a_path = tmp_path / "mod_a.cobra"
     mod_b_path = tmp_path / "mod_b.cobra"
 
@@ -101,7 +101,7 @@ def test_import_cobra_ciclo_directo(tmp_path):
 
 
 @pytest.mark.timeout(5)
-def test_import_cobra_compatibilidad_ambito(tmp_path):
+def test_import_co_compatibilidad_ambito(tmp_path):
     mod_path = tmp_path / "mod_vars.cobra"
     mod_path.write_text("var x = 10\nvar y = 20")
 

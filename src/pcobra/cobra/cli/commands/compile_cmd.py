@@ -32,7 +32,7 @@ from pcobra.cobra.cli.deprecation_policy import (
 )
 from pcobra.cobra.cli.utils.messages import mostrar_advertencia, mostrar_error, mostrar_info
 from pcobra.cobra.cli.utils.validators import validar_archivo_existente
-from pcobra.cobra.extensions import es_fuente_cobra, es_ruta_paquete_cobra
+from pcobra.cobra.extensions import es_ruta_paquete_cobra
 from pcobra.cobra.cli.utils.autocomplete import files_completer
 from pcobra.cobra.core import ParserError
 from pcobra.cobra.core.cobra_config import tiempo_max_transpilacion
