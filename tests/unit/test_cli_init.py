@@ -5,12 +5,13 @@ import runpy
 import sys
 from io import StringIO
 from pathlib import Path
-from types import ModuleType
+from types import ModuleType, SimpleNamespace
 from unittest.mock import patch
 
 import pytest
 
 from cobra.cli.cli import main
+from pcobra.cobra.cli.commands.init_cmd import InitCommand
 
 WRAPPER_FILES = (
     ("src/cli/cli.py", "cli.cli"),
@@ -56,8 +57,8 @@ def _cargar_modulo_desde_archivo(module_name: str, file_path: Path):
 def test_cli_init_creates_project(tmp_path):
     ruta = tmp_path / "proy"
     with patch("sys.stdout", new_callable=StringIO) as out:
-        main(["init", str(ruta)])
-    assert (ruta / "main.co").exists()
+        assert InitCommand().run(SimpleNamespace(ruta=str(ruta))) == 0
+    assert (ruta / "main.cobra").exists()
     assert "Proyecto Cobra inicializado" in out.getvalue()
 
 

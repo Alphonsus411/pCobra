@@ -117,7 +117,7 @@ def run_benchmarks(backends: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
 
     try:
         with tempfile.TemporaryDirectory() as tmpdir:
-            co_file = Path(tmpdir) / "program.co"
+            co_file = Path(tmpdir) / "program.cobra"
             co_file.write_text(BENCHMARK_CODE)
 
             cobra_cmd = [sys.executable, "-m", "pcobra.cobra.cli.cli", "ejecutar", str(co_file)]

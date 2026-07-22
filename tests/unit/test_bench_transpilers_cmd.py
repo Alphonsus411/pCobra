@@ -64,7 +64,7 @@ def test_ensure_program_reads_and_writes_in_program_dir(tmp_path, monkeypatch):
     cmd = bt.BenchTranspilersCommand()
     generated = cmd._ensure_program("small")
 
-    small_file = program_dir / "small.co"
+    small_file = program_dir / "small.cobra"
     assert small_file.exists()
     assert generated == small_file.read_text(encoding="utf-8")
 

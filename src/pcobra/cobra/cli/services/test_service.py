@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 from unittest.mock import patch
 
+from pcobra.cobra.extensions import COBRA_SOURCE_EXTENSIONS, es_fuente_cobra
 from pcobra.cobra.core.interpreter import InterpretadorCobra
 from pcobra.cobra.core.sandbox import ejecutar_en_contenedor, ejecutar_en_sandbox, ejecutar_en_sandbox_js
 from pcobra.cobra.build import backend_pipeline
@@ -22,7 +23,7 @@ from pcobra.cobra.cli.utils.validators import validar_archivo_existente
 from pcobra.cobra.core import Lexer, Parser
 
 MAX_FILE_SIZE = 10 * 1024 * 1024
-VALID_EXTENSIONS = {".cobra", ".cbr", ".co"}
+VALID_EXTENSIONS = COBRA_SOURCE_EXTENSIONS
 
 
 def target_cli_choices(values: tuple[str, ...] | list[str]) -> tuple[str, ...]:
@@ -100,7 +101,7 @@ class TestService:
 
     def validate_file(self, file_path: str) -> None:
         path = Path(file_path)
-        if path.suffix not in VALID_EXTENSIONS:
+        if not es_fuente_cobra(path):
             raise ValueError(_("Extensión de archivo no válida. Debe ser: {}").format(", ".join(sorted(VALID_EXTENSIONS))))
 
         if path.stat().st_size > MAX_FILE_SIZE:

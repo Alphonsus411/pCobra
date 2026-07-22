@@ -139,7 +139,7 @@ def test_cli_startup_preserva_utf8_en_literal_imprimir() -> None:
         "import tempfile; "
         "from pathlib import Path; "
         "from pcobra.cli import main; "
-        "tmp = Path(tempfile.gettempdir()) / 'pcobra_utf8_test.co'; "
+        "tmp = Path(tempfile.gettempdir()) / 'pcobra_utf8_test.cobra'; "
         "tmp.write_text('imprimir(\"áéíóú ñ € 🚀\")\\n', encoding='utf-8'); "
         "raise SystemExit(main(['ejecutar', str(tmp)]))"
     )

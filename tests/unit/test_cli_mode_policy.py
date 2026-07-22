@@ -41,7 +41,7 @@ def test_modo_cobra_permite_ejecutar():
 
 
 def test_modo_cobra_bloquea_verificar(monkeypatch, tmp_path):
-    archivo = tmp_path / "demo.co"
+    archivo = tmp_path / "demo.cobra"
     archivo.write_text("imprimir(1)", encoding="utf-8")
     mensajes = []
 
@@ -69,7 +69,7 @@ def test_modo_cobra_bloquea_transpilar_inverso(monkeypatch, tmp_path):
 
 
 def test_modo_cobra_bloquea_compilar(monkeypatch, tmp_path):
-    archivo = tmp_path / "demo.co"
+    archivo = tmp_path / "demo.cobra"
     archivo.write_text("imprimir(1)", encoding="utf-8")
     mensajes = []
 
@@ -83,7 +83,7 @@ def test_modo_cobra_bloquea_compilar(monkeypatch, tmp_path):
 
 
 def test_modo_transpilar_bloquea_ejecutar(monkeypatch, tmp_path):
-    archivo = tmp_path / "demo.co"
+    archivo = tmp_path / "demo.cobra"
     archivo.write_text("imprimir(1)", encoding="utf-8")
     mensajes = []
 
@@ -97,7 +97,7 @@ def test_modo_transpilar_bloquea_ejecutar(monkeypatch, tmp_path):
 
 
 def test_modo_mixto_permite_ejecutar_y_falla_por_archivo(monkeypatch, tmp_path):
-    archivo = tmp_path / "no_existe.co"
+    archivo = tmp_path / "no_existe.cobra"
     mensajes = []
 
     monkeypatch.setattr(execute_module, "mostrar_error", lambda msg: mensajes.append(msg))
@@ -111,7 +111,7 @@ def test_modo_mixto_permite_ejecutar_y_falla_por_archivo(monkeypatch, tmp_path):
 
 
 def test_modo_transpilar_permite_compilar_y_falla_por_archivo(monkeypatch, tmp_path):
-    archivo = tmp_path / "no_existe.co"
+    archivo = tmp_path / "no_existe.cobra"
     mensajes = []
 
     monkeypatch.setattr(compile_module, "mostrar_error", lambda msg: mensajes.append(msg))
@@ -135,7 +135,7 @@ def test_menu_modo_cobra_muestra_solo_ejecutar(monkeypatch):
 
     monkeypatch.setattr("cobra.cli.cli.sys.stdin", types.SimpleNamespace(isatty=lambda: True))
     monkeypatch.setattr("cobra.cli.cli.messages.mostrar_info", lambda msg: mensajes_info.append(msg))
-    monkeypatch.setattr("builtins.input", lambda _: "archivo.co")
+    monkeypatch.setattr("builtins.input", lambda _: "archivo.cobra")
 
     rc = app.execute_command(argparse.Namespace(cmd="menu", modo="cobra", lang="es"))
 
@@ -157,7 +157,7 @@ def test_menu_modo_transpilar_muestra_solo_transpilar(monkeypatch):
     monkeypatch.setattr("cobra.cli.cli.sys.stdin", types.SimpleNamespace(isatty=lambda: True))
     monkeypatch.setattr("cobra.cli.cli.messages.mostrar_info", lambda msg: mensajes_info.append(msg))
     monkeypatch.setattr("cobra.cli.cli.messages.mostrar_error", lambda msg: (_ for _ in ()).throw(AssertionError(msg)))
-    respuestas = iter(["s", "archivo.co", "python"])
+    respuestas = iter(["s", "archivo.cobra", "python"])
     monkeypatch.setattr("builtins.input", lambda _: next(respuestas))
     monkeypatch.setattr(
         "cobra.cli.commands.execute_cmd.ExecuteCommand.run",
@@ -205,11 +205,11 @@ def test_help_global_refuerza_solo_programar_interpretar_sin_codegen():
 @pytest.mark.parametrize(
     ("module", "command", "args"),
     [
-        (compile_module, CompileCommand(), SimpleNamespace(archivo="demo.co", tipo="python", backend=None, tipos=None, modo="cobra")),
-        (verify_module, VerifyCommand(), SimpleNamespace(archivo="demo.co", lenguajes=["python"], modo="cobra")),
+        (compile_module, CompileCommand(), SimpleNamespace(archivo="demo.cobra", tipo="python", backend=None, tipos=None, modo="cobra")),
+        (verify_module, VerifyCommand(), SimpleNamespace(archivo="demo.cobra", lenguajes=["python"], modo="cobra")),
         (inverse_module, TranspilarInversoCommand(), SimpleNamespace(archivo="demo.py", origen="python", destino="javascript", modo="cobra")),
         (validar_sintaxis_module, ValidarSintaxisCommand(), SimpleNamespace(modo="cobra", perfil="transpiladores", strict=False, solo_cobra=False, targets="", report_json=None)),
-        (qa_validar_module, QaValidarCommand(), SimpleNamespace(modo="cobra", scope="syntax", strict=False, archivo="demo.co", targets="", report_json=None)),
+        (qa_validar_module, QaValidarCommand(), SimpleNamespace(modo="cobra", scope="syntax", strict=False, archivo="demo.cobra", targets="", report_json=None)),
     ],
 )
 def test_comandos_codegen_bloqueados_muestran_mensaje_homogeneo(module, command, args, monkeypatch):

@@ -248,8 +248,8 @@ def test_cli_crear_archivo(tmp_path, monkeypatch):
     ruta = tmp_path / "nuevo"
     with patch("sys.stdout", new_callable=StringIO) as out:
         cli_module.main(["crear", "archivo", str(ruta)])
-    assert (tmp_path / "nuevo.co").exists()
-    assert f"Archivo creado: {ruta}.co" in out.getvalue().strip()
+    assert (tmp_path / "nuevo.cobra").exists()
+    assert f"Archivo creado: {ruta}.cobra" in out.getvalue().strip()
 
 
 @pytest.mark.timeout(5)
@@ -263,5 +263,5 @@ def test_cli_crear_proyecto(tmp_path, monkeypatch):
     ruta = tmp_path / "proj"
     with patch("sys.stdout", new_callable=StringIO) as out:
         cli_module.main(["crear", "proyecto", str(ruta)])
-    assert (ruta / "main.co").exists()
+    assert (ruta / "main.cobra").exists()
     assert "Proyecto Cobra creado" in out.getvalue()

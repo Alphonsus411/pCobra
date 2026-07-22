@@ -225,7 +225,7 @@ Estas acciones están conectadas desde `src/pcobra/gui/idle.py` exclusivamente a
 
 Proyectos de demostración disponibles en el [repositorio de ejemplos](https://github.com/Alphonsus411/pCobra/tree/HEAD/examples).
 Este repositorio incluye ejemplos básicos en la carpeta `examples/`, por
-ejemplo `examples/funciones_principales.co` que muestra condicionales, bucles y
+ejemplo `examples/funciones_principales.cobra` que muestra condicionales, bucles y
 definición de funciones en Cobra.
 Para ejemplos interactivos revisa los cuadernos en `notebooks/casos_reales/`.
 
