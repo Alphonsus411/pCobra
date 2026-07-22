@@ -145,9 +145,7 @@ jobs:
         with:
           extra: "sphinx sphinx-rtd-theme pytest-cov codecov pyright"
       - name: Validate canonical Cobra source/package extensions
-        run: |
-          python -m pytest -q tests/test_cobra_extension_contract.py tests/integration/test_usar_project_modules.py tests/gui/test_gui_runtime_local_modules.py
-          python -m pytest -q tests/unit/test_validate_file.py
+        run: python -m pytest -q tests/test_cobra_extension_contract.py tests/integration/test_usar_project_modules.py tests/gui/test_gui_runtime_local_modules.py tests/unit/test_validate_file.py
       - name: Run smoke syntax gates
         if: runner.os != 'Windows'
         shell: bash
