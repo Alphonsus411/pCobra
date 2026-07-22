@@ -118,7 +118,7 @@ class BenchTranspilersCommand(BaseCommand):
         if size not in VALID_SIZES:
             raise ValueError(_('Tamaño de programa no válido'))
         
-        file = PROGRAM_DIR / f"{size}.co"
+        file = PROGRAM_DIR / f"{size}.cobra"
         try:
             if not file.exists():
                 PROGRAM_DIR.mkdir(parents=True, exist_ok=True)

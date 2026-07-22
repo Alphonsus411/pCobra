@@ -15,7 +15,7 @@ from pcobra.cobra.packaging import es_paquete_cobra
 from .project import BuildOptions, CobraInstallerError, CobraProject
 from .targets import validate_target
 
-COBRA_EXTENSIONS = (".cobra", ".co")
+COBRA_EXTENSIONS = (".cobra",)
 _EXECUTABLE_NAME_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]*$")
 _RESERVED_EXECUTABLE_NAMES = {
     "CON",
@@ -170,7 +170,7 @@ def validate_build_options(options: BuildOptions) -> BuildOptions:
 def discover_entrypoint(project_root: Path) -> Path | None:
     """Busca un punto de entrada Cobra común dentro del proyecto."""
 
-    for name in ("main.cobra", "main.co", "app.cobra", "app.co"):
+    for name in ("main.cobra", "app.cobra"):
         candidate = project_root / name
         if candidate.exists() and candidate.is_file():
             return candidate

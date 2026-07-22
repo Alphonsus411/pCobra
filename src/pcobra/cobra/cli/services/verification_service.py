@@ -17,7 +17,7 @@ from pcobra.cobra.qa.syntax_validation import SUPPORTED_VALIDATOR_TARGETS
 
 
 MAX_FILE_SIZE = 10 * 1024 * 1024
-VALID_EXTENSIONS = {".cobra", ".cbr", ".co"}
+VALID_EXTENSIONS = {".cobra"}
 
 
 @dataclass
