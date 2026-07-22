@@ -49,7 +49,7 @@ def test_cli_qa_validar_exporta_feature_gap_report_json_estable(monkeypatch, tmp
     rc = QaValidarCommand().run(
         Namespace(
             modo="mixto",
-            archivo="programa.co",
+            archivo="programa.cobra",
             strict=False,
             solo_cobra=False,
             targets="python",

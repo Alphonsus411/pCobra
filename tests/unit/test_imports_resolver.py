@@ -12,7 +12,7 @@ from pcobra.cobra.imports.resolver import (
 
 
 def test_resuelve_stdlib_antes_que_modulo_proyecto(tmp_path):
-    (tmp_path / "datos.co").write_text("usar algo")
+    (tmp_path / "datos.cobra").write_text("usar algo")
     resolver = CobraImportResolver(project_root=tmp_path, collision_policy="warn")
 
     with pytest.warns(UserWarning, match="Colisión de import"):
@@ -55,7 +55,7 @@ def test_colision_stdlib_vs_bridge_genera_warning(monkeypatch):
 
 
 def test_colision_stdlib_proyecto_y_bridge_respeta_orden(monkeypatch, tmp_path):
-    (tmp_path / "datos.co").write_text("usar algo")
+    (tmp_path / "datos.cobra").write_text("usar algo")
     resolver = CobraImportResolver(project_root=tmp_path, collision_policy="warn")
 
     import importlib.util
@@ -81,7 +81,7 @@ def test_colision_stdlib_proyecto_y_bridge_respeta_orden(monkeypatch, tmp_path):
 
 
 def test_colision_total_namespace_required_falla(monkeypatch, tmp_path):
-    (tmp_path / "datos.co").write_text("usar algo")
+    (tmp_path / "datos.cobra").write_text("usar algo")
     resolver = CobraImportResolver(project_root=tmp_path, collision_policy="namespace_required")
 
     import importlib.util
@@ -103,7 +103,7 @@ def test_colision_total_namespace_required_falla(monkeypatch, tmp_path):
 
 
 def test_colision_en_modo_estricto_falla(tmp_path):
-    (tmp_path / "datos.co").write_text("usar algo")
+    (tmp_path / "datos.cobra").write_text("usar algo")
     resolver = CobraImportResolver(project_root=tmp_path, strict_ambiguous_imports=True)
 
     with pytest.raises(ImportResolutionError, match="strict mode"):
@@ -111,7 +111,7 @@ def test_colision_en_modo_estricto_falla(tmp_path):
 
 
 def test_colision_en_namespace_required_falla(tmp_path):
-    (tmp_path / "datos.co").write_text("usar algo")
+    (tmp_path / "datos.cobra").write_text("usar algo")
     resolver = CobraImportResolver(project_root=tmp_path, collision_policy="namespace_required")
 
     with pytest.raises(ImportResolutionError, match="namespace_required"):
@@ -119,7 +119,7 @@ def test_colision_en_namespace_required_falla(tmp_path):
 
 
 def test_politica_colisiones_desde_config(monkeypatch, tmp_path):
-    (tmp_path / "datos.co").write_text("usar algo")
+    (tmp_path / "datos.cobra").write_text("usar algo")
     monkeypatch.setattr(
         "pcobra.cobra.imports.resolver.get_toml_map",
         lambda: {"imports": {"collision_policy": "strict_error"}},
@@ -132,7 +132,7 @@ def test_politica_colisiones_desde_config(monkeypatch, tmp_path):
 
 
 def test_modulo_proyecto_expone_file_path_canonico(tmp_path):
-    modulo = tmp_path / "utilidades" / "fechas.co"
+    modulo = tmp_path / "utilidades" / "fechas.cobra"
     modulo.parent.mkdir()
     modulo.write_text("", encoding="utf-8")
 
@@ -147,7 +147,7 @@ def test_modulo_proyecto_expone_file_path_canonico(tmp_path):
 def test_modulo_proyecto_rechaza_file_path_canonico_fuera_de_root(tmp_path):
     destino_externo = tmp_path.parent / f"{tmp_path.name}_externo_resolver"
     destino_externo.mkdir()
-    (destino_externo / "fechas.co").write_text("", encoding="utf-8")
+    (destino_externo / "fechas.cobra").write_text("", encoding="utf-8")
     (tmp_path / "utilidades").symlink_to(destino_externo, target_is_directory=True)
 
     resolver = CobraImportResolver(project_root=tmp_path)
@@ -322,7 +322,7 @@ def test_resolver_usa_contrato_publico_para_backend_stdlib():
 
 
 def test_modo_migracion_habilita_warn_desde_config(monkeypatch, tmp_path):
-    (tmp_path / "datos.co").write_text("usar algo")
+    (tmp_path / "datos.cobra").write_text("usar algo")
     monkeypatch.setattr(
         "pcobra.cobra.imports.resolver.get_toml_map",
         lambda: {"imports": {"migration_mode": True}},
@@ -337,7 +337,7 @@ def test_modo_migracion_habilita_warn_desde_config(monkeypatch, tmp_path):
 
 
 def test_warn_desde_config_sin_migracion_hace_fallback_a_namespace_required(monkeypatch, tmp_path):
-    (tmp_path / "datos.co").write_text("usar algo")
+    (tmp_path / "datos.cobra").write_text("usar algo")
     monkeypatch.setattr(
         "pcobra.cobra.imports.resolver.get_toml_map",
         lambda: {"imports": {"collision_policy": "warn"}},
@@ -351,7 +351,7 @@ def test_warn_desde_config_sin_migracion_hace_fallback_a_namespace_required(monk
 
 
 def test_colision_short_import_namespace_required_incluye_recomendacion(tmp_path):
-    (tmp_path / "datos.co").write_text("usar algo")
+    (tmp_path / "datos.cobra").write_text("usar algo")
     resolver = CobraImportResolver(project_root=tmp_path)
 
     with pytest.raises(ImportResolutionError) as excinfo:
@@ -364,7 +364,7 @@ def test_colision_short_import_namespace_required_incluye_recomendacion(tmp_path
 
 
 def test_colision_tipica_importar_datos_local_vs_cobra_datos_sugiere_ruta(tmp_path):
-    (tmp_path / "datos.co").write_text("usar algo")
+    (tmp_path / "datos.cobra").write_text("usar algo")
     resolver = CobraImportResolver(project_root=tmp_path)
 
     with pytest.raises(ImportResolutionError) as excinfo:
@@ -379,7 +379,7 @@ def test_colision_tipica_importar_datos_local_vs_cobra_datos_sugiere_ruta(tmp_pa
 def test_import_namespaced_no_colision_con_modulo_local(tmp_path):
     app_dir = tmp_path / "app"
     app_dir.mkdir()
-    (app_dir / "datos.co").write_text("usar algo")
+    (app_dir / "datos.cobra").write_text("usar algo")
     resolver = CobraImportResolver(project_root=tmp_path)
 
     stdlib_result = resolver.resolve("cobra.datos")
@@ -399,7 +399,7 @@ def test_load_module_inyecta_backend_adapter_en_ruta_namespaced_stdlib():
 
 
 def test_motivo_precedencia_en_colision(tmp_path):
-    (tmp_path / "datos.co").write_text("usar algo")
+    (tmp_path / "datos.cobra").write_text("usar algo")
     resolver = CobraImportResolver(project_root=tmp_path, collision_policy="warn")
 
     with pytest.warns(UserWarning, match="Colisión de import"):
@@ -410,7 +410,7 @@ def test_motivo_precedencia_en_colision(tmp_path):
 
 
 def test_metadata_incluye_conflict_candidates_para_debug_interno(tmp_path):
-    (tmp_path / "datos.co").write_text("usar algo")
+    (tmp_path / "datos.cobra").write_text("usar algo")
     resolver = CobraImportResolver(project_root=tmp_path, collision_policy="warn")
 
     with pytest.warns(UserWarning, match="Colisión de import"):
@@ -429,7 +429,7 @@ def test_error_si_no_hay_candidato():
 
 
 def test_error_colision_expone_codigo_estable(tmp_path):
-    (tmp_path / "datos.co").write_text("usar algo")
+    (tmp_path / "datos.cobra").write_text("usar algo")
     resolver = CobraImportResolver(project_root=tmp_path)
 
     with pytest.raises(ImportResolutionError) as excinfo:
@@ -440,7 +440,7 @@ def test_error_colision_expone_codigo_estable(tmp_path):
 
 
 def test_audit_debug_registra_resolucion_y_precedence_reason(tmp_path):
-    (tmp_path / "datos.co").write_text("usar algo")
+    (tmp_path / "datos.cobra").write_text("usar algo")
     resolver = CobraImportResolver(
         project_root=tmp_path,
         collision_policy="warn",

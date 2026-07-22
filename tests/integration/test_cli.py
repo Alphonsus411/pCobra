@@ -79,9 +79,9 @@ def test_modulos_instalar_enlace_simbolico(tmp_path, monkeypatch):
     monkeypatch.setattr(modules_cmd, "MODULE_MAP_PATH", str(mod_file))
     monkeypatch.setattr(modules_cmd, "LOCK_FILE", mod_file)
 
-    real_file = tmp_path / "m.co"
+    real_file = tmp_path / "m.cobra"
     real_file.write_text("var x = 1")
-    link = tmp_path / "link.co"
+    link = tmp_path / "link.cobra"
     link.symlink_to(real_file)
     with patch("sys.stdout", new_callable=StringIO) as out:
         main(["mod", "install", str(link)])

@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 from unittest.mock import patch
 
+from pcobra.cobra.extensions import COBRA_SOURCE_EXTENSIONS
 from pcobra.cobra.core.interpreter import InterpretadorCobra
 from pcobra.cobra.core.sandbox import ejecutar_en_contenedor, ejecutar_en_sandbox, ejecutar_en_sandbox_js
 from pcobra.cobra.build import backend_pipeline

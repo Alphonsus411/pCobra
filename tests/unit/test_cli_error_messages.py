@@ -13,7 +13,7 @@ def _legacy_main():
 @pytest.mark.timeout(5)
 def test_error_msg_compile_missing(tmp_path, monkeypatch):
     monkeypatch.setenv("COBRA_CLI_COMMAND_PROFILE", "development")
-    archivo = tmp_path / "no.co"
+    archivo = tmp_path / "no.cobra"
     with patch("sys.stdout", new_callable=StringIO) as out:
         _legacy_main()(["compilar", str(archivo)])
     assert "archivo" in out.getvalue().lower()
@@ -21,7 +21,7 @@ def test_error_msg_compile_missing(tmp_path, monkeypatch):
 
 @pytest.mark.timeout(5)
 def test_error_msg_execute_missing(tmp_path):
-    archivo = tmp_path / "no.co"
+    archivo = tmp_path / "no.cobra"
     with patch("sys.stdout", new_callable=StringIO) as out:
         main(["ejecutar", str(archivo)])
     assert "archivo" in out.getvalue().lower()
@@ -30,7 +30,7 @@ def test_error_msg_execute_missing(tmp_path):
 @pytest.mark.timeout(5)
 def test_cli_legacy_imports_flag_muestra_ruta_migracion(tmp_path, monkeypatch):
     monkeypatch.setenv("COBRA_CLI_COMMAND_PROFILE", "development")
-    archivo = tmp_path / "no.co"
+    archivo = tmp_path / "no.cobra"
     with patch("sys.stdout", new_callable=StringIO) as out:
         _legacy_main()(["--legacy-imports", "compilar", str(archivo)])
     salida = out.getvalue()

@@ -6,7 +6,7 @@ import pytest
 from pcobra.cobra.core import Lexer, Parser, ParserError
 from pcobra.cobra.core.interpreter import InterpretadorCobra
 from pcobra.cobra.usar_loader import (
-    obtener_cache_ast_import_co,
+    obtener_cache_ast_import_cobra,
     obtener_cache_modulos_cobra_proyecto,
     obtener_pila_carga_modulos_cobra_proyecto,
     usar_modulo,
@@ -15,11 +15,11 @@ from pcobra.cobra.usar_loader import (
 
 @pytest.fixture(autouse=True)
 def limpiar_caches_usar():
-    obtener_cache_ast_import_co().clear()
+    obtener_cache_ast_import_cobra().clear()
     obtener_cache_modulos_cobra_proyecto().clear()
     obtener_pila_carga_modulos_cobra_proyecto().clear()
     yield
-    obtener_cache_ast_import_co().clear()
+    obtener_cache_ast_import_cobra().clear()
     obtener_cache_modulos_cobra_proyecto().clear()
     obtener_pila_carga_modulos_cobra_proyecto().clear()
 

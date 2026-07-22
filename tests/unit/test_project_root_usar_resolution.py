@@ -6,7 +6,7 @@ import pytest
 from pcobra.cobra.cli.execution_pipeline import PipelineInput, ejecutar_pipeline_explicito
 from pcobra.cobra.usar_loader import (
     descubrir_raiz_proyecto,
-    obtener_cache_ast_import_co,
+    obtener_cache_ast_import_cobra,
     formatear_ciclo_modulos_cobra_proyecto,
     obtener_cache_modulos_cobra_proyecto,
     obtener_pila_carga_modulos_cobra_proyecto,
@@ -29,11 +29,11 @@ from pcobra.core.ast_nodes import (
 def limpiar_estado_usar_proyecto_compartido():
     """Aísla la caché/pila global compartida entre tests de módulos de proyecto."""
 
-    obtener_cache_ast_import_co().clear()
+    obtener_cache_ast_import_cobra().clear()
     obtener_cache_modulos_cobra_proyecto().clear()
     obtener_pila_carga_modulos_cobra_proyecto().clear()
     yield
-    obtener_cache_ast_import_co().clear()
+    obtener_cache_ast_import_cobra().clear()
     obtener_cache_modulos_cobra_proyecto().clear()
     obtener_pila_carga_modulos_cobra_proyecto().clear()
 
@@ -42,8 +42,8 @@ def test_formatear_ciclo_modulos_usa_rutas_relativas_en_subcarpetas(tmp_path):
     proyecto = tmp_path / "app"
     anidados = proyecto / "utilidades" / "internas"
     anidados.mkdir(parents=True)
-    modulo_a = anidados / "a.co"
-    modulo_b = anidados / "b.co"
+    modulo_a = anidados / "a.cobra"
+    modulo_b = anidados / "b.cobra"
     modulo_a.write_text("", encoding="utf-8")
     modulo_b.write_text("", encoding="utf-8")
 
@@ -55,8 +55,8 @@ def test_formatear_ciclo_modulos_usa_rutas_relativas_en_subcarpetas(tmp_path):
 
     assert (
         cadena
-        == "utilidades/internas/a.co -> utilidades/internas/b.co -> "
-        "utilidades/internas/a.co"
+        == "utilidades/internas/a.cobra -> utilidades/internas/b.cobra -> "
+        "utilidades/internas/a.cobra"
     )
 
 def test_formatear_ciclo_modulos_fallback_canonico_fuera_de_project_root(tmp_path):
@@ -64,7 +64,7 @@ def test_formatear_ciclo_modulos_fallback_canonico_fuera_de_project_root(tmp_pat
     externo = tmp_path / "externo"
     proyecto.mkdir()
     externo.mkdir()
-    modulo = externo / "a.co"
+    modulo = externo / "a.cobra"
     modulo.write_text("", encoding="utf-8")
 
     cadena = formatear_ciclo_modulos_cobra_proyecto(
@@ -78,14 +78,14 @@ def test_descubrir_raiz_proyecto_prefiere_cobra_toml_desde_archivo_principal(tmp
     subdir = proyecto / "src"
     subdir.mkdir(parents=True)
     (proyecto / "cobra.toml").write_text("[proyecto]\n", encoding="utf-8")
-    principal = subdir / "main.co"
+    principal = subdir / "main.cobra"
     principal.write_text("", encoding="utf-8")
 
     assert descubrir_raiz_proyecto(subdir, principal) == proyecto.resolve()
 
 
 def test_descubrir_raiz_proyecto_usa_directorio_principal_sin_cobra_toml(tmp_path):
-    principal = tmp_path / "programa.co"
+    principal = tmp_path / "programa.cobra"
     principal.write_text("", encoding="utf-8")
 
     assert descubrir_raiz_proyecto(None, principal) == tmp_path.resolve()
@@ -101,10 +101,10 @@ def test_ejecucion_desde_cwd_externo_resuelve_usar_con_main_file(
     (proyecto / "utilidades").mkdir(parents=True)
     externo.mkdir()
     (proyecto / "cobra.toml").write_text("[proyecto]\n", encoding="utf-8")
-    principal = proyecto / "programas" / "main.co"
+    principal = proyecto / "programas" / "main.cobra"
     principal.parent.mkdir()
     principal.write_text('usar "utilidades.fechas"\n', encoding="utf-8")
-    modulo = proyecto / "utilidades" / "fechas.co"
+    modulo = proyecto / "utilidades" / "fechas.cobra"
     modulo.write_text("var hoy = 13\n", encoding="utf-8")
     rutas_cargadas = []
 
@@ -138,9 +138,9 @@ def test_usar_proyecto_respeta_superficie_controlada_de_import_utils(
 
     proyecto = tmp_path / "app"
     proyecto.mkdir()
-    principal = proyecto / "main.co"
+    principal = proyecto / "main.cobra"
     principal.write_text("", encoding="utf-8")
-    modulo = proyecto / "util.co"
+    modulo = proyecto / "util.cobra"
     modulo.write_text("", encoding="utf-8")
     cargas = []
 
@@ -172,10 +172,10 @@ def test_ejecucion_real_desde_cwd_externo_resuelve_usar_en_cobra_toml(
     (proyecto / "utilidades").mkdir(parents=True)
     externo.mkdir()
     (proyecto / "cobra.toml").write_text("[proyecto]\n", encoding="utf-8")
-    principal = proyecto / "programas" / "main.co"
+    principal = proyecto / "programas" / "main.cobra"
     principal.parent.mkdir()
     principal.write_text('usar "utilidades.fechas"\n', encoding="utf-8")
-    (proyecto / "utilidades" / "fechas.co").write_text(
+    (proyecto / "utilidades" / "fechas.cobra").write_text(
         "var hoy = 13\n",
         encoding="utf-8",
     )
@@ -199,7 +199,7 @@ def test_resolver_modulo_cobra_proyecto_usa_raiz_canonicalizada(tmp_path):
     proyecto = tmp_path / "app"
     modulo_dir = proyecto / "utilidades"
     modulo_dir.mkdir(parents=True)
-    ruta = modulo_dir / "fechas.co"
+    ruta = modulo_dir / "fechas.cobra"
     ruta.write_text("", encoding="utf-8")
 
     assert (
@@ -213,9 +213,9 @@ def test_interpretador_usar_proyecto_resuelve_desde_cobra_toml(monkeypatch, tmp_
     (proyecto / "programas").mkdir(parents=True)
     (proyecto / "utilidades").mkdir()
     (proyecto / "cobra.toml").write_text("[proyecto]\n", encoding="utf-8")
-    principal = proyecto / "programas" / "main.co"
+    principal = proyecto / "programas" / "main.cobra"
     principal.write_text("", encoding="utf-8")
-    modulo = proyecto / "utilidades" / "fechas.co"
+    modulo = proyecto / "utilidades" / "fechas.cobra"
     modulo.write_text("", encoding="utf-8")
     rutas_cargadas = []
 
@@ -248,9 +248,9 @@ def test_interpretador_usar_proyecto_cachea_por_ruta_canonica(monkeypatch, tmp_p
     proyecto = tmp_path / "app"
     (proyecto / "utilidades").mkdir(parents=True)
     (proyecto / "cobra.toml").write_text("[proyecto]\n", encoding="utf-8")
-    principal = proyecto / "main.co"
+    principal = proyecto / "main.cobra"
     principal.write_text("", encoding="utf-8")
-    modulo = proyecto / "utilidades" / "fechas.co"
+    modulo = proyecto / "utilidades" / "fechas.cobra"
     modulo.write_text("", encoding="utf-8")
     cargas = []
 
@@ -278,10 +278,10 @@ def test_interpretador_usar_proyecto_detecta_ciclos_con_rutas_canonicas(monkeypa
     utilidades = proyecto / "utilidades"
     utilidades.mkdir(parents=True)
     (proyecto / "cobra.toml").write_text("[proyecto]\n", encoding="utf-8")
-    principal = proyecto / "main.co"
+    principal = proyecto / "main.cobra"
     principal.write_text("", encoding="utf-8")
-    modulo_a = utilidades / "a.co"
-    modulo_b = utilidades / "b.co"
+    modulo_a = utilidades / "a.cobra"
+    modulo_b = utilidades / "b.cobra"
     modulo_a.write_text("", encoding="utf-8")
     modulo_b.write_text("", encoding="utf-8")
 
@@ -301,7 +301,7 @@ def test_interpretador_usar_proyecto_detecta_ciclos_con_rutas_canonicas(monkeypa
     except ImportError as exc:
         assert str(exc) == (
             "Ciclo de módulos detectado en usar: "
-            "utilidades/a.co -> utilidades/b.co -> utilidades/a.co"
+            "utilidades/a.cobra -> utilidades/b.cobra -> utilidades/a.cobra"
         )
     else:
         raise AssertionError("Se esperaba un ImportError por ciclo de módulos")
@@ -315,9 +315,9 @@ def test_interpretador_usar_proyecto_respeta_export_y_detecta_conflicto(monkeypa
     proyecto = tmp_path / "app"
     (proyecto / "utilidades").mkdir(parents=True)
     (proyecto / "cobra.toml").write_text("[proyecto]\n", encoding="utf-8")
-    principal = proyecto / "main.co"
+    principal = proyecto / "main.cobra"
     principal.write_text("", encoding="utf-8")
-    modulo = proyecto / "utilidades" / "fechas.co"
+    modulo = proyecto / "utilidades" / "fechas.cobra"
     modulo.write_text("", encoding="utf-8")
 
     def fake_cargar_ast_modulo(ruta, **kwargs):
@@ -349,7 +349,7 @@ def test_interpretador_usar_proyecto_respeta_export_y_detecta_conflicto(monkeypa
 def test_resolver_modulo_cobra_proyecto_resuelve_modulo_misma_carpeta(tmp_path):
     proyecto = tmp_path / "app"
     proyecto.mkdir()
-    modulo = proyecto / "saludos.co"
+    modulo = proyecto / "saludos.cobra"
     modulo.write_text("", encoding="utf-8")
 
     assert resolver_modulo_cobra_proyecto("saludos", project_root=proyecto) == modulo.resolve()
@@ -357,7 +357,7 @@ def test_resolver_modulo_cobra_proyecto_resuelve_modulo_misma_carpeta(tmp_path):
 
 def test_resolver_modulo_cobra_proyecto_resuelve_subcarpeta_con_puntos(tmp_path):
     proyecto = tmp_path / "app"
-    modulo = proyecto / "utilidades" / "fechas.co"
+    modulo = proyecto / "utilidades" / "fechas.cobra"
     modulo.parent.mkdir(parents=True)
     modulo.write_text("", encoding="utf-8")
 
@@ -366,7 +366,7 @@ def test_resolver_modulo_cobra_proyecto_resuelve_subcarpeta_con_puntos(tmp_path)
 
 def test_resolver_modulo_cobra_proyecto_resuelve_modulo_anidado(tmp_path):
     proyecto = tmp_path / "app"
-    modulo = proyecto / "a" / "b" / "c.co"
+    modulo = proyecto / "a" / "b" / "c.cobra"
     modulo.parent.mkdir(parents=True)
     modulo.write_text("", encoding="utf-8")
 
@@ -379,16 +379,16 @@ def test_cobertura_explicita_usar_resuelve_util_subcarpeta_y_anidado(tmp_path):
     """Documenta los tres casos nominales pedidos para `usar` de proyecto.
 
     Mantiene la cobertura explícita sin tocar gramática, tokens, Lexer ni Parser:
-    - `usar util` -> `util.co` en la raíz del proyecto;
+    - `usar util` -> `util.cobra` en la raíz del proyecto;
     - `usar utilidades.fechas` -> subcarpeta;
     - `usar a.b.c` -> módulo anidado.
     """
 
     proyecto = tmp_path / "app"
     rutas_esperadas = {
-        "util": proyecto / "util.co",
-        "utilidades.fechas": proyecto / "utilidades" / "fechas.co",
-        "a.b.c": proyecto / "a" / "b" / "c.co",
+        "util": proyecto / "util.cobra",
+        "utilidades.fechas": proyecto / "utilidades" / "fechas.cobra",
+        "a.b.c": proyecto / "a" / "b" / "c.cobra",
     }
     for ruta in rutas_esperadas.values():
         ruta.parent.mkdir(parents=True, exist_ok=True)
@@ -407,9 +407,9 @@ def test_usar_modulo_api_resuelve_util_misma_carpeta(monkeypatch, tmp_path):
     proyecto = tmp_path / "app"
     (proyecto / "utilidades" / "internas").mkdir(parents=True)
     (proyecto / "cobra.toml").write_text("[proyecto]\n", encoding="utf-8")
-    principal = proyecto / "main.co"
+    principal = proyecto / "main.cobra"
     principal.write_text("", encoding="utf-8")
-    modulo = proyecto / "util.co"
+    modulo = proyecto / "util.cobra"
     modulo.write_text("", encoding="utf-8")
     rutas_cargadas = []
 
@@ -433,9 +433,9 @@ def test_usar_modulo_api_resuelve_utilidades_fechas(monkeypatch, tmp_path):
     proyecto = tmp_path / "app"
     (proyecto / "utilidades").mkdir(parents=True)
     (proyecto / "cobra.toml").write_text("[proyecto]\n", encoding="utf-8")
-    principal = proyecto / "main.co"
+    principal = proyecto / "main.cobra"
     principal.write_text("", encoding="utf-8")
-    modulo = proyecto / "utilidades" / "fechas.co"
+    modulo = proyecto / "utilidades" / "fechas.cobra"
     modulo.write_text("", encoding="utf-8")
     rutas_cargadas = []
 
@@ -459,7 +459,7 @@ def test_usar_modulo_api_nombre_simple_inexistente_mantiene_error_publico(tmp_pa
     proyecto = tmp_path / "app"
     proyecto.mkdir()
     (proyecto / "cobra.toml").write_text("[proyecto]\n", encoding="utf-8")
-    principal = proyecto / "main.co"
+    principal = proyecto / "main.cobra"
     principal.write_text("", encoding="utf-8")
 
     with pytest.raises(PermissionError, match="no canónico"):
@@ -471,7 +471,7 @@ def test_usar_modulo_repl_estricto_no_resuelve_nombre_simple_como_proyecto(
 ):
     proyecto = tmp_path / "app"
     proyecto.mkdir()
-    (proyecto / "num.co").write_text("", encoding="utf-8")
+    (proyecto / "num.cobra").write_text("", encoding="utf-8")
 
     def resolver_no_esperado(*_args, **_kwargs):
         raise AssertionError("el REPL estricto no debe consultar el proyecto")
@@ -498,9 +498,9 @@ def test_interpretador_usar_proyecto_misma_carpeta_con_nombre_simple(monkeypatch
     proyecto = tmp_path / "app"
     proyecto.mkdir()
     (proyecto / "cobra.toml").write_text("[proyecto]\n", encoding="utf-8")
-    principal = proyecto / "main.co"
+    principal = proyecto / "main.cobra"
     principal.write_text("", encoding="utf-8")
-    modulo = proyecto / "saludos.co"
+    modulo = proyecto / "saludos.cobra"
     modulo.write_text("", encoding="utf-8")
     rutas_cargadas = []
 
@@ -524,9 +524,9 @@ def test_interpretador_usar_proyecto_util_misma_carpeta(monkeypatch, tmp_path):
     proyecto = tmp_path / "app"
     proyecto.mkdir()
     (proyecto / "cobra.toml").write_text("[proyecto]\n", encoding="utf-8")
-    principal = proyecto / "main.co"
+    principal = proyecto / "main.cobra"
     principal.write_text("", encoding="utf-8")
-    modulo = proyecto / "util.co"
+    modulo = proyecto / "util.cobra"
     modulo.write_text("", encoding="utf-8")
     rutas_cargadas = []
 
@@ -551,9 +551,9 @@ def test_interpretador_usar_proyecto_utilidades_fechas(monkeypatch, tmp_path):
     proyecto = tmp_path / "app"
     (proyecto / "utilidades").mkdir(parents=True)
     (proyecto / "cobra.toml").write_text("[proyecto]\n", encoding="utf-8")
-    principal = proyecto / "main.co"
+    principal = proyecto / "main.cobra"
     principal.write_text("", encoding="utf-8")
-    modulo = proyecto / "utilidades" / "fechas.co"
+    modulo = proyecto / "utilidades" / "fechas.cobra"
     modulo.write_text("", encoding="utf-8")
     rutas_cargadas = []
 
@@ -577,9 +577,9 @@ def test_interpretador_usar_proyecto_mantiene_raiz_al_cambiar_cwd(monkeypatch, t
     externo.mkdir()
     (proyecto / "utilidades").mkdir(parents=True)
     (proyecto / "cobra.toml").write_text("[proyecto]\n", encoding="utf-8")
-    principal = proyecto / "main.co"
+    principal = proyecto / "main.cobra"
     principal.write_text("", encoding="utf-8")
-    modulo = proyecto / "utilidades" / "fechas.co"
+    modulo = proyecto / "utilidades" / "fechas.cobra"
     modulo.write_text("", encoding="utf-8")
     rutas_cargadas = []
 
@@ -605,9 +605,9 @@ def test_interpretador_usar_proyecto_cachea_referencias_equivalentes(monkeypatch
     proyecto = tmp_path / "app"
     (proyecto / "a" / "b").mkdir(parents=True)
     (proyecto / "cobra.toml").write_text("[proyecto]\n", encoding="utf-8")
-    principal = proyecto / "main.co"
+    principal = proyecto / "main.cobra"
     principal.write_text("", encoding="utf-8")
-    modulo = proyecto / "a" / "b" / "c.co"
+    modulo = proyecto / "a" / "b" / "c.cobra"
     modulo.write_text("", encoding="utf-8")
     cargas = []
 
@@ -631,7 +631,7 @@ def test_interpretador_usar_proyecto_cachea_referencias_equivalentes(monkeypatch
 def test_resolver_ruta_canonica_modulo_cobra_proyecto_normaliza_project_root_equivalente(tmp_path):
     proyecto = tmp_path / "app"
     subdir = proyecto / "subdir"
-    modulo = proyecto / "utilidades" / "fechas.co"
+    modulo = proyecto / "utilidades" / "fechas.cobra"
     subdir.mkdir(parents=True)
     modulo.parent.mkdir(parents=True)
     modulo.write_text("", encoding="utf-8")
@@ -653,11 +653,11 @@ def test_usar_modulo_cachea_referencias_equivalentes_al_mismo_co(monkeypatch, tm
 
     proyecto = tmp_path / "app"
     subdir = proyecto / "subdir"
-    modulo = proyecto / "utilidades" / "fechas.co"
+    modulo = proyecto / "utilidades" / "fechas.cobra"
     subdir.mkdir(parents=True)
     modulo.parent.mkdir(parents=True)
     (proyecto / "cobra.toml").write_text("[proyecto]\n", encoding="utf-8")
-    principal = proyecto / "main.co"
+    principal = proyecto / "main.cobra"
     principal.write_text("", encoding="utf-8")
     modulo.write_text("", encoding="utf-8")
     cargas = []
@@ -688,9 +688,9 @@ def test_api_e_interpretador_aislan_cache_por_ejecucion_independiente(monkeypatc
     proyecto = tmp_path / "app"
     (proyecto / "utilidades").mkdir(parents=True)
     (proyecto / "cobra.toml").write_text("[proyecto]\n", encoding="utf-8")
-    principal = proyecto / "main.co"
+    principal = proyecto / "main.cobra"
     principal.write_text("", encoding="utf-8")
-    modulo = proyecto / "utilidades" / "fechas.co"
+    modulo = proyecto / "utilidades" / "fechas.cobra"
     modulo.write_text("", encoding="utf-8")
     cargas = []
 
@@ -723,8 +723,8 @@ def test_interpretes_independientes_no_comparten_cache_ni_pila_usar(tmp_path):
     proyecto_b = tmp_path / "b"
     proyecto_a.mkdir()
     proyecto_b.mkdir()
-    principal_a = proyecto_a / "main.co"
-    principal_b = proyecto_b / "main.co"
+    principal_a = proyecto_a / "main.cobra"
+    principal_b = proyecto_b / "main.cobra"
     principal_a.write_text("", encoding="utf-8")
     principal_b.write_text("", encoding="utf-8")
 
@@ -743,11 +743,11 @@ def test_interpretador_usar_proyecto_detecta_ciclo_directo_self(monkeypatch, tmp
     proyecto = tmp_path / "app"
     proyecto.mkdir()
     (proyecto / "cobra.toml").write_text("[proyecto]\n", encoding="utf-8")
-    principal = proyecto / "main.co"
+    principal = proyecto / "main.cobra"
     principal.write_text("", encoding="utf-8")
     anidados = proyecto / "utilidades" / "internas"
     anidados.mkdir(parents=True)
-    modulo = anidados / "a.co"
+    modulo = anidados / "a.cobra"
     modulo.write_text("", encoding="utf-8")
 
     monkeypatch.setattr(
@@ -760,7 +760,7 @@ def test_interpretador_usar_proyecto_detecta_ciclo_directo_self(monkeypatch, tmp
         ImportError,
         match=(
             r"Ciclo de módulos detectado en usar: "
-            r"utilidades/internas/a\.co -> utilidades/internas/a\.co"
+            r"utilidades/internas/a\.cobra -> utilidades/internas/a\.cobra"
         ),
     ):
         interp.ejecutar_usar(SimpleNamespace(modulo="utilidades.internas.a"))
@@ -773,18 +773,18 @@ def test_interpretador_usar_proyecto_detecta_ciclo_indirecto(monkeypatch, tmp_pa
     proyecto = tmp_path / "app"
     (proyecto / "utilidades" / "internas").mkdir(parents=True)
     (proyecto / "cobra.toml").write_text("[proyecto]\n", encoding="utf-8")
-    principal = proyecto / "main.co"
+    principal = proyecto / "main.cobra"
     principal.write_text("", encoding="utf-8")
     for nombre in ("a", "b", "c"):
-        (proyecto / "utilidades" / "internas" / f"{nombre}.co").write_text(
+        (proyecto / "utilidades" / "internas" / f"{nombre}.cobra").write_text(
             "", encoding="utf-8"
         )
 
     def fake_cargar_ast_modulo(ruta, **kwargs):
         siguiente = {
-            "a.co": "utilidades.internas.b",
-            "b.co": "utilidades.internas.c",
-            "c.co": "utilidades.internas.a",
+            "a.cobra": "utilidades.internas.b",
+            "b.cobra": "utilidades.internas.c",
+            "c.cobra": "utilidades.internas.a",
         }[Path(ruta).name]
         return [NodoUsar(siguiente)]
 
@@ -796,8 +796,8 @@ def test_interpretador_usar_proyecto_detecta_ciclo_indirecto(monkeypatch, tmp_pa
     with pytest.raises(
         ImportError,
         match=(
-            r"utilidades/internas/a\.co -> utilidades/internas/b\.co -> "
-            r"utilidades/internas/c\.co -> utilidades/internas/a\.co"
+            r"utilidades/internas/a\.cobra -> utilidades/internas/b\.cobra -> "
+            r"utilidades/internas/c\.cobra -> utilidades/internas/a\.cobra"
         ),
     ):
         interp.ejecutar_usar(SimpleNamespace(modulo="utilidades.internas.a"))
@@ -813,9 +813,9 @@ def test_interpretador_usar_proyecto_detecta_ciclo_directo_en_root_con_mensaje_e
     proyecto = tmp_path / "app"
     proyecto.mkdir()
     (proyecto / "cobra.toml").write_text("[proyecto]\n", encoding="utf-8")
-    principal = proyecto / "main.co"
+    principal = proyecto / "main.cobra"
     principal.write_text("", encoding="utf-8")
-    modulo = proyecto / "a.co"
+    modulo = proyecto / "a.cobra"
     modulo.write_text("", encoding="utf-8")
 
     monkeypatch.setattr(
@@ -827,7 +827,7 @@ def test_interpretador_usar_proyecto_detecta_ciclo_directo_en_root_con_mensaje_e
     with pytest.raises(ImportError) as excinfo:
         interp.ejecutar_usar(SimpleNamespace(modulo="a"))
 
-    assert str(excinfo.value) == "Ciclo de módulos detectado en usar: a.co -> a.co"
+    assert str(excinfo.value) == "Ciclo de módulos detectado en usar: a.cobra -> a.cobra"
     assert obtener_pila_carga_modulos_cobra_proyecto() == []
 
 
@@ -839,16 +839,16 @@ def test_interpretador_usar_proyecto_detecta_ciclo_indirecto_en_root_con_cadena_
     proyecto = tmp_path / "app"
     proyecto.mkdir()
     (proyecto / "cobra.toml").write_text("[proyecto]\n", encoding="utf-8")
-    principal = proyecto / "main.co"
+    principal = proyecto / "main.cobra"
     principal.write_text("", encoding="utf-8")
     for nombre in ("a", "b", "c"):
-        (proyecto / f"{nombre}.co").write_text("", encoding="utf-8")
+        (proyecto / f"{nombre}.cobra").write_text("", encoding="utf-8")
 
     def fake_cargar_ast_modulo(ruta, **_kwargs):
         siguiente = {
-            "a.co": "b",
-            "b.co": "c",
-            "c.co": "a",
+            "a.cobra": "b",
+            "b.cobra": "c",
+            "c.cobra": "a",
         }[Path(ruta).name]
         return [NodoUsar(siguiente)]
 
@@ -861,7 +861,7 @@ def test_interpretador_usar_proyecto_detecta_ciclo_indirecto_en_root_con_cadena_
         interp.ejecutar_usar(SimpleNamespace(modulo="a"))
 
     assert str(excinfo.value) == (
-        "Ciclo de módulos detectado en usar: a.co -> b.co -> c.co -> a.co"
+        "Ciclo de módulos detectado en usar: a.cobra -> b.cobra -> c.cobra -> a.cobra"
     )
     assert obtener_pila_carga_modulos_cobra_proyecto() == []
 
@@ -870,9 +870,9 @@ def test_usar_proyecto_limpia_pila_si_falla_cargar_ast_modulo(monkeypatch, tmp_p
     proyecto = tmp_path / "app"
     proyecto.mkdir()
     (proyecto / "cobra.toml").write_text("[proyecto]\n", encoding="utf-8")
-    principal = proyecto / "main.co"
+    principal = proyecto / "main.cobra"
     principal.write_text("", encoding="utf-8")
-    modulo = proyecto / "a.co"
+    modulo = proyecto / "a.cobra"
     modulo.write_text("", encoding="utf-8")
 
     def fake_cargar_ast_modulo(_ruta, **_kwargs):
@@ -894,9 +894,9 @@ def test_interpretador_usar_proyecto_modulo_inexistente_muestra_nombre_y_ruta(tm
     proyecto = tmp_path / "app"
     (proyecto / "utilidades").mkdir(parents=True)
     (proyecto / "cobra.toml").write_text("[proyecto]\n", encoding="utf-8")
-    principal = proyecto / "main.co"
+    principal = proyecto / "main.cobra"
     principal.write_text("", encoding="utf-8")
-    ruta_buscada = proyecto / "utilidades" / "faltante.co"
+    ruta_buscada = proyecto / "utilidades" / "faltante.cobra"
 
     interp = InterpretadorCobra(main_file=principal)
     with pytest.raises(FileNotFoundError) as excinfo:
@@ -917,7 +917,7 @@ def test_resolver_modulo_cobra_proyecto_rechaza_resultado_manipulado_fuera_de_ro
     externo = tmp_path / "externo"
     proyecto.mkdir()
     externo.mkdir()
-    ruta_externa = externo / "fechas.co"
+    ruta_externa = externo / "fechas.cobra"
     ruta_externa.write_text("", encoding="utf-8")
 
     class FakeResolver:
@@ -946,7 +946,7 @@ def test_resolver_modulo_cobra_proyecto_fallback_devuelve_ruta_canonica(
 
     proyecto = tmp_path / "app"
     proyecto.mkdir()
-    ruta_modulo = proyecto / "utilidades" / "fechas.co"
+    ruta_modulo = proyecto / "utilidades" / "fechas.cobra"
     ruta_modulo.parent.mkdir()
     ruta_modulo.write_text("", encoding="utf-8")
 
@@ -956,7 +956,7 @@ def test_resolver_modulo_cobra_proyecto_fallback_devuelve_ruta_canonica(
 
         def resolve(self, nombre):
             ruta_legacy = (
-                proyecto / "." / "utilidades" / ".." / "utilidades" / "fechas.co"
+                proyecto / "." / "utilidades" / ".." / "utilidades" / "fechas.cobra"
             )
             return ResolutionResult(
                 request=nombre,
@@ -975,9 +975,9 @@ def test_resolver_modulo_cobra_proyecto_fallback_devuelve_ruta_canonica(
 
 
 def test_import_archivo_co_mantiene_ejecutar_import(monkeypatch, tmp_path):
-    principal = tmp_path / "main.co"
+    principal = tmp_path / "main.cobra"
     principal.write_text("", encoding="utf-8")
-    modulo = tmp_path / "archivo.co"
+    modulo = tmp_path / "archivo.cobra"
     modulo.write_text("", encoding="utf-8")
     llamadas = []
 
@@ -998,13 +998,13 @@ def test_import_archivo_co_mantiene_ejecutar_import(monkeypatch, tmp_path):
 def test_import_archivo_co_via_nodo_import_usa_flujo_legacy_y_whitelist(
     monkeypatch, tmp_path
 ):
-    """`import 'archivo.co'` conserva el loader legacy de `NodoImport`."""
+    """`import 'archivo.cobra'` conserva el loader legacy de `NodoImport`."""
 
     proyecto = tmp_path / "app"
     proyecto.mkdir()
-    principal = proyecto / "main.co"
-    principal.write_text("import 'archivo.co'\n", encoding="utf-8")
-    modulo = proyecto / "archivo.co"
+    principal = proyecto / "main.cobra"
+    principal.write_text("import 'archivo.cobra'\n", encoding="utf-8")
+    modulo = proyecto / "archivo.cobra"
     modulo.write_text("var valor_importado = 42\n", encoding="utf-8")
     llamadas = []
 
@@ -1031,11 +1031,11 @@ def test_import_archivo_co_via_nodo_import_usa_flujo_legacy_y_whitelist(
     interp.ejecutar_import(ast_principal[0])
 
     assert isinstance(ast_principal[0], NodoImport)
-    assert ast_principal[0].ruta == "archivo.co"
+    assert ast_principal[0].ruta == "archivo.cobra"
     assert interp.variables["valor_importado"] == 42
     assert llamadas == [
         (
-            "archivo.co",
+            "archivo.cobra",
             {
                 "modules_path": str(proyecto),
                 "whitelist": {proyecto},
@@ -1048,9 +1048,9 @@ def test_import_archivo_co_via_nodo_import_usa_flujo_legacy_y_whitelist(
 def test_import_archivo_co_duplicado_no_reejecuta_side_effects(monkeypatch, tmp_path):
     proyecto = tmp_path / "app"
     proyecto.mkdir()
-    principal = proyecto / "main.co"
+    principal = proyecto / "main.cobra"
     principal.write_text("", encoding="utf-8")
-    modulo = proyecto / "archivo.co"
+    modulo = proyecto / "archivo.cobra"
     modulo.write_text("", encoding="utf-8")
     ejecuciones = []
 
@@ -1085,10 +1085,10 @@ def test_import_archivo_co_duplicado_no_reejecuta_side_effects(monkeypatch, tmp_
 def test_import_archivo_co_detecta_ciclo_de_ejecucion_legacy(monkeypatch, tmp_path):
     proyecto = tmp_path / "app"
     proyecto.mkdir()
-    principal = proyecto / "main.co"
+    principal = proyecto / "main.cobra"
     principal.write_text("", encoding="utf-8")
-    modulo_a = proyecto / "a.co"
-    modulo_b = proyecto / "b.co"
+    modulo_a = proyecto / "a.cobra"
+    modulo_b = proyecto / "b.cobra"
     modulo_a.write_text("", encoding="utf-8")
     modulo_b.write_text("", encoding="utf-8")
 
@@ -1112,7 +1112,7 @@ def test_import_archivo_co_detecta_ciclo_de_ejecucion_legacy(monkeypatch, tmp_pa
 
     with pytest.raises(
         ImportError,
-        match=r"Ciclo de módulos detectado en import: a\.co -> b\.co -> a\.co",
+        match=r"Ciclo de módulos detectado en import: a\.cobra -> b\.cobra -> a\.cobra",
     ):
         interp.ejecutar_import(NodoImport(str(modulo_a)))
     assert interp._import_execution_stack == []
@@ -1124,9 +1124,9 @@ def test_usar_loader_no_altera_semantica_de_nodo_import(monkeypatch, tmp_path):
 
     proyecto = tmp_path / "app"
     proyecto.mkdir()
-    principal = proyecto / "main.co"
+    principal = proyecto / "main.cobra"
     principal.write_text("", encoding="utf-8")
-    modulo = proyecto / "archivo.co"
+    modulo = proyecto / "archivo.cobra"
     modulo.write_text("", encoding="utf-8")
     llamadas = []
 
@@ -1165,12 +1165,12 @@ def test_import_archivo_co_y_usar_utilidades_fechas_conviven_sin_semantica_publi
     utilidades = proyecto / "utilidades"
     utilidades.mkdir(parents=True)
     (proyecto / "cobra.toml").write_text("[proyecto]\n", encoding="utf-8")
-    principal = proyecto / "main.co"
+    principal = proyecto / "main.cobra"
     principal.write_text(
-        "import 'archivo.co'\nusar utilidades.fechas\n", encoding="utf-8"
+        "import 'archivo.cobra'\nusar utilidades.fechas\n", encoding="utf-8"
     )
-    archivo = proyecto / "archivo.co"
-    fechas = utilidades / "fechas.co"
+    archivo = proyecto / "archivo.cobra"
+    fechas = utilidades / "fechas.cobra"
     archivo.write_text("", encoding="utf-8")
     fechas.write_text("", encoding="utf-8")
     cargas = []
@@ -1232,7 +1232,7 @@ def test_validacion_modulo_proyecto_acepta_puntos():
     [
         "..",
         "../externo",
-        "../externo.co",
+        "../externo.cobra",
         "a/../b",
         "a..b",
         "utilidades..fechas",
@@ -1265,7 +1265,7 @@ def test_validacion_modulo_proyecto_rechaza_traversal_rutas_y_caracteres_prohibi
     [
         "..",
         "../externo",
-        "../externo.co",
+        "../externo.cobra",
         "a/../b",
         "utilidades..fechas",
     ],
@@ -1273,7 +1273,7 @@ def test_validacion_modulo_proyecto_rechaza_traversal_rutas_y_caracteres_prohibi
 def test_resolver_modulo_cobra_proyecto_rechaza_intentos_posix_de_escape(tmp_path, nombre):
     proyecto = tmp_path / "app"
     proyecto.mkdir()
-    externo = tmp_path / "externo.co"
+    externo = tmp_path / "externo.cobra"
     externo.write_text("var secreto = 1\n", encoding="utf-8")
 
     with pytest.raises(ValueError):
@@ -1299,9 +1299,9 @@ def test_resolver_modulo_cobra_proyecto_rechaza_rutas_windows_sin_depender_de_wi
 def test_resolver_modulo_cobra_proyecto_no_devuelve_symlink_fuera_de_project_root(tmp_path):
     proyecto = tmp_path / "app"
     proyecto.mkdir()
-    externo = tmp_path / "externo.co"
+    externo = tmp_path / "externo.cobra"
     externo.write_text("var secreto = 1\n", encoding="utf-8")
-    enlace = proyecto / "escape.co"
+    enlace = proyecto / "escape.cobra"
     enlace.symlink_to(externo)
 
     with pytest.raises(ValueError, match="fuera de la raíz autorizada"):
@@ -1318,15 +1318,15 @@ def test_usar_anidado_mantiene_raiz_autorizada_estable_con_current_file(
     externo.mkdir()
     (proyecto / "cobra.toml").write_text("[proyecto]\n", encoding="utf-8")
     # Este cobra.toml anidado detecta regresiones: la raíz autorizada debe seguir
-    # siendo la descubierta desde main.co, no la del módulo actualmente cargado.
+    # siendo la descubierta desde main.cobra, no la del módulo actualmente cargado.
     (modulo_dir / "cobra.toml").write_text("[proyecto]\n", encoding="utf-8")
-    principal = proyecto / "main.co"
+    principal = proyecto / "main.cobra"
     principal.write_text("usar a.b\n", encoding="utf-8")
-    (modulo_dir / "b.co").write_text(
+    (modulo_dir / "b.cobra").write_text(
         "usar a.c\nvar desde_b = 2\n",
         encoding="utf-8",
     )
-    (modulo_dir / "c.co").write_text("var desde_c = 3\n", encoding="utf-8")
+    (modulo_dir / "c.cobra").write_text("var desde_c = 3\n", encoding="utf-8")
 
     rutas_cargadas = []
     roots_usados = []
@@ -1368,8 +1368,8 @@ def test_usar_anidado_mantiene_raiz_autorizada_estable_con_current_file(
     assert roots_usados == [proyecto.resolve(), proyecto.resolve()]
     assert current_files_usados == [
         principal.resolve(),
-        (modulo_dir / "b.co").resolve(),
+        (modulo_dir / "b.cobra").resolve(),
     ]
-    assert (modulo_dir / "b.co").resolve() in rutas_cargadas
-    assert (modulo_dir / "c.co").resolve() in rutas_cargadas
+    assert (modulo_dir / "b.cobra").resolve() in rutas_cargadas
+    assert (modulo_dir / "c.cobra").resolve() in rutas_cargadas
     assert all(ruta.is_relative_to(proyecto.resolve()) for ruta in rutas_cargadas)

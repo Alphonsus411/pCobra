@@ -29,7 +29,7 @@ def test_transpilar_try_catch_throw():
 
 
 def test_transpilar_import(tmp_path):
-    mod = tmp_path / "mod.co"
+    mod = tmp_path / "mod.cobra"
     mod.write_text("var dato = 5")
     nodo = NodoImport(str(mod))
     codigo = TranspiladorPython().generate_code([nodo])

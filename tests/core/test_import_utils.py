@@ -22,7 +22,7 @@ def _ast_falso_desde_archivo(ruta: str):
 
 
 def test_obtener_simbolos_invalida_cache_si_cambia_archivo(tmp_path, monkeypatch):
-    modulo = tmp_path / "modulo.co"
+    modulo = tmp_path / "modulo.cobra"
     modulo.write_text("func:saludar\n", encoding="utf-8")
 
     monkeypatch.setattr(import_utils, "MODULES_PATH", tmp_path)
@@ -50,7 +50,7 @@ def test_obtener_simbolos_invalida_cache_si_cambia_archivo(tmp_path, monkeypatch
 def test_obtener_simbolos_reintenta_si_archivo_cambia_entre_fingerprint_y_parseo(
     tmp_path, monkeypatch
 ):
-    modulo = tmp_path / "modulo_race.co"
+    modulo = tmp_path / "modulo_race.cobra"
     modulo.write_text("var:uno\n", encoding="utf-8")
 
     monkeypatch.setattr(import_utils, "MODULES_PATH", tmp_path)

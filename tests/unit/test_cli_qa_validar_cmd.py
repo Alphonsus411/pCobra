@@ -12,7 +12,7 @@ from pcobra.cobra.qa.syntax_validation import SyntaxReport, SyntaxValidationExec
 def _args(**kwargs) -> Namespace:
     base = {
         "modo": "mixto",
-        "archivo": "programa.co",
+        "archivo": "programa.cobra",
         "strict": False,
         "solo_cobra": False,
         "targets": "",

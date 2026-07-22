@@ -10,6 +10,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Mapping, Sequence
 
+from pcobra.cobra.extensions import COBRA_SOURCE_EXTENSIONS
 from pcobra.cobra.packaging import es_paquete_cobra
 
 from .project import BuildOptions, CobraInstallerError, CobraProject

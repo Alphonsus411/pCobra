@@ -5,6 +5,7 @@ from io import StringIO
 from typing import Any
 from unittest.mock import patch
 
+from pcobra.cobra.extensions import COBRA_SOURCE_EXTENSIONS
 from pcobra.cobra.build import backend_pipeline
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.execution_pipeline import construir_interprete_seguro_canonico
