@@ -16,7 +16,7 @@ from pcobra.cobra.packaging import es_paquete_cobra
 from .project import BuildOptions, CobraInstallerError, CobraProject
 from .targets import validate_target
 
-COBRA_EXTENSIONS = tuple(sorted(COBRA_SOURCE_EXTENSIONS))
+COBRA_EXTENSIONS = (".cobra",)
 _EXECUTABLE_NAME_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]*$")
 _RESERVED_EXECUTABLE_NAMES = {
     "CON",

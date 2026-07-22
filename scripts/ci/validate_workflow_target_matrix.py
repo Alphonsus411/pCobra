@@ -39,9 +39,7 @@ RETIRED_REFERENCE_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = (
 )
 
 LEGACY_COBRA_SOURCE_COMMAND_PATTERN = re.compile(
-    r"(?im)(?:\bcobra\s+|\bpython\s+-m\s+"
-    r"(?:pcobra|pcobra\.cobra\.cli\.cli|cobra\.cli\.cli)\s+)"
-    r"(?:run|build|test|ejecutar|compilar|verificar)"
+    r"(?im)\b(?:cobra\s+)?(?:run|build|test|ejecutar|compilar|verificar)"
     r"\s+[^\n]*?\.co\b"
 )
 
