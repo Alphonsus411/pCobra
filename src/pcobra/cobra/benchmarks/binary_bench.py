@@ -114,7 +114,7 @@ def run_binary_benchmarks(
     results: list[dict[str, int | float | str]] = []
     try:
         with tempfile.TemporaryDirectory() as tmpdir:
-            co_file = Path(tmpdir) / "program.co"
+            co_file = Path(tmpdir) / "program.cobra"
             co_file.write_text(CODE, encoding="utf-8")
             selected_backends = list(
                 executable_benchmark_backends(

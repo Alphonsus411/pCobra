@@ -8,7 +8,7 @@ ROOT = Path(__file__).resolve().parents[2]
 EXAMPLES_DIR = ROOT / "examples"
 EXPECTED_DIR = ROOT / "tests" / "data" / "expected_examples"
 
-EXAMPLE_FILES = sorted(EXAMPLES_DIR.rglob("*.co"))
+EXAMPLE_FILES = sorted(EXAMPLES_DIR.rglob("*.cobra"))
 
 
 def _run_cli(args, toml_path):

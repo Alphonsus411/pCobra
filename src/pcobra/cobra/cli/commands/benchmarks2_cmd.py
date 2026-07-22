@@ -125,7 +125,7 @@ class BenchmarksV2Command(BaseCommand):
         base = "imprimir('hola')\n"
         archivos_creados: list[Path] = []
 
-        co_path = _escritura_programa_temporal(base, ".co")
+        co_path = _escritura_programa_temporal(base, ".cobra")
         archivos_creados.append(co_path)
 
         py_path = _escritura_programa_temporal("print('hola')\n", ".py")
