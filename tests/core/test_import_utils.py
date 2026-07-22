@@ -2,8 +2,27 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 from pcobra.core import import_utils
 from pcobra.core.ast_nodes import NodoAsignacion, NodoClase, NodoFuncion
+
+
+def test_cargar_ast_modulo_rechaza_co_sin_invocar_lexer(
+    tmp_path, monkeypatch
+):
+    modulo = tmp_path / "modulo.co"
+    modulo.write_text("imprimir('no parsear')\n", encoding="utf-8")
+
+    def fail_lexer(*_args, **_kwargs):
+        raise AssertionError("Un .co no debe llegar al Lexer")
+
+    monkeypatch.setattr(import_utils, "Lexer", fail_lexer)
+
+    with pytest.raises(ValueError, match=r"extensión \.cobra"):
+        import_utils.cargar_ast_modulo(
+            str(modulo), modules_path=str(tmp_path), whitelist={tmp_path}
+        )
 
 
 def _ast_falso_desde_archivo(ruta: str):

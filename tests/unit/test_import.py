@@ -16,6 +16,23 @@ IMPORTS = get_standard_imports("python")
 
 
 @pytest.mark.timeout(5)
+def test_import_rechaza_archivo_co_de_texto_antes_de_ejecutarlo(tmp_path):
+    modulo = tmp_path / "modulo.co"
+    modulo.write_text("var ejecutado = verdadero", encoding="utf-8")
+    IMPORT_WHITELIST.add(str(modulo))
+
+    ruta = str(modulo).replace("\\", "/")
+    codigo = f"import '{ruta}'"
+    ast = Parser(Lexer(codigo).analizar_token()).parsear()
+
+    try:
+        with pytest.raises(ValueError, match=r"extensión \.cobra"):
+            InterpretadorCobra().ejecutar_ast(ast)
+    finally:
+        IMPORT_WHITELIST.remove(str(modulo))
+
+
+@pytest.mark.timeout(5)
 def test_import_interpreter(tmp_path):
     mod = tmp_path / "mod.cobra"
     mod.write_text("var dato = 5")
@@ -105,7 +122,7 @@ def test_import_co_compatibilidad_ambito(tmp_path):
 
 
 @pytest.mark.timeout(5)
-def test_import_co_proteccion_path_traversal(tmp_path):
+def test_import_cobra_proteccion_path_traversal(tmp_path):
     # Crear un archivo fuera del directorio temporal para simular un intento de traversal
     malicious_file = tmp_path.parent / "malicious.cobra"
     malicious_file.write_text("var secreto = 'informacion_sensible'")
@@ -136,4 +153,3 @@ def test_import_transpiler(tmp_path):
     py_code = TranspiladorPython().generate_code(ast)
     expected = IMPORTS + "valor = 3\nprint(valor)\n"
     assert py_code == expected
-
