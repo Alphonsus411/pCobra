@@ -200,7 +200,7 @@ def read_declared_dependencies(path: str | Path) -> dict[str, DeclaredDependency
 
 
 def detect_cobra_imports(project_root: str | Path) -> set[str]:
-    """Detecta estáticamente imports Cobra usados por archivos ``.cobra``/``.co``."""
+    """Detecta estáticamente imports Cobra usados por archivos ``.cobra``."""
 
     root = Path(project_root)
     imports: set[str] = set()
@@ -223,14 +223,14 @@ def _iter_cobra_sources(root: Path):
     for path in root.rglob("*"):
         if any(part in _IGNORED_DIRS for part in path.relative_to(root).parts):
             continue
-        if path.is_file() and path.suffix in {".cobra", ".co"}:
+        if path.is_file() and path.suffix == ".cobra":
             yield path
 
 
 def _is_local_import(module: str) -> bool:
     return (
         module.startswith((".", "/"))
-        or module.endswith((".cobra", ".co"))
+        or module.endswith(".cobra")
         or "/" in module
         or "\\" in module
     )

@@ -19,7 +19,7 @@ TRANSPILERS = get_transpilers()
 
 @pytest.mark.parametrize("lang", SUPPORTED_TARGETS)
 def test_generate_and_syntax(tmp_path, lang):
-    src = Path("tests/data/ejemplo.co")
+    src = Path("tests/data/ejemplo.cobra")
     tokens = Lexer(src.read_text()).analizar_token()
     ast = Parser(tokens).parsear()
 

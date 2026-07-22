@@ -9,7 +9,7 @@ from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
 
 
 class CrearCommand(BaseCommand):
-    """Crea archivos o proyectos Cobra con extensión .co."""
+    """Crea archivos o proyectos Cobra con extensión .cobra."""
     
     name = "crear"
     
@@ -28,7 +28,7 @@ class CrearCommand(BaseCommand):
         parser = subparsers.add_parser(self.name, help=_("Crea archivos o proyectos"))
         sub = parser.add_subparsers(dest="accion", required=True)
         
-        arch = sub.add_parser("archivo", help=_("Crea un archivo .co"))
+        arch = sub.add_parser("archivo", help=_("Crea un archivo .cobra"))
         arch.add_argument("ruta", help=_("Ruta del archivo a crear"))
         
         carp = sub.add_parser("carpeta", help=_("Crea una carpeta"))
@@ -79,7 +79,7 @@ class CrearCommand(BaseCommand):
 
     @staticmethod
     def _crear_archivo(ruta: Path) -> int:
-        """Crea un archivo .co vacío.
+        """Crea un archivo .cobra vacío.
         
         Args:
             ruta: Ruta donde crear el archivo
@@ -91,8 +91,8 @@ class CrearCommand(BaseCommand):
             PermissionError: Si no hay permisos suficientes
             OSError: Si ocurre un error al crear el archivo
         """
-        if not str(ruta).endswith(".co"):
-            ruta = ruta.with_suffix(".co")
+        if not str(ruta).endswith(".cobra"):
+            ruta = ruta.with_suffix(".cobra")
             
         if ruta.exists():
             mostrar_error(_("El archivo ya existe: {path}").format(path=ruta))
@@ -136,10 +136,10 @@ class CrearCommand(BaseCommand):
             OSError: Si ocurre un error al crear el proyecto
         """
         ruta.mkdir(parents=True, exist_ok=True)
-        main_file = ruta / "main.co"
+        main_file = ruta / "main.cobra"
         
         if main_file.exists():
-            mostrar_error(_("El archivo main.co ya existe en {path}").format(path=ruta))
+            mostrar_error(_("El archivo main.cobra ya existe en {path}").format(path=ruta))
             return 1
             
         main_file.touch()

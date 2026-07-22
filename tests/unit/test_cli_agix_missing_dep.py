@@ -6,7 +6,7 @@ from pcobra.ia.analizador_agix import DependenciaAGIXNoDisponibleError
 
 
 def test_cli_agix_sin_agix(tmp_path, capsys):
-    archivo = tmp_path / "ejemplo.co"
+    archivo = tmp_path / "ejemplo.cobra"
     archivo.write_text("var x = 5")
     cmd = AgixCommand()
     args = Namespace(
@@ -26,7 +26,7 @@ def test_cli_agix_sin_agix(tmp_path, capsys):
 
 
 def test_cli_agix_captura_solo_excepcion_especifica_de_dependencia(tmp_path, capsys):
-    archivo = tmp_path / "ejemplo.co"
+    archivo = tmp_path / "ejemplo.cobra"
     archivo.write_text("var x = 5")
     args = Namespace(
         archivo=str(archivo),

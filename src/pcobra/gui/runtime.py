@@ -13,7 +13,11 @@ from pathlib import Path
 from typing import Any
 
 from pcobra.cobra.architecture.backend_policy import PUBLIC_BACKENDS
-from pcobra.cobra.packaging import es_paquete_cobra
+from pcobra.cobra.extensions import (
+    COBRA_SOURCE_EXTENSIONS,
+    es_fuente_cobra,
+    es_ruta_paquete_cobra,
+)
 from pcobra.corelibs.archivo import _resolver_ruta as resolver_ruta_sandbox
 
 
@@ -132,7 +136,7 @@ ACCIONES_PAQUETE_COBRA: frozenset[str] = frozenset(
 )
 """Acciones disponibles para paquetes Cobra ``.co``."""
 
-COBRA_FILE_EXTENSIONS: tuple[str, ...] = (".cobra", ".co")
+COBRA_FILE_EXTENSIONS: tuple[str, ...] = tuple(sorted(COBRA_SOURCE_EXTENSIONS))
 """Extensiones Cobra aceptadas y priorizadas para el explorador del IDLE."""
 
 MARKDOWN_FILE_EXTENSIONS: frozenset[str] = frozenset({".md", ".markdown"})
@@ -330,9 +334,9 @@ def detectar_tipo_archivo(path: str | Path) -> str:
         or nombre == "docker-compose.yml"
     ):
         return TIPO_ARCHIVO_DOCKER
-    if extension == ".co" and es_paquete_cobra(ruta):
+    if es_ruta_paquete_cobra(ruta):
         return TIPO_ARCHIVO_PAQUETE_COBRA
-    if extension in COBRA_FILE_EXTENSIONS:
+    if es_fuente_cobra(ruta):
         return TIPO_ARCHIVO_COBRA
     if extension in MARKDOWN_FILE_EXTENSIONS:
         return TIPO_ARCHIVO_MARKDOWN
@@ -403,7 +407,7 @@ def resolver_ruta_archivo_en_project_root(
         else ruta_expandida
     )
     if ruta_con_extension.suffix.lower() not in COBRA_FILE_EXTENSIONS:
-        raise ValueError("El archivo debe usar la extensión .cobra o .co.")
+        raise ValueError("El archivo fuente debe usar la extensión .cobra.")
 
     candidata_original = (
         ruta_expandida if ruta_expandida.is_absolute() else raiz / ruta_expandida

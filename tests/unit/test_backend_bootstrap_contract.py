@@ -38,7 +38,7 @@ def test_bootstrap_runtime_manager_no_carga_modulos_legacy() -> None:
 def test_bootstrap_backend_pipeline_no_carga_backends_legado() -> None:
     result = _run_python_isolated(
         "import pcobra.cobra.build.backend_pipeline as bp; "
-        "bp.resolve_backend_runtime('app.co', {'preferred_backend': 'python'}); "
+        "bp.resolve_backend_runtime('app.cobra', {'preferred_backend': 'python'}); "
         "import sys; "
         "legacy_modules = ('pcobra.cobra.transpilers.transpiler.to_go', 'pcobra.cobra.transpilers.transpiler.to_cpp', 'pcobra.cobra.transpilers.transpiler.to_java', 'pcobra.cobra.transpilers.transpiler.to_wasm', 'pcobra.cobra.transpilers.transpiler.to_asm'); "
         "assert not any(name in sys.modules for name in legacy_modules), "

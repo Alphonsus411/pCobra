@@ -52,6 +52,6 @@ def procesar_archivo(ruta_archivo: str) -> Optional[str]:
     return None
 
 if __name__ == "__main__":
-    resultado = procesar_archivo('examples/tutorial_basico/hola_mundo.co')
+    resultado = procesar_archivo('examples/tutorial_basico/hola_mundo.cobra')
     if resultado:
         print(resultado)

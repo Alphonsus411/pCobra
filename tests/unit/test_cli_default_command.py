@@ -360,9 +360,9 @@ def test_build_argument_parser_preserva_epilogo_publico_minimo():
     epilog = app.parser.epilog
     assert epilog is not None
     for ejemplo in (
-        "cobra run <archivo.co>",
-        "cobra build <archivo.co>",
-        "cobra test <archivo.co>",
+        "cobra run <archivo.cobra>",
+        "cobra build <archivo.cobra>",
+        "cobra test <archivo.cobra>",
         "cobra mod <list|install|remove|publish|search>",
         "cobra repl",
     ):
