@@ -13,13 +13,13 @@ from pcobra.cobra.cli.services.contracts import (
 
 
 def test_normalize_run_request_defaults_and_aliases() -> None:
-    req = normalize_run_request({"file": "main.co"})
-    assert req == RunRequest(archivo="main.co")
+    req = normalize_run_request({"file": "main.cobra"})
+    assert req == RunRequest(archivo="main.cobra")
 
 
 def test_normalize_test_request_parses_languajes_string() -> None:
-    req = normalize_test_request({"archivo": "main.co", "lenguajes": "python,javascript"})
-    assert req == CliTestRequest(archivo="main.co", lenguajes=["python", "javascript"])
+    req = normalize_test_request({"archivo": "main.cobra", "lenguajes": "python,javascript"})
+    assert req == CliTestRequest(archivo="main.cobra", lenguajes=["python", "javascript"])
 
 
 def test_normalize_mod_request_requires_action_fields() -> None:
@@ -34,7 +34,7 @@ def test_normalize_mod_request_requires_action_fields() -> None:
 
 
 def test_normalize_test_request_from_namespace() -> None:
-    ns = SimpleNamespace(file="programa.co", langs=["python"])
+    ns = SimpleNamespace(file="programa.cobra", langs=["python"])
     req = normalize_test_request(ns)
-    assert req.archivo == "programa.co"
+    assert req.archivo == "programa.cobra"
     assert req.lenguajes == ["python"]

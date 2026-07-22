@@ -11,7 +11,7 @@ from cobra.cli.commands.profile_cmd import ProfileCommand
 def test_execute_command_with_format_invokes_formatter(tmp_path):
     import cobra.cli.commands.execute_cmd as execute_module
 
-    archivo = tmp_path / "programa.co"
+    archivo = tmp_path / "programa.cobra"
     archivo.write_text("imprimir('hola')\n", encoding="utf-8")
 
     args = Namespace(
@@ -50,7 +50,7 @@ def test_execute_command_with_format_invokes_formatter(tmp_path):
 
 
 def test_profile_command_with_format_invokes_formatter(tmp_path):
-    archivo = tmp_path / "perfilado.co"
+    archivo = tmp_path / "perfilado.cobra"
     archivo.write_text("imprimir('hola')\n", encoding="utf-8")
 
     args = Namespace(
@@ -124,7 +124,7 @@ def _build_execute_args(archivo, **overrides):
 
 
 def test_execute_command_debug_flag_sets_debug_logger(tmp_path):
-    archivo = tmp_path / "programa_debug.co"
+    archivo = tmp_path / "programa_debug.cobra"
     archivo.write_text("imprimir('hola')\n", encoding="utf-8")
     args = _build_execute_args(archivo, debug=True)
     comando = ExecuteCommand()
@@ -149,7 +149,7 @@ def test_execute_command_debug_flag_sets_debug_logger(tmp_path):
 
 
 def test_execute_command_verbose_flag_sets_debug_logger(tmp_path):
-    archivo = tmp_path / "programa_verbose.co"
+    archivo = tmp_path / "programa_verbose.cobra"
     archivo.write_text("imprimir('hola')\n", encoding="utf-8")
     args = _build_execute_args(archivo, verbose=1)
     comando = ExecuteCommand()
@@ -174,7 +174,7 @@ def test_execute_command_verbose_flag_sets_debug_logger(tmp_path):
 
 
 def test_execute_command_depurar_legacy_still_supported(tmp_path):
-    archivo = tmp_path / "programa_legacy.co"
+    archivo = tmp_path / "programa_legacy.cobra"
     archivo.write_text("imprimir('hola')\n", encoding="utf-8")
     args = _build_execute_args(archivo, depurar=True)
     comando = ExecuteCommand()
@@ -202,7 +202,7 @@ def test_execute_command_pasa_raiz_proyecto_a_validar_dependencias(tmp_path, mon
     proyecto = tmp_path / "demo"
     proyecto.mkdir()
     (proyecto / "cobra.toml").write_text("", encoding="utf-8")
-    archivo = proyecto / "programa.co"
+    archivo = proyecto / "programa.cobra"
     archivo.write_text("imprimir('hola')\n", encoding="utf-8")
     args = _build_execute_args(archivo)
     comando = ExecuteCommand()

@@ -86,7 +86,7 @@ def test_cli_compilar_con_tipos(tmp_path, monkeypatch):
 
     monkeypatch.setattr(compile_module.multiprocessing, "Pool", DummyPool)
 
-    archivo = tmp_path / "programa.co"
+    archivo = tmp_path / "programa.cobra"
     archivo.write_text("var x = 5")
 
     with patch("sys.stdout", new_callable=StringIO) as out:

@@ -9,12 +9,12 @@ _ANSI_RE = re.compile(r"\x1b\[[0-9;]*m")
 
 
 def ejemplos_disponibles() -> list[str]:
-    """Busca programas ``.cobra``/``.co`` con su archivo ``.out`` correspondiente."""
+    """Busca programas ``.cobra`` con su archivo ``.out`` correspondiente."""
     base = Path(__file__).resolve().parent / "data"
     ejemplos = sorted(
         {
             archivo.stem
-            for patron in ("*.cobra", "*.co")
+            for patron in ("*.cobra",)
             for archivo in base.glob(patron)
             if (base / f"{archivo.stem}.out").exists()
         }
@@ -27,8 +27,6 @@ def ejemplos_disponibles() -> list[str]:
 def test_ejecutar_ejemplos(nombre: str, ruta_ejemplos: Path) -> None:
     """Ejecuta programas de ejemplo y compara la salida con su archivo .out."""
     archivo = ruta_ejemplos / f"{nombre}.cobra"
-    if not archivo.exists():
-        archivo = ruta_ejemplos / f"{nombre}.co"
     esperado = (ruta_ejemplos / f"{nombre}.out").read_text(encoding="utf-8").strip()
     comando = [sys.executable, "-m", "pcobra.cli", "ejecutar", str(archivo)]
     resultado = subprocess.run(
@@ -66,8 +64,6 @@ def test_suma_conserva_el_contexto_local_hasta_imprimir(ruta_ejemplos: Path) -> 
 def test_build_muestra_fragmentos(nombre: str, ruta_ejemplos: Path) -> None:
     """Construye ejemplos y valida que el código contenga fragmentos esperados."""
     archivo = ruta_ejemplos / f"{nombre}.cobra"
-    if not archivo.exists():
-        archivo = ruta_ejemplos / f"{nombre}.co"
     comando = [sys.executable, "-m", "pcobra.cli", "build", str(archivo)]
     resultado = subprocess.run(
         comando,
@@ -117,8 +113,6 @@ def _resolver_snapshot_esperado(ruta_ejemplos: Path, nombre: str) -> Path:
 def test_build_coincide_con_archivo(nombre: str, ruta_ejemplos: Path) -> None:
     """Construye ejemplos y compara el código generado con el snapshot versionado."""
     archivo = ruta_ejemplos / f"{nombre}.cobra"
-    if not archivo.exists():
-        archivo = ruta_ejemplos / f"{nombre}.co"
     comando = [sys.executable, "-m", "pcobra.cli", "build", str(archivo)]
     resultado = subprocess.run(
         comando,

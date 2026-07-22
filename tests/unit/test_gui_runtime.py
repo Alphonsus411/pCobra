@@ -209,20 +209,21 @@ def test_boton_sugerencias_se_deshabilita_y_menciona_paquete_correcto(monkeypatc
 
 
 def test_es_archivo_cobra_reconoce_extensiones_seguras_documentadas() -> None:
-    assert runtime.COBRA_FILE_EXTENSIONS == (".cobra", ".co")
-    assert runtime.es_archivo_cobra("programa.co")
+    assert runtime.COBRA_FILE_EXTENSIONS == (".cobra",)
+    assert not runtime.es_archivo_cobra("programa.co")
     assert runtime.es_archivo_cobra("modulo.COBRA")
     assert not runtime.es_archivo_cobra("notas.txt")
 
 
-def test_detectar_tipo_archivo_co_de_texto_sigue_siendo_archivo_cobra(
+def test_detectar_tipo_archivo_co_de_texto_es_paquete_invalido(
     tmp_path: Path,
 ) -> None:
     archivo = tmp_path / "programa.co"
     archivo.write_text("imprimir('hola')\n", encoding="utf-8")
 
-    assert runtime.detectar_tipo_archivo(archivo) == runtime.TIPO_ARCHIVO_COBRA
-    assert runtime.es_archivo_cobra(archivo)
+    assert runtime.detectar_tipo_archivo(archivo) == runtime.TIPO_ARCHIVO_PAQUETE_COBRA
+    assert runtime.es_paquete_cobra_gui(archivo)
+    assert not runtime.es_archivo_cobra(archivo)
 
 
 def test_detectar_tipo_archivo_co_zip_con_manifest_es_paquete_cobra(
@@ -231,7 +232,7 @@ def test_detectar_tipo_archivo_co_zip_con_manifest_es_paquete_cobra(
     paquete = tmp_path / "paquete.co"
     with zipfile.ZipFile(paquete, "w") as zf:
         zf.writestr("cobra.pkg.json", '{"name":"demo","version":"1.0.0"}')
-        zf.writestr("main.co", "imprimir('hola')\n")
+        zf.writestr("main.cobra", "imprimir('hola')\n")
 
     assert runtime.detectar_tipo_archivo(paquete) == runtime.TIPO_ARCHIVO_PAQUETE_COBRA
     assert runtime.es_paquete_cobra_gui(paquete)
@@ -243,11 +244,11 @@ def test_detectar_tipo_archivo_co_zip_sin_manifest_no_es_paquete_cobra_valido(
 ) -> None:
     archivo = tmp_path / "archivo.co"
     with zipfile.ZipFile(archivo, "w") as zf:
-        zf.writestr("main.co", "imprimir('hola')\n")
+        zf.writestr("main.cobra", "imprimir('hola')\n")
 
-    assert runtime.detectar_tipo_archivo(archivo) == runtime.TIPO_ARCHIVO_COBRA
-    assert not runtime.es_paquete_cobra_gui(archivo)
-    assert runtime.es_archivo_cobra(archivo)
+    assert runtime.detectar_tipo_archivo(archivo) == runtime.TIPO_ARCHIVO_PAQUETE_COBRA
+    assert runtime.es_paquete_cobra_gui(archivo)
+    assert not runtime.es_archivo_cobra(archivo)
 
 
 def test_cargar_archivo_desde_arbol_no_lee_paquete_cobra_zip_como_texto(
@@ -256,7 +257,7 @@ def test_cargar_archivo_desde_arbol_no_lee_paquete_cobra_zip_como_texto(
     paquete = tmp_path / "paquete.co"
     with zipfile.ZipFile(paquete, "w") as zf:
         zf.writestr("cobra.pkg.json", '{"name":"demo","version":"1.0.0"}')
-        zf.writestr("main.co", "imprimir('hola')\n")
+        zf.writestr("main.cobra", "imprimir('hola')\n")
     estado = runtime.GuiFileState()
 
     contenido, mensaje = runtime.cargar_archivo_desde_arbol(paquete, estado)
@@ -271,7 +272,7 @@ def test_cargar_archivo_desde_arbol_no_lee_paquete_cobra_zip_como_texto(
 def test_detectar_tipo_archivo_clasifica_extensiones_y_nombres_conocidos() -> None:
     casos = {
         "main.cobra": runtime.TIPO_ARCHIVO_COBRA,
-        "main.co": runtime.TIPO_ARCHIVO_COBRA,
+        "main.co": runtime.TIPO_ARCHIVO_PAQUETE_COBRA,
         "README.md": runtime.TIPO_ARCHIVO_MARKDOWN,
         "README.markdown": runtime.TIPO_ARCHIVO_MARKDOWN,
         "notas.txt": runtime.TIPO_ARCHIVO_TEXTO,
@@ -1847,7 +1848,6 @@ def test_resolver_ruta_archivo_en_project_root_relativa_y_extension_por_defecto(
     [
         ("main", "main.cobra"),
         ("src/main", "src/main.cobra"),
-        ("main.co", "main.co"),
         ("main.cobra", "main.cobra"),
     ],
 )
@@ -1862,14 +1862,14 @@ def test_resolver_ruta_archivo_en_project_root_normaliza_extensiones_cobra(
 def test_resolver_ruta_archivo_en_project_root_rechaza_extension_no_cobra(
     tmp_path: Path,
 ) -> None:
-    with pytest.raises(ValueError, match="extensión .cobra o .co"):
+    with pytest.raises(ValueError, match=r"extensión \.cobra"):
         runtime.resolver_ruta_archivo_en_project_root("main.txt", tmp_path)
 
 
 def test_resolver_ruta_archivo_en_project_root_acepta_absoluta_interna(
     tmp_path: Path,
 ) -> None:
-    archivo = tmp_path / "programa.co"
+    archivo = tmp_path / "programa.cobra"
 
     destino = runtime.resolver_ruta_archivo_en_project_root(archivo, tmp_path)
 

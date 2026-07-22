@@ -17,7 +17,7 @@ IMPORTS = get_standard_imports("python")
 
 @pytest.mark.timeout(5)
 def test_import_interpreter(tmp_path):
-    mod = tmp_path / "mod.co"
+    mod = tmp_path / "mod.cobra"
     mod.write_text("var dato = 5")
 
     IMPORT_WHITELIST.add(str(mod))
@@ -38,7 +38,7 @@ def test_import_interpreter(tmp_path):
 
 @pytest.mark.timeout(5)
 def test_import_co_carga_unica(tmp_path):
-    mod_path = tmp_path / "mod_contador.co"
+    mod_path = tmp_path / "mod_contador.cobra"
     # Cambiar el contenido para evitar la auto-referencia
     mod_path.write_text("var _contador_interno = 0\nfunc incrementar_contador() { _contador_interno = _contador_interno + 1 }\nincrementar_contador()")
 
@@ -60,8 +60,8 @@ def test_import_co_carga_unica(tmp_path):
 
 @pytest.mark.timeout(5)
 def test_import_co_ciclo_directo(tmp_path):
-    mod_a_path = tmp_path / "mod_a.co"
-    mod_b_path = tmp_path / "mod_b.co"
+    mod_a_path = tmp_path / "mod_a.cobra"
+    mod_b_path = tmp_path / "mod_b.cobra"
 
     mod_b_path_str = str(mod_b_path).replace('\\', '/')
     mod_a_path.write_text(f"import '{mod_b_path_str}'")
@@ -85,7 +85,7 @@ def test_import_co_ciclo_directo(tmp_path):
 
 @pytest.mark.timeout(5)
 def test_import_co_compatibilidad_ambito(tmp_path):
-    mod_path = tmp_path / "mod_vars.co"
+    mod_path = tmp_path / "mod_vars.cobra"
     mod_path.write_text("var x = 10\nvar y = 20")
 
     IMPORT_WHITELIST.add(str(mod_path))
@@ -107,7 +107,7 @@ def test_import_co_compatibilidad_ambito(tmp_path):
 @pytest.mark.timeout(5)
 def test_import_co_proteccion_path_traversal(tmp_path):
     # Crear un archivo fuera del directorio temporal para simular un intento de traversal
-    malicious_file = tmp_path.parent / "malicious.co"
+    malicious_file = tmp_path.parent / "malicious.cobra"
     malicious_file.write_text("var secreto = 'informacion_sensible'")
 
     # Intentar importar usando ../
@@ -126,7 +126,7 @@ def test_import_co_proteccion_path_traversal(tmp_path):
 
 @pytest.mark.timeout(5)
 def test_import_transpiler(tmp_path):
-    mod = tmp_path / "m.co"
+    mod = tmp_path / "m.cobra"
     mod.write_text("var valor = 3")
 
     codigo = f"import '{mod}'\nimprimir(valor)"

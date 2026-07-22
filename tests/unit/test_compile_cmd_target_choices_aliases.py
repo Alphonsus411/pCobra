@@ -51,7 +51,7 @@ def test_compile_register_subparser_evalua_choices_en_tiempo_de_registro(monkeyp
 def test_compile_parser_normaliza_targets_canonicos_en_tipo_y_tipos():
     parser, _ = _build_parser()
 
-    args = parser.parse_args(["compilar", "input.co", "--tipo", "rust", "--tipos", "python,javascript,rust"])
+    args = parser.parse_args(["compilar", "input.cobra", "--tipo", "rust", "--tipos", "python,javascript,rust"])
 
     assert args.tipo == "rust"
     assert args.tipos == ["python", "javascript", "rust"]
@@ -62,7 +62,7 @@ def test_compile_parser_backend_rechaza_alias_legacy_explicito():
     legacy_js = "j" "s"
 
     with pytest.raises(SystemExit):
-        parser.parse_args(["compilar", "input.co", "--backend", legacy_js])
+        parser.parse_args(["compilar", "input.cobra", "--backend", legacy_js])
 
 
 def test_compile_parser_tipos_rechaza_alias_legacy_explicito():
@@ -70,7 +70,7 @@ def test_compile_parser_tipos_rechaza_alias_legacy_explicito():
     legacy_assembly = "as" "sembly"
 
     with pytest.raises(SystemExit):
-        parser.parse_args(["compilar", "input.co", "--tipos", f"python,{legacy_assembly}"])
+        parser.parse_args(["compilar", "input.cobra", "--tipos", f"python,{legacy_assembly}"])
 
 
 def test_compile_help_refleja_solo_nombres_canonicos():

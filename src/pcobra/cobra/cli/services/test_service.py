@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 from unittest.mock import patch
 
+from pcobra.cobra.extensions import COBRA_SOURCE_EXTENSIONS
 from pcobra.cobra.core.interpreter import InterpretadorCobra
 from pcobra.cobra.core.sandbox import ejecutar_en_contenedor, ejecutar_en_sandbox, ejecutar_en_sandbox_js
 from pcobra.cobra.build import backend_pipeline
@@ -22,7 +23,7 @@ from pcobra.cobra.cli.utils.validators import validar_archivo_existente
 from pcobra.cobra.core import Lexer, Parser
 
 MAX_FILE_SIZE = 10 * 1024 * 1024
-VALID_EXTENSIONS = {".cobra", ".cbr", ".co"}
+VALID_EXTENSIONS = COBRA_SOURCE_EXTENSIONS
 
 
 def target_cli_choices(values: tuple[str, ...] | list[str]) -> tuple[str, ...]:

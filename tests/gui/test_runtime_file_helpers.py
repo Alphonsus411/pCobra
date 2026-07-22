@@ -41,7 +41,7 @@ def test_resolver_workspace_root_idle_crea_cobraprojects_en_home_sin_env(
 
 
 def test_es_archivo_cobra_prioriza_extensiones_documentadas():
-    assert runtime.es_archivo_cobra("programa.co")
+    assert not runtime.es_archivo_cobra("programa.co")
     assert runtime.es_archivo_cobra("paquete.COBRA")
     assert not runtime.es_archivo_cobra("README.md")
 
@@ -97,10 +97,9 @@ def test_construir_entradas_directorio_muestra_readme_markdown(tmp_path: Path):
     [
         ("src/programa", "src/programa.cobra"),
         ("src/programa.cobra", "src/programa.cobra"),
-        ("src/programa.co", "src/programa.co"),
     ],
 )
-def test_resolver_ruta_archivo_en_project_root_acepta_cobra_co_y_normaliza_sin_extension(
+def test_resolver_ruta_archivo_en_project_root_acepta_cobra_y_normaliza_sin_extension(
     tmp_path: Path, ruta: str, esperado: str
 ):
     (tmp_path / "src").mkdir()
@@ -113,7 +112,7 @@ def test_resolver_ruta_archivo_en_project_root_acepta_cobra_co_y_normaliza_sin_e
 def test_resolver_ruta_archivo_en_project_root_rechaza_extension_ajena_txt(
     tmp_path: Path,
 ):
-    with pytest.raises(ValueError, match="extensión .cobra o .co"):
+    with pytest.raises(ValueError, match=r"extensión \.cobra"):
         runtime.resolver_ruta_archivo_en_project_root("src/programa.txt", tmp_path)
 
 

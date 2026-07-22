@@ -34,7 +34,7 @@ def _build_parser_for(command):
 def test_compilar_acepta_los_8_targets_oficiales_en_tipo(target):
     parser, _ = _build_parser_for(CompileCommand())
 
-    args = parser.parse_args(["compilar", "archivo.co", "--tipo", target])
+    args = parser.parse_args(["compilar", "archivo.cobra", "--tipo", target])
 
     assert args.tipo == target
 
@@ -43,7 +43,7 @@ def test_compilar_acepta_los_8_targets_oficiales_en_tipos():
     parser, _ = _build_parser_for(CompileCommand())
 
     args = parser.parse_args(
-        ["compilar", "archivo.co", "--tipos", ",".join(OFFICIAL_TRANSPILATION_TARGETS)]
+        ["compilar", "archivo.cobra", "--tipos", ",".join(OFFICIAL_TRANSPILATION_TARGETS)]
     )
 
     assert args.tipos == list(OFFICIAL_TRANSPILATION_TARGETS)
@@ -60,7 +60,7 @@ def test_execute_e_interactive_aceptan_solo_targets_runtime(command, flag, suppo
     parser, _ = _build_parser_for(command)
 
     for target in supported_targets:
-        args = parser.parse_args([command.name, flag, target, *(["archivo.co"] if command.name == "ejecutar" else [])])
+        args = parser.parse_args([command.name, flag, target, *(["archivo.cobra"] if command.name == "ejecutar" else [])])
         attr = "contenedor" if flag == "--contenedor" else "sandbox_docker"
         assert getattr(args, attr) == target
 
@@ -69,17 +69,17 @@ runtime_error_cases = []
 if FIRST_TRANSPILATION_ONLY:
     runtime_error_cases.extend(
         [
-            (ExecuteCommand(), ["ejecutar", "archivo.co", "--contenedor", FIRST_TRANSPILATION_ONLY], DOCKER_EXECUTABLE_TARGETS, FIRST_TRANSPILATION_ONLY),
+            (ExecuteCommand(), ["ejecutar", "archivo.cobra", "--contenedor", FIRST_TRANSPILATION_ONLY], DOCKER_EXECUTABLE_TARGETS, FIRST_TRANSPILATION_ONLY),
             (InteractiveCommand(MagicMock()), ["interactive", "--sandbox-docker", FIRST_TRANSPILATION_ONLY], DOCKER_EXECUTABLE_TARGETS, FIRST_TRANSPILATION_ONLY),
-            (VerifyCommand(), ["verificar", "archivo.co", "--lenguajes", FIRST_TRANSPILATION_ONLY], VERIFICATION_EXECUTABLE_TARGETS, FIRST_TRANSPILATION_ONLY),
+            (VerifyCommand(), ["verificar", "archivo.cobra", "--lenguajes", FIRST_TRANSPILATION_ONLY], VERIFICATION_EXECUTABLE_TARGETS, FIRST_TRANSPILATION_ONLY),
         ]
     )
 if FIRST_BEST_EFFORT:
     runtime_error_cases.extend(
         [
-            (ExecuteCommand(), ["ejecutar", "archivo.co", "--contenedor", FIRST_BEST_EFFORT], DOCKER_EXECUTABLE_TARGETS, FIRST_BEST_EFFORT),
+            (ExecuteCommand(), ["ejecutar", "archivo.cobra", "--contenedor", FIRST_BEST_EFFORT], DOCKER_EXECUTABLE_TARGETS, FIRST_BEST_EFFORT),
             (InteractiveCommand(MagicMock()), ["interactive", "--sandbox-docker", FIRST_BEST_EFFORT], DOCKER_EXECUTABLE_TARGETS, FIRST_BEST_EFFORT),
-            (VerifyCommand(), ["verificar", "archivo.co", "--lenguajes", FIRST_BEST_EFFORT], VERIFICATION_EXECUTABLE_TARGETS, FIRST_BEST_EFFORT),
+            (VerifyCommand(), ["verificar", "archivo.cobra", "--lenguajes", FIRST_BEST_EFFORT], VERIFICATION_EXECUTABLE_TARGETS, FIRST_BEST_EFFORT),
         ]
     )
 

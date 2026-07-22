@@ -378,9 +378,7 @@ class CobraImportResolver:
 
         relative = Path(*name.split("."))
         local_patterns = (
-            relative.with_suffix(".co"),
             relative.with_suffix(".cobra"),
-            relative / "__init__.co",
             relative / "__init__.cobra",
         )
         for pattern in local_patterns:

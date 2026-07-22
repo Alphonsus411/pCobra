@@ -80,7 +80,7 @@ Public wording rule: keep **official output targets** separate from **reverse tr
 
 ## Examples
 
-Demo projects are available in the [example repository](https://github.com/Alphonsus411/pCobra/tree/HEAD/examples). This repository includes basic examples in the `examples/` folder, for instance `examples/funciones_principales.co` which shows conditionals, loops and function definitions in Cobra. For interactive examples check the notebooks in `../notebooks/casos_reales/`.
+Demo projects are available in the [example repository](https://github.com/Alphonsus411/pCobra/tree/HEAD/examples). This repository includes basic examples in the `examples/` folder, for instance `examples/funciones_principales.cobra` which shows conditionals, loops and function definitions in Cobra. For interactive examples check the notebooks in `../notebooks/casos_reales/`.
 
 ### Advanced examples
 

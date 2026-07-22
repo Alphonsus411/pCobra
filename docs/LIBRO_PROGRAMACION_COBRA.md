@@ -1018,7 +1018,7 @@ Ruta práctica (ejecuta cada bloque antes de pasar al siguiente):
 
 ### 17.1 Cero → base sintáctica
 
-1. `examples/tutorial_basico/hola_mundo.co`
+1. `examples/tutorial_basico/hola_mundo.cobra`
 2. `examples/tutorial_basico/README.md`
 3. `examples/tutorial_basico/compile_manual.py`
 
@@ -1026,17 +1026,17 @@ Objetivo: dominar ejecución mínima, literales, impresión y ciclo editar-ejecu
 
 ### 17.2 Base → features del lenguaje
 
-1. `examples/features/feature_base/minimal.co`
+1. `examples/features/feature_base/minimal.cobra`
 2. `examples/features/README.md`
 
 Objetivo: practicar estructuras canónicas que luego aparecen en proyectos reales.
 
 ### 17.3 Features → avanzado por dominio
 
-1. `examples/avanzados/funciones/factorial_recursivo.co`
-2. `examples/avanzados/funciones/utilidades.co`
-3. `examples/avanzados/clases/persona.co`
-4. `examples/avanzados/clases/herencia_multiple.co`
+1. `examples/avanzados/funciones/factorial_recursivo.cobra`
+2. `examples/avanzados/funciones/utilidades.cobra`
+3. `examples/avanzados/clases/persona.cobra`
+4. `examples/avanzados/clases/herencia_multiple.cobra`
 5. `examples/avanzados/control_flujo/README.md`
 
 Objetivo: integrar funciones, clases, reutilización y control de flujo no trivial.
