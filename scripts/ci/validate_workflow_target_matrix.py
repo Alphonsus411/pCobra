@@ -45,6 +45,7 @@ LEGACY_COBRA_SOURCE_COMMAND_PATTERN = re.compile(
 
 TARGET_KEY_PATTERN = re.compile(r"^\s*(?:target|targets|backend|backends)\s*:\s*(.+?)\s*$", re.IGNORECASE)
 LIST_ITEM_PATTERN = re.compile(r"^\s*-\s*([a-zA-Z0-9_+\- ]+)\s*$")
+RUN_KEY_PATTERN = re.compile(r"^(\s*)(?:-\s*)?run:\s*(.*?)\s*$")
 
 
 def _normalize_target(value: str) -> str:
@@ -59,6 +60,40 @@ def _extract_inline_items(raw_value: str) -> tuple[str, ...]:
             return tuple()
         return tuple(_normalize_target(item) for item in inner.split(",") if item.strip())
     return tuple()
+
+
+def _iter_run_commands(lines: list[str]):
+    """Entrega únicamente valores YAML ``run`` con su línea de origen."""
+
+    index = 0
+    while index < len(lines):
+        match = RUN_KEY_PATTERN.match(lines[index])
+        if not match:
+            index += 1
+            continue
+
+        line_no = index + 1
+        base_indent = len(match.group(1))
+        raw_value = match.group(2).strip()
+        if raw_value not in {"", "|", ">", "|-", ">-", "|+", ">+"}:
+            yield line_no, raw_value
+            index += 1
+            continue
+
+        block: list[str] = []
+        index += 1
+        while index < len(lines):
+            candidate = lines[index]
+            if not candidate.strip():
+                block.append("")
+                index += 1
+                continue
+            indent = len(candidate) - len(candidate.lstrip())
+            if indent <= base_indent:
+                break
+            block.append(candidate.strip())
+            index += 1
+        yield line_no, "\n".join(block)
 
 
 def validate_workflow(path: Path, allowed_targets: set[str]) -> list[str]:
