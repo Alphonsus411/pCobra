@@ -10,7 +10,7 @@ def visit_import(self, nodo):
     """Transpila una declaración de importación consultando el mapeo."""
     codigo, ruta_str = load_mapped_module(nodo.ruta, "python")
 
-    if ruta_str.endswith(".co"):
+    if ruta_str.endswith(".cobra"):
         ruta_canonica = canonicalizar_ruta_usar_proyecto(ruta_str)
         ast_cache = obtener_cache_ast_import_co()
         loading_stack = obtener_pila_carga_modulos_cobra_proyecto()

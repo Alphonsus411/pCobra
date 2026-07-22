@@ -14,7 +14,7 @@ def ejemplos_disponibles() -> list[str]:
     ejemplos = sorted(
         {
             archivo.stem
-            for patron in ("*.cobra", "*.co")
+            for patron in ("*.cobra",)
             for archivo in base.glob(patron)
             if (base / f"{archivo.stem}.out").exists()
         }

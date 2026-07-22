@@ -40,7 +40,7 @@
       {
         "id": "cobra",
         "extensions": [
-          ".co"
+          ".cobra"
         ],
         "aliases": [
           "Cobra"

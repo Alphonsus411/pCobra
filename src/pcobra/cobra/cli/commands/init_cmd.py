@@ -57,8 +57,8 @@ class InitCommand(BaseCommand):
             # Crear directorio si no existe
             ruta.mkdir(parents=True, exist_ok=True)
             
-            # Crear archivo main.co con template básico
-            main = ruta / "main.co"
+            # Crear archivo main.cobra con template básico
+            main = ruta / "main.cobra"
             if not main.exists():
                 template = (
                     "# Proyecto Cobra\n"

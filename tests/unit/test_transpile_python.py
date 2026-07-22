@@ -23,7 +23,7 @@ def test_transpile_python_and_execute(tmp_path):
 
 
 def test_transpile_async_top_level_esperar_uses_asyncio_run(tmp_path):
-    source = Path("tests/data/async_await.co").read_text(encoding="utf-8")
+    source = Path("tests/data/async_await.cobra").read_text(encoding="utf-8")
     ast = Parser(Lexer(source).analizar_token()).parsear()
 
     codigo = TranspiladorPython().generate_code(ast)
