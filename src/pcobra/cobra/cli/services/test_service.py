@@ -23,7 +23,7 @@ from pcobra.cobra.cli.utils.validators import validar_archivo_existente
 from pcobra.cobra.core import Lexer, Parser
 
 MAX_FILE_SIZE = 10 * 1024 * 1024
-VALID_EXTENSIONS = COBRA_SOURCE_EXTENSIONS
+VALID_EXTENSIONS = {".cobra"}
 
 
 def target_cli_choices(values: tuple[str, ...] | list[str]) -> tuple[str, ...]:
