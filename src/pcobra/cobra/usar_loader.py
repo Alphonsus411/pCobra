@@ -34,7 +34,7 @@ _VALID_PROJECT_MODULE_SEGMENT_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 _PROJECT_MODULE_FORBIDDEN_CHARS = frozenset('/\\@$%*?"\'<>|;`!()[]{}=+,')
 _USAR_PROJECT_MODULE_CACHE: dict[Path, dict[str, Any]] = {}
 _USAR_PROJECT_LOADING_STACK: list[Path] = []
-_IMPORT_CO_AST_CACHE: dict[Path, list[Any]] = {} # Nueva caché para ASTs de .co
+_IMPORT_COBRA_AST_CACHE: dict[Path, list[Any]] = {} # Nueva caché para ASTs de fuentes .cobra
 CobraImportResolver = imports_resolver.CobraImportResolver
 _DEFAULT_COBRA_IMPORT_RESOLVER = CobraImportResolver
 
@@ -271,11 +271,11 @@ def resolver_modulo_cobra_proyecto(
     project_root: Path,
     current_file: Path | None = None,
 ) -> Path:
-    """Resuelve un módulo Cobra de proyecto a un archivo ``.co`` seguro.
+    """Resuelve un módulo Cobra de proyecto a un archivo ``.cobra`` seguro.
 
     ``nombre`` es una ruta lógica punteada (por ejemplo
     ``utilidades.fechas``), que se transforma en
-    ``project_root / "utilidades" / "fechas.co"``. La función sólo devuelve
+    ``project_root / "utilidades" / "fechas.cobra"``. La función sólo devuelve
     una ruta canónica; no carga ni importa el módulo para evitar introducir un
     segundo sistema de imports.
     """
@@ -289,7 +289,7 @@ def resolver_modulo_cobra_proyecto(
 
     ruta_directa = root_resuelto.joinpath(
         *validar_nombre_modulo_cobra_proyecto(nombre)
-    ).with_suffix(".co")
+    ).with_suffix(".cobra")
     if ruta_directa.exists():
         ruta_directa = canonicalizar_ruta_usar_proyecto(ruta_directa)
         _verificar_path_dentro_de_root(ruta_directa, root_resuelto)
@@ -298,7 +298,7 @@ def resolver_modulo_cobra_proyecto(
     # Compatibilidad legacy: el resolver histórico sólo puede actuar como
     # fallback cuando haya sido sustituido explícitamente por un caller/test.
     # La ruta principal y estable para `usar utilidades.fechas` es siempre:
-    # `project_root / "utilidades" / "fechas.co"`.
+    # `project_root / "utilidades" / "fechas.cobra"`.
     resolver_cls = _obtener_resolver_imports_parcheable()
     if getattr(resolver_cls, "__module__", "") == "pcobra.cobra.imports.resolver":
         raise FileNotFoundError(f"Módulo no encontrado: {nombre}")
@@ -357,9 +357,9 @@ def obtener_pila_carga_modulos_cobra_proyecto() -> list[Path]:
     return _USAR_PROJECT_LOADING_STACK
 
 
-def obtener_cache_ast_import_co() -> dict[Path, list[Any]]:
-    """Expone la caché compartida de ASTs de módulos .co para el transpilador."""
-    return _IMPORT_CO_AST_CACHE
+def obtener_cache_ast_import_cobra() -> dict[Path, list[Any]]:
+    """Expone la caché compartida de ASTs de fuentes .cobra para el transpilador."""
+    return _IMPORT_COBRA_AST_CACHE
 
 
 def _formatear_ruta_ciclo_modulo(ruta: Path, project_root: Path | None) -> str:
@@ -668,7 +668,7 @@ def _extraer_exports_modulo_cobra_proyecto(
     *,
     ruta_modulo: Path,
 ) -> dict[str, Any]:
-    """Extrae exports saneados de un módulo ``.co`` ya ejecutado."""
+    """Extrae exports saneados de un módulo ``.cobra`` ya ejecutado."""
 
     from pcobra.core.ast_nodes import NodoExport
 
@@ -818,7 +818,7 @@ def usar_modulo(
 
     - Los módulos oficiales preservan ``obtener_modulo`` y devuelven sus
       símbolos públicos saneados.
-    - Los módulos Cobra de proyecto (``foo.bar`` -> ``foo/bar.co``) usan la
+    - Los módulos Cobra de proyecto (``foo.bar`` -> ``foo/bar.cobra``) usan la
       misma resolución canónica por ruta y una cache global por archivo.
     """
 
@@ -945,7 +945,7 @@ def usar_modulo(
         except FileNotFoundError as exc:
             ruta_buscada = root.joinpath(
                 *nombre_validado_proyecto.split(".")
-            ).with_suffix(".co")
+            ).with_suffix(".cobra")
             raise FileNotFoundError(
                 f"Módulo no encontrado: {nombre_validado_proyecto}. "
                 f"Módulo de proyecto no encontrado: {nombre_validado_proyecto}. "

@@ -6,9 +6,13 @@ on:
   push:
     paths:
       - '.github/workflows/**'
+      - 'scripts/ci/validate_workflow_target_matrix.py'
+      - 'tests/unit/test_ci_workflow_extension_contract.py'
   pull_request:
     paths:
       - '.github/workflows/**'
+      - 'scripts/ci/validate_workflow_target_matrix.py'
+      - 'tests/unit/test_ci_workflow_extension_contract.py'
 
 jobs:
   actionlint:
@@ -34,3 +38,6 @@ jobs:
 
       - name: Validar política de targets en workflows
         run: python scripts/ci/validate_workflow_target_matrix.py
+
+      - name: Probar contrato de extensiones en workflows
+        run: python -m pytest -q tests/unit/test_ci_workflow_extension_contract.py

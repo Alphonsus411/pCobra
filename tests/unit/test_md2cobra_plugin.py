@@ -28,7 +28,7 @@ var y = 2
 """,
         encoding="utf-8",
     )
-    salida = tmp_path / "salida.co"
+    salida = tmp_path / "salida.cobra"
     ep = importlib.metadata.EntryPoint(
         name="md2cobra",
         value="md2cobra_plugin:MarkdownToCobraCommand",

@@ -38,8 +38,16 @@ RETIRED_REFERENCE_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = (
     ),
 )
 
+LEGACY_COBRA_SOURCE_COMMAND_PATTERN = re.compile(
+    r"(?im)(?:\bcobra\s+|\bpython\s+-m\s+"
+    r"(?:pcobra|pcobra\.cobra\.cli\.cli|cobra\.cli\.cli)\s+)"
+    r"(?:run|build|test|ejecutar|compilar|verificar)"
+    r"\s+[^\n]*?\.co\b"
+)
+
 TARGET_KEY_PATTERN = re.compile(r"^\s*(?:target|targets|backend|backends)\s*:\s*(.+?)\s*$", re.IGNORECASE)
 LIST_ITEM_PATTERN = re.compile(r"^\s*-\s*([a-zA-Z0-9_+\- ]+)\s*$")
+RUN_KEY_PATTERN = re.compile(r"^(\s*)(?:-\s*)?run:\s*(.*?)\s*$")
 
 
 def _normalize_target(value: str) -> str:
@@ -56,11 +64,52 @@ def _extract_inline_items(raw_value: str) -> tuple[str, ...]:
     return tuple()
 
 
+def _iter_run_commands(lines: list[str]):
+    """Entrega únicamente valores YAML ``run`` con su línea de origen."""
+
+    index = 0
+    while index < len(lines):
+        match = RUN_KEY_PATTERN.match(lines[index])
+        if not match:
+            index += 1
+            continue
+
+        line_no = index + 1
+        base_indent = len(match.group(1))
+        raw_value = match.group(2).strip()
+        if raw_value not in {"", "|", ">", "|-", ">-", "|+", ">+"}:
+            yield line_no, raw_value
+            index += 1
+            continue
+
+        block: list[str] = []
+        index += 1
+        while index < len(lines):
+            candidate = lines[index]
+            if not candidate.strip():
+                block.append("")
+                index += 1
+                continue
+            indent = len(candidate) - len(candidate.lstrip())
+            if indent <= base_indent:
+                break
+            block.append(candidate.strip())
+            index += 1
+        yield line_no, "\n".join(block)
+
+
 def validate_workflow(path: Path, allowed_targets: set[str]) -> list[str]:
     errors: list[str] = []
     lines = path.read_text(encoding="utf-8").splitlines()
 
     full_text = "\n".join(lines)
+    for run_line, command in _iter_run_commands(lines):
+        if LEGACY_COBRA_SOURCE_COMMAND_PATTERN.search(command):
+            errors.append(
+                f"{path.relative_to(ROOT).as_posix()}:{run_line}: "
+                "comando de fuente Cobra usa .co; debe usar .cobra"
+            )
+
     for pattern, label in RETIRED_REFERENCE_PATTERNS:
         for match in pattern.finditer(full_text):
             line_no = full_text.count("\n", 0, match.start()) + 1

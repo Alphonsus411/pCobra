@@ -15,7 +15,7 @@ class _DummyDocument:
 
 
 def test_pylsp_format_document_devuelve_edits_si_formatea(monkeypatch, tmp_path):
-    archivo = tmp_path / "demo.co"
+    archivo = tmp_path / "demo.cobra"
     archivo.write_text("imprimir(1)\n", encoding="utf-8")
     documento = _DummyDocument(path=archivo, source=archivo.read_text(encoding="utf-8"))
 
@@ -33,7 +33,7 @@ def test_pylsp_format_document_devuelve_edits_si_formatea(monkeypatch, tmp_path)
 
 
 def test_pylsp_format_document_lanza_runtimeerror_si_falla_formateo(monkeypatch, tmp_path):
-    archivo = tmp_path / "demo.co"
+    archivo = tmp_path / "demo.cobra"
     archivo.write_text("imprimir(1)\n", encoding="utf-8")
     documento = _DummyDocument(path=archivo, source=archivo.read_text(encoding="utf-8"))
 

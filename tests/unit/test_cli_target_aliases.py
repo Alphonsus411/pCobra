@@ -72,13 +72,13 @@ def test_parse_target_rechaza_nombres_legacy_o_ambiguos_con_error_explicito(lega
 def test_compile_parser_rechaza_alias_c_mas_mas():
     parser = _build_parser_with_command(CompileCommand())
     with pytest.raises(SystemExit):
-        parser.parse_args(["compilar", "script.co", "--tipo", "C++"])
+        parser.parse_args(["compilar", "script.cobra", "--tipo", "C++"])
 
 
 def test_compile_parser_rechaza_alias_ensamblador_en_minusculas():
     parser = _build_parser_with_command(CompileCommand())
     with pytest.raises(SystemExit):
-        parser.parse_args(["compilar", "script.co", "--tipo", "ensamblador"])
+        parser.parse_args(["compilar", "script.cobra", "--tipo", "ensamblador"])
 
 
 def test_transpilar_inverso_parser_rechaza_alias_ensamblador(tmp_path):
@@ -120,14 +120,14 @@ def test_transpilar_inverso_parser_rechaza_alias_c_mas_mas(tmp_path):
 def test_verify_parser_rechaza_alias_c_mas_mas():
     parser = _build_parser_with_command(VerifyCommand())
     with pytest.raises(SystemExit):
-        parser.parse_args(["verificar", "script.co", "--lenguajes", "python,C++"])
+        parser.parse_args(["verificar", "script.cobra", "--lenguajes", "python,C++"])
 
 
 def test_verify_parser_rechaza_alias_ensamblador():
     parser = _build_parser_with_command(VerifyCommand())
 
     with pytest.raises(SystemExit):
-        parser.parse_args(["verificar", "script.co", "--lenguajes", "python,Ensamblador"])
+        parser.parse_args(["verificar", "script.cobra", "--lenguajes", "python,Ensamblador"])
 
 
 def test_compile_parser_no_expone_aliases_en_choices_publicos():

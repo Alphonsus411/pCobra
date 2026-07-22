@@ -13,7 +13,7 @@ from cobra.cli.commands.compile_cmd import CompileCommand
 
 @pytest.mark.timeout(5)
 def test_transpilador_inexistente(monkeypatch, tmp_path):
-    archivo = tmp_path / "code.co"
+    archivo = tmp_path / "code.cobra"
     archivo.write_text("x = 1")
     mensajes = []
 
@@ -31,7 +31,7 @@ def test_transpilador_inexistente(monkeypatch, tmp_path):
 
 @pytest.mark.timeout(5)
 def test_dependencia_faltante(monkeypatch, tmp_path):
-    archivo = tmp_path / "code.co"
+    archivo = tmp_path / "code.cobra"
     archivo.write_text("x = 1")
     mensajes = []
 
@@ -52,7 +52,7 @@ def test_dependencia_faltante(monkeypatch, tmp_path):
 
 @pytest.mark.timeout(5)
 def test_archivo_invalido(monkeypatch, tmp_path):
-    archivo = tmp_path / "no_existe.co"
+    archivo = tmp_path / "no_existe.cobra"
     mensajes = []
 
     monkeypatch.setattr("cobra.cli.commands.compile_cmd.validar_dependencias", lambda *a, **k: None)
@@ -68,7 +68,7 @@ def test_archivo_invalido(monkeypatch, tmp_path):
 
 @pytest.mark.timeout(5)
 def test_exceso_tipos(monkeypatch, tmp_path):
-    archivo = tmp_path / "code.co"
+    archivo = tmp_path / "code.cobra"
     archivo.write_text("x = 1")
     mensajes = []
 
@@ -87,7 +87,7 @@ def test_exceso_tipos(monkeypatch, tmp_path):
 
 @pytest.mark.timeout(5)
 def test_backend_legacy_muestra_warning_deprecacion(monkeypatch, tmp_path):
-    archivo = tmp_path / "code.co"
+    archivo = tmp_path / "code.cobra"
     archivo.write_text("x = 1")
     advertencias = []
 

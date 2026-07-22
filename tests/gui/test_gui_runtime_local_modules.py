@@ -13,7 +13,7 @@ def _crear_proyecto(
 ) -> tuple[Path, str]:
     raiz.mkdir(parents=True)
 
-    (raiz / "utilidades.co").write_text(
+    (raiz / "utilidades.cobra").write_text(
         (
             "func duplicar(valor):\n"
             f"    retorno valor * {factor}\n"
@@ -23,7 +23,7 @@ def _crear_proyecto(
     )
 
     codigo = 'usar "utilidades"\nimprimir(duplicar(21))\n'
-    principal = raiz / "principal.co"
+    principal = raiz / "principal.cobra"
     principal.write_text(codigo, encoding="utf-8")
     return principal, codigo
 
