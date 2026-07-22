@@ -1,225 +1,269 @@
 {
-  "archivo_sugerido": "resumen_conversacion.json",
-  "fecha_contexto": "2026-07-20",
+  "metadata": {
+    "titulo": "Resumen técnico de la conversación sobre pCobra",
+    "asistente": "Bella",
+    "idioma": "es",
+    "formato": "JSON",
+    "estado_general": "Investigación activa y preparación de una migración estructural"
+  },
   "proyecto": {
     "nombre": "pCobra",
-    "repositorio_local": "C:/Users/Adolfo/PycharmProjects/pCobra",
-    "repositorio_remoto": "https://github.com/Alphonsus411/pCobra.git",
-    "rama_actual": "feat/flet-0.86-editor",
-    "rama_principal": "master"
+    "repositorio_local": "C:\\Users\\Adolfo\\PycharmProjects\\pCobra",
+    "rama_observada": "master",
+    "commit_observado": {
+      "hash": "8b1676cd",
+      "mensaje": "Cambios en idle y runtime.py",
+      "sincronizado_con_origin": true
+    },
+    "worktree_observado": "limpio"
   },
-  "preferencias_del_usuario": {
-    "idioma": "español",
-    "nombre_usuario": "Adolfo",
-    "asistente": "Bella",
-    "formato_de_trabajo": "Presentar como máximo tres comandos o pruebas por respuesta para evitar sobrecarga.",
-    "estilo": "Técnico, claro, cercano y estructurado."
-  },
-  "incidencia_nodo_para": {
-    "estado": "resuelta, validada, fusionada y publicada",
-    "problema_original": "El parser generaba NodoPara, pero el intérprete producía: Nodo no soportado: <class 'pcobra.core.ast_nodes.NodoPara'>.",
-    "rama": "fix/interpreter-nodo-para",
-    "commit_correccion": {
-      "hash": "3e988828",
-      "mensaje": "fix(runtime): ejecutar bucles para en el intérprete"
-    },
-    "commit_merge": {
-      "hash": "ee86154d",
-      "mensaje": "merge: soportar bucles para en el intérprete"
-    },
-    "cambios": [
-      "Se importó NodoPara en src/pcobra/core/interpreter.py.",
-      "Se añadió NodoPara al despachador del intérprete.",
-      "Se implementó ejecutar_para.",
-      "Se materializa el iterable antes de recorrerlo.",
-      "Se valida que el valor sea iterable.",
-      "La variable del bucle se declara o actualiza según el entorno.",
-      "Se implementó soporte de romper y continuar.",
-      "Se añadieron pruebas unitarias y una prueba de ejecución GUI."
-    ],
-    "archivos_modificados": [
-      "src/pcobra/core/interpreter.py",
-      "tests/gui/test_gui_runtime_execution_scope.py",
-      "tests/unit/test_interpreter_para.py"
-    ],
-    "validacion_automatica": {
-      "resultado": "28 passed, 1 warning",
-      "codigo_salida": 0,
-      "warning": "Advertencia no relacionada de Hypothesis sobre norecursedirs."
-    },
-    "validacion_manual": {
-      "codigo": "para valor en [1, 2, 3]:\n    imprimir(valor)\nfin",
-      "salida": [
-        "1",
-        "2",
-        "3"
-      ],
-      "resultado": "correcto"
-    },
-    "sincronizacion": {
-      "master_local": "ee86154d",
-      "origin_master": "ee86154d",
-      "estado": "sincronizados"
+  "objetivo_inicial": {
+    "descripcion": "Validar el uso de módulos Cobra locales desde la GUI",
+    "ejemplo": {
+      "archivo_principal": "prueba_modulo_local.cobra",
+      "codigo": "usar \"utilidades\"\nimprimir(duplicar(21))",
+      "resultado_esperado": "42"
     }
   },
-  "incidencia_tabulador": {
-    "estado": "abierta",
-    "problema": "La tecla Tab no introduce indentación en la superficie de escritura del IDLE.",
-    "superficie_actual": {
-      "archivo": "src/pcobra/gui/idle.py",
-      "creacion": "entrada = runtime.crear_editor_codigo(ft)",
-      "implementacion": "src/pcobra/gui/runtime.py",
-      "control": "ft.TextField",
-      "opciones": {
-        "multiline": true,
-        "expand": true
-      }
-    },
-    "hallazgos_en_flet_0_28_3": {
-      "version": "0.28.3",
-      "TextField_selection": false,
-      "TextField_cursor_position": false,
-      "TextField_on_selection_change": false,
-      "TextField_on_key_down": false,
-      "TextField_on_keyboard_event": false,
-      "Page_on_keyboard_event": true,
-      "KeyboardListener": false,
-      "CodeEditor": false,
-      "conclusion": "Page puede detectar Tab, pero TextField no permite conocer ni modificar la posición del cursor o la selección. Un parche correcto de indentación no es viable con esa API."
-    },
-    "investigacion_interna": {
-      "TextSelection": "Existe, pero se usa en controles de texto seleccionable y no proporciona edición de TextField.",
-      "invoke_method": "Existe como transporte genérico, pero no se encontraron métodos cliente de TextField para obtener selección, mover cursor o insertar texto.",
-      "controles_personalizados_en_repositorio": "No se encontró infraestructura existente.",
-      "conclusion": "La solución correcta es migrar Flet y usar un editor especializado, en lugar de aplicar un parche privado y frágil."
-    }
-  },
-  "migracion_flet": {
-    "rama": "feat/flet-0.86-editor",
-    "objetivo": "Actualizar Flet y reemplazar la superficie de escritura por un editor con soporte real de selección, cursor e indentación con Tab.",
-    "linea_base_antes_de_actualizar": {
-      "suite": [
-        "tests/unit/test_gui_idle.py",
-        "tests/gui",
-        "tests/unit/test_cli_gui.py",
-        "tests/unit/test_cli_gui_without_flet.py"
-      ],
-      "resultado": "140 passed, 1 warning",
-      "codigo_salida": 0,
-      "duracion": "1.65s"
-    },
-    "paquetes_instalados": {
-      "flet": "0.86.1",
-      "flet-code-editor": "0.86.1",
-      "flet-desktop": "0.86.1",
-      "msgpack": "1.2.1"
-    },
-    "conflictos_actuales_de_dependencias": [
-      {
-        "paquete": "agix 1.9.0",
-        "restriccion": "flet>=0.28,<0.29",
-        "conflicto": "Flet instalado es 0.86.1."
-      },
-      {
-        "paquete": "pcobra 10.1.1",
-        "restriccion": "flet>=0.28.3,!=0.29.*,<0.86",
-        "conflicto": "Flet instalado es 0.86.1."
-      }
+  "problema_gui_confirmado": {
+    "descripcion": "La GUI perdía la ruta del archivo activo antes de ejecutar el código.",
+    "causa": "crear_handler_ejecucion y ejecutar_o_transpilar no propagaban main_file hasta ejecutar_codigo.",
+    "cadena_corregida": [
+      "estado.ruta",
+      "obtener_main_file()",
+      "crear_handler_ejecucion()",
+      "ejecutar_o_transpilar(main_file=...)",
+      "ejecutar_codigo(main_file=...)",
+      "PipelineInput.main_file",
+      "resolución de módulos locales"
     ],
-    "conflicto_resuelto": {
-      "paquete": "flet-desktop",
-      "version_anterior": "0.28.3",
-      "version_actual": "0.86.1"
-    },
-    "agix": {
-      "version_instalada": "1.9.0",
-      "ultima_version_disponible": "1.9.0",
-      "uso_real_en_pcobra": [
-        "src/pcobra/cobra/cli/commands/agix_cmd.py",
-        "src/pcobra/ia/analizador_agix.py",
-        "tests/integration/test_agix_reasoner.py",
-        "tests/unit/test_analizador_agix.py",
-        "tests/unit/test_cli_agix.py",
-        "tests/unit/test_cli_agix_missing_dep.py"
-      ],
-      "observacion": "El código describe AGIX como dependencia opcional, pero pyproject.toml todavía lo declara como dependencia obligatoria.",
-      "decision_provisional": "Mover AGIX a un extra opcional, por ejemplo pcobra[ai], para desacoplarlo de la GUI basada en Flet 0.86.1."
-    }
-  },
-  "estado_de_pyproject": {
-    "version_proyecto": "10.1.1",
-    "python": ">=3.11",
-    "dependencia_agix_actual": "agix>=1.9.0,<2",
-    "dependencia_flet_actual": "flet>=0.28.3,!=0.29.*,<0.86",
-    "cambios_propuestos_no_confirmados": [
-      "Eliminar agix de project.dependencies.",
-      "Añadir ai = [\"agix>=1.9.0,<2\"] en project.optional-dependencies.",
-      "Cambiar Flet a flet[desktop]==0.86.1.",
-      "Añadir flet-code-editor==0.86.1.",
-      "Regenerar requirements.txt, requirements-dev.txt y docs/requirements.txt después de estabilizar la migración."
+    "restricciones_respetadas": [
+      "No se utilizó os.chdir.",
+      "No se modificaron Lexer ni Parser.",
+      "No se relajó safe_mode.",
+      "La ruta activa se consulta en cada ejecución."
     ]
   },
-  "estado_actual_confirmado": {
-    "rama": "feat/flet-0.86-editor",
-    "flet_instalado": "0.86.1",
-    "flet_code_editor_instalado": "0.86.1",
-    "flet_desktop_instalado": "0.86.1",
-    "agix_instalado": "1.9.0",
-    "pip_check": [
-      "agix 1.9.0 es incompatible con Flet 0.86.1.",
-      "Los metadatos instalados de pcobra 10.1.1 todavía restringen Flet a una versión menor que 0.86."
+  "parche_gui": {
+    "archivos_modificados": [
+      "src/pcobra/gui/runtime.py",
+      "src/pcobra/gui/idle.py"
     ],
-    "cambios_git_de_la_migracion": "No se ha confirmado todavía ningún cambio de código ni commit en esta rama.",
-    "suite_gui_despues_de_actualizar": "Todavía no ejecutada, porque primero se estaba resolviendo la coherencia de dependencias."
+    "prueba_agregada": "tests/gui/test_gui_runtime_local_modules.py",
+    "resultado_pruebas": {
+      "total": 35,
+      "aprobadas": 35,
+      "fallidas": 0,
+      "advertencias": 1,
+      "duracion_segundos": 0.76
+    },
+    "advertencia": {
+      "origen": "_hypothesis_pytestplugin.py",
+      "descripcion": "La configuración norecursedirs hace que pytest omita el directorio .hypothesis.",
+      "relacion_con_el_parche": "No relacionada"
+    },
+    "estado": "Integrado y publicado en el commit 8b1676cd"
   },
-  "siguiente_secuencia_recomendada": [
+  "hallazgo_posterior": {
+    "descripcion": "Tras corregir main_file, el runtime buscó utilidades.co en la carpeta correcta.",
+    "interpretacion": "La propagación de contexto funcionaba, pero quedó expuesta una contradicción histórica en el contrato de extensiones.",
+    "correccion_de_criterio": "Renombrar utilidades.cobra a utilidades.co fue descartado como solución."
+  },
+  "contrato_canonico_decidido": {
+    ".cobra": "Archivo fuente Cobra individual.",
+    ".co": "Paquete o proyecto Cobra completo.",
+    "regla": "Un archivo .co nunca debe interpretarse como fuente por no ser un paquete válido.",
+    "comportamiento_para_co_invalido": "Debe tratarse como paquete inválido, no enviarse al Lexer, Parser, intérprete o transpilador."
+  },
+  "auditoria_del_repositorio": {
+    "archivos_cobra_rastreados": 25,
+    "paquetes_co_zip_con_manifest": 0,
+    "co_zip_sin_manifest": 0,
+    "co_de_texto_no_paquete": 35,
+    "distribucion_co_no_paquete": {
+      "examples": 25,
+      "scripts": 6,
+      "tests": 4
+    },
+    "hardcodings_relevantes": {
+      "with_suffix_co": 4,
+      "suffix_co": 1,
+      "endswith_co": 3,
+      "literales_co": 768
+    },
+    "conclusion": "La ambigüedad entre .cobra y .co está distribuida por múltiples capas y requiere una migración transversal, no un reemplazo global."
+  },
+  "puntos_de_conflicto_confirmados": [
     {
-      "paso": 1,
-      "accion": "Modificar pyproject.toml para actualizar Flet, añadir flet-code-editor y mover AGIX al extra opcional ai."
+      "archivo": "src/pcobra/cobra/usar_loader.py",
+      "problema": "Resuelve módulos de proyecto como .co y construye mensajes de error con .co."
     },
     {
-      "paso": 2,
-      "accion": "Desinstalar AGIX del entorno GUI principal, reinstalar pCobra en modo editable y ejecutar pip check."
+      "archivo": "src/pcobra/cobra/imports/resolver.py",
+      "problema": "Busca candidatos .co y .cobra, incluyendo __init__.co."
     },
     {
-      "paso": 3,
-      "accion": "Ejecutar la suite GUI para obtener el mapa real de incompatibilidades con Flet 0.86.1."
+      "archivo": "src/pcobra/cobra/cli/commands/crear_cmd.py",
+      "problema": "Crea archivos fuente .co y proyectos con main.co."
+    },
+    {
+      "archivo": "src/pcobra/cobra/cli/commands/init_cmd.py",
+      "problema": "Inicializa proyectos con main.co."
+    },
+    {
+      "archivo": "src/pcobra/cobra/cli/commands/benchthreads_cmd.py",
+      "problema": "Crea archivos temporales de código con sufijo .co."
+    },
+    {
+      "archivo": "src/pcobra/gui/runtime.py",
+      "problema": "Considera .cobra y .co como extensiones de fuente y puede degradar un .co inválido a código."
+    },
+    {
+      "archivo": "src/pcobra/jupyter_kernel/__init__.py",
+      "problema": "Declara .co como extensión de archivo fuente."
+    },
+    {
+      "archivo": "src/pcobra/cobra_installer/validator.py",
+      "problema": "Mantiene compatibilidad con entrypoints .co además de .cobra."
+    },
+    {
+      "archivo": "extensions/vscode/package.json",
+      "problema": "Asocia .co al lenguaje fuente Cobra."
+    },
+    {
+      "archivo": "examples, scripts/benchmarks y tests/data",
+      "problema": "Contienen archivos .co de texto plano usados como fuentes."
     }
   ],
-  "comandos_propuestos_anteriormente_pero_no_confirmados": {
-    "actualizar_pyproject": "Editar pyproject.toml para sustituir la restricción antigua de Flet, añadir flet-code-editor y mover AGIX a project.optional-dependencies.ai.",
-    "limpiar_entorno": "python -m pip uninstall -y agix && python -m pip install -e . && python -m pip check",
-    "medir_migracion": "python -m pytest -q tests/unit/test_gui_idle.py tests/gui tests/unit/test_cli_gui.py tests/unit/test_cli_gui_without_flet.py --tb=short"
-  },
-  "riesgos_y_precauciones": [
-    "No asumir que CodeEditor gestiona Tab exactamente como se necesita hasta validarlo manualmente.",
-    "No mezclar la migración de Flet con incidencias antiguas no relacionadas.",
-    "No reinstalar pcobra[ai] junto con Flet 0.86.1 mientras AGIX mantenga su restricción flet<0.29.",
-    "Mantener commits separados para dependencias, adaptación de API y sustitución del editor.",
-    "Actualizar los archivos de requisitos bloqueados solo después de estabilizar pyproject.toml."
+  "referencias_co_que_deben_conservarse": [
+    "Paquetes construidos.",
+    "Artefactos CobraHub.",
+    "Cachés de paquetes.",
+    "Descargas de paquetes.",
+    "Nombres de distribución nombre-version.co.",
+    "Validación, extracción, publicación e integridad de paquetes.",
+    "Dependencias empaquetadas del instalador."
   ],
-  "incidencias_independientes_detectadas": [
-    {
-      "archivo": "tests/unit/test_parser_consistencia_ast.py",
-      "problema": "Usa la sintaxis antigua para i in x.",
-      "sintaxis_actual": "para i en x"
+  "referencias_co_que_deben_migrarse": [
+    "Archivos fuente ejecutables.",
+    "Módulos locales cargados mediante usar.",
+    "Entrypoints fuente.",
+    "Archivos temporales con código Cobra.",
+    "Ejemplos y benchmarks de código.",
+    "Fixtures de ejecución y transpilación.",
+    "Asociaciones del editor y Jupyter para código fuente."
+  ],
+  "estrategia_propuesta": {
+    "fase_1": {
+      "nombre": "Fuente única de verdad",
+      "acciones": [
+        "Definir COBRA_SOURCE_EXTENSION como .cobra.",
+        "Definir COBRA_PACKAGE_EXTENSION como .co.",
+        "Separar helpers de fuente y paquete.",
+        "Evitar duplicación de constantes cuando no cree ciclos."
+      ]
     },
-    {
-      "archivo": "tests/unit/test_romper_continuar.py",
-      "problema": "Contiene expectativas antiguas de parser y transpiladores."
+    "fase_2": {
+      "nombre": "Resolución y ejecución",
+      "acciones": [
+        "Hacer que usar resuelva exclusivamente archivos .cobra.",
+        "Eliminar candidatos .co del resolvedor de fuentes.",
+        "Actualizar errores, caché y detección de ciclos para mostrar .cobra.",
+        "No añadir fallback de fuente a .co."
+      ]
     },
-    {
-      "suite": "tests/unit/test_interpreter.py",
-      "problema": "Existen fallos previos no relacionados con NodoPara."
+    "fase_3": {
+      "nombre": "GUI",
+      "acciones": [
+        "Clasificar .cobra como fuente.",
+        "Clasificar cualquier .co como ruta de paquete.",
+        "Impedir que .co llegue al pipeline de fuente.",
+        "Preservar la propagación dinámica de main_file."
+      ]
     },
-    {
-      "problema": "Hay una duplicación histórica potencial entre imports core.interpreter y pcobra.core.interpreter.",
-      "decision": "No mezclar esta incidencia con la migración actual."
+    "fase_4": {
+      "nombre": "CLI y tooling",
+      "acciones": [
+        "Crear archivos y proyectos con .cobra.",
+        "Generar main.cobra.",
+        "Usar .cobra en temporales, Jupyter, pruebas y verificación.",
+        "Mantener .co donde represente paquetes."
+      ]
+    },
+    "fase_5": {
+      "nombre": "Migración de archivos rastreados",
+      "acciones": [
+        "Renombrar examples/**/*.co a .cobra con git mv.",
+        "Renombrar scripts/benchmarks/programs/*.co a .cobra con git mv.",
+        "Renombrar tests/data/*.co a .cobra con git mv.",
+        "Actualizar referencias funcionales y documentación."
+      ]
+    },
+    "fase_6": {
+      "nombre": "Endurecimiento contractual",
+      "acciones": [
+        "Añadir pruebas que impidan resolver .co como fuente.",
+        "Añadir una auditoría CI para detectar .co de texto rastreados.",
+        "Crear fixtures negativos temporalmente dentro de las pruebas.",
+        "Comprobar que un .co inválido se informe como paquete inválido."
+      ]
     }
+  },
+  "rama_de_trabajo_propuesta": {
+    "nombre": "fix/contrato-extensiones-cobra",
+    "comando": "git switch -c fix/contrato-extensiones-cobra",
+    "estado_confirmado": false,
+    "nota": "La conversación propuso crear esta rama, pero no contiene evidencia de que el comando se haya ejecutado."
+  },
+  "prompt_para_codex": {
+    "creado": true,
+    "rama_objetivo": "fix/contrato-extensiones-cobra",
+    "condiciones_principales": [
+      "Trabajar exclusivamente en esa rama.",
+      "Detenerse si el worktree no está limpio o la rama no coincide.",
+      "No modificar master.",
+      "No hacer reemplazos globales de .co por .cobra.",
+      "No tocar Lexer ni Parser.",
+      "No relajar safe_mode ni la allowlist.",
+      "No usar os.chdir.",
+      "Conservar la semántica de .co para paquetes.",
+      "Crear commits atómicos.",
+      "Ejecutar pruebas focalizadas y la suite completa.",
+      "Entregar informe final con commits, cambios, pruebas y git status."
+    ]
+  },
+  "commits_recomendados_para_codex": [
+    "refactor(extensions): separar fuente .cobra y paquete .co",
+    "fix(imports): resolver módulos de proyecto exclusivamente como .cobra",
+    "fix(gui-cli): impedir ejecución de .co y generar fuentes .cobra",
+    "chore(sources): migrar ejemplos benchmarks y fixtures a .cobra",
+    "docs(tests): alinear documentación y regresiones con el contrato"
   ],
-  "plan_de_commits_sugerido": [
-    "chore(deps): actualizar Flet y desacoplar AGIX",
-    "refactor(gui): adaptar wrappers y pruebas a Flet 0.86.1",
-    "feat(gui): usar CodeEditor y soportar indentación con Tab"
+  "regresiones_minimas_requeridas": [
+    "usar \"utilidades\" resuelve utilidades.cobra.",
+    "utilidades.co de texto no se resuelve como módulo.",
+    "El error de módulo ausente menciona utilidades.cobra.",
+    "Los ciclos muestran rutas .cobra.",
+    "La caché conserva rutas canónicas.",
+    "La GUI ejecuta módulos locales .cobra desde el archivo activo.",
+    "La GUI nunca ejecuta .co como fuente.",
+    "Un .co inválido se informa como paquete inválido.",
+    "cobra crear archivo produce .cobra.",
+    "cobra crear proyecto e init producen main.cobra.",
+    "Jupyter declara .cobra.",
+    "El resolvedor genérico no contiene candidatos .co de fuente."
+  ],
+  "estado_actual": {
+    "parche_main_file": "Completado, probado, integrado y sincronizado.",
+    "migracion_extensiones": "Aún no aplicada.",
+    "auditoria": "Completada.",
+    "prompt_codex": "Preparado.",
+    "siguiente_accion": "Crear o verificar la rama fix/contrato-extensiones-cobra y ejecutar el prompt en Codex."
+  },
+  "fuentes_documentales_usadas": [
+    "Auditoría del contrato de extensiones Cobra.",
+    "Extracción de usar_loader.py, imports/resolver.py, crear_cmd.py, init_cmd.py y otros archivos relevantes.",
+    "runtime.py de la GUI.",
+    "Resultados de pytest y salidas de Git proporcionadas durante la conversación."
   ]
 }
