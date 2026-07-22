@@ -21,11 +21,11 @@ def test_run_v2_container_acepta_solo_targets_oficiales_runtime():
     command.register_subparser(subparsers)
 
     parser = subparsers.choices[command.name]
-    parsed = parser.parse_args(["programa.co", "--container", "rust"])
+    parsed = parser.parse_args(["programa.cobra", "--container", "rust"])
     assert parsed.container == "rust"
 
     with pytest.raises(SystemExit):
-        parser.parse_args(["programa.co", "--container", "cpp"])
+        parser.parse_args(["programa.cobra", "--container", "cpp"])
 
 
 def test_test_v2_langs_es_opcional_y_usa_default_de_politica_oficial():
@@ -34,7 +34,7 @@ def test_test_v2_langs_es_opcional_y_usa_default_de_politica_oficial():
     command.register_subparser(subparsers)
 
     parser = subparsers.choices[command.name]
-    parsed = parser.parse_args(["programa.co"])
+    parsed = parser.parse_args(["programa.cobra"])
 
     assert parsed.langs == list(VERIFICATION_EXECUTABLE_TARGETS)
 
@@ -80,7 +80,7 @@ def test_build_v2_resuelve_backend_via_pipeline(monkeypatch):
     )
 
     status = command.run(
-        argparse.Namespace(file="programa.co", modo="mixto", debug=False)
+        argparse.Namespace(file="programa.cobra", modo="mixto", debug=False)
     )
     assert status == 0
     assert "build" in called
@@ -114,7 +114,7 @@ def test_build_v2_ux_salida_estable_sin_terminos_internos(monkeypatch):
     )
 
     status = command.run(
-        argparse.Namespace(file="programa.co", modo="mixto", debug=False)
+        argparse.Namespace(file="programa.cobra", modo="mixto", debug=False)
     )
 
     assert status == 0
@@ -149,7 +149,7 @@ def test_build_v2_muestra_reason_solo_en_debug(monkeypatch):
     )
 
     status = command.run(
-        argparse.Namespace(file="programa.co", modo="mixto", debug=True)
+        argparse.Namespace(file="programa.cobra", modo="mixto", debug=True)
     )
 
     assert status == 0
@@ -188,7 +188,7 @@ def test_build_v2_parser_publico_registra_file_y_alias_installer():
     assert ("installer", ("--installer",)) in [
         (action.dest, tuple(action.option_strings)) for action in public_actions
     ]
-    assert parser.parse_args(["programa.co"]).file == "programa.co"
+    assert parser.parse_args(["programa.cobra"]).file == "programa.cobra"
     alias_args = parser.parse_args(["--installer", "."])
     assert alias_args.installer is True
     assert alias_args.file == "."
@@ -219,7 +219,7 @@ def test_run_v2_valida_seguridad_por_ruta_binding(monkeypatch):
 
     status = command.run(
         argparse.Namespace(
-            file="programa.co",
+            file="programa.cobra",
             debug=False,
             sandbox=False,
             container="rust",
@@ -251,7 +251,7 @@ def test_test_v2_valida_seguridad_por_ruta_binding(monkeypatch):
 
     status = command.run(
         argparse.Namespace(
-            file="programa.co",
+            file="programa.cobra",
             debug=False,
             langs=["python", "javascript", "rust"],
             modo="mixto",

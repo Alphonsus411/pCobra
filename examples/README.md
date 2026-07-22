@@ -19,7 +19,7 @@ para migración/regresión técnica y no deben presentarse como opción pública
 - **hello_world/**: demostraciones para targets públicos (`python`, `rust`, `javascript`) y artefactos legacy internal-only de referencia técnica.
 - **[hola_mundo](hola_mundo/)**: ejemplo mínimo para transpilar a Python.
   ```bash
-  cobra compilar examples/hola_mundo/hola.co --backend python
+  cobra compilar examples/hola_mundo/hola.cobra --backend python
   ```
 - **plugins/**: plugins de muestra instalables en modo editable. Para probarlos:
   ```bash
@@ -29,7 +29,7 @@ para migración/regresión técnica y no deben presentarse como opción pública
   ```
 - **tutorial_basico/**: guía básica con un hola mundo y utilidades de compilación manual. El programa principal se corre con:
   ```bash
-  cobra ejecutar examples/tutorial_basico/hola_mundo.co
+  cobra ejecutar examples/tutorial_basico/hola_mundo.cobra
   ```
 
 - **main.py**: script Python que muestra cómo usar `standard_library.interfaz` para

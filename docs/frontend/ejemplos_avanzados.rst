@@ -89,7 +89,7 @@ Bioinformática
 En ``examples/casos_reales/bioinformatica/`` se calcula el porcentaje de GC de una
 secuencia en formato FASTA. El script es el siguiente:
 
-.. literalinclude:: ../../examples/casos_reales/bioinformatica/ejemplo_gc.co
+.. literalinclude:: ../../examples/casos_reales/bioinformatica/ejemplo_gc.cobra
    :language: cobra
 
 Revisa el archivo ``README.md`` de la carpeta para los pasos de compilación y
@@ -101,7 +101,7 @@ Análisis de Datos
 ``examples/casos_reales/analisis_datos/`` contiene un programa que procesa un CSV con
 ``pandas`` para calcular el promedio de una columna:
 
-.. literalinclude:: ../../examples/casos_reales/analisis_datos/estadisticas.co
+.. literalinclude:: ../../examples/casos_reales/analisis_datos/estadisticas.cobra
    :language: cobra
 
 El ``README.md`` explica cómo transpilar a Python y ejecutar el resultado.
@@ -112,7 +112,7 @@ Inteligencia Artificial
 En ``examples/casos_reales/inteligencia_artificial/`` se muestra cómo cargar un modelo de
 ``scikit-learn`` y realizar una predicción:
 
-.. literalinclude:: ../../examples/casos_reales/inteligencia_artificial/modelo_ia.co
+.. literalinclude:: ../../examples/casos_reales/inteligencia_artificial/modelo_ia.cobra
    :language: cobra
 
 Consulta el ``README.md`` para conocer las dependencias y el proceso de ejecución.

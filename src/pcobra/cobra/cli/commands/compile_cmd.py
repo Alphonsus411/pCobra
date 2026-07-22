@@ -32,7 +32,7 @@ from pcobra.cobra.cli.deprecation_policy import (
 )
 from pcobra.cobra.cli.utils.messages import mostrar_advertencia, mostrar_error, mostrar_info
 from pcobra.cobra.cli.utils.validators import validar_archivo_existente
-from pcobra.cobra.packaging import es_paquete_cobra
+from pcobra.cobra.extensions import es_fuente_cobra, es_ruta_paquete_cobra
 from pcobra.cobra.cli.utils.autocomplete import files_completer
 from pcobra.cobra.core import ParserError
 from pcobra.cobra.core.cobra_config import tiempo_max_transpilacion
@@ -87,11 +87,13 @@ def validate_file(filepath: str) -> bool:
         raise ValueError(f"No hay permisos de lectura para '{filepath}'")
     if os.path.getsize(path) > MAX_FILE_SIZE:
         raise ValueError(f"El archivo excede el tamaño máximo permitido ({MAX_FILE_SIZE} bytes)")
-    if es_paquete_cobra(path):
+    if es_ruta_paquete_cobra(path):
         raise ValueError(
             "El archivo es un paquete Cobra .co, no una fuente transpirable. "
             "Instálalo o extráelo con el comando paquete antes de compilar."
         )
+    if not es_fuente_cobra(path):
+        raise ValueError("El archivo fuente Cobra debe usar la extensión .cobra.")
     return True
 
 def validar_dependencias_con_alias(backend: str, mod_info: dict) -> None:
@@ -329,4 +331,3 @@ class CompileCommand(BaseCommand):
         except Exception as e:
             mostrar_error(str(e))
             return 1
-

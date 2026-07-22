@@ -30,7 +30,7 @@ def test_api_parse_target_invalido_muestra_lista_exacta_con_tiers() -> None:
 
 
 def test_cli_compilar_target_invalido_muestra_lista_exacta_con_tiers(tmp_path) -> None:
-    archivo = tmp_path / "demo.co"
+    archivo = tmp_path / "demo.cobra"
     archivo.write_text("mostrar(\"hola\")\n", encoding="utf-8")
 
     with patch("sys.stdout", new_callable=StringIO) as out:

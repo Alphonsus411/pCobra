@@ -111,7 +111,7 @@ def test_usar_modulo_proyecto_reusa_resolucion_y_cache(tmp_path, monkeypatch) ->
     from pcobra.cobra.usar_loader import usar_modulo
     from pcobra.core import import_utils
 
-    modulo = tmp_path / "utilidades" / "saludos.co"
+    modulo = tmp_path / "utilidades" / "saludos.cobra"
     modulo.parent.mkdir()
     modulo.write_text("exportar saludo\n", encoding="utf-8")
     llamadas = []
@@ -214,7 +214,7 @@ def test_transpilador_js_garantia() -> None:
 
 def test_transpilador_python_usar_proyecto_incluye_contexto_estable(tmp_path, monkeypatch) -> None:
     proyecto = tmp_path / "proyecto"
-    principal = proyecto / "src" / "main.co"
+    principal = proyecto / "src" / "main.cobra"
     principal.parent.mkdir(parents=True)
     (proyecto / "cobra.toml").write_text("[project]\nname = 'demo'\n", encoding="utf-8")
     principal.write_text("usar utilidades.fechas\n", encoding="utf-8")
@@ -257,8 +257,8 @@ def test_transpilado_python_usar_proyecto_funciona_fuera_del_cwd(tmp_path, monke
 
     proyecto = tmp_path / "proyecto"
     externo = tmp_path / "externo"
-    principal = proyecto / "src" / "main.co"
-    modulo = proyecto / "utilidades" / "fechas.co"
+    principal = proyecto / "src" / "main.cobra"
+    modulo = proyecto / "utilidades" / "fechas.cobra"
     principal.parent.mkdir(parents=True)
     modulo.parent.mkdir()
     externo.mkdir()
@@ -295,7 +295,7 @@ def test_transpilado_python_usar_proyecto_funciona_fuera_del_cwd(tmp_path, monke
 
 def test_python_adapter_usar_proyecto_propaga_contexto_estable(tmp_path) -> None:
     proyecto = tmp_path / "proyecto"
-    principal = proyecto / "src" / "main.co"
+    principal = proyecto / "src" / "main.cobra"
     principal.parent.mkdir(parents=True)
     (proyecto / "cobra.toml").write_text("[project]\nname = 'demo'\n", encoding="utf-8")
     principal.write_text('usar "utilidades.fechas"\n', encoding="utf-8")
@@ -314,7 +314,7 @@ def test_python_adapter_usar_proyecto_propaga_contexto_estable(tmp_path) -> None
 
 def test_transpilador_python_usar_oficial_acepta_contexto(tmp_path) -> None:
     proyecto = tmp_path / "proyecto"
-    principal = proyecto / "main.co"
+    principal = proyecto / "main.cobra"
     proyecto.mkdir()
     (proyecto / "cobra.toml").write_text("[project]\nname = 'demo'\n", encoding="utf-8")
     principal.write_text("usar texto\n", encoding="utf-8")

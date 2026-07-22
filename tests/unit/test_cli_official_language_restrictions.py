@@ -36,7 +36,7 @@ def test_compile_falla_con_tipo_fuera_de_targets_oficiales(language):
     parser = _build_parser_for(CompileCommand())
 
     with pytest.raises(SystemExit):
-        parser.parse_args(["compilar", "archivo.co", "--tipo", language])
+        parser.parse_args(["compilar", "archivo.cobra", "--tipo", language])
 
 
 @pytest.mark.parametrize("language", INVALID_LANGUAGES)
@@ -44,7 +44,7 @@ def test_compile_falla_con_tipos_fuera_de_targets_oficiales(language):
     parser = _build_parser_for(CompileCommand())
 
     with pytest.raises(SystemExit):
-        parser.parse_args(["compilar", "archivo.co", "--tipos", f"python,{language}"])
+        parser.parse_args(["compilar", "archivo.cobra", "--tipos", f"python,{language}"])
 
 
 @pytest.mark.parametrize("language", INVALID_LANGUAGES)
@@ -89,7 +89,7 @@ def test_verify_rechaza_lenguajes_fuera_del_runtime_soportado(language):
     parser = _build_parser_for(VerifyCommand())
 
     with pytest.raises(SystemExit):
-        parser.parse_args(["verificar", "archivo.co", "--lenguajes", language])
+        parser.parse_args(["verificar", "archivo.cobra", "--lenguajes", language])
 
 
 def test_set_oficial_documentado_en_tests_deriva_del_registro_canonico():
@@ -158,7 +158,7 @@ def test_compile_rechaza_cada_alias_legacy_con_mensaje_uniforme(legacy_alias):
     parser = _build_parser_for(CompileCommand())
 
     with pytest.raises(SystemExit):
-        parser.parse_args(["compilar", "archivo.co", "--tipo", legacy_alias])
+        parser.parse_args(["compilar", "archivo.cobra", "--tipo", legacy_alias])
 
 
 @pytest.mark.parametrize("legacy_alias", LEGACY_ALIASES_RECHAZADOS)
@@ -189,7 +189,7 @@ def test_verify_rechaza_cada_alias_legacy_con_mensaje_uniforme(legacy_alias):
     parser = _build_parser_for(VerifyCommand())
 
     with pytest.raises(SystemExit):
-        parser.parse_args(["verificar", "archivo.co", "--lenguajes", legacy_alias])
+        parser.parse_args(["verificar", "archivo.cobra", "--lenguajes", legacy_alias])
 
 
 @pytest.mark.parametrize("legacy_alias", LEGACY_ALIASES_RECHAZADOS)

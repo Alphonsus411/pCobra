@@ -10,6 +10,17 @@ from pcobra.cobra.cli.services.run_service import RunService
 from pcobra.cobra.cli.services.contracts import RunRequest
 
 
+@pytest.mark.parametrize("extension", [".co", ".txt", ".py"])
+def test_run_service_rechaza_archivos_que_no_son_fuente_cobra(
+    tmp_path, extension
+):
+    archivo = tmp_path / f"programa{extension}"
+    archivo.write_text('imprimir("no ejecutar")\n', encoding="utf-8")
+
+    with pytest.raises(ValueError, match="paquete Cobra|extensión \\.cobra"):
+        RunService().validar_archivo(str(archivo))
+
+
 @pytest.mark.skipif(sys.platform != "linux", reason="resource module is Unix-specific")
 def test_run_service_sandbox_con_programa_cobra_no_contamina_anfitrion(monkeypatch):
     import resource
