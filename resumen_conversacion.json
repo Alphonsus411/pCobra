@@ -1,269 +1,288 @@
 {
   "metadata": {
-    "titulo": "Resumen técnico de la conversación sobre pCobra",
+    "titulo": "Resumen técnico de validación de la migración de extensiones Cobra",
     "asistente": "Bella",
     "idioma": "es",
     "formato": "JSON",
-    "estado_general": "Investigación activa y preparación de una migración estructural"
+    "fecha_contextual": "2026-07-23",
+    "estado_general": "Validación activa; la rama todavía no está lista para merge"
   },
   "proyecto": {
     "nombre": "pCobra",
     "repositorio_local": "C:\\Users\\Adolfo\\PycharmProjects\\pCobra",
-    "rama_observada": "master",
-    "commit_observado": {
-      "hash": "8b1676cd",
-      "mensaje": "Cambios en idle y runtime.py",
-      "sincronizado_con_origin": true
-    },
-    "worktree_observado": "limpio"
+    "rama_actual": "fix/contrato-extensiones-cobra",
+    "rama_destino": "master",
+    "objetivo": "Validar la migración contractual en la que .cobra representa fuentes y .co representa paquetes Cobra"
   },
-  "objetivo_inicial": {
-    "descripcion": "Validar el uso de módulos Cobra locales desde la GUI",
-    "ejemplo": {
-      "archivo_principal": "prueba_modulo_local.cobra",
-      "codigo": "usar \"utilidades\"\nimprimir(duplicar(21))",
-      "resultado_esperado": "42"
-    }
-  },
-  "problema_gui_confirmado": {
-    "descripcion": "La GUI perdía la ruta del archivo activo antes de ejecutar el código.",
-    "causa": "crear_handler_ejecucion y ejecutar_o_transpilar no propagaban main_file hasta ejecutar_codigo.",
-    "cadena_corregida": [
-      "estado.ruta",
-      "obtener_main_file()",
-      "crear_handler_ejecucion()",
-      "ejecutar_o_transpilar(main_file=...)",
-      "ejecutar_codigo(main_file=...)",
-      "PipelineInput.main_file",
-      "resolución de módulos locales"
-    ],
-    "restricciones_respetadas": [
-      "No se utilizó os.chdir.",
-      "No se modificaron Lexer ni Parser.",
-      "No se relajó safe_mode.",
-      "La ruta activa se consulta en cada ejecución."
+  "contrato_de_extensiones": {
+    ".cobra": "Archivo fuente Cobra individual",
+    ".co": "Paquete Cobra",
+    "reglas": [
+      "Un archivo .co no debe ejecutarse ni transpilarse como fuente.",
+      "Los módulos locales cargados mediante usar deben resolverse como .cobra.",
+      "Los paquetes CobraHub, cachés, publicaciones y artefactos construidos conservan .co.",
+      "No se deben modificar Lexer ni Parser para completar esta migración."
     ]
   },
-  "parche_gui": {
-    "archivos_modificados": [
-      "src/pcobra/gui/runtime.py",
-      "src/pcobra/gui/idle.py"
-    ],
-    "prueba_agregada": "tests/gui/test_gui_runtime_local_modules.py",
-    "resultado_pruebas": {
-      "total": 35,
-      "aprobadas": 35,
-      "fallidas": 0,
-      "advertencias": 1,
-      "duracion_segundos": 0.76
-    },
-    "advertencia": {
-      "origen": "_hypothesis_pytestplugin.py",
-      "descripcion": "La configuración norecursedirs hace que pytest omita el directorio .hypothesis.",
-      "relacion_con_el_parche": "No relacionada"
-    },
-    "estado": "Integrado y publicado en el commit 8b1676cd"
+  "estado_inicial_de_la_rama": {
+    "rama_verificada": true,
+    "worktree_inicialmente_limpio": true,
+    "resultado_git_branch": "fix/contrato-extensiones-cobra",
+    "resultado_git_status_short": ""
   },
-  "hallazgo_posterior": {
-    "descripcion": "Tras corregir main_file, el runtime buscó utilidades.co en la carpeta correcta.",
-    "interpretacion": "La propagación de contexto funcionaba, pero quedó expuesta una contradicción histórica en el contrato de extensiones.",
-    "correccion_de_criterio": "Renombrar utilidades.cobra a utilidades.co fue descartado como solución."
-  },
-  "contrato_canonico_decidido": {
-    ".cobra": "Archivo fuente Cobra individual.",
-    ".co": "Paquete o proyecto Cobra completo.",
-    "regla": "Un archivo .co nunca debe interpretarse como fuente por no ser un paquete válido.",
-    "comportamiento_para_co_invalido": "Debe tratarse como paquete inválido, no enviarse al Lexer, Parser, intérprete o transpilador."
-  },
-  "auditoria_del_repositorio": {
-    "archivos_cobra_rastreados": 25,
-    "paquetes_co_zip_con_manifest": 0,
-    "co_zip_sin_manifest": 0,
-    "co_de_texto_no_paquete": 35,
-    "distribucion_co_no_paquete": {
-      "examples": 25,
-      "scripts": 6,
-      "tests": 4
-    },
-    "hardcodings_relevantes": {
-      "with_suffix_co": 4,
-      "suffix_co": 1,
-      "endswith_co": 3,
-      "literales_co": 768
-    },
-    "conclusion": "La ambigüedad entre .cobra y .co está distribuida por múltiples capas y requiere una migración transversal, no un reemplazo global."
-  },
-  "puntos_de_conflicto_confirmados": [
+  "bloqueadores_encontrados_y_corregidos": [
     {
+      "problema": "Getter de caché AST con nombre antiguo",
+      "sintoma": "ImportError: cannot import name 'obtener_cache_ast_import_cobra'",
       "archivo": "src/pcobra/cobra/usar_loader.py",
-      "problema": "Resuelve módulos de proyecto como .co y construye mensajes de error con .co."
+      "causa": "La variable de caché ya representaba fuentes .cobra, pero el getter seguía llamándose obtener_cache_ast_import_co.",
+      "correccion": {
+        "antes": "def obtener_cache_ast_import_co()",
+        "despues": "def obtener_cache_ast_import_cobra()"
+      },
+      "validacion": [
+        "El símbolo pudo importarse.",
+        "El getter devolvió un dict vacío.",
+        "tests/integration/test_usar_project_modules.py: 19 passed.",
+        "tests/gui/test_gui_runtime_execution_scope.py: 16 passed.",
+        "tests/unit/test_project_root_usar_resolution.py: 77 passed."
+      ]
     },
     {
-      "archivo": "src/pcobra/cobra/imports/resolver.py",
-      "problema": "Busca candidatos .co y .cobra, incluyendo __init__.co."
+      "problema": "Parche del sandbox aplicado sobre namespace legacy en prueba de Jupyter",
+      "sintoma": "El kernel ejecutaba el sandbox real y fallaba en Windows por límites de recursos no soportados.",
+      "archivo": "tests/integration/test_kernel_transpiler.py",
+      "causa": "La prueba parcheaba core.sandbox, pero después reemplazaba sys.modules['core']; el kernel resolvía pcobra.core.sandbox como otro módulo.",
+      "correccion": {
+        "antes": "import core.sandbox as sandbox",
+        "despues": "import pcobra.core.sandbox as sandbox",
+        "limpieza_adicional": "Se eliminó un import sys duplicado."
+      },
+      "validacion": "tests/integration/test_kernel_transpiler.py: 1 passed."
     },
     {
-      "archivo": "src/pcobra/cobra/cli/commands/crear_cmd.py",
-      "problema": "Crea archivos fuente .co y proyectos con main.co."
+      "problema": "Import faltante en el comando de compilación",
+      "sintoma": "NameError: name 'es_fuente_cobra' is not defined",
+      "archivo": "src/pcobra/cobra/cli/commands/compile_cmd.py",
+      "correccion": {
+        "antes": "from pcobra.cobra.extensions import es_ruta_paquete_cobra",
+        "despues": "from pcobra.cobra.extensions import es_fuente_cobra, es_ruta_paquete_cobra"
+      },
+      "validacion": "tests/integration/test_end_to_end.py: 1 passed, 1 skipped."
     },
     {
-      "archivo": "src/pcobra/cobra/cli/commands/init_cmd.py",
-      "problema": "Inicializa proyectos con main.co."
+      "problema": "Import faltante en el servicio de ejecución",
+      "sintoma": "Cinco ejemplos fallaban con NameError: name 'es_fuente_cobra' is not defined",
+      "archivo": "src/pcobra/cobra/cli/services/run_service.py",
+      "correccion": {
+        "antes": "from pcobra.cobra.extensions import es_ruta_paquete_cobra",
+        "despues": "from pcobra.cobra.extensions import es_fuente_cobra, es_ruta_paquete_cobra"
+      },
+      "validacion": "tests/test_ejemplos_io.py: 19 passed."
     },
     {
-      "archivo": "src/pcobra/cobra/cli/commands/benchthreads_cmd.py",
-      "problema": "Crea archivos temporales de código con sufijo .co."
-    },
-    {
-      "archivo": "src/pcobra/gui/runtime.py",
-      "problema": "Considera .cobra y .co como extensiones de fuente y puede degradar un .co inválido a código."
-    },
-    {
-      "archivo": "src/pcobra/jupyter_kernel/__init__.py",
-      "problema": "Declara .co como extensión de archivo fuente."
-    },
-    {
-      "archivo": "src/pcobra/cobra_installer/validator.py",
-      "problema": "Mantiene compatibilidad con entrypoints .co además de .cobra."
-    },
-    {
-      "archivo": "extensions/vscode/package.json",
-      "problema": "Asocia .co al lenguaje fuente Cobra."
-    },
-    {
-      "archivo": "examples, scripts/benchmarks y tests/data",
-      "problema": "Contienen archivos .co de texto plano usados como fuentes."
+      "problema": "Pruebas CobraHub no portables entre POSIX y Windows",
+      "sintoma": "La prueba esperaba dist/demo.co pero Windows entregaba dist\\demo.co.",
+      "archivo": "tests/unit/test_cobrahub_cache.py",
+      "causa": "Las expectativas comparaban una representación POSIX literal.",
+      "correccion": {
+        "antes": "publicar.assert_called_once_with(\"dist/demo.co\")",
+        "despues": "publicar.assert_called_once_with(str(Path(\"dist/demo.co\")))",
+        "reemplazos": 2
+      },
+      "validacion": "tests/unit/test_cobrahub_cache.py: 14 passed."
     }
   ],
-  "referencias_co_que_deben_conservarse": [
-    "Paquetes construidos.",
-    "Artefactos CobraHub.",
-    "Cachés de paquetes.",
-    "Descargas de paquetes.",
-    "Nombres de distribución nombre-version.co.",
-    "Validación, extracción, publicación e integridad de paquetes.",
-    "Dependencias empaquetadas del instalador."
-  ],
-  "referencias_co_que_deben_migrarse": [
-    "Archivos fuente ejecutables.",
-    "Módulos locales cargados mediante usar.",
-    "Entrypoints fuente.",
-    "Archivos temporales con código Cobra.",
-    "Ejemplos y benchmarks de código.",
-    "Fixtures de ejecución y transpilación.",
-    "Asociaciones del editor y Jupyter para código fuente."
-  ],
-  "estrategia_propuesta": {
-    "fase_1": {
-      "nombre": "Fuente única de verdad",
-      "acciones": [
-        "Definir COBRA_SOURCE_EXTENSION como .cobra.",
-        "Definir COBRA_PACKAGE_EXTENSION como .co.",
-        "Separar helpers de fuente y paquete.",
-        "Evitar duplicación de constantes cuando no cree ciclos."
-      ]
+  "pruebas_focalizadas_aprobadas": [
+    {
+      "archivo": "tests/integration/test_usar_project_modules.py",
+      "resultado": "19 passed"
     },
-    "fase_2": {
-      "nombre": "Resolución y ejecución",
-      "acciones": [
-        "Hacer que usar resuelva exclusivamente archivos .cobra.",
-        "Eliminar candidatos .co del resolvedor de fuentes.",
-        "Actualizar errores, caché y detección de ciclos para mostrar .cobra.",
-        "No añadir fallback de fuente a .co."
-      ]
+    {
+      "archivo": "tests/gui/test_gui_runtime_execution_scope.py",
+      "resultado": "16 passed"
     },
-    "fase_3": {
-      "nombre": "GUI",
-      "acciones": [
-        "Clasificar .cobra como fuente.",
-        "Clasificar cualquier .co como ruta de paquete.",
-        "Impedir que .co llegue al pipeline de fuente.",
-        "Preservar la propagación dinámica de main_file."
-      ]
+    {
+      "archivo": "tests/unit/test_project_root_usar_resolution.py",
+      "resultado": "77 passed"
     },
-    "fase_4": {
-      "nombre": "CLI y tooling",
-      "acciones": [
-        "Crear archivos y proyectos con .cobra.",
-        "Generar main.cobra.",
-        "Usar .cobra en temporales, Jupyter, pruebas y verificación.",
-        "Mantener .co donde represente paquetes."
-      ]
+    {
+      "archivo": "tests/gui/test_gui_runtime_local_modules.py",
+      "resultado": "1 passed"
     },
-    "fase_5": {
-      "nombre": "Migración de archivos rastreados",
-      "acciones": [
-        "Renombrar examples/**/*.co a .cobra con git mv.",
-        "Renombrar scripts/benchmarks/programs/*.co a .cobra con git mv.",
-        "Renombrar tests/data/*.co a .cobra con git mv.",
-        "Actualizar referencias funcionales y documentación."
-      ]
+    {
+      "archivo": "tests/unit/test_cli_init.py",
+      "resultado": "7 passed"
     },
-    "fase_6": {
-      "nombre": "Endurecimiento contractual",
-      "acciones": [
-        "Añadir pruebas que impidan resolver .co como fuente.",
-        "Añadir una auditoría CI para detectar .co de texto rastreados.",
-        "Crear fixtures negativos temporalmente dentro de las pruebas.",
-        "Comprobar que un .co inválido se informe como paquete inválido."
-      ]
+    {
+      "archivo": "tests/integration/test_kernel_transpiler.py",
+      "resultado": "1 passed"
+    },
+    {
+      "archivo": "tests/unit/test_cli_commands_extra.py",
+      "resultado": "9 passed"
+    },
+    {
+      "archivo": "tests/gui/test_idle_packaging.py",
+      "resultado": "5 passed"
+    },
+    {
+      "archivo": "tests/unit/test_cobra_installer_builders.py",
+      "resultado": "5 passed"
+    },
+    {
+      "archivo": "tests/gui/test_runtime_file_helpers.py",
+      "resultado": "31 passed"
+    },
+    {
+      "archivo": "tests/gui/test_idle_path_guards.py",
+      "resultado": "6 passed"
+    },
+    {
+      "archivo": "tests/integration/test_cobra_installer_build.py",
+      "resultado": "2 passed"
+    },
+    {
+      "archivo": "tests/integration/test_usar_public_contract_regression.py",
+      "resultado": "27 passed"
+    },
+    {
+      "archivo": "tests/integration/test_usar_legacy_compatibility.py",
+      "resultado": "1 passed"
+    },
+    {
+      "archivo": "tests/unit/test_cli_paquete.py",
+      "resultado": "9 passed"
+    },
+    {
+      "archivo": "tests/unit/test_cli_jupyter.py",
+      "resultado": "8 passed"
+    },
+    {
+      "archivo": "tests/unit/test_cobrahub_cache.py",
+      "resultado": "14 passed"
+    },
+    {
+      "archivo": "tests/integration/test_end_to_end.py",
+      "resultado": "1 passed, 1 skipped"
+    },
+    {
+      "archivo": "tests/unit/test_cli_compilar_tipos.py",
+      "resultado": "1 passed"
+    },
+    {
+      "archivo": "tests/unit/test_cli_compile_parallel.py",
+      "resultado": "1 passed"
+    },
+    {
+      "archivo": "tests/test_ejemplos_io.py",
+      "resultado": "19 passed"
+    },
+    {
+      "archivo": "tests/unit/test_cli_execution_pipeline_contract.py",
+      "resultado": "27 passed"
+    },
+    {
+      "archivo": "tests/unit/test_cli_execute_missing_file.py",
+      "resultado": "1 passed"
+    },
+    {
+      "archivo": "tests/integration/test_transpiladores.py",
+      "resultado": "1 passed"
+    },
+    {
+      "archivo": "tests/unit/test_cli_execution_error_output.py",
+      "resultado": "12 passed"
+    },
+    {
+      "archivo": "tests/integration/test_cli_integration.py",
+      "resultado": "1 passed, 3 skipped"
     }
-  },
-  "rama_de_trabajo_propuesta": {
-    "nombre": "fix/contrato-extensiones-cobra",
-    "comando": "git switch -c fix/contrato-extensiones-cobra",
-    "estado_confirmado": false,
-    "nota": "La conversación propuso crear esta rama, pero no contiene evidencia de que el comando se haya ejecutado."
-  },
-  "prompt_para_codex": {
-    "creado": true,
-    "rama_objetivo": "fix/contrato-extensiones-cobra",
-    "condiciones_principales": [
-      "Trabajar exclusivamente en esa rama.",
-      "Detenerse si el worktree no está limpio o la rama no coincide.",
-      "No modificar master.",
-      "No hacer reemplazos globales de .co por .cobra.",
-      "No tocar Lexer ni Parser.",
-      "No relajar safe_mode ni la allowlist.",
-      "No usar os.chdir.",
-      "Conservar la semántica de .co para paquetes.",
-      "Crear commits atómicos.",
-      "Ejecutar pruebas focalizadas y la suite completa.",
-      "Entregar informe final con commits, cambios, pruebas y git status."
+  ],
+  "totales_observados": {
+    "pruebas_focalizadas_aprobadas": 302,
+    "pruebas_omitidas": 4,
+    "advertencia_recurrente": {
+      "origen": "_hypothesis_pytestplugin.py",
+      "mensaje": "Skipping collection of '.hypothesis' directory",
+      "relacion_con_la_migracion": "No relacionada"
+    },
+    "otras_advertencias_no_bloqueantes": [
+      "DeprecationWarning de rutas legacy de CLI.",
+      "DeprecationWarning de COBRA_AST_CACHE."
     ]
   },
-  "commits_recomendados_para_codex": [
-    "refactor(extensions): separar fuente .cobra y paquete .co",
-    "fix(imports): resolver módulos de proyecto exclusivamente como .cobra",
-    "fix(gui-cli): impedir ejecución de .co y generar fuentes .cobra",
-    "chore(sources): migrar ejemplos benchmarks y fixtures a .cobra",
-    "docs(tests): alinear documentación y regresiones con el contrato"
-  ],
-  "regresiones_minimas_requeridas": [
-    "usar \"utilidades\" resuelve utilidades.cobra.",
-    "utilidades.co de texto no se resuelve como módulo.",
-    "El error de módulo ausente menciona utilidades.cobra.",
-    "Los ciclos muestran rutas .cobra.",
-    "La caché conserva rutas canónicas.",
-    "La GUI ejecuta módulos locales .cobra desde el archivo activo.",
-    "La GUI nunca ejecuta .co como fuente.",
-    "Un .co inválido se informa como paquete inválido.",
-    "cobra crear archivo produce .cobra.",
-    "cobra crear proyecto e init producen main.cobra.",
-    "Jupyter declara .cobra.",
-    "El resolvedor genérico no contiene candidatos .co de fuente."
-  ],
-  "estado_actual": {
-    "parche_main_file": "Completado, probado, integrado y sincronizado.",
-    "migracion_extensiones": "Aún no aplicada.",
-    "auditoria": "Completada.",
-    "prompt_codex": "Preparado.",
-    "siguiente_accion": "Crear o verificar la rama fix/contrato-extensiones-cobra y ejecutar el prompt en Codex."
+  "fallo_actual_no_resuelto": {
+    "suite": "tests/unit/test_cli_run_examples.py",
+    "resultado": "5 failed",
+    "casos": [
+      "examples/avanzados/clases/estudiante.cobra",
+      "examples/avanzados/clases/herencia_multiple.cobra",
+      "examples/avanzados/clases/main.cobra",
+      "examples/avanzados/clases/persona.cobra",
+      "examples/avanzados/funciones/factorial_recursivo.cobra"
+    ],
+    "causas_identificadas": [
+      {
+        "causa": "La prueba descubre automáticamente todos los archivos examples/**/*.cobra.",
+        "contexto": "En master solo existían como fuentes .cobra examples/main.cobra y examples/replit/main.cobra. La migración incorporó numerosos antiguos .co a la colección ejecutable."
+      },
+      {
+        "causa": "Los cuatro ejemplos de clases conservan sintaxis legacy.",
+        "detalles": [
+          "Usan import \"persona.co\" e import \"estudiante.co\".",
+          "Usan llamadas, atributos, métodos o formas de impresión que el parser vigente rechaza.",
+          "Los archivos fueron renombrados con similitud 100%, sin adaptar su contenido."
+        ]
+      },
+      {
+        "causa": "La salida de factorial_recursivo.cobra queda contaminada por mensajes INFO.",
+        "mensajes": [
+          "INFO:pcobra.cobra.cli.cli:SQLITE_DB_KEY no requerida por comando 'ejecutar'.",
+          "INFO:pcobra.runtime:runtime.command.validation.run"
+        ],
+        "contexto": "La prueba combina stderr con stdout mediante stderr=subprocess.STDOUT."
+      }
+    ],
+    "interpretacion": "No debe modificarse Lexer ni Parser. Hay que separar la modernización o clasificación de ejemplos legacy del contrato de logging de la CLI."
   },
-  "fuentes_documentales_usadas": [
-    "Auditoría del contrato de extensiones Cobra.",
-    "Extracción de usar_loader.py, imports/resolver.py, crear_cmd.py, init_cmd.py y otros archivos relevantes.",
-    "runtime.py de la GUI.",
-    "Resultados de pytest y salidas de Git proporcionadas durante la conversación."
-  ]
+  "diagnostico_pendiente_propuesto": [
+    {
+      "objetivo": "Revisar sintaxis canónica de clases aceptada actualmente",
+      "comando": "echo \"===== ejemplo canónico existente =====\"\nsed -n '1,220p' examples/clase_metodo_atributo.cobra\n\necho\necho \"===== pruebas del parser de clases =====\"\nsed -n '1,180p' tests/unit/test_parser_clase.py\n\necho\necho \"===== pruebas de método y atributo =====\"\nsed -n '1,180p' tests/unit/test_metodo_atributo.py"
+    },
+    {
+      "objetivo": "Determinar si la rama alteró la configuración de logging",
+      "comando": "sed -n '75,105p' src/pcobra/cobra/cli/services/run_service.py\nsed -n '1250,1290p' src/pcobra/cobra/cli/cli.py\ngit diff master...HEAD -- src/pcobra/cli.py src/pcobra/cobra/cli/cli.py src/pcobra/cobra/cli/services/run_service.py"
+    },
+    {
+      "objetivo": "Separar stdout y stderr de un ejemplo válido",
+      "comando": "PYTHONPATH=\"$PWD/src:$PWD\" python -m cli.cli ejecutar examples/avanzados/funciones/factorial_recursivo.cobra > /tmp/cobra_stdout.txt 2> /tmp/cobra_stderr.txt\n\necho \"===== STDOUT =====\"\ncat /tmp/cobra_stdout.txt\n\necho\necho \"===== STDERR =====\"\ncat /tmp/cobra_stderr.txt"
+    }
+  ],
+  "cambios_manuales_pendientes_de_commit": [
+    "src/pcobra/cobra/usar_loader.py",
+    "src/pcobra/cobra/cli/commands/compile_cmd.py",
+    "src/pcobra/cobra/cli/services/run_service.py",
+    "tests/integration/test_kernel_transpiler.py",
+    "tests/unit/test_cobrahub_cache.py"
+  ],
+  "estado_git_actual_estimado": {
+    "worktree_limpio": false,
+    "motivo": "Se aplicaron correcciones manuales durante la validación.",
+    "git_diff_check": "Sin errores en las comprobaciones realizadas.",
+    "commit_realizado": false
+  },
+  "criterio_para_merge": {
+    "listo_para_merge": false,
+    "bloqueadores": [
+      "Resolver tests/unit/test_cli_run_examples.py.",
+      "Ejecutar las regresiones afectadas después de la corrección.",
+      "Ejecutar una suite amplia o completa.",
+      "Revisar git diff y confirmar que no quedan fuentes .co de texto rastreadas.",
+      "Crear uno o más commits para las correcciones manuales.",
+      "Confirmar git status limpio antes del merge."
+    ]
+  },
+  "siguiente_accion": "Retomar con los tres diagnósticos pendientes sobre sintaxis de clases, configuración de logging y separación de stdout/stderr."
 }

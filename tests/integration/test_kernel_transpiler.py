@@ -1,9 +1,8 @@
 import subprocess
 import sys
-import sys
 import types
 
-import core.sandbox as sandbox
+import pcobra.core.sandbox as sandbox
 
 
 def fake_sandbox(code, timeout=5, memoria_mb=None):

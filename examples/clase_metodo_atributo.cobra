@@ -1,6 +1,8 @@
 clase Persona:
     metodo set_nombre(self, nombre):
         atributo self nombre = nombre
+    fin
+
     metodo saludar(self):
         imprimir atributo self nombre
     fin
