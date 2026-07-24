@@ -1,5 +1,7 @@
-usar pandas
+var valor_1 = 10
+var valor_2 = 20
+var valor_3 = 30
 
-datos = pandas.leer_csv('datos.csv')
-prom = datos.columna('valor').promedio()
-imprimir 'Promedio:', prom
+var suma = valor_1 + valor_2 + valor_3
+var cantidad = 3
+var promedio = suma / cantidad

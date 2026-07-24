@@ -40,21 +40,30 @@ def test_construir_cadena_sin_reutilizar(monkeypatch):
     assert contador == 2
 
 
-def test_valida_cada_nodo_una_sola_vez(monkeypatch):
+def test_valida_y_audita_cada_nodo_una_vez_por_fase():
     from core.interpreter import InterpretadorCobra
     from core.ast_nodes import NodoAsignacion, NodoValor
 
     interp = InterpretadorCobra()
-    nodo = NodoAsignacion("x", NodoValor(1))
+    nodo = NodoAsignacion("x", NodoValor(1), declaracion=True)
 
-    contador = 0
+    conteos = {
+        "analysis": 0,
+        "execution": 0,
+    }
 
     class DummyValidator:
+        def __init__(self):
+            self.emitir_side_effects = False
+            self.mode = "analysis"
+
         def visit(self, _):
-            nonlocal contador
-            contador += 1
+            conteos[self.mode] += 1
 
     interp._validador = DummyValidator()
     interp.ejecutar_ast([nodo])
 
-    assert contador == 1
+    assert conteos == {
+        "analysis": 1,
+        "execution": 1,
+    }

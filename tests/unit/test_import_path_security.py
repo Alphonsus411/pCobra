@@ -42,7 +42,7 @@ def test_ruta_permitida_por_lista_blanca(tmp_path, monkeypatch):
 def test_interpreter_bloquea_prefijo_modules_fake(tmp_path, monkeypatch):
     modules_dir = tmp_path / "modules"
     modules_dir.mkdir()
-    ruta_evasion = tmp_path / "modules_fake" / "malicioso.co"
+    ruta_evasion = tmp_path / "modules_fake" / "malicioso.cobra"
     ruta_evasion.parent.mkdir()
     ruta_evasion.write_text("var trampa = 1")
 
@@ -62,7 +62,10 @@ def test_interpreter_bloquea_prefijo_modules_fake(tmp_path, monkeypatch):
 
     interp = InterpretadorCobra()
 
-    with pytest.raises(PrimitivaPeligrosaError):
+    with pytest.raises(
+        PermissionError,
+        match="Módulo fuera de la lista blanca",
+    ):
         interp.ejecutar_import(NodoImport(str(ruta_evasion)))
 
 
@@ -71,9 +74,9 @@ def test_interpreter_bloquea_symlink_fuera_de_modules(tmp_path, monkeypatch):
     modules_dir.mkdir()
     directorio_fuera = tmp_path / "fuera"
     directorio_fuera.mkdir()
-    archivo_real = directorio_fuera / "malicioso.co"
+    archivo_real = directorio_fuera / "malicioso.cobra"
     archivo_real.write_text("var x = 0")
-    enlace = modules_dir / "atajo.co"
+    enlace = modules_dir / "atajo.cobra"
     os.symlink(archivo_real, enlace)
 
     _configurar_imports(monkeypatch, modules_dir)
@@ -92,7 +95,10 @@ def test_interpreter_bloquea_symlink_fuera_de_modules(tmp_path, monkeypatch):
 
     interp = InterpretadorCobra()
 
-    with pytest.raises(PrimitivaPeligrosaError):
+    with pytest.raises(
+        PermissionError,
+        match="Módulo fuera de la lista blanca",
+    ):
         interp.ejecutar_import(NodoImport(str(enlace)))
 
 
@@ -101,9 +107,9 @@ def test_validador_detecta_symlink(tmp_path, monkeypatch):
     modules_dir.mkdir()
     directorio_fuera = tmp_path / "trampa"
     directorio_fuera.mkdir()
-    archivo_real = directorio_fuera / "malicioso.co"
+    archivo_real = directorio_fuera / "malicioso.cobra"
     archivo_real.write_text("var x = 1")
-    enlace = modules_dir / "atajo.co"
+    enlace = modules_dir / "atajo.cobra"
     os.symlink(archivo_real, enlace)
 
     _configurar_imports(monkeypatch, modules_dir)

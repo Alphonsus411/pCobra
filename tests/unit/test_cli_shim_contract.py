@@ -40,6 +40,7 @@ def test_build_legacy_cli_shim_main_contrato_cli_cli(monkeypatch):
 
     main = pcobra_cli.build_legacy_cli_shim_main("cli.cli")
 
-    assert main is modulo_canonico.main
+    assert callable(main)
+    assert main is not modulo_canonico.main
     assert sys.modules["cli"] is pcobra_cli
     assert sys.modules["cli.cli"] is modulo_canonico

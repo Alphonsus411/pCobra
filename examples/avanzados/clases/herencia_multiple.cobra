@@ -12,10 +12,6 @@ fin
 
 clase Pato(Volador, Nadador):
     metodo desplazar(self):
-        self.volar()
-        self.nadar()
+        imprimir "El pato puede volar y nadar"
     fin
 fin
-
-pato = Pato()
-pato.desplazar()

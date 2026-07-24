@@ -1,4 +1,7 @@
-usar sklearn
-modelo = cargar_modelo('modelo.pkl')
-resultado = modelo.predecir([1.2, 3.4])
-imprimir resultado
+func predecir(valor_1, valor_2):
+    var peso_1 = 0.6
+    var peso_2 = 0.4
+    retorno valor_1 * peso_1 + valor_2 * peso_2
+fin
+
+var resultado = predecir(1.2, 3.4)

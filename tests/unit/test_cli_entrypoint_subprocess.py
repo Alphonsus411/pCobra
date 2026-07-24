@@ -382,8 +382,12 @@ def _run_cobra_script(args: list[str], env: dict[str, str], tmp_path: Path) -> s
         encoding="utf-8",
     )
     cobra_script.chmod(0o755)
+    comando = [str(cobra_script), *args]
+    if sys.platform == "win32":
+        comando = [sys.executable, str(cobra_script), *args]
+
     return subprocess.run(
-        [str(cobra_script), *args],
+        comando,
         capture_output=True,
         text=True,
         env=env,

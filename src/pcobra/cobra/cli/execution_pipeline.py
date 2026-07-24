@@ -163,7 +163,7 @@ def validar_ast_seguro(
     validadores_extra: Any,
     interpretador: Any | None = None,
     validar_metadata_usar: bool = True,
-    construir_cadena_fn: Callable[[Any], Any] = construir_cadena,
+    construir_cadena_fn: Callable[..., Any] = construir_cadena,
 ) -> None:
     """Aplica la cadena de validadores de seguridad sobre el AST."""
 
@@ -179,13 +179,31 @@ def validar_ast_seguro(
             raise TypeError(
                 _("Los validadores extra deben ser una lista de instancias de validadores")
             )
-    validador = (
-        getattr(interpretador, "_validador", None)
-        if interpretador is not None
-        else None
-    )
-    if validador is None:
-        validador = construir_cadena_fn(validadores_extra)
+    if validadores_extra is not None:
+        contexto = {}
+        if interpretador is not None:
+            contexto = {
+                "main_file": getattr(interpretador, "_main_file", None),
+                "project_root": getattr(interpretador, "_project_root", None),
+            }
+            contexto = {
+                clave: valor
+                for clave, valor in contexto.items()
+                if valor is not None
+            }
+
+        validador = construir_cadena_fn(
+            validadores_extra,
+            **contexto,
+        )
+    else:
+        validador = (
+            getattr(interpretador, "_validador", None)
+            if interpretador is not None
+            else None
+        )
+        if validador is None:
+            validador = construir_cadena_fn(None)
     if interpretador is not None:
         metadata_usar = getattr(interpretador, "_usar_symbol_metadata", {}) or {}
         validadores_registrables = []
