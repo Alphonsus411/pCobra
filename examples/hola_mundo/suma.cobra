@@ -1,5 +1,5 @@
-a = 10
-b = 32
-resultado = a + b
+var a = 10
+var b = 32
+var resultado = a + b
 
 imprimir resultado

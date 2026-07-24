@@ -46,7 +46,7 @@ def _run_legacy_wrapper_file(*args: str) -> subprocess.CompletedProcess[str]:
 
 @pytest.mark.timeout(20)
 def test_wrapper_legacy_y_entrypoints_canonicos_comparten_exitcode_en_error_controlado() -> None:
-    args = ("compilar", "archivo_que_no_existe.cobra")
+    args = ("--opcion-inexistente",)
 
     canonical = _run_module("pcobra.cli", *args)
     legacy_wrapper = _run_legacy_wrapper_file(*args)

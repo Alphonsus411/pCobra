@@ -1,274 +1,231 @@
 {
   "metadata": {
-    "proyecto": "pCobra",
+    "asistente": "Bella",
+    "usuario": "Adolfo",
+    "idioma": "es",
+    "fecha_resumen": "2026-07-24",
+    "repositorio": "C:/Users/Adolfo/PycharmProjects/pCobra",
     "rama": "fix/contrato-extensiones-cobra",
     "entorno": {
-      "sistema": "Windows con Git Bash",
+      "terminal": "Git Bash sobre Windows",
       "python": "3.11.9",
-      "pytest": "8.4.2"
-    },
-    "directorio_repositorio": "C:/Users/Adolfo/PycharmProjects/pCobra",
-    "fecha_resumen": "2026-07-24"
+      "pytest": "8.4.2",
+      "virtualenv": ".venv"
+    }
   },
   "objetivo_principal": {
-    "descripcion": "Corregir la migración del contrato de extensiones y conseguir que los ejemplos Cobra se ejecuten correctamente mediante la CLI.",
+    "descripcion": "Migrar y validar el contrato de extensiones, imports, CLI, validadores semánticos, ejemplos y backends oficiales de Cobra.",
     "contrato_extensiones": {
-      ".cobra": "archivo de código fuente Cobra",
-      ".co": "paquete o artefacto empaquetado, no código fuente"
+      "codigo_fuente": ".cobra",
+      "paquetes_artefactos": ".co",
+      "regla": ".co no debe tratarse como código fuente Cobra"
     },
     "restricciones": [
-      "No modificar Lexer ni Parser.",
-      "Ejecutar y revisar las pruebas una por una.",
-      "No cerrar la consola de Git Bash.",
-      "No usar comandos exit.",
-      "Guardar salidas extensas en archivos temporales cuando sea necesario."
+      "No modificar Lexer.",
+      "No modificar Parser.",
+      "Ejecutar y revisar las pruebas de forma incremental.",
+      "No cerrar Git Bash ni ejecutar exit.",
+      "Mantener únicamente python, javascript y rust como backends oficiales."
     ]
   },
-  "estado_inicial": {
-    "pruebas_enfocadas_previas": {
-      "aprobadas": 302,
-      "omitidas": 4
-    },
-    "fallos_iniciales_relevantes": [
-      "examples/clase_metodo_atributo.cobra",
-      "examples/avanzados/clases/persona.cobra",
-      "examples/avanzados/clases/estudiante.cobra",
-      "examples/avanzados/clases/herencia_multiple.cobra",
-      "examples/factorial_recursivo.cobra"
+  "trabajo_previo_confirmado": {
+    "imports_y_seguridad": [
+      "Se contextualizó la resolución de imports con main_file y project_root.",
+      "Se corrigió el uso contextual de la cadena de validadores.",
+      "Se actualizaron pruebas de rutas e imports para usar .cobra como fuente.",
+      "Se confirmó que .co es rechazado como fuente sin invocar el lexer.",
+      "Se ajustaron expectativas entre PermissionError y PrimitivaPeligrosaError según la capa validada."
     ],
-    "causas_iniciales_detectadas": [
-      "Bloques metodo sin cierre fin.",
-      "Mensajes INFO contaminando la salida esperada de la CLI.",
-      "Ejemplos con sintaxis legacy no soportada completamente por el parser actual.",
-      "Importaciones relativas validadas sin considerar la ubicación del archivo principal."
-    ]
-  },
-  "cambios_realizados": [
-    {
-      "archivo": "examples/clase_metodo_atributo.cobra",
-      "tipo": "corrección de sintaxis",
-      "cambio": "Se añadió fin al método set_nombre antes de declarar saludar.",
-      "resultado": "La prueba enfocada pasó."
-    },
-    {
-      "archivo": "src/pcobra/cli.py",
-      "tipo": "configuración de logging",
-      "cambio": "El shim legacy creado por build_legacy_cli_shim_main ahora configura logging a partir de --debug y --verbose, igual que la entrada canónica.",
-      "motivo": "La ruta python -m cli.cli ejecutar emitía mensajes INFO que contaminaban stdout/stderr.",
-      "resultado": "Los ejemplos clase_metodo_atributo y factorial_recursivo dejaron de producir salida de logging inesperada."
-    },
-    {
-      "archivo": "examples/avanzados/clases/persona.cobra",
-      "tipo": "corrección de sintaxis",
-      "cambio": "Se añadió fin al método __init__ antes de declarar saludar.",
-      "resultado": "La prueba enfocada pasó."
-    },
-    {
-      "archivo": "examples/avanzados/clases/estudiante.cobra",
-      "tipo": "modernización del ejemplo",
-      "cambios": [
-        "Se cambió import \"persona.co\" por import \"persona.cobra\".",
-        "Se añadió fin al método __init__.",
-        "Se sustituyó Persona.__init__(self, nombre) por la asignación directa de atributo self nombre.",
-        "Se sustituyó self.saludar() por la impresión directa del saludo.",
-        "Se mantuvo la herencia clase Estudiante(Persona)."
-      ],
-      "contenido_actual_resumido": [
-        "Importa persona.cobra.",
-        "Define nombre y carrera como atributos.",
-        "presentar imprime el nombre y la carrera."
-      ],
-      "resultado": "La prueba enfocada pasó después de corregir también la validación de imports relativos."
-    },
-    {
-      "archivo": "src/pcobra/core/semantic_validators/import_seguro.py",
-      "tipo": "corrección de seguridad y resolución de rutas",
-      "cambios": [
-        "ValidadorImportSeguro acepta main_file y project_root.",
-        "Las rutas relativas se resuelven desde el directorio del archivo principal.",
-        "La ruta resultante sigue validándose contra MODULES_PATH, project_root e IMPORT_WHITELIST.",
-        "Se mantiene la resolución real de rutas para impedir escapes mediante enlaces simbólicos."
-      ]
-    },
-    {
-      "archivo": "src/pcobra/core/semantic_validators/__init__.py",
-      "tipo": "caché de validadores",
-      "cambios": [
-        "construir_cadena acepta main_file y project_root.",
-        "La cadena global sigue reutilizándose cuando no hay contexto.",
-        "Las cadenas contextuales no se almacenan en la caché global."
-      ],
-      "motivo": "Evitar compartir entre intérpretes un ValidadorImportSeguro con contexto mutable."
-    },
-    {
-      "archivo": "src/pcobra/core/interpreter.py",
-      "tipo": "orden de inicialización",
-      "cambios": [
-        "_main_file y _project_root se configuran antes de construir _validador.",
-        "La cadena se construye con el archivo principal y la raíz de proyecto."
-      ]
-    },
-    {
-      "archivo": "src/pcobra/cobra/cli/execution_pipeline.py",
-      "tipo": "propagación de contexto",
-      "cambio": "validar_ast_seguro reutiliza interpretador._validador cuando existe, en vez de construir siempre una segunda cadena sin contexto.",
-      "correccion_adicional": "Se corrigió una referencia insertada inicialmente como interpreter para usar el nombre correcto interpretador."
-    },
-    {
-      "archivo": "tests/unit/test_import_seguro_validator.py",
-      "tipo": "prueba de regresión",
-      "prueba_añadida": "test_import_relativo_resuelto_desde_archivo_principal",
-      "escenario": "main.cobra y persona.cobra están en el mismo directorio temporal; NodoImport contiene únicamente persona.cobra.",
-      "resultado_antes_del_parche": "Fallaba con Importación de módulo no permitida: persona.cobra.",
-      "resultado_despues_del_parche": "Pasó."
-    }
-  ],
-  "hallazgos_tecnicos": {
-    "herencia": {
-      "sintaxis": "clase Nombre(Base):",
-      "estado": "Soportada por Lexer y Parser.",
-      "evidencia_local": "tests/unit/test_interface.py comprueba que clase Doc(Printable) produce bases == [\"Printable\"]."
-    },
-    "llamadas_a_funcion": {
-      "sintaxis_soportada": "funcion(argumentos)",
-      "implementacion": "parser.py::llamada_funcion"
-    },
-    "llamadas_a_metodo_con_punto": {
-      "ejemplos_problematicos": [
-        "Persona.__init__(self, nombre)",
-        "self.saludar()"
-      ],
-      "estado": "No se convierten correctamente en llamadas por el parser actual.",
-      "causa": "termino reconoce identificadores separados por puntos y devuelve NodoAtributo inmediatamente, sin comprobar si después aparece LPAREN.",
-      "efecto": "El paréntesis queda sin consumir y se produce el error Se esperaba ')' para cerrar la expresión entre paréntesis.",
-      "decision": "No modificar Parser; adaptar los ejemplos."
-    },
-    "importaciones_relativas": {
-      "comportamiento_del_interprete": "ejecutar_import resuelve rutas relativas desde _current_module_stack, _main_file o Path.cwd.",
-      "comportamiento_anterior_del_validador": "Validaba la cadena cruda respecto al directorio de trabajo antes de que el intérprete pudiera resolverla.",
-      "defecto": "Una importación segura y válida junto al archivo principal era rechazada prematuramente.",
-      "correccion": "Resolver la ruta con main_file dentro del validador antes de aplicar la política de seguridad."
-    },
-    "logging": {
-      "causa": "El shim legacy de cli.cli no invocaba configure_logging.",
-      "observacion": "RunCommandV2 y RunService realizan validaciones de runtime que pueden generar eventos duplicados, pero no se modificaron porque tienen cobertura contractual independiente.",
-      "estado": "La contaminación de salida en los ejemplos comprobados quedó corregida."
+    "validacion_semantica": [
+      "Se corrigió una prueba de optimización para declarar variables con declaracion=True.",
+      "Se verificó una validación en fase analysis y una auditoría en fase execution.",
+      "Se corrigió validar_ast_seguro para no ignorar validadores_extra cuando el intérprete ya posee _validador.",
+      "Se añadió una regresión específica para validadores_extra con contexto."
+    ],
+    "cli": [
+      "Se ajustó el shim legacy para configurar logging con --debug y --verbose.",
+      "Se validó el comportamiento de wrappers legacy y entrypoints canónicos.",
+      "Se corrigió la ejecución de scripts temporales en Windows mediante sys.executable.",
+      "Se distinguió la UI pública v2 de la UI legacy."
+    ],
+    "pruebas_previas_aprobadas": {
+      "tests/unit/test_import_seguro_validator.py": "3 passed",
+      "tests/unit/test_import_path_security.py": "5 passed",
+      "tests/core/test_import_utils.py": "3 passed",
+      "tests/unit/test_validator_optimization.py": "3 passed",
+      "tests/unit/test_semantic_validator.py": "4 passed",
+      "tests/unit/test_cli_execution_pipeline_contract.py": "27 passed",
+      "tests/unit/test_cli_secure_validators.py": "4 passed",
+      "tests/unit/test_cli_commands_extra.py": "9 passed",
+      "tests/unit/test_cli_logging.py": "2 passed",
+      "tests/unit/test_cli_logging_regression.py": "8 passed",
+      "tests/unit/test_cli_shim_contract.py": "2 passed",
+      "tests/unit/test_cli_entrypoint_subprocess.py": "4 passed"
     }
   },
-  "resultados_de_pruebas": [
-    {
-      "prueba": "tests/unit/test_cli_run_examples.py -k \"clase_metodo_atributo\"",
-      "resultado": "PASSED"
+  "ejemplos_actualizados": {
+    "archivos_modificados": {
+      "examples/avanzados/clases/herencia_multiple.cobra": "Se eliminó el uso de llamadas de métodos con sintaxis no soportada y se conservó un ejemplo válido de herencia múltiple.",
+      "examples/avanzados/clases/main.cobra": "Se migró estudiante.co a estudiante.cobra y se evitó sintaxis de métodos no soportada.",
+      "examples/casos_reales/analisis_datos/estadisticas.cobra": "Se reemplazó pandas y llamadas con punto por un cálculo aritmético Cobra válido.",
+      "examples/casos_reales/bioinformatica/ejemplo_gc.cobra": "Se reemplazaron operadores y construcciones no soportadas por bucles y condiciones válidas.",
+      "examples/casos_reales/inteligencia_artificial/modelo_ia.cobra": "Se sustituyó sklearn por una función Cobra determinista.",
+      "examples/funciones_principales.cobra": "Se reemplazó imprimir con argumentos separados por coma por tres salidas explícitas.",
+      "examples/hola_mundo/suma.cobra": "Se declararon a, b y resultado mediante var.",
+      "examples/patrones.cobra": "Se retiraron tuplas anidadas y patrones con guarda no soportados.",
+      "examples/smoke_assign.cobra": "Se cambió valor = 42 por var valor = 42."
     },
-    {
-      "prueba": "tests/unit/test_cli_run_examples.py -k \"factorial_recursivo\"",
-      "resultado": "PASSED"
+    "snapshots_agregados": {
+      "tests/data/expected_examples/features/feature_base/minimal.txt": "fixture feature_base",
+      "tests/data/expected_examples/hello_world/javascript.txt": "Hola mundo",
+      "tests/data/expected_examples/hello_world/python.txt": "Hola mundo",
+      "tests/data/expected_examples/hello_world/rust.txt": "Hola mundo",
+      "tests/data/expected_examples/hola_mundo/hola.txt": "Hola mundo",
+      "tests/data/expected_examples/hola_mundo/suma.txt": "42",
+      "tests/data/expected_examples/replit/main.txt": "Hola desde Replit"
     },
-    {
-      "prueba": "tests/unit/test_cli_run_examples.py -k \"avanzados and persona\"",
-      "resultado": "PASSED"
+    "backends_retirados": {
+      "asm": [
+        "examples/hello_world/asm.asm",
+        "examples/hello_world/asm.cobra",
+        "examples/hello_world/asm/hola.asm"
+      ],
+      "cpp": [
+        "examples/hello_world/cpp.cobra",
+        "examples/hello_world/cpp.cpp",
+        "examples/hello_world/cpp/hola.cpp"
+      ],
+      "go": [
+        "examples/hello_world/go.cobra",
+        "examples/hello_world/go.go",
+        "examples/hello_world/go/hola.go"
+      ],
+      "java": [
+        "examples/hello_world/java.cobra",
+        "examples/hello_world/java.java",
+        "examples/hello_world/java/Hola.java"
+      ],
+      "wasm": [
+        "examples/hello_world/wasm.cobra",
+        "examples/hello_world/wasm.wat",
+        "examples/hello_world/wasm/hola.wat"
+      ]
     },
-    {
-      "prueba": "tests/unit/test_cli_run_examples.py -k \"avanzados and estudiante\"",
-      "resultado_inicial": "FAILED por error de análisis en Persona.__init__(self, nombre)"
-    },
-    {
-      "prueba": "parseo temporal de estudiante modernizado",
-      "resultado": "PARSE OK: NodoImport y NodoClase"
-    },
-    {
-      "prueba": "tests/unit/test_cli_run_examples.py -k \"avanzados and estudiante\"",
-      "resultado_intermedio": "FAILED por Importación de módulo no permitida: persona.cobra"
-    },
-    {
-      "prueba": "test_import_relativo_resuelto_desde_archivo_principal antes del parche",
-      "resultado": "FAILED como se esperaba"
-    },
-    {
-      "prueba": "test_import_relativo_resuelto_desde_archivo_principal después del parche",
-      "resultado": "PASSED"
-    },
-    {
-      "prueba": "tests/unit/test_cli_run_examples.py -k \"avanzados and estudiante\" después del parche",
-      "resultado": "PASSED"
-    },
-    {
-      "prueba": "tests/unit/test_cli_logging.py",
-      "resultado_previo": "2 PASSED"
-    },
-    {
-      "prueba": "tests/unit/test_cli_logging_regression.py",
-      "resultado_previo": "8 PASSED"
+    "resultado_suite_ejemplos": {
+      "archivo": "tests/unit/test_cli_run_examples.py",
+      "resultado": "22 passed, 1 warning",
+      "duracion_aproximada_segundos": 14.8
     }
-  ],
-  "archivos_temporales_generados": [
-    ".tmp_test_estudiante.txt",
-    ".tmp_llamadas_metodos.txt",
-    ".tmp_parser_llamada_metodo.txt",
-    ".tmp_parser_llamadas.txt",
-    ".tmp_politica_importacion.txt",
-    ".tmp_interpreter_import.txt",
-    ".tmp_usos_validador_import.txt",
-    ".tmp_contexto_validadores.txt",
-    ".tmp_llamadas_configurar_principal.txt",
-    ".tmp_tests_construir_cadena.txt",
-    ".tmp_tests_cadena_pipeline.txt",
-    ".tmp_regresion_import_relativo.txt",
-    ".tmp_regresion_import_relativo_reintento.txt",
-    ".tmp_test_estudiante_reintento.txt",
-    ".tmp_test_estudiante_final.txt"
-  ],
-  "estado_actual": {
-    "estudiante_cobra": "Corregido y aprobado.",
-    "persona_cobra": "Corregido y aprobado.",
-    "clase_metodo_atributo_cobra": "Corregido y aprobado.",
-    "factorial_recursivo_cobra": "Aprobado después de corregir logging.",
-    "herencia_multiple_cobra": "Pendiente de ejecutar.",
-    "suite_completa": "Pendiente.",
-    "consola": "Debe permanecer abierta."
   },
-  "riesgos_y_validaciones_pendientes": [
-    {
-      "riesgo": "Regresión en la política de seguridad de imports.",
-      "pruebas_recomendadas": [
-        "tests/unit/test_import_seguro_validator.py",
-        "tests/unit/test_import_path_security.py",
-        "tests/core/test_import_utils.py"
-      ]
+  "contrato_cli": {
+    "superficies": {
+      "pcobra.cli": "UI pública v2 con run, build, test, mod, repl y gui.",
+      "cobra/cli/cli.py": "Wrapper raíz alineado con la UI pública.",
+      "cli.cli": "Superficie legacy con comandos como compilar y ejecutar."
     },
-    {
-      "riesgo": "Regresión en la caché de la cadena de validadores.",
-      "pruebas_recomendadas": [
-        "tests/unit/test_validator_optimization.py",
-        "tests/unit/test_semantic_validator.py"
-      ]
+    "hallazgo": "No existe un subcomando de compilación común entre la UI pública v2 y cli.cli legacy.",
+    "prueba_corregida": {
+      "archivo": "tests/unit/test_cli_legacy_wrapper_exitcode.py",
+      "cambio": "La comparación de exit codes usa --opcion-inexistente en lugar de compilar.",
+      "razon": "Una opción global inválida genera exit code 2 en las tres superficies.",
+      "resultado": "2 passed"
     },
-    {
-      "riesgo": "validar_ast_seguro reutiliza interpretador._validador.",
-      "detalle": "Debe comprobarse que validadores_extra no se pierdan cuando el intérprete ya posee una cadena construida.",
-      "pruebas_recomendadas": [
-        "Pruebas del execution_pipeline.",
-        "Pruebas de validadores extra.",
-        "Pruebas de CLI execute y REPL."
-      ]
-    },
-    {
-      "riesgo": "El cambio de logging del shim legacy todavía debe validarse con todas las rutas de entrada.",
-      "pruebas_recomendadas": [
-        "tests/unit/test_cli_logging.py",
-        "tests/unit/test_cli_logging_regression.py",
-        "Pruebas específicas del shim legacy y del bootstrap."
-      ]
-    },
-    {
-      "riesgo": "Algunas pruebas de seguridad usan nombres .co como archivos simulados.",
-      "detalle": "Conviene revisar si son simples rutas opacas para seguridad o si contradicen el nuevo contrato fuente .cobra."
+    "pruebas_aprobadas_recientes": {
+      "tests/unit/test_cli_entrypoint_subprocess.py": "4 passed",
+      "tests/unit/test_cli_wrapper_consistency.py": "1 passed",
+      "tests/unit/test_cli_legacy_wrapper_exitcode.py": "2 passed",
+      "tests/unit/test_cli_execute_debug_verbose.py": "2 passed",
+      "tests/unit/test_cli_shim_contract.py": "2 passed",
+      "tests/integration/test_cli_public_help_contract.py": "11 passed",
+      "tests/unit/test_cli_official_language_restrictions.py": "93 passed"
     }
+  },
+  "backends_oficiales": {
+    "permitidos": [
+      "python",
+      "javascript",
+      "rust"
+    ],
+    "retirados_o_no_oficiales": [
+      "asm",
+      "cpp",
+      "go",
+      "java",
+      "wasm"
+    ],
+    "validacion": "tests/unit/test_cli_official_language_restrictions.py terminó con 93 passed y confirmó el rechazo uniforme de aliases legacy."
+  },
+  "estado_git_revisado": {
+    "cambios_staged_confirmados": {
+      "modificados": [
+        "examples/funciones_principales.cobra",
+        "examples/hola_mundo/suma.cobra",
+        "examples/patrones.cobra",
+        "examples/smoke_assign.cobra",
+        "tests/unit/test_cli_legacy_wrapper_exitcode.py"
+      ],
+      "eliminados": [
+        "Archivos de ejemplos correspondientes a asm, cpp, go, java y wasm."
+      ],
+      "agregados": [
+        "Snapshots de feature_base, hello_world, hola_mundo y replit."
+      ]
+    },
+    "ultima_estadistica_confirmada_antes_de_la_prueba_legacy": {
+      "archivos": 26,
+      "inserciones": 21,
+      "eliminaciones": 98
+    },
+    "whitespace": "git diff --cached --check no informó errores.",
+    "finales_de_linea": "Git mostró advertencias informativas LF a CRLF en Windows."
+  },
+  "suite_completa": {
+    "primer_intento": {
+      "comando": "python -m pytest -q",
+      "resultado": "Interrumpida durante la colección.",
+      "exit_code": 2,
+      "error": "ModuleNotFoundError: No module named 'cobra.transpilers.transpiler.to_wasm'",
+      "archivo_causante": "tests/unit/test_wasm_transpiler.py"
+    },
+    "diagnostico": {
+      "descripcion": "La prueba importa TranspiladorWasm, pero el módulo ya no existe y WASM no es backend oficial.",
+      "contenido_prueba": "Transpilaba una función simple y comprobaba código WAT.",
+      "referencias_wasm_restantes": [
+        "src/pcobra/cobra/transpilers/transpiler/historical/wasm_runtime.py",
+        "tests/integration/transpilers/golden_language_equivalence/wasm.async.golden",
+        "tests/integration/transpilers/golden_language_equivalence/wasm.decoradores.golden",
+        "tests/integration/transpilers/golden_language_equivalence/wasm.imports_corelibs.golden",
+        "tests/integration/transpilers/golden_language_equivalence/wasm.manejo_errores.golden",
+        "tests/unit/test_wasm_transpiler.py"
+      ]
+    },
+    "decision": {
+      "eliminar": "tests/unit/test_wasm_transpiler.py",
+      "conservar_por_ahora": [
+        "El runtime ubicado bajo historical.",
+        "Los archivos golden de WASM hasta comprobar si participan en alguna prueba activa."
+      ]
+    },
+    "confirmacion_pendiente": "No se ha mostrado todavía una salida que confirme git rm de tests/unit/test_wasm_transpiler.py ni una nueva ejecución completa de pytest."
+  },
+  "advertencias_no_bloqueantes": [
+    "Hypothesis avisa que .hypothesis está siendo excluido por norecursedirs.",
+    "Pytest no puede recopilar TestCommandV2 como clase de pruebas porque define __init__.",
+    "Existe una DeprecationWarning por una secuencia de escape inválida en test_security_sandbox.py."
   ],
-  "siguiente_paso_propuesto": {
-    "objetivo": "Ejecutar el siguiente ejemplo avanzado de clases de forma aislada.",
-    "prueba": "tests/unit/test_cli_run_examples.py -k \"avanzados and herencia_multiple\"",
-    "archivo": "examples/avanzados/clases/herencia_multiple.cobra",
-    "estado": "Todavía no ejecutada."
-  }
+  "siguiente_paso_recomendado": {
+    "paso_1": "Confirmar o ejecutar git rm tests/unit/test_wasm_transpiler.py.",
+    "paso_2": "Comprobar git status --short -- tests/unit/test_wasm_transpiler.py.",
+    "paso_3": "Repetir python -m pytest -q guardando la salida en pytest-full.log.",
+    "paso_4": "Analizar los siguientes fallos reales, uno por uno.",
+    "paso_5": "Cuando la suite completa pase, revisar git status, git diff --cached --check y el diff global antes del commit."
+  },
+  "comandos_pendientes": [
+    "git rm tests/unit/test_wasm_transpiler.py",
+    "git status --short -- tests/unit/test_wasm_transpiler.py",
+    "python -m pytest -q > pytest-full.log 2>&1",
+    "pytest_code=$?",
+    "tail -100 pytest-full.log",
+    "printf '\\npytest exit code: %s\\n' \"$pytest_code\""
+  ]
 }

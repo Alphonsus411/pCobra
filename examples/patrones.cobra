@@ -1,8 +1,9 @@
-var punto = (1, (2, 3))
+var x = 1
+var y = 2
+var resultado = 0
 
-switch punto:
-    case (x, (y, _)) si x > y:
-        imprimir(x)
-    sino:
-        imprimir(0)
+si x > y:
+    resultado = x
+sino:
+    resultado = y
 fin
