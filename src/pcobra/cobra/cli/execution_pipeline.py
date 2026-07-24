@@ -179,7 +179,13 @@ def validar_ast_seguro(
             raise TypeError(
                 _("Los validadores extra deben ser una lista de instancias de validadores")
             )
-    validador = construir_cadena_fn(validadores_extra)
+    validador = (
+        getattr(interpretador, "_validador", None)
+        if interpretador is not None
+        else None
+    )
+    if validador is None:
+        validador = construir_cadena_fn(validadores_extra)
     if interpretador is not None:
         metadata_usar = getattr(interpretador, "_usar_symbol_metadata", {}) or {}
         validadores_registrables = []

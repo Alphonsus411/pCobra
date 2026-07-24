@@ -21,7 +21,13 @@ _CADENA_DEFECTO = None
 _CACHE_INFO: tuple[FunctionType, bool, bool] | None = None
 
 
-def construir_cadena(extra_validators=None, *, emitir_side_effects: bool = False):
+def construir_cadena(
+    extra_validators=None,
+    *,
+    emitir_side_effects: bool = False,
+    main_file=None,
+    project_root=None,
+):
     """Devuelve la cadena de validadores por defecto.
 
     Si no se proporcionan validadores extra, la cadena se crea una única vez y
@@ -30,9 +36,14 @@ def construir_cadena(extra_validators=None, *, emitir_side_effects: bool = False
     global _CADENA_DEFECTO, _CACHE_INFO
 
     auditoria = auditoria_activa()
+    usar_cache = (
+        extra_validators is None
+        and main_file is None
+        and project_root is None
+    )
 
     if (
-        extra_validators is None
+        usar_cache
         and _CADENA_DEFECTO is not None
         and _CACHE_INFO == (ValidadorPrimitivaPeligrosa.__init__, auditoria, emitir_side_effects)
     ):
@@ -44,7 +55,12 @@ def construir_cadena(extra_validators=None, *, emitir_side_effects: bool = False
     else:
         primero = ValidadorPrimitivaPeligrosa()
         actual = primero
-    actual = actual.set_siguiente(ValidadorImportSeguro())
+    actual = actual.set_siguiente(
+        ValidadorImportSeguro(
+            main_file=main_file,
+            project_root=project_root,
+        )
+    )
     actual = actual.set_siguiente(ValidadorSistemaArchivos())
     actual = actual.set_siguiente(ValidadorProhibirReflexion())
 
@@ -52,7 +68,7 @@ def construir_cadena(extra_validators=None, *, emitir_side_effects: bool = False
         for val in extra_validators:
             actual = actual.set_siguiente(val)
 
-    if extra_validators is None:
+    if usar_cache:
         _CADENA_DEFECTO = primero
         _CACHE_INFO = (ValidadorPrimitivaPeligrosa.__init__, auditoria, emitir_side_effects)
 

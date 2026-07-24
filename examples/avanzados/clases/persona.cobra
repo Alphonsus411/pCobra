@@ -1,6 +1,8 @@
 clase Persona:
     metodo __init__(self, nombre):
         atributo self nombre = nombre
+    fin
+
     metodo saludar(self):
         imprimir "Hola, soy " + atributo self nombre
     fin

@@ -567,8 +567,21 @@ class InterpretadorCobra:
         # Regla de fases: analysis = sin efectos, execution = con efectos.
         # Por defecto iniciamos en ejecución para preservar compatibilidad fuera del REPL.
         self.mode = "execution"
+
+        self._main_file: Path | None = None
+        self._project_root: Path = Path.cwd().resolve()
+        self._contexto_proyecto_verificado = False
+        self.configurar_archivo_principal(main_file)
+
         self._validador = (
-            construir_cadena(extra, emitir_side_effects=True) if safe_mode else None
+            construir_cadena(
+                extra,
+                emitir_side_effects=True,
+                main_file=self._main_file,
+                project_root=self._project_root,
+            )
+            if safe_mode
+            else None
         )
         # Analizador semántico persistente para mantener contexto entre ejecuciones
         self.analizador = AnalizadorSemantico()
@@ -597,10 +610,6 @@ class InterpretadorCobra:
         # Metadatos de símbolos inyectados por `usar` para soportar reimport idempotente.
         # nombre_simbolo -> {"module": str, "exported_name": str, "callable_id": int}
         self._usar_symbol_metadata: dict[str, dict[str, object]] = {}
-        self._main_file: Path | None = None
-        self._project_root: Path = Path.cwd().resolve()
-        self._contexto_proyecto_verificado = False
-        self.configurar_archivo_principal(main_file)
         self._current_module_stack: list[Path] = []
         self._usar_module_cache: dict[Path, dict[str, object]] = {}
         self._usar_loading_stack: list[Path] = []

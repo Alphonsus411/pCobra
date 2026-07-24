@@ -1,11 +1,13 @@
-import "persona.co"
+import "persona.cobra"
 
 clase Estudiante(Persona):
     metodo __init__(self, nombre, carrera):
-        Persona.__init__(self, nombre)
+        atributo self nombre = nombre
         atributo self carrera = carrera
+    fin
+
     metodo presentar(self):
-        self.saludar()
+        imprimir "Hola, soy " + atributo self nombre
         imprimir "Estudio " + atributo self carrera
     fin
 fin
