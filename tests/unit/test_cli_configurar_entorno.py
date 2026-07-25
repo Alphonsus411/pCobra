@@ -188,6 +188,6 @@ def test_configure_encoding_unicode_salida_bytes_utf8(monkeypatch):
     print("después")
     stdout.flush()
 
-    salida = stdout_bytes.getvalue()
+    salida = stdout_bytes.getvalue().replace(b"\r\n", b"\n")
     assert salida == "después\n".encode("utf-8")
     assert salida.decode("utf-8") == "después\n"

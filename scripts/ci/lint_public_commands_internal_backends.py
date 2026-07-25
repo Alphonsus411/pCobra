@@ -48,7 +48,7 @@ def find_violations(root: Path = ROOT) -> list[str]:
         if not scope.exists():
             continue
         for path in sorted(scope.rglob("*.py")):
-            rel = path.relative_to(root)
+            rel = path.relative_to(root).as_posix()
             violations = _scan_file(path)
             for line, reason in violations:
                 failures.append(

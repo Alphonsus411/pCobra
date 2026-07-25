@@ -19,7 +19,7 @@ from pcobra.cobra.usar_policy import (
     USAR_COBRA_PUBLIC_MODULES,
     USAR_RUNTIME_EXPORT_OVERRIDES,
 )
-from pcobra.core.usar_symbol_policy import (
+from ..core.usar_symbol_policy import (
     build_and_validate_usar_symbol_metadata,
     depuracion_saneamiento_usar_habilitada,
     sanear_exportables_para_usar,
@@ -670,7 +670,7 @@ def _extraer_exports_modulo_cobra_proyecto(
 ) -> dict[str, Any]:
     """Extrae exports saneados de un módulo ``.cobra`` ya ejecutado."""
 
-    from pcobra.core.ast_nodes import NodoExport
+    from ..core.ast_nodes import NodoExport
 
     valores_entorno = getattr(entorno_modulo, "values", {})
     nombres_exportados = [
@@ -707,10 +707,10 @@ def _cargar_exports_modulo_cobra_proyecto(
 ) -> dict[str, Any]:
     """Carga un módulo Cobra de proyecto usando resolución canónica y cache."""
 
-    from pcobra.core.environment import Environment
-    from pcobra.core import import_utils
-    from pcobra.core.interpreter import InterpretadorCobra
-    from pcobra.core.ast_nodes import NodoExport, NodoUsar
+    from ..core.environment import Environment
+    from ..core import import_utils
+    from ..core.interpreter import InterpretadorCobra
+    from ..core.ast_nodes import NodoExport, NodoUsar
 
     root_canonico = canonicalizar_ruta_usar_proyecto(project_root)
     cache = module_cache if module_cache is not None else _USAR_PROJECT_MODULE_CACHE

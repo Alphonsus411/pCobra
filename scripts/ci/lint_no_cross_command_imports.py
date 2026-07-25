@@ -310,7 +310,7 @@ def find_violations(root: Path = ROOT) -> list[str]:
         if not scope.exists():
             continue
         for path in sorted(scope.rglob("*.py")):
-            rel = path.relative_to(root)
+            rel = path.relative_to(root).as_posix()
             graph = _build_import_graph(path, root)
             if path.name != "__init__.py":
                 for line, target in _scan_restricted_command_imports(path, root):
@@ -367,12 +367,12 @@ def find_violations(root: Path = ROOT) -> list[str]:
 def main() -> int:
     failures = find_violations(ROOT)
     if failures:
-        print("❌ Lint de contratos en comandos (grafo imports + fronteras + contrato transpiladores): FALLÓ")
+        print("[ERROR] Lint de contratos en comandos (grafo imports + fronteras + contrato transpiladores): FALLÓ")
         for item in failures:
             print(f" - {item}")
         return 1
 
-    print("✅ Lint de contratos en comandos (grafo imports + fronteras + contrato transpiladores): OK")
+    print("[OK] Lint de contratos en comandos (grafo imports + fronteras + contrato transpiladores): OK")
     return 0
 
 

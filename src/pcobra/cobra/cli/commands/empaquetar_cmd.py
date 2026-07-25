@@ -1,5 +1,4 @@
 import os
-import platform
 from pathlib import Path
 import subprocess
 import re
@@ -73,7 +72,7 @@ class EmpaquetarCommand(BaseCommand):
         Returns:
             str: Nombre del ejecutable con la extensión apropiada
         """
-        if platform.system() == 'Windows':
+        if os.name == "nt":
             return f"{nombre_base}.exe"
         return nombre_base
 
@@ -110,7 +109,8 @@ class EmpaquetarCommand(BaseCommand):
         raiz = Path(__file__).resolve().parents[5]
         cli_path = raiz / "src" / "cli" / "cli.py"
         output = Path(args.output).resolve()
-        nombre = self._get_nombre_ejecutable(args.name)
+        nombre_pyinstaller = args.name
+        nombre_ejecutable = self._get_nombre_ejecutable(nombre_pyinstaller)
         spec = getattr(args, "spec", None)
         datos = getattr(args, "add_data", [])
 
@@ -142,7 +142,9 @@ class EmpaquetarCommand(BaseCommand):
             if spec:
                 cmd.append(str(spec))
             else:
-                cmd.extend(["--onefile", "-n", nombre, str(cli_path)])
+                cmd.extend(
+                    ["--onefile", "-n", nombre_pyinstaller, str(cli_path)]
+                )
 
             for d in datos:
                 if not self._validar_add_data(d):
@@ -155,7 +157,7 @@ class EmpaquetarCommand(BaseCommand):
             
             subprocess.run(cmd, check=True, capture_output=True, text=True)
             
-            ejecutable = output / nombre
+            ejecutable = output / nombre_ejecutable
             if not ejecutable.exists():
                 mostrar_error(_("No se generó el ejecutable esperado"))
                 return 1

@@ -38,7 +38,7 @@ def find_violations(root: Path = ROOT) -> list[str]:
         for node in ast.walk(tree):
             for target in _node_import_targets(node):
                 if _is_forbidden(target):
-                    rel = path.relative_to(root)
+                    rel = path.relative_to(root).as_posix()
                     failures.append(
                         f"{rel}:{node.lineno}: import no permitido a {target}; "
                         "usa pcobra.cobra.* / pcobra.core.* o imports relativos dentro de pcobra"
@@ -48,17 +48,17 @@ def find_violations(root: Path = ROOT) -> list[str]:
 
 def main() -> int:
     if not SRC_ROOT.exists():
-        print("⚠️ Lint imports legacy bindings: src/pcobra/ no existe, se omite.")
+        print("[SKIP] Lint imports legacy bindings: src/pcobra/ no existe, se omite.")
         return 0
 
     failures = find_violations(ROOT)
     if failures:
-        print("❌ Lint imports legacy bindings en src/pcobra/: FALLÓ")
+        print("[ERROR] Lint imports legacy bindings en src/pcobra/: FALLÓ")
         for item in failures:
             print(f" - {item}")
         return 1
 
-    print("✅ Lint imports legacy bindings en src/pcobra/: OK")
+    print("[OK] Lint imports legacy bindings en src/pcobra/: OK")
     return 0
 
 

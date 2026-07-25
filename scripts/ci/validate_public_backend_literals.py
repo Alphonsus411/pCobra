@@ -52,7 +52,8 @@ def find_violations(root: Path = ROOT) -> list[str]:
         rel_path = path.relative_to(root)
         if _is_allowed_module(rel_path):
             continue
-        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(rel_path))
+        rel = rel_path.as_posix()
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=rel)
         for node in ast.walk(tree):
             target_name = None
             value = None
@@ -67,7 +68,7 @@ def find_violations(root: Path = ROOT) -> list[str]:
                 continue
             if _public_backend_literal(value):
                 violations.append(
-                    f"{rel_path}:{getattr(node, 'lineno', '?')}: "
+                    f"{rel}:{getattr(node, 'lineno', '?')}: "
                     f"lista literal de backends públicos detectada en '{target_name}'"
                 )
     return violations

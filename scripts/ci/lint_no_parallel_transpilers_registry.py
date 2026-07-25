@@ -42,9 +42,10 @@ CANONICAL_MODULE_MAP_MODULES = {
 def _find_transpilers_literal_violations(root: Path) -> list[str]:
     violations: list[str] = []
     for path in sorted(root.rglob("*.py")):
-        rel = path.relative_to(root)
-        if rel in ALLOWED_TRANSPILERS_LITERAL_MODULES:
+        rel_path = path.relative_to(root)
+        if rel_path in ALLOWED_TRANSPILERS_LITERAL_MODULES:
             continue
+        rel = rel_path.as_posix()
         tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
         for node in ast.walk(tree):
             target_name: str | None = None
@@ -66,7 +67,7 @@ def _find_transpilers_literal_violations(root: Path) -> list[str]:
 def _find_parallel_catalog_name_violations(root: Path) -> list[str]:
     violations: list[str] = []
     for path in sorted(root.rglob("*.py")):
-        rel = path.relative_to(root)
+        rel = path.relative_to(root).as_posix()
         if rel == CANONICAL_TRANSPILERS_REGISTRY:
             continue
         tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
@@ -128,7 +129,7 @@ def _find_cli_registry_facade_violations(root: Path) -> list[str]:
         return violations
 
     for path in sorted(cli_root.rglob("*.py")):
-        rel = path.relative_to(root)
+        rel = path.relative_to(root).as_posix()
         if rel == Path("src/pcobra/cobra/cli/transpiler_registry.py"):
             continue
         for lineno, module in _iter_import_modules(path, root):
@@ -147,7 +148,7 @@ def _find_cli_module_map_facade_violations(root: Path) -> list[str]:
         return violations
 
     for path in sorted(cli_commands_root.rglob("*.py")):
-        rel = path.relative_to(root)
+        rel = path.relative_to(root).as_posix()
         for lineno, module in _iter_import_modules(path, root):
             if module not in CANONICAL_MODULE_MAP_MODULES:
                 continue
