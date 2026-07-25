@@ -29,11 +29,6 @@ OFFICIAL_TRANSPILER_HINTS: tuple[str, ...] = (
     "src/pcobra/cobra/transpilers/transpiler/to_python.py",
     "src/pcobra/cobra/transpilers/transpiler/to_js.py",
     "src/pcobra/cobra/transpilers/transpiler/to_rust.py",
-    "src/pcobra/cobra/transpilers/transpiler/to_go.py",
-    "src/pcobra/cobra/transpilers/transpiler/to_cpp.py",
-    "src/pcobra/cobra/transpilers/transpiler/to_java.py",
-    "src/pcobra/cobra/transpilers/transpiler/to_wasm.py",
-    "src/pcobra/cobra/transpilers/transpiler/to_asm.py",
 )
 MATRIX_HINTS: tuple[str, ...] = (
     "docs/matriz_transpiladores.md",
@@ -128,7 +123,7 @@ def _files_containing_token(search_roots: tuple[Path, ...], token: str) -> list[
         for path in root.rglob("*"):
             if not path.is_file():
                 continue
-            if path.suffix not in {".py", ".md", ".rst", ".txt", ".co", ".csv", ".json", ".yaml", ".yml"}:
+            if path.suffix not in {".py", ".md", ".rst", ".txt", ".cobra", ".csv", ".json", ".yaml", ".yml"}:
                 continue
             content = path.read_text(encoding="utf-8", errors="ignore").lower()
             if lowered in content or lowered in path.as_posix().lower():
@@ -148,7 +143,7 @@ def audit_feature_id(feature_id: str) -> dict[str, list[str]]:
     matrix_hits = [p for p in MATRIX_HINTS if (ROOT / p).exists() and feature in (ROOT / p).read_text(encoding="utf-8", errors="ignore").lower()]
     test_hits = _files_containing_token((ROOT / "tests",), feature)
     docs_hits = _files_containing_token((ROOT / "docs", ROOT / "CONTRIBUTING.md"), feature)
-    example_path = EXAMPLES_FEATURES_DIR / feature / "minimal.co"
+    example_path = EXAMPLES_FEATURES_DIR / feature / "minimal.cobra"
     example_hits = [example_path.relative_to(ROOT).as_posix()] if example_path.exists() else []
 
     return {

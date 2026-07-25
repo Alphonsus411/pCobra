@@ -307,7 +307,7 @@ def test_integridad_estatica_lexer_y_parser_sin_diff_inesperado():
         "src/pcobra/cobra/core/parser.py": "3017fa31e1707ca82358d548e71ba27d4b8e73342950ab6959b32c13dcc02505",
     }
     for ruta, hash_esperado in hashes_esperados.items():
-        contenido = Path(ruta).read_bytes()
+        contenido = Path(ruta).read_bytes().replace(b"\r\n", b"\n")
         assert hashlib.sha256(contenido).hexdigest() == hash_esperado, f"Hash inesperado en {ruta}"
 
 

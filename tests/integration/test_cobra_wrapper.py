@@ -17,7 +17,7 @@ def test_wrapper_ejecuta_entry_point_instalado_sin_importar_checkout(
 ) -> None:
     entorno = tmp_path / "entorno"
     venv.EnvBuilder(with_pip=False).create(entorno)
-    python = entorno / "bin" / "python3"
+    python = entorno / ("Scripts/python.exe" if os.name == "nt" else "bin/python3")
 
     purelib = subprocess.run(
         [str(python), "-c", "import sysconfig; print(sysconfig.get_path('purelib'))"],
@@ -50,10 +50,15 @@ def test_wrapper_ejecuta_entry_point_instalado_sin_importar_checkout(
         "COBRA_MARKER": str(marker),
         "HOME": str(tmp_path),
         # El directorio del wrapper primero reproduce el caso propenso a recursión.
-        "PATH": os.pathsep.join((str(WRAPPER.parent), str(entorno / "bin"))),
+        "PATH": os.pathsep.join((str(WRAPPER.parent), str(python.parent))),
     }
+    command = (
+        [str(python), str(WRAPPER)]
+        if os.name == "nt"
+        else [str(WRAPPER)]
+    )
     result = subprocess.run(
-        [str(WRAPPER)],
+        command,
         cwd=tmp_path,
         env=env,
         capture_output=True,
@@ -62,6 +67,6 @@ def test_wrapper_ejecuta_entry_point_instalado_sin_importar_checkout(
 
     assert result.returncode == 37, result.stderr
     payload = json.loads(marker.read_text(encoding="utf-8"))
-    assert Path(payload["executable"]).parent == entorno / "bin"
+    assert Path(payload["executable"]).parent == python.parent
     assert str(REPO_ROOT) not in payload["path"]
     assert str(REPO_ROOT / "src") not in payload["path"]

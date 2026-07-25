@@ -12,9 +12,9 @@ if not hasattr(importlib, "ModuleType"):
     importlib.ModuleType = types.ModuleType
 
 import pcobra
-import core.ast_nodes as core_ast_nodes
-import cobra.core as cobra_core
-import cobra.core.ast_nodes as cobra_ast_nodes
+import pcobra.core.ast_nodes as core_ast_nodes
+import pcobra.cobra.core as cobra_core
+import pcobra.cobra.core.ast_nodes as cobra_ast_nodes
 for nombre in dir(core_ast_nodes):
     if nombre.startswith("Nodo"):
         obj = getattr(core_ast_nodes, nombre)
@@ -22,8 +22,8 @@ for nombre in dir(core_ast_nodes):
             setattr(cobra_ast_nodes, nombre, obj)
         if not hasattr(cobra_core, nombre):
             setattr(cobra_core, nombre, obj)
-from cobra.core import Lexer
-from cobra.core import Parser
+from pcobra.cobra.core import Lexer
+from pcobra.cobra.core import Parser
 from pcobra.cobra.transpilers.registry import get_transpilers
 
 from tests.utils.runtime import execute_transpiled_code

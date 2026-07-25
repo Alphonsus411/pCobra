@@ -30,6 +30,8 @@ def _run_python_isolated(code: str) -> subprocess.CompletedProcess[str]:
         [sys.executable, "-I", "-c", bootstrap + code],
         capture_output=True,
         text=True,
+        encoding="utf-8",
+        errors="strict",
     )
 
 
