@@ -1,231 +1,284 @@
 {
   "metadata": {
-    "asistente": "Bella",
+    "documento": "Resumen de continuidad para otra conversación",
+    "proyecto": "pCobra",
     "usuario": "Adolfo",
-    "idioma": "es",
-    "fecha_resumen": "2026-07-24",
+    "asistente": "Bella",
+    "idioma": "español",
+    "estado": "trabajo en progreso",
+    "objetivo_inmediato": "Cerrar la suite completa de pytest y revisar globalmente el diff antes de preparar un commit"
+  },
+  "entorno": {
+    "sistema": "Windows",
+    "shell": "Git Bash / MINGW64",
     "repositorio": "C:/Users/Adolfo/PycharmProjects/pCobra",
     "rama": "fix/contrato-extensiones-cobra",
-    "entorno": {
-      "terminal": "Git Bash sobre Windows",
-      "python": "3.11.9",
-      "pytest": "8.4.2",
-      "virtualenv": ".venv"
+    "python": "3.11.9",
+    "pytest": "8.4.2",
+    "entorno_virtual": ".venv",
+    "ejecutable_python": ".venv/Scripts/python.exe"
+  },
+  "restricciones_de_trabajo": [
+    "No modificar Lexer ni Parser salvo evidencia inequívoca y aprobación explícita.",
+    "Trabajar incrementalmente y ejecutar pruebas focalizadas antes de la suite completa.",
+    "No usar el comando shell `exit`.",
+    "Los backends públicos oficiales son únicamente python, javascript y rust.",
+    "La extensión de fuente Cobra es `.cobra`.",
+    "La extensión `.co` queda reservada para artefactos de paquete.",
+    "No reintroducir imports legacy o dependencias paralelas solo para satisfacer pruebas antiguas.",
+    "No crear commits hasta revisar el diff global y confirmar que no hay archivos accidentales."
+  ],
+  "resultado_actual_suite_completa": {
+    "comando": "python -m pytest -q > pytest-full.log 2>&1",
+    "exit_code": 1,
+    "passed": 1593,
+    "skipped": 30,
+    "failed": 5,
+    "warnings": 9,
+    "duracion_segundos": 93.85,
+    "ultimo_archivo_con_fallos": "tests/unit/test_cli_format_flag.py"
+  },
+  "fallos_actuales": [
+    {
+      "test": "test_execute_command_with_format_invokes_formatter",
+      "error": "AttributeError: module 'pcobra.cobra.cli.commands.execute_cmd' has no attribute 'module_map'",
+      "diagnostico_provisional": "La prueba intenta parchear una superficie antigua eliminada durante la consolidación del registro de transpiladores."
+    },
+    {
+      "test": "test_profile_command_with_format_invokes_formatter",
+      "error": "AttributeError: ExecuteCommand no tiene el atributo '_formatear_codigo'",
+      "diagnostico_provisional": "El formateo parece haberse movido a otro helper o servicio canónico; la prueba conserva un punto de monkeypatch obsoleto."
+    },
+    {
+      "test": "test_execute_command_debug_flag_sets_debug_logger",
+      "error": "AttributeError al resolver pcobra.cobra.cli.commands.execute_cmd.module_map",
+      "diagnostico_provisional": "Ruta de mock desactualizada."
+    },
+    {
+      "test": "test_execute_command_verbose_flag_sets_debug_logger",
+      "error": "AttributeError al resolver pcobra.cobra.cli.commands.execute_cmd.module_map",
+      "diagnostico_provisional": "Ruta de mock desactualizada."
+    },
+    {
+      "test": "test_execute_command_depurar_legacy_still_supported",
+      "error": "AttributeError al resolver pcobra.cobra.cli.commands.execute_cmd.module_map",
+      "diagnostico_provisional": "Ruta de mock desactualizada."
     }
-  },
-  "objetivo_principal": {
-    "descripcion": "Migrar y validar el contrato de extensiones, imports, CLI, validadores semánticos, ejemplos y backends oficiales de Cobra.",
-    "contrato_extensiones": {
-      "codigo_fuente": ".cobra",
-      "paquetes_artefactos": ".co",
-      "regla": ".co no debe tratarse como código fuente Cobra"
-    },
-    "restricciones": [
-      "No modificar Lexer.",
-      "No modificar Parser.",
-      "Ejecutar y revisar las pruebas de forma incremental.",
-      "No cerrar Git Bash ni ejecutar exit.",
-      "Mantener únicamente python, javascript y rust como backends oficiales."
-    ]
-  },
-  "trabajo_previo_confirmado": {
-    "imports_y_seguridad": [
-      "Se contextualizó la resolución de imports con main_file y project_root.",
-      "Se corrigió el uso contextual de la cadena de validadores.",
-      "Se actualizaron pruebas de rutas e imports para usar .cobra como fuente.",
-      "Se confirmó que .co es rechazado como fuente sin invocar el lexer.",
-      "Se ajustaron expectativas entre PermissionError y PrimitivaPeligrosaError según la capa validada."
-    ],
-    "validacion_semantica": [
-      "Se corrigió una prueba de optimización para declarar variables con declaracion=True.",
-      "Se verificó una validación en fase analysis y una auditoría en fase execution.",
-      "Se corrigió validar_ast_seguro para no ignorar validadores_extra cuando el intérprete ya posee _validador.",
-      "Se añadió una regresión específica para validadores_extra con contexto."
-    ],
-    "cli": [
-      "Se ajustó el shim legacy para configurar logging con --debug y --verbose.",
-      "Se validó el comportamiento de wrappers legacy y entrypoints canónicos.",
-      "Se corrigió la ejecución de scripts temporales en Windows mediante sys.executable.",
-      "Se distinguió la UI pública v2 de la UI legacy."
-    ],
-    "pruebas_previas_aprobadas": {
-      "tests/unit/test_import_seguro_validator.py": "3 passed",
-      "tests/unit/test_import_path_security.py": "5 passed",
-      "tests/core/test_import_utils.py": "3 passed",
-      "tests/unit/test_validator_optimization.py": "3 passed",
-      "tests/unit/test_semantic_validator.py": "4 passed",
-      "tests/unit/test_cli_execution_pipeline_contract.py": "27 passed",
-      "tests/unit/test_cli_secure_validators.py": "4 passed",
-      "tests/unit/test_cli_commands_extra.py": "9 passed",
-      "tests/unit/test_cli_logging.py": "2 passed",
-      "tests/unit/test_cli_logging_regression.py": "8 passed",
-      "tests/unit/test_cli_shim_contract.py": "2 passed",
-      "tests/unit/test_cli_entrypoint_subprocess.py": "4 passed"
-    }
-  },
-  "ejemplos_actualizados": {
-    "archivos_modificados": {
-      "examples/avanzados/clases/herencia_multiple.cobra": "Se eliminó el uso de llamadas de métodos con sintaxis no soportada y se conservó un ejemplo válido de herencia múltiple.",
-      "examples/avanzados/clases/main.cobra": "Se migró estudiante.co a estudiante.cobra y se evitó sintaxis de métodos no soportada.",
-      "examples/casos_reales/analisis_datos/estadisticas.cobra": "Se reemplazó pandas y llamadas con punto por un cálculo aritmético Cobra válido.",
-      "examples/casos_reales/bioinformatica/ejemplo_gc.cobra": "Se reemplazaron operadores y construcciones no soportadas por bucles y condiciones válidas.",
-      "examples/casos_reales/inteligencia_artificial/modelo_ia.cobra": "Se sustituyó sklearn por una función Cobra determinista.",
-      "examples/funciones_principales.cobra": "Se reemplazó imprimir con argumentos separados por coma por tres salidas explícitas.",
-      "examples/hola_mundo/suma.cobra": "Se declararon a, b y resultado mediante var.",
-      "examples/patrones.cobra": "Se retiraron tuplas anidadas y patrones con guarda no soportados.",
-      "examples/smoke_assign.cobra": "Se cambió valor = 42 por var valor = 42."
-    },
-    "snapshots_agregados": {
-      "tests/data/expected_examples/features/feature_base/minimal.txt": "fixture feature_base",
-      "tests/data/expected_examples/hello_world/javascript.txt": "Hola mundo",
-      "tests/data/expected_examples/hello_world/python.txt": "Hola mundo",
-      "tests/data/expected_examples/hello_world/rust.txt": "Hola mundo",
-      "tests/data/expected_examples/hola_mundo/hola.txt": "Hola mundo",
-      "tests/data/expected_examples/hola_mundo/suma.txt": "42",
-      "tests/data/expected_examples/replit/main.txt": "Hola desde Replit"
-    },
-    "backends_retirados": {
-      "asm": [
-        "examples/hello_world/asm.asm",
-        "examples/hello_world/asm.cobra",
-        "examples/hello_world/asm/hola.asm"
-      ],
-      "cpp": [
-        "examples/hello_world/cpp.cobra",
-        "examples/hello_world/cpp.cpp",
-        "examples/hello_world/cpp/hola.cpp"
-      ],
-      "go": [
-        "examples/hello_world/go.cobra",
-        "examples/hello_world/go.go",
-        "examples/hello_world/go/hola.go"
-      ],
-      "java": [
-        "examples/hello_world/java.cobra",
-        "examples/hello_world/java.java",
-        "examples/hello_world/java/Hola.java"
-      ],
-      "wasm": [
-        "examples/hello_world/wasm.cobra",
-        "examples/hello_world/wasm.wat",
-        "examples/hello_world/wasm/hola.wat"
-      ]
-    },
-    "resultado_suite_ejemplos": {
-      "archivo": "tests/unit/test_cli_run_examples.py",
-      "resultado": "22 passed, 1 warning",
-      "duracion_aproximada_segundos": 14.8
-    }
-  },
-  "contrato_cli": {
-    "superficies": {
-      "pcobra.cli": "UI pública v2 con run, build, test, mod, repl y gui.",
-      "cobra/cli/cli.py": "Wrapper raíz alineado con la UI pública.",
-      "cli.cli": "Superficie legacy con comandos como compilar y ejecutar."
-    },
-    "hallazgo": "No existe un subcomando de compilación común entre la UI pública v2 y cli.cli legacy.",
-    "prueba_corregida": {
-      "archivo": "tests/unit/test_cli_legacy_wrapper_exitcode.py",
-      "cambio": "La comparación de exit codes usa --opcion-inexistente en lugar de compilar.",
-      "razon": "Una opción global inválida genera exit code 2 en las tres superficies.",
-      "resultado": "2 passed"
-    },
-    "pruebas_aprobadas_recientes": {
-      "tests/unit/test_cli_entrypoint_subprocess.py": "4 passed",
-      "tests/unit/test_cli_wrapper_consistency.py": "1 passed",
-      "tests/unit/test_cli_legacy_wrapper_exitcode.py": "2 passed",
-      "tests/unit/test_cli_execute_debug_verbose.py": "2 passed",
-      "tests/unit/test_cli_shim_contract.py": "2 passed",
-      "tests/integration/test_cli_public_help_contract.py": "11 passed",
-      "tests/unit/test_cli_official_language_restrictions.py": "93 passed"
-    }
-  },
-  "backends_oficiales": {
-    "permitidos": [
-      "python",
-      "javascript",
-      "rust"
-    ],
-    "retirados_o_no_oficiales": [
-      "asm",
-      "cpp",
-      "go",
-      "java",
-      "wasm"
-    ],
-    "validacion": "tests/unit/test_cli_official_language_restrictions.py terminó con 93 passed y confirmó el rechazo uniforme de aliases legacy."
-  },
-  "estado_git_revisado": {
-    "cambios_staged_confirmados": {
-      "modificados": [
-        "examples/funciones_principales.cobra",
-        "examples/hola_mundo/suma.cobra",
-        "examples/patrones.cobra",
-        "examples/smoke_assign.cobra",
-        "tests/unit/test_cli_legacy_wrapper_exitcode.py"
-      ],
-      "eliminados": [
-        "Archivos de ejemplos correspondientes a asm, cpp, go, java y wasm."
-      ],
-      "agregados": [
-        "Snapshots de feature_base, hello_world, hola_mundo y replit."
-      ]
-    },
-    "ultima_estadistica_confirmada_antes_de_la_prueba_legacy": {
-      "archivos": 26,
-      "inserciones": 21,
-      "eliminaciones": 98
-    },
-    "whitespace": "git diff --cached --check no informó errores.",
-    "finales_de_linea": "Git mostró advertencias informativas LF a CRLF en Windows."
-  },
-  "suite_completa": {
-    "primer_intento": {
-      "comando": "python -m pytest -q",
-      "resultado": "Interrumpida durante la colección.",
-      "exit_code": 2,
-      "error": "ModuleNotFoundError: No module named 'cobra.transpilers.transpiler.to_wasm'",
-      "archivo_causante": "tests/unit/test_wasm_transpiler.py"
-    },
-    "diagnostico": {
-      "descripcion": "La prueba importa TranspiladorWasm, pero el módulo ya no existe y WASM no es backend oficial.",
-      "contenido_prueba": "Transpilaba una función simple y comprobaba código WAT.",
-      "referencias_wasm_restantes": [
-        "src/pcobra/cobra/transpilers/transpiler/historical/wasm_runtime.py",
-        "tests/integration/transpilers/golden_language_equivalence/wasm.async.golden",
-        "tests/integration/transpilers/golden_language_equivalence/wasm.decoradores.golden",
-        "tests/integration/transpilers/golden_language_equivalence/wasm.imports_corelibs.golden",
-        "tests/integration/transpilers/golden_language_equivalence/wasm.manejo_errores.golden",
-        "tests/unit/test_wasm_transpiler.py"
-      ]
-    },
-    "decision": {
-      "eliminar": "tests/unit/test_wasm_transpiler.py",
-      "conservar_por_ahora": [
-        "El runtime ubicado bajo historical.",
-        "Los archivos golden de WASM hasta comprobar si participan en alguna prueba activa."
-      ]
-    },
-    "confirmacion_pendiente": "No se ha mostrado todavía una salida que confirme git rm de tests/unit/test_wasm_transpiler.py ni una nueva ejecución completa de pytest."
-  },
-  "advertencias_no_bloqueantes": [
-    "Hypothesis avisa que .hypothesis está siendo excluido por norecursedirs.",
-    "Pytest no puede recopilar TestCommandV2 como clase de pruebas porque define __init__.",
-    "Existe una DeprecationWarning por una secuencia de escape inválida en test_security_sandbox.py."
   ],
   "siguiente_paso_recomendado": {
-    "paso_1": "Confirmar o ejecutar git rm tests/unit/test_wasm_transpiler.py.",
-    "paso_2": "Comprobar git status --short -- tests/unit/test_wasm_transpiler.py.",
-    "paso_3": "Repetir python -m pytest -q guardando la salida en pytest-full.log.",
-    "paso_4": "Analizar los siguientes fallos reales, uno por uno.",
-    "paso_5": "Cuando la suite completa pase, revisar git status, git diff --cached --check y el diff global antes del commit."
+    "objetivo": "Identificar las superficies canónicas actuales para el mapa de módulos y el formateo antes de modificar las pruebas.",
+    "comandos": [
+      "nl -ba tests/unit/test_cli_format_flag.py | sed -n '1,240p'",
+      "nl -ba src/pcobra/cobra/cli/commands/execute_cmd.py | sed -n '1,380p'",
+      "nl -ba src/pcobra/cobra/cli/commands/profile_cmd.py | sed -n '1,240p'",
+      "git grep -n -e '_formatear_codigo' -e 'formatear_codigo' -e 'formatear' -e 'get_toml_map' -e 'cli_toml_map' -e 'module_map' -e 'transpiler_registry' -- src/pcobra/cobra/cli src/pcobra/cobra/build tests/unit/test_cli_format_flag.py",
+      "python -m pytest -q tests/unit/test_cli_format_flag.py -vv --tb=short"
+    ],
+    "criterio": "Actualizar los mocks hacia las dependencias canónicas reales. No reintroducir execute_cmd.module_map ni ExecuteCommand._formatear_codigo como aliases de compatibilidad sin una razón arquitectónica."
   },
-  "comandos_pendientes": [
-    "git rm tests/unit/test_wasm_transpiler.py",
-    "git status --short -- tests/unit/test_wasm_transpiler.py",
+  "cambios_realizados": [
+    {
+      "area": "Contrato de extensiones",
+      "archivos": [
+        "tests/data/transpiler_outputs.csv",
+        "tests/integration/test_transpilador_syntax.py"
+      ],
+      "cambio": "Sustitución de usos de `.co` como fuente por `.cobra`."
+    },
+    {
+      "area": "Imports canónicos",
+      "archivos": [
+        "tests/integration/test_cross_backend_output.py"
+      ],
+      "cambio": "Migración de imports legacy como core.*, cobra.core.* y cobra.* hacia pcobra.core.* y pcobra.cobra.*."
+    },
+    {
+      "area": "Wrapper CLI en Windows",
+      "archivos": [
+        "tests/integration/test_cobra_wrapper.py"
+      ],
+      "cambio": "Uso correcto de Scripts/python.exe, PATH basado en el directorio del intérprete y ejecución del wrapper mediante Python en Windows."
+    },
+    {
+      "area": "Hashes de fuentes",
+      "archivos": [
+        "tests/integration/test_usar_runtime_contract.py"
+      ],
+      "cambio": "Normalización CRLF a LF antes de comprobar hashes."
+    },
+    {
+      "area": "Contrato de errores del Parser",
+      "archivos": [
+        "tests/test_parser.py"
+      ],
+      "cambio": "La prueba valida la excepción ParserError y su mensaje, en lugar de exigir que parser.errores se rellene."
+    },
+    {
+      "area": "Subprocesos UTF-8",
+      "archivos": [
+        "tests/test_cli_entrypoint_imports.py"
+      ],
+      "cambio": "Decodificación explícita con encoding='utf-8' y errors='strict'."
+    },
+    {
+      "area": "Dependencia opcional Dask",
+      "archivos": [
+        "tests/unit/test_big_data_extra.py"
+      ],
+      "cambio": "Uso de pytest.importorskip para el extra opcional pcobra[big-data]."
+    },
+    {
+      "area": "Auditoría de rollout",
+      "archivos": [
+        "scripts/ci/audit_feature_rollout.py"
+      ],
+      "cambio": "Extensión textual `.cobra`, ejemplo minimal.cobra y backends oficiales reducidos a python, javascript y rust."
+    },
+    {
+      "area": "Rutas portables en linters",
+      "archivos": [
+        "scripts/ci/lint_no_cross_command_imports.py",
+        "scripts/ci/lint_no_legacy_bindings_imports.py",
+        "scripts/ci/lint_no_legacy_cobra_core_imports.py",
+        "scripts/ci/lint_no_parallel_transpilers_registry.py",
+        "scripts/ci/lint_public_commands_internal_backends.py",
+        "scripts/ci/lint_public_no_direct_transpiler_imports.py",
+        "scripts/ci/validate_public_backend_literals.py"
+      ],
+      "cambio": "Los diagnósticos usan Path.as_posix(). Cuando existen allowlists de objetos Path, se conserva rel_path para comparar y se crea rel como cadena POSIX solo para mensajes."
+    },
+    {
+      "area": "Guards de linters y codificación",
+      "archivos": [
+        "tests/unit/test_ci_lint_no_legacy_bindings_imports_guard.py",
+        "tests/unit/test_ciint_no_legacy_bindings_imports_guard.py",
+        "tests/unit/test_ci_lint_no_legacy_cobra_core_imports_guard.py"
+      ],
+      "cambio": "Control explícito de UTF-8 en el proceso hijo y en la captura del padre."
+    },
+    {
+      "area": "Fronteras entre pcobra.cobra y pcobra.core",
+      "archivos": [
+        "src/pcobra/cobra/core/usar_symbol_policy.py",
+        "src/pcobra/cobra/transpilers/transpiler/python_nodes/importar.py",
+        "src/pcobra/cobra/usar_loader.py"
+      ],
+      "cambio": "Migración de imports absolutos prohibidos hacia imports relativos equivalentes o fachadas canónicas bajo pcobra.cobra."
+    },
+    {
+      "area": "Pruebas UTF-8 en Windows",
+      "archivos": [
+        "tests/unit/test_cli_bootstrap_utf8.py",
+        "tests/unit/test_cli_configurar_entorno.py"
+      ],
+      "cambio": "Normalización de CRLF a LF antes de comprobar bytes UTF-8. La prueba valida codificación, no convención de salto de línea del sistema."
+    },
+    {
+      "area": "Empaquetado con PyInstaller",
+      "archivos": [
+        "src/pcobra/cobra/cli/commands/empaquetar_cmd.py"
+      ],
+      "cambio": "Separación entre nombre lógico de PyInstaller y nombre físico del ejecutable. PyInstaller recibe 'cobra'; en Windows se comprueba 'cobra.exe'. Se sustituyó platform.system() por os.name para evitar que mocks de subprocess.run afecten la detección de plataforma."
+    },
+    {
+      "area": "Fuga de caché de configuración",
+      "archivos": [
+        "tests/unit/test_ast_limit.py"
+      ],
+      "cambio": "cargar_configuracion.cache_clear() se ejecuta también en finally. La prueba dejaba cacheado limite_nodos=1 después de que monkeypatch restaurara COBRA_CONFIG."
+    }
+  ],
+  "pruebas_focalizadas_confirmadas": [
+    {
+      "grupo": "Lint entre comandos",
+      "resultado": "15 passed"
+    },
+    {
+      "grupo": "Linters legacy bindings y cobra/core",
+      "resultado": "8 passed"
+    },
+    {
+      "grupo": "Importación, usar y transpilación",
+      "resultado": "51 passed"
+    },
+    {
+      "grupo": "Registro paralelo e INTERNAL_BACKENDS",
+      "resultado": "9 passed"
+    },
+    {
+      "grupo": "Linters públicos y UTF-8",
+      "resultado": "19 passed"
+    },
+    {
+      "grupo": "Empaquetado CLI",
+      "resultado": "4 passed"
+    },
+    {
+      "grupo": "Límite AST seguido del contrato de ejecución",
+      "resultado": "28 passed"
+    },
+    {
+      "grupo": "Contrato de ejecución aislado",
+      "resultado": "27 passed"
+    }
+  ],
+  "investigacion_fuga_ast_limit": {
+    "sintoma": "Cinco casos de paridad script frente a REPL fallaban solo dentro de la suite completa.",
+    "resultado_aislado": "tests/unit/test_cli_execution_pipeline_contract.py pasaba 27/27.",
+    "metodo": "Bisección por sufijos acumulativos de archivos anteriores usando pytest y JUnit XML.",
+    "archivo_contaminante": "tests/unit/test_ast_limit.py",
+    "causa": "La prueba limpiaba cargar_configuracion antes de cargar una configuración temporal con limite_nodos=1, pero no después. COBRA_CONFIG se restauraba mediante monkeypatch, mientras la caché conservaba el límite restrictivo.",
+    "solucion": "Añadir un bloque try/finally y ejecutar cargar_configuracion.cache_clear() en finally.",
+    "verificacion": [
+      "test_ast_limit.py más el caso de paridad: 2 passed",
+      "test_ast_limit.py más todo test_cli_execution_pipeline_contract.py: 28 passed"
+    ]
+  },
+  "advertencias_no_bloqueantes": [
+    "Hypothesis avisa que `.hypothesis` se omite porque norecursedirs reemplaza los ignores por defecto.",
+    "Pytest no recoge TestCommandV2 porque define __init__.",
+    "RuntimeWarning por colisión del símbolo es_finito durante usar.",
+    "DeprecationWarning de imports legacy cobra/core/bindings.",
+    "DeprecationWarning de COBRA_AST_CACHE frente a COBRA_DB_PATH.",
+    "RuntimeWarning de runpy para pcobra.__main__ ya presente en sys.modules."
+  ],
+  "archivos_temporales_generados": [
+    {
+      "ruta": "pytest-full.log",
+      "accion_antes_de_commit": "Revisar y normalmente eliminar o dejar sin seguimiento."
+    },
+    {
+      "ruta": "pytest-collected.txt",
+      "accion_antes_de_commit": "Eliminar o dejar sin seguimiento."
+    }
+  ],
+  "comando_suite_completa": [
     "python -m pytest -q > pytest-full.log 2>&1",
     "pytest_code=$?",
-    "tail -100 pytest-full.log",
-    "printf '\\npytest exit code: %s\\n' \"$pytest_code\""
+    "echo \"pytest exit code: $pytest_code\"",
+    "tail -n 260 pytest-full.log"
+  ],
+  "revision_final_pendiente": {
+    "comandos": [
+      "git status --short",
+      "git diff --check",
+      "git diff --stat",
+      "git diff --name-status",
+      "git diff HEAD",
+      "git ls-files --others --exclude-standard"
+    ],
+    "objetivos": [
+      "Confirmar que no hay cambios accidentales.",
+      "Confirmar que pytest-full.log y pytest-collected.txt no se incluirán.",
+      "Revisar staged y unstaged conjuntamente.",
+      "Ejecutar una última suite completa después de cerrar test_cli_format_flag.py.",
+      "Preparar el commit solo después de una suite verde."
+    ]
+  },
+  "notas_de_continuidad": [
+    "No se ha demostrado que la caché global _CADENA_DEFECTO de validadores sea la causa de los fallos actuales. No modificarla sin nueva evidencia.",
+    "Los cinco fallos actuales parecen pruebas con mocks obsoletos, pero debe confirmarse inspeccionando execute_cmd.py, profile_cmd.py y los helpers canónicos de formato y registro.",
+    "No restaurar APIs eliminadas solamente para satisfacer los mocks antiguos.",
+    "El progreso ha sido incremental y cada bloque corregido cuenta con pruebas focalizadas verdes."
   ]
 }
