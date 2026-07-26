@@ -31,12 +31,13 @@ jsonschema_mod.validate = lambda *a, **k: None
 jsonschema_mod.ValidationError = Exception
 sys.modules.setdefault("jsonschema", jsonschema_mod)
 
-import cobra.cli
-import cobra.cli.commands
+import pcobra.cobra.cli
+import pcobra.cobra.cli.commands
 
-from cobra.cli.commands.interactive_cmd import InteractiveCommand, format_user_error
-from cobra.core import ParserError, LexerError
-from core.interpreter import InterpretadorCobra
+from pcobra.cobra.cli.commands.interactive_cmd import InteractiveCommand, format_user_error
+from pcobra.cobra.core import ParserError
+from pcobra.core.errors import LexerError
+from pcobra.core.interpreter import InterpretadorCobra
 
 
 def _args():
@@ -54,7 +55,7 @@ def test_interactive_exit():
     interp = MagicMock()
     cmd = InteractiveCommand(interp)
     with patch('prompt_toolkit.PromptSession.prompt', side_effect=['salir']), \
-         patch('cobra.cli.commands.interactive_cmd.validar_dependencias'):
+         patch('pcobra.cobra.cli.commands.interactive_cmd.validar_dependencias'):
         ret = cmd.run(_args())
     assert ret == 0
 
@@ -62,8 +63,8 @@ def test_interactive_exit():
 def test_interactive_tokens():
     cmd = InteractiveCommand(MagicMock())
     with patch('prompt_toolkit.PromptSession.prompt', side_effect=['tokens', 'salir']), \
-         patch('cobra.cli.commands.interactive_cmd.mostrar_info') as mock_info, \
-         patch('cobra.cli.commands.interactive_cmd.validar_dependencias'):
+         patch('pcobra.cobra.cli.commands.interactive_cmd.mostrar_info') as mock_info, \
+         patch('pcobra.cobra.cli.commands.interactive_cmd.validar_dependencias'):
         cmd.run(_args())
     mock_info.assert_any_call('Tokens generados:')
 
@@ -71,9 +72,9 @@ def test_interactive_tokens():
 def test_interactive_ast():
     cmd = InteractiveCommand(MagicMock())
     with patch('prompt_toolkit.PromptSession.prompt', side_effect=['ast', 'salir']), \
-         patch('cobra.cli.commands.interactive_cmd.mostrar_info') as mock_info, \
-         patch('cobra.cli.commands.interactive_cmd.validar_dependencias'), \
-         patch('cobra.cli.commands.interactive_cmd.InteractiveCommand.procesar_ast', return_value='AST'):
+         patch('pcobra.cobra.cli.commands.interactive_cmd.mostrar_info') as mock_info, \
+         patch('pcobra.cobra.cli.commands.interactive_cmd.validar_dependencias'), \
+         patch('pcobra.cobra.cli.commands.interactive_cmd.InteractiveCommand.procesar_ast', return_value='AST'):
         cmd.run(_args())
     mock_info.assert_any_call('AST generado:')
 
@@ -82,8 +83,8 @@ def test_interactive_keyboard_interrupt():
     interp = MagicMock()
     cmd = InteractiveCommand(interp)
     with patch('prompt_toolkit.PromptSession.prompt', side_effect=KeyboardInterrupt), \
-         patch('cobra.cli.commands.interactive_cmd.mostrar_info') as mock_info, \
-         patch('cobra.cli.commands.interactive_cmd.validar_dependencias'):
+         patch('pcobra.cobra.cli.commands.interactive_cmd.mostrar_info') as mock_info, \
+         patch('pcobra.cobra.cli.commands.interactive_cmd.validar_dependencias'):
         ret = cmd.run(_args())
     assert ret == 0
     mock_info.assert_any_call('Saliendo...')
@@ -93,8 +94,8 @@ def test_interactive_eof_error():
     interp = MagicMock()
     cmd = InteractiveCommand(interp)
     with patch('prompt_toolkit.PromptSession.prompt', side_effect=EOFError), \
-         patch('cobra.cli.commands.interactive_cmd.mostrar_info') as mock_info, \
-         patch('cobra.cli.commands.interactive_cmd.validar_dependencias'):
+         patch('pcobra.cobra.cli.commands.interactive_cmd.mostrar_info') as mock_info, \
+         patch('pcobra.cobra.cli.commands.interactive_cmd.validar_dependencias'):
         ret = cmd.run(_args())
     assert ret == 0
     mock_info.assert_any_call('Saliendo...')
@@ -102,10 +103,10 @@ def test_interactive_eof_error():
 
 def test_interactive_session_persistence():
     inputs = ['var x = 5', 'imprimir(x)', 'salir']
-    with patch('cobra.cli.commands.interactive_cmd.validar_dependencias'), \
+    with patch('pcobra.cobra.cli.commands.interactive_cmd.validar_dependencias'), \
          patch('prompt_toolkit.PromptSession.prompt', side_effect=inputs), \
          patch('sys.stdout', new_callable=StringIO) as mock_stdout, \
-         patch('cobra.cli.commands.interactive_cmd.InteractiveCommand.validar_entrada', return_value=True):
+         patch('pcobra.cobra.cli.commands.interactive_cmd.InteractiveCommand.validar_entrada', return_value=True):
         cmd = InteractiveCommand(InterpretadorCobra())
         cmd.run(_args())
     salida = mock_stdout.getvalue().strip().split('\n')
@@ -117,7 +118,7 @@ def test_interactive_session_persistence_reutiliza_misma_instancia_en_toda_la_se
     cmd = InteractiveCommand(InterpretadorCobra())
     interpretador_sesion = cmd.interpretador
 
-    with patch('cobra.cli.commands.interactive_cmd.validar_dependencias'), \
+    with patch('pcobra.cobra.cli.commands.interactive_cmd.validar_dependencias'), \
          patch('prompt_toolkit.PromptSession.prompt', side_effect=inputs), \
          patch('sys.stdout', new_callable=StringIO) as mock_stdout:
         ret = cmd.run(_args())
@@ -185,9 +186,9 @@ def test_interactive_history_append(tmp_path):
         self.history.append_string('cmd')
         return 'salir'
 
-    with patch('cobra.cli.commands.interactive_cmd.os.path.expanduser', return_value=str(fake_path)), \
+    with patch('pcobra.cobra.cli.commands.interactive_cmd.os.path.expanduser', return_value=str(fake_path)), \
          patch('prompt_toolkit.PromptSession.prompt', new=fake_prompt), \
-         patch('cobra.cli.commands.interactive_cmd.validar_dependencias'):
+         patch('pcobra.cobra.cli.commands.interactive_cmd.validar_dependencias'):
         cmd.run(_args())
     assert fake_path.exists()
 
@@ -218,7 +219,7 @@ def test_interactive_persist_debug_enabled_en_estado_repl():
     args = _args()
     args.debug = True
 
-    with patch('cobra.cli.commands.interactive_cmd.validar_dependencias'), \
+    with patch('pcobra.cobra.cli.commands.interactive_cmd.validar_dependencias'), \
          patch('prompt_toolkit.PromptSession.prompt', side_effect=['salir']):
         ret = cmd.run(args)
 
@@ -230,10 +231,10 @@ def test_interactive_multiline_si_ejecuta_al_cerrar_bloque():
     inputs = ['si verdadero:', 'imprimir "ok"', 'fin', 'salir']
     cmd = InteractiveCommand(MagicMock())
 
-    with patch('cobra.cli.commands.interactive_cmd.validar_dependencias'), \
+    with patch('pcobra.cobra.cli.commands.interactive_cmd.validar_dependencias'), \
          patch('prompt_toolkit.PromptSession.prompt', side_effect=inputs), \
          patch.object(cmd, 'ejecutar_codigo') as mock_ejecutar, \
-         patch('cobra.cli.commands.interactive_cmd.InteractiveCommand.validar_entrada', return_value=True):
+         patch('pcobra.cobra.cli.commands.interactive_cmd.InteractiveCommand.validar_entrada', return_value=True):
         ret = cmd.run(_args())
 
     assert ret == 0
@@ -252,10 +253,10 @@ def test_interactive_multiline_si_usa_prompt_secundario_y_no_parsea_antes():
         prompts.append(prompt_text)
         return next(entradas)
 
-    with patch('cobra.cli.commands.interactive_cmd.validar_dependencias'), \
+    with patch('pcobra.cobra.cli.commands.interactive_cmd.validar_dependencias'), \
          patch('prompt_toolkit.PromptSession.prompt', side_effect=_prompt_side_effect), \
          patch.object(cmd, 'ejecutar_codigo') as mock_ejecutar, \
-         patch('cobra.cli.commands.interactive_cmd.InteractiveCommand.validar_entrada', return_value=True):
+         patch('pcobra.cobra.cli.commands.interactive_cmd.InteractiveCommand.validar_entrada', return_value=True):
         cmd.run(_args())
 
     assert prompts[:3] == ['>>> ', '... ', '... ']
@@ -266,10 +267,10 @@ def test_interactive_multiline_bloque_con_multiples_sentencias_se_ejecuta_igual(
     inputs = ['si verdadero:', 'var x = 1', 'imprimir(x)', 'fin', 'salir']
     cmd = InteractiveCommand(MagicMock())
 
-    with patch('cobra.cli.commands.interactive_cmd.validar_dependencias'), \
+    with patch('pcobra.cobra.cli.commands.interactive_cmd.validar_dependencias'), \
          patch('prompt_toolkit.PromptSession.prompt', side_effect=inputs), \
          patch.object(cmd, 'ejecutar_codigo') as mock_ejecutar, \
-         patch('cobra.cli.commands.interactive_cmd.InteractiveCommand.validar_entrada', return_value=True):
+         patch('pcobra.cobra.cli.commands.interactive_cmd.InteractiveCommand.validar_entrada', return_value=True):
         ret = cmd.run(_args())
 
     assert ret == 0
@@ -281,7 +282,7 @@ def test_interactive_multiline_bloque_con_multiples_sentencias_se_ejecuta_igual(
 
 def test_interactive_rechaza_fin_sin_bloque_abierto():
     cmd = InteractiveCommand(MagicMock())
-    with patch('cobra.cli.commands.interactive_cmd.validar_dependencias'), \
+    with patch('pcobra.cobra.cli.commands.interactive_cmd.validar_dependencias'), \
          patch('prompt_toolkit.PromptSession.prompt', side_effect=['fin', 'salir']), \
          patch.object(cmd, 'ejecutar_codigo') as mock_ejecutar, \
          patch('sys.stdout', new_callable=StringIO) as mock_stdout:
@@ -294,11 +295,11 @@ def test_interactive_rechaza_fin_sin_bloque_abierto():
 
 def test_interactive_rechaza_bloque_vacio():
     cmd = InteractiveCommand(MagicMock())
-    with patch('cobra.cli.commands.interactive_cmd.validar_dependencias'), \
+    with patch('pcobra.cobra.cli.commands.interactive_cmd.validar_dependencias'), \
          patch('prompt_toolkit.PromptSession.prompt', side_effect=['si verdadero:', 'fin', 'salir']), \
          patch.object(cmd, 'ejecutar_codigo') as mock_ejecutar, \
          patch('sys.stdout', new_callable=StringIO) as mock_stdout, \
-         patch('cobra.cli.commands.interactive_cmd.InteractiveCommand.validar_entrada', return_value=True):
+         patch('pcobra.cobra.cli.commands.interactive_cmd.InteractiveCommand.validar_entrada', return_value=True):
         ret = cmd.run(_args())
 
     assert ret == 0
@@ -315,7 +316,7 @@ def test_interactive_lineas_blancas_en_bloque_se_ignoran():
         prompts.append(prompt_text)
         return next(entradas)
 
-    with patch('cobra.cli.commands.interactive_cmd.validar_dependencias'), \
+    with patch('pcobra.cobra.cli.commands.interactive_cmd.validar_dependencias'), \
          patch('prompt_toolkit.PromptSession.prompt', side_effect=_prompt_side_effect), \
          patch.object(cmd, 'ejecutar_codigo') as mock_ejecutar:
         ret = cmd.run(_args())
@@ -330,12 +331,12 @@ def test_interactive_comando_especial_no_interfiere_con_fin_y_lineas_blanco_en_b
     cmd = InteractiveCommand(MagicMock())
     entradas = ['si verdadero:', 'tokens', '', 'imprimir "ok"', 'fin', 'tokens', 'salir']
 
-    with patch('cobra.cli.commands.interactive_cmd.validar_dependencias'), \
+    with patch('pcobra.cobra.cli.commands.interactive_cmd.validar_dependencias'), \
          patch('prompt_toolkit.PromptSession.prompt', side_effect=entradas), \
          patch.object(cmd, 'ejecutar_codigo') as mock_ejecutar, \
          patch.object(cmd, '_procesar_comando_especial', wraps=cmd._procesar_comando_especial) as mock_comando, \
-         patch('cobra.cli.commands.interactive_cmd.InteractiveCommand.validar_entrada', return_value=True), \
-         patch('cobra.cli.commands.interactive_cmd.mostrar_info'):
+         patch('pcobra.cobra.cli.commands.interactive_cmd.InteractiveCommand.validar_entrada', return_value=True), \
+         patch('pcobra.cobra.cli.commands.interactive_cmd.mostrar_info'):
         ret = cmd.run(_args())
 
     assert ret == 0
@@ -362,7 +363,7 @@ def test_repl_basico_comparte_validacion_fin_sin_bloque():
 
 def test_interactive_rechaza_exceso_lineas_blanco_consecutivas_en_bloque():
     cmd = InteractiveCommand(MagicMock())
-    with patch('cobra.cli.commands.interactive_cmd.validar_dependencias'), \
+    with patch('pcobra.cobra.cli.commands.interactive_cmd.validar_dependencias'), \
          patch('prompt_toolkit.PromptSession.prompt', side_effect=['si verdadero:', '', '', '', 'fin', 'salir']), \
          patch.object(cmd, 'ejecutar_codigo') as mock_ejecutar, \
          patch('sys.stdout', new_callable=StringIO) as mock_stdout:
@@ -691,7 +692,7 @@ def test_parsear_y_ejecutar_codigo_repl_restaurar_interpretador_de_sesion():
     cmd._interpretador_sesion = cmd.interpretador
     cmd.interpretador = MagicMock(name="interp_temporal")
 
-    with patch('cobra.cli.commands.interactive_cmd.prevalidar_y_parsear_codigo'), \
+    with patch('pcobra.cobra.cli.commands.interactive_cmd.prevalidar_y_parsear_codigo'), \
          patch.object(cmd, 'ejecutar_codigo') as mock_ejecutar:
         cmd.parsear_y_ejecutar_codigo_repl("imprimir(1)")
 
@@ -742,7 +743,7 @@ def test_ejecutar_en_sandbox_arma_script_con_captura_y_booleanos():
     )
 
     with patch(
-        "cobra.cli.commands.interactive_cmd.resolver_interpretador_cls",
+        "pcobra.cobra.cli.commands.interactive_cmd.resolver_interpretador_cls",
         return_value=interpretador_cls,
     ) as mock_resolver, patch.object(
         cmd,
@@ -755,13 +756,13 @@ def test_ejecutar_en_sandbox_arma_script_con_captura_y_booleanos():
         cmd,
         "_configurar_restriccion_usar_repl",
     ) as mock_configurar_usar, patch(
-        "cobra.cli.commands.interactive_cmd.prevalidar_y_parsear_codigo",
+        "pcobra.cobra.cli.commands.interactive_cmd.prevalidar_y_parsear_codigo",
         return_value=[],
     ) as mock_prevalidar, patch(
-        "cobra.cli.commands.interactive_cmd.ejecutar_en_sandbox",
+        "pcobra.cobra.cli.commands.interactive_cmd.ejecutar_en_sandbox",
         return_value="ok",
     ) as mock_sandbox, patch(
-        "cobra.cli.commands.interactive_cmd.mostrar_info",
+        "pcobra.cobra.cli.commands.interactive_cmd.mostrar_info",
     ) as mock_info:
         cmd._ejecutar_en_sandbox("imprimir(1)")
 
@@ -805,13 +806,13 @@ def test_ejecutar_en_sandbox_invoca_pipeline_explicito_solo_para_setup():
         "pcobra.cobra.cli.execution_pipeline.ejecutar_pipeline_explicito",
         return_value=(setup, SimpleNamespace()),
     ) as mock_pipeline, patch(
-        "cobra.cli.commands.interactive_cmd.prevalidar_y_parsear_codigo",
+        "pcobra.cobra.cli.commands.interactive_cmd.prevalidar_y_parsear_codigo",
         return_value=[],
     ) as mock_prevalidar, patch(
-        "cobra.cli.commands.interactive_cmd.construir_script_sandbox_canonico",
+        "pcobra.cobra.cli.commands.interactive_cmd.construir_script_sandbox_canonico",
         return_value="SCRIPT",
     ) as mock_script, patch(
-        "cobra.cli.commands.interactive_cmd.ejecutar_en_sandbox",
+        "pcobra.cobra.cli.commands.interactive_cmd.ejecutar_en_sandbox",
         return_value=None,
     ) as mock_sandbox:
         cmd._ejecutar_en_sandbox("imprimir(7)")
@@ -977,7 +978,7 @@ def test_run_repl_loop_reporta_error_sandbox_una_sola_vez():
 
     with patch.object(cmd, "validar_entrada", return_value=True), \
          patch.object(cmd, "_ejecutar_en_sandbox", side_effect=RuntimeError("Error general: fallo controlado")), \
-         patch("cobra.cli.commands.interactive_cmd.mostrar_error") as mock_error:
+         patch("pcobra.cobra.cli.commands.interactive_cmd.mostrar_error") as mock_error:
         cmd._run_repl_loop(
             args=_args(),
             validador=None,
@@ -1031,7 +1032,7 @@ def test_run_repl_loop_acumula_buffer_hasta_fin_y_parsea_una_sola_vez():
         "validar_entrada",
         return_value=True,
     ), patch(
-        "cobra.cli.commands.interactive_cmd.prevalidar_y_parsear_codigo",
+        "pcobra.cobra.cli.commands.interactive_cmd.prevalidar_y_parsear_codigo",
         side_effect=fake_parse,
     ), patch.object(
         cmd,
@@ -1080,7 +1081,7 @@ def test_run_repl_loop_bloque_si_parsea_buffer_completo_y_ejecuta_al_cerrar():
         "validar_entrada",
         return_value=True,
     ), patch(
-        "cobra.cli.commands.interactive_cmd.prevalidar_y_parsear_codigo",
+        "pcobra.cobra.cli.commands.interactive_cmd.prevalidar_y_parsear_codigo",
         side_effect=fake_parse,
     ), patch.object(
         cmd,
@@ -1149,7 +1150,7 @@ def test_run_repl_loop_error_sintactico_real_limpia_buffer_y_permite_recuperacio
         "validar_entrada",
         return_value=True,
     ), patch(
-        "cobra.cli.commands.interactive_cmd.prevalidar_y_parsear_codigo",
+        "pcobra.cobra.cli.commands.interactive_cmd.prevalidar_y_parsear_codigo",
         side_effect=_fake_parse,
     ), patch.object(
         cmd,
@@ -1200,7 +1201,7 @@ def test_ejecutar_codigo_restaurar_modo_previo_tras_ejecucion_repl():
     ast_dummy = [_NodoDummy()]
 
     with patch(
-        "cobra.cli.commands.interactive_cmd.prevalidar_y_parsear_codigo",
+        "pcobra.cobra.cli.commands.interactive_cmd.prevalidar_y_parsear_codigo",
         return_value=ast_dummy,
     ), patch.object(cmd, "_imprimir_resultado_repl"):
         cmd.ejecutar_codigo("1 + 6")
