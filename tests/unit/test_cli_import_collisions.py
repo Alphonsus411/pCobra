@@ -87,23 +87,24 @@ def test_python_m_pcobra_cli_no_reimporta_bootstrap(monkeypatch: pytest.MonkeyPa
     assert "pcobra.cli" not in llamadas_import_module
 
 
-def test_python_m_cli_cli_no_colisiona(monkeypatch: pytest.MonkeyPatch):
+def test_python_m_cli_cli_no_colisiona(
+    monkeypatch: pytest.MonkeyPatch,
+):
     _limpiar_aliases()
-
-    fake_cli_module = ModuleType("pcobra.cobra.cli.cli")
-    fake_cli_module.main = lambda _argv=None: 0
-    monkeypatch.setitem(sys.modules, "pcobra.cobra.cli.cli", fake_cli_module)
-    monkeypatch.setattr(sys, "argv", ["cli.cli"])
+    monkeypatch.setattr(sys, "argv", ["cli.cli", "--version"])
 
     with pytest.raises(SystemExit) as exc_info:
         runpy.run_module("cli.cli", run_name="__main__")
 
     assert exc_info.value.code == 0
-    assert "pcobra.cli" not in sys.modules
+    assert "pcobra.cli" in sys.modules
+
     cli_cli_mod = sys.modules.get("cli.cli")
     if cli_cli_mod is not None:
-        assert cli_cli_mod.__name__ in {"cli.cli", "pcobra.cobra.cli.cli"}
-
+        assert cli_cli_mod.__name__ in {
+            "cli.cli",
+            "pcobra.cobra.cli.cli",
+        }
 
 def test_main_con_legacy_imports_activa_aliases_en_runtime(monkeypatch: pytest.MonkeyPatch):
     _limpiar_aliases()

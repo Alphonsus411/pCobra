@@ -1018,6 +1018,7 @@ class InteractiveCommand(BaseCommand):
         estado["debug_enabled"] = self._debug_mode
         estado["fase"] = "analisis"
         self._estado_repl = estado
+        estado = self._estado_repl
         self._interpretador_sesion = self.interpretador
         while True:
             try:
@@ -1065,22 +1066,25 @@ class InteractiveCommand(BaseCommand):
                 continue
 
             try:
-                estado["buffer_lineas"].append(linea)
-                codigo = "\n".join(estado["buffer_lineas"])
+                codigo = self._actualizar_buffer_y_obtener_codigo_listo(
+                    estado["buffer_lineas"],
+                    linea,
+                )
+                if codigo is None:
+                    continue
+
                 estado["fase"] = "analisis"
                 ast = self.procesar_ast(codigo, validador)
                 estado["lineas_blanco_consecutivas"] = 0
             except (LexerError, ParserError) as err:
                 if self._es_error_de_bloque_incompleto(err):
                     continue
-                estado["buffer_lineas"].clear()
-                estado["lineas_blanco_consecutivas"] = 0
+                self._limpiar_estado_repl(estado)
                 categoria = self._clasificar_error_repl(err)
                 self._log_error(categoria, err)
                 continue
             except Exception as err:  # pragma: no cover - ruta unificada de errores
-                estado["buffer_lineas"].clear()
-                estado["lineas_blanco_consecutivas"] = 0
+                self._limpiar_estado_repl(estado)
                 categoria = self._clasificar_error_repl(err)
                 self._log_error(categoria, err)
                 continue
@@ -1102,10 +1106,10 @@ class InteractiveCommand(BaseCommand):
                     # REPL = intérprete incremental; pipeline explícito solo para sandbox/setup.
                     # Rama normal: AST directo con entorno persistente.
                     self.ejecutar_codigo(codigo, validador, ast_preparseado=ast)
-                estado["buffer_lineas"].clear()
+                self._limpiar_estado_repl(estado)
                 estado["fase"] = "analisis"
             except Exception as err:  # pragma: no cover - ruta unificada de errores
-                estado["buffer_lineas"].clear()
+                self._limpiar_estado_repl(estado)
                 estado["fase"] = "analisis"
                 categoria = self._clasificar_error_repl(err)
                 self._log_error(categoria, err)
@@ -1235,7 +1239,6 @@ class InteractiveCommand(BaseCommand):
             raise ParserError(self.ERROR_BLOQUE_VACIO)
 
         codigo = "\n".join(buffer_lineas)
-        buffer_lineas.clear()
         return codigo
 
     def _procesar_comando_especial(self, linea: str, validador: Optional[Any]) -> bool:

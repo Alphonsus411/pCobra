@@ -1,284 +1,177 @@
 {
-  "metadata": {
-    "documento": "Resumen de continuidad para otra conversación",
-    "proyecto": "pCobra",
-    "usuario": "Adolfo",
-    "asistente": "Bella",
-    "idioma": "español",
-    "estado": "trabajo en progreso",
-    "objetivo_inmediato": "Cerrar la suite completa de pytest y revisar globalmente el diff antes de preparar un commit"
-  },
-  "entorno": {
-    "sistema": "Windows",
-    "shell": "Git Bash / MINGW64",
-    "repositorio": "C:/Users/Adolfo/PycharmProjects/pCobra",
+  "proyecto": {
+    "nombre": "pCobra",
     "rama": "fix/contrato-extensiones-cobra",
-    "python": "3.11.9",
-    "pytest": "8.4.2",
-    "entorno_virtual": ".venv",
-    "ejecutable_python": ".venv/Scripts/python.exe"
-  },
-  "restricciones_de_trabajo": [
-    "No modificar Lexer ni Parser salvo evidencia inequívoca y aprobación explícita.",
-    "Trabajar incrementalmente y ejecutar pruebas focalizadas antes de la suite completa.",
-    "No usar el comando shell `exit`.",
-    "Los backends públicos oficiales son únicamente python, javascript y rust.",
-    "La extensión de fuente Cobra es `.cobra`.",
-    "La extensión `.co` queda reservada para artefactos de paquete.",
-    "No reintroducir imports legacy o dependencias paralelas solo para satisfacer pruebas antiguas.",
-    "No crear commits hasta revisar el diff global y confirmar que no hay archivos accidentales."
-  ],
-  "resultado_actual_suite_completa": {
-    "comando": "python -m pytest -q > pytest-full.log 2>&1",
-    "exit_code": 1,
-    "passed": 1593,
-    "skipped": 30,
-    "failed": 5,
-    "warnings": 9,
-    "duracion_segundos": 93.85,
-    "ultimo_archivo_con_fallos": "tests/unit/test_cli_format_flag.py"
-  },
-  "fallos_actuales": [
-    {
-      "test": "test_execute_command_with_format_invokes_formatter",
-      "error": "AttributeError: module 'pcobra.cobra.cli.commands.execute_cmd' has no attribute 'module_map'",
-      "diagnostico_provisional": "La prueba intenta parchear una superficie antigua eliminada durante la consolidación del registro de transpiladores."
-    },
-    {
-      "test": "test_profile_command_with_format_invokes_formatter",
-      "error": "AttributeError: ExecuteCommand no tiene el atributo '_formatear_codigo'",
-      "diagnostico_provisional": "El formateo parece haberse movido a otro helper o servicio canónico; la prueba conserva un punto de monkeypatch obsoleto."
-    },
-    {
-      "test": "test_execute_command_debug_flag_sets_debug_logger",
-      "error": "AttributeError al resolver pcobra.cobra.cli.commands.execute_cmd.module_map",
-      "diagnostico_provisional": "Ruta de mock desactualizada."
-    },
-    {
-      "test": "test_execute_command_verbose_flag_sets_debug_logger",
-      "error": "AttributeError al resolver pcobra.cobra.cli.commands.execute_cmd.module_map",
-      "diagnostico_provisional": "Ruta de mock desactualizada."
-    },
-    {
-      "test": "test_execute_command_depurar_legacy_still_supported",
-      "error": "AttributeError al resolver pcobra.cobra.cli.commands.execute_cmd.module_map",
-      "diagnostico_provisional": "Ruta de mock desactualizada."
+    "entorno": {
+      "sistema": "Windows con Git Bash",
+      "python": "3.11.9",
+      "pytest": "8.4.2",
+      "entorno_virtual": ".venv"
     }
-  ],
-  "siguiente_paso_recomendado": {
-    "objetivo": "Identificar las superficies canónicas actuales para el mapa de módulos y el formateo antes de modificar las pruebas.",
-    "comandos": [
-      "nl -ba tests/unit/test_cli_format_flag.py | sed -n '1,240p'",
-      "nl -ba src/pcobra/cobra/cli/commands/execute_cmd.py | sed -n '1,380p'",
-      "nl -ba src/pcobra/cobra/cli/commands/profile_cmd.py | sed -n '1,240p'",
-      "git grep -n -e '_formatear_codigo' -e 'formatear_codigo' -e 'formatear' -e 'get_toml_map' -e 'cli_toml_map' -e 'module_map' -e 'transpiler_registry' -- src/pcobra/cobra/cli src/pcobra/cobra/build tests/unit/test_cli_format_flag.py",
-      "python -m pytest -q tests/unit/test_cli_format_flag.py -vv --tb=short"
-    ],
-    "criterio": "Actualizar los mocks hacia las dependencias canónicas reales. No reintroducir execute_cmd.module_map ni ExecuteCommand._formatear_codigo como aliases de compatibilidad sin una razón arquitectónica."
   },
-  "cambios_realizados": [
-    {
-      "area": "Contrato de extensiones",
-      "archivos": [
-        "tests/data/transpiler_outputs.csv",
-        "tests/integration/test_transpilador_syntax.py"
-      ],
-      "cambio": "Sustitución de usos de `.co` como fuente por `.cobra`."
+  "objetivo_de_la_sesion": "Alinear pruebas obsoletas con la arquitectura actual de la CLI y del REPL sin reintroducir superficies legacy ni modificar Lexer o Parser.",
+  "estado_inicial": {
+    "suite_completa": {
+      "passed": 1593,
+      "skipped": 30,
+      "failed": 5
     },
-    {
-      "area": "Imports canónicos",
-      "archivos": [
-        "tests/integration/test_cross_backend_output.py"
-      ],
-      "cambio": "Migración de imports legacy como core.*, cobra.core.* y cobra.* hacia pcobra.core.* y pcobra.cobra.*."
+    "fallos_iniciales": "Cinco pruebas obsoletas concentradas inicialmente en tests/unit/test_cli_format_flag.py."
+  },
+  "decisiones_arquitectonicas_confirmadas": {
+    "execute_command": "Construye un RunRequest y delega en RunService.",
+    "profile_command": "Usa directamente format_code_with_black como superficie canónica.",
+    "repl": {
+      "modelo": "Intérprete incremental con estado persistente por sesión.",
+      "ejecucion": "Nodo a nodo mediante interpretador.ejecutar_nodo.",
+      "parseo_multilinea": "El bloque se acumula hasta fin, se parsea una sola vez y el AST se reutiliza mediante ast_preparseado.",
+      "pipeline_batch": "No debe usarse en la ruta normal del REPL.",
+      "sandbox": "Puede usar un pipeline explícito únicamente para preparar el entorno aislado.",
+      "interprete_de_sesion": "El setup temporal del sandbox no reemplaza el intérprete activo del REPL."
     },
-    {
-      "area": "Wrapper CLI en Windows",
-      "archivos": [
-        "tests/integration/test_cobra_wrapper.py"
-      ],
-      "cambio": "Uso correcto de Scripts/python.exe, PATH basado en el directorio del intérprete y ejecución del wrapper mediante Python en Windows."
+    "extensiones": {
+      "codigo_fuente": ".cobra",
+      "artefactos_de_paquete": ".co"
     },
-    {
-      "area": "Hashes de fuentes",
-      "archivos": [
-        "tests/integration/test_usar_runtime_contract.py"
-      ],
-      "cambio": "Normalización CRLF a LF antes de comprobar hashes."
-    },
-    {
-      "area": "Contrato de errores del Parser",
-      "archivos": [
-        "tests/test_parser.py"
-      ],
-      "cambio": "La prueba valida la excepción ParserError y su mensaje, en lugar de exigir que parser.errores se rellene."
-    },
-    {
-      "area": "Subprocesos UTF-8",
-      "archivos": [
-        "tests/test_cli_entrypoint_imports.py"
-      ],
-      "cambio": "Decodificación explícita con encoding='utf-8' y errors='strict'."
-    },
-    {
-      "area": "Dependencia opcional Dask",
-      "archivos": [
-        "tests/unit/test_big_data_extra.py"
-      ],
-      "cambio": "Uso de pytest.importorskip para el extra opcional pcobra[big-data]."
-    },
-    {
-      "area": "Auditoría de rollout",
-      "archivos": [
-        "scripts/ci/audit_feature_rollout.py"
-      ],
-      "cambio": "Extensión textual `.cobra`, ejemplo minimal.cobra y backends oficiales reducidos a python, javascript y rust."
-    },
-    {
-      "area": "Rutas portables en linters",
-      "archivos": [
-        "scripts/ci/lint_no_cross_command_imports.py",
-        "scripts/ci/lint_no_legacy_bindings_imports.py",
-        "scripts/ci/lint_no_legacy_cobra_core_imports.py",
-        "scripts/ci/lint_no_parallel_transpilers_registry.py",
-        "scripts/ci/lint_public_commands_internal_backends.py",
-        "scripts/ci/lint_public_no_direct_transpiler_imports.py",
-        "scripts/ci/validate_public_backend_literals.py"
-      ],
-      "cambio": "Los diagnósticos usan Path.as_posix(). Cuando existen allowlists de objetos Path, se conserva rel_path para comparar y se crea rel como cadena POSIX solo para mensajes."
-    },
-    {
-      "area": "Guards de linters y codificación",
-      "archivos": [
-        "tests/unit/test_ci_lint_no_legacy_bindings_imports_guard.py",
-        "tests/unit/test_ciint_no_legacy_bindings_imports_guard.py",
-        "tests/unit/test_ci_lint_no_legacy_cobra_core_imports_guard.py"
-      ],
-      "cambio": "Control explícito de UTF-8 en el proceso hijo y en la captura del padre."
-    },
-    {
-      "area": "Fronteras entre pcobra.cobra y pcobra.core",
-      "archivos": [
-        "src/pcobra/cobra/core/usar_symbol_policy.py",
-        "src/pcobra/cobra/transpilers/transpiler/python_nodes/importar.py",
-        "src/pcobra/cobra/usar_loader.py"
-      ],
-      "cambio": "Migración de imports absolutos prohibidos hacia imports relativos equivalentes o fachadas canónicas bajo pcobra.cobra."
-    },
-    {
-      "area": "Pruebas UTF-8 en Windows",
-      "archivos": [
-        "tests/unit/test_cli_bootstrap_utf8.py",
-        "tests/unit/test_cli_configurar_entorno.py"
-      ],
-      "cambio": "Normalización de CRLF a LF antes de comprobar bytes UTF-8. La prueba valida codificación, no convención de salto de línea del sistema."
-    },
-    {
-      "area": "Empaquetado con PyInstaller",
-      "archivos": [
-        "src/pcobra/cobra/cli/commands/empaquetar_cmd.py"
-      ],
-      "cambio": "Separación entre nombre lógico de PyInstaller y nombre físico del ejecutable. PyInstaller recibe 'cobra'; en Windows se comprueba 'cobra.exe'. Se sustituyó platform.system() por os.name para evitar que mocks de subprocess.run afecten la detección de plataforma."
-    },
-    {
-      "area": "Fuga de caché de configuración",
-      "archivos": [
-        "tests/unit/test_ast_limit.py"
-      ],
-      "cambio": "cargar_configuracion.cache_clear() se ejecuta también en finally. La prueba dejaba cacheado limite_nodos=1 después de que monkeypatch restaurara COBRA_CONFIG."
-    }
-  ],
-  "pruebas_focalizadas_confirmadas": [
-    {
-      "grupo": "Lint entre comandos",
-      "resultado": "15 passed"
-    },
-    {
-      "grupo": "Linters legacy bindings y cobra/core",
-      "resultado": "8 passed"
-    },
-    {
-      "grupo": "Importación, usar y transpilación",
-      "resultado": "51 passed"
-    },
-    {
-      "grupo": "Registro paralelo e INTERNAL_BACKENDS",
-      "resultado": "9 passed"
-    },
-    {
-      "grupo": "Linters públicos y UTF-8",
-      "resultado": "19 passed"
-    },
-    {
-      "grupo": "Empaquetado CLI",
-      "resultado": "4 passed"
-    },
-    {
-      "grupo": "Límite AST seguido del contrato de ejecución",
-      "resultado": "28 passed"
-    },
-    {
-      "grupo": "Contrato de ejecución aislado",
-      "resultado": "27 passed"
-    }
-  ],
-  "investigacion_fuga_ast_limit": {
-    "sintoma": "Cinco casos de paridad script frente a REPL fallaban solo dentro de la suite completa.",
-    "resultado_aislado": "tests/unit/test_cli_execution_pipeline_contract.py pasaba 27/27.",
-    "metodo": "Bisección por sufijos acumulativos de archivos anteriores usando pytest y JUnit XML.",
-    "archivo_contaminante": "tests/unit/test_ast_limit.py",
-    "causa": "La prueba limpiaba cargar_configuracion antes de cargar una configuración temporal con limite_nodos=1, pero no después. COBRA_CONFIG se restauraba mediante monkeypatch, mientras la caché conservaba el límite restrictivo.",
-    "solucion": "Añadir un bloque try/finally y ejecutar cargar_configuracion.cache_clear() en finally.",
-    "verificacion": [
-      "test_ast_limit.py más el caso de paridad: 2 passed",
-      "test_ast_limit.py más todo test_cli_execution_pipeline_contract.py: 28 passed"
+    "backends_publicos_oficiales": [
+      "python",
+      "javascript",
+      "rust"
     ]
   },
-  "advertencias_no_bloqueantes": [
-    "Hypothesis avisa que `.hypothesis` se omite porque norecursedirs reemplaza los ignores por defecto.",
-    "Pytest no recoge TestCommandV2 porque define __init__.",
-    "RuntimeWarning por colisión del símbolo es_finito durante usar.",
-    "DeprecationWarning de imports legacy cobra/core/bindings.",
-    "DeprecationWarning de COBRA_AST_CACHE frente a COBRA_DB_PATH.",
-    "RuntimeWarning de runpy para pcobra.__main__ ya presente en sys.modules."
+  "restricciones_mantenidas": [
+    "No modificar Lexer ni Parser sin evidencia inequívoca y aprobación explícita.",
+    "No reintroducir imports, alias o dependencias legacy para satisfacer pruebas antiguas.",
+    "Trabajar de forma incremental con pruebas focalizadas antes de ejecutar la suite completa.",
+    "No realizar commit hasta revisar el diff global y excluir archivos accidentales."
   ],
-  "archivos_temporales_generados": [
-    {
-      "ruta": "pytest-full.log",
-      "accion_antes_de_commit": "Revisar y normalmente eliminar o dejar sin seguimiento."
+  "cambios_en_pruebas": {
+    "tests/unit/test_cli_format_flag.py": {
+      "accion": "Reescrito para reflejar la arquitectura actual.",
+      "resultado_focalizado": "6 passed"
     },
-    {
-      "ruta": "pytest-collected.txt",
-      "accion_antes_de_commit": "Eliminar o dejar sin seguimiento."
+    "tests/unit/test_cli_import_collisions.py": {
+      "accion": "Actualizado para invocar la CLI canónica y comprobar el registro correcto."
+    },
+    "tests/unit/test_cli_imports_alias.py": {
+      "accion": "Sustituida la comparación de __file__ por el contrato de shim y sys.modules."
+    },
+    "tests/unit/test_cli_interactive_cmd.py": {
+      "accion": "Actualización amplia de pruebas antiguas del REPL, fallback, sandbox y parseo multilinea.",
+      "resultado_actual": {
+        "passed": 48,
+        "failed": 0,
+        "warnings": 1
+      },
+      "actualizaciones_principales": [
+        "Los tests booleanos y de valores usan ejecutar_nodo y ast_preparseado.",
+        "Los tests de fallback parchean prevalidar_y_parsear_codigo y _ejecutar_ast_en_repl en lugar de ejecutar_pipeline_explicito.",
+        "Los tests de parsear_y_ejecutar_codigo_repl inyectan prevalidar_fn explícitamente.",
+        "Los tests de sandbox usan construir_script_sandbox_canonico y respetan los nombres internos actuales cobra_interp, cobra_ast y cobra_resultado.",
+        "Los tests de sandbox preservan el intérprete original de sesión.",
+        "Los tests multilinea verifican acumulación hasta fin, parseo único y reutilización del AST.",
+        "El test de recuperación sintáctica ahora cierra el bloque con fin, valida la limpieza del buffer y confirma la ejecución posterior de una entrada válida."
+      ]
     }
-  ],
-  "comando_suite_completa": [
-    "python -m pytest -q > pytest-full.log 2>&1",
-    "pytest_code=$?",
-    "echo \"pytest exit code: $pytest_code\"",
-    "tail -n 260 pytest-full.log"
-  ],
-  "revision_final_pendiente": {
-    "comandos": [
-      "git status --short",
-      "git diff --check",
-      "git diff --stat",
-      "git diff --name-status",
-      "git diff HEAD",
-      "git ls-files --others --exclude-standard"
-    ],
-    "objetivos": [
-      "Confirmar que no hay cambios accidentales.",
-      "Confirmar que pytest-full.log y pytest-collected.txt no se incluirán.",
-      "Revisar staged y unstaged conjuntamente.",
-      "Ejecutar una última suite completa después de cerrar test_cli_format_flag.py.",
-      "Preparar el commit solo después de una suite verde."
+  },
+  "cambios_en_produccion": {
+    "archivo": "src/pcobra/cobra/cli/commands/interactive_cmd.py",
+    "motivo": "El bucle principal del REPL estaba evitando helpers existentes que implementaban contratos declarados de bloques y líneas en blanco.",
+    "cambios": [
+      "Después de asignar self._estado_repl, se reutiliza la copia efectiva mediante estado = self._estado_repl.",
+      "El bucle usa _actualizar_buffer_y_obtener_codigo_listo para gestionar acumulación y cierre de bloques.",
+      "El buffer no se limpia antes del despacho del AST.",
+      "La limpieza del estado se realiza mediante _limpiar_estado_repl tras ejecución o errores definitivos.",
+      "Se preservan los errores de fin sin bloque, bloque vacío y exceso de líneas en blanco consecutivas."
     ]
   },
-  "notas_de_continuidad": [
-    "No se ha demostrado que la caché global _CADENA_DEFECTO de validadores sea la causa de los fallos actuales. No modificarla sin nueva evidencia.",
-    "Los cinco fallos actuales parecen pruebas con mocks obsoletos, pero debe confirmarse inspeccionando execute_cmd.py, profile_cmd.py y los helpers canónicos de formato y registro.",
-    "No restaurar APIs eliminadas solamente para satisfacer los mocks antiguos.",
-    "El progreso ha sido incremental y cada bloque corregido cuenta con pruebas focalizadas verdes."
+  "fallos_diagnosticados_y_resueltos": [
+    {
+      "problema": "Congelamientos en validar_ast_seguro.",
+      "causa": "MagicMock y AST sintéticos incompatibles con la validación segura.",
+      "solucion": "Desactivar _seguro_repl en tests unitarios sintéticos y usar ast_preparseado."
+    },
+    {
+      "problema": "Uso de ejecutar_ast en pruebas antiguas.",
+      "causa": "El REPL actual ejecuta nodo a nodo.",
+      "solucion": "Usar ejecutar_nodo y verificar llamadas por nodo."
+    },
+    {
+      "problema": "Mocks de ejecutar_pipeline_explicito inexistentes.",
+      "causa": "La superficie batch fue retirada de la ruta normal del REPL.",
+      "solucion": "Parchear las superficies internas canónicas del REPL."
+    },
+    {
+      "problema": "Mocks de Parser inexistentes en interactive_cmd.",
+      "causa": "El parseo se centralizó en prevalidar_y_parsear_codigo.",
+      "solucion": "Actualizar los tests de sandbox sin reintroducir Parser."
+    },
+    {
+      "problema": "Carga real accidental de extra_repl.py.",
+      "causa": "Un test ejecutaba el pipeline real de setup del sandbox.",
+      "solucion": "Aislar _ejecutar_pipeline_explicito_solo_setup_sandbox con un setup controlado."
+    },
+    {
+      "problema": "Expectativas de parseo progresivo de bloques.",
+      "causa": "Los tests describían un contrato anterior.",
+      "solucion": "Verificar acumulación hasta fin, parseo único y uso de ast_preparseado."
+    }
+  ],
+  "advertencias": {
+    "hypothesis": "La advertencia indica que norecursedirs reemplaza los ignores por defecto y se omite la colección de .hypothesis.",
+    "impacto_actual": "No afecta al resultado funcional de las pruebas ejecutadas."
+  },
+  "archivos_probablemente_modificados": [
+    "src/pcobra/cobra/cli/commands/interactive_cmd.py",
+    "tests/unit/test_cli_format_flag.py",
+    "tests/unit/test_cli_import_collisions.py",
+    "tests/unit/test_cli_imports_alias.py",
+    "tests/unit/test_cli_interactive_cmd.py"
+  ],
+  "archivos_temporales_o_de_diagnostico_a_revisar": [
+    "pytest-full.log",
+    "pytest-collected.txt",
+    "diagnostico-cli-restante.txt",
+    "diagnostico-history.txt",
+    "diagnostico-bloques-repl.txt",
+    "diagnostico-fallback-repl.txt",
+    "diagnostico-sandbox-repl.txt",
+    "diagnostico-recuperacion-repl.txt"
+  ],
+  "estado_actual": {
+    "test_cli_interactive_cmd": "48 passed, 1 warning",
+    "lexer_parser_modificados": false,
+    "commit_realizado": false,
+    "suite_completa_posterior_a_los_cambios": false
+  },
+  "siguientes_validaciones_recomendadas": [
+    {
+      "paso": 1,
+      "descripcion": "Ejecutar los contratos externos e integración del REPL.",
+      "comando": "python -m pytest -q tests/unit/test_cli_interactive_cmd.py tests/cli/test_repl_error_recovery_contract.py tests/cli/test_repl_script_parity_contract.py tests/integration/test_run_repl_equivalence.py -vv --tb=short"
+    },
+    {
+      "paso": 2,
+      "descripcion": "Ejecutar conjuntamente los cuatro archivos unitarios corregidos.",
+      "comando": "python -m pytest -q tests/unit/test_cli_format_flag.py tests/unit/test_cli_import_collisions.py tests/unit/test_cli_imports_alias.py tests/unit/test_cli_interactive_cmd.py -vv --tb=short"
+    },
+    {
+      "paso": 3,
+      "descripcion": "Revisar integridad del diff y archivos accidentales.",
+      "comandos": [
+        "git diff --check",
+        "git status --short"
+      ]
+    },
+    {
+      "paso": 4,
+      "descripcion": "Ejecutar la suite completa y conservar el resultado.",
+      "comandos": [
+        "python -m pytest -q > pytest-full.log 2>&1",
+        "pytest_code=$?",
+        "echo \"pytest exit code: $pytest_code\"",
+        "tail -n 260 pytest-full.log"
+      ]
+    }
   ]
 }

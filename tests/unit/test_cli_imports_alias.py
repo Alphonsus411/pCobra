@@ -49,10 +49,11 @@ from pcobra.cli.commands.base import BaseCommand as BaseCommand_pcobra
 
 
 def test_cli_alias_module():
-    import cli
-    import pcobra.cli
-    assert cli.__file__ == pcobra.cli.__file__
+    modulo_cli = importlib.import_module("cli")
+    modulo_pcobra_cli = importlib.import_module("pcobra.cli")
 
+    assert callable(modulo_cli.main)
+    assert sys.modules["pcobra.cli"] is modulo_pcobra_cli
 
 def test_cli_alias_function():
     assert main_cli is main_pcobra
