@@ -2,8 +2,8 @@ import pytest
 
 pytest.importorskip("tree_sitter")
 
-from cobra.transpilers.reverse.from_js import ReverseFromJS
-from core.ast_nodes import (
+from pcobra.cobra.transpilers.reverse.from_js import ReverseFromJS
+from pcobra.cobra.core.ast_nodes import (
     NodoFuncion,
     NodoClase,
     NodoBucleMientras,

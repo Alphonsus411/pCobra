@@ -20,7 +20,6 @@ from .performance import optimizar, perfilar
 from .resource_limits import limitar_memoria_mb, limitar_cpu_segundos
 
 sys.modules["core"] = sys.modules[__name__]
-sys.modules["core.ast_nodes"] = sys.modules[f"{__name__}.ast_nodes"]
 
 __all__ = [
     "NodoAST",
