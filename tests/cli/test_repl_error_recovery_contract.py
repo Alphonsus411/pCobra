@@ -74,7 +74,7 @@ def test_repl_error_sintactico_por_cierre_extra_reporta_y_acepta_nuevas_entradas
         sandbox_docker=None,
     )
 
-    assert any("'fin'" in msg and "inesperado" in msg for msg in errores)
+    assert errores == ["'fin' sin bloque abierto."]
     ejecutar_spy.assert_called_once()
     args, kwargs = ejecutar_spy.call_args
     assert args[:2] == ('imprimir("ok")', None)
