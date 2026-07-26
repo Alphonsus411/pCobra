@@ -5,7 +5,9 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from pcobra.cobra.cli.commands.interactive_cmd import InteractiveCommand
+from pcobra.cobra.cli.commands import interactive_cmd as interactive_cmd_module
+
+InteractiveCommand = interactive_cmd_module.InteractiveCommand
 
 
 @pytest.mark.integration
@@ -59,7 +61,8 @@ def test_repl_error_sintactico_por_cierre_extra_reporta_y_acepta_nuevas_entradas
         return next(entradas)
 
     monkeypatch.setattr(
-        "pcobra.cobra.cli.commands.interactive_cmd.mostrar_error",
+        interactive_cmd_module,
+        "mostrar_error",
         lambda mensaje, registrar_log=False: errores.append(str(mensaje)),
     )
 
@@ -93,7 +96,8 @@ def test_repl_error_runtime_no_cierra_sesion_y_permite_recuperacion(monkeypatch)
         return next(entradas)
 
     monkeypatch.setattr(
-        "pcobra.cobra.cli.commands.interactive_cmd.mostrar_error",
+        interactive_cmd_module,
+        "mostrar_error",
         lambda mensaje, registrar_log=False: errores.append(str(mensaje)),
     )
 
@@ -135,7 +139,8 @@ def test_repl_usar_errores_esperados_solo_mensaje_breve_sin_traceback(
     logs_debug: list[str] = []
 
     monkeypatch.setattr(
-        "pcobra.cobra.cli.commands.interactive_cmd.mostrar_error",
+        interactive_cmd_module,
+        "mostrar_error",
         lambda mensaje, registrar_log=False: errores.append(str(mensaje)),
     )
     monkeypatch.setattr(
@@ -176,7 +181,8 @@ def test_repl_usar_error_debug_incluye_traceback(monkeypatch):
     logs_debug: list[str] = []
 
     monkeypatch.setattr(
-        "pcobra.cobra.cli.commands.interactive_cmd.mostrar_error",
+        interactive_cmd_module,
+        "mostrar_error",
         lambda mensaje, registrar_log=False: errores.append(str(mensaje)),
     )
     monkeypatch.setattr(
