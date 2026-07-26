@@ -7,15 +7,15 @@ from unittest.mock import patch
 import pytest
 
 import pcobra  # ensure package is initialized
-import cobra.cli.cli as cli_module
-from cobra.cli.cli import main
-from cobra.cli.commands import cache_cmd, modules_cmd
+import pcobra.cli.cli as cli_module
+from pcobra.cli.cli import main
+from pcobra.cobra.cli.commands import cache_cmd, modules_cmd
 from pcobra.cobra.core import Lexer, Parser
 
 
 def _reload_ast_cache(monkeypatch):
     monkeypatch.delenv("COBRA_AST_CACHE", raising=False)
-    import core.ast_cache as ast_cache_module
+    import pcobra.core.ast_cache as ast_cache_module
 
     ast_cache_module = importlib.reload(ast_cache_module)
     ast_cache_module.limpiar_cache()
