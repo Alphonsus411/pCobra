@@ -9,7 +9,8 @@ sys.path.insert(0, str(ROOT / "src"))
 
 import pcobra  # noqa: F401
 from pcobra.cobra.transpilers.registry import get_transpilers
-from cobra.core import Lexer, Parser
+from pcobra.core.lexer import Lexer
+from pcobra.core.parser import Parser
 from tests.integration.test_transpile_semantics import obtener_salida_interprete
 from tests.utils.runtime import execute_transpiled_code
 from tests.utils.targets import OFFICIAL_RUNTIME_TARGETS, SUPPORTED_TARGETS
