@@ -17,10 +17,10 @@ if not hasattr(importlib, "ModuleType"):
     importlib.ModuleType = types.ModuleType
 
 import pcobra  # noqa: F401
-from pcobra.cobra.cli.commands.compile_cmd import CompileCommand
-from cobra.core import Lexer
-from cobra.core import Parser
-from core.interpreter import InterpretadorCobra
+from pcobra.cli.commands.compile_cmd import CompileCommand
+from pcobra.core.lexer import Lexer
+from pcobra.core.parser import Parser
+from pcobra.core.interpreter import InterpretadorCobra
 import cobra.transpilers.module_map as module_map
 
 from tests.utils.runtime import execute_transpiled_code
