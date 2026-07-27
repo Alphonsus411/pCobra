@@ -1,29 +1,13 @@
 import sys
 from pathlib import Path
-import importlib
-import types
 
 import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 
-if not hasattr(importlib, "ModuleType"):
-    importlib.ModuleType = types.ModuleType
-
-import pcobra
-import pcobra.core.ast_nodes as core_ast_nodes
-import pcobra.cobra.core as cobra_core
-import pcobra.cobra.core.ast_nodes as cobra_ast_nodes
-for nombre in dir(core_ast_nodes):
-    if nombre.startswith("Nodo"):
-        obj = getattr(core_ast_nodes, nombre)
-        if not hasattr(cobra_ast_nodes, nombre):
-            setattr(cobra_ast_nodes, nombre, obj)
-        if not hasattr(cobra_core, nombre):
-            setattr(cobra_core, nombre, obj)
-from pcobra.cobra.core import Lexer
-from pcobra.cobra.core import Parser
+from pcobra.core.lexer import Lexer
+from pcobra.core.parser import Parser
 from pcobra.cobra.transpilers.registry import get_transpilers
 
 from tests.utils.runtime import execute_transpiled_code
