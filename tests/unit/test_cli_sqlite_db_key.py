@@ -2,8 +2,8 @@ import pytest
 import os
 from unittest.mock import patch
 
-from cobra.cli.cli import CliApplication
-from cobra.cli.commands.cache_cmd import CacheCommand
+from pcobra.cli.cli import CliApplication
+from pcobra.cli.commands.cache_cmd import CacheCommand
 
 
 def test_cli_falla_si_no_hay_sqlite_db_key(monkeypatch):
