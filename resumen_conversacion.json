@@ -1,177 +1,283 @@
 {
-  "proyecto": {
-    "nombre": "pCobra",
-    "rama": "fix/contrato-extensiones-cobra",
-    "entorno": {
-      "sistema": "Windows con Git Bash",
-      "python": "3.11.9",
-      "pytest": "8.4.2",
-      "entorno_virtual": ".venv"
-    }
+  "metadata": {
+    "titulo": "Resumen de trabajo sobre pCobra",
+    "idioma": "es",
+    "asistente": "Bella",
+    "proyecto": "Alphonsus411/pCobra",
+    "objetivo_general": "Eliminar contaminaciones de identidad modular y AST causadas por imports legacy en pruebas, estabilizar la suite y mantener los contratos actuales sin modificar Lexer ni Parser.",
+    "fuentes_relevantes": [
+      "Informes y resúmenes pegados por el usuario durante la conversación",
+      ":contentReference[oaicite:0]{index=0}"
+    ]
   },
-  "objetivo_de_la_sesion": "Alinear pruebas obsoletas con la arquitectura actual de la CLI y del REPL sin reintroducir superficies legacy ni modificar Lexer o Parser.",
-  "estado_inicial": {
-    "suite_completa": {
-      "passed": 1593,
-      "skipped": 30,
-      "failed": 5
-    },
-    "fallos_iniciales": "Cinco pruebas obsoletas concentradas inicialmente en tests/unit/test_cli_format_flag.py."
+  "reglas_de_trabajo": {
+    "rama_contractual": "fix/contrato-extensiones-cobra",
+    "problema_recurrente_de_codex": "Codex web suele comenzar en la rama work aunque la interfaz indique otra rama.",
+    "regla_obligatoria": "Antes de inspeccionar, probar o modificar archivos, localizar y seleccionar explícitamente fix/contrato-extensiones-cobra dentro del repositorio.",
+    "estrategia_de_localizacion": [
+      "Comprobar rama local exacta.",
+      "Comprobar referencias remotas exactas.",
+      "Comprobar git show-ref.",
+      "Comprobar la línea literal de fix/contrato-extensiones-cobra en .git/FETCH_HEAD.",
+      "Cuando solo existe en FETCH_HEAD, crear la rama local desde el SHA de esa línea exacta.",
+      "No usar work como sustituto aunque apunte al mismo commit."
+    ],
+    "restricciones_recurrentes": [
+      "No modificar Lexer ni Parser.",
+      "No modificar producción sin evidencia directa.",
+      "No añadir aliases legacy.",
+      "No corregir la identidad mediante sys.modules, importlib.reload, setattr o copia de clases.",
+      "No relajar aserciones ni añadir skips o xfails para ocultar fallos.",
+      "No instalar vm2, Go u otras dependencias globales.",
+      "No hacer pull, merge, rebase ni cherry-pick.",
+      "Se pidió repetidamente no crear commit, push ni pull request."
+    ],
+    "desviacion_de_plataforma": "En varias tareas Codex afirmó que instrucciones de plataforma de mayor prioridad exigían crear commit y pull request, pese a la prohibición explícita del usuario. Debe mencionarse como desviación cuando ocurra."
   },
-  "decisiones_arquitectonicas_confirmadas": {
-    "execute_command": "Construye un RunRequest y delega en RunService.",
-    "profile_command": "Usa directamente format_code_with_black como superficie canónica.",
-    "repl": {
-      "modelo": "Intérprete incremental con estado persistente por sesión.",
-      "ejecucion": "Nodo a nodo mediante interpretador.ejecutar_nodo.",
-      "parseo_multilinea": "El bloque se acumula hasta fin, se parsea una sola vez y el AST se reutiliza mediante ast_preparseado.",
-      "pipeline_batch": "No debe usarse en la ruta normal del REPL.",
-      "sandbox": "Puede usar un pipeline explícito únicamente para preparar el entorno aislado.",
-      "interprete_de_sesion": "El setup temporal del sandbox no reemplaza el intérprete activo del REPL."
+  "contexto_arquitectonico": {
+    "namespace_canonico": [
+      "pcobra.core.*",
+      "pcobra.cobra.*",
+      "pcobra.cli.*"
+    ],
+    "namespaces_legacy_problematicos": [
+      "core.*",
+      "cobra.*",
+      "cli.*"
+    ],
+    "causa_raiz_general": "El mismo archivo físico de Python puede cargarse bajo nombres modulares diferentes. Esto crea objetos módulo y clases AST distintas, por lo que isinstance falla aunque las clases provengan del mismo código fuente.",
+    "ejemplo": {
+      "nodo_recibido": "core.ast_nodes.NodoImprimir",
+      "base_esperada": "pcobra.core.ast_nodes.NodoAST",
+      "resultado": "El nodo legacy no es instancia de la clase base canónica.",
+      "fallo_observable": "Estructura AST inválida en optimización (constant_folder) en 'NodoImprimir': NodoImprimir"
     },
-    "extensiones": {
-      "codigo_fuente": ".cobra",
-      "artefactos_de_paquete": ".co"
-    },
-    "backends_publicos_oficiales": [
+    "backends_oficiales": [
       "python",
       "javascript",
       "rust"
-    ]
+    ],
+    "go": "Cobertura experimental o best-effort; no debe convertirse en backend oficial."
   },
-  "restricciones_mantenidas": [
-    "No modificar Lexer ni Parser sin evidencia inequívoca y aprobación explícita.",
-    "No reintroducir imports, alias o dependencias legacy para satisfacer pruebas antiguas.",
-    "Trabajar de forma incremental con pruebas focalizadas antes de ejecutar la suite completa.",
-    "No realizar commit hasta revisar el diff global y excluir archivos accidentales."
-  ],
-  "cambios_en_pruebas": {
-    "tests/unit/test_cli_format_flag.py": {
-      "accion": "Reescrito para reflejar la arquitectura actual.",
-      "resultado_focalizado": "6 passed"
+  "trabajo_realizado": [
+    {
+      "area": "REPL",
+      "archivo_principal": "tests/cli/test_repl_error_recovery_contract.py",
+      "problema": "Monkeypatch textual resolvía un módulo interactive_cmd duplicado.",
+      "correccion": "Importar el objeto módulo canónico y aplicar monkeypatch directamente sobre ese objeto.",
+      "resultado": "Pruebas focalizadas del REPL aprobadas."
     },
-    "tests/unit/test_cli_import_collisions.py": {
-      "accion": "Actualizado para invocar la CLI canónica y comprobar el registro correcto."
+    {
+      "area": "Reverse JavaScript",
+      "archivo_principal": "tests/integration/reverse/test_from_js.py",
+      "problema": "Imports legacy y una propuesta inicial de alias de producción core.ast_nodes.",
+      "correccion": "Eliminar el alias de producción y migrar la prueba a imports canónicos.",
+      "resultado": "Pruebas reverse y contratos legacy aprobados."
     },
-    "tests/unit/test_cli_imports_alias.py": {
-      "accion": "Sustituida la comparación de __file__ por el contrato de shim y sys.modules."
+    {
+      "area": "CLI cache y SQLite",
+      "archivos_principales": [
+        "tests/integration/test_cli.py",
+        "tests/unit/test_cli_db_key_gating.py",
+        "tests/unit/test_cli_sqlite_db_key.py"
+      ],
+      "problema": "Wrappers legacy no exponían correctamente setup_gettext o CliApplication.",
+      "correccion": "Migrar imports a pcobra.cli.cli, pcobra.cobra.cli.commands y pcobra.core.ast_cache.",
+      "resultado": "Pruebas focalizadas aprobadas."
     },
-    "tests/unit/test_cli_interactive_cmd.py": {
-      "accion": "Actualización amplia de pruebas antiguas del REPL, fallback, sandbox y parseo multilinea.",
-      "resultado_actual": {
-        "passed": 48,
-        "failed": 0,
-        "warnings": 1
-      },
-      "actualizaciones_principales": [
-        "Los tests booleanos y de valores usan ejecutar_nodo y ast_preparseado.",
-        "Los tests de fallback parchean prevalidar_y_parsear_codigo y _ejecutar_ast_en_repl en lugar de ejecutar_pipeline_explicito.",
-        "Los tests de parsear_y_ejecutar_codigo_repl inyectan prevalidar_fn explícitamente.",
-        "Los tests de sandbox usan construir_script_sandbox_canonico y respetan los nombres internos actuales cobra_interp, cobra_ast y cobra_resultado.",
-        "Los tests de sandbox preservan el intérprete original de sesión.",
-        "Los tests multilinea verifican acumulación hasta fin, parseo único y reutilización del AST.",
-        "El test de recuperación sintáctica ahora cierra el bloque con fin, valida la limpieza del buffer y confirma la ejecución posterior de una entrada válida."
+    {
+      "area": "End-to-end y transpiladores",
+      "archivos_principales": [
+        "tests/integration/test_end_to_end.py",
+        "tests/integration/test_cross_backend_output.py",
+        "tests/integration/test_transpilers_generation.py",
+        "tests/integration/test_transpile_semantics.py"
+      ],
+      "problema": "Mezcla de cobra.core, core.interpreter, pcobra.cobra y pcobra, además de shims que copiaban clases AST.",
+      "correccion": "Migrar imports ordinarios a pcobra.core.* y eliminar shims de identidad.",
+      "resultado": "Validaciones focalizadas aprobadas; el problema JavaScript ESM/CommonJS con vm2 quedó fuera de alcance."
+    },
+    {
+      "area": "Runtime Python",
+      "archivo_principal": "tests/integration/test_runtime_python.py",
+      "problema": "Contaminación dependiente del orden con test_cross_backend_output.",
+      "correccion": "Imports canónicos para Lexer, Parser y TranspiladorPython.",
+      "commit_reportado": "c22e3a8, incluido posteriormente en un merge reportado como f4bd440.",
+      "resultado": [
+        "Archivo completo: 3 passed.",
+        "Runtime Python seguido de cross-backend: passed.",
+        "Orden inverso: passed.",
+        "Desapareció el Python generado con representaciones como <NodoOperacionBinaria ...>."
+      ]
+    },
+    {
+      "area": "Runtime JavaScript",
+      "archivo_principal": "tests/integration/test_runtime_js.py",
+      "problema": "Importaba core.ast_nodes y cobra.core, modificaba __all__, copiaba clases Nodo* con setattr y cargaba el transpilador bajo cobra.transpilers.",
+      "correccion": "Usar pcobra.core.lexer, pcobra.core.parser y pcobra.cobra.transpilers.transpiler.to_js; eliminar por completo el shim.",
+      "commit_reportado": "54995a8",
+      "resultado": [
+        "Archivo: 1 passed, 2 skipped.",
+        "Cross-backend pasa en ambos órdenes.",
+        "End-to-end JavaScript alcanza el skip ambiental sin fallar en constant_folder.",
+        "Validación cercana reportada: 29 passed, 6 skipped."
+      ]
+    },
+    {
+      "area": "Igualdad de cadenas",
+      "archivo_principal": "tests/integration/test_interpreter_string_equality.py",
+      "problema": "Usaba from cobra.core import Lexer, Parser y from core.interpreter import InterpretadorCobra.",
+      "correccion": "Usar pcobra.core.lexer, pcobra.core.parser y pcobra.core.interpreter.",
+      "commits_reportados_equivalentes": [
+        "240c896",
+        "edc0e38"
+      ],
+      "nota": "Los SHA variaron entre entornos o reconstrucciones de rama, pero el contenido canónico quedó confirmado.",
+      "resultado": [
+        "2 passed.",
+        "Junto a ambos end-to-end: 3 passed, 1 skipped.",
+        "Validación cercana: 31 passed, 6 skipped."
+      ]
+    },
+    {
+      "area": "Runtime Go experimental",
+      "archivo_principal": "tests/integration/test_runtime_go.py",
+      "problema": "Durante colección importaba cobra.core y core.ast_nodes, modificaba __all__, copiaba clases Nodo* mediante setattr y cargaba cobra.transpilers.",
+      "correccion": "Eliminar el shim; usar pcobra.core.lexer, pcobra.core.parser y el intento canónico pcobra.cobra.transpilers.transpiler.to_go dentro del manejo preexistente de ImportError.",
+      "commit_reportado": "456e384",
+      "resultado": [
+        "2 skips preexistentes conservados.",
+        "Junto a end-to-end Python: 1 passed, 2 skipped.",
+        "Junto a ambos backends: 1 passed, 3 skipped.",
+        "Validación cercana: 31 passed, 8 skipped."
+      ],
+      "nota": "El módulo to_go.py no existía; se mantuvo el comportamiento experimental y el skip."
+    },
+    {
+      "area": "Contrato AST unitario",
+      "archivo_principal": "tests/unit/test_ast_contract.py",
+      "problema": "Imports ordinarios legacy desde cobra.core, core.ast_nodes, core.interpreter y core.utils creaban identidades NodoBloque incompatibles y cargaban módulos legacy.",
+      "correccion": "Migrar a pcobra.core.ast_nodes, pcobra.core.interpreter, pcobra.core.lexer, pcobra.core.parser y pcobra.core.utils.",
+      "commit_reportado": "a4ce06a",
+      "resultado": [
+        "8 passed.",
+        "Junto a end-to-end Python: 9 passed.",
+        "Junto a ambos backends: 9 passed, 1 skipped.",
+        "core.ast_nodes NOT_LOADED.",
+        "core.optimizations.constant_folder NOT_LOADED.",
+        "Validación cercana: 39 passed, 8 skipped."
       ]
     }
-  },
-  "cambios_en_produccion": {
-    "archivo": "src/pcobra/cobra/cli/commands/interactive_cmd.py",
-    "motivo": "El bucle principal del REPL estaba evitando helpers existentes que implementaban contratos declarados de bloques y líneas en blanco.",
-    "cambios": [
-      "Después de asignar self._estado_repl, se reutiliza la copia efectiva mediante estado = self._estado_repl.",
-      "El bucle usa _actualizar_buffer_y_obtener_codigo_listo para gestionar acumulación y cierre de bloques.",
-      "El buffer no se limpia antes del despacho del AST.",
-      "La limpieza del estado se realiza mediante _limpiar_estado_repl tras ejecución o errores definitivos.",
-      "Se preservan los errores de fin sin bloque, bloque vacío y exceso de líneas en blanco consecutivas."
-    ]
-  },
-  "fallos_diagnosticados_y_resueltos": [
-    {
-      "problema": "Congelamientos en validar_ast_seguro.",
-      "causa": "MagicMock y AST sintéticos incompatibles con la validación segura.",
-      "solucion": "Desactivar _seguro_repl en tests unitarios sintéticos y usar ast_preparseado."
-    },
-    {
-      "problema": "Uso de ejecutar_ast en pruebas antiguas.",
-      "causa": "El REPL actual ejecuta nodo a nodo.",
-      "solucion": "Usar ejecutar_nodo y verificar llamadas por nodo."
-    },
-    {
-      "problema": "Mocks de ejecutar_pipeline_explicito inexistentes.",
-      "causa": "La superficie batch fue retirada de la ruta normal del REPL.",
-      "solucion": "Parchear las superficies internas canónicas del REPL."
-    },
-    {
-      "problema": "Mocks de Parser inexistentes en interactive_cmd.",
-      "causa": "El parseo se centralizó en prevalidar_y_parsear_codigo.",
-      "solucion": "Actualizar los tests de sandbox sin reintroducir Parser."
-    },
-    {
-      "problema": "Carga real accidental de extra_repl.py.",
-      "causa": "Un test ejecutaba el pipeline real de setup del sandbox.",
-      "solucion": "Aislar _ejecutar_pipeline_explicito_solo_setup_sandbox con un setup controlado."
-    },
-    {
-      "problema": "Expectativas de parseo progresivo de bloques.",
-      "causa": "Los tests describían un contrato anterior.",
-      "solucion": "Verificar acumulación hasta fin, parseo único y uso de ast_preparseado."
-    }
   ],
-  "advertencias": {
-    "hypothesis": "La advertencia indica que norecursedirs reemplaza los ignores por defecto y se omite la colección de .hypothesis.",
-    "impacto_actual": "No afecta al resultado funcional de las pruebas ejecutadas."
+  "patron_de_diagnostico_usado": {
+    "metodo": "Instrumentar la colección global de Pytest con plugins temporales bajo /tmp.",
+    "hooks": [
+      "pytest_make_collect_report",
+      "pytest_runtest_setup",
+      "pytest_runtest_makereport"
+    ],
+    "eventos_observados": [
+      "CORE_AST_NODES_CREATED",
+      "FIRST_REAL_CLASS_DUPLICATION",
+      "CANONICAL_AST_ATTRIBUTE_DIVERGED",
+      "LEGACY_CONSTANT_FOLDER_CREATED",
+      "CONSTANT_FOLDER_CLASS_DIVERGED",
+      "PIPELINE_AST_DIVERGED"
+    ],
+    "criterio_causal": "No considerar causal un wrapper modular distinto si exporta exactamente las mismas clases. El contaminante real debe crear identidades de clase diferentes o desviar el árbol de atributos respecto de sys.modules."
   },
-  "archivos_probablemente_modificados": [
-    "src/pcobra/cobra/cli/commands/interactive_cmd.py",
-    "tests/unit/test_cli_format_flag.py",
-    "tests/unit/test_cli_import_collisions.py",
-    "tests/unit/test_cli_imports_alias.py",
-    "tests/unit/test_cli_interactive_cmd.py"
-  ],
-  "archivos_temporales_o_de_diagnostico_a_revisar": [
-    "pytest-full.log",
-    "pytest-collected.txt",
-    "diagnostico-cli-restante.txt",
-    "diagnostico-history.txt",
-    "diagnostico-bloques-repl.txt",
-    "diagnostico-fallback-repl.txt",
-    "diagnostico-sandbox-repl.txt",
-    "diagnostico-recuperacion-repl.txt"
-  ],
   "estado_actual": {
-    "test_cli_interactive_cmd": "48 passed, 1 warning",
-    "lexer_parser_modificados": false,
-    "commit_realizado": false,
-    "suite_completa_posterior_a_los_cambios": false
-  },
-  "siguientes_validaciones_recomendadas": [
-    {
-      "paso": 1,
-      "descripcion": "Ejecutar los contratos externos e integración del REPL.",
-      "comando": "python -m pytest -q tests/unit/test_cli_interactive_cmd.py tests/cli/test_repl_error_recovery_contract.py tests/cli/test_repl_script_parity_contract.py tests/integration/test_run_repl_equivalence.py -vv --tb=short"
+    "rama_requerida": "fix/contrato-extensiones-cobra",
+    "ultimo_head_reportado": "a4ce06a57825c4618b2c7c6ad68e13c61dfe50ee",
+    "arbol_reportado": "limpio",
+    "ultima_validacion_cercana": {
+      "passed": 39,
+      "skipped": 8,
+      "warnings": 5
     },
-    {
-      "paso": 2,
-      "descripcion": "Ejecutar conjuntamente los cuatro archivos unitarios corregidos.",
-      "comando": "python -m pytest -q tests/unit/test_cli_format_flag.py tests/unit/test_cli_import_collisions.py tests/unit/test_cli_imports_alias.py tests/unit/test_cli_interactive_cmd.py -vv --tb=short"
-    },
-    {
-      "paso": 3,
-      "descripcion": "Revisar integridad del diff y archivos accidentales.",
-      "comandos": [
-        "git diff --check",
-        "git status --short"
-      ]
-    },
-    {
-      "paso": 4,
-      "descripcion": "Ejecutar la suite completa y conservar el resultado.",
-      "comandos": [
-        "python -m pytest -q > pytest-full.log 2>&1",
-        "pytest_code=$?",
-        "echo \"pytest exit code: $pytest_code\"",
-        "tail -n 260 pytest-full.log"
+    "ultima_suite_global": {
+      "passed": 343,
+      "skipped": 6,
+      "failed": 3,
+      "warnings": 3,
+      "primeros_fallos": [
+        {
+          "nodeid": "tests/integration/test_end_to_end.py::test_end_to_end[python]",
+          "causa": "Otro contaminante AST global provoca estructura inválida en constant_folder."
+        },
+        {
+          "nodeid": "tests/integration/test_end_to_end.py::test_end_to_end[javascript]",
+          "causa": "La misma contaminación AST antes de alcanzar el skip ambiental."
+        },
+        {
+          "nodeid": "tests/integration/test_execute_container.py::test_execute_en_contenedor",
+          "causa": "El objetivo legacy cobra.cli.services no expone el atributo run_service."
+        }
       ]
     }
-  ]
+  },
+  "problemas_pendientes": [
+    {
+      "prioridad": 1,
+      "problema": "Existe al menos otro archivo que contamina la identidad AST durante la colección global.",
+      "estado": "No identificado todavía después de corregir tests/unit/test_ast_contract.py.",
+      "siguiente_accion": "Ejecutar el último prompt diagnóstico para inventariar imports legacy restantes e instrumentar la colección global.",
+      "restriccion": "No modificar archivos hasta identificar el siguiente contaminante exacto."
+    },
+    {
+      "prioridad": 2,
+      "problema": "tests/integration/test_execute_container.py::test_execute_en_contenedor",
+      "causa_conocida": "Monkeypatch u objetivo textual legacy sobre cobra.cli.services.run_service, que no existe en ese wrapper.",
+      "estado": "No investigado todavía de forma focalizada.",
+      "siguiente_accion": "Abordarlo solo después de estabilizar la contaminación AST global."
+    },
+    {
+      "prioridad": 3,
+      "problema": "Warnings y problemas ambientales.",
+      "elementos": [
+        "DeprecationWarning por ast.Str en src/pcobra/core/sandbox.py.",
+        "JavaScript opcional sin vm2.",
+        "Problema separado ESM/CommonJS al instalar vm2 temporalmente.",
+        "Warnings de nbformat/jsonschema.",
+        "PytestCollectionWarning para TestCommandV2.",
+        "SyntaxWarning por secuencia de escape en una prueba de sandbox."
+      ],
+      "estado": "Fuera del alcance actual."
+    }
+  ],
+  "ultimo_prompt_generado": {
+    "tipo": "Diagnóstico sin modificaciones",
+    "objetivo": "Encontrar el siguiente contaminante AST global después de tests/unit/test_ast_contract.py.",
+    "pasos_principales": [
+      "Seleccionar explícitamente fix/contrato-extensiones-cobra.",
+      "Verificar que las correcciones anteriores siguen presentes.",
+      "Crear un inventario estático de imports legacy y mutaciones modulares en tests.",
+      "Ejecutar una colección global de test_end_to_end.",
+      "Crear un plugin temporal bajo /tmp que registre transiciones de identidad AST.",
+      "Ejecutar una segunda y última colección global instrumentada.",
+      "Identificar el primer archivo que cree core.ast_nodes o desvíe pcobra.core.ast_nodes.",
+      "Distinguir imports accidentales de pruebas contractuales de compatibilidad legacy.",
+      "Realizar una reproducción pequeña con el archivo causal y end_to_end[python].",
+      "Recomendar la corrección mínima sin aplicarla."
+    ],
+    "estado": "Pendiente de ejecutar y devolver informe."
+  },
+  "criterios_para_la_siguiente_ventana": {
+    "no_asumir": [
+      "No asumir que la rama visible en la interfaz es la correcta.",
+      "No asumir que un SHA de una sesión anterior existe en el repositorio actual.",
+      "No asumir que todo import legacy es accidental.",
+      "No asumir que el propio test_end_to_end es el contaminante si su baseline es coherente."
+    ],
+    "verificar_siempre": [
+      "git status --short",
+      "git branch --show-current",
+      "git rev-parse HEAD",
+      "referencia literal de fix/contrato-extensiones-cobra en .git/FETCH_HEAD",
+      "contenido real de los archivos corregidos",
+      "identidades de NodoAST y NodoImprimir antes de atribuir causalidad"
+    ],
+    "respuesta_esperada_de_bella": "Analizar cada informe de Codex, confirmar qué quedó demostrado, señalar desviaciones de rama o commits y generar el siguiente prompt focalizado."
+  },
+  "mensaje_sugerido_para_reanudar": "Continuamos con pCobra. Usa este JSON como contexto. El siguiente paso es ejecutar el último diagnóstico para identificar el contaminante AST global posterior a tests/unit/test_ast_contract.py. Debe trabajarse exclusivamente en fix/contrato-extensiones-cobra y no modificar archivos hasta identificar el archivo causal."
 }
