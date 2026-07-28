@@ -1,30 +1,23 @@
-import core.visitor as _vis
-import sys
-
-# Compatibilidad para pruebas
-sys.modules.setdefault("pcobra.core.visitor", _vis)
-sys.modules.setdefault("pcobra.core", sys.modules.get("core"))
-
-from cobra.core import Lexer
-from cobra.core import Parser
-from core.ast_nodes import NodoEnum
-from cobra.transpilers.transpiler.to_python import TranspiladorPython
-from cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
-from cobra.transpilers.import_helper import get_standard_imports
+from pcobra.cobra.core import Lexer
+from pcobra.cobra.core import Parser
+from pcobra.core.ast_nodes import NodoEnum
+from pcobra.cobra.transpilers.transpiler.to_python import TranspiladorPython
+from pcobra.cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
+from pcobra.cobra.transpilers.import_helper import get_standard_imports
 
 IMPORTS_PY = get_standard_imports("python")
 IMPORTS_JS = "".join(f"{line}\n" for line in get_standard_imports("javascript"))
 
 
-def test_parser_enum():
-    codigo = "enum Color: ROJO, VERDE fin"
+def test_parser_enumeracion_color():
+    codigo = "enumeracion Color: ROJO, VERDE fin"
     ast = Parser(Lexer(codigo).analizar_token()).parsear()
     assert type(ast[0]).__name__ == "NodoEnum"
     assert ast[0].nombre == "Color"
     assert ast[0].miembros == ["ROJO", "VERDE"]
 
 
-def test_parser_enumeracion_alias():
+def test_parser_enumeracion_estado():
     codigo = "enumeracion Estado: ACTIVO, INACTIVO fin"
     parser = Parser(Lexer(codigo).analizar_token())
     ast = parser.parsear()
