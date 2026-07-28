@@ -1,6 +1,6 @@
 import pcobra
-from core.ast_nodes import NodoImprimir, NodoValor
-from cobra.transpilers.transpiler.to_python import TranspiladorPython
+from pcobra.core.ast_nodes import NodoImprimir, NodoValor
+from pcobra.cobra.transpilers.transpiler.to_python import TranspiladorPython
 
 
 def test_transpilador_python_generacion():
