@@ -2,16 +2,17 @@ from __future__ import annotations
 
 import pytest
 
-from cobra.core import Lexer, Parser
-from core.ast_nodes import (
+from pcobra.core.ast_nodes import (
     NodoBloque,
     NodoBucleMientras,
     NodoCondicional,
     NodoPara,
     NodoValor,
 )
-from core.interpreter import InterpretadorCobra
-from core.utils import ErrorEstructuraAST, validar_ast_estructural
+from pcobra.core.interpreter import InterpretadorCobra
+from pcobra.core.lexer import Lexer
+from pcobra.core.parser import Parser
+from pcobra.core.utils import ErrorEstructuraAST, validar_ast_estructural
 
 
 def test_ast_falla_si_hay_lista_donde_se_espera_nodo_bloque() -> None:
