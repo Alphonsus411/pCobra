@@ -3,12 +3,12 @@ from unittest.mock import patch
 import asyncio
 import subprocess
 
-from cobra.core import Token, TipoToken
-from cobra.core import Parser
-from core.ast_nodes import NodoHilo, NodoLlamadaFuncion, NodoValor, NodoImprimir, NodoIdentificador, NodoAsignacion, NodoFuncion
-from core.interpreter import InterpretadorCobra
-from cobra.transpilers.transpiler.to_python import TranspiladorPython
-from cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
+from pcobra.cobra.core import Token, TipoToken
+from pcobra.cobra.core import Parser
+from pcobra.core.ast_nodes import NodoHilo, NodoLlamadaFuncion, NodoValor, NodoImprimir, NodoIdentificador, NodoAsignacion, NodoFuncion
+from pcobra.core.interpreter import InterpretadorCobra
+from pcobra.cobra.transpilers.transpiler.to_python import TranspiladorPython
+from pcobra.cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
 
 
 def test_parser_hilo():
@@ -70,8 +70,12 @@ def test_interpreter_varios_hilos():
 
 def test_hilos_preservan_variables_globales():
     interp = InterpretadorCobra()
-    interp.ejecutar_asignacion(NodoAsignacion('contador', NodoValor(0)))
-    funcion = NodoFuncion('trabajo', [], [NodoAsignacion('contador', NodoValor(5))])
+    interp.ejecutar_asignacion(NodoAsignacion('contador', NodoValor(0), declaracion=True))
+    funcion = NodoFuncion(
+        'trabajo',
+        [],
+        [NodoAsignacion('contador', NodoValor(5), declaracion=True)],
+    )
     interp.ejecutar_funcion(funcion)
     h1 = interp.ejecutar_hilo(NodoHilo(NodoLlamadaFuncion('trabajo', [])))
     h2 = interp.ejecutar_hilo(NodoHilo(NodoLlamadaFuncion('trabajo', [])))
