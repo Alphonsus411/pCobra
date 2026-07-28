@@ -7,8 +7,8 @@ import pytest
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 
-import cobra.macro
-cobra.macro.expandir_macros = lambda nodos: nodos
+import pcobra.cobra.macro as cobra_macro
+cobra_macro.expandir_macros = lambda nodos: nodos
 
 import types
 jk = types.ModuleType("jupyter_kernel")
@@ -16,14 +16,14 @@ class CobraKernel: ...
 jk.CobraKernel = CobraKernel
 sys.modules["jupyter_kernel"] = jk
 
-from cobra.cli.commands.base import BaseCommand
-import cobra.cli.utils as cli_utils
+from pcobra.cobra.cli.commands.base import BaseCommand
+import pcobra.cobra.cli.utils as cli_utils
 config_mod = types.ModuleType("cobra.cli.utils.config")
 config_mod.load_config = lambda: {}
 sys.modules["cobra.cli.utils.config"] = config_mod
 cli_utils.config = config_mod
 
-import core.interpreter as core_interpreter
+import pcobra.core.interpreter as core_interpreter
 
 class DummyInterpreter:
     def cleanup(self):
@@ -77,7 +77,7 @@ def _stub_command(name: str, class_name: str) -> None:
 for mod, cls in _STUBS.items():
     _stub_command(mod, cls)
 
-from cobra.cli.cli import main
+from pcobra.cobra.cli.cli import main
 from pcobra.cobra.cli import cli as cli_module
 from pcobra.cobra.cli.commands.compile_cmd import CompileCommand
 from pcobra.cobra.cli.commands.execute_cmd import ExecuteCommand
@@ -87,7 +87,7 @@ from pcobra.cobra.cli.commands.transpilar_inverso_cmd import TranspilarInversoCo
 @pytest.fixture(autouse=True)
 def _development_command_profile(monkeypatch):
     monkeypatch.setattr(
-        "cobra.cli.cli.resolve_command_profile", lambda: "development"
+        "pcobra.cobra.cli.cli.resolve_command_profile", lambda: "development"
     )
     monkeypatch.setattr(
         cli_module.AppConfig,
@@ -98,7 +98,7 @@ def _development_command_profile(monkeypatch):
 
 def _set_tty(monkeypatch, is_tty: bool) -> None:
     fake_stdin = types.SimpleNamespace(isatty=lambda: is_tty)
-    monkeypatch.setattr("cobra.cli.cli.sys.stdin", fake_stdin)
+    monkeypatch.setattr("pcobra.cobra.cli.cli.sys.stdin", fake_stdin)
 
 
 def test_menu_no_transpile(monkeypatch):

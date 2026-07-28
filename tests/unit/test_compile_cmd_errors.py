@@ -1,12 +1,6 @@
-import sys
 from types import SimpleNamespace
 
 import pytest
-
-import core.ast_nodes as core_ast_nodes
-
-# Asegura que los transpiladores usen el módulo completo de nodos AST
-sys.modules["cobra.core.ast_nodes"] = core_ast_nodes
 
 from cobra.cli.commands.compile_cmd import CompileCommand
 
