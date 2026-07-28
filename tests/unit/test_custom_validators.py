@@ -1,8 +1,8 @@
 import pytest
 import logging
-from core.interpreter import InterpretadorCobra, IMPORT_WHITELIST
-from core.semantic_validators.base import ValidadorBase
-from core.ast_nodes import NodoValor
+from pcobra.core.ast_nodes import NodoValor
+from pcobra.core.interpreter import IMPORT_WHITELIST, InterpretadorCobra
+from pcobra.core.semantic_validators.base import ValidadorBase
 
 class DummyError(Exception):
     pass
@@ -10,12 +10,6 @@ class DummyError(Exception):
 class DummyValidator(ValidadorBase):
     def visit_valor(self, nodo):
         raise DummyError('validado')
-
-
-@pytest.fixture(autouse=True)
-def _evitar_limites_reales_en_tests(monkeypatch):
-    monkeypatch.setattr("core.interpreter._lim_cpu", lambda *_: None)
-    monkeypatch.setattr("core.interpreter._lim_mem", lambda *_: None)
 
 
 def test_interpreter_extra_validators_list():

@@ -1,6 +1,6 @@
-from core.interpreter import InterpretadorCobra
-from core.optimizations import remove_dead_code
-from core.ast_nodes import (
+from pcobra.core.interpreter import InterpretadorCobra
+from pcobra.core.optimizations import remove_dead_code
+from pcobra.core.ast_nodes import (
     NodoFuncion,
     NodoRetorno,
     NodoAsignacion,
@@ -43,8 +43,8 @@ def test_condicional_constante():
     ast = [
         NodoCondicional(
             NodoValor(False),
-            [NodoAsignacion("x", NodoValor(1))],
-            [NodoAsignacion("y", NodoValor(2))],
+            [NodoAsignacion("x", NodoValor(1), declaracion=True)],
+            [NodoAsignacion("y", NodoValor(2), declaracion=True)],
         )
     ]
     interpreter = InterpretadorCobra()

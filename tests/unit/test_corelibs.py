@@ -19,17 +19,13 @@ import pytest
 sys.modules.setdefault("yaml", ModuleType("yaml"))
 sys.modules.setdefault("httpx", ModuleType("httpx"))
 
-import core.ast_nodes as core_ast_nodes
-
-sys.modules.setdefault("cobra.core.ast_nodes", core_ast_nodes)
-
 import pcobra.corelibs as core
 import pcobra.corelibs.sistema as core_sistema
 import pcobra.corelibs.tiempo as core_tiempo
-from cobra.transpilers.import_helper import get_standard_imports
-from cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
-from cobra.transpilers.transpiler.to_python import TranspiladorPython
-from core.ast_nodes import NodoLlamadaFuncion, NodoValor
+from pcobra.cobra.transpilers.import_helper import get_standard_imports
+from pcobra.cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
+from pcobra.cobra.transpilers.transpiler.to_python import TranspiladorPython
+from pcobra.core.ast_nodes import NodoLlamadaFuncion, NodoValor
 
 IMPORTS_PY = get_standard_imports("python")
 IMPORTS_JS = "".join(f"{line}\n" for line in get_standard_imports("javascript"))
