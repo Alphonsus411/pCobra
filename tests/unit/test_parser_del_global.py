@@ -1,17 +1,8 @@
-import sys
-from pathlib import Path
-
 import pytest
 
-ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT))
-import core.visitor as _vis
-sys.modules.setdefault("pcobra.core.visitor", _vis)
-sys.modules.setdefault("pcobra.core", sys.modules.get("core"))
-
-from cobra.core import Lexer
-from cobra.core import Parser, ParserError
-from core.ast_nodes import (
+from pcobra.cobra.core import Lexer
+from pcobra.cobra.core import Parser, ParserError
+from pcobra.core.ast_nodes import (
     NodoDel,
     NodoGlobal,
     NodoNoLocal,
@@ -19,8 +10,8 @@ from core.ast_nodes import (
     NodoPasar,
     NodoIdentificador,
 )
-from cobra.transpilers.transpiler.to_python import TranspiladorPython
-from cobra.transpilers.import_helper import get_standard_imports
+from pcobra.cobra.transpilers.transpiler.to_python import TranspiladorPython
+from pcobra.cobra.transpilers.import_helper import get_standard_imports
 
 IMPORTS = get_standard_imports("python")
 
@@ -54,8 +45,8 @@ def test_parser_with():
     assert len(ast[0].cuerpo) == 1 and isinstance(ast[0].cuerpo[0], NodoPasar)
 
 
-def test_parser_with_en():
-    code = "with recurso as r: pasar fin"
+def test_parser_con_alias():
+    code = "con recurso como r: pasar fin"
     ast = Parser(Lexer(code).analizar_token()).parsear()
     assert isinstance(ast[0], NodoWith)
     assert isinstance(ast[0].contexto, NodoIdentificador)
