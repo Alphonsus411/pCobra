@@ -3,14 +3,14 @@ import builtins
 
 import pytest
 
-from core.ast_nodes import NodoImport
-from core.interpreter import InterpretadorCobra, _ruta_import_permitida
-from core.semantic_validators.import_seguro import ValidadorImportSeguro
-from core.semantic_validators.primitiva_peligrosa import PrimitivaPeligrosaError
+from pcobra.core.ast_nodes import NodoImport
+from pcobra.core.interpreter import InterpretadorCobra, _ruta_import_permitida
+from pcobra.core.semantic_validators.import_seguro import ValidadorImportSeguro
+from pcobra.core.semantic_validators.primitiva_peligrosa import PrimitivaPeligrosaError
 
 
 def _configurar_imports(monkeypatch, modules_dir, whitelist=None):
-    import core.interpreter as interpreter_mod
+    import pcobra.core.interpreter as interpreter_mod
 
     lista = set() if whitelist is None else set(whitelist)
     monkeypatch.setattr(interpreter_mod, "MODULES_PATH", str(modules_dir))
