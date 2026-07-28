@@ -1,4 +1,4 @@
-from core.ast_nodes import (
+from pcobra.core.ast_nodes import (
     NodoFuncion,
     NodoDecorador,
     NodoYield,
@@ -6,15 +6,15 @@ from core.ast_nodes import (
     NodoValor,
     NodoIdentificador,
 )
-from cobra.transpilers.transpiler.to_python import TranspiladorPython
-from cobra.transpilers.import_helper import get_standard_imports
+from pcobra.cobra.transpilers.transpiler.to_python import TranspiladorPython
+from pcobra.cobra.transpilers.import_helper import get_standard_imports
 
 IMPORTS = get_standard_imports("python")
 
 
 def test_transpilar_funcion_con_decorador():
     decorador = NodoDecorador(NodoIdentificador("decor"))
-    func = NodoFuncion("saluda", [], [NodoImprimir(NodoValor("'hola'"))], [decorador])
+    func = NodoFuncion("saluda", [], [NodoImprimir(NodoValor("hola"))], [decorador])
     codigo = TranspiladorPython().generate_code([func])
     esperado = IMPORTS + "@decor\n" + "def saluda():\n    print('hola')\n"
     assert codigo == esperado
