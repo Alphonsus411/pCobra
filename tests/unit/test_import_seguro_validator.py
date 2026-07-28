@@ -1,16 +1,16 @@
 import pytest
 from types import SimpleNamespace
-from core.semantic_validators.import_seguro import ValidadorImportSeguro
-from core.semantic_validators.primitiva_peligrosa import PrimitivaPeligrosaError
-from core.ast_nodes import NodoImport
-from core.interpreter import InterpretadorCobra, IMPORT_WHITELIST
+from pcobra.core.semantic_validators.import_seguro import ValidadorImportSeguro
+from pcobra.core.semantic_validators.primitiva_peligrosa import PrimitivaPeligrosaError
+from pcobra.core.ast_nodes import NodoImport
+from pcobra.core.interpreter import InterpretadorCobra, IMPORT_WHITELIST
 
 
 def test_import_seguro_fuera_de_ruta(tmp_path, monkeypatch):
     validator = ValidadorImportSeguro()
     nodo = NodoImport(str(tmp_path / "m.co"))
-    monkeypatch.setattr('core.interpreter.MODULES_PATH', str(tmp_path / 'mods'))
-    monkeypatch.setattr('core.interpreter.IMPORT_WHITELIST', set())
+    monkeypatch.setattr('pcobra.core.interpreter.MODULES_PATH', str(tmp_path / 'mods'))
+    monkeypatch.setattr('pcobra.core.interpreter.IMPORT_WHITELIST', set())
     with pytest.raises(PrimitivaPeligrosaError):
         nodo.aceptar(validator)
 
