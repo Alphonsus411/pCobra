@@ -6,9 +6,9 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from cobra.cli.commands.interactive_cmd import InteractiveCommand
-from cobra.core import ParserError
-from core.interpreter import InterpretadorCobra
+from pcobra.cobra.cli.commands.interactive_cmd import InteractiveCommand
+from pcobra.cobra.core import ParserError
+from pcobra.core.interpreter import InterpretadorCobra
 
 
 def _args() -> SimpleNamespace:
@@ -39,7 +39,7 @@ def test_multilinea_con_bloque_completo_se_ejecuta_una_vez() -> None:
         except StopIteration as exc:
             raise EOFError from exc
 
-    with patch("cobra.cli.commands.interactive_cmd.validar_dependencias"), patch.object(
+    with patch("pcobra.cobra.cli.commands.interactive_cmd.validar_dependencias"), patch.object(
         cmd,
         "ejecutar_codigo",
     ) as mock_ejecutar:
@@ -65,7 +65,7 @@ def test_lineas_en_blanco_se_ignoran_sin_romper_el_bloque() -> None:
         except StopIteration as exc:
             raise EOFError from exc
 
-    with patch("cobra.cli.commands.interactive_cmd.validar_dependencias"), patch.object(
+    with patch("pcobra.cobra.cli.commands.interactive_cmd.validar_dependencias"), patch.object(
         cmd,
         "ejecutar_codigo",
     ) as mock_ejecutar:
