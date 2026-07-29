@@ -1,9 +1,9 @@
-from cobra.core import Lexer
-from cobra.core import Parser
-from core.ast_nodes import NodoInterface, NodoClase
-from cobra.transpilers.transpiler.to_python import TranspiladorPython
-from cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
-from cobra.transpilers.transpiler.to_rust import TranspiladorRust
+from pcobra.cobra.core import Lexer
+from pcobra.cobra.core import Parser
+from pcobra.core.ast_nodes import NodoInterface, NodoClase
+from pcobra.cobra.transpilers.transpiler.to_python import TranspiladorPython
+from pcobra.cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
+from pcobra.cobra.transpilers.transpiler.to_rust import TranspiladorRust
 
 CODIGO = """
 interface Printable:
