@@ -1,6 +1,6 @@
 import pytest
-from core.interpreter import InterpretadorCobra
-from core.ast_nodes import (
+from pcobra.core.interpreter import InterpretadorCobra
+from pcobra.core.ast_nodes import (
     NodoAsignacion,
     NodoValor,
     NodoFuncion,
