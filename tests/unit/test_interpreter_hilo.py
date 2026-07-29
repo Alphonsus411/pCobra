@@ -20,8 +20,8 @@ if "tree_sitter_languages" not in sys.modules:
     tsl_mod.get_parser = lambda lang: None
     sys.modules["tree_sitter_languages"] = tsl_mod
 
-from core.ast_nodes import NodoHilo, NodoLlamadaFuncion, NodoValor, NodoFuncion
-from core.interpreter import InterpretadorCobra
+from pcobra.core.ast_nodes import NodoHilo, NodoLlamadaFuncion, NodoValor, NodoFuncion
+from pcobra.core.interpreter import InterpretadorCobra
 
 
 def test_hilo_es_daemon():
