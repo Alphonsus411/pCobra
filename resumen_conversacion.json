@@ -6,9 +6,12 @@
     "fecha_resumen": "2026-07-29",
     "repositorio": "Alphonsus411/pCobra",
     "rama_contractual": "fix/contrato-extensiones-cobra",
-    "objetivo_general": "Eliminar contaminaciones de identidad modular y AST provocadas por imports legacy en las pruebas, estabilizar la suite incrementalmente y conservar los contratos actuales sin modificar Lexer ni Parser."
+    "suite_global_estabilizada": false,
+    "origen_del_estado": "Informes y archivos proporcionados por el usuario; no verificado directamente por Bella sobre el repositorio vivo."
   },
-  "principios_de_trabajo": {
+  "objetivo_general": {
+    "descripcion": "Eliminar contaminaciones de identidad modular y AST causadas por imports legacy durante la colección de Pytest, corregir los defectos funcionales revelados por la canonicalización y estabilizar la suite incrementalmente.",
+    "estrategia": "Corregir un contaminante por tarea, demostrar causalidad, preservar contratos vigentes y localizar el siguiente contaminante mediante colección global.",
     "namespace_canonico": [
       "pcobra.core.*",
       "pcobra.cobra.*",
@@ -20,279 +23,377 @@
       "cli.*",
       "bindings.*"
     ],
-    "reglas_principales": [
-      "Trabajar exclusivamente en fix/contrato-extensiones-cobra.",
-      "Verificar explícitamente la rama local y la referencia remota antes de inspeccionar, probar o modificar archivos.",
-      "No utilizar work como rama sustitutiva.",
-      "No modificar Lexer.",
-      "No modificar Parser.",
-      "No modificar constant_folder para aceptar clases AST duplicadas.",
-      "No cambiar gramática ni tokens.",
-      "No modificar producción sin evidencia directa.",
-      "No reparar identidades mediante sys.modules, importlib.reload, setattr, aliases artificiales o copia de clases.",
-      "No relajar aserciones ni añadir skips o xfails para ocultar fallos.",
-      "Resolver los contaminantes de forma incremental, uno por tarea."
-    ],
     "backends_oficiales": [
       "python",
       "javascript",
       "rust"
     ]
   },
-  "causa_raiz_tecnica": {
-    "descripcion": "Un mismo archivo físico de Python puede ejecutarse bajo nombres modulares distintos, creando objetos módulo y clases independientes.",
-    "archivo_afectado_recurrente": "src/pcobra/core/ast_nodes.py",
-    "nombres_duplicados_habituales": [
-      "pcobra.core.ast_nodes",
-      "core.ast_nodes"
+  "restricciones_permanentes": {
+    "rama": [
+      "Trabajar exclusivamente en fix/contrato-extensiones-cobra.",
+      "No utilizar work como rama alternativa o sustitutiva.",
+      "Verificar rama, remoto, HEAD, merge-base, divergencia y árbol antes de inspeccionar o modificar."
     ],
-    "efectos": [
-      "Las clases con el mismo nombre dejan de compartir identidad.",
-      "isinstance falla entre nodos legacy y clases canónicas.",
-      "issubclass falla en ambos sentidos.",
-      "pcobra.core.ast_nodes puede quedar desalineado respecto de sys.modules['pcobra.core.ast_nodes'].",
-      "constant_folder, intérpretes y transpiladores pueden rechazar nodos válidos por identidad incompatible.",
-      "La contaminación suele ocurrir durante la colección de Pytest, antes de ejecutar las pruebas."
-    ],
-    "ejemplo_de_fallo": "Estructura AST inválida en optimización (constant_folder) en 'NodoImprimir': NodoImprimir"
-  },
-  "metodologia_de_diagnostico": {
-    "instrumentacion": "Plugins temporales de Pytest almacenados exclusivamente bajo /tmp.",
-    "eventos_observados": [
-      "BEFORE_COLLECT",
-      "AFTER_COLLECT",
-      "healthy -> duplicated",
-      "legacy_present",
-      "parent_aligned"
-    ],
-    "datos_comparados": [
-      "Presencia de pcobra.core.ast_nodes.",
-      "Presencia de core.ast_nodes.",
-      "id de los módulos.",
-      "__file__ y realpath.",
-      "__name__ y __package__.",
-      "Identidad de clases AST.",
-      "Relaciones issubclass.",
-      "Alineación de atributos de paquetes padre.",
-      "Primera solicitud de import que crea el módulo legacy."
-    ],
-    "criterio_causal": "Un wrapper con nombre distinto no se considera contaminante por sí solo. Debe demostrarse que crea una segunda identidad de módulo o clase, o que desvía los atributos del paquete padre."
-  },
-  "historial_de_correcciones": [
-    {
-      "archivo": "tests/unit/test_imports_alias_clase.py",
-      "problema": "Imports legacy durante colección duplicaban las identidades AST.",
-      "correccion": "Migración de nodos AST, transpiladores y helper de imports a rutas pcobra.*.",
-      "commit_reportado": "6d7548d00cba9ba9c32299b9309d30371298edcc",
-      "resultado": [
-        "2 passed en el archivo aislado.",
-        "Comparaciones de orden con end-to-end sin regresión.",
-        "Se localizó posteriormente test_inlining_transpilers.py como contaminante independiente."
-      ]
-    },
-    {
-      "archivo": "tests/unit/test_inlining_transpilers.py",
-      "problema": "from core.ast_nodes import ... ejecutaba ast_nodes.py bajo core.ast_nodes.",
-      "causa_exacta": "Import legacy directo en el nivel superior del archivo.",
-      "correccion": "Canonicalización de nodos AST, transpiladores Python y JavaScript e import_helper.",
-      "commits_reportados": [
-        "fc1a2668240448f9ed95377e19c6716012206082",
-        "18e7bf4 como commit equivalente posteriormente integrado"
-      ],
-      "merge_remoto_reportado": "b9334f189dd86cb1f2be406d3b7497cc14e6b74d",
-      "resultado": [
-        "2 passed.",
-        "La colección dejó de crear core.ast_nodes.",
-        "La identidad canónica permaneció alineada.",
-        "Se localizó después test_interactive_block_depth.py."
-      ]
-    },
-    {
-      "archivo": "tests/unit/test_interactive_block_depth.py",
-      "problema": "from core.interpreter import InterpretadorCobra cargaba transitivamente core.optimizations.constant_folder y core.ast_nodes.",
-      "cadena_causal": [
-        "tests/unit/test_interactive_block_depth.py",
-        "core.interpreter",
-        "core.optimizations",
-        "core.optimizations.constant_folder",
-        "core.ast_nodes"
-      ],
-      "correccion": [
-        "InteractiveCommand importado desde pcobra.cobra.cli.commands.interactive_cmd.",
-        "ParserError importado desde pcobra.cobra.core.",
-        "InterpretadorCobra importado desde pcobra.core.interpreter.",
-        "Objetivos patch(...) migrados al módulo canónico realmente utilizado."
-      ],
-      "commit_reportado": "a669f4430d6aec1cd7e4e5de653526214e6041d1",
-      "resultado": [
-        "9 passed.",
-        "Ambos órdenes con end-to-end: 1 passed y 1 skipped.",
-        "Validación acumulada: 17 passed y 1 skipped.",
-        "Lexer, Parser y constant_folder intactos."
-      ]
-    },
-    {
-      "archivos": [
-        "tests/unit/test_interactive_cmd_repl_pipeline_coupling.py",
-        "tests/unit/test_interactive_cmd_repl_state_persistence.py"
-      ],
-      "problema": "Imports legacy del intérprete, InteractiveCommand y clases AST contaminaban el estado REPL y la identidad modular.",
-      "correccion": [
-        "InterpretadorCobra migrado al namespace canónico.",
-        "InteractiveCommand migrado al namespace canónico.",
-        "Clases AST migradas a pcobra.core.ast_nodes.",
-        "Objetivos patch(...) actualizados al módulo canónico."
-      ],
-      "commit_reportado": "422570f",
-      "commit_equivalente_integrado_reportado": "58430c4",
-      "merge_remoto_reportado": "48cdfb9e01e585c347664ae8678115494f6c6c8c",
-      "resultado": [
-        "Pipeline coupling: 3 passed.",
-        "State persistence: 7 passed.",
-        "Conjunto relacionado: 21 passed.",
-        "Ambos archivos sanos antes y después de colección.",
-        "Se dejó fuera deliberadamente el contaminante posterior test_interface.py."
-      ]
-    },
-    {
-      "archivo": "tests/unit/test_interface.py",
-      "problema": "Seis imports ordinarios legacy mezclaban Lexer, Parser, AST y transpiladores bajo namespaces incompatibles.",
-      "causa_exacta": "from core.ast_nodes import NodoInterface, NodoClase",
-      "efecto_previo": "Una prueba fallaba porque isinstance(ast[0], NodoInterface) devolvía False.",
-      "correccion": [
-        "Lexer y Parser importados desde rutas canónicas.",
-        "NodoInterface y NodoClase importados desde pcobra.core.ast_nodes.",
-        "Transpiladores Python, JavaScript y Rust importados desde pcobra.cobra.*."
-      ],
-      "commit_reportado": "542f29c2795c7850269ebc3374dce8659523f959",
-      "mensaje_commit": "Evita contaminación AST en pruebas de interfaz",
-      "resultado": [
-        "2 passed en el archivo aislado.",
-        "Colección focalizada sana antes y después.",
-        "Ambos órdenes con end-to-end: 1 passed y 1 skipped.",
-        "Validación acumulada: 24 passed y 1 skipped.",
-        "Producción, Lexer, Parser y constant_folder intactos."
-      ]
-    }
-  ],
-  "desviaciones_de_plataforma": {
-    "descripcion": "En varias tareas se indicó que una instrucción superior de la plataforma obligaba a crear un commit y registrar un pull request mediante make_pr, aunque algunos prompts pedían dejar cambios sin commit.",
-    "acciones_reportadas": [
-      "Se crearon commits focalizados.",
-      "Se registraron pull requests mediante make_pr.",
-      "No se realizaron pushes manuales."
-    ],
-    "criterio_adoptado": "Registrar esas acciones como desviaciones del flujo de plataforma y no como solicitudes originales del usuario."
-  },
-  "estado_contractual_mas_reciente_confirmado": {
-    "rama": "fix/contrato-extensiones-cobra",
-    "head_local": "542f29c2795c7850269ebc3374dce8659523f959",
-    "referencia_remota_base": "48cdfb9e01e585c347664ae8678115494f6c6c8c",
-    "merge_base": "48cdfb9e01e585c347664ae8678115494f6c6c8c",
-    "divergencia": {
-      "ahead": 1,
-      "behind": 0
-    },
-    "arbol": "limpio",
-    "ultimo_archivo_modificado": "tests/unit/test_interface.py",
-    "produccion": "intacta",
-    "lexer": "intacto",
-    "parser": "intacto",
-    "constant_folder": "intacto"
-  },
-  "ultima_validacion_acumulada_confirmada": {
-    "passed": 24,
-    "skipped": 1,
-    "failed": 0,
-    "warnings": 0,
-    "archivos_principales": [
-      "tests/unit/test_inlining_transpilers.py",
-      "tests/unit/test_interactive_block_depth.py",
-      "tests/unit/test_interactive_cmd_repl_pipeline_coupling.py",
-      "tests/unit/test_interactive_cmd_repl_state_persistence.py",
-      "tests/unit/test_interface.py",
-      "tests/integration/test_end_to_end.py"
-    ]
-  },
-  "ultima_coleccion_global_confirmada": {
-    "tests_collected": 4714,
-    "exit_code": 0,
-    "warnings": 3,
-    "archivos_corregidos_confirmados_sanos": [
-      "tests/unit/test_inlining_transpilers.py",
-      "tests/unit/test_interactive_block_depth.py",
-      "tests/unit/test_interactive_cmd_repl_pipeline_coupling.py",
-      "tests/unit/test_interactive_cmd_repl_state_persistence.py",
-      "tests/unit/test_interface.py"
-    ],
-    "suite_global_estabilizada": false
-  },
-  "siguiente_contaminante_identificado": {
-    "archivo": "tests/unit/test_interpreter.py",
-    "frontera": {
-      "ultimo_sano": {
-        "secuencia": 714,
-        "evento": "BEFORE",
-        "canonical_present": true,
-        "legacy_present": false,
-        "parent_aligned": true
-      },
-      "primero_contaminado": {
-        "secuencia": 715,
-        "evento": "AFTER",
-        "canonical_present": true,
-        "legacy_present": true,
-        "parent_aligned": false
-      }
-    },
-    "estado": "Candidato causal confirmado por frontera de colección, pero todavía no se ha recibido el informe de diagnóstico o corrección.",
-    "tarea_preparada": [
-      "Inspeccionar íntegramente tests/unit/test_interpreter.py.",
-      "Identificar imports legacy de Lexer, Parser, InterpretadorCobra y clases AST.",
-      "Reproducir la primera operación causal.",
-      "Corregir los fallos funcionales derivados de identidades incompatibles.",
-      "Modificar únicamente tests/unit/test_interpreter.py.",
-      "Mantener Lexer y Parser completamente intactos.",
-      "Mantener constant_folder y toda producción intactos.",
-      "Ejecutar el archivo aislado.",
-      "Ejecutar ambos órdenes con test_end_to_end.",
-      "Ejecutar validación acumulada.",
-      "Ejecutar colección global posterior para localizar el siguiente contaminante."
-    ]
-  },
-  "restricciones_para_la_siguiente_tarea": {
-    "archivo_inicialmente_autorizado": "tests/unit/test_interpreter.py",
     "componentes_protegidos": [
       "src/pcobra/core/lexer.py",
       "src/pcobra/core/parser.py",
       "src/pcobra/cobra/core/lexer.py",
       "src/pcobra/cobra/core/parser.py",
       "src/pcobra/core/optimizations/constant_folder.py",
-      "todo src/"
+      "gramática",
+      "tokens"
     ],
-    "correccion_permitida": [
-      "Canonicalizar imports ordinarios legacy.",
-      "Alinear InterpretadorCobra y los nodos AST bajo pcobra.core.*.",
-      "Usar Lexer y Parser mediante sus rutas canónicas sin cambiar sus implementaciones.",
-      "Actualizar objetivos patch(...) solo si apuntan a un módulo distinto del realmente utilizado.",
-      "Conservar todas las pruebas, nombres, entradas y aserciones."
-    ],
-    "correcciones_prohibidas": [
-      "Modificar Lexer o Parser.",
-      "Modificar gramática o tokens.",
-      "Modificar constant_folder.",
-      "Aceptar clases duplicadas mediante cambios de producción.",
+    "practicas_prohibidas": [
       "Manipular sys.modules.",
       "Usar importlib.reload.",
-      "Copiar clases o atributos.",
-      "Añadir aliases.",
+      "Copiar clases AST o atributos.",
+      "Añadir aliases o shims artificiales.",
+      "Aceptar clases AST duplicadas mediante cambios de producción.",
+      "Detectar nodos únicamente por el nombre textual de la clase.",
       "Relajar aserciones.",
-      "Añadir skips o xfails."
+      "Añadir skips o xfails para ocultar fallos.",
+      "Cambiar entradas o resultados esperados sin contradicción contractual demostrada.",
+      "Hacer push manual.",
+      "Ejecutar pull, merge, rebase, cherry-pick o reset --hard dentro del flujo acordado."
     ]
   },
-  "estado_de_la_conversacion": {
-    "ultimo_prompt_generado": "Prompt para diagnosticar y corregir tests/unit/test_interpreter.py manteniendo Lexer, Parser, constant_folder y producción intactos.",
-    "resultado_de_ese_prompt": "Pendiente de ser proporcionado por el usuario.",
-    "siguiente_paso": "Ejecutar el prompt en Codex y revisar el informe resultante antes de avanzar al siguiente contaminante."
-  }
+  "causa_raiz_tecnica": {
+    "descripcion": "Python puede ejecutar el mismo archivo físico bajo nombres modulares distintos, creando objetos módulo y clases independientes.",
+    "archivo_recurrente": "src/pcobra/core/ast_nodes.py",
+    "identidades_duplicadas_habituales": [
+      "pcobra.core.ast_nodes",
+      "core.ast_nodes"
+    ],
+    "cadena_transitiva_frecuente": [
+      "import legacy de core.interpreter",
+      "core.interpreter",
+      "core.optimizations",
+      "core.optimizations.constant_folder",
+      "core.ast_nodes"
+    ],
+    "efectos": [
+      "isinstance falla entre nodos canónicos y legacy.",
+      "issubclass falla entre clases homónimas.",
+      "El atributo pcobra.core.ast_nodes puede quedar desalineado respecto de sys.modules.",
+      "El intérprete y constant_folder pueden rechazar nodos válidos.",
+      "La contaminación puede comenzar durante la colección, antes de ejecutar las pruebas."
+    ],
+    "criterio_causal": "Un wrapper legacy solo se considera contaminante cuando se demuestra que crea una segunda identidad de módulo o clase, o que desalineó el atributo del paquete padre."
+  },
+  "metodologia_de_diagnostico": {
+    "instrumentacion": "Plugins temporales de Pytest almacenados exclusivamente bajo /tmp.",
+    "eventos": [
+      "BEFORE",
+      "AFTER",
+      "FILE_AFTER"
+    ],
+    "estado_sano_esperado": {
+      "canonical_present": true,
+      "legacy_present": false,
+      "parent_aligned": true
+    },
+    "datos_comparados": [
+      "Presencia de módulos canónicos y legacy.",
+      "id de los módulos.",
+      "__file__ y realpath.",
+      "__name__ y __package__.",
+      "Alineación de atributos de paquetes padre.",
+      "Identidad de clases AST.",
+      "Relaciones is, isinstance e issubclass.",
+      "Primera operación que cambia el estado de sano a contaminado."
+    ],
+    "validaciones_habituales": [
+      "Archivo focal aislado.",
+      "Colección focal con probe.",
+      "Reproducción secuencial de imports.",
+      "Órdenes directo e inverso con test_end_to_end.",
+      "Conjunto acumulado de archivos corregidos.",
+      "Colección global para localizar el siguiente contaminante.",
+      "git diff --check.",
+      "Comprobación explícita de componentes protegidos."
+    ]
+  },
+  "historial_de_descontaminacion": [
+    {
+      "archivo": "tests/unit/test_imports_alias_clase.py",
+      "correccion": "Migración de nodos AST, transpiladores y helpers a rutas pcobra.*.",
+      "commit_reportado": "6d7548d00cba9ba9c32299b9309d30371298edcc",
+      "resultado": "La colección dejó de duplicar identidades AST en este archivo."
+    },
+    {
+      "archivo": "tests/unit/test_inlining_transpilers.py",
+      "causa": "Import superior desde core.ast_nodes.",
+      "correccion": "Canonicalización de AST, transpiladores Python y JavaScript e import_helper.",
+      "commits_reportados": [
+        "fc1a2668240448f9ed95377e19c6716012206082",
+        "18e7bf4"
+      ],
+      "merge_reportado": "b9334f189dd86cb1f2be406d3b7497cc14e6b74d"
+    },
+    {
+      "archivo": "tests/unit/test_interactive_block_depth.py",
+      "causa": "core.interpreter cargaba transitivamente core.optimizations.constant_folder y core.ast_nodes.",
+      "correccion": "Imports y objetivos de patch migrados a módulos canónicos.",
+      "commit_reportado": "a669f4430d6aec1cd7e4e5de653526214e6041d1"
+    },
+    {
+      "archivos": [
+        "tests/unit/test_interactive_cmd_repl_pipeline_coupling.py",
+        "tests/unit/test_interactive_cmd_repl_state_persistence.py"
+      ],
+      "correccion": "Canonicalización del intérprete, InteractiveCommand, AST y objetivos de patch.",
+      "commits_reportados": [
+        "422570f",
+        "58430c4"
+      ],
+      "merge_reportado": "48cdfb9e01e585c347664ae8678115494f6c6c8c"
+    },
+    {
+      "archivo": "tests/unit/test_interface.py",
+      "causa": "Imports legacy mezclaban Lexer, Parser, AST y transpiladores.",
+      "correccion": "Canonicalización de todos los imports internos.",
+      "commits_reportados": [
+        "542f29c2795c7850269ebc3374dce8659523f959",
+        "49f9128"
+      ],
+      "merge_reportado": "781481e970273b1a3d14980a3c4bcfbcd9c06613"
+    },
+    {
+      "archivo": "tests/unit/test_interpreter.py",
+      "causa": "from core.interpreter import InterpretadorCobra creaba core.ast_nodes transitivamente.",
+      "correccion": "Canonicalización del intérprete, Environment, Lexer, tokens, AST y targets de monkeypatch.",
+      "commit_reportado": "05b7383b3108a5b8c1f5110b091e8e6982a537f4",
+      "resultado_identidad": "36 pruebas recolectadas sin módulos legacy.",
+      "fallos_funcionales_revelados": 5
+    },
+    {
+      "archivo": "src/pcobra/core/interpreter.py",
+      "tipo": "Corrección funcional",
+      "problemas_resueltos": [
+        "Valor de retorno de asignaciones.",
+        "Retorno temprano y limpieza de contexto en with.",
+        "Restauración de mode durante imports fallidos.",
+        "Disponibilidad de longitud.",
+        "Evaluación recursiva de listas literales."
+      ],
+      "commits_reportados": [
+        "fbca04e",
+        "987d7e4"
+      ],
+      "resultado": "tests/unit/test_interpreter.py quedó en 36 passed."
+    },
+    {
+      "archivo": "tests/unit/test_interpreter_atributo.py",
+      "causa": "Imports legacy del intérprete, Lexer, Parser y AST.",
+      "correccion": "Canonicalización de los imports.",
+      "commits_reportados": [
+        "eeeaf8a99e553c6fc022250824bf3da9b2489064",
+        "2d67f32"
+      ],
+      "fallo_funcional_revelado": "El literal de cadena se imprimía como \"Ana\" incluyendo delimitadores."
+    },
+    {
+      "archivo": "tests/unit/test_interpreter_concurrency.py",
+      "causa": "Imports legacy de core.interpreter y core.ast_nodes.",
+      "correccion": "Canonicalización exclusiva de imports.",
+      "commits_reportados": [
+        "2141e21",
+        "05a3349"
+      ],
+      "fallo_funcional_revelado": "NameError para contador antes de iniciar los hilos."
+    },
+    {
+      "archivos": [
+        "src/pcobra/core/interpreter.py",
+        "tests/unit/test_interpreter_cycles.py"
+      ],
+      "tipo": "Corrección funcional y de identidad",
+      "correcciones_funcionales": [
+        "Materialización segura de literales de cadena mediante ast.literal_eval para literales delimitados válidos.",
+        "Primera asignación introduce un binding en el entorno activo.",
+        "Reasignación actualiza el scope propietario.",
+        "Lecturas inexistentes continúan produciendo NameError.",
+        "Autorreferencia inicial inválida continúa fallando.",
+        "RLock por intérprete compartido.",
+        "Aislamiento del entorno capturado durante llamadas originadas por hilos."
+      ],
+      "correccion_identidad": "Canonicalización de imports en test_interpreter_cycles.py.",
+      "commits_reportados": [
+        "70b45db",
+        "b69f0c4",
+        "403f55f"
+      ],
+      "resultado": "74 passed, 1 skipped en el conjunto acumulado de ese punto."
+    },
+    {
+      "archivo": "tests/unit/test_interpreter_herencia.py",
+      "causa": "Imports legacy de core.interpreter y core.ast_nodes.",
+      "correccion": "Canonicalización exclusiva de ambos imports.",
+      "commits_reportados": [
+        "4937e14ee1f44877dbd812def93da5e1e2b0a9e4",
+        "2914778"
+      ],
+      "resultado": "La prueba de resolución de método heredado continuó pasando sin cambios de producción."
+    },
+    {
+      "archivo": "tests/unit/test_interpreter_hilo.py",
+      "causa": "El primer contaminante era from core.ast_nodes import ..., seguido por core.interpreter.",
+      "correccion": "Canonicalización exclusiva de AST e intérprete.",
+      "commit_local_reportado": "85f1461b7806831b40f5aac49a233c7dfa9e4db2",
+      "resultado": [
+        "1 passed en el archivo focal.",
+        "Cinco repeticiones focales correctas.",
+        "Cinco repeticiones de test_interpreter_concurrency.py correctas.",
+        "52 passed en los seis archivos saneados.",
+        "76 passed y 1 skipped en el conjunto acumulado."
+      ]
+    }
+  ],
+  "estado_contractual_mas_reciente_reportado": {
+    "rama": "fix/contrato-extensiones-cobra",
+    "head_local": "85f1461b7806831b40f5aac49a233c7dfa9e4db2",
+    "mensaje_head": "Evita contaminación AST en pruebas de hilos del intérprete",
+    "referencia_remota_base_reportada": "c7a37556ab4dd6b8feadb1d0596501c4f7eddf5b",
+    "divergencia": {
+      "ahead": 1,
+      "behind": 0
+    },
+    "arbol": "limpio",
+    "push_manual": false,
+    "produccion_modificada_en_ultima_tarea": false,
+    "lexer": "intacto",
+    "parser": "intacto",
+    "gramatica": "intacta",
+    "tokens": "intactos",
+    "constant_folder": "intacto"
+  },
+  "ultima_validacion_acumulada": {
+    "passed": 76,
+    "skipped": 1,
+    "failed": 0,
+    "skip_conocido": "Variante JavaScript de tests/integration/test_end_to_end.py omitida por condición ambiental existente.",
+    "archivos_saneados_confirmados": [
+      "tests/unit/test_interpreter.py",
+      "tests/unit/test_interpreter_atributo.py",
+      "tests/unit/test_interpreter_concurrency.py",
+      "tests/unit/test_interpreter_cycles.py",
+      "tests/unit/test_interpreter_herencia.py",
+      "tests/unit/test_interpreter_hilo.py"
+    ],
+    "resultado_archivos_saneados": {
+      "passed": 52,
+      "failed": 0
+    }
+  },
+  "ultima_coleccion_global_reportada": {
+    "tests_collected": 4714,
+    "exit_code": 0,
+    "suite_funcional_global_ejecutada": false,
+    "suite_funcional_global_estabilizada": false,
+    "warnings_ultimo_informe": [
+      "PytestDeprecationWarning en tests/integration/test_notebooks_execution.py.",
+      "PytestCollectionWarning relativo a TestCommandV2."
+    ],
+    "observacion": "En reportes anteriores también apareció una SyntaxWarning en una prueba de sandbox; el último informe no la enumeró."
+  },
+  "fallos_pendientes_confirmados": {
+    "tests/unit/test_interpreter_scope_contract.py": {
+      "total_fallos": 3,
+      "fallos": [
+        {
+          "tipo": "shadowing",
+          "observado": 2,
+          "esperado": 1
+        },
+        {
+          "tipo": "contrato_de_entorno",
+          "descripcion": "Ausencia del atributo o propiedad entorno."
+        },
+        {
+          "tipo": "asignacion_no_declarada",
+          "descripcion": "Una asignación que debería exigir un binding previo no produce NameError."
+        }
+      ],
+      "caracter": "Fallos funcionales reproducibles en procesos limpios."
+    },
+    "tests/unit/test_interpreter_loop_scope_regression.py": {
+      "total_fallos": 4,
+      "error_representativo": "ValueError: Nodo no soportado: <class 'pcobra.core.ast_nodes.NodoAsignacion'>",
+      "hipotesis_principal": "Incompatibilidad de identidad AST causada por imports legacy del archivo o de dependencias cargadas en el mismo proceso."
+    }
+  },
+  "contaminantes_pendientes": {
+    "candidato_relacionado_inmediato": "tests/unit/test_interpreter_inheritance.py",
+    "motivo": "Contiene imports legacy y fue el primer candidato posterior identificado entre las pruebas relacionadas.",
+    "frontera_global": "El último probe global no atribuyó una frontera única a un archivo: los módulos legacy reaparecieron durante la fase final de modificación de items de colección.",
+    "otros_archivos_relacionados_ejecutados": {
+      "tests/unit/test_interpreter_inheritance.py": "2 passed de forma aislada, pero contiene imports legacy.",
+      "tests/unit/test_interpreter_objects.py": "2 passed.",
+      "tests/unit/test_interpreter_scope_contract.py": "16 passed, 3 failed.",
+      "tests/unit/test_interpreter_loop_scope_regression.py": "4 failed.",
+      "tests/unit/test_metodo_atributo.py": "28 passed.",
+      "tests/integration/test_interpreter_loop_mutation_persistence.py": "1 passed.",
+      "tests/integration/test_interpreter_string_equality.py": "2 passed."
+    }
+  },
+  "siguiente_tarea_preparada": {
+    "estado": "Prompt generado, todavía sin informe de ejecución proporcionado.",
+    "objetivos": [
+      "Canonicalizar imports legacy en tests/unit/test_interpreter_inheritance.py.",
+      "Canonicalizar imports y eliminar incompatibilidades AST en tests/unit/test_interpreter_loop_scope_regression.py.",
+      "Diagnosticar y corregir los tres fallos funcionales de tests/unit/test_interpreter_scope_contract.py.",
+      "Preservar los seis archivos ya saneados.",
+      "Mantener Lexer, Parser, gramática, tokens y constant_folder intactos.",
+      "Ejecutar los tres archivos individualmente y en varios órdenes.",
+      "Repetir pruebas concurrentes.",
+      "Ejecutar ambos órdenes con test_end_to_end.",
+      "Ejecutar validación acumulada y colección global.",
+      "Localizar el siguiente contaminante sin corregirlo."
+    ],
+    "archivos_inicialmente_autorizados": [
+      "tests/unit/test_interpreter_inheritance.py",
+      "tests/unit/test_interpreter_loop_scope_regression.py",
+      "tests/unit/test_interpreter_scope_contract.py"
+    ],
+    "produccion_condicionalmente_autorizada": [
+      "src/pcobra/core/interpreter.py",
+      "Módulo canónico real de Environment, solo con evidencia causal."
+    ],
+    "contratos_funcionales_a_preservar": [
+      "Lectura desde el scope actual hacia padres.",
+      "Declaración en el scope activo.",
+      "Reasignación en el scope propietario.",
+      "Shadowing local sin mutar el exterior.",
+      "Eliminación de bindings locales al salir del scope.",
+      "Closures, parámetros y retornos.",
+      "Persistencia contractual de mutaciones de bucles.",
+      "Global y nolocal.",
+      "Aislamiento concurrente y RLock.",
+      "Entorno de instancias y métodos.",
+      "Primera asignación válida.",
+      "Autorreferencia inicial inválida."
+    ]
+  },
+  "desviaciones_de_plataforma": {
+    "descripcion": "En varias tareas una instrucción superior de la plataforma obligó a crear commits y registrar PR mediante make_pr.",
+    "acciones": [
+      "Se crearon commits focalizados.",
+      "Se registraron PR.",
+      "No se hicieron pushes manuales."
+    ],
+    "nota_sobre_shas": "Los SHA locales reportados en ejecuciones anteriores no siempre existen en clones posteriores porque los cambios fueron integrados mediante commits equivalentes o merges con SHA distintos."
+  },
+  "documentacion_disponible": {
+    "readme_proyecto": "README general de pCobra, versión reportada 10.0.13.",
+    "libro_principal": "docs/LIBRO_PROGRAMACION_COBRA.md.",
+    "inventario_repositorio": "Estructura completa del proyecto proporcionada por el usuario.",
+    "contratos_relevantes": [
+      "CLI pública única cobra.",
+      "Backends oficiales python, javascript y rust.",
+      "Imports internos nuevos mediante pcobra.cobra.* o rutas canónicas pcobra.*.",
+      "Rutas legacy reservadas para compatibilidad histórica."
+    ]
+  },
+  "siguiente_paso": "Ejecutar en Codex el último prompt preparado para resolver contaminación en inheritance y loop_scope_regression, junto con los tres defectos funcionales de scope; después revisar el informe resultante antes de avanzar."
 }
