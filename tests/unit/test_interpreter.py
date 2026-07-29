@@ -2,10 +2,10 @@ import pytest
 from io import StringIO
 from unittest.mock import patch
 
-from core.interpreter import InterpretadorCobra
-from core.environment import Environment
-from cobra.core import Token, TipoToken
-from core.ast_nodes import (
+from pcobra.core.interpreter import InterpretadorCobra
+from pcobra.core.environment import Environment
+from pcobra.core.lexer import Token, TipoToken
+from pcobra.core.ast_nodes import (
     NodoAsignacion,
     NodoDel,
     NodoFuncion,
@@ -611,7 +611,7 @@ def test_mode_se_restaura_en_import_si_falla_validacion(monkeypatch):
     inter = InterpretadorCobra()
     modo_inicial = inter.mode
 
-    monkeypatch.setattr("core.interpreter.cargar_ast_modulo", lambda *a, **k: [NodoValor(1)])
+    monkeypatch.setattr("pcobra.core.interpreter.cargar_ast_modulo", lambda *a, **k: [NodoValor(1)])
 
     def _falla_validacion(_nodo):
         raise RuntimeError("validacion import")
@@ -630,7 +630,7 @@ def test_mode_se_restaura_en_import_si_falla_ejecucion(monkeypatch):
     inter = InterpretadorCobra()
     modo_inicial = inter.mode
 
-    monkeypatch.setattr("core.interpreter.cargar_ast_modulo", lambda *a, **k: [NodoValor(3)])
+    monkeypatch.setattr("pcobra.core.interpreter.cargar_ast_modulo", lambda *a, **k: [NodoValor(3)])
     monkeypatch.setattr(inter, "_validar", lambda _nodo: None)
 
     def _falla_ejecucion(_nodo):
