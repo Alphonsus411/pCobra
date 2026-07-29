@@ -6,8 +6,7 @@ from unittest.mock import patch
 
 import pytest
 
-from cobra.core import Token, TipoToken
-from core.ast_nodes import (
+from pcobra.core.ast_nodes import (
     NodoAsignacion,
     NodoBucleMientras,
     NodoCondicional,
@@ -20,8 +19,9 @@ from core.ast_nodes import (
     NodoRetorno,
     NodoValor,
 )
-from core.interpreter import InterpretadorCobra
 from pcobra.core.environment import Environment
+from pcobra.core.interpreter import InterpretadorCobra
+from pcobra.core.lexer import TipoToken, Token
 
 
 def _ejecutar(nodos: list) -> InterpretadorCobra:
