@@ -1,9 +1,9 @@
 from io import StringIO
 from unittest.mock import patch
 
-from core.interpreter import InterpretadorCobra
-from cobra.core import Lexer
-from cobra.core import Parser
+from pcobra.core.interpreter import InterpretadorCobra
+from pcobra.core.lexer import Lexer
+from pcobra.core.parser import Parser
 
 
 def test_interpreter_atributo_lectura_escritura():
