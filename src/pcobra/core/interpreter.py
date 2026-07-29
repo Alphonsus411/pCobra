@@ -863,12 +863,14 @@ class InterpretadorCobra:
                     continue
 
     def _construir_funcion(self, nodo):
+        entorno = self.contextos[-1]
         return {
             "tipo": "funcion",
             "nombre": nodo.nombre,
             "parametros": list(nodo.parametros),
             "cuerpo": list(nodo.cuerpo),
-            "scope_lexico": self.contextos[-1],
+            "scope_lexico": entorno,
+            "entorno": entorno,
         }
 
     def _registrar_funciones_declaradas_como_valores(self, ast) -> None:
@@ -1677,7 +1679,12 @@ class InterpretadorCobra:
         self._auditar_en_ejecucion(nodo)
         
         if isinstance(nodo, NodoAsignacion):
-            return self.ejecutar_asignacion(nodo)
+            return self.ejecutar_asignacion(
+                nodo,
+                permitir_asignacion_inicial=isinstance(
+                    getattr(nodo, "expresion", None), NodoInstancia
+                ),
+            )
         elif isinstance(nodo, NodoCondicional):
             return self.ejecutar_condicional(nodo)
         elif isinstance(nodo, NodoBucleMientras):
@@ -1783,7 +1790,13 @@ class InterpretadorCobra:
         else:
             raise ValueError(f"Nodo no soportado: {type(nodo)}")
 
-    def ejecutar_asignacion(self, nodo, visitados=None):
+    def ejecutar_asignacion(
+        self,
+        nodo,
+        visitados=None,
+        *,
+        permitir_asignacion_inicial=True,
+    ):
         """Evalúa una asignación de variable o atributo."""
         # El valor de una asignación es un resultado ordinario. El control de
         # flujo se propaga exclusivamente mediante las señales _Control*.
@@ -1816,8 +1829,17 @@ class InterpretadorCobra:
             else:
                 indice_contexto = self._indice_entorno_variable(nombre)
                 if indice_contexto is None:
-                    # La primera asignación introduce el nombre en el entorno
-                    # activo; las lecturas siguen exigiendo que ya exista.
+                    if self._call_depth == 0 and not permitir_asignacion_inicial:
+                        raise NameError(f"Variable no declarada: {nombre}")
+                    # Dentro de una función, una primera asignación simple
+                    # introduce un nombre local durante la llamada.
+                    indice_contexto = len(self.mem_contextos) - 1
+                    indice = self.solicitar_memoria(1)
+                    self.mem_contextos[indice_contexto][nombre] = (indice, 1)
+                    self.contextos[-1].define(nombre, valor)
+                elif 0 < indice_contexto < len(self.contextos) - 1:
+                    # Sin una declaración ``nolocal``, una escritura desde una
+                    # función anidada sombrea el local de la función exterior.
                     indice_contexto = len(self.mem_contextos) - 1
                     indice = self.solicitar_memoria(1)
                     self.mem_contextos[indice_contexto][nombre] = (indice, 1)

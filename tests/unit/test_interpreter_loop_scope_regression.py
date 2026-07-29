@@ -3,8 +3,9 @@ from __future__ import annotations
 from io import StringIO
 from unittest.mock import patch
 
-from cobra.core import Lexer, Parser
-from core.interpreter import InterpretadorCobra
+from pcobra.core.interpreter import InterpretadorCobra
+from pcobra.core.lexer import Lexer
+from pcobra.core.parser import Parser
 
 
 def _ejecutar_codigo_y_capturar_stdout(codigo: str) -> str:
