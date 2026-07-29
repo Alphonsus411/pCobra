@@ -1,8 +1,14 @@
 import pytest
-from core.ast_nodes import NodoFuncion, NodoRetorno, NodoValor, NodoAsignacion, NodoLlamadaFuncion
-from cobra.transpilers.transpiler.to_python import TranspiladorPython
-from cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
-from cobra.transpilers.import_helper import get_standard_imports
+from pcobra.core.ast_nodes import (
+    NodoFuncion,
+    NodoRetorno,
+    NodoValor,
+    NodoAsignacion,
+    NodoLlamadaFuncion,
+)
+from pcobra.cobra.transpilers.transpiler.to_python import TranspiladorPython
+from pcobra.cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
+from pcobra.cobra.transpilers.import_helper import get_standard_imports
 
 IMPORTS = get_standard_imports("python")
 
