@@ -88,6 +88,7 @@ from .usar_symbol_policy import (
     validate_usar_symbol_metadata,
 )
 from .environment import Environment
+from pcobra.corelibs.datos import longitud
 from pcobra.cobra.usar_loader import descubrir_raiz_proyecto
 
 MODULES_PATH = _DEFAULT_MODULES_PATH
@@ -589,6 +590,7 @@ class InterpretadorCobra:
         self._validados = set()
         # Pila de entornos para mantener variables locales en cada llamada
         self.contextos = [Environment()]
+        self.funciones_nativas = {"longitud": longitud}
         # Mapa paralelo para gestionar bloques de memoria por contexto
         self.mem_contextos = [{}]
         # Gestor genético de estrategias de memoria
@@ -597,6 +599,7 @@ class InterpretadorCobra:
         self.op_memoria = 0
         self._eval_stack = set()
         self._call_depth = 0
+        self._with_return_depth = 0
         # Funciones Cobra declaradas en el AST fuente. Se mantiene separada del
         # entorno de variables para que los optimizadores puedan eliminar nodos
         # ``NodoFuncion`` sin impedir que sus nombres sigan siendo resolubles
@@ -1720,10 +1723,18 @@ class InterpretadorCobra:
             self.evaluar_expresion(nodo.contexto)
             self.contextos.append(Environment(parent=self.contextos[-1]))
             self.mem_contextos.append({})
+            capturar_retorno = self._call_depth == 0
+            self._with_return_depth += 1
             try:
-                for instr in nodo.cuerpo:
-                    self.ejecutar_nodo(instr)
+                try:
+                    for instr in nodo.cuerpo:
+                        self.ejecutar_nodo(instr)
+                except _ControlRetorno as retorno:
+                    if not capturar_retorno:
+                        raise
+                    return retorno.valor
             finally:
+                self._with_return_depth -= 1
                 memoria_local = self.mem_contextos.pop()
                 for idx, tam in memoria_local.values():
                     self.liberar_memoria(idx, tam)
@@ -1735,7 +1746,7 @@ class InterpretadorCobra:
         elif isinstance(nodo, NodoHilo):
             return self.ejecutar_hilo(nodo)
         elif isinstance(nodo, NodoRetorno):
-            if self._call_depth == 0:
+            if self._call_depth == 0 and self._with_return_depth == 0:
                 raise RuntimeError("retorno fuera de función")
             raise _ControlRetorno(self.evaluar_expresion(nodo.expresion))
         elif isinstance(nodo, NodoRomper):
@@ -1751,8 +1762,8 @@ class InterpretadorCobra:
 
     def ejecutar_asignacion(self, nodo, visitados=None):
         """Evalúa una asignación de variable o atributo."""
-        # Contrato: una declaración (`var`/`variable`) solo muta contexto y nunca
-        # devuelve señal de control para cortar un bloque.
+        # El valor de una asignación es un resultado ordinario. El control de
+        # flujo se propaga exclusivamente mediante las señales _Control*.
         visitados = set() if visitados is None else visitados
         nombre = getattr(nodo, "identificador", getattr(nodo, "variable", None))
         valor_nodo = getattr(nodo, "expresion", getattr(nodo, "valor", None))
@@ -1778,9 +1789,7 @@ class InterpretadorCobra:
                 indice = self.solicitar_memoria(1)
                 self.mem_contextos[indice_contexto][nombre] = (indice, 1)
                 self.contextos[-1].define(nombre, valor)
-                # Contrato explícito: toda declaración muta estado local y
-                # devuelve ``None`` (nunca señal de control).
-                return None
+                return valor
             else:
                 indice_contexto = self._indice_entorno_variable(nombre)
                 if indice_contexto is None:
@@ -1800,9 +1809,7 @@ class InterpretadorCobra:
                     indice = self.solicitar_memoria(1)
                     self.mem_contextos[indice_contexto][nombre] = (indice, 1)
                     self.contextos[-1].set(nombre, valor)
-        # Igual que una declaración, una reasignación solo muta estado y nunca
-        # debe propagarse como señal de control dentro de bloques/bucles.
-        return None
+        return valor
 
     def evaluar_expresion(self, expresion, visitados=None):
         """Resuelve el valor de una expresión de forma recursiva.
@@ -2291,7 +2298,12 @@ class InterpretadorCobra:
                 if emitir_salida_llamada:
                     print(valor)
         else:
-            funcion = self.obtener_variable(nodo.nombre)
+            try:
+                funcion = self.obtener_variable(nodo.nombre)
+            except NameError:
+                if nodo.nombre not in self.funciones_nativas:
+                    raise
+                funcion = self.funciones_nativas[nodo.nombre]
 
             if callable(funcion):
                 argumentos_resueltos = []
@@ -2526,7 +2538,13 @@ class InterpretadorCobra:
         self._current_module_stack.append(ruta_canonica)
         try:
             for subnodo in ast:
-                self.ejecutar_nodo(subnodo)
+                modo_previo = self._set_mode("analysis")
+                try:
+                    self._validar(subnodo)
+                    self._set_mode("execution")
+                    self.ejecutar_nodo(subnodo)
+                finally:
+                    self._set_mode(modo_previo)
         finally:
             self._current_module_stack.pop()
             self._import_execution_stack.pop()
