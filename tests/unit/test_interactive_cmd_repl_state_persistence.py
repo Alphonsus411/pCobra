@@ -36,9 +36,9 @@ _jsonschema_mod.validate = lambda *a, **k: None
 _jsonschema_mod.ValidationError = Exception
 sys.modules.setdefault("jsonschema", _jsonschema_mod)
 
-from cobra.cli.commands.interactive_cmd import InteractiveCommand
-from core.ast_nodes import NodoAsignacion, NodoImprimir, NodoOperacionBinaria
-from core.interpreter import InterpretadorCobra
+from pcobra.cobra.cli.commands.interactive_cmd import InteractiveCommand
+from pcobra.core.ast_nodes import NodoAsignacion, NodoImprimir, NodoOperacionBinaria
+from pcobra.core.interpreter import InterpretadorCobra
 
 
 def _args() -> SimpleNamespace:
@@ -55,9 +55,9 @@ def _args() -> SimpleNamespace:
 def test_repl_normal_persiste_estado_entre_snippets_y_no_filtra_cse() -> None:
     entradas = ["var x = 21", "var y = x * 2", "y", "salir"]
 
-    with patch("cobra.cli.commands.interactive_cmd.validar_dependencias"), \
+    with patch("pcobra.cobra.cli.commands.interactive_cmd.validar_dependencias"), \
          patch("prompt_toolkit.PromptSession.prompt", side_effect=entradas), \
-         patch("cobra.cli.commands.interactive_cmd.InteractiveCommand.validar_entrada", return_value=True), \
+         patch("pcobra.cobra.cli.commands.interactive_cmd.InteractiveCommand.validar_entrada", return_value=True), \
          patch("sys.stdout", new_callable=StringIO) as salida:
         cmd = InteractiveCommand(InterpretadorCobra())
         ret = cmd.run(_args())
