@@ -32,7 +32,7 @@ from io import StringIO
 from types import SimpleNamespace
 
 from cobra.cli.commands.interactive_cmd import InteractiveCommand
-from core.interpreter import InterpretadorCobra
+from pcobra.core.interpreter import InterpretadorCobra
 
 
 def _args() -> SimpleNamespace:
