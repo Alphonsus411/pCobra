@@ -1,5 +1,6 @@
 """Implementación del intérprete del lenguaje Cobra."""
 
+import ast
 import logging
 import os
 import hashlib
@@ -272,6 +273,19 @@ class InterpretadorCobra:
         """Imprime trazas internas solo cuando el modo debug está activo."""
         if self.in_execution() and self._debug_trazas_habilitadas():
             print(mensaje)
+
+    @staticmethod
+    def _valor_literal(valor):
+        """Convierte representaciones textuales válidas de cadenas a runtime."""
+        if not isinstance(valor, str) or len(valor) < 2:
+            return valor
+        if valor[0] not in {"'", '"'} or valor[-1] != valor[0]:
+            return valor
+        try:
+            normalizado = ast.literal_eval(valor)
+        except (SyntaxError, ValueError):
+            return valor
+        return normalizado if isinstance(normalizado, str) else valor
 
     @staticmethod
     def _registrar_auditoria_validador(
@@ -600,6 +614,10 @@ class InterpretadorCobra:
         self._eval_stack = set()
         self._call_depth = 0
         self._with_return_depth = 0
+        import threading
+
+        self._thread_execution_lock = threading.RLock()
+        self._thread_isolation_depth = 0
         # Funciones Cobra declaradas en el AST fuente. Se mantiene separada del
         # entorno de variables para que los optimizadores puedan eliminar nodos
         # ``NodoFuncion`` sin impedir que sus nombres sigan siendo resolubles
@@ -1410,7 +1428,12 @@ class InterpretadorCobra:
                 if isinstance(actual, NodoIdentificador):
                     if actual.nombre == nombre:
                         # Permite patrones válidos como ``x = x + 1`` usando el
-                        # valor previamente materializado en el entorno actual.
+                        # valor previamente materializado en el entorno actual;
+                        # sin un binding previo, ``x = x`` sí es un ciclo.
+                        if not self.contextos[-1].contains(nombre):
+                            raise RuntimeError(
+                                f"Ciclo de variables detectado en '{nombre}'"
+                            )
                         continue
                     self._resolver_identificador(actual.nombre, visitados)
                     continue
@@ -1793,11 +1816,8 @@ class InterpretadorCobra:
             else:
                 indice_contexto = self._indice_entorno_variable(nombre)
                 if indice_contexto is None:
-                    if self._call_depth == 0:
-                        raise NameError(f"Variable no declarada: {nombre}")
-                    # Una asignación simple dentro de una función introduce un
-                    # nombre local cuando no existe en su cadena léxica. Este
-                    # contexto permanece activo durante todo el cuerpo.
+                    # La primera asignación introduce el nombre en el entorno
+                    # activo; las lecturas siguen exigiendo que ya exista.
                     indice_contexto = len(self.mem_contextos) - 1
                     indice = self.solicitar_memoria(1)
                     self.mem_contextos[indice_contexto][nombre] = (indice, 1)
@@ -1845,14 +1865,14 @@ class InterpretadorCobra:
                 )
 
             if isinstance(expresion, NodoValor):
-                return expresion.valor  # Obtiene el valor directo si es un NodoValor
+                return self._valor_literal(expresion.valor)
             elif isinstance(expresion, Token) and expresion.tipo in {
                 TipoToken.ENTERO,
                 TipoToken.FLOTANTE,
                 TipoToken.CADENA,
                 TipoToken.BOOLEANO,
             }:
-                return expresion.valor  # Si es un token de tipo literal, devuelve su valor
+                return self._valor_literal(expresion.valor)
             elif isinstance(expresion, NodoAsignacion):
                 # Resuelve asignaciones anidadas y devuelve su valor
                 return self.ejecutar_asignacion(expresion, visitados)
@@ -2247,6 +2267,11 @@ class InterpretadorCobra:
         entorno_capturado = funcion.get(
             "scope_lexico", funcion.get("entorno", self.contextos[-1])
         )
+        if self._thread_isolation_depth:
+            entorno_capturado = Environment(
+                values=dict(entorno_capturado.values),
+                parent=entorno_capturado.parent,
+            )
         self.contextos.append(Environment(parent=entorno_capturado))
         self.mem_contextos.append({})
         try:
@@ -2349,6 +2374,11 @@ class InterpretadorCobra:
                 entorno_capturado = funcion.get(
                     "scope_lexico", funcion.get("entorno", self.contextos[-1])
                 )
+                if self._thread_isolation_depth:
+                    entorno_capturado = Environment(
+                        values=dict(entorno_capturado.values),
+                        parent=entorno_capturado.parent,
+                    )
                 self.contextos.append(Environment(parent=entorno_capturado))
                 self.mem_contextos.append({})
                 for nombre_param, valor in zip(parametros, argumentos_resueltos):
@@ -2784,7 +2814,16 @@ class InterpretadorCobra:
         import threading
 
         def destino():
-            self.ejecutar_llamada_funcion(nodo.llamada)
+            # Las llamadas concurrentes comparten el intérprete, pero cada
+            # hilo ejecuta la función sobre una vista aislada de su entorno
+            # capturado. El bloqueo protege las pilas internas de contextos y
+            # memoria, que son estructuras compartidas y no thread-local.
+            with self._thread_execution_lock:
+                self._thread_isolation_depth += 1
+                try:
+                    self.ejecutar_llamada_funcion(nodo.llamada)
+                finally:
+                    self._thread_isolation_depth -= 1
 
         # El hilo se marca como daemon para evitar que bloquee el cierre del
         # intérprete si queda en ejecución al finalizar el programa.
