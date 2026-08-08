@@ -6,6 +6,7 @@ import os
 import hashlib
 import inspect
 import math
+import multiprocessing
 import threading
 import warnings
 from pathlib import Path
@@ -340,8 +341,7 @@ class InterpretadorCobra:
 
     @staticmethod
     def _cargar_validadores(ruta):
-        """Carga una lista de validadores desde un archivo Python."""
-        import ast
+        """Carga descriptores en un worker aislado y construye clases admitidas."""
 
         ruta_abs = os.path.abspath(ruta)
         if not _ruta_import_permitida(ruta_abs):
@@ -363,222 +363,80 @@ class InterpretadorCobra:
             ) from e
         hash_corto = hashlib.sha256(source.encode("utf-8")).hexdigest()[:12]
 
+        from .validator_worker import run_validator_worker
+
+        context = multiprocessing.get_context("spawn")
+        parent, child = context.Pipe(duplex=False)
+        process = context.Process(
+            target=run_validator_worker,
+            args=(child, {"source": source, "filename": ruta_real}),
+        )
+        process.start()
+        child.close()
+        timeout = float(os.getenv("PCOBRA_VALIDATOR_TIMEOUT", "2"))
+        response = None
         try:
-            tree = ast.parse(source, filename=ruta_real)
-        except SyntaxError as e:
-            InterpretadorCobra._registrar_auditoria_validador(
-                ruta_real,
-                "rechazado",
-                "sintaxis_invalida",
-                hash_corto=hash_corto,
-                fase="parse",
-            )
-            raise ImportError(
-                "El archivo de validadores tiene sintaxis inválida."
-            ) from e
+            if parent.poll(timeout):
+                response = parent.recv()
+            else:
+                process.terminate()
+                process.join(0.5)
+                if process.is_alive():
+                    process.kill()
+                raise ImportError("El validador adicional superó el tiempo permitido.")
+        except EOFError:
+            response = None
+        finally:
+            if process.is_alive():
+                process.terminate()
+            process.join()
+            parent.close()
 
-        magia_permitida = {"__name__"}
-        tokens_sensibles = {
-            "__subclasses__",
-            "__globals__",
-            "__dict__",
-            "__mro__",
-            "__bases__",
-            "__getattribute__",
-            "__setattr__",
-            "__delattr__",
-            "__code__",
-            "__closure__",
-            "__func__",
-            "__self__",
+        if not isinstance(response, dict) or response.get("estado") != "ok":
+            codigo = response.get("codigo") if isinstance(response, dict) else "worker_terminado"
+            if response is None and process.exitcode is not None and process.exitcode < 0:
+                codigo = "cpu_excedida"
+            mensajes = {
+                "import_no_permitido": "No se permiten importaciones en validadores adicionales.",
+                "atributo_magico_no_permitido": "Se detectó un atributo mágico no permitido.",
+                "introspeccion_no_permitida": "Se detectó introspección no permitida.",
+                "memoria_excedida": "El validador adicional excede los límites de memoria permitidos.",
+                "cpu_excedida": "El validador adicional superó el tiempo permitido.",
+                "resultado_no_serializable": "El resultado del validador no es serializable.",
+                "descriptor_invalido": "El validador adicional devolvió un descriptor inválido.",
+                "worker_terminado": "El proceso del validador terminó sin resultado.",
+            }
+            raise ImportError(mensajes.get(codigo, "No se pudo cargar el validador adicional de forma segura."))
+
+        from .semantic_validators import (
+            ValidadorImportSeguro,
+            ValidadorPrimitivaPeligrosa,
+            ValidadorProhibirReflexion,
+            ValidadorSistemaArchivos,
+        )
+
+        registry = {
+            "import_seguro": ValidadorImportSeguro,
+            "primitiva_peligrosa": ValidadorPrimitivaPeligrosa,
+            "reflexion_segura": ValidadorProhibirReflexion,
+            "sistema_archivos": ValidadorSistemaArchivos,
         }
-        for node in ast.walk(tree):
-            if isinstance(node, (ast.Import, ast.ImportFrom)):
-                InterpretadorCobra._registrar_auditoria_validador(
-                    ruta_real,
-                    "rechazado",
-                    "import_no_permitido",
-                    hash_corto=hash_corto,
-                    fase="policy_check",
-                )
-                raise ImportError(
-                    "ImportError: no se permiten importaciones en validadores adicionales."
-                )
-            if isinstance(node, ast.Attribute):
-                if (
-                    node.attr.startswith("__")
-                    and node.attr.endswith("__")
-                    and node.attr not in magia_permitida
-                ):
-                    InterpretadorCobra._registrar_auditoria_validador(
-                        ruta_real,
-                        "rechazado",
-                        "atributo_magico_no_permitido",
-                        hash_corto=hash_corto,
-                        fase="policy_check",
-                    )
-                    raise ImportError(
-                        "ImportError: se detectó acceso a atributo mágico no permitido en el validador adicional."
-                    )
-            if isinstance(node, ast.Constant) and isinstance(node.value, str):
-                if any(token in node.value for token in tokens_sensibles):
-                    InterpretadorCobra._registrar_auditoria_validador(
-                        ruta_real,
-                        "rechazado",
-                        "cadena_introspeccion_sensible",
-                        hash_corto=hash_corto,
-                        fase="policy_check",
-                    )
-                    raise ImportError(
-                        "ImportError: se detectó un patrón de introspección no permitido en el validador adicional."
-                    )
-            if isinstance(node, ast.Call):
-                func = node.func
-                if isinstance(func, ast.Name) and func.id == "__import__":
-                    InterpretadorCobra._registrar_auditoria_validador(
-                        ruta_real,
-                        "rechazado",
-                        "dunder_import_bloqueado",
-                        hash_corto=hash_corto,
-                        fase="policy_check",
-                    )
-                    raise ImportError(
-                        "ImportError: el uso de __import__ está bloqueado en validadores adicionales."
-                    )
-                if isinstance(func, ast.Name) and func.id == "getattr":
-                    primer_arg = node.args[0] if node.args else None
-                    objetivo_sensible = isinstance(primer_arg, ast.Name) and primer_arg.id in {
-                        "__builtins__",
-                        "builtins",
-                        "object",
-                        "type",
-                    }
-                    atributo_sensible = (
-                        len(node.args) > 1
-                        and isinstance(node.args[1], ast.Constant)
-                        and isinstance(node.args[1].value, str)
-                        and any(token in node.args[1].value for token in tokens_sensibles)
-                    )
-                    if objetivo_sensible or atributo_sensible:
-                        InterpretadorCobra._registrar_auditoria_validador(
-                            ruta_real,
-                            "rechazado",
-                            "getattr_introspeccion_bloqueado",
-                            hash_corto=hash_corto,
-                            fase="policy_check",
-                        )
-                        raise ImportError(
-                            "ImportError: uso de introspección dinámica no permitido en el validador adicional."
-                        )
-
-        from .sandbox import cargar_simbolos_restrictedpython
-        from .semantic_validators.base import ValidadorBase
-
-        import builtins
-
-        rp_symbols, has_restricted_python = cargar_simbolos_restrictedpython()
-        if not has_restricted_python:
-            raise ImportError(
-                "Los validadores adicionales requieren RestrictedPython instalado "
-                "y compatible con la API de seguridad de Cobra."
-            )
-
-        rp_safe_builtins = rp_symbols["safe_builtins"]
-        safe_builtins = {
-            nombre: rp_safe_builtins[nombre]
-            for nombre in (
-                "len",
-                "range",
-                "__build_class__",
-                "Exception",
-                "object",
-            )
-            if nombre in rp_safe_builtins
-        }
-        safe_builtins.setdefault("len", builtins.len)
-        safe_builtins.setdefault("range", builtins.range)
-        safe_builtins.setdefault("__build_class__", builtins.__build_class__)
-        safe_builtins.setdefault("Exception", builtins.Exception)
-        safe_builtins.setdefault("object", builtins.object)
-
-        namespace = {
-            "__builtins__": safe_builtins,
-            "ValidadorBase": ValidadorBase,
-            "__name__": "validators",
-            "__metaclass__": builtins.type,
-            "_print_": rp_symbols["PrintCollector"],
-            "_getattr_": rp_symbols["default_guarded_getattr"],
-            "_getitem_": rp_symbols["default_guarded_getitem"],
-            "_iter_unpack_sequence_": rp_symbols["guarded_iter_unpack_sequence"],
-            "_unpack_sequence_": rp_symbols["guarded_unpack_sequence"],
-        }
-        compile_restricted = rp_symbols["compile_restricted"]
-        try:
-            byte_code = compile_restricted(source, ruta_abs, "exec")
-        except TimeoutError as e:
-            InterpretadorCobra._registrar_auditoria_validador(
-                ruta_real,
-                "rechazado",
-                "timeout",
-                hash_corto=hash_corto,
-                fase="compile",
-            )
-            raise ImportError(
-                "El validador adicional superó el tiempo permitido."
-            ) from e
-        except (MemoryError, OverflowError) as e:
-            InterpretadorCobra._registrar_auditoria_validador(
-                ruta_real,
-                "rechazado",
-                "memoria_excedida",
-                hash_corto=hash_corto,
-                fase="compile",
-            )
-            raise ImportError(
-                "El validador adicional excede los límites de memoria permitidos."
-            ) from e
-        try:
-            exec(byte_code, namespace)
-        except TimeoutError as e:
-            InterpretadorCobra._registrar_auditoria_validador(
-                ruta_real,
-                "rechazado",
-                "timeout",
-                hash_corto=hash_corto,
-                fase="exec",
-            )
-            raise ImportError(
-                "El validador adicional superó el tiempo permitido."
-            ) from e
-        except (MemoryError, OverflowError) as e:
-            InterpretadorCobra._registrar_auditoria_validador(
-                ruta_real,
-                "rechazado",
-                "memoria_excedida",
-                hash_corto=hash_corto,
-                fase="exec",
-            )
-            raise ImportError(
-                "El validador adicional excede los límites de memoria permitidos."
-            ) from e
-        except Exception as e:
-            InterpretadorCobra._registrar_auditoria_validador(
-                ruta_real,
-                "rechazado",
-                "error_en_ejecucion",
-                hash_corto=hash_corto,
-                fase="exec",
-            )
-            raise ImportError(
-                "No se pudo cargar el validador adicional de forma segura."
-            ) from e
+        validators = []
+        for descriptor in response.get("validadores", []):
+            validator_class = registry.get(descriptor["nombre"])
+            if validator_class is None:
+                raise ImportError("El descriptor solicita un validador no preautorizado.")
+            try:
+                validators.append(validator_class(**descriptor["parametros"]))
+            except (TypeError, ValueError) as exc:
+                raise ImportError("Parámetros inválidos para el validador preautorizado.") from exc
         InterpretadorCobra._registrar_auditoria_validador(
             ruta_real,
             "permitido",
             hash_corto=hash_corto,
             fase="exec",
         )
-        return namespace.get("VALIDADORES_EXTRA", [])
+        return validators
 
     def __init__(
         self,
@@ -596,8 +454,8 @@ class InterpretadorCobra:
             devuelta por :func:`construir_cadena`, restringiendo primitivas
             como ``import`` o ``hilo``.
         extra_validators: list | str, optional
-            Lista de instancias adicionales o ruta a un módulo que defina
-            ``VALIDADORES_EXTRA``.
+            Ruta a un módulo que defina ``VALIDADORES_EXTRA`` mediante
+            descriptores declarativos. Las instancias y callables se rechazan.
         main_file: Path | str, optional
             Archivo principal conocido por CLI/runtime para resolver módulos de
             proyecto con ``usar`` desde la raíz canonicalizada.
@@ -605,6 +463,11 @@ class InterpretadorCobra:
         extra = extra_validators
         if isinstance(extra, str):
             extra = self._cargar_validadores(extra)
+        elif extra:
+            raise TypeError(
+                "Los validadores adicionales deben indicarse mediante una ruta "
+                "con descriptores declarativos; no se admiten instancias ni callables."
+            )
 
         self.safe_mode = safe_mode
         # Regla de fases: analysis = sin efectos, execution = con efectos.
