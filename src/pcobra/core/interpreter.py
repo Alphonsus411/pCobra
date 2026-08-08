@@ -1958,7 +1958,7 @@ class InterpretadorCobra:
                 )
 
             if isinstance(expresion, NodoValor):
-                return self._valor_literal(expresion.valor)
+                return expresion.valor
             elif isinstance(expresion, Token) and expresion.tipo in {
                 TipoToken.ENTERO,
                 TipoToken.FLOTANTE,
