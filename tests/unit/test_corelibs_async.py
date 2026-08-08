@@ -356,6 +356,7 @@ async def test_obtener_url_async(monkeypatch):
 @pytest.mark.asyncio
 async def test_descargar_archivo_async_elimina_si_falla(monkeypatch, tmp_path):
     monkeypatch.setenv("COBRA_HOST_WHITELIST", "example.com")
+    monkeypatch.setenv("COBRA_IO_BASE_DIR", str(tmp_path))
 
     class _ResponseGrande(_FakeResponse):
         async def aiter_bytes(self, chunk_size=8192):
@@ -368,13 +369,14 @@ async def test_descargar_archivo_async_elimina_si_falla(monkeypatch, tmp_path):
 
     destino = tmp_path / "archivo.bin"
     with pytest.raises(ValueError):
-        await red.descargar_archivo("https://example.com", destino)
+        await red.descargar_archivo("https://example.com", "archivo.bin")
     assert not destino.exists()
 
 
 @pytest.mark.asyncio
 async def test_descargar_archivo_async(monkeypatch, tmp_path):
     monkeypatch.setenv("COBRA_HOST_WHITELIST", "example.com")
+    monkeypatch.setenv("COBRA_IO_BASE_DIR", str(tmp_path))
     respuesta = _FakeResponse(body=b"contenido")
     cliente = _FakeAsyncClient([respuesta])
     if red.httpx is None:
@@ -382,7 +384,7 @@ async def test_descargar_archivo_async(monkeypatch, tmp_path):
     monkeypatch.setattr(red.httpx, "AsyncClient", lambda **_kwargs: cliente, raising=False)
 
     destino = tmp_path / "datos.bin"
-    ruta = await red.descargar_archivo("https://example.com", destino)
+    ruta = await red.descargar_archivo("https://example.com", "datos.bin")
     assert ruta.read_bytes() == b"contenido"
 
 

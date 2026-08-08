@@ -66,10 +66,22 @@ def resolver_ruta_existente(ruta: str | os.PathLike[str]) -> Path:
 
 
 def resolver_destino_nuevo(ruta: str | os.PathLike[str]) -> Path:
-    """Resuelve un destino nuevo tras validar el padre real y su confinamiento."""
+    """Resuelve un destino nuevo validando primero su confinamiento.
+
+    Los directorios intermedios pueden no existir todavía. Se resuelve el
+    ancestro existente más próximo para detectar enlaces simbólicos salientes
+    sin crear nada antes de completar la validación.
+    """
 
     raiz = _obtener_raiz()
     destino = raiz / _normalizar_ruta_usuario(ruta)
-    padre_real = destino.parent.resolve(strict=True)
-    _comprobar_confinamiento(padre_real, raiz)
-    return padre_real / destino.name
+    ancestro = destino.parent
+    partes_pendientes: list[str] = []
+    while not ancestro.exists():
+        partes_pendientes.append(ancestro.name)
+        ancestro = ancestro.parent
+    ancestro_real = ancestro.resolve(strict=True)
+    _comprobar_confinamiento(ancestro_real, raiz)
+    padre_validado = ancestro_real.joinpath(*reversed(partes_pendientes))
+    _comprobar_confinamiento(padre_validado, raiz)
+    return padre_validado / destino.name
