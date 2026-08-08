@@ -1,4 +1,5 @@
 import sys
+import threading
 import types
 from io import StringIO
 from unittest.mock import patch
@@ -32,3 +33,30 @@ def test_hilo_es_daemon():
         hilo = interp.ejecutar_hilo(NodoHilo(NodoLlamadaFuncion('marca', [])))
         assert hilo.daemon
         hilo.join()
+
+
+def test_hilo_daemon_puede_quedar_esperando_sin_bloquear_cierre():
+    interp = InterpretadorCobra()
+    liberar = threading.Event()
+    iniciado = threading.Event()
+
+    def esperar_evento():
+        iniciado.set()
+        liberar.wait()
+
+    interp.funciones_nativas["esperar_evento"] = esperar_evento
+    interp.ejecutar_funcion(
+        NodoFuncion("esperar", [], [NodoLlamadaFuncion("esperar_evento", [])])
+    )
+
+    hilo = interp.ejecutar_hilo(NodoHilo(NodoLlamadaFuncion("esperar", [])))
+    try:
+        assert iniciado.wait(timeout=2)
+        assert hilo.daemon
+        assert hilo.is_alive()
+    finally:
+        liberar.set()
+        hilo.join(timeout=2)
+
+    assert not hilo.is_alive()
+    assert len(interp.contextos) == len(interp.mem_contextos) == 1
