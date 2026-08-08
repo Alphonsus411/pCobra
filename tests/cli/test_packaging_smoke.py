@@ -14,14 +14,14 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
 @pytest.mark.integration
-def test_packaging_smoke_build_install_and_run_help(tmp_path: Path) -> None:
-    """Valida artefactos de packaging y `pcobra.cli:main(['--help'])` en entorno limpio."""
+def test_wheel_instalado_resuelve_usar_sin_checkout(tmp_path: Path) -> None:
+    """Ejecuta intérprete y corelibs usando exclusivamente el wheel instalado."""
 
     dist_dir = tmp_path / "dist"
     dist_dir.mkdir(parents=True, exist_ok=True)
 
     build_result = subprocess.run(
-        [sys.executable, "-m", "build", "--wheel", "--sdist", "--outdir", str(dist_dir)],
+        [sys.executable, "-m", "build", "--wheel", "--outdir", str(dist_dir)],
         cwd=REPO_ROOT,
         check=False,
         capture_output=True,
@@ -33,9 +33,7 @@ def test_packaging_smoke_build_install_and_run_help(tmp_path: Path) -> None:
     )
 
     wheels = sorted(dist_dir.glob("*.whl"))
-    sdists = sorted(dist_dir.glob("*.tar.gz"))
     assert wheels, "No se generó wheel durante el smoke test de packaging."
-    assert sdists, "No se generó sdist durante el smoke test de packaging."
 
     venv_dir = tmp_path / "venv"
     subprocess.run(
@@ -53,26 +51,41 @@ def test_packaging_smoke_build_install_and_run_help(tmp_path: Path) -> None:
         venv_pip = venv_dir / "bin" / "pip"
 
     subprocess.run(
-        [str(venv_pip), "install", "--no-deps", "--force-reinstall", str(wheels[0])],
+        [str(venv_pip), "install", "--force-reinstall", str(wheels[0])],
         check=True,
         capture_output=True,
         text=True,
     )
 
     smoke_script = (
+        "import pathlib, sys\n"
+        f"checkout = pathlib.Path({str(REPO_ROOT)!r}).resolve()\n"
+        "if any(pathlib.Path(p or '.').resolve() == checkout for p in sys.path):\n"
+        "    raise SystemExit('el checkout está presente en sys.path')\n"
+        "consultas_src = []\n"
+        "def auditar(evento, args):\n"
+        "    if evento == 'open' and args and isinstance(args[0], (str, bytes)):\n"
+        "        ruta = pathlib.Path(args[0]).resolve()\n"
+        "        if 'src' in ruta.parts:\n"
+        "            consultas_src.append(str(ruta))\n"
+        "sys.addaudithook(auditar)\n"
         "import pcobra\n"
-        "import pcobra.cli\n"
-        "from pcobra.cli import main\n"
-        "import sys\n"
-        "antes = set(sys.modules)\n"
-        "code = main(['--help'])\n"
-        "despues = set(sys.modules)\n"
-        "if code != 0:\n"
-        "    raise SystemExit(f'pcobra.cli.main([\\'--help\\']) devolvió {code}')\n"
-        "prohibidos = {'cobra', 'core', 'bindings'}\n"
-        "cargados = sorted(name for name in (despues - antes) if name in prohibidos)\n"
-        "if cargados:\n"
-        "    raise SystemExit(f'Se cargaron paquetes raíz legacy en smoke limpio: {cargados!r}')\n"
+        "from pcobra.cobra.core.lexer import Lexer\n"
+        "from pcobra.cobra.core.parser import Parser\n"
+        "from pcobra.cobra.core.runtime import InterpretadorCobra\n"
+        "from pcobra.cobra.usar_loader import usar_modulo\n"
+        "codigo = 'usar \\\"texto\\\"\\nvariable saludo := mayusculas(\\\"cobra\\\")\\nusar \\\"proceso\\\"'\n"
+        "interprete = InterpretadorCobra(safe_mode=False)\n"
+        "interprete.ejecutar_ast(Parser(Lexer(codigo).tokenizar()).parsear())\n"
+        "assert interprete.obtener_variable('saludo') == 'COBRA'\n"
+        "proceso = usar_modulo('proceso', safe_mode=False)\n"
+        "resultado = proceso['ejecutar']([sys.executable, '-c', 'print(6 * 7)'])\n"
+        "assert resultado['codigo'] == 0 and resultado['salida'].strip() == '42'\n"
+        "for modulo in ('pcobra', 'pcobra.standard_library.texto', 'pcobra.corelibs.proceso'):\n"
+        "    ruta = pathlib.Path(sys.modules[modulo].__file__).resolve()\n"
+        "    assert checkout not in ruta.parents and 'site-packages' in ruta.parts, ruta\n"
+        "if consultas_src:\n"
+        "    raise SystemExit(f'se consultaron carpetas src externas: {consultas_src!r}')\n"
     )
     run_help = subprocess.run(
         [str(venv_python), "-I", "-c", smoke_script],
@@ -83,6 +96,6 @@ def test_packaging_smoke_build_install_and_run_help(tmp_path: Path) -> None:
     )
 
     assert run_help.returncode == 0, (
-        "El smoke test aislado de packaging debe validar `import pcobra; import pcobra.cli` y ejecutar --help sin depender de paquetes raíz. "
+        "El smoke test aislado debe ejecutar el wheel sin consultar el checkout ni otro src. "
         f"stdout={run_help.stdout!r} stderr={run_help.stderr!r}"
     )
