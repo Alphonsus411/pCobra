@@ -5,7 +5,6 @@ from __future__ import annotations
 import importlib
 from dataclasses import dataclass, field, replace
 
-
 # Fuente única de verdad de módulos canónicos permitidos por `usar`.
 USAR_COBRA_PUBLIC_MODULES: tuple[str, ...] = (
     "numero",
@@ -135,6 +134,15 @@ class CanonicalModuleSurfaceContract:
     allowed_aliases: dict[str, str]
     forbidden_symbols: tuple[str, ...]
     symbol_capabilities: dict[str, frozenset[str]] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class FilesystemSymbolPolicy:
+    """Decisión auditable para un símbolo que accede al filesystem."""
+
+    capabilities: frozenset[str]
+    sandbox_confined: bool
+    safe_mode_decision: str
 
 
 CANONICAL_MODULE_SURFACE_CONTRACTS: dict[str, CanonicalModuleSurfaceContract] = {
@@ -674,6 +682,97 @@ _EFFECTFUL_PUBLIC_SYMBOLS: dict[str, dict[str, frozenset[str]]] = {
         },
     },
 }
+
+# Matriz canónica de confinamiento. Cada entrada corresponde a un símbolo de
+# ``_EFFECTFUL_PUBLIC_SYMBOLS`` con filesystem.read/filesystem.write. Los grupos
+# son enumeraciones declarativas de implementaciones auditadas, no heurísticas
+# basadas en el nombre. ``allow`` sólo significa que el efecto filesystem puede
+# alcanzar el runtime seguro; otras capacidades del símbolo (por ejemplo red)
+# se siguen aplicando independientemente.
+_FILESYSTEM_SANDBOX_CONFINEMENT: dict[str, dict[str, bool]] = {
+    "datos": {
+        "leer_csv": False,
+        "leer_json": False,
+        "leer_excel": False,
+        "leer_parquet": False,
+        "leer_feather": False,
+        "escribir_csv": False,
+        "escribir_json": False,
+        "escribir_excel": False,
+        "escribir_parquet": False,
+        "escribir_feather": False,
+    },
+    "sistema": {"listar_dir": False},
+    "archivo": {
+        "leer": True,
+        "existe": True,
+        "leer_lineas": True,
+        "escribir": True,
+        "eliminar": True,
+        "anexar": True,
+    },
+    "red": {"descargar_archivo": True},
+    "ruta": {"existe": False},
+    "serializacion": {
+        "leer_json": False,
+        "leer_csv": False,
+        "escribir_json": False,
+        "escribir_csv": False,
+    },
+    "temporal": {
+        "archivo_temporal": False,
+        "directorio_temporal": False,
+        "limpiar": False,
+    },
+    "compresion": {
+        "crear_zip": True,
+        "extraer_zip": True,
+        "listar_zip": True,
+    },
+    "configuracion": {
+        "leer_toml": False,
+        "leer_ini": False,
+        "leer_configuracion": False,
+    },
+}
+
+FILESYSTEM_SYMBOL_POLICIES: dict[tuple[str, str], FilesystemSymbolPolicy] = {
+    (module_name, symbol_name): FilesystemSymbolPolicy(
+        capabilities=capabilities,
+        sandbox_confined=confined,
+        safe_mode_decision="allow" if confined else "deny",
+    )
+    for module_name, symbols in _FILESYSTEM_SANDBOX_CONFINEMENT.items()
+    for symbol_name, confined in symbols.items()
+    for capabilities in (_EFFECTFUL_PUBLIC_SYMBOLS[module_name][symbol_name],)
+}
+
+
+def filesystem_policy_for(
+    module_name: str, symbol_name: str
+) -> FilesystemSymbolPolicy | None:
+    """Consulta la matriz explícita sin deducir decisiones del identificador."""
+
+    return FILESYSTEM_SYMBOL_POLICIES.get((module_name, symbol_name))
+
+
+def _validar_matriz_filesystem() -> None:
+    esperados = {
+        (module_name, symbol_name)
+        for module_name, symbols in _EFFECTFUL_PUBLIC_SYMBOLS.items()
+        for symbol_name, capabilities in symbols.items()
+        if capabilities & {"filesystem.read", "filesystem.write"}
+    }
+    declarados = set(FILESYSTEM_SYMBOL_POLICIES)
+    if esperados != declarados:
+        raise RuntimeError(
+            "[STARTUP CONTRACT] Matriz filesystem incompleta: "
+            f"faltantes={sorted(esperados - declarados)} "
+            f"sobrantes={sorted(declarados - esperados)}"
+        )
+
+
+_validar_matriz_filesystem()
 
 _PURE_PUBLIC_SYMBOLS: dict[str, tuple[str, ...]] = {
     "numero": (
