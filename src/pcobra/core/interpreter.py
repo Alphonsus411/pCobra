@@ -6,6 +6,7 @@ import os
 import hashlib
 import inspect
 import math
+import threading
 import warnings
 from pathlib import Path
 from typing import Mapping, Optional
@@ -254,6 +255,30 @@ class _ControlRetorno(Exception):
     def __init__(self, valor):
         super().__init__()
         self.valor = valor
+
+
+class _EstadoEjecucion(threading.local):
+    """Estado mutable que pertenece exclusivamente a una ejecución/hilo.
+
+    Inventario: las pilas de scopes y de bloques de memoria locales,
+    ``call_depth``, el conjunto temporal de evaluación recursiva y la
+    profundidad de aislamiento del worker. Las señales de control
+    (``_ControlRetorno``, ``_ControlRomper`` y ``_ControlContinuar``), junto
+    con ``visitados`` y demás temporales de evaluación, viajan por la pila de
+    Python y por tanto ya son locales a cada llamada.
+
+    El entorno global se conserva por referencia: los workers crean scopes
+    locales cuyo padre léxico apunta a él. Cuando una llamada necesita aislar
+    los bindings capturados se usa una copia *superficial* de ``values`` para
+    preservar las referencias léxicas a objetos compartidos.
+    """
+
+    def __init__(self) -> None:
+        self.contextos: list[Environment] | None = None
+        self.mem_contextos: list[dict[str, tuple[int, int]]] | None = None
+        self.call_depth = 0
+        self.eval_stack: set[tuple[int, int]] = set()
+        self.thread_isolation_depth = 0
 
 
 class InterpretadorCobra:
@@ -602,19 +627,23 @@ class InterpretadorCobra:
         self.analizador = AnalizadorSemantico()
         # Conjunto para evitar validar el mismo nodo varias veces
         self._validados = set()
-        # Pila de entornos para mantener variables locales en cada llamada
-        self.contextos = [Environment()]
+        # Estado estrictamente por ejecución. El entorno raíz sigue siendo la
+        # referencia léxica compartida desde la que parten los workers.
+        self._execution_state = _EstadoEjecucion()
+        self._global_environment = Environment()
+        self._global_mem_context: dict[str, tuple[int, int]] = {}
+        self.contextos = [self._global_environment]
         self.funciones_nativas = {"longitud": longitud}
         # Mapa paralelo para gestionar bloques de memoria por contexto
-        self.mem_contextos = [{}]
+        self.mem_contextos = [self._global_mem_context]
         # Gestor genético de estrategias de memoria
         self.gestor_memoria = GestorMemoriaGenetico()
         self.estrategia = self.gestor_memoria.poblacion[0]
         self.op_memoria = 0
         self._eval_stack = set()
         self._call_depth = 0
-        import threading
-
+        # Orden de bloqueo único: ninguna ruta adquiere otro lock mientras
+        # mantiene éste. Solo protege el gestor/estrategia de memoria común.
         self._thread_execution_lock = threading.RLock()
         self._thread_isolation_depth = 0
         # Funciones Cobra declaradas en el AST fuente. Se mantiene separada del
@@ -638,6 +667,54 @@ class InterpretadorCobra:
         self._imported_module_paths: set[Path] = set()
         # Debe ejecutarse siempre después de crear _validador y _usar_symbol_metadata.
         self.asegurar_estado_runtime_inicial()
+
+    @property
+    def contextos(self):
+        contextos = self._execution_state.contextos
+        if contextos is None:
+            contextos = [self._global_environment]
+            self._execution_state.contextos = contextos
+        return contextos
+
+    @contextos.setter
+    def contextos(self, value):
+        self._execution_state.contextos = value
+
+    @property
+    def mem_contextos(self):
+        contextos = self._execution_state.mem_contextos
+        if contextos is None:
+            contextos = [self._global_mem_context]
+            self._execution_state.mem_contextos = contextos
+        return contextos
+
+    @mem_contextos.setter
+    def mem_contextos(self, value):
+        self._execution_state.mem_contextos = value
+
+    @property
+    def _call_depth(self):
+        return self._execution_state.call_depth
+
+    @_call_depth.setter
+    def _call_depth(self, value):
+        self._execution_state.call_depth = value
+
+    @property
+    def _eval_stack(self):
+        return self._execution_state.eval_stack
+
+    @_eval_stack.setter
+    def _eval_stack(self, value):
+        self._execution_state.eval_stack = value
+
+    @property
+    def _thread_isolation_depth(self):
+        return self._execution_state.thread_isolation_depth
+
+    @_thread_isolation_depth.setter
+    def _thread_isolation_depth(self, value):
+        self._execution_state.thread_isolation_depth = value
 
     def asegurar_estado_runtime_inicial(self) -> None:
         """Garantiza estado mínimo de runtime para metadata de `usar`.
@@ -1112,21 +1189,23 @@ class InterpretadorCobra:
     # -- Gestión de memoria -------------------------------------------------
     def solicitar_memoria(self, tam):
         """Solicita un bloque a la estrategia actual."""
-        index = self.estrategia.asignar(tam)
-        if index == -1:
-            self.gestor_memoria.evolucionar(verbose=False)
-            self.estrategia = self.gestor_memoria.poblacion[0]
+        with self._thread_execution_lock:
             index = self.estrategia.asignar(tam)
-        self.op_memoria += 1
-        if self.op_memoria >= 1000:
-            self.gestor_memoria.evolucionar(verbose=False)
-            self.estrategia = self.gestor_memoria.poblacion[0]
-            self.op_memoria = 0
-        return index
+            if index == -1:
+                self.gestor_memoria.evolucionar(verbose=False)
+                self.estrategia = self.gestor_memoria.poblacion[0]
+                index = self.estrategia.asignar(tam)
+            self.op_memoria += 1
+            if self.op_memoria >= 1000:
+                self.gestor_memoria.evolucionar(verbose=False)
+                self.estrategia = self.gestor_memoria.poblacion[0]
+                self.op_memoria = 0
+            return index
 
     def liberar_memoria(self, index, tam):
         """Libera un bloque de memoria."""
-        self.estrategia.liberar(index, tam)
+        with self._thread_execution_lock:
+            self.estrategia.liberar(index, tam)
 
     # -- Utilidades ---------------------------------------------------------
     def _validar(self, nodo):
@@ -2914,19 +2993,21 @@ class InterpretadorCobra:
 
     def ejecutar_hilo(self, nodo):
         """Ejecuta una función en un hilo separado."""
-        import threading
-
         def destino():
-            # Las llamadas concurrentes comparten el intérprete, pero cada
-            # hilo ejecuta la función sobre una vista aislada de su entorno
-            # capturado. El bloqueo protege las pilas internas de contextos y
-            # memoria, que son estructuras compartidas y no thread-local.
-            with self._thread_execution_lock:
-                self._thread_isolation_depth += 1
-                try:
-                    self.ejecutar_llamada_funcion(nodo.llamada)
-                finally:
-                    self._thread_isolation_depth -= 1
+            # ``threading.local`` crea pilas limpias para este worker. No se
+            # serializa la ejecución completa: solo las operaciones realmente
+            # compartidas (p. ej. memoria) toman su bloqueo específico.
+            self._thread_isolation_depth += 1
+            try:
+                self.ejecutar_llamada_funcion(nodo.llamada)
+            finally:
+                self._thread_isolation_depth -= 1
+                # Una excepción no debe dejar scopes ni temporales vivos en el
+                # estado local si el Thread es retenido por instrumentación.
+                self.contextos[:] = [self._global_environment]
+                self.mem_contextos[:] = [self._global_mem_context]
+                self._eval_stack.clear()
+                self._call_depth = 0
 
         # El hilo se marca como daemon para evitar que bloquee el cierre del
         # intérprete si queda en ejecución al finalizar el programa.
