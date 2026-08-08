@@ -262,6 +262,8 @@ CANONICAL_MODULE_SURFACE_CONTRACTS: dict[str, CanonicalModuleSurfaceContract] = 
         required_functions=(
             "ejecutar",
             "capturar",
+            "ejecutar_async",
+            "ejecutar_stream",
             "codigo_salida",
             "salida",
             "errores",

@@ -8,10 +8,12 @@ from pathlib import Path
 import subprocess
 import sys
 import tomllib as tomli
+from functools import wraps
 from typing import Any
 
 from pcobra.cobra.imports import resolver as imports_resolver
 from pcobra.cobra.imports.resolver import ImportResolutionError
+from pcobra.cobra.usar_capabilities import CapacidadUsar, capacidades_de
 from pcobra.cobra.usar_policy import (
     CANONICAL_MODULE_SURFACE_CONTRACTS,
     REPL_COBRA_MODULE_INTERNAL_PATH_MAP,
@@ -113,6 +115,33 @@ def _construir_exports_usar(
     exports = UsarExports({"simbolos": simbolos, "metadata": metadata})
     exports.update(dict(simbolos))
     return exports
+
+
+def _aplicar_capacidades(
+    modulo: str,
+    simbolos: list[tuple[str, Any]],
+    *,
+    safe_mode: bool,
+) -> list[tuple[str, Any]]:
+    """Construye wrappers desde contratos internos, nunca desde atributos Cobra."""
+
+    resultado: list[tuple[str, Any]] = []
+    for nombre, simbolo in simbolos:
+        capacidades = capacidades_de(modulo, nombre)
+        if not callable(simbolo) or CapacidadUsar.PROCESS_SPAWN not in capacidades:
+            resultado.append((nombre, simbolo))
+            continue
+
+        @wraps(simbolo)
+        def protegido(*args, __simbolo=simbolo, **kwargs):
+            if safe_mode:
+                if kwargs.get("shell") is True:
+                    raise PermissionError("capacidad process.shell denegada en modo seguro")
+                raise PermissionError("capacidad process.spawn denegada en modo seguro")
+            return __simbolo(*args, **kwargs)
+
+        resultado.append((nombre, protegido))
+    return resultado
 
 
 def normalizar_nombre_usar(nombre: str) -> str:
@@ -813,6 +842,7 @@ def usar_modulo(
     loading_stack: list[Path] | None = None,
     permitir_modulos_proyecto: bool | None = None,
     contexto_proyecto_verificado: bool | None = None,
+    safe_mode: bool = True,
 ) -> dict[str, Any]:
     """API única para resolver ``usar`` en runtime y transpilación Python.
 
@@ -856,6 +886,9 @@ def usar_modulo(
             )
         if not simbolos_saneados:
             raise ImportError(f"No se encontraron símbolos exportables para usar '{nombre_validado_oficial}'.")
+        simbolos_saneados = _aplicar_capacidades(
+            nombre_validado_oficial, simbolos_saneados, safe_mode=safe_mode
+        )
         return _construir_exports_usar(simbolos_saneados, metadata_por_simbolo)
     except ModuloFueraCatalogoPublicoError as permiso_exc:
         # Caso 3: un nombre externo/no canónico no puede convertirse

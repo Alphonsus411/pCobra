@@ -107,6 +107,7 @@ def _usar_modulo_con_estado_aislado(
     module_cache: dict[Path, dict[str, object]],
     loading_stack: list[Path],
     contexto_proyecto_verificado: bool,
+    safe_mode: bool,
 ) -> Mapping[str, object]:
     """Llama a ``usar_modulo`` pasando estado aislado si la función lo soporta."""
 
@@ -124,6 +125,8 @@ def _usar_modulo_con_estado_aislado(
         "contexto_proyecto_verificado" in parametros
     ):
         kwargs["contexto_proyecto_verificado"] = contexto_proyecto_verificado
+    if any(param.kind == inspect.Parameter.VAR_KEYWORD for param in parametros.values()) or "safe_mode" in parametros:
+        kwargs["safe_mode"] = safe_mode
     return usar_modulo(nombre, **kwargs)
 USAR_DIRECT_BACKEND_IMPORT_ERROR = (
     "usar_error[backend_import_directo]: import directo de backend no permitido en usar"
@@ -2854,6 +2857,7 @@ class InterpretadorCobra:
                 module_cache=self._usar_module_cache,
                 loading_stack=self._usar_loading_stack,
                 contexto_proyecto_verificado=self._contexto_proyecto_verificado,
+                safe_mode=self.safe_mode,
             )
             self._inyectar_exports_modulo_proyecto(exports)
         except Exception as exc:
