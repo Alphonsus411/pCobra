@@ -156,8 +156,13 @@ def ejecutar(
     try:
         _verificar_descriptor(fd, st_dev, st_ino)
         _verificar_ruta(exe_real, st_dev, st_ino)
+        opciones_descriptor = {}
         if os.name == "posix" and sys.platform.startswith("linux"):
+            if not os.path.exists("/proc/self/fd"):
+                raise RuntimeError("No está disponible /proc/self/fd")
             args_exec[0] = f"/proc/self/fd/{fd}"
+            # pass_fds hace heredable el fd abierto con O_CLOEXEC solo en el hijo.
+            opciones_descriptor = {"pass_fds": (fd,), "close_fds": True}
 
         resultado = subprocess.run(
             args_exec,
@@ -166,6 +171,7 @@ def ejecutar(
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             timeout=timeout,
+            **opciones_descriptor,
         )
         _verificar_descriptor(fd, st_dev, st_ino)
         _verificar_ruta(exe_real, st_dev, st_ino)
@@ -204,13 +210,19 @@ async def ejecutar_async(
     try:
         _verificar_descriptor(fd, st_dev, st_ino)
         _verificar_ruta(exe_real, st_dev, st_ino)
+        opciones_descriptor = {}
         if os.name == "posix" and sys.platform.startswith("linux"):
+            if not os.path.exists("/proc/self/fd"):
+                raise RuntimeError("No está disponible /proc/self/fd")
             args_exec[0] = f"/proc/self/fd/{fd}"
+            # pass_fds hace heredable el fd abierto con O_CLOEXEC solo en el hijo.
+            opciones_descriptor = {"pass_fds": (fd,), "close_fds": True}
 
         proc = await asyncio.create_subprocess_exec(
             *args_exec,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
+            **opciones_descriptor,
         )
         try:
             stdout_bytes, stderr_bytes = await asyncio.wait_for(
@@ -283,14 +295,20 @@ async def ejecutar_stream(
     try:
         _verificar_descriptor(fd, st_dev, st_ino)
         _verificar_ruta(exe_real, st_dev, st_ino)
+        opciones_descriptor = {}
         if os.name == "posix" and sys.platform.startswith("linux"):
+            if not os.path.exists("/proc/self/fd"):
+                raise RuntimeError("No está disponible /proc/self/fd")
             args_exec[0] = f"/proc/self/fd/{fd}"
+            # pass_fds hace heredable el fd abierto con O_CLOEXEC solo en el hijo.
+            opciones_descriptor = {"pass_fds": (fd,), "close_fds": True}
         try:
             async with asyncio.timeout(timeout):
                 proc = await asyncio.create_subprocess_exec(
                     *args_exec,
                     stdout=asyncio.subprocess.PIPE,
                     stderr=asyncio.subprocess.PIPE,
+                    **opciones_descriptor,
                 )
                 cola_stdout: asyncio.Queue[bytes | None] = asyncio.Queue(maxsize=1)
                 tareas_lectura = [
@@ -304,21 +322,23 @@ async def ejecutar_stream(
         except asyncio.TimeoutError as exc:
             timeout_error = exc
     finally:
-        if proc is not None and proc.returncode is None:
-            proc.kill()
-        if proc is not None:
-            await proc.wait()
-        for tarea in tareas_lectura:
-            if not tarea.done():
-                tarea.cancel()
-        if tareas_lectura:
-            await asyncio.gather(*tareas_lectura, return_exceptions=True)
-        _verificar_descriptor(fd, st_dev, st_ino)
-        _verificar_ruta(exe_real, st_dev, st_ino)
         try:
-            os.close(fd)
-        except OSError:
-            pass
+            if proc is not None and proc.returncode is None:
+                proc.kill()
+            if proc is not None:
+                await proc.wait()
+            for tarea in tareas_lectura:
+                if not tarea.done():
+                    tarea.cancel()
+            if tareas_lectura:
+                await asyncio.gather(*tareas_lectura, return_exceptions=True)
+            _verificar_descriptor(fd, st_dev, st_ino)
+            _verificar_ruta(exe_real, st_dev, st_ino)
+        finally:
+            try:
+                os.close(fd)
+            except OSError:
+                pass
 
     stderr_bytes = b"".join(stderr_chunks)
     if timeout_error is not None:
