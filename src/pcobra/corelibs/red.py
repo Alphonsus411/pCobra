@@ -4,10 +4,13 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+import tempfile
 from typing import Any, TYPE_CHECKING
 import urllib.parse
 
 import requests
+
+from pcobra.corelibs._sandbox_paths import resolver_destino_nuevo
 
 try:  # pragma: no cover - depende de extras opcionales
     import httpx  # type: ignore[import-not-found]
@@ -172,15 +175,16 @@ async def _leer_respuesta_async(resp: "_httpx.Response") -> str:
     return datos.decode(resp.encoding or "utf-8", errors="replace")
 
 
-async def _descargar_a_archivo(resp: "_httpx.Response", destino: Path) -> Path:
+async def _descargar_a_archivo(resp: "_httpx.Response", archivo: Any) -> None:
     total = 0
-    with destino.open("wb") as archivo:
-        async for chunk in resp.aiter_bytes(chunk_size=8192):
-            total += len(chunk)
-            if total > _MAX_RESP_SIZE:
-                raise ValueError("Respuesta demasiado grande")
-            archivo.write(chunk)
-    return destino
+    async for chunk in resp.aiter_bytes(chunk_size=8192):
+        nuevo_total = total + len(chunk)
+        if nuevo_total > _MAX_RESP_SIZE:
+            raise ValueError("Respuesta demasiado grande")
+        archivo.write(chunk)
+        total = nuevo_total
+    archivo.flush()
+    os.fsync(archivo.fileno())
 
 
 async def _realizar_peticion_async(
@@ -189,7 +193,7 @@ async def _realizar_peticion_async(
     *,
     datos: dict[str, Any] | None = None,
     permitir_redirecciones: bool = False,
-    destino: Path | None = None,
+    archivo_destino: Any | None = None,
 ) -> str | Path:
     _validar_esquema(url)
     hosts = _obtener_hosts_permitidos()
@@ -207,15 +211,20 @@ async def _realizar_peticion_async(
                     if redirecciones_restantes == 0:
                         raise ValueError("Demasiadas redirecciones")
                     destino_header = resp.headers.get("Location")
-                    url_actual = _resolver_redireccion(url_actual, destino_header, hosts)
+                    url_actual = _resolver_redireccion(
+                        url_actual, destino_header, hosts
+                    )
                     redirecciones_restantes -= 1
                     continue
+                if 300 <= resp.status_code < 400:
+                    raise ValueError("Redirecciones no permitidas")
                 resp.raise_for_status()
                 url_final = str(resp.url)
                 _validar_esquema(url_final)
                 _validar_host(url_final, hosts)
-                if destino is not None:
-                    return await _descargar_a_archivo(resp, destino)
+                if archivo_destino is not None:
+                    await _descargar_a_archivo(resp, archivo_destino)
+                    return Path(archivo_destino.name)
                 return await _leer_respuesta_async(resp)
 
 
@@ -263,19 +272,30 @@ async def descargar_archivo(
     recibida y con las utilidades de archivos locales.
     """
 
-    ruta = Path(destino)
+    ruta = resolver_destino_nuevo(destino)
     if crear_padres:
         ruta.parent.mkdir(parents=True, exist_ok=True)
+    elif not ruta.parent.is_dir():
+        raise FileNotFoundError(ruta.parent)
+
+    temporal: Path | None = None
     try:
-        resultado = await _realizar_peticion_async(
-            "GET", url, permitir_redirecciones=permitir_redirecciones, destino=ruta
-        )
+        with tempfile.NamedTemporaryFile(
+            mode="w+b", prefix=f".{ruta.name}.", dir=ruta.parent, delete=False
+        ) as archivo:
+            temporal = Path(archivo.name)
+            await _realizar_peticion_async(
+                "GET",
+                url,
+                permitir_redirecciones=permitir_redirecciones,
+                archivo_destino=archivo,
+            )
+        os.replace(temporal, ruta)
     except Exception:
-        if ruta.exists():
-            ruta.unlink()
+        if temporal is not None:
+            temporal.unlink(missing_ok=True)
         raise
-    assert isinstance(resultado, Path)
-    return resultado
+    return ruta
 
 
 async def obtener_url_texto(url: str, permitir_redirecciones: bool = False) -> str:
