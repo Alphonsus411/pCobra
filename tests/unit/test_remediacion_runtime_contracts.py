@@ -28,12 +28,10 @@ from pcobra.cobra.transpilers.transpiler.to_python import TranspiladorPython
             "network.get",
             "network.post",
             "network.download",
-            "filesystem.read",
-            "filesystem.write",
         }
     ],
 )
-def test_todo_simbolo_effectful_usa_la_clasificacion_canonica_y_se_bloquea(modulo, nombre):
+def test_simbolos_restringidos_usan_clasificacion_canonica_y_se_bloquean(modulo, nombre):
     esperadas = CANONICAL_MODULE_SURFACE_CONTRACTS[modulo].symbol_capabilities[nombre]
     assert esperadas
     assert {capacidad.value for capacidad in capacidades_de(modulo, nombre)} == esperadas
@@ -51,6 +49,22 @@ def test_todo_simbolo_effectful_usa_la_clasificacion_canonica_y_se_bloquea(modul
                 asyncio.run(resultado)
         else:
             pytest.fail("un símbolo effectful invocable alcanzó el runtime en safe_mode")
+
+
+@pytest.mark.parametrize(
+    "modulo,nombre",
+    [
+        (modulo, nombre)
+        for modulo, contrato in CANONICAL_MODULE_SURFACE_CONTRACTS.items()
+        for nombre, capacidades in contrato.symbol_capabilities.items()
+        if capacidades & {"filesystem.read", "filesystem.write"}
+    ],
+)
+def test_simbolos_filesystem_conservan_clasificacion_canonica(modulo, nombre):
+    esperadas = CANONICAL_MODULE_SURFACE_CONTRACTS[modulo].symbol_capabilities[nombre]
+
+    assert esperadas
+    assert {capacidad.value for capacidad in capacidades_de(modulo, nombre)} == esperadas
 
 
 @pytest.mark.parametrize(
@@ -73,11 +87,13 @@ def test_modulo_oficial_preinyectado_sin_procedencia_es_rechazado(monkeypatch):
         usar_modulo("numero")
 
 
-@pytest.mark.parametrize("modulo", ("red", "proceso"))
+@pytest.mark.parametrize("modulo", ("red", "proceso", "numero"))
 def test_transpilador_python_propaga_safe_mode_explicito(modulo):
+    predeterminado = TranspiladorPython().generate_code([NodoUsar(modulo)])
     inseguro = TranspiladorPython(safe_mode=False).generate_code([NodoUsar(modulo)])
     seguro = TranspiladorPython(safe_mode=True).generate_code([NodoUsar(modulo)])
 
+    assert f"usar_modulo('{modulo}', safe_mode=True)" in predeterminado
     assert f"usar_modulo('{modulo}', safe_mode=False)" in inseguro
     assert f"usar_modulo('{modulo}', safe_mode=True)" in seguro
 

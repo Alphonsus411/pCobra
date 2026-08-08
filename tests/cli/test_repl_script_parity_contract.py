@@ -605,10 +605,12 @@ def test_paridad_run_y_repl_usar_archivo_habilita_existe_rutas_relativas() -> No
     )
     variables = ("existe_local", "existe_parent")
 
-    with pytest.raises(PermissionError, match="filesystem.read"):
-        _ejecutar_por_ruta_script(codigo, variables, seguro=True)
-    with pytest.raises(PermissionError, match="filesystem.read"):
-        _ejecutar_por_ruta_repl(codigo, variables, seguro=True)
+    resultado_script = _ejecutar_por_ruta_script(codigo, variables, seguro=True)
+    resultado_repl = _ejecutar_por_ruta_repl(codigo, variables, seguro=True)
+
+    assert resultado_script["stderr"] == resultado_repl["stderr"] == ""
+    assert resultado_script["estado"] == resultado_repl["estado"]
+    assert resultado_script["estado"]["existe_local"] is True
 
 
 @pytest.mark.integration

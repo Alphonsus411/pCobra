@@ -135,8 +135,6 @@ def _aplicar_capacidades(
             CapacidadUsar.NETWORK_GET,
             CapacidadUsar.NETWORK_POST,
             CapacidadUsar.NETWORK_DOWNLOAD,
-            CapacidadUsar.FILESYSTEM_READ,
-            CapacidadUsar.FILESYSTEM_WRITE,
         }
     )
     resultado: list[tuple[str, Any]] = []

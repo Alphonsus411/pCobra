@@ -75,6 +75,37 @@ for canonical_name, module in modules.items():
     assert result.returncode == 0, result.stderr
 
 
+def test_import_legacy_ast_reutiliza_identidad_canonica_en_ambos_ordenes() -> None:
+    clases = ("NodoAST", "NodoValor", "NodoAsignacion", "NodoFuncion", "NodoUsar")
+    ordenes = (
+        ("pcobra.core.ast_nodes", "core.ast_nodes"),
+        ("core.ast_nodes", "pcobra.core.ast_nodes"),
+    )
+
+    for primero, segundo in ordenes:
+        script = f"""
+import importlib
+
+primero = importlib.import_module({primero!r})
+segundo = importlib.import_module({segundo!r})
+canonical = importlib.import_module('pcobra.core.ast_nodes')
+legacy = importlib.import_module('core.ast_nodes')
+
+assert canonical is legacy, (canonical, legacy)
+for nombre in {clases!r}:
+    assert getattr(canonical, nombre) is getattr(legacy, nombre), nombre
+"""
+        result = subprocess.run(
+            [sys.executable, "-c", script],
+            cwd=ROOT,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+
+        assert result.returncode == 0, result.stderr
+
+
 def test_pruebas_nuevas_no_importan_superficies_legacy() -> None:
     violations: list[str] = []
 

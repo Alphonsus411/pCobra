@@ -218,11 +218,11 @@ def test_repl_entrypoint_texto_conserva_interprete_e_imprime_cuatro(capsys, monk
 def test_repl_entrypoint_archivo_existe_booleano_sin_error_metadata(capsys):
     cmd = ReplCommandV2()
     cmd._ejecutar_en_modo_normal('usar "archivo"')
-    with pytest.raises(PermissionError, match="filesystem.read"):
-        cmd._ejecutar_en_modo_normal('imprimir(existe("README.md"))')
+    cmd._ejecutar_en_modo_normal('imprimir(existe("README.md"))')
 
     salida = capsys.readouterr().out
     assert "Error: metadata" not in salida
+    assert any(token in salida for token in ("verdadero", "falso"))
 
 
 def test_repl_entrypoint_usar_archivo_sin_comillas_falla_por_sintaxis():
@@ -834,6 +834,7 @@ def test_holobit_corelib_exporta_solo_simbolos_canonicos_publicos():
 
 @pytest.mark.parametrize("modulo", sorted(REPL_COBRA_MODULE_MAP.keys()))
 def test_repl_contract_pipeline_completo_por_modulo_canonico(monkeypatch, tmp_path, modulo):
+    monkeypatch.setenv("COBRA_IO_BASE_DIR", str(tmp_path))
     mod = ModuleType(modulo)
     expected_symbols = []
 
@@ -1024,29 +1025,39 @@ def test_repl_contract_pipeline_completo_por_modulo_canonico(monkeypatch, tmp_pa
         elif modulo == "texto" and symbol == "quitar_acentos":
             interp.contextos[-1].values[symbol]("canción")
         elif modulo == "sistema" and symbol == "ejecutar":
-            interp.contextos[-1].values[symbol](["cobra"], permitidos=[r"C:\\cobra\\mock.exe"])
+            with pytest.raises(PermissionError, match="process.spawn"):
+                interp.contextos[-1].values[symbol](["cobra"], permitidos=[r"C:\\cobra\\mock.exe"])
         elif modulo == "sistema" and symbol == "ejecutar_async":
-            interp.contextos[-1].values[symbol](["cobra"], permitidos=[r"C:\\cobra\\mock.exe"])
+            with pytest.raises(PermissionError, match="process.spawn"):
+                interp.contextos[-1].values[symbol](["cobra"], permitidos=[r"C:\\cobra\\mock.exe"])
         elif modulo == "sistema" and symbol == "ejecutar_stream":
-            interp.contextos[-1].values[symbol](["cobra"], permitidos=[r"C:\\cobra\\mock.exe"])
+            with pytest.raises(PermissionError, match="process.spawn"):
+                interp.contextos[-1].values[symbol](["cobra"], permitidos=[r"C:\\cobra\\mock.exe"])
         elif modulo == "sistema" and symbol == "obtener_env":
             interp.contextos[-1].values[symbol]("PATH")
         elif modulo == "sistema" and symbol == "listar_dir":
             interp.contextos[-1].values[symbol](".")
         elif modulo == "red" and symbol == "obtener_url":
-            interp.contextos[-1].values[symbol]("https://example.com")
+            with pytest.raises(PermissionError, match="network.get"):
+                interp.contextos[-1].values[symbol]("https://example.com")
         elif modulo == "red" and symbol == "enviar_post":
-            interp.contextos[-1].values[symbol]("https://example.com", {})
+            with pytest.raises(PermissionError, match="network.post"):
+                interp.contextos[-1].values[symbol]("https://example.com", {})
         elif modulo == "red" and symbol == "obtener_url_async":
-            interp.contextos[-1].values[symbol]("http://example.com")
+            with pytest.raises(PermissionError, match="network.get"):
+                interp.contextos[-1].values[symbol]("https://example.com")
         elif modulo == "red" and symbol == "enviar_post_async":
-            interp.contextos[-1].values[symbol]("http://example.com", {})
+            with pytest.raises(PermissionError, match="network.post"):
+                interp.contextos[-1].values[symbol]("https://example.com", {})
         elif modulo == "red" and symbol == "descargar_archivo":
-            interp.contextos[-1].values[symbol]("http://example.com", "dummy_path")
+            with pytest.raises(PermissionError, match="network.download"):
+                interp.contextos[-1].values[symbol]("https://example.com", "dummy_path")
         elif modulo == "red" and symbol == "obtener_url_texto":
-            interp.contextos[-1].values[symbol]("http://example.com")
+            with pytest.raises(PermissionError, match="network.get"):
+                interp.contextos[-1].values[symbol]("https://example.com")
         elif modulo == "red" and symbol == "obtener_json":
-            interp.contextos[-1].values[symbol]("http://example.com")
+            with pytest.raises(PermissionError, match="network.get"):
+                interp.contextos[-1].values[symbol]("https://example.com")
         elif modulo == "asincrono" and symbol == "proteger_tarea":
             interp.contextos[-1].values[symbol](asyncio.Future())
         elif modulo == "asincrono" and symbol == "limitar_tiempo":

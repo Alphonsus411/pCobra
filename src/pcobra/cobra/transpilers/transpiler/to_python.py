@@ -245,7 +245,7 @@ def visit_diccionario_comprehension(self, nodo):
 
 
 class TranspiladorPython(BaseTranspiler):
-    def __init__(self, *, source_file=None, project_root=None, safe_mode=False):
+    def __init__(self, *, source_file=None, project_root=None, safe_mode=True):
         # Incluir los modulos nativos al inicio del codigo generado
         self.codigo = ""
         self.usa_asyncio = False

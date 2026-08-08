@@ -132,6 +132,7 @@ package-dir = {"" = "src"}
 where = ["src"]
 include = [
     "pcobra*",
+    "core*",
 ]
 exclude = [
     "*.tests",
