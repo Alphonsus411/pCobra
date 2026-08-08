@@ -128,14 +128,26 @@ def _aplicar_capacidades(
 ) -> list[tuple[str, Any]]:
     """Construye wrappers desde contratos internos, nunca desde atributos Cobra."""
 
+    capacidades_restringidas = frozenset(
+        {
+            CapacidadUsar.PROCESS_SPAWN,
+            CapacidadUsar.PROCESS_SHELL,
+            CapacidadUsar.NETWORK_GET,
+            CapacidadUsar.NETWORK_POST,
+            CapacidadUsar.NETWORK_DOWNLOAD,
+            CapacidadUsar.FILESYSTEM_READ,
+            CapacidadUsar.FILESYSTEM_WRITE,
+        }
+    )
     resultado: list[tuple[str, Any]] = []
     for nombre, simbolo in simbolos:
         capacidades = capacidades_de(modulo, nombre)
-        if not callable(simbolo) or not capacidades:
+        capacidades_enforced = capacidades & capacidades_restringidas
+        if not callable(simbolo) or not capacidades_enforced:
             resultado.append((nombre, simbolo))
             continue
 
-        def verificar_permiso(kwargs, __capacidades=capacidades):
+        def verificar_permiso(kwargs, __capacidades=capacidades_enforced):
             if safe_mode:
                 if (
                     CapacidadUsar.PROCESS_SPAWN in __capacidades
@@ -517,12 +529,11 @@ def _cargar_modulo_local_desde_directorio(nombre: str, directorio: Path):
     sys.modules[nombre] = modulo
     try:
         mod_spec.loader.exec_module(modulo)
-    except BaseException:
+    finally:
         if modulo_previo is _MODULO_AUSENTE:
             sys.modules.pop(nombre, None)
         else:
             sys.modules[nombre] = modulo_previo
-        raise
     return modulo
 
 
@@ -542,12 +553,11 @@ def _cargar_modulo_local_desde_ruta(nombre: str, ruta: Path):
     sys.modules[nombre] = modulo
     try:
         mod_spec.loader.exec_module(modulo)
-    except BaseException:
+    finally:
         if modulo_existente is _MODULO_AUSENTE:
             sys.modules.pop(nombre, None)
         else:
             sys.modules[nombre] = modulo_existente
-        raise
     return modulo
 
 
@@ -561,6 +571,22 @@ def obtener_modulo_cobra_oficial(nombre: str):
             f"Módulo oficial Cobra '{nombre}' permitido pero sin paquete interno canónico declarado."
         )
     modulo = importlib.import_module(nombre_import)
+    spec = getattr(modulo, "__spec__", None)
+    origin = getattr(spec, "origin", None)
+    pcobra_package = importlib.import_module("pcobra")
+    package_roots = tuple(
+        Path(root).resolve() for root in getattr(pcobra_package, "__path__", ())
+    )
+    try:
+        origin_path = Path(origin).resolve(strict=True) if origin else None
+    except (OSError, RuntimeError):
+        origin_path = None
+    if origin_path is None or not any(
+        origin_path.is_relative_to(root) for root in package_roots
+    ):
+        raise PermissionError(
+            "usar_error[procedencia_no_oficial]: el módulo no procede del paquete pcobra instalado"
+        )
     for export_name in getattr(modulo, "__all__", ()):  # Cobra-facing: alias público.
         export = getattr(modulo, export_name, None)
         if callable(export) and hasattr(export, "__module__"):

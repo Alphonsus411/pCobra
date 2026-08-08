@@ -75,6 +75,7 @@ from .semantic_validators import (
     construir_cadena,
     PrimitivaPeligrosaError,
 )
+from .semantic_validators.base import ValidadorBase
 from .semantico import AnalizadorSemantico
 from .cobra_config import limite_nodos
 from .import_utils import (
@@ -383,6 +384,9 @@ class InterpretadorCobra:
                 process.join(0.5)
                 if process.is_alive():
                     process.kill()
+                InterpretadorCobra._registrar_auditoria_validador(
+                    ruta_real, "rechazado", "timeout", hash_corto=hash_corto, fase="worker"
+                )
                 raise ImportError("El validador adicional superó el tiempo permitido.")
         except EOFError:
             response = None
@@ -405,7 +409,16 @@ class InterpretadorCobra:
                 "resultado_no_serializable": "El resultado del validador no es serializable.",
                 "descriptor_invalido": "El validador adicional devolvió un descriptor inválido.",
                 "worker_terminado": "El proceso del validador terminó sin resultado.",
+                "sintaxis_invalida": "El validador adicional contiene sintaxis inválida.",
+                "error_en_ejecucion": "El validador adicional falló durante su ejecución aislada.",
             }
+            InterpretadorCobra._registrar_auditoria_validador(
+                ruta_real,
+                "rechazado",
+                str(codigo),
+                hash_corto=hash_corto,
+                fase="worker",
+            )
             raise ImportError(mensajes.get(codigo, "No se pudo cargar el validador adicional de forma segura."))
 
         from .semantic_validators import (
@@ -463,10 +476,15 @@ class InterpretadorCobra:
         extra = extra_validators
         if isinstance(extra, str):
             extra = self._cargar_validadores(extra)
+        elif isinstance(extra, list) and all(
+            isinstance(validador, ValidadorBase) for validador in extra
+        ):
+            extra = list(extra)
         elif extra:
             raise TypeError(
                 "Los validadores adicionales deben indicarse mediante una ruta "
-                "con descriptores declarativos; no se admiten instancias ni callables."
+                "con descriptores declarativos o instancias preautorizadas; "
+                "no se admiten callables arbitrarios."
             )
 
         self.safe_mode = safe_mode

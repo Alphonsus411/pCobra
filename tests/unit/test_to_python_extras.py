@@ -43,7 +43,7 @@ def test_transpilar_usar():
     esperado = (
         IMPORTS
         + "from pcobra.cobra.usar_loader import usar_modulo\n"
-        + "_usar_exports = usar_modulo('math')\n"
+        + "_usar_exports = usar_modulo('math', safe_mode=False)\n"
         + "globals().update(dict(_usar_exports.get('simbolos', [])))\n"
     )
     assert codigo == esperado

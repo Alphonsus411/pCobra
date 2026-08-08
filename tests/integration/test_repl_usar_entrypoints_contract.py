@@ -218,11 +218,11 @@ def test_repl_entrypoint_texto_conserva_interprete_e_imprime_cuatro(capsys, monk
 def test_repl_entrypoint_archivo_existe_booleano_sin_error_metadata(capsys):
     cmd = ReplCommandV2()
     cmd._ejecutar_en_modo_normal('usar "archivo"')
-    cmd._ejecutar_en_modo_normal('imprimir(existe("README.md"))')
+    with pytest.raises(PermissionError, match="filesystem.read"):
+        cmd._ejecutar_en_modo_normal('imprimir(existe("README.md"))')
 
     salida = capsys.readouterr().out
     assert "Error: metadata" not in salida
-    assert any(token in salida for token in ("verdadero", "falso"))
 
 
 def test_repl_entrypoint_usar_archivo_sin_comillas_falla_por_sintaxis():

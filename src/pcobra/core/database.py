@@ -194,12 +194,11 @@ def _load_sqliteplus_class(*, silent_optional: bool = False):
         sys.modules[constants_name] = constants_module
         try:
             constants_spec.loader.exec_module(constants_module)
-        except BaseException:
+        finally:
             if constants_module_previo is _MODULO_AUSENTE:
                 sys.modules.pop(constants_name, None)
             else:
                 sys.modules[constants_name] = constants_module_previo
-            raise
         utils_module = sys.modules.setdefault(
             "sqliteplus.utils", types.ModuleType("sqliteplus.utils")
         )
@@ -226,12 +225,11 @@ def _load_sqliteplus_class(*, silent_optional: bool = False):
     sys.modules[module_name] = module
     try:
         spec.loader.exec_module(module)
-    except BaseException:
+    finally:
         if module_previo is _MODULO_AUSENTE:
             sys.modules.pop(module_name, None)
         else:
             sys.modules[module_name] = module_previo
-        raise
     sqliteplus_class = getattr(module, "SQLitePlus", None)
     if sqliteplus_class is None:  # pragma: no cover - instalación dañada
         return _use_optional_fallback(

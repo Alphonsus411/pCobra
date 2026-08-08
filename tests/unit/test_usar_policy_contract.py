@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import importlib
 
 import pytest
 
@@ -27,11 +28,16 @@ def test_modulos_oficiales_se_resuelven_como_paquetes_instalables() -> None:
     for alias, canonical in REPL_COBRA_MODULE_MAP.items():
         modulo = obtener_modulo_cobra_oficial(canonical)
         expected_package = REPL_COBRA_MODULE_PACKAGE_MAP[alias]
-        assert REPL_COBRA_MODULE_INTERNAL_PATH_MAP[alias] == expected_package
+        legacy_path = REPL_COBRA_MODULE_INTERNAL_PATH_MAP[alias]
+        assert legacy_path != expected_package
+        assert (Path(__file__).resolve().parents[2] / legacy_path).is_file()
+        assert importlib.util.find_spec(expected_package) is not None
         assert modulo.__name__ == expected_package
         assert expected_package.startswith(
             ("pcobra.corelibs.", "pcobra.standard_library.")
         )
+
+    assert REPL_COBRA_MODULE_INTERNAL_PATH_MAP is not REPL_COBRA_MODULE_PACKAGE_MAP
 
 
 def test_contrato_superficie_publica_cubre_modulos_canonicos() -> None:

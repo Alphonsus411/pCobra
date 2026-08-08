@@ -45,8 +45,34 @@ def test_reintento_tras_fallo_carga_el_modulo_correctamente(tmp_path):
     modulo = usar_loader._cargar_modulo_local_desde_directorio(nombre, tmp_path)
 
     assert modulo.resultado == 42
-    assert sys.modules[nombre] is modulo
-    sys.modules.pop(nombre, None)
+    assert nombre not in sys.modules
+
+
+def test_pybind_restaura_entrada_previa_tras_carga_exitosa(tmp_path, monkeypatch):
+    ruta = tmp_path / "extension.so"
+    ruta.touch()
+    previo = ModuleType("extension_previa")
+
+    class LoaderExitoso:
+        name = "extension"
+
+        def __init__(self, nombre, path):
+            self.name = nombre
+
+        def create_module(self, spec):
+            return None
+
+        def exec_module(self, module):
+            module.resultado = 42
+
+    monkeypatch.setattr(pybind_bridge, "_ALLOWED_PREFIXES", [str(tmp_path)])
+    monkeypatch.setattr(pybind_bridge.importlib.machinery, "ExtensionFileLoader", LoaderExitoso)
+    monkeypatch.setitem(sys.modules, "extension", previo)
+
+    cargado = pybind_bridge.cargar_extension(str(ruta))
+
+    assert cargado.resultado == 42
+    assert sys.modules["extension"] is previo
 
 
 def test_paquete_con_init_fallido_no_permanece_en_sys_modules(tmp_path):

@@ -10,11 +10,13 @@ from __future__ import annotations
 
 import os
 import tempfile
+import threading
 from pathlib import Path, PurePosixPath, PureWindowsPath
 from typing import Final
 
 _VARIABLE_RAIZ: Final = "COBRA_IO_BASE_DIR"
 _raiz_privada: Path | None = None
+_bloqueo_raiz = threading.Lock()
 
 
 def _obtener_raiz() -> Path:
@@ -29,7 +31,9 @@ def _obtener_raiz() -> Path:
 
     global _raiz_privada
     if _raiz_privada is None:
-        _raiz_privada = Path(tempfile.mkdtemp(prefix="pcobra-io-"))
+        with _bloqueo_raiz:
+            if _raiz_privada is None:
+                _raiz_privada = Path(tempfile.mkdtemp(prefix="pcobra-io-"))
     return _raiz_privada.resolve(strict=True)
 
 
@@ -75,6 +79,8 @@ def resolver_destino_nuevo(ruta: str | os.PathLike[str]) -> Path:
 
     raiz = _obtener_raiz()
     destino = raiz / _normalizar_ruta_usuario(ruta)
+    if destino.is_symlink():
+        raise ValueError("El destino no puede ser un enlace simbólico")
     ancestro = destino.parent
     partes_pendientes: list[str] = []
     while not ancestro.exists():
@@ -84,4 +90,6 @@ def resolver_destino_nuevo(ruta: str | os.PathLike[str]) -> Path:
     _comprobar_confinamiento(ancestro_real, raiz)
     padre_validado = ancestro_real.joinpath(*reversed(partes_pendientes))
     _comprobar_confinamiento(padre_validado, raiz)
-    return padre_validado / destino.name
+    destino_validado = padre_validado / destino.name
+    _comprobar_confinamiento(destino_validado.resolve(strict=False), raiz)
+    return destino_validado

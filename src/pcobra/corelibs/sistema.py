@@ -267,6 +267,18 @@ async def ejecutar_stream(
     stderr_chunks: deque[bytes] = deque()
     stderr_tamano = 0
     limite_stderr = 64 * 1024
+    bucle = asyncio.get_running_loop()
+    deadline = None if timeout is None else bucle.time() + timeout
+
+    async def esperar(esperable):
+        if deadline is None:
+            return await esperable
+        restante = deadline - bucle.time()
+        if restante <= 0:
+            if hasattr(esperable, "close"):
+                esperable.close()
+            raise asyncio.TimeoutError
+        return await asyncio.wait_for(esperable, restante)
 
     async def drenar_stdout(cola: asyncio.Queue[bytes | None]) -> None:
         assert proc is not None and proc.stdout is not None
@@ -303,22 +315,21 @@ async def ejecutar_stream(
             # pass_fds hace heredable el fd abierto con O_CLOEXEC solo en el hijo.
             opciones_descriptor = {"pass_fds": (fd,), "close_fds": True}
         try:
-            async with asyncio.timeout(timeout):
-                proc = await asyncio.create_subprocess_exec(
+            proc = await esperar(asyncio.create_subprocess_exec(
                     *args_exec,
                     stdout=asyncio.subprocess.PIPE,
                     stderr=asyncio.subprocess.PIPE,
                     **opciones_descriptor,
-                )
-                cola_stdout: asyncio.Queue[bytes | None] = asyncio.Queue(maxsize=1)
-                tareas_lectura = [
-                    asyncio.create_task(drenar_stdout(cola_stdout)),
-                    asyncio.create_task(drenar_stderr()),
-                ]
-                while (chunk := await cola_stdout.get()) is not None:
-                    yield chunk.decode("utf-8", errors="replace")
-                await tareas_lectura[0]
-                await proc.wait()
+            ))
+            cola_stdout: asyncio.Queue[bytes | None] = asyncio.Queue(maxsize=1)
+            tareas_lectura = [
+                asyncio.create_task(drenar_stdout(cola_stdout)),
+                asyncio.create_task(drenar_stderr()),
+            ]
+            while (chunk := await esperar(cola_stdout.get())) is not None:
+                yield chunk.decode("utf-8", errors="replace")
+            await esperar(tareas_lectura[0])
+            await esperar(proc.wait())
         except asyncio.TimeoutError as exc:
             timeout_error = exc
     finally:
