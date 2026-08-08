@@ -16,7 +16,7 @@ IMPORTS = get_standard_imports("python")
 
 def test_transpilar_try_catch_throw():
     nodo = NodoTryCatch(
-        [NodoThrow(NodoValor("1"))],
+        [NodoThrow(NodoValor(1))],
         "e",
         [NodoImprimir(NodoIdentificador("e"))],
     )
@@ -43,7 +43,7 @@ def test_transpilar_usar():
     esperado = (
         IMPORTS
         + "from pcobra.cobra.usar_loader import usar_modulo\n"
-        + "_usar_exports = usar_modulo('math', safe_mode=False)\n"
+        + "_usar_exports = usar_modulo('math', safe_mode=True)\n"
         + "globals().update(dict(_usar_exports.get('simbolos', [])))\n"
     )
     assert codigo == esperado
