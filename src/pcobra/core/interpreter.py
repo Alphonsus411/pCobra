@@ -613,7 +613,6 @@ class InterpretadorCobra:
         self.op_memoria = 0
         self._eval_stack = set()
         self._call_depth = 0
-        self._with_return_depth = 0
         import threading
 
         self._thread_execution_lock = threading.RLock()
@@ -1806,18 +1805,10 @@ class InterpretadorCobra:
             self.evaluar_expresion(nodo.contexto)
             self.contextos.append(Environment(parent=self.contextos[-1]))
             self.mem_contextos.append({})
-            capturar_retorno = self._call_depth == 0
-            self._with_return_depth += 1
             try:
-                try:
-                    for instr in nodo.cuerpo:
-                        self.ejecutar_nodo(instr)
-                except _ControlRetorno as retorno:
-                    if not capturar_retorno:
-                        raise
-                    return retorno.valor
+                for instr in nodo.cuerpo:
+                    self.ejecutar_nodo(instr)
             finally:
-                self._with_return_depth -= 1
                 memoria_local = self.mem_contextos.pop()
                 for idx, tam in memoria_local.values():
                     self.liberar_memoria(idx, tam)
@@ -1829,7 +1820,7 @@ class InterpretadorCobra:
         elif isinstance(nodo, NodoHilo):
             return self.ejecutar_hilo(nodo)
         elif isinstance(nodo, NodoRetorno):
-            if self._call_depth == 0 and self._with_return_depth == 0:
+            if self._call_depth == 0:
                 raise RuntimeError("retorno fuera de función")
             raise _ControlRetorno(self.evaluar_expresion(nodo.expresion))
         elif isinstance(nodo, NodoRomper):

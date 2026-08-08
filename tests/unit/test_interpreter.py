@@ -294,45 +294,99 @@ def test_del_objetivo_no_identificador_lanza_typeerror():
         inter.ejecutar_nodo(NodoDel(NodoValor(1)))
 
 
-def test_with_limpia_contexto_y_memoria_en_retorno_temprano():
+def test_retorno_fuera_de_funcion_es_rechazado():
+    inter = InterpretadorCobra()
+
+    with pytest.raises(RuntimeError, match=r"^retorno fuera de función$"):
+        inter.ejecutar_nodo(NodoRetorno(NodoValor(7)))
+
+
+def test_with_no_transforma_retorno_fuera_de_funcion_en_valor():
+    inter = InterpretadorCobra()
+    contextos_iniciales = len(inter.contextos)
+    mem_contextos_iniciales = len(inter.mem_contextos)
+
+    with pytest.raises(RuntimeError, match=r"^retorno fuera de función$"):
+        inter.ejecutar_nodo(
+            NodoWith(
+                NodoValor("ctx"),
+                None,
+                [NodoRetorno(NodoValor(7))],
+            )
+        )
+
+    assert len(inter.contextos) == contextos_iniciales
+    assert len(inter.mem_contextos) == mem_contextos_iniciales
+
+
+def test_with_limpia_contexto_y_memoria_en_retorno_temprano_de_funcion():
     inter = InterpretadorCobra()
     inter.ejecutar_nodo(NodoAsignacion("x", NodoValor(0), declaracion=True))
     contextos_iniciales = len(inter.contextos)
     mem_contextos_iniciales = len(inter.mem_contextos)
+    liberaciones = []
+    liberar_memoria = inter.liberar_memoria
 
-    resultado = inter.ejecutar_nodo(
-        NodoWith(
-            NodoValor("ctx"),
-            None,
+    def registrar_liberacion(indice, tamano):
+        liberaciones.append((indice, tamano))
+        liberar_memoria(indice, tamano)
+
+    inter.liberar_memoria = registrar_liberacion
+
+    inter.ejecutar_nodo(
+        NodoFuncion(
+            "actualizar",
+            [],
             [
-                NodoAsignacion("x", NodoValor(7)),
-                NodoRetorno(NodoIdentificador("x")),
+                NodoWith(
+                    NodoValor("ctx"),
+                    None,
+                    [
+                        NodoAsignacion("temporal", NodoValor(1), declaracion=True),
+                        NodoAsignacion("x", NodoValor(7)),
+                        NodoRetorno(NodoIdentificador("x")),
+                    ],
+                )
             ],
         )
     )
+    resultado = inter.ejecutar_nodo(NodoLlamadaFuncion("actualizar", []))
 
     assert resultado == 7
     assert inter.obtener_variable("x") == 7
     assert len(inter.contextos) == contextos_iniciales
     assert len(inter.mem_contextos) == mem_contextos_iniciales
+    assert liberaciones
 
 
 def test_with_limpia_contexto_y_memoria_si_hay_excepcion():
     inter = InterpretadorCobra()
     contextos_iniciales = len(inter.contextos)
     mem_contextos_iniciales = len(inter.mem_contextos)
+    liberaciones = []
+    liberar_memoria = inter.liberar_memoria
+
+    def registrar_liberacion(indice, tamano):
+        liberaciones.append((indice, tamano))
+        liberar_memoria(indice, tamano)
+
+    inter.liberar_memoria = registrar_liberacion
 
     with pytest.raises(NameError, match=r"^Variable no declarada: no_definida$"):
         inter.ejecutar_nodo(
             NodoWith(
                 NodoValor("ctx"),
                 None,
-                [NodoImprimir(NodoIdentificador("no_definida"))],
+                [
+                    NodoAsignacion("temporal", NodoValor(1), declaracion=True),
+                    NodoImprimir(NodoIdentificador("no_definida")),
+                ],
             )
         )
 
     assert len(inter.contextos) == contextos_iniciales
     assert len(inter.mem_contextos) == mem_contextos_iniciales
+    assert liberaciones
 
 
 def test_with_declara_local_y_no_contamina_scope_vecino():
