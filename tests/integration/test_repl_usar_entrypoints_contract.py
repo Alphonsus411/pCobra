@@ -1103,8 +1103,14 @@ def test_repl_contract_pipeline_completo_por_modulo_canonico(monkeypatch, tmp_pa
             interp.contextos[-1].values[symbol]("cobra")
         elif modulo == "cripto" and symbol == "comparar_seguro":
             interp.contextos[-1].values[symbol]("cobra", "cobra")
-        elif modulo == "proceso" and symbol in {"ejecutar", "capturar"}:
-            interp.contextos[-1].values[symbol](["python", "--version"])
+        elif modulo == "proceso" and symbol in {
+            "ejecutar",
+            "capturar",
+            "ejecutar_async",
+            "ejecutar_stream",
+        }:
+            with pytest.raises(PermissionError, match="process.spawn"):
+                interp.contextos[-1].values[symbol](["python", "--version"])
         elif modulo == "proceso" and symbol == "codigo_salida":
             interp.contextos[-1].values[symbol]({"codigo": 0})
         elif modulo == "proceso" and symbol == "salida":

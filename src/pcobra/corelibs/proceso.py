@@ -8,6 +8,7 @@ la entrada no es confiable.
 
 from __future__ import annotations
 
+import asyncio
 import shlex
 import subprocess
 from collections.abc import Sequence
@@ -18,6 +19,8 @@ ResultadoProceso = dict[str, int | str]
 __all__ = [
     "ejecutar",
     "capturar",
+    "ejecutar_async",
+    "ejecutar_stream",
     "codigo_salida",
     "salida",
     "errores",
@@ -77,6 +80,7 @@ def ejecutar(
     *,
     argumentos: Sequence[object] | None = None,
     shell: bool = False,
+    autorizar_shell: bool = False,
     cwd: str | None = None,
     entorno: dict[str, str] | None = None,
     timeout: int | float | None = None,
@@ -98,6 +102,10 @@ def ejecutar(
     ``127`` y ``124`` respectivamente.
     """
 
+    if not isinstance(shell, bool) or not isinstance(autorizar_shell, bool):
+        raise TypeError("shell y autorizar_shell deben ser booleanos")
+    if shell and not autorizar_shell:
+        raise PermissionError("shell=True requiere autorizar_shell=True explícito")
     comando_preparado = _preparar_comando(comando, argumentos=argumentos, shell=shell)
     try:
         completado = subprocess.run(
@@ -130,6 +138,7 @@ def capturar(
     *,
     argumentos: Sequence[object] | None = None,
     shell: bool = False,
+    autorizar_shell: bool = False,
     cwd: str | None = None,
     entorno: dict[str, str] | None = None,
     timeout: int | float | None = None,
@@ -140,10 +149,31 @@ def capturar(
         comando,
         argumentos=argumentos,
         shell=shell,
+        autorizar_shell=autorizar_shell,
         cwd=cwd,
         entorno=entorno,
         timeout=timeout,
     )
+
+
+async def ejecutar_async(
+    comando: str | Sequence[object],
+    **opciones: Any,
+) -> ResultadoProceso:
+    """Ejecuta sin bloquear el bucle de eventos, con el mismo contrato seguro."""
+
+    return await asyncio.to_thread(ejecutar, comando, **opciones)
+
+
+async def ejecutar_stream(
+    comando: str | Sequence[object],
+    **opciones: Any,
+):
+    """Produce por líneas la salida capturada de un proceso terminado."""
+
+    resultado = await ejecutar_async(comando, **opciones)
+    for linea in str(resultado["salida"]).splitlines(keepends=True):
+        yield linea
 
 
 def codigo_salida(resultado: dict[str, Any]) -> int:
