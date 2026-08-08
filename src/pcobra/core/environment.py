@@ -12,6 +12,10 @@ class Environment:
 
     values: dict[str, Any] = field(default_factory=dict)
     parent: Environment | None = None
+    is_function_scope: bool = False
+    local_names: set[str] = field(default_factory=set)
+    nonlocal_bindings: dict[str, Environment] = field(default_factory=dict)
+    global_names: set[str] = field(default_factory=set)
 
     def get(self, name: str) -> Any:
         """Obtiene ``name`` desde el entorno actual o alguno de sus ancestros."""

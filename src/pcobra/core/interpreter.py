@@ -730,6 +730,52 @@ class InterpretadorCobra:
                 return indice
         return None
 
+    def _entorno_funcion_activo(self) -> Environment | None:
+        """Devuelve el entorno de la llamada activa, si existe."""
+        for entorno in reversed(self.contextos):
+            if entorno.is_function_scope:
+                return entorno
+        return None
+
+    def _entorno_global(self) -> Environment:
+        entorno = self.contextos[-1]
+        while entorno.parent is not None:
+            entorno = entorno.parent
+        return entorno
+
+    def _indice_contexto_entorno(self, entorno: Environment) -> int | None:
+        for indice, candidato in enumerate(self.contextos):
+            if candidato is entorno:
+                return indice
+        return None
+
+    def _declarar_nolocal(self, nombre: str) -> None:
+        entorno_funcion = self._entorno_funcion_activo()
+        if entorno_funcion is None:
+            raise SyntaxError("nolocal fuera de función")
+        if nombre in entorno_funcion.local_names:
+            raise SyntaxError(f"Nombre '{nombre}' declarado local y nolocal")
+        if nombre in entorno_funcion.global_names:
+            raise SyntaxError(f"Nombre '{nombre}' declarado global y nolocal")
+
+        exterior = entorno_funcion.parent
+        while exterior is not None and exterior.parent is not None:
+            if exterior.is_function_scope and nombre in exterior.values:
+                entorno_funcion.nonlocal_bindings[nombre] = exterior
+                return
+            exterior = exterior.parent
+        raise SyntaxError(f"No existe binding nolocal para '{nombre}'")
+
+    def _declarar_global(self, nombre: str) -> None:
+        entorno_funcion = self._entorno_funcion_activo()
+        if entorno_funcion is None:
+            return
+        if nombre in entorno_funcion.local_names:
+            raise SyntaxError(f"Nombre '{nombre}' declarado local y global")
+        if nombre in entorno_funcion.nonlocal_bindings:
+            raise SyntaxError(f"Nombre '{nombre}' declarado nolocal y global")
+        entorno_funcion.global_names.add(nombre)
+
     def _liberar_memoria_variable_en_contexto(self, nombre: str, indice_contexto: int) -> None:
         """Libera el bloque de memoria asociado a ``nombre`` en un contexto concreto."""
         if indice_contexto < 0 or indice_contexto >= len(self.mem_contextos):
@@ -1751,9 +1797,11 @@ class InterpretadorCobra:
             if indice_contexto is not None:
                 self._liberar_memoria_variable_en_contexto(nombre, indice_contexto)
         elif isinstance(nodo, NodoGlobal):
-            pass  # sin efecto en este intérprete simplificado
+            for nombre in nodo.nombres:
+                self._declarar_global(nombre)
         elif isinstance(nodo, NodoNoLocal):
-            pass
+            for nombre in nodo.nombres:
+                self._declarar_nolocal(nombre)
         elif isinstance(nodo, NodoWith):
             self.evaluar_expresion(nodo.contexto)
             self.contextos.append(Environment(parent=self.contextos[-1]))
@@ -1823,8 +1871,20 @@ class InterpretadorCobra:
             self._verificar_valor_contexto(valor)
             atributos[nombre.nombre] = valor
         else:
+            entorno_funcion = self._entorno_funcion_activo()
+            destino_declarado = None
+            if entorno_funcion is not None:
+                destino_declarado = entorno_funcion.nonlocal_bindings.get(nombre)
+                if nombre in entorno_funcion.global_names:
+                    destino_declarado = self._entorno_global()
             if getattr(nodo, "inferencia", False) or getattr(nodo, "declaracion", False):
                 # Declaración local (explícita o por inferencia)
+                if entorno_funcion is not None:
+                    if nombre in entorno_funcion.nonlocal_bindings:
+                        raise SyntaxError(f"Nombre '{nombre}' declarado nolocal y local")
+                    if nombre in entorno_funcion.global_names:
+                        raise SyntaxError(f"Nombre '{nombre}' declarado global y local")
+                    entorno_funcion.local_names.add(nombre)
                 indice_contexto = len(self.mem_contextos) - 1
                 self._liberar_memoria_variable_en_contexto(nombre, indice_contexto)
                 indice = self.solicitar_memoria(1)
@@ -1832,7 +1892,18 @@ class InterpretadorCobra:
                 self.contextos[-1].define(nombre, valor)
                 return valor
             else:
-                indice_contexto = self._indice_entorno_variable(nombre)
+                indice_contexto = (
+                    self._indice_contexto_entorno(destino_declarado)
+                    if destino_declarado is not None
+                    else self._indice_entorno_variable(nombre)
+                )
+                if destino_declarado is not None:
+                    destino_declarado.values[nombre] = valor
+                    if indice_contexto is not None:
+                        self._liberar_memoria_variable_en_contexto(nombre, indice_contexto)
+                        indice = self.solicitar_memoria(1)
+                        self.mem_contextos[indice_contexto][nombre] = (indice, 1)
+                    return valor
                 if indice_contexto is None:
                     if self._call_depth == 0 and not permitir_asignacion_inicial:
                         raise NameError(f"Variable no declarada: {nombre}")
@@ -1842,6 +1913,8 @@ class InterpretadorCobra:
                     indice = self.solicitar_memoria(1)
                     self.mem_contextos[indice_contexto][nombre] = (indice, 1)
                     self.contextos[-1].define(nombre, valor)
+                    if entorno_funcion is not None:
+                        entorno_funcion.local_names.add(nombre)
                 elif 0 < indice_contexto < len(self.contextos) - 1:
                     # Sin una declaración ``nolocal``, una escritura desde una
                     # función anidada sombrea el local de la función exterior.
@@ -1849,6 +1922,8 @@ class InterpretadorCobra:
                     indice = self.solicitar_memoria(1)
                     self.mem_contextos[indice_contexto][nombre] = (indice, 1)
                     self.contextos[-1].define(nombre, valor)
+                    if entorno_funcion is not None:
+                        entorno_funcion.local_names.add(nombre)
                 else:
                     # Mutación sobre una variable existente: ``set`` solo
                     # actualiza en el scope donde ya está declarada.
@@ -2299,13 +2374,16 @@ class InterpretadorCobra:
                 values=dict(entorno_capturado.values),
                 parent=entorno_capturado.parent,
             )
-        self.contextos.append(Environment(parent=entorno_capturado))
+        self.contextos.append(
+            Environment(parent=entorno_capturado, is_function_scope=True)
+        )
         self.mem_contextos.append({})
         try:
             for nombre_param, valor in zip(parametros, argumentos):
                 indice = self.solicitar_memoria(1)
                 self.mem_contextos[-1][nombre_param] = (indice, 1)
                 self.contextos[-1].define(nombre_param, valor)
+                self.contextos[-1].local_names.add(nombre_param)
 
             self._call_depth += 1
             try:
@@ -2406,12 +2484,15 @@ class InterpretadorCobra:
                         values=dict(entorno_capturado.values),
                         parent=entorno_capturado.parent,
                     )
-                self.contextos.append(Environment(parent=entorno_capturado))
+                self.contextos.append(
+                    Environment(parent=entorno_capturado, is_function_scope=True)
+                )
                 self.mem_contextos.append({})
                 for nombre_param, valor in zip(parametros, argumentos_resueltos):
                     indice = self.solicitar_memoria(1)
                     self.mem_contextos[-1][nombre_param] = (indice, 1)
                     self.contextos[-1].define(nombre_param, valor)
+                    self.contextos[-1].local_names.add(nombre_param)
 
             def limpiar_contexto():
                 # Se restaura el scope anterior al finalizar la llamada.
@@ -2515,13 +2596,17 @@ class InterpretadorCobra:
             raise ValueError(f"Método '{nodo.nombre_metodo}' no encontrado")
 
         entorno_capturado = metodo.get("entorno", self.contextos[-1])
-        self.contextos.append(Environment(parent=entorno_capturado))
+        self.contextos.append(
+            Environment(parent=entorno_capturado, is_function_scope=True)
+        )
         self.mem_contextos.append({})
         self.contextos[-1].define("self", objeto)
+        self.contextos[-1].local_names.add("self")
         for nombre_param, arg in zip(metodo.get("parametros", [])[1:], nodo.argumentos):
             valor = self.evaluar_expresion(arg)
             self._verificar_valor_contexto(valor)
             self.contextos[-1].define(nombre_param, valor)
+            self.contextos[-1].local_names.add(nombre_param)
 
         try:
             self._call_depth += 1
