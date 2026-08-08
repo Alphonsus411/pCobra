@@ -403,9 +403,10 @@ def test_contrato_anticoopia_entorno_cierre_observa_mutaciones_posteriores() -> 
     assert inter.obtener_variable("resultado") == 2
 
 
-def test_asignar_sin_declarar_falla_con_name_error() -> None:
-    with pytest.raises(NameError, match=r"^Variable no declarada: x$"):
-        _ejecutar([NodoAsignacion("x", NodoValor(10))])
+def test_primera_asignacion_simple_define_binding_superior() -> None:
+    inter = _ejecutar([NodoAsignacion("x", NodoValor(10))])
+
+    assert inter.obtener_variable("x") == 10
 
 
 def test_declaracion_y_reasignacion_mantienen_contexto_y_memoria_sin_desfase() -> None:

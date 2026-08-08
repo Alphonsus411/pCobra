@@ -1679,10 +1679,15 @@ class InterpretadorCobra:
         self._auditar_en_ejecucion(nodo)
         
         if isinstance(nodo, NodoAsignacion):
+            es_asignacion_de_variable = isinstance(nodo.variable, str)
+            entorno_admite_nuevos_bindings = isinstance(
+                self.contextos[-1], Environment
+            )
             return self.ejecutar_asignacion(
                 nodo,
-                permitir_asignacion_inicial=isinstance(
-                    getattr(nodo, "expresion", None), NodoInstancia
+                permitir_asignacion_inicial=(
+                    es_asignacion_de_variable
+                    and entorno_admite_nuevos_bindings
                 ),
             )
         elif isinstance(nodo, NodoCondicional):
