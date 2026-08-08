@@ -5,6 +5,7 @@ from __future__ import annotations
 import importlib.machinery
 import importlib.util
 import os
+import sys
 import tempfile
 import shutil
 from types import ModuleType
@@ -14,6 +15,7 @@ from pybind11.setup_helpers import Pybind11Extension, build_ext
 from setuptools import Distribution
 
 _cache: Dict[str, ModuleType] = {}
+_MODULO_AUSENTE = object()
 
 # Prefijos permitidos para cargar extensiones
 _ALLOWED_PREFIXES: list[str] = [
@@ -85,7 +87,16 @@ def cargar_extension(ruta: str) -> ModuleType:
         if spec is None:
             raise ImportError(f"No se pudo obtener un spec para {path}")
         module = importlib.util.module_from_spec(spec)
-        loader.exec_module(module)
+        modulo_previo = sys.modules.get(nombre, _MODULO_AUSENTE)
+        sys.modules[nombre] = module
+        try:
+            loader.exec_module(module)
+        except BaseException:
+            if modulo_previo is _MODULO_AUSENTE:
+                sys.modules.pop(nombre, None)
+            else:
+                sys.modules[nombre] = modulo_previo
+            raise
         _cache[path] = module
     return _cache[path]
 

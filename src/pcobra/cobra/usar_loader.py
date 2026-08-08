@@ -38,6 +38,7 @@ _PROJECT_MODULE_FORBIDDEN_CHARS = frozenset('/\\@$%*?"\'<>|;`!()[]{}=+,')
 _USAR_PROJECT_MODULE_CACHE: dict[Path, dict[str, Any]] = {}
 _USAR_PROJECT_LOADING_STACK: list[Path] = []
 _IMPORT_COBRA_AST_CACHE: dict[Path, list[Any]] = {} # Nueva caché para ASTs de fuentes .cobra
+_MODULO_AUSENTE = object()
 CobraImportResolver = imports_resolver.CobraImportResolver
 _DEFAULT_COBRA_IMPORT_RESOLVER = CobraImportResolver
 
@@ -511,16 +512,24 @@ def _cargar_modulo_local_desde_directorio(nombre: str, directorio: Path):
     if mod_spec is None or mod_spec.loader is None:
         raise ImportError(f"No se pudo crear spec para el módulo '{nombre}'")
     modulo = importlib.util.module_from_spec(mod_spec)
+    modulo_previo = sys.modules.get(nombre, _MODULO_AUSENTE)
     sys.modules[nombre] = modulo
-    mod_spec.loader.exec_module(modulo)
+    try:
+        mod_spec.loader.exec_module(modulo)
+    except BaseException:
+        if modulo_previo is _MODULO_AUSENTE:
+            sys.modules.pop(nombre, None)
+        else:
+            sys.modules[nombre] = modulo_previo
+        raise
     return modulo
 
 
 def _cargar_modulo_local_desde_ruta(nombre: str, ruta: Path):
     """Carga un módulo Python desde una ruta absoluta explícita."""
 
-    modulo_existente = sys.modules.get(nombre)
-    if modulo_existente is not None:
+    modulo_existente = sys.modules.get(nombre, _MODULO_AUSENTE)
+    if modulo_existente is not _MODULO_AUSENTE and modulo_existente is not None:
         modulo_file = getattr(modulo_existente, "__file__", None)
         if modulo_file and Path(modulo_file).resolve() == ruta:
             return modulo_existente
@@ -530,7 +539,14 @@ def _cargar_modulo_local_desde_ruta(nombre: str, ruta: Path):
         raise ImportError(f"No se pudo crear spec para el módulo '{nombre}'")
     modulo = importlib.util.module_from_spec(mod_spec)
     sys.modules[nombre] = modulo
-    mod_spec.loader.exec_module(modulo)
+    try:
+        mod_spec.loader.exec_module(modulo)
+    except BaseException:
+        if modulo_existente is _MODULO_AUSENTE:
+            sys.modules.pop(nombre, None)
+        else:
+            sys.modules[nombre] = modulo_existente
+        raise
     return modulo
 
 

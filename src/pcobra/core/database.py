@@ -64,6 +64,7 @@ _SQLITEPLUS_AVAILABILITY: bool | None = None
 
 _PATH_PREFIXES = ("path:", "file:")
 LOGGER = logging.getLogger(__name__)
+_MODULO_AUSENTE = object()
 
 
 def _build_sqliteplus_fallback():
@@ -189,7 +190,16 @@ def _load_sqliteplus_class(*, silent_optional: bool = False):
                 "se utilizará SQLite simplificado."
             )
         constants_module = importlib_util.module_from_spec(constants_spec)
-        constants_spec.loader.exec_module(constants_module)
+        constants_module_previo = sys.modules.get(constants_name, _MODULO_AUSENTE)
+        sys.modules[constants_name] = constants_module
+        try:
+            constants_spec.loader.exec_module(constants_module)
+        except BaseException:
+            if constants_module_previo is _MODULO_AUSENTE:
+                sys.modules.pop(constants_name, None)
+            else:
+                sys.modules[constants_name] = constants_module_previo
+            raise
         utils_module = sys.modules.setdefault(
             "sqliteplus.utils", types.ModuleType("sqliteplus.utils")
         )
@@ -199,7 +209,6 @@ def _load_sqliteplus_class(*, silent_optional: bool = False):
             "sqliteplus", types.ModuleType("sqliteplus")
         )
         setattr(package_module, "utils", utils_module)
-        sys.modules[constants_name] = constants_module
 
     spec = importlib_util.spec_from_file_location(
         "sqliteplus_utils_sync", module_path
@@ -212,7 +221,17 @@ def _load_sqliteplus_class(*, silent_optional: bool = False):
         )
 
     module = importlib_util.module_from_spec(spec)
-    spec.loader.exec_module(module)
+    module_name = spec.name
+    module_previo = sys.modules.get(module_name, _MODULO_AUSENTE)
+    sys.modules[module_name] = module
+    try:
+        spec.loader.exec_module(module)
+    except BaseException:
+        if module_previo is _MODULO_AUSENTE:
+            sys.modules.pop(module_name, None)
+        else:
+            sys.modules[module_name] = module_previo
+        raise
     sqliteplus_class = getattr(module, "SQLitePlus", None)
     if sqliteplus_class is None:  # pragma: no cover - instalación dañada
         return _use_optional_fallback(
