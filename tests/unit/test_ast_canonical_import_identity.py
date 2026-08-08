@@ -75,7 +75,9 @@ for canonical_name, module in modules.items():
     assert result.returncode == 0, result.stderr
 
 
-def test_import_legacy_ast_reutiliza_identidad_canonica_en_ambos_ordenes() -> None:
+def test_contrato_checkout_shim_ast_reutiliza_identidad_canonica_en_ambos_ordenes() -> None:
+    """El shim del source tree conserva la identidad AST en ambos órdenes."""
+
     clases = ("NodoAST", "NodoValor", "NodoAsignacion", "NodoFuncion", "NodoUsar")
     ordenes = (
         ("pcobra.core.ast_nodes", "core.ast_nodes"),
@@ -85,6 +87,10 @@ def test_import_legacy_ast_reutiliza_identidad_canonica_en_ambos_ordenes() -> No
     for primero, segundo in ordenes:
         script = f"""
 import importlib
+import importlib.util
+
+if importlib.util.find_spec('core') is None:
+    raise SystemExit('el shim histórico core no está disponible en este checkout')
 
 primero = importlib.import_module({primero!r})
 segundo = importlib.import_module({segundo!r})
