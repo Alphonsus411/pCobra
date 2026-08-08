@@ -2,6 +2,7 @@ import asyncio
 import functools
 
 import os
+import sys
 from types import SimpleNamespace
 
 import pytest
@@ -466,8 +467,9 @@ class _FakeStderr:
     def __init__(self, data=b""):
         self._data = data
 
-    async def read(self):
-        return self._data
+    async def read(self, _tamano=-1):
+        data, self._data = self._data, b""
+        return data
 
 
 class _FakeProcStream:
@@ -547,6 +549,69 @@ async def test_ejecutar_stream_error_provoca_excepcion(monkeypatch):
         async for _ in gen:
             pass
     assert "fallo" in str(excinfo.value)
+
+
+@pytest.mark.asyncio
+async def test_ejecutar_stream_drena_stderr_y_entrega_stdout_incrementalmente(
+    monkeypatch,
+):
+    ejecutable = sys.executable
+    monkeypatch.setattr(sistema.sys, "platform", "darwin")
+    codigo = (
+        "import sys, time\n"
+        "print('primera', flush=True)\n"
+        "sys.stderr.write('E' * (1024 * 1024))\n"
+        "sys.stderr.flush()\n"
+        "time.sleep(0.25)\n"
+        "print('segunda', flush=True)\n"
+        "print('tercera', flush=True)\n"
+    )
+    primera_recibida = asyncio.Event()
+    lineas = []
+
+    async def consumir() -> None:
+        async for linea in sistema.ejecutar_stream(
+            [ejecutable, "-c", codigo],
+            permitidos=[ejecutable],
+            timeout=5,
+        ):
+            lineas.append(linea)
+            primera_recibida.set()
+
+    consumo = asyncio.create_task(consumir())
+    await asyncio.wait_for(primera_recibida.wait(), timeout=1)
+    assert lineas == ["primera\n"]
+    assert not consumo.done()
+    await consumo
+    assert lineas == ["primera\n", "segunda\n", "tercera\n"]
+
+
+@pytest.mark.asyncio
+async def test_ejecutar_stream_acota_stderr_y_conserva_codigo_y_final_util(
+    monkeypatch,
+):
+    ejecutable = sys.executable
+    monkeypatch.setattr(sistema.sys, "platform", "darwin")
+    codigo = (
+        "import sys\n"
+        "sys.stderr.write('E' * (1024 * 1024))\n"
+        "sys.stderr.write('detalle-final-util')\n"
+        "sys.stderr.flush()\n"
+        "raise SystemExit(7)\n"
+    )
+
+    with pytest.raises(RuntimeError) as excinfo:
+        async for _ in sistema.ejecutar_stream(
+            [ejecutable, "-c", codigo],
+            permitidos=[ejecutable],
+            timeout=5,
+        ):
+            pass
+
+    mensaje = str(excinfo.value)
+    assert "código 7" in mensaje
+    assert "detalle-final-util" in mensaje
+    assert len(mensaje) < 70 * 1024
 
 
 @pytest.mark.asyncio

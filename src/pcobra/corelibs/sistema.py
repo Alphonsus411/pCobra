@@ -8,6 +8,7 @@ import sys
 import platform
 import shutil
 import subprocess
+from collections import deque
 from collections.abc import Iterable
 from typing import AsyncIterator
 
@@ -250,65 +251,68 @@ async def ejecutar_stream(
     args, exe_real, fd, st_dev, st_ino = _resolver_ejecutable(comando, permitidos)
     args_exec = list(args)
     proc: asyncio.subprocess.Process | None = None
-    stderr_bytes = b""
+    tareas_lectura: list[asyncio.Task[None]] = []
+    stderr_chunks: deque[bytes] = deque()
+    stderr_tamano = 0
+    limite_stderr = 64 * 1024
+
+    async def drenar_stdout(cola: asyncio.Queue[bytes | None]) -> None:
+        assert proc is not None and proc.stdout is not None
+        try:
+            while chunk := await proc.stdout.readline():
+                await cola.put(chunk)
+        finally:
+            await cola.put(None)
+
+    async def drenar_stderr() -> None:
+        nonlocal stderr_tamano
+        assert proc is not None and proc.stderr is not None
+        while chunk := await proc.stderr.read(8192):
+            stderr_chunks.append(chunk)
+            stderr_tamano += len(chunk)
+            while stderr_tamano > limite_stderr and stderr_chunks:
+                exceso = stderr_tamano - limite_stderr
+                primero = stderr_chunks[0]
+                if len(primero) <= exceso:
+                    stderr_tamano -= len(stderr_chunks.popleft())
+                else:
+                    stderr_chunks[0] = primero[exceso:]
+                    stderr_tamano -= exceso
+
+    timeout_error: asyncio.TimeoutError | None = None
     try:
         _verificar_descriptor(fd, st_dev, st_ino)
         _verificar_ruta(exe_real, st_dev, st_ino)
         if os.name == "posix" and sys.platform.startswith("linux"):
             args_exec[0] = f"/proc/self/fd/{fd}"
-        proc = await asyncio.create_subprocess_exec(
-            *args_exec,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-        )
-        loop = asyncio.get_running_loop()
-        inicio = loop.time()
-        assert proc.stdout is not None
-        while True:
-            restante = None
-            if timeout is not None:
-                restante = timeout - (loop.time() - inicio)
-                if restante <= 0:
-                    raise asyncio.TimeoutError
-            try:
-                if restante is None:
-                    chunk = await proc.stdout.readline()
-                else:
-                    chunk = await asyncio.wait_for(proc.stdout.readline(), restante)
-            except asyncio.TimeoutError as exc:
-                proc.kill()
-                _, stderr_bytes = await proc.communicate()
-                if stderr_bytes:
-                    raise RuntimeError(_decodificar(stderr_bytes)) from exc
-                raise RuntimeError(
-                    f"Tiempo de espera agotado al ejecutar '{' '.join(args)}'"
-                ) from exc
-            if not chunk:
-                break
-            yield chunk.decode("utf-8", errors="replace")
-
-        restante = None
-        if timeout is not None:
-            restante = timeout - (loop.time() - inicio)
-            if restante <= 0:
-                raise asyncio.TimeoutError
         try:
-            if restante is None:
+            async with asyncio.timeout(timeout):
+                proc = await asyncio.create_subprocess_exec(
+                    *args_exec,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE,
+                )
+                cola_stdout: asyncio.Queue[bytes | None] = asyncio.Queue(maxsize=1)
+                tareas_lectura = [
+                    asyncio.create_task(drenar_stdout(cola_stdout)),
+                    asyncio.create_task(drenar_stderr()),
+                ]
+                while (chunk := await cola_stdout.get()) is not None:
+                    yield chunk.decode("utf-8", errors="replace")
+                await tareas_lectura[0]
                 await proc.wait()
-            else:
-                await asyncio.wait_for(proc.wait(), restante)
         except asyncio.TimeoutError as exc:
-            proc.kill()
-            _, stderr_bytes = await proc.communicate()
-            if stderr_bytes:
-                raise RuntimeError(_decodificar(stderr_bytes)) from exc
-            raise RuntimeError(
-                f"Tiempo de espera agotado al ejecutar '{' '.join(args)}'"
-            ) from exc
-
-        if proc.stderr is not None:
-            stderr_bytes = await proc.stderr.read()
+            timeout_error = exc
     finally:
+        if proc is not None and proc.returncode is None:
+            proc.kill()
+        if proc is not None:
+            await proc.wait()
+        for tarea in tareas_lectura:
+            if not tarea.done():
+                tarea.cancel()
+        if tareas_lectura:
+            await asyncio.gather(*tareas_lectura, return_exceptions=True)
         _verificar_descriptor(fd, st_dev, st_ino)
         _verificar_ruta(exe_real, st_dev, st_ino)
         try:
@@ -316,12 +320,19 @@ async def ejecutar_stream(
         except OSError:
             pass
 
+    stderr_bytes = b"".join(stderr_chunks)
+    if timeout_error is not None:
+        detalle = _decodificar(stderr_bytes).strip()
+        mensaje = f"Tiempo de espera agotado al ejecutar '{' '.join(args)}'"
+        if detalle:
+            mensaje = f"{mensaje}: {detalle}"
+        raise RuntimeError(mensaje) from timeout_error
+
     if proc is not None and proc.returncode:
+        mensaje = f"Error al ejecutar '{' '.join(args)}': código {proc.returncode}"
         if stderr_bytes:
-            raise RuntimeError(_decodificar(stderr_bytes))
-        raise RuntimeError(
-            f"Error al ejecutar '{' '.join(args)}': código {proc.returncode}"
-        )
+            mensaje = f"{mensaje}: {_decodificar(stderr_bytes)}"
+        raise RuntimeError(mensaje)
 
 
 def obtener_env(nombre: str) -> str | None:
