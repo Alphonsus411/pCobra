@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import importlib
 from dataclasses import dataclass, field, replace
-from pathlib import Path
 
 
 # Fuente única de verdad de módulos canónicos permitidos por `usar`.
@@ -50,45 +49,27 @@ USAR_COBRA_FACING_MODULE_FLAGS: dict[str, bool] = {
     modulo: True for modulo in USAR_COBRA_PUBLIC_MODULES
 }
 
-_USAR_CANONICAL_INTERNAL_PATHS: dict[str, str] = {
+REPL_COBRA_MODULE_PACKAGE_MAP: dict[str, str] = {
     # `numero` expone el contrato runtime de `usar` desde corelibs.
-    "numero": "src/pcobra/corelibs/numero.py",
+    "numero": "pcobra.corelibs.numero",
     # `texto` expone su API Cobra-facing desde corelibs para evitar inicializar agregadores.
-    "texto": "src/pcobra/standard_library/texto.py",
+    "texto": "pcobra.standard_library.texto",
     # `datos` mantiene la misma estrategia que `numero`: el alias público se
     # resuelve por la ruta interna canónica declarada aquí.  En este caso el
     # contrato runtime apunta explícitamente a standard_library.
-    "datos": "src/pcobra/standard_library/datos.py",
-    "logica": "src/pcobra/corelibs/logica.py",
-    "asincrono": "src/pcobra/corelibs/asincrono.py",
-    "sistema": "src/pcobra/corelibs/sistema.py",
-    "archivo": "src/pcobra/corelibs/archivo.py",
-    "tiempo": "src/pcobra/corelibs/tiempo.py",
-    "red": "src/pcobra/corelibs/red.py",
-    "holobit": "src/pcobra/corelibs/holobit.py",
-    "ruta": "src/pcobra/corelibs/ruta.py",
-    "serializacion": "src/pcobra/corelibs/serializacion.py",
-    "proceso": "src/pcobra/corelibs/proceso.py",
-    "registro": "src/pcobra/corelibs/registro.py",
-    "argumentos": "src/pcobra/corelibs/argumentos.py",
-    "pruebas": "src/pcobra/corelibs/pruebas.py",
-    "temporal": "src/pcobra/corelibs/temporal.py",
-    "cripto": "src/pcobra/corelibs/cripto.py",
-    "regex": "src/pcobra/corelibs/regex.py",
-    "compresion": "src/pcobra/corelibs/compresion.py",
-    "configuracion": "src/pcobra/corelibs/configuracion.py",
+    "datos": "pcobra.standard_library.datos",
+    **{
+        alias: f"pcobra.corelibs.{alias}"
+        for alias in USAR_COBRA_PUBLIC_MODULES
+        if alias not in {"numero", "texto", "datos"}
+    },
 }
 
 
-def _build_repl_cobra_module_internal_path_map() -> dict[str, str]:
-    """Construye el mapeo oficial `alias usar` -> ruta interna por módulo."""
-
-    return dict(_USAR_CANONICAL_INTERNAL_PATHS)
-
-
-# Fuente única de verdad: alias canónico `usar` -> ruta interna oficial.
+# Compatibilidad nominal: el mapa histórico conserva su interfaz pública, pero
+# sus valores son ahora nombres importables, nunca rutas del checkout.
 REPL_COBRA_MODULE_INTERNAL_PATH_MAP: dict[str, str] = (
-    _build_repl_cobra_module_internal_path_map()
+    REPL_COBRA_MODULE_PACKAGE_MAP
 )
 
 
@@ -125,20 +106,22 @@ def validar_contrato_modulos_canonicos_usar() -> None:
             f"faltantes={faltantes} sobrantes={sobrantes}."
         )
 
-    repo_root = Path(__file__).resolve().parents[3]
-    for alias, rel_path in REPL_COBRA_MODULE_INTERNAL_PATH_MAP.items():
-        if not rel_path.startswith(
-            ("src/pcobra/corelibs/", "src/pcobra/standard_library/")
+    for alias, package_name in REPL_COBRA_MODULE_PACKAGE_MAP.items():
+        if not package_name.startswith(
+            ("pcobra.corelibs.", "pcobra.standard_library.")
         ):
             raise RuntimeError(
                 "[STARTUP CONTRACT] Las rutas internas oficiales de `usar` deben "
-                f"estar en corelibs/standard_library; alias={alias} ruta={rel_path}."
+                f"estar en corelibs/standard_library; alias={alias} paquete={package_name}."
             )
-        path = repo_root / rel_path
-        if not path.exists():
+        try:
+            spec = importlib.util.find_spec(package_name)
+        except (ImportError, AttributeError, ValueError):
+            spec = None
+        if spec is None:
             raise RuntimeError(
                 "[STARTUP CONTRACT] Falta módulo canónico obligatorio de `usar`: "
-                f"alias={alias} ruta={rel_path}."
+                f"alias={alias} paquete={package_name}."
             )
 
 
@@ -942,13 +925,9 @@ def validar_paridad_superficie_publica_modulos_canonicos() -> None:
                 f"[STARTUP CONTRACT] {module_name} no debe exportar clases en __all__: {leaked_class_like}"
             )
 
-        stdlib_path = (
-            Path(__file__).resolve().parents[1]
-            / "standard_library"
-            / f"{module_name}.py"
-        )
-        if stdlib_path.exists():
-            std_mod = importlib.import_module(f"pcobra.standard_library.{module_name}")
+        stdlib_name = f"pcobra.standard_library.{module_name}"
+        if importlib.util.find_spec(stdlib_name) is not None:
+            std_mod = importlib.import_module(stdlib_name)
             std_exports = tuple(getattr(std_mod, "__all__", ()))
             if std_exports:
                 combined_exports = set(exports) | set(std_exports)

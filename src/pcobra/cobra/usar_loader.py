@@ -18,6 +18,7 @@ from pcobra.cobra.usar_capabilities import CapacidadUsar, capacidades_de
 from pcobra.cobra.usar_policy import (
     CANONICAL_MODULE_SURFACE_CONTRACTS,
     REPL_COBRA_MODULE_INTERNAL_PATH_MAP,
+    REPL_COBRA_MODULE_PACKAGE_MAP,
     USAR_BACKEND_BLOCKLIST,
     USAR_COBRA_PUBLIC_MODULES,
     USAR_RUNTIME_EXPORT_OVERRIDES,
@@ -551,44 +552,23 @@ def _cargar_modulo_local_desde_ruta(nombre: str, ruta: Path):
 
 
 def obtener_modulo_cobra_oficial(nombre: str):
-    """Carga módulos oficiales de Cobra desde la ruta interna canónica declarada."""
+    """Importa un módulo oficial desde el paquete ``pcobra`` instalado."""
 
     nombre = validar_nombre_modulo_usar(nombre, require_allowlist=True)
-    rel_path = REPL_COBRA_MODULE_INTERNAL_PATH_MAP.get(nombre)
-    if not rel_path:
+    nombre_import = REPL_COBRA_MODULE_PACKAGE_MAP.get(nombre)
+    if not nombre_import:
         raise ModuleNotFoundError(
-            f"Módulo oficial Cobra '{nombre}' permitido pero sin ruta interna canónica declarada."
+            f"Módulo oficial Cobra '{nombre}' permitido pero sin paquete interno canónico declarado."
         )
-
-    repo_root = Path(__file__).resolve().parents[3]
-    ruta_modulo = (repo_root / rel_path).resolve()
-    if not ruta_modulo.exists():
-        raise ModuleNotFoundError(
-            "Módulo oficial Cobra permitido no resoluble en runtime: "
-            f"alias='{nombre}' ruta='{rel_path}'."
-        )
-
-    if rel_path.startswith("src/pcobra/corelibs/"):
-        nombre_import = f"pcobra.corelibs.{ruta_modulo.stem}"
-    elif rel_path.startswith("src/pcobra/standard_library/"):
-        nombre_import = f"pcobra.standard_library.{ruta_modulo.stem}"
-    else:
-        nombre_import = ""
-
-    if nombre_import:
-        modulo = importlib.import_module(nombre_import)
-        modulo_file = getattr(modulo, "__file__", None)
-        if modulo_file and Path(modulo_file).resolve() == ruta_modulo:
-            for export_name in getattr(modulo, "__all__", ()):  # Cobra-facing: alias público.
-                export = getattr(modulo, export_name, None)
-                if callable(export) and hasattr(export, "__module__"):
-                    try:
-                        export.__module__ = nombre
-                    except (AttributeError, TypeError):
-                        pass
-            return modulo
-
-    return _cargar_modulo_local_desde_ruta(nombre, ruta_modulo)
+    modulo = importlib.import_module(nombre_import)
+    for export_name in getattr(modulo, "__all__", ()):  # Cobra-facing: alias público.
+        export = getattr(modulo, export_name, None)
+        if callable(export) and hasattr(export, "__module__"):
+            try:
+                export.__module__ = nombre
+            except (AttributeError, TypeError):
+                pass
+    return modulo
 
 
 def _obtener_modulo_cobra_oficial_compat(nombre: str):
@@ -610,11 +590,9 @@ def _obtener_modulo_cobra_oficial_compat(nombre: str):
 
     modulo = obtener_modulo_cobra_oficial(nombre)
 
-    rel_path = REPL_COBRA_MODULE_INTERNAL_PATH_MAP.get(nombre)
-    if rel_path:
-        ruta_oficial = (Path(__file__).resolve().parents[3] / rel_path).resolve()
-        modulo_file = getattr(modulo, "__file__", None)
-        if not modulo_file or Path(modulo_file).resolve() != ruta_oficial:
+    package_name = REPL_COBRA_MODULE_PACKAGE_MAP.get(nombre)
+    if package_name:
+        if getattr(modulo, "__name__", None) != package_name:
             raise PermissionError(
                 "usar_error[modulo_no_permitido]: módulo externo no permitido en REPL estricto "
                 "(solo alias oficiales Cobra)"
