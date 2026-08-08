@@ -99,6 +99,27 @@ def test_distribucion_publica_no_expone_namespaces_legacy() -> None:
     assert "bindings*" not in include
 
 
+def test_checkout_conserva_core_como_shim_legacy_solo_en_arbol_fuente(
+    tmp_path: Path,
+) -> None:
+    shim_path = Path("src/core/__init__.py")
+
+    assert shim_path.is_file()
+
+    env = os.environ.copy()
+    env["PYTHONPATH"] = str(Path("src").resolve())
+    completed = subprocess.run(
+        [sys.executable, "-c", "import core; print(core.__file__)"],
+        check=True,
+        capture_output=True,
+        text=True,
+        env=env,
+        cwd=tmp_path,
+    )
+
+    assert Path(completed.stdout.strip()).resolve() == shim_path.resolve()
+
+
 def test_script_entrypoint_cobra_se_mantiene_en_pcobra_cli_main() -> None:
     pyproject_path = Path("pyproject.toml")
     data = tomllib.loads(pyproject_path.read_text(encoding="utf-8"))
