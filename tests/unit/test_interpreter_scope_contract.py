@@ -12,9 +12,11 @@ from pcobra.core.ast_nodes import (
     NodoCondicional,
     NodoContinuar,
     NodoFuncion,
+    NodoGlobal,
     NodoIdentificador,
     NodoLlamadaFuncion,
     NodoOperacionBinaria,
+    NodoNoLocal,
     NodoRomper,
     NodoRetorno,
     NodoValor,
@@ -29,6 +31,169 @@ def _ejecutar(nodos: list) -> InterpretadorCobra:
     for nodo in nodos:
         inter.ejecutar_nodo(nodo)
     return inter
+
+
+def _incremento(nombre: str) -> NodoAsignacion:
+    return NodoAsignacion(
+        nombre,
+        NodoOperacionBinaria(
+            NodoIdentificador(nombre),
+            Token(TipoToken.SUMA, "+"),
+            NodoValor(1),
+        ),
+    )
+
+
+def test_nolocal_lee_y_escribe_binding_de_funcion_exterior() -> None:
+    inter = _ejecutar(
+        [
+            NodoFuncion(
+                "exterior",
+                [],
+                [
+                    NodoAsignacion("x", NodoValor(1), declaracion=True),
+                    NodoFuncion(
+                        "interior",
+                        [],
+                        [
+                            NodoNoLocal(["x"]),
+                            _incremento("x"),
+                            NodoRetorno(NodoIdentificador("x")),
+                        ],
+                    ),
+                    NodoRetorno(NodoLlamadaFuncion("interior", [])),
+                ],
+            ),
+            NodoAsignacion(
+                "resultado", NodoLlamadaFuncion("exterior", []), declaracion=True
+            ),
+        ]
+    )
+
+    assert inter.obtener_variable("resultado") == 2
+
+
+def test_nolocal_busca_el_binding_mas_cercano_en_dos_niveles() -> None:
+    inter = _ejecutar(
+        [
+            NodoFuncion(
+                "exterior",
+                [],
+                [
+                    NodoAsignacion("x", NodoValor(1), declaracion=True),
+                    NodoFuncion(
+                        "medio",
+                        [],
+                        [
+                            NodoAsignacion("x", NodoValor(10), declaracion=True),
+                            NodoFuncion(
+                                "interior",
+                                [],
+                                [NodoNoLocal(["x"]), _incremento("x")],
+                            ),
+                            NodoLlamadaFuncion("interior", []),
+                            NodoRetorno(NodoIdentificador("x")),
+                        ],
+                    ),
+                    NodoRetorno(NodoLlamadaFuncion("medio", [])),
+                ],
+            ),
+            NodoAsignacion(
+                "resultado", NodoLlamadaFuncion("exterior", []), declaracion=True
+            ),
+        ]
+    )
+
+    assert inter.obtener_variable("resultado") == 11
+
+
+def test_asignacion_anidada_sin_nolocal_sombrea_binding_exterior() -> None:
+    inter = _ejecutar(
+        [
+            NodoFuncion(
+                "exterior",
+                [],
+                [
+                    NodoAsignacion("x", NodoValor(1), declaracion=True),
+                    NodoFuncion("interior", [], [NodoAsignacion("x", NodoValor(9))]),
+                    NodoLlamadaFuncion("interior", []),
+                    NodoRetorno(NodoIdentificador("x")),
+                ],
+            ),
+            NodoAsignacion(
+                "resultado", NodoLlamadaFuncion("exterior", []), declaracion=True
+            ),
+        ]
+    )
+
+    assert inter.obtener_variable("resultado") == 1
+
+
+def test_nolocal_sin_binding_exterior_falla_inmediatamente_y_limpia_llamada() -> None:
+    inter = _ejecutar(
+        [NodoFuncion("invalida", [], [NodoNoLocal(["ausente"])])]
+    )
+
+    with pytest.raises(SyntaxError, match="No existe binding nolocal para 'ausente'"):
+        inter.ejecutar_nodo(NodoLlamadaFuncion("invalida", []))
+
+    assert len(inter.contextos) == 1
+    assert len(inter.mem_contextos) == 1
+
+
+def test_registros_nolocal_son_independientes_entre_llamadas_sucesivas() -> None:
+    inter = _ejecutar(
+        [
+            NodoFuncion(
+                "contador",
+                [],
+                [
+                    NodoAsignacion("x", NodoValor(0), declaracion=True),
+                    NodoFuncion(
+                        "subir",
+                        [],
+                        [NodoNoLocal(["x"]), _incremento("x")],
+                    ),
+                    NodoLlamadaFuncion("subir", []),
+                    NodoRetorno(NodoIdentificador("x")),
+                ],
+            ),
+            NodoAsignacion(
+                "primera", NodoLlamadaFuncion("contador", []), declaracion=True
+            ),
+            NodoAsignacion(
+                "segunda", NodoLlamadaFuncion("contador", []), declaracion=True
+            ),
+        ]
+    )
+
+    assert inter.obtener_variable("primera") == 1
+    assert inter.obtener_variable("segunda") == 1
+
+
+def test_nolocal_rechaza_contradicciones_local_y_global() -> None:
+    inter = _ejecutar(
+        [
+            NodoFuncion(
+                "local_conflict",
+                [],
+                [
+                    NodoAsignacion("x", NodoValor(1), declaracion=True),
+                    NodoNoLocal(["x"]),
+                ],
+            ),
+            NodoFuncion(
+                "global_conflict",
+                [],
+                [NodoGlobal(["x"]), NodoNoLocal(["x"])],
+            ),
+        ]
+    )
+
+    with pytest.raises(SyntaxError, match="declarado local y nolocal"):
+        inter.ejecutar_nodo(NodoLlamadaFuncion("local_conflict", []))
+    with pytest.raises(SyntaxError, match="declarado global y nolocal"):
+        inter.ejecutar_nodo(NodoLlamadaFuncion("global_conflict", []))
 
 
 def test_reasignacion_en_mientras_persiste_fuera_del_loop() -> None:
