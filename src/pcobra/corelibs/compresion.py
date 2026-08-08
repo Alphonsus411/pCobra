@@ -7,12 +7,28 @@ futura; la superficie pública inicial cubre únicamente archivos ZIP.
 from __future__ import annotations
 
 import os
+import shutil
+import stat
+import tempfile
 from pathlib import Path, PurePosixPath
-from zipfile import ZipFile
+from zipfile import ZipFile, ZipInfo
+
+from pcobra.corelibs._sandbox_paths import (
+    resolver_destino_nuevo,
+    resolver_ruta_existente,
+)
 
 PathLike = str | os.PathLike[str]
 
 __all__ = ["crear_zip", "extraer_zip", "listar_zip"]
+
+# Límites internos (no forman parte de la API pública) y sustituibles en pruebas o
+# por integradores que necesiten una política más restrictiva.
+_MAX_ENTRADAS = 10_000
+_MAX_BYTES_ENTRADA = 100 * 1024 * 1024
+_MAX_BYTES_TOTALES = 1024 * 1024 * 1024
+_MAX_RATIO_COMPRESION = 100.0
+_TAMANO_CHUNK = 64 * 1024
 
 
 def crear_zip(
@@ -49,35 +65,58 @@ def crear_zip(
 
 
 def extraer_zip(origen: PathLike, destino: PathLike) -> list[str]:
-    """Extrae ``origen`` en ``destino`` evitando path traversal.
+    """Extrae ``origen`` en ``destino`` de forma confinada y limitada.
 
     Devuelve las rutas extraídas como cadenas. Cada miembro del ZIP se resuelve
     contra el directorio destino y se rechaza si queda fuera de él.
     """
 
-    origen_zip = _validar_ruta(origen, "origen")
-    if not origen_zip.exists():
-        raise FileNotFoundError(f"El ZIP de origen no existe: {origen_zip}")
-
-    destino_base = _validar_ruta(destino, "destino").resolve()
+    origen_zip = resolver_ruta_existente(_texto_ruta(origen, "origen"))
+    destino_base = resolver_destino_nuevo(_texto_ruta(destino, "destino"))
+    if destino_base.is_symlink():
+        raise ValueError("El destino de extracción no puede ser un enlace simbólico")
     destino_base.mkdir(parents=True, exist_ok=True)
-    rutas_extraidas: list[str] = []
-
-    with ZipFile(origen_zip, "r") as archivo_zip:
-        for miembro in archivo_zip.infolist():
-            ruta_destino = _ruta_segura_extraccion(destino_base, miembro.filename)
-            if miembro.is_dir():
-                ruta_destino.mkdir(parents=True, exist_ok=True)
-            else:
-                ruta_destino.parent.mkdir(parents=True, exist_ok=True)
+    temporal = Path(tempfile.mkdtemp(prefix=".pcobra-zip-", dir=destino_base))
+    try:
+        with ZipFile(origen_zip, "r") as archivo_zip:
+            miembros = archivo_zip.infolist()
+            rutas = _inspeccionar_miembros(miembros, destino_base)
+            _comprobar_destinos_libres(rutas, destino_base)
+            total_real = 0
+            for miembro, ruta_final in zip(miembros, rutas):
+                relativa = ruta_final.relative_to(destino_base)
+                ruta_temporal = temporal / relativa
+                if miembro.is_dir():
+                    ruta_temporal.mkdir(parents=True, exist_ok=True)
+                    continue
+                ruta_temporal.parent.mkdir(parents=True, exist_ok=True)
+                bytes_entrada = 0
                 with (
-                    archivo_zip.open(miembro, "r") as origen_archivo,
-                    ruta_destino.open("wb") as destino_archivo,
+                    archivo_zip.open(miembro) as entrada,
+                    ruta_temporal.open("xb") as salida,
                 ):
-                    destino_archivo.write(origen_archivo.read())
-            rutas_extraidas.append(str(ruta_destino))
+                    while chunk := entrada.read(_TAMANO_CHUNK):
+                        bytes_entrada += len(chunk)
+                        total_real += len(chunk)
+                        if bytes_entrada > _MAX_BYTES_ENTRADA:
+                            raise ValueError(
+                                "Una entrada ZIP supera el tamaño permitido"
+                            )
+                        if total_real > _MAX_BYTES_TOTALES:
+                            raise ValueError("El ZIP supera el tamaño total permitido")
+                        salida.write(chunk)
 
-    return rutas_extraidas
+        for miembro, ruta_final in zip(miembros, rutas):
+            relativa = ruta_final.relative_to(destino_base)
+            ruta_temporal = temporal / relativa
+            if miembro.is_dir():
+                ruta_final.mkdir(parents=True, exist_ok=True)
+            else:
+                ruta_final.parent.mkdir(parents=True, exist_ok=True)
+                os.replace(ruta_temporal, ruta_final)
+        return [str(ruta) for ruta in rutas]
+    finally:
+        shutil.rmtree(temporal, ignore_errors=True)
 
 
 def listar_zip(origen: PathLike) -> list[str]:
@@ -104,6 +143,10 @@ def _normalizar_rutas(
 
 
 def _validar_ruta(ruta: PathLike, nombre_argumento: str) -> Path:
+    return Path(_texto_ruta(ruta, nombre_argumento))
+
+
+def _texto_ruta(ruta: PathLike, nombre_argumento: str) -> str:
     if not isinstance(ruta, (str, os.PathLike)):
         raise TypeError(
             f"{nombre_argumento} debe ser una ruta de texto o compatible con os.PathLike"
@@ -113,7 +156,7 @@ def _validar_ruta(ruta: PathLike, nombre_argumento: str) -> Path:
         raise TypeError(f"{nombre_argumento} debe representar una ruta de texto")
     if texto == "":
         raise ValueError(f"{nombre_argumento} no puede estar vacía")
-    return Path(texto)
+    return texto
 
 
 def _resolver_base(rutas: list[Path], base: PathLike | None) -> Path:
@@ -171,3 +214,42 @@ def _ruta_segura_extraccion(destino_base: Path, nombre: str) -> Path:
 
 def _parece_ruta_windows_absoluta(nombre: str) -> bool:
     return len(nombre) >= 2 and nombre[1] == ":" and nombre[0].isalpha()
+
+
+def _inspeccionar_miembros(miembros: list[ZipInfo], destino_base: Path) -> list[Path]:
+    if len(miembros) > _MAX_ENTRADAS:
+        raise ValueError("El ZIP supera la cantidad de entradas permitida")
+
+    total_declarado = 0
+    rutas: list[Path] = []
+    for miembro in miembros:
+        ruta = _ruta_segura_extraccion(destino_base, miembro.filename)
+        tipo = stat.S_IFMT(miembro.external_attr >> 16)
+        if tipo not in (0, stat.S_IFREG, stat.S_IFDIR):
+            raise ValueError(f"Tipo de entrada ZIP no permitido: {miembro.filename}")
+        if miembro.file_size > _MAX_BYTES_ENTRADA:
+            raise ValueError("Una entrada ZIP supera el tamaño permitido")
+        total_declarado += miembro.file_size
+        if total_declarado > _MAX_BYTES_TOTALES:
+            raise ValueError("El ZIP supera el tamaño total permitido")
+        if miembro.compress_size:
+            ratio = miembro.file_size / miembro.compress_size
+        else:
+            ratio = float("inf") if miembro.file_size else 1.0
+        if ratio > _MAX_RATIO_COMPRESION:
+            raise ValueError("Una entrada ZIP supera el ratio de compresión permitido")
+        rutas.append(ruta)
+    return rutas
+
+
+def _comprobar_destinos_libres(rutas: list[Path], destino_base: Path) -> None:
+    if len(set(rutas)) != len(rutas):
+        raise ValueError("El ZIP contiene destinos duplicados")
+    for ruta in rutas:
+        if ruta.exists() or ruta.is_symlink():
+            raise FileExistsError(f"El destino ya existe: {ruta}")
+        for padre in ruta.parents:
+            if padre == destino_base:
+                break
+            if padre.is_symlink() or (padre.exists() and not padre.is_dir()):
+                raise FileExistsError(f"Un ancestro del destino no es seguro: {padre}")
