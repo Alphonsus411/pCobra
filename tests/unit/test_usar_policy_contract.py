@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 from pcobra.cobra.usar_loader import obtener_modulo_cobra_oficial
 from pcobra.cobra.usar_policy import (
     CANONICAL_MODULE_SURFACE_CONTRACTS,
@@ -41,6 +43,29 @@ def test_contrato_superficie_publica_cubre_modulos_canonicos() -> None:
 
 def test_validacion_paridad_superficie_publica_ejecutable() -> None:
     validar_paridad_superficie_publica_modulos_canonicos()
+
+
+@pytest.mark.parametrize("modulo", USAR_COBRA_PUBLIC_MODULES)
+def test_cada_export_oficial_tiene_una_clasificacion_explicita_de_capacidades(
+    modulo: str,
+) -> None:
+    assert modulo in CANONICAL_MODULE_SURFACE_CONTRACTS
+    assert modulo in USAR_COBRA_PUBLIC_MODULES
+
+    contrato = CANONICAL_MODULE_SURFACE_CONTRACTS[modulo]
+    exports_declarados = tuple(
+        getattr(obtener_modulo_cobra_oficial(modulo), "__all__", ())
+    )
+    exports_oficiales = USAR_RUNTIME_EXPORT_OVERRIDES.get(modulo, exports_declarados)
+
+    assert exports_declarados == exports_oficiales
+    assert len(exports_oficiales) == len(set(exports_oficiales))
+    assert set(contrato.symbol_capabilities) == set(exports_oficiales)
+
+    for alias, destino in contrato.allowed_aliases.items():
+        assert (
+            contrato.symbol_capabilities[alias] == contrato.symbol_capabilities[destino]
+        )
 
 
 def test_consistencia_runtime_loader_docs_modulos_canonicos() -> None:
