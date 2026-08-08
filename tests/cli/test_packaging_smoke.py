@@ -57,11 +57,21 @@ def test_wheel_instalado_resuelve_usar_sin_checkout(tmp_path: Path) -> None:
         text=True,
     )
 
+    isolated_cwd = tmp_path / "wheel-smoke-cwd"
+    isolated_cwd.mkdir()
     smoke_script = (
-        "import pathlib, sys\n"
+        "import importlib, importlib.util, os, pathlib, sys\n"
         f"checkout = pathlib.Path({str(REPO_ROOT)!r}).resolve()\n"
+        "cwd = pathlib.Path.cwd().resolve()\n"
+        "assert cwd != checkout and checkout not in cwd.parents, cwd\n"
+        "assert 'PYTHONPATH' not in os.environ, os.environ.get('PYTHONPATH')\n"
         "if any(pathlib.Path(p or '.').resolve() == checkout for p in sys.path):\n"
         "    raise SystemExit('el checkout está presente en sys.path')\n"
+        "if any(pathlib.Path(p or '.').resolve().name == 'src' for p in sys.path):\n"
+        "    raise SystemExit(f'una carpeta src está presente en sys.path: {sys.path!r}')\n"
+        "ast_nodes = importlib.import_module('pcobra.core.ast_nodes')\n"
+        "assert ast_nodes.NodoAST.__module__ == 'pcobra.core.ast_nodes'\n"
+        "assert importlib.util.find_spec('core') is None, 'el wheel instaló el namespace top-level core'\n"
         "consultas_src = []\n"
         "def auditar(evento, args):\n"
         "    if evento == 'open' and args and isinstance(args[0], (str, bytes)):\n"
@@ -92,7 +102,8 @@ def test_wheel_instalado_resuelve_usar_sin_checkout(tmp_path: Path) -> None:
         check=False,
         capture_output=True,
         text=True,
-        cwd=tmp_path,
+        cwd=isolated_cwd,
+        env={key: value for key, value in os.environ.items() if key != "PYTHONPATH"},
     )
 
     assert run_help.returncode == 0, (
