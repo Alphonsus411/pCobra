@@ -8,6 +8,11 @@ import pytest
 import pcobra.corelibs.compresion as compresion
 
 
+@pytest.fixture(autouse=True)
+def _sandbox(tmp_path, monkeypatch) -> None:
+    monkeypatch.setenv("COBRA_IO_BASE_DIR", str(tmp_path))
+
+
 def test_import_directo_y_all_presente() -> None:
     modulo = importlib.import_module("pcobra.corelibs.compresion")
 
@@ -26,7 +31,9 @@ def test_crear_listar_y_extraer_zip_con_tmp_path(tmp_path) -> None:
 
     nombres = compresion.crear_zip(zip_path, archivo, base=origen)
     destino = tmp_path / "extraido"
-    extraidas = compresion.extraer_zip(zip_path, destino)
+    extraidas = compresion.extraer_zip(
+        zip_path.relative_to(tmp_path), destino.relative_to(tmp_path)
+    )
 
     assert nombres == ["datos.txt"]
     assert compresion.listar_zip(zip_path) == ["datos.txt"]
@@ -40,4 +47,4 @@ def test_extraer_zip_rechaza_path_traversal(tmp_path) -> None:
         archivo_zip.writestr("../escape.txt", "no")
 
     with pytest.raises(ValueError):
-        compresion.extraer_zip(zip_path, tmp_path / "destino")
+        compresion.extraer_zip(zip_path.name, "destino")
