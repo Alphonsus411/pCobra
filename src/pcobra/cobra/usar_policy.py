@@ -66,11 +66,12 @@ REPL_COBRA_MODULE_PACKAGE_MAP: dict[str, str] = {
 }
 
 
-# Compatibilidad nominal: el mapa histórico conserva su interfaz pública, pero
-# sus valores son ahora nombres importables, nunca rutas del checkout.
-REPL_COBRA_MODULE_INTERNAL_PATH_MAP: dict[str, str] = (
-    REPL_COBRA_MODULE_PACKAGE_MAP
-)
+# Contrato legacy para consumidores que resuelven archivos desde la raíz del
+# checkout. Es deliberadamente distinto del mapa de nombres importables.
+REPL_COBRA_MODULE_INTERNAL_PATH_MAP: dict[str, str] = {
+    alias: "src/" + package_name.replace(".", "/") + ".py"
+    for alias, package_name in REPL_COBRA_MODULE_PACKAGE_MAP.items()
+}
 
 
 def validar_contrato_modulos_canonicos_usar() -> None:

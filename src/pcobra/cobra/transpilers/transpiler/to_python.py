@@ -245,7 +245,7 @@ def visit_diccionario_comprehension(self, nodo):
 
 
 class TranspiladorPython(BaseTranspiler):
-    def __init__(self, *, source_file=None, project_root=None):
+    def __init__(self, *, source_file=None, project_root=None, safe_mode=False):
         # Incluir los modulos nativos al inicio del codigo generado
         self.codigo = ""
         self.usa_asyncio = False
@@ -255,6 +255,7 @@ class TranspiladorPython(BaseTranspiler):
         self._async_function_depth = 0
         self._defer_stack: list[str] = []
         self._defer_counter = 0
+        self.safe_mode = bool(safe_mode)
         self.source_file = self._normalizar_ruta_contexto(source_file)
         self.project_root = self._normalizar_ruta_contexto(project_root)
         if self.project_root is None and self.source_file is not None:
@@ -279,7 +280,7 @@ class TranspiladorPython(BaseTranspiler):
     def contexto_usar_kwargs(self):
         """Devuelve argumentos estables para ``usar_modulo`` cuando hay contexto."""
 
-        kwargs = []
+        kwargs = [("safe_mode", self.safe_mode)]
         if self.project_root is not None:
             kwargs.append(("project_root", str(self.project_root)))
         if self.source_file is not None:

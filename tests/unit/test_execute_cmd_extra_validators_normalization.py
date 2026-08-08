@@ -30,9 +30,11 @@ def test_ejecutar_normal_carga_validadores_desde_una_ruta(monkeypatch):
     cargado = [DummyValidator()]
 
     class DummyInterp:
-        def __init__(self, safe_mode=True, extra_validators=None):
+        def __init__(self, safe_mode=True, extra_validators=None, main_file=None):
             self.safe_mode = safe_mode
             self.extra_validators = extra_validators
+            self._usar_symbol_metadata = {}
+            self._validador = SimpleNamespace(_metadata_simbolos_usar={})
 
         def ejecutar_ast(self, _ast):
             return None
@@ -62,8 +64,10 @@ def test_ejecutar_normal_carga_y_acumula_multiples_rutas(monkeypatch):
     class DummyInterp:
         init_extra = None
 
-        def __init__(self, safe_mode=True, extra_validators=None):
+        def __init__(self, safe_mode=True, extra_validators=None, main_file=None):
             DummyInterp.init_extra = extra_validators
+            self._usar_symbol_metadata = {}
+            self._validador = SimpleNamespace(_metadata_simbolos_usar={})
 
         def ejecutar_ast(self, _ast):
             return None
@@ -91,8 +95,10 @@ def test_ejecutar_normal_acepta_lista_vacia_y_none(monkeypatch):
     class DummyInterp:
         llamadas = []
 
-        def __init__(self, safe_mode=True, extra_validators=None):
+        def __init__(self, safe_mode=True, extra_validators=None, main_file=None):
             DummyInterp.llamadas.append(extra_validators)
+            self._usar_symbol_metadata = {}
+            self._validador = SimpleNamespace(_metadata_simbolos_usar={})
 
         def ejecutar_ast(self, _ast):
             return None
@@ -118,9 +124,11 @@ def test_ejecutar_normal_muestra_error_claro_si_falla_una_ruta(monkeypatch):
     errores = []
 
     class DummyInterp:
-        def __init__(self, safe_mode=True, extra_validators=None):
+        def __init__(self, safe_mode=True, extra_validators=None, main_file=None):
             self.safe_mode = safe_mode
             self.extra_validators = extra_validators
+            self._usar_symbol_metadata = {}
+            self._validador = SimpleNamespace(_metadata_simbolos_usar={})
 
         def ejecutar_ast(self, _ast):
             return None

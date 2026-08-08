@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import ast
 import builtins
+import math
 import os
 from typing import Any
 
@@ -27,7 +28,10 @@ def _apply_resource_limits() -> None:
 
     memory = 256 * 1024 * 1024
     resource.setrlimit(resource.RLIMIT_AS, (memory, memory))
-    resource.setrlimit(resource.RLIMIT_CPU, (1, 1))
+    cpu_consumida = resource.getrusage(resource.RUSAGE_SELF)
+    usada = cpu_consumida.ru_utime + cpu_consumida.ru_stime
+    limite_blando = max(1, math.ceil(usada + 1.0))
+    resource.setrlimit(resource.RLIMIT_CPU, (limite_blando, limite_blando + 1))
 
 
 def _check_policy(source: str, filename: str) -> ast.AST:

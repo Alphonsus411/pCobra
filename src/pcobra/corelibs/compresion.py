@@ -50,7 +50,9 @@ def crear_zip(
             raise FileNotFoundError(f"La ruta a comprimir no existe: {ruta}")
 
     base_resuelta = _resolver_base(rutas_normalizadas, base)
-    destino_zip = _validar_ruta(destino, "destino")
+    destino_zip = resolver_destino_nuevo(_ruta_relativa_sandbox(destino, "destino"))
+    if destino_zip.is_symlink():
+        raise ValueError("El destino ZIP no puede ser un enlace simbólico")
     destino_zip.parent.mkdir(parents=True, exist_ok=True)
 
     nombres: list[str] = []
@@ -71,8 +73,8 @@ def extraer_zip(origen: PathLike, destino: PathLike) -> list[str]:
     contra el directorio destino y se rechaza si queda fuera de él.
     """
 
-    origen_zip = resolver_ruta_existente(_texto_ruta(origen, "origen"))
-    destino_base = resolver_destino_nuevo(_texto_ruta(destino, "destino"))
+    origen_zip = resolver_ruta_existente(_ruta_relativa_sandbox(origen, "origen"))
+    destino_base = resolver_destino_nuevo(_ruta_relativa_sandbox(destino, "destino"))
     if destino_base.is_symlink():
         raise ValueError("El destino de extracción no puede ser un enlace simbólico")
     destino_base.mkdir(parents=True, exist_ok=True)
@@ -122,9 +124,7 @@ def extraer_zip(origen: PathLike, destino: PathLike) -> list[str]:
 def listar_zip(origen: PathLike) -> list[str]:
     """Devuelve la lista simple de nombres incluidos en ``origen``."""
 
-    origen_zip = _validar_ruta(origen, "origen")
-    if not origen_zip.exists():
-        raise FileNotFoundError(f"El ZIP de origen no existe: {origen_zip}")
+    origen_zip = resolver_ruta_existente(_ruta_relativa_sandbox(origen, "origen"))
 
     with ZipFile(origen_zip, "r") as archivo_zip:
         return archivo_zip.namelist()
@@ -134,11 +134,12 @@ def _normalizar_rutas(
     rutas: PathLike | list[PathLike] | tuple[PathLike, ...],
 ) -> list[Path]:
     if isinstance(rutas, (str, os.PathLike)):
-        return [_validar_ruta(rutas, "rutas")]
+        return [resolver_ruta_existente(_ruta_relativa_sandbox(rutas, "rutas"))]
     if not isinstance(rutas, (list, tuple)):
         raise TypeError("rutas debe ser una ruta o una lista/tupla de rutas")
     return [
-        _validar_ruta(ruta, f"rutas[{indice}]") for indice, ruta in enumerate(rutas)
+        resolver_ruta_existente(_ruta_relativa_sandbox(ruta, f"rutas[{indice}]"))
+        for indice, ruta in enumerate(rutas)
     ]
 
 
@@ -159,12 +160,30 @@ def _texto_ruta(ruta: PathLike, nombre_argumento: str) -> str:
     return texto
 
 
+def _ruta_relativa_sandbox(ruta: PathLike, nombre_argumento: str) -> str:
+    """Adapta rutas absolutas legacy solo cuando ya están dentro del sandbox."""
+
+    texto = _texto_ruta(ruta, nombre_argumento)
+    candidata = Path(texto).expanduser()
+    if not candidata.is_absolute():
+        return texto
+    base = os.environ.get("COBRA_IO_BASE_DIR")
+    if not base:
+        raise ValueError("Las rutas absolutas requieren COBRA_IO_BASE_DIR")
+    try:
+        return str(
+            candidata.resolve(strict=False).relative_to(Path(base).resolve(strict=True))
+        )
+    except ValueError as exc:
+        raise ValueError("La ruta absoluta queda fuera del sandbox") from exc
+
+
 def _resolver_base(rutas: list[Path], base: PathLike | None) -> Path:
     if not rutas:
         raise ValueError("Debe indicarse al menos una ruta para comprimir")
 
     if base is not None:
-        base_resuelta = _validar_ruta(base, "base").resolve()
+        base_resuelta = resolver_ruta_existente(_ruta_relativa_sandbox(base, "base"))
         if not base_resuelta.exists():
             raise FileNotFoundError(f"La base no existe: {base_resuelta}")
         if not base_resuelta.is_dir():

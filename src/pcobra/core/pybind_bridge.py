@@ -91,12 +91,11 @@ def cargar_extension(ruta: str) -> ModuleType:
         sys.modules[nombre] = module
         try:
             loader.exec_module(module)
-        except BaseException:
+        finally:
             if modulo_previo is _MODULO_AUSENTE:
                 sys.modules.pop(nombre, None)
             else:
                 sys.modules[nombre] = modulo_previo
-            raise
         _cache[path] = module
     return _cache[path]
 

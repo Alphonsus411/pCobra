@@ -281,7 +281,7 @@ async def descargar_archivo(
     temporal: Path | None = None
     try:
         with tempfile.NamedTemporaryFile(
-            mode="w+b", prefix=f".{ruta.name}.", dir=ruta.parent, delete=False
+            mode="w+b", prefix=".pcobra-download-", dir=ruta.parent, delete=False
         ) as archivo:
             temporal = Path(archivo.name)
             await _realizar_peticion_async(
@@ -291,7 +291,7 @@ async def descargar_archivo(
                 archivo_destino=archivo,
             )
         os.replace(temporal, ruta)
-    except Exception:
+    except BaseException:
         if temporal is not None:
             temporal.unlink(missing_ok=True)
         raise
