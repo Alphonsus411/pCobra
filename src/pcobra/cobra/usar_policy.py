@@ -622,17 +622,19 @@ _EFFECTFUL_PUBLIC_SYMBOLS: dict[str, dict[str, frozenset[str]]] = {
     },
     "red": {
         **{
-            name: frozenset({"network.access"})
+            name: frozenset({"network.get"})
             for name in (
                 "obtener_url",
-                "enviar_post",
                 "obtener_url_async",
-                "enviar_post_async",
                 "obtener_url_texto",
                 "obtener_json",
             )
         },
-        "descargar_archivo": frozenset({"network.access", "filesystem.write"}),
+        **{
+            name: frozenset({"network.post"})
+            for name in ("enviar_post", "enviar_post_async")
+        },
+        "descargar_archivo": frozenset({"network.download", "filesystem.write"}),
     },
     "ruta": {
         "existe": frozenset({"filesystem.read"}),

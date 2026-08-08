@@ -9,6 +9,10 @@ from types import MappingProxyType
 class CapacidadUsar(StrEnum):
     PROCESS_SPAWN = "process.spawn"
     PROCESS_SHELL = "process.shell"
+    NETWORK_GET = "network.get"
+    NETWORK_POST = "network.post"
+    NETWORK_DOWNLOAD = "network.download"
+    FILESYSTEM_WRITE = "filesystem.write"
 
 
 _SIMBOLO_CANONICO = MappingProxyType(
@@ -17,6 +21,13 @@ _SIMBOLO_CANONICO = MappingProxyType(
         ("proceso", "capturar"): ("proceso", "ejecutar"),
         ("proceso", "ejecutar_async"): ("proceso", "ejecutar_async"),
         ("proceso", "ejecutar_stream"): ("proceso", "ejecutar_stream"),
+        ("red", "obtener_url"): ("red", "obtener_url"),
+        ("red", "obtener_url_async"): ("red", "obtener_url"),
+        ("red", "obtener_url_texto"): ("red", "obtener_url"),
+        ("red", "obtener_json"): ("red", "obtener_url"),
+        ("red", "enviar_post"): ("red", "enviar_post"),
+        ("red", "enviar_post_async"): ("red", "enviar_post"),
+        ("red", "descargar_archivo"): ("red", "descargar_archivo"),
     }
 )
 
@@ -25,6 +36,11 @@ _CAPACIDADES = MappingProxyType(
         ("proceso", "ejecutar"): frozenset({CapacidadUsar.PROCESS_SPAWN}),
         ("proceso", "ejecutar_async"): frozenset({CapacidadUsar.PROCESS_SPAWN}),
         ("proceso", "ejecutar_stream"): frozenset({CapacidadUsar.PROCESS_SPAWN}),
+        ("red", "obtener_url"): frozenset({CapacidadUsar.NETWORK_GET}),
+        ("red", "enviar_post"): frozenset({CapacidadUsar.NETWORK_POST}),
+        ("red", "descargar_archivo"): frozenset(
+            {CapacidadUsar.NETWORK_DOWNLOAD, CapacidadUsar.FILESYSTEM_WRITE}
+        ),
     }
 )
 
