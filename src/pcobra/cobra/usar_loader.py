@@ -22,6 +22,7 @@ from pcobra.cobra.usar_policy import (
     USAR_BACKEND_BLOCKLIST,
     USAR_COBRA_PUBLIC_MODULES,
     USAR_RUNTIME_EXPORT_OVERRIDES,
+    filesystem_policy_for,
 )
 from ..core.usar_symbol_policy import (
     build_and_validate_usar_symbol_metadata,
@@ -141,6 +142,15 @@ def _aplicar_capacidades(
     for nombre, simbolo in simbolos:
         capacidades = capacidades_de(modulo, nombre)
         capacidades_enforced = capacidades & capacidades_restringidas
+        filesystem_policy = filesystem_policy_for(modulo, nombre)
+        if (
+            filesystem_policy is not None
+            and filesystem_policy.safe_mode_decision == "deny"
+        ):
+            capacidades_enforced |= capacidades & {
+                CapacidadUsar.FILESYSTEM_READ,
+                CapacidadUsar.FILESYSTEM_WRITE,
+            }
         if not callable(simbolo) or not capacidades_enforced:
             resultado.append((nombre, simbolo))
             continue

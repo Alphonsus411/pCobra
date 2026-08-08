@@ -9,7 +9,10 @@ import pytest
 
 from pcobra.cobra.usar_capabilities import capacidades_de
 from pcobra.cobra.usar_loader import usar_modulo
-from pcobra.cobra.usar_policy import CANONICAL_MODULE_SURFACE_CONTRACTS
+from pcobra.cobra.usar_policy import (
+    CANONICAL_MODULE_SURFACE_CONTRACTS,
+    FILESYSTEM_SYMBOL_POLICIES,
+)
 from pcobra.corelibs import compresion, red, sistema
 from pcobra.core.ast_nodes import NodoUsar
 from pcobra.cobra.transpilers.transpiler.to_python import TranspiladorPython
@@ -31,10 +34,14 @@ from pcobra.cobra.transpilers.transpiler.to_python import TranspiladorPython
         }
     ],
 )
-def test_simbolos_restringidos_usan_clasificacion_canonica_y_se_bloquean(modulo, nombre):
+def test_simbolos_restringidos_usan_clasificacion_canonica_y_se_bloquean(
+    modulo, nombre
+):
     esperadas = CANONICAL_MODULE_SURFACE_CONTRACTS[modulo].symbol_capabilities[nombre]
     assert esperadas
-    assert {capacidad.value for capacidad in capacidades_de(modulo, nombre)} == esperadas
+    assert {
+        capacidad.value for capacidad in capacidades_de(modulo, nombre)
+    } == esperadas
     simbolo = usar_modulo(modulo, safe_mode=True)[nombre]
     if callable(simbolo):
         try:
@@ -48,7 +55,9 @@ def test_simbolos_restringidos_usan_clasificacion_canonica_y_se_bloquean(modulo,
             with pytest.raises(PermissionError):
                 asyncio.run(resultado)
         else:
-            pytest.fail("un símbolo effectful invocable alcanzó el runtime en safe_mode")
+            pytest.fail(
+                "un símbolo effectful invocable alcanzó el runtime en safe_mode"
+            )
 
 
 @pytest.mark.parametrize(
@@ -64,7 +73,124 @@ def test_simbolos_filesystem_conservan_clasificacion_canonica(modulo, nombre):
     esperadas = CANONICAL_MODULE_SURFACE_CONTRACTS[modulo].symbol_capabilities[nombre]
 
     assert esperadas
-    assert {capacidad.value for capacidad in capacidades_de(modulo, nombre)} == esperadas
+    assert {
+        capacidad.value for capacidad in capacidades_de(modulo, nombre)
+    } == esperadas
+
+
+def test_matriz_filesystem_expone_decision_verificable_completa():
+    esperados = {
+        (modulo, nombre)
+        for modulo, contrato in CANONICAL_MODULE_SURFACE_CONTRACTS.items()
+        for nombre, capacidades in contrato.symbol_capabilities.items()
+        if capacidades & {"filesystem.read", "filesystem.write"}
+    }
+
+    assert set(FILESYSTEM_SYMBOL_POLICIES) == esperados
+    for (modulo, nombre), policy in FILESYSTEM_SYMBOL_POLICIES.items():
+        assert (
+            policy.capabilities
+            == CANONICAL_MODULE_SURFACE_CONTRACTS[modulo].symbol_capabilities[nombre]
+        )
+        assert policy.safe_mode_decision == (
+            "allow" if policy.sandbox_confined else "deny"
+        )
+
+
+def test_safe_mode_permite_archivo_confinado_y_rechaza_acceso_externo(
+    monkeypatch, tmp_path
+):
+    sandbox = tmp_path / "sandbox"
+    outside = tmp_path / "outside"
+    sandbox.mkdir()
+    outside.mkdir()
+    secreto = outside / "secreto.txt"
+    secreto.write_text("intacto", encoding="utf-8")
+    monkeypatch.setenv("COBRA_IO_BASE_DIR", str(sandbox))
+    archivo = usar_modulo("archivo", safe_mode=True)
+
+    archivo["escribir"]("permitido.txt", "dentro")
+    assert archivo["leer"]("permitido.txt") == "dentro"
+    assert (sandbox / "permitido.txt").read_text(encoding="utf-8") == "dentro"
+    with pytest.raises(ValueError, match="fuera del directorio permitido"):
+        archivo["eliminar"](secreto)
+    assert secreto.read_text(encoding="utf-8") == "intacto"
+
+
+def test_safe_mode_bloquea_lectura_escritura_y_limpieza_no_confinadas(
+    monkeypatch, tmp_path
+):
+    sandbox = tmp_path / "sandbox"
+    outside = tmp_path / "outside"
+    sandbox.mkdir()
+    outside.mkdir()
+    externo = outside / "datos.json"
+    externo.write_text('{"valor": 1}', encoding="utf-8")
+    directorio = outside / "borrar"
+    directorio.mkdir()
+    (directorio / "testigo").write_text("intacto", encoding="utf-8")
+    monkeypatch.setenv("COBRA_IO_BASE_DIR", str(sandbox))
+
+    serializacion = usar_modulo("serializacion", safe_mode=True)
+    with pytest.raises(PermissionError, match="filesystem.read"):
+        serializacion["leer_json"](externo)
+    with pytest.raises(PermissionError, match="filesystem.write"):
+        serializacion["escribir_json"](externo, {"valor": 2})
+    with pytest.raises(PermissionError, match="filesystem.write"):
+        usar_modulo("temporal", safe_mode=True)["limpiar"](directorio.resolve())
+
+    assert externo.read_text(encoding="utf-8") == '{"valor": 1}'
+    assert (directorio / "testigo").read_text(encoding="utf-8") == "intacto"
+
+
+def test_safe_mode_false_conserva_filesystem_proceso_y_red(monkeypatch, tmp_path):
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    externo = outside / "datos.json"
+    serializacion = usar_modulo("serializacion", safe_mode=False)
+    serializacion["escribir_json"](externo, {"valor": 2})
+    assert serializacion["leer_json"](externo) == {"valor": 2}
+
+    resultado = usar_modulo("proceso", safe_mode=False)["ejecutar"](
+        [sys.executable, "-c", "print('ok')"]
+    )
+    assert resultado["salida"].strip() == "ok"
+
+    monkeypatch.setattr(red, "obtener_url", lambda *_args, **_kwargs: "red-ok")
+    assert (
+        usar_modulo("red", safe_mode=False)["obtener_url"]("https://example.com")
+        == "red-ok"
+    )
+
+    assert usar_modulo("temporal", safe_mode=False)["limpiar"](externo) is True
+    assert not externo.exists()
+
+
+def test_safe_mode_bloquea_proceso_y_red_antes_de_operar():
+    with pytest.raises(PermissionError, match="process.spawn"):
+        usar_modulo("proceso", safe_mode=True)["ejecutar"](
+            [sys.executable], permitidos=[sys.executable]
+        )
+    with pytest.raises(PermissionError, match="network.get"):
+        usar_modulo("red", safe_mode=True)["obtener_url"]("https://example.com")
+
+
+def test_codigo_transpilado_usa_contrato_filesystem_seguro_por_defecto(
+    monkeypatch, tmp_path
+):
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    testigo = outside / "testigo.txt"
+    testigo.write_text("intacto", encoding="utf-8")
+    monkeypatch.setenv("COBRA_IO_BASE_DIR", str(tmp_path / "sandbox"))
+    (tmp_path / "sandbox").mkdir()
+
+    codigo = TranspiladorPython().generate_code([NodoUsar("temporal")])
+    entorno: dict[str, object] = {}
+    exec(codigo, entorno)
+    with pytest.raises(PermissionError, match="filesystem.write"):
+        entorno["limpiar"](str(outside.resolve()))  # type: ignore[operator]
+    assert testigo.read_text(encoding="utf-8") == "intacto"
 
 
 @pytest.mark.parametrize(
@@ -106,11 +232,15 @@ def test_zip_crear_listar_extraer_comparte_sandbox(monkeypatch, tmp_path):
     assert compresion.listar_zip("a.zip") == ["entrada.txt"]
     compresion.extraer_zip("a.zip", "salida")
 
-    assert (tmp_path / "salida" / "entrada.txt").read_text(encoding="utf-8") == "contenido"
+    assert (tmp_path / "salida" / "entrada.txt").read_text(
+        encoding="utf-8"
+    ) == "contenido"
 
 
 @pytest.mark.asyncio
-async def test_descarga_cancelada_limpia_temporal_y_preserva_destino(monkeypatch, tmp_path):
+async def test_descarga_cancelada_limpia_temporal_y_preserva_destino(
+    monkeypatch, tmp_path
+):
     monkeypatch.setenv("COBRA_IO_BASE_DIR", str(tmp_path))
     destino = tmp_path / "destino.bin"
     destino.write_bytes(b"previo")
