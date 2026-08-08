@@ -1,5 +1,6 @@
 import importlib
 import importlib.util
+import inspect
 import logging
 import os
 import re
@@ -128,17 +129,39 @@ def _aplicar_capacidades(
     resultado: list[tuple[str, Any]] = []
     for nombre, simbolo in simbolos:
         capacidades = capacidades_de(modulo, nombre)
-        if not callable(simbolo) or CapacidadUsar.PROCESS_SPAWN not in capacidades:
+        if not callable(simbolo) or not capacidades:
             resultado.append((nombre, simbolo))
             continue
 
-        @wraps(simbolo)
-        def protegido(*args, __simbolo=simbolo, **kwargs):
+        def verificar_permiso(kwargs, __capacidades=capacidades):
             if safe_mode:
-                if kwargs.get("shell") is True:
+                if (
+                    CapacidadUsar.PROCESS_SPAWN in __capacidades
+                    and kwargs.get("shell") is True
+                ):
                     raise PermissionError("capacidad process.shell denegada en modo seguro")
-                raise PermissionError("capacidad process.spawn denegada en modo seguro")
-            return __simbolo(*args, **kwargs)
+                capacidad = sorted(
+                    (capacidad.value for capacidad in __capacidades),
+                    key=lambda valor: (not valor.startswith("network."), valor),
+                )[0]
+                raise PermissionError(
+                    f"capacidad {capacidad} denegada en modo seguro"
+                )
+
+        if modulo == "red" and inspect.iscoroutinefunction(simbolo):
+            @wraps(simbolo)
+            async def protegido(
+                *args, __simbolo=simbolo, __verificar=verificar_permiso, **kwargs
+            ):
+                __verificar(kwargs)
+                return await __simbolo(*args, **kwargs)
+        else:
+            @wraps(simbolo)
+            def protegido(
+                *args, __simbolo=simbolo, __verificar=verificar_permiso, **kwargs
+            ):
+                __verificar(kwargs)
+                return __simbolo(*args, **kwargs)
 
         resultado.append((nombre, protegido))
     return resultado
