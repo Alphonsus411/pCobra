@@ -5,17 +5,20 @@ from io import StringIO
 from typing import Any
 from unittest.mock import patch
 
-from pcobra.cobra.extensions import COBRA_SOURCE_EXTENSIONS
+from pcobra.cobra.extensions import COBRA_SOURCE_EXTENSIONS, es_fuente_cobra
 from pcobra.cobra.build import backend_pipeline
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.execution_pipeline import construir_interprete_seguro_canonico
 from pcobra.cobra.cli.target_policies import VERIFICATION_EXECUTABLE_TARGETS
 from pcobra.cobra.core import Lexer, Parser
 from pcobra.cobra.core.interpreter import InterpretadorCobra
-from pcobra.cobra.core.sandbox import ejecutar_en_contenedor, ejecutar_en_sandbox, ejecutar_en_sandbox_js
+from pcobra.cobra.core.sandbox import (
+    ejecutar_en_contenedor,
+    ejecutar_en_sandbox,
+    ejecutar_en_sandbox_js,
+)
 from pcobra.cobra.cli.utils.validators import validar_archivo_existente
 from pcobra.cobra.qa.syntax_validation import SUPPORTED_VALIDATOR_TARGETS
-
 
 MAX_FILE_SIZE = 10 * 1024 * 1024
 VALID_EXTENSIONS = {".cobra"}
@@ -36,12 +39,18 @@ def parse_verification_targets(targets_raw: str) -> list[str]:
         raise ValueError(_("La lista --targets está vacía"))
     invalid = sorted(set(parsed) - set(SUPPORTED_VALIDATOR_TARGETS))
     if invalid:
-        raise ValueError(_("Targets no soportados en --targets: {}.").format(", ".join(invalid)))
+        raise ValueError(
+            _("Targets no soportados en --targets: {}.").format(", ".join(invalid))
+        )
     return parsed
 
 
 def resolve_executable_targets(requested_targets: list[str]) -> list[str]:
-    return [target for target in requested_targets if target in VERIFICATION_EXECUTABLE_TARGETS]
+    return [
+        target
+        for target in requested_targets
+        if target in VERIFICATION_EXECUTABLE_TARGETS
+    ]
 
 
 def _compile_and_execute(ast: Any, lang: str) -> tuple[str | None, str | None]:
@@ -77,9 +86,17 @@ def execute_runtime_verification(archivo: str, lenguajes: list[str]) -> int:
 
     path = validar_archivo_existente(archivo)
     if not es_fuente_cobra(path):
-        raise ValueError(_("Extensión de archivo no válida. Debe ser: {}").format(", ".join(sorted(VALID_EXTENSIONS))))
+        raise ValueError(
+            _("Extensión de archivo no válida. Debe ser: {}").format(
+                ", ".join(sorted(VALID_EXTENSIONS))
+            )
+        )
     if path.stat().st_size > MAX_FILE_SIZE:
-        raise ValueError(_("El archivo es demasiado grande (máximo {} MB)").format(MAX_FILE_SIZE // (1024 * 1024)))
+        raise ValueError(
+            _("El archivo es demasiado grande (máximo {} MB)").format(
+                MAX_FILE_SIZE // (1024 * 1024)
+            )
+        )
 
     code = path.read_text(encoding="utf-8")
     tokens = Lexer(code).tokenizar()

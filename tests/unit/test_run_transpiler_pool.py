@@ -3,6 +3,8 @@ import types
 
 import pytest
 
+_modules_before = sys.modules.copy()
+
 # Prepara stubs mínimos para los módulos pesados que `compile_cmd` importa.
 # Esto evita dependencias innecesarias en las pruebas unitarias.
 cobra_transpilers = types.ModuleType("cobra.transpilers")
@@ -14,10 +16,12 @@ transpiler_pkg = types.ModuleType("cobra.transpilers.transpiler")
 transpiler_pkg.__path__ = []
 sys.modules.setdefault("cobra.transpilers.transpiler", transpiler_pkg)
 
+
 def _stub(mod_name: str, cls_name: str) -> None:
     mod = types.ModuleType(f"cobra.transpilers.transpiler.{mod_name}")
     setattr(mod, cls_name, type(cls_name, (), {}))
     sys.modules[f"cobra.transpilers.transpiler.{mod_name}"] = mod
+
 
 for name, cls in [
     ("to_js", "TranspiladorJavaScript"),
@@ -27,19 +31,27 @@ for name, cls in [
     _stub(name, cls)
 
 # Stubs adicionales requeridos por ``compile_cmd``.
-sys.modules.setdefault("cobra.cli.commands.base", types.SimpleNamespace(BaseCommand=object))
+sys.modules.setdefault(
+    "cobra.cli.commands.base", types.SimpleNamespace(BaseCommand=object)
+)
 sys.modules.setdefault("cobra.cli.i18n", types.SimpleNamespace(_=lambda s: s))
 sys.modules.setdefault(
     "cobra.cli.utils.messages",
-    types.SimpleNamespace(mostrar_error=lambda *a, **k: None, mostrar_info=lambda *a, **k: None),
+    types.SimpleNamespace(
+        mostrar_error=lambda *a, **k: None, mostrar_info=lambda *a, **k: None
+    ),
 )
-sys.modules.setdefault("core.ast_cache", types.SimpleNamespace(obtener_ast=lambda code: None))
+sys.modules.setdefault(
+    "core.ast_cache", types.SimpleNamespace(obtener_ast=lambda code: None)
+)
 sys.modules.setdefault(
     "core.sandbox", types.SimpleNamespace(validar_dependencias=lambda *a, **k: None)
 )
 sys.modules.setdefault(
     "core.semantic_validators",
-    types.SimpleNamespace(PrimitivaPeligrosaError=Exception, construir_cadena=lambda: None),
+    types.SimpleNamespace(
+        PrimitivaPeligrosaError=Exception, construir_cadena=lambda: None
+    ),
 )
 
 # Pre-importa ``cobra.core`` para estabilizar las dependencias internas.
@@ -50,6 +62,13 @@ from cobra.cli.commands.compile_cmd import (
     MAX_LANGUAGES,
     PROCESS_TIMEOUT,
 )
+
+# Los stubs son locales a la importación de ``compile_cmd`` y no deben contaminar
+# la colección de otros módulos de prueba.
+for _module_name in set(sys.modules) - set(_modules_before):
+    del sys.modules[_module_name]
+sys.modules.update(_modules_before)
+del _modules_before
 
 
 def dummy_executor(params):
