@@ -155,7 +155,7 @@ cobra = "pcobra.cli:main"
 
 [tool.black]
 line-length = 88
-target-version = ["py311", "py312", "py313"]
+target-version = ["py311"]
 extend-exclude = '''(?x)(
   ^docs/frontend/
   | ^docs/build/
