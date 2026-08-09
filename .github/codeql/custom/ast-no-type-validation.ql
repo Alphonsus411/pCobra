@@ -19,7 +19,7 @@ where
         fc.getTarget().hasQualifiedName("isinstance")
       ) or
       // Búsqueda de sentencia assert
-      exists(AssertStmt ast |
+      exists(Assert ast |
         ast.getEnclosingCallable() = m
       )
     )
