@@ -101,6 +101,7 @@ REPO_AUDIT_ALLOWED_FILE_PATHS = frozenset(
         "scripts/validate_targets_policy.py",
         "scripts/ci/validate_targets.py",
         "scripts/ci/audit_targets_contract.py",
+        "scripts/ci/audit_public_backend_exposure_terms.py",
         "scripts/audit_retired_targets.py",
         "scripts/ci/validate_workflow_target_matrix.py",
         "tests/unit/test_cli_target_aliases.py",
@@ -510,8 +511,14 @@ def validate_critical_signature_alignment() -> list[str]:
     """Compara firmas/constantes críticas entre árbol canónico y shims publicados."""
     errors: list[str] = []
 
-    import cli.cli as shim_cli_entry
+    # ``pcobra`` publica aliases legacy en ``sys.modules`` al importarse. Retirarlos
+    # aquí permite que la comprobación cargue los shims físicos que quiere comparar.
+    for module_name in tuple(sys.modules):
+        if module_name == "cobra" or module_name.startswith("cobra."):
+            sys.modules.pop(module_name)
+
     import cobra.cli.cli as shim_cobra_entry
+    import cli.cli as shim_cli_entry
     import cobra.cli.target_policies as shim_policies
     import cobra.transpilers.compatibility_matrix as shim_matrix
     import cobra.transpilers.registry as shim_registry
