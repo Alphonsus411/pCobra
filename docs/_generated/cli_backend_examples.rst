@@ -1,5 +1,5 @@
 .. code-block:: bash
 
-   cobra compilar programa.co --tipo python
-   cobra compilar programa.co --tipo javascript
-   cobra compilar programa.co --tipo rust
+   cobra compilar programa.cobra --tipo python
+   cobra compilar programa.cobra --tipo javascript
+   cobra compilar programa.cobra --tipo rust
