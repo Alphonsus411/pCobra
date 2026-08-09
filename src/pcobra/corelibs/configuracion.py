@@ -10,6 +10,8 @@ from pathlib import Path
 from types import ModuleType
 from typing import Any
 
+from pcobra.corelibs.archivo import _resolver_ruta_filesystem_confinado
+
 __all__ = [
     "leer_toml",
     "leer_ini",
@@ -82,7 +84,7 @@ def _validar_archivo_existente(ruta: PathLike) -> Path:
         raise TypeError("ruta debe representar una ruta de texto")
     if texto == "":
         raise ValueError("ruta no puede estar vacía")
-    ruta_configuracion = Path(texto)
+    ruta_configuracion = _resolver_ruta_filesystem_confinado(texto)
     if not ruta_configuracion.is_file():
         raise FileNotFoundError(
             f"Archivo de configuración no encontrado: {ruta_configuracion}"

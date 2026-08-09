@@ -6,12 +6,19 @@ import tempfile
 from pathlib import Path
 from typing import Optional, Union
 
+from pcobra.corelibs.archivo import (
+    _resolver_ruta,
+    _resolver_ruta_filesystem_confinado,
+)
+
 PathLike = Union[str, os.PathLike[str]]
 
 __all__ = ["archivo_temporal", "directorio_temporal", "limpiar"]
 
 
-def _validar_texto_opcional(valor: Optional[str], nombre_argumento: str) -> Optional[str]:
+def _validar_texto_opcional(
+    valor: Optional[str], nombre_argumento: str
+) -> Optional[str]:
     if valor is None:
         return None
     if not isinstance(valor, str):
@@ -46,8 +53,10 @@ def archivo_temporal(
         raise TypeError("texto debe ser booleano")
 
     opciones_directorio = {}
-    if base := os.environ.get("COBRA_IO_BASE_DIR"):
-        opciones_directorio["dir"] = base
+    if os.environ.get("COBRA_IO_BASE_DIR"):
+        opciones_directorio["dir"] = _resolver_ruta(
+            ".", permitir_absoluta_dentro_base=True
+        )
     descriptor, ruta = tempfile.mkstemp(
         prefix=prefijo_validado,
         suffix=sufijo_validado,
@@ -63,8 +72,10 @@ def directorio_temporal(*, prefijo: Optional[str] = None) -> str:
 
     prefijo_validado = _validar_texto_opcional(prefijo, "prefijo")
     opciones_directorio = {}
-    if base := os.environ.get("COBRA_IO_BASE_DIR"):
-        opciones_directorio["dir"] = base
+    if os.environ.get("COBRA_IO_BASE_DIR"):
+        opciones_directorio["dir"] = _resolver_ruta(
+            ".", permitir_absoluta_dentro_base=True
+        )
     return str(Path(tempfile.mkdtemp(prefix=prefijo_validado, **opciones_directorio)))
 
 
@@ -76,7 +87,7 @@ def limpiar(ruta: PathLike) -> bool:
     """
 
     ruta_validada = _validar_ruta(ruta)
-    objetivo = Path(ruta_validada)
+    objetivo = _resolver_ruta_filesystem_confinado(ruta_validada, "filesystem.write")
 
     if not objetivo.exists():
         return False

@@ -702,7 +702,7 @@ _FILESYSTEM_SANDBOX_CONFINEMENT: dict[str, dict[str, bool]] = {
         "escribir_parquet": False,
         "escribir_feather": False,
     },
-    "sistema": {"listar_dir": False},
+    "sistema": {"listar_dir": True},
     "archivo": {
         "leer": True,
         "existe": True,
@@ -712,17 +712,17 @@ _FILESYSTEM_SANDBOX_CONFINEMENT: dict[str, dict[str, bool]] = {
         "anexar": True,
     },
     "red": {"descargar_archivo": True},
-    "ruta": {"existe": False},
+    "ruta": {"existe": True},
     "serializacion": {
-        "leer_json": False,
-        "leer_csv": False,
-        "escribir_json": False,
-        "escribir_csv": False,
+        "leer_json": True,
+        "leer_csv": True,
+        "escribir_json": True,
+        "escribir_csv": True,
     },
     "temporal": {
-        "archivo_temporal": False,
-        "directorio_temporal": False,
-        "limpiar": False,
+        "archivo_temporal": True,
+        "directorio_temporal": True,
+        "limpiar": True,
     },
     "compresion": {
         "crear_zip": True,
@@ -730,9 +730,9 @@ _FILESYSTEM_SANDBOX_CONFINEMENT: dict[str, dict[str, bool]] = {
         "listar_zip": True,
     },
     "configuracion": {
-        "leer_toml": False,
-        "leer_ini": False,
-        "leer_configuracion": False,
+        "leer_toml": True,
+        "leer_ini": True,
+        "leer_configuracion": True,
     },
 }
 

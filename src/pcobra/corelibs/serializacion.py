@@ -8,6 +8,8 @@ import os
 from pathlib import Path
 from typing import Any, Iterable, Mapping
 
+from pcobra.corelibs.archivo import _resolver_ruta_filesystem_confinado
+
 __all__ = [
     "codificar_json",
     "decodificar_json",
@@ -20,7 +22,11 @@ __all__ = [
 PathLike = str | os.PathLike[str]
 
 
-def _validar_ruta(ruta: PathLike, nombre_argumento: str = "ruta") -> Path:
+def _validar_ruta(
+    ruta: PathLike,
+    nombre_argumento: str = "ruta",
+    capacidad: str = "filesystem.read",
+) -> Path:
     if not isinstance(ruta, (str, os.PathLike)):
         raise TypeError(
             f"{nombre_argumento} debe ser una ruta de texto o compatible con os.PathLike"
@@ -30,7 +36,7 @@ def _validar_ruta(ruta: PathLike, nombre_argumento: str = "ruta") -> Path:
         raise TypeError(f"{nombre_argumento} debe representar una ruta de texto")
     if texto == "":
         raise ValueError(f"{nombre_argumento} no puede estar vacía")
-    return Path(texto)
+    return _resolver_ruta_filesystem_confinado(texto, capacidad)
 
 
 def _validar_delimitador(delimitador: str) -> str:
@@ -80,7 +86,7 @@ def leer_json(ruta: PathLike) -> Any:
 def escribir_json(ruta: PathLike, objeto: Any, *, indentar: int | None = 2) -> None:
     """Codifica ``objeto`` como JSON y lo escribe en ``ruta``."""
 
-    _validar_ruta(ruta).write_text(
+    _validar_ruta(ruta, capacidad="filesystem.write").write_text(
         codificar_json(objeto, indentar=indentar) + "\n",
         encoding="utf-8",
     )
@@ -139,7 +145,9 @@ def escribir_csv(
     filas_normalizadas = _normalizar_filas_csv(filas)
     campos = list(filas_normalizadas[0].keys())
 
-    with _validar_ruta(ruta).open("w", encoding="utf-8", newline="") as archivo:
+    with _validar_ruta(ruta, capacidad="filesystem.write").open(
+        "w", encoding="utf-8", newline=""
+    ) as archivo:
         escritor = csv.DictWriter(
             archivo, fieldnames=campos, delimiter=delimitador_validado
         )
