@@ -7,6 +7,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 CODEQL_CONFIG = ROOT / ".github" / "codeql" / "custom" / "codeql-config.yml"
+MISSING_CODEGEN_EXCEPTION_QUERY = (
+    ROOT / ".github" / "codeql" / "custom" / "missing-codegen-exception.ql"
+)
 
 
 def _codeql_config_text() -> str:
@@ -34,3 +37,11 @@ def test_codeql_custom_queries_resolve_from_repository_root() -> None:
     for query_path in query_paths:
         assert f"  - uses: {query_path}" in config
         assert (ROOT / query_path).is_file(), query_path
+
+
+def test_missing_codegen_exception_uses_supported_try_type() -> None:
+    """Evita reintroducir el tipo inexistente ``TryStmt`` en la query."""
+    query = MISSING_CODEGEN_EXCEPTION_QUERY.read_text(encoding="utf-8")
+
+    assert "exists(Try t |" in query
+    assert "TryStmt" not in query
