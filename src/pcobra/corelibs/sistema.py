@@ -88,9 +88,7 @@ def _verificar_descriptor(fd: int, st_dev: int, st_ino: int) -> None:
     try:
         actual = os.fstat(fd)
     except OSError as exc:
-        raise RuntimeError(
-            "No se pudo verificar el ejecutable autorizado"
-        ) from exc
+        raise RuntimeError("No se pudo verificar el ejecutable autorizado") from exc
 
     if actual.st_dev != st_dev or actual.st_ino != st_ino:
         raise RuntimeError("El ejecutable cambió durante la ejecución")
@@ -100,9 +98,7 @@ def _verificar_ruta(exe_real: str, st_dev: int, st_ino: int) -> None:
     try:
         actual = os.stat(exe_real)
     except OSError as exc:
-        raise RuntimeError(
-            "El ejecutable cambió durante la ejecución"
-        ) from exc
+        raise RuntimeError("El ejecutable cambió durante la ejecución") from exc
 
     if actual.st_dev != st_dev or actual.st_ino != st_ino:
         raise RuntimeError("El ejecutable cambió durante la ejecución")
@@ -315,12 +311,14 @@ async def ejecutar_stream(
             # pass_fds hace heredable el fd abierto con O_CLOEXEC solo en el hijo.
             opciones_descriptor = {"pass_fds": (fd,), "close_fds": True}
         try:
-            proc = await esperar(asyncio.create_subprocess_exec(
+            proc = await esperar(
+                asyncio.create_subprocess_exec(
                     *args_exec,
                     stdout=asyncio.subprocess.PIPE,
                     stderr=asyncio.subprocess.PIPE,
                     **opciones_descriptor,
-            ))
+                )
+            )
             cola_stdout: asyncio.Queue[bytes | None] = asyncio.Queue(maxsize=1)
             tareas_lectura = [
                 asyncio.create_task(drenar_stdout(cola_stdout)),
@@ -373,10 +371,9 @@ def obtener_env(nombre: str) -> str | None:
 
 def listar_dir(ruta: str) -> list[str]:
     """Lista los archivos de un directorio."""
-    objetivo = os.fspath(ruta)
-    base = os.environ.get("COBRA_IO_BASE_DIR")
-    if base and not os.path.isabs(objetivo):
-        objetivo = os.path.join(base, objetivo)
+    from pcobra.corelibs.archivo import _resolver_ruta_filesystem_confinado
+
+    objetivo = _resolver_ruta_filesystem_confinado(ruta)
     return os.listdir(objetivo)
 
 
@@ -396,11 +393,11 @@ async def ejecutar_comando_async(
         raise _error_sistema("ejecutar_comando_async", exc) from None
 
 
-
 def directorio_actual() -> str:
     """Devuelve la ruta del directorio de trabajo actual."""
 
     return os.getcwd()
+
 
 __all__ = [
     "obtener_os",
