@@ -1,0 +1,21 @@
+................F.........................                               [100%]
+=================================== FAILURES ===================================
+_ test_error_semantico_y_runtime_equivalen_en_tipo_y_mensaje[no_definida = 1] __
+tests/integration/test_run_repl_equivalence.py:509: in test_error_semantico_y_runtime_equivalen_en_tipo_y_mensaje
+    with pytest.raises(Exception) as err_script:  # noqa: BLE001 - contrato integración
+         ^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE <class 'Exception'>
+============================= slowest 10 durations =============================
+0.35s call     tests/integration/test_run_repl_equivalence.py::test_run_usar_modulos_oficiales_produce_salida_exacta
+0.08s call     tests/integration/test_run_repl_equivalence.py::test_build_utf8_bom_y_sin_bom_compilan_sin_token_bom
+0.05s call     tests/integration/test_run_repl_equivalence.py::test_run_conservar_control_break_y_continue_en_mientras
+0.03s call     tests/integration/test_run_repl_equivalence.py::test_run_error_funcion_no_declarada_conserva_identificador_completo
+0.02s call     tests/integration/test_run_repl_equivalence.py::test_anidacion_condicional_bucle_equivale_en_salida_y_estado
+0.02s call     tests/integration/test_run_repl_equivalence.py::test_repl_llamada_funcion_auditoria_una_sola_vez_y_retorno_correcto
+0.01s call     tests/integration/test_run_repl_equivalence.py::test_runtime_estado_final_paridad_run_vs_repl[mientras_con_continuar_romper_y_variable_local_visible-var paso = falso-mientras verdadero:\n    si paso:\n        var ultimo = 2\n        romper\n    fin\n    paso = verdadero\n    continuar\nfin-variables_esperadas2]
+0.01s call     tests/integration/test_run_repl_equivalence.py::test_misma_secuencia_semantica_equivale_entre_run_y_repl
+0.01s call     tests/integration/test_run_repl_equivalence.py::test_run_utf8_bom_y_sin_bom_producen_salida_identica
+0.01s call     tests/integration/test_run_repl_equivalence.py::test_run_usar_archivo_existe_parent_es_falso_por_wrapper_seguro
+=========================== short test summary info ============================
+FAILED tests/integration/test_run_repl_equivalence.py::test_error_semantico_y_runtime_equivalen_en_tipo_y_mensaje[no_definida = 1]
+1 failed, 41 passed in 2.25s

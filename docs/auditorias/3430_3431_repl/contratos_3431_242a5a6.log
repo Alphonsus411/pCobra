@@ -1,0 +1,24 @@
+........................................................................ [ 63%]
+..........................................                               [100%]
+=============================== warnings summary ===============================
+tests/integration/test_repl_usar_entrypoints_contract.py::test_repl_contract_pipeline_completo_por_modulo_canonico[asincrono]
+  /tmp/pCobra-242a5a6a7822889a1ae696492c72de1dd31e67b1/tests/integration/test_repl_usar_entrypoints_contract.py:1062: DeprecationWarning: There is no current event loop
+    interp.contextos[-1].values[symbol](asyncio.Future())
+
+tests/integration/test_repl_usar_entrypoints_contract.py::test_repl_contract_colision_warn_alias_required_estructurada
+  /tmp/pCobra-242a5a6a7822889a1ae696492c72de1dd31e67b1/src/pcobra/core/interpreter.py:2743: RuntimeWarning: Conflicto de nombres en `usar`: el símbolo 'es_finito' ya existe y no será sobrescrito.
+    self._inyectar_exports_modulo_proyecto(exports)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+============================= slowest 10 durations =============================
+0.93s call     tests/integration/test_repl_usar_entrypoints_contract.py::test_holobit_corelib_exporta_solo_simbolos_canonicos_publicos
+0.25s call     tests/integration/test_repl_usar_entrypoints_contract.py::test_repl_contrato_cli_superficie_publica_y_error_corto_numpy
+0.24s call     tests/integration/test_repl_usar_entrypoints_contract.py::test_repl_usar_modulos_numero_logica_tiempo_y_datos_con_epoch_rango
+0.23s call     tests/integration/test_repl_usar_entrypoints_contract.py::test_repl_integracion_usar_modulos_publicos_end_to_end[ReplCommandV2-<lambda>-<lambda>]
+0.23s call     tests/integration/test_repl_usar_entrypoints_contract.py::test_repl_integracion_usar_modulos_publicos_end_to_end[<lambda>-<lambda>-<lambda>]
+0.11s call     tests/integration/test_repl_usar_entrypoints_contract.py::test_repl_usar_datos_numero_archivo_contrato_basico_sin_errores_metadata
+0.07s call     tests/integration/test_repl_usar_entrypoints_contract.py::test_interprete_corelibs_superficie_minima_requerida
+0.03s call     tests/integration/test_repl_usar_entrypoints_contract.py::test_repl_usar_datos_longitud_imprimir_lista_y_variable[ReplCommandV2-<lambda>-<lambda>]
+0.03s call     tests/integration/test_repl_usar_entrypoints_contract.py::test_repl_usar_datos_longitud_imprimir_lista_y_variable[<lambda>-<lambda>-<lambda>]
+0.02s call     tests/integration/test_repl_usar_entrypoints_contract.py::test_repl_entrypoint_numero_es_finito_imprime_verdadero
+114 passed, 2 warnings in 3.67s
