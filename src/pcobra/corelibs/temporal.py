@@ -45,8 +45,14 @@ def archivo_temporal(
     if not isinstance(texto, bool):
         raise TypeError("texto debe ser booleano")
 
+    opciones_directorio = {}
+    if base := os.environ.get("COBRA_IO_BASE_DIR"):
+        opciones_directorio["dir"] = base
     descriptor, ruta = tempfile.mkstemp(
-        prefix=prefijo_validado, suffix=sufijo_validado, text=texto
+        prefix=prefijo_validado,
+        suffix=sufijo_validado,
+        text=texto,
+        **opciones_directorio,
     )
     os.close(descriptor)
     return str(Path(ruta))
@@ -56,7 +62,10 @@ def directorio_temporal(*, prefijo: Optional[str] = None) -> str:
     """Crea un directorio temporal y devuelve su ruta como texto."""
 
     prefijo_validado = _validar_texto_opcional(prefijo, "prefijo")
-    return str(Path(tempfile.mkdtemp(prefix=prefijo_validado)))
+    opciones_directorio = {}
+    if base := os.environ.get("COBRA_IO_BASE_DIR"):
+        opciones_directorio["dir"] = base
+    return str(Path(tempfile.mkdtemp(prefix=prefijo_validado, **opciones_directorio)))
 
 
 def limpiar(ruta: PathLike) -> bool:
