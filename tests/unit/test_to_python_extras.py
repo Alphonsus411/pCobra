@@ -37,13 +37,24 @@ def test_transpilar_import(tmp_path):
     assert codigo == esperado
 
 
-def test_transpilar_usar():
+@pytest.mark.parametrize(
+    ("transpilador", "safe_mode_esperado"),
+    [
+        (TranspiladorPython(), True),
+        (TranspiladorPython(safe_mode=True), True),
+        (TranspiladorPython(safe_mode=False), False),
+    ],
+    ids=("default-seguro", "seguro-explicito", "inseguro-explicito"),
+)
+def test_transpilar_usar_respeta_contrato_safe_mode(
+    transpilador, safe_mode_esperado
+):
     nodo = NodoUsar("math")
-    codigo = TranspiladorPython().generate_code([nodo])
+    codigo = transpilador.generate_code([nodo])
     esperado = (
         IMPORTS
         + "from pcobra.cobra.usar_loader import usar_modulo\n"
-        + "_usar_exports = usar_modulo('math', safe_mode=True)\n"
+        + f"_usar_exports = usar_modulo('math', safe_mode={safe_mode_esperado})\n"
         + "globals().update(dict(_usar_exports.get('simbolos', [])))\n"
     )
     assert codigo == esperado
