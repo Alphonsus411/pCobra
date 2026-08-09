@@ -156,11 +156,8 @@ def _aplicar_capacidades(
             continue
 
         def verificar_permiso(
-            args,
             kwargs,
             __capacidades=capacidades_enforced,
-            __modulo=modulo,
-            __nombre=nombre,
         ):
             if safe_mode:
                 if (
@@ -168,14 +165,6 @@ def _aplicar_capacidades(
                     and kwargs.get("shell") is True
                 ):
                     raise PermissionError("capacidad process.shell denegada en modo seguro")
-                capacidades_filesystem = __capacidades & {
-                    CapacidadUsar.FILESYSTEM_READ,
-                    CapacidadUsar.FILESYSTEM_WRITE,
-                }
-                if capacidades_filesystem and _solicitud_filesystem_confinada(
-                    __modulo, __nombre, args
-                ):
-                    return
                 capacidad = sorted(
                     (capacidad.value for capacidad in __capacidades),
                     key=lambda valor: (not valor.startswith("network."), valor),
@@ -189,47 +178,18 @@ def _aplicar_capacidades(
             async def protegido(
                 *args, __simbolo=simbolo, __verificar=verificar_permiso, **kwargs
             ):
-                __verificar(args, kwargs)
+                __verificar(kwargs)
                 return await __simbolo(*args, **kwargs)
         else:
             @wraps(simbolo)
             def protegido(
                 *args, __simbolo=simbolo, __verificar=verificar_permiso, **kwargs
             ):
-                __verificar(args, kwargs)
+                __verificar(kwargs)
                 return __simbolo(*args, **kwargs)
 
         resultado.append((nombre, protegido))
     return resultado
-
-
-def _solicitud_filesystem_confinada(
-    modulo: str, nombre: str, args: tuple[Any, ...]
-) -> bool:
-    """Autoriza efectos demostrablemente contenidos en la raíz de E/S."""
-
-    raiz_configurada = os.environ.get("COBRA_IO_BASE_DIR")
-    if modulo == "temporal" and nombre in {
-        "archivo_temporal",
-        "directorio_temporal",
-    }:
-        return bool(raiz_configurada)
-    if not args:
-        return False
-
-    try:
-        raiz = Path(raiz_configurada or Path.cwd()).expanduser().resolve(strict=True)
-        solicitada = Path(os.fspath(args[0])).expanduser()
-        objetivo = (
-            solicitada.resolve(strict=False)
-            if solicitada.is_absolute()
-            else (raiz / solicitada).resolve(strict=False)
-        )
-        objetivo.relative_to(raiz)
-    except (TypeError, ValueError, OSError):
-        return False
-    return True
-
 
 def normalizar_nombre_usar(nombre: str) -> str:
     """Normaliza nombre de módulo para validaciones canónicas de `usar`."""
