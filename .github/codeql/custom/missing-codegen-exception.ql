@@ -9,7 +9,7 @@ where
   m.getName() = "generate_code" and
   m.getFile() = f and
   f.getRelativePath().regexp("^src/cobra/transpilers/transpiler/") and
-  not exists(TryStmt t |
+  not exists(Try t |
     t.getEnclosingCallable() = m
   )
 select m, "Falta manejo de excepciones durante la generación de código"
