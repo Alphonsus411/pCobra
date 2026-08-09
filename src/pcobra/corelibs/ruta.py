@@ -75,7 +75,11 @@ def existe(ruta: PathLike) -> bool:
     """Indica si una ruta existe en el sistema de archivos."""
 
     ruta_validada = _validar_ruta(ruta)
-    return Path(ruta_validada).exists()
+    objetivo = Path(ruta_validada)
+    base = os.environ.get("COBRA_IO_BASE_DIR")
+    if base and not objetivo.is_absolute():
+        objetivo = Path(base) / objetivo
+    return objetivo.exists()
 
 
 def es_absoluta(ruta: PathLike) -> bool:

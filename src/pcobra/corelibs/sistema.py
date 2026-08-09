@@ -373,7 +373,11 @@ def obtener_env(nombre: str) -> str | None:
 
 def listar_dir(ruta: str) -> list[str]:
     """Lista los archivos de un directorio."""
-    return os.listdir(ruta)
+    objetivo = os.fspath(ruta)
+    base = os.environ.get("COBRA_IO_BASE_DIR")
+    if base and not os.path.isabs(objetivo):
+        objetivo = os.path.join(base, objetivo)
+    return os.listdir(objetivo)
 
 
 def _error_sistema(operacion: str, exc: Exception) -> RuntimeError:
