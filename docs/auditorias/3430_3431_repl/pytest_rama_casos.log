@@ -1,0 +1,71 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-9.0.3, pluggy-1.6.0 -- /root/.pyenv/versions/3.12.13/bin/python
+cachedir: .pytest_cache
+rootdir: /workspace/pCobra
+configfile: pyproject.toml
+plugins: flet-0.86.1, anyio-4.13.0
+collecting ... collected 42 items
+
+tests/integration/test_run_repl_equivalence.py::test_misma_secuencia_semantica_equivale_entre_run_y_repl PASSED [  2%]
+tests/integration/test_run_repl_equivalence.py::test_mutacion_en_mientras_y_lectura_posterior_persisten_en_repl PASSED [  4%]
+tests/integration/test_run_repl_equivalence.py::test_persistencia_basica_var_x_e_impresion_equivale_entre_run_y_repl PASSED [  7%]
+tests/integration/test_run_repl_equivalence.py::test_bloque_si_comparte_estado_posterior_equivale_entre_run_y_repl PASSED [  9%]
+tests/integration/test_run_repl_equivalence.py::test_repl_evalua_expresiones_con_estado_persistente[x + 10-15] PASSED [ 11%]
+tests/integration/test_run_repl_equivalence.py::test_repl_evalua_expresiones_con_estado_persistente[x * 2-10] PASSED [ 14%]
+tests/integration/test_run_repl_equivalence.py::test_repl_fallback_expresion_sin_duplicar_salida_y_nameerror_real_preservado PASSED [ 16%]
+tests/integration/test_run_repl_equivalence.py::test_repl_no_suprime_error_real_en_expresion_con_variable_no_declarada PASSED [ 19%]
+tests/integration/test_run_repl_equivalence.py::test_repl_statement_normal_imprimir_no_duplica_salida PASSED [ 21%]
+tests/integration/test_run_repl_equivalence.py::test_instrucciones_posteriores_a_si_y_llamadas_con_valor_se_ejecutan PASSED [ 23%]
+tests/integration/test_run_repl_equivalence.py::test_repl_llamada_funcion_auditoria_una_sola_vez_y_retorno_correcto PASSED [ 26%]
+tests/integration/test_run_repl_equivalence.py::test_repl_definir_funcion_triple_no_produce_salida_en_definicion PASSED [ 28%]
+tests/integration/test_run_repl_equivalence.py::test_repl_incremental_var_var_imprimir_y_nameerror_sin_temporales_internas PASSED [ 30%]
+tests/integration/test_run_repl_equivalence.py::test_repl_mantiene_estado_tras_error_intermedio PASSED [ 33%]
+tests/integration/test_run_repl_equivalence.py::test_repl_persistencia_entre_entradas_tras_error_intermedio_real PASSED [ 35%]
+tests/integration/test_run_repl_equivalence.py::test_anidacion_condicional_bucle_equivale_en_salida_y_estado PASSED [ 38%]
+tests/integration/test_run_repl_equivalence.py::test_error_semantico_y_runtime_equivalen_en_tipo_y_mensaje[no_definida = 1] FAILED [ 40%]
+tests/integration/test_run_repl_equivalence.py::test_error_semantico_y_runtime_equivalen_en_tipo_y_mensaje[var x = 10 / 0] PASSED [ 42%]
+tests/integration/test_run_repl_equivalence.py::test_error_sintactico_equivale_en_tipo_y_mensaje[imprimir("cadena sin cerrar)] PASSED [ 45%]
+tests/integration/test_run_repl_equivalence.py::test_error_sintactico_equivale_en_tipo_y_mensaje[si verdadero imprimir(1)] PASSED [ 47%]
+tests/integration/test_run_repl_equivalence.py::test_runtime_estado_final_paridad_run_vs_repl[mutacion_en_mientras_persiste-var contador = 10-mientras verdadero:\n    contador = 15\n    romper\nfin-variables_esperadas0] PASSED [ 50%]
+tests/integration/test_run_repl_equivalence.py::test_runtime_estado_final_paridad_run_vs_repl[mutacion_en_mientras_persiste_fuera_del_bucle-var total = 1-mientras verdadero:\n    total = 4\n    romper\nfin-variables_esperadas1] PASSED [ 52%]
+tests/integration/test_run_repl_equivalence.py::test_runtime_estado_final_paridad_run_vs_repl[mientras_con_continuar_romper_y_variable_local_visible-var paso = falso-mientras verdadero:\n    si paso:\n        var ultimo = 2\n        romper\n    fin\n    paso = verdadero\n    continuar\nfin-variables_esperadas2] PASSED [ 54%]
+tests/integration/test_run_repl_equivalence.py::test_runtime_estado_final_paridad_run_vs_repl[bloque_anidado_shadowing_y_set_dirigido-var raiz = 100-func ajustar():\n    var raiz = 5\n    raiz = 9\n    retorno raiz\nfin\nvar resultado = ajustar()-variables_esperadas3] PASSED [ 57%]
+tests/integration/test_run_repl_equivalence.py::test_sandbox_normaliza_safe_mode_y_validadores_igual_en_run_y_repl PASSED [ 59%]
+tests/integration/test_run_repl_equivalence.py::test_paridad_funcional_acotada_run_y_repl_en_declaraciones_secuenciales[var-imprimir("antes")\nvar x = 3\nimprimir("despues")-estado_esperado0] PASSED [ 61%]
+tests/integration/test_run_repl_equivalence.py::test_paridad_funcional_acotada_run_y_repl_en_declaraciones_secuenciales[variable-imprimir("antes")\nvariable y := 4\nimprimir("despues")-estado_esperado1] PASSED [ 64%]
+tests/integration/test_run_repl_equivalence.py::test_run_no_corta_sentencias_posteriores_en_bloque_si PASSED [ 66%]
+tests/integration/test_run_repl_equivalence.py::test_run_retorno_fuera_de_funcion_muestra_error_corto_sin_traceback PASSED [ 69%]
+tests/integration/test_run_repl_equivalence.py::test_run_conservar_control_break_y_continue_en_mientras PASSED [ 71%]
+tests/integration/test_run_repl_equivalence.py::test_run_acepta_utf8_bom_en_frontera_de_entrada[True] PASSED [ 73%]
+tests/integration/test_run_repl_equivalence.py::test_run_acepta_utf8_bom_en_frontera_de_entrada[False] PASSED [ 76%]
+tests/integration/test_run_repl_equivalence.py::test_run_utf8_bom_y_sin_bom_producen_salida_identica PASSED [ 78%]
+tests/integration/test_run_repl_equivalence.py::test_build_rechaza_programa_semanticamente_invalido_sin_generar_codigo PASSED [ 80%]
+tests/integration/test_run_repl_equivalence.py::test_build_utf8_bom_y_sin_bom_compilan_sin_token_bom PASSED [ 83%]
+tests/integration/test_run_repl_equivalence.py::test_run_usar_modulos_oficiales_produce_salida_exacta PASSED [ 85%]
+tests/integration/test_run_repl_equivalence.py::test_run_error_lexico_sigue_siendo_corto_sin_traceback_con_y_sin_bom PASSED [ 88%]
+tests/integration/test_run_repl_equivalence.py::test_run_usar_numpy_rechaza_sin_traceback_ni_error_duplicado PASSED [ 90%]
+tests/integration/test_run_repl_equivalence.py::test_run_usar_archivo_habilita_existe_readme_local PASSED [ 92%]
+tests/integration/test_run_repl_equivalence.py::test_run_usar_archivo_existe_parent_es_falso_por_wrapper_seguro PASSED [ 95%]
+tests/integration/test_run_repl_equivalence.py::test_run_existe_sin_usar_archivo_permanece_bloqueado PASSED [ 97%]
+tests/integration/test_run_repl_equivalence.py::test_run_error_funcion_no_declarada_conserva_identificador_completo PASSED [100%]
+
+=================================== FAILURES ===================================
+_ test_error_semantico_y_runtime_equivalen_en_tipo_y_mensaje[no_definida = 1] __
+tests/integration/test_run_repl_equivalence.py:509: in test_error_semantico_y_runtime_equivalen_en_tipo_y_mensaje
+    with pytest.raises(Exception) as err_script:  # noqa: BLE001 - contrato integración
+         ^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE <class 'Exception'>
+============================= slowest 10 durations =============================
+0.33s call     tests/integration/test_run_repl_equivalence.py::test_run_usar_modulos_oficiales_produce_salida_exacta
+0.05s call     tests/integration/test_run_repl_equivalence.py::test_instrucciones_posteriores_a_si_y_llamadas_con_valor_se_ejecutan
+0.04s call     tests/integration/test_run_repl_equivalence.py::test_run_conservar_control_break_y_continue_en_mientras
+0.04s call     tests/integration/test_run_repl_equivalence.py::test_build_utf8_bom_y_sin_bom_compilan_sin_token_bom
+0.03s call     tests/integration/test_run_repl_equivalence.py::test_run_error_funcion_no_declarada_conserva_identificador_completo
+0.02s call     tests/integration/test_run_repl_equivalence.py::test_anidacion_condicional_bucle_equivale_en_salida_y_estado
+0.02s call     tests/integration/test_run_repl_equivalence.py::test_runtime_estado_final_paridad_run_vs_repl[mientras_con_continuar_romper_y_variable_local_visible-var paso = falso-mientras verdadero:\n    si paso:\n        var ultimo = 2\n        romper\n    fin\n    paso = verdadero\n    continuar\nfin-variables_esperadas2]
+0.02s call     tests/integration/test_run_repl_equivalence.py::test_repl_llamada_funcion_auditoria_una_sola_vez_y_retorno_correcto
+0.01s call     tests/integration/test_run_repl_equivalence.py::test_misma_secuencia_semantica_equivale_entre_run_y_repl
+0.01s call     tests/integration/test_run_repl_equivalence.py::test_run_utf8_bom_y_sin_bom_producen_salida_identica
+=========================== short test summary info ============================
+FAILED tests/integration/test_run_repl_equivalence.py::test_error_semantico_y_runtime_equivalen_en_tipo_y_mensaje[no_definida = 1] - Failed: DID NOT RAISE <class 'Exception'>
+========================= 1 failed, 41 passed in 1.55s =========================
