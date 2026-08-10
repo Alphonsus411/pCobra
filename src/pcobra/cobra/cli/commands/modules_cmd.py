@@ -25,7 +25,9 @@ from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 from pcobra.cobra.cli.utils.module_paths import modules_path, user_config_dir
 from pcobra.cobra.cli.utils.messages import mostrar_error
 
-_cobrahub_module = __import__("pcobra.cobra.cli.cobrahub_client", fromlist=["CobraHubClient"])
+_cobrahub_module = __import__(
+    "pcobra.cobra.cli.cobrahub_client", fromlist=["CobraHubClient"]
+)
 _CobraHubClient = _cobrahub_module.CobraHubClient
 client = _CobraHubClient.__new__(_CobraHubClient)
 client.base_url = "https://cobrahub.example.com/api"

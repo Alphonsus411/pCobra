@@ -42,12 +42,21 @@ imprimir(x)
 """
 
 
-def run_and_measure(cmd: list[str], env: dict[str, str] | None = None) -> tuple[float, int]:
+def run_and_measure(
+    cmd: list[str], env: dict[str, str] | None = None
+) -> tuple[float, int]:
     try:
         if resource is not None:
             start_usage = resource.getrusage(resource.RUSAGE_CHILDREN)
             start_time = time.perf_counter()
-            subprocess.run(cmd, env=env, check=False, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT, timeout=SUBPROCESS_TIMEOUT)
+            subprocess.run(
+                cmd,
+                env=env,
+                check=False,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.STDOUT,
+                timeout=SUBPROCESS_TIMEOUT,
+            )
             elapsed = time.perf_counter() - start_time
             end_usage = resource.getrusage(resource.RUSAGE_CHILDREN)
             mem_kb = max(0, end_usage.ru_maxrss - start_usage.ru_maxrss)
@@ -64,27 +73,54 @@ def run_and_measure(cmd: list[str], env: dict[str, str] | None = None) -> tuple[
             return time.perf_counter() - start_time, max_mem // 1024
 
         start_time = time.perf_counter()
-        subprocess.run(cmd, env=env, check=False, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT, timeout=SUBPROCESS_TIMEOUT)
+        subprocess.run(
+            cmd,
+            env=env,
+            check=False,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.STDOUT,
+            timeout=SUBPROCESS_TIMEOUT,
+        )
         return time.perf_counter() - start_time, 0
     except subprocess.TimeoutExpired:
         mostrar_error(_("Timeout al ejecutar {cmd}").format(cmd=" ".join(cmd)))
         return 0.0, 0
 
 
-def run_backend_benchmark(backend: str, cfg: dict[str, Any], co_file: Path, tmpdir: str, env: dict[str, str]) -> list[dict[str, Any]]:
+def run_backend_benchmark(
+    backend: str, cfg: dict[str, Any], co_file: Path, tmpdir: str, env: dict[str, str]
+) -> list[dict[str, Any]]:
     results: list[dict[str, Any]] = []
-    backend_display = f"{target_label(backend)} ({backend})" if backend in PUBLIC_BACKENDS else backend
+    backend_display = (
+        f"{target_label(backend)} ({backend})"
+        if backend in PUBLIC_BACKENDS
+        else backend
+    )
     src_file = Path(tmpdir) / f"program.{cfg['ext']}"
 
-    transp_cmd = [sys.executable, "-m", "pcobra.cobra.cli.cli", "compilar", str(co_file), "--tipo", backend]
+    transp_cmd = [
+        sys.executable,
+        "-m",
+        "pcobra.cobra.cli.cli",
+        "compilar",
+        str(co_file),
+        "--tipo",
+        backend,
+    ]
     try:
         out = subprocess.check_output(transp_cmd, env=env, text=True)
     except subprocess.CalledProcessError as exc:
-        mostrar_info(_("Error al compilar {backend}: {error}").format(backend=backend_display, error=str(exc)))
+        mostrar_info(
+            _("Error al compilar {backend}: {error}").format(
+                backend=backend_display, error=str(exc)
+            )
+        )
         return results
 
     out = ANSI_ESCAPE.sub("", out)
-    lines = [line for line in out.splitlines() if not line.startswith(("DEBUG:", "INFO:"))]
+    lines = [
+        line for line in out.splitlines() if not line.startswith(("DEBUG:", "INFO:"))
+    ]
     if lines and lines[0].startswith("Código generado"):
         lines = lines[1:]
     src_file.write_text("\n".join(lines))
@@ -94,12 +130,20 @@ def run_backend_benchmark(backend: str, cfg: dict[str, Any], co_file: Path, tmpd
         try:
             subprocess.run(compile_cmd, check=True, timeout=SUBPROCESS_TIMEOUT)
         except (subprocess.SubprocessError, subprocess.TimeoutExpired) as exc:
-            mostrar_info(_("Error al compilar {backend}: {error}").format(backend=backend_display, error=str(exc)))
+            mostrar_info(
+                _("Error al compilar {backend}: {error}").format(
+                    backend=backend_display, error=str(exc)
+                )
+            )
             return results
 
     cmd = [arg.format(file=src_file, tmp=tmpdir) for arg in cfg["run"]]
     if not shutil.which(cmd[0]) and not os.path.exists(cmd[0]):
-        mostrar_info(_("Ejecutable no encontrado para {backend}: {cmd}").format(backend=backend_display, cmd=cmd[0]))
+        mostrar_info(
+            _("Ejecutable no encontrado para {backend}: {cmd}").format(
+                backend=backend_display, cmd=cmd[0]
+            )
+        )
         return results
 
     elapsed, mem = run_and_measure(cmd, env)
@@ -120,12 +164,22 @@ def run_benchmarks(backends: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
             co_file = Path(tmpdir) / "program.cobra"
             co_file.write_text(BENCHMARK_CODE)
 
-            cobra_cmd = [sys.executable, "-m", "pcobra.cobra.cli.cli", "ejecutar", str(co_file)]
+            cobra_cmd = [
+                sys.executable,
+                "-m",
+                "pcobra.cobra.cli.cli",
+                "ejecutar",
+                str(co_file),
+            ]
             elapsed, mem = run_and_measure(cobra_cmd, env)
-            results.append({"backend": "cobra", "time": round(elapsed, 4), "memory_kb": mem})
+            results.append(
+                {"backend": "cobra", "time": round(elapsed, 4), "memory_kb": mem}
+            )
 
             for backend, cfg in backends.items():
-                results.extend(run_backend_benchmark(backend, cfg, co_file, tmpdir, env))
+                results.extend(
+                    run_backend_benchmark(backend, cfg, co_file, tmpdir, env)
+                )
     finally:
         tmp_path.unlink(missing_ok=True)
 

@@ -184,6 +184,7 @@ def _is_invalid_target_error(lowered: str) -> bool:
         "target inválido" in lowered
         or "target invalid" in lowered
         or "target seleccionado" in lowered
-        or "target" in lowered and "no soport" in lowered
+        or "target" in lowered
+        and "no soport" in lowered
         or "invalid target" in lowered
     )

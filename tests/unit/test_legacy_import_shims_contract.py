@@ -5,6 +5,7 @@ from pathlib import Path
 import sys
 import warnings
 
+
 def _purge_module_prefix(prefix: str) -> None:
     for name in list(sys.modules):
         if name == prefix or name.startswith(f"{prefix}."):
@@ -36,9 +37,7 @@ def test_import_legacy_core_solo_via_shim_con_deprecacion() -> None:
     package_root = source_root / "pcobra"
     original_path = list(sys.path)
     sys.path[:] = [
-        path
-        for path in sys.path
-        if not path or Path(path).resolve() != package_root
+        path for path in sys.path if not path or Path(path).resolve() != package_root
     ]
     sys.path.insert(0, str(source_root))
     importlib.invalidate_caches()

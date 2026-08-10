@@ -39,6 +39,7 @@ CANONICAL_MODULE_MAP_MODULES = {
     "pcobra.cobra.imports._module_map_api",
 }
 
+
 def _find_transpilers_literal_violations(root: Path) -> list[str]:
     violations: list[str] = []
     for path in sorted(root.rglob("*.py")):
@@ -81,9 +82,8 @@ def _find_parallel_catalog_name_violations(root: Path) -> list[str]:
             elif isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name):
                 target_name = node.target.id
                 value = node.value
-            if (
-                target_name in FORBIDDEN_PARALLEL_CATALOG_NAMES
-                and isinstance(value, ast.Dict)
+            if target_name in FORBIDDEN_PARALLEL_CATALOG_NAMES and isinstance(
+                value, ast.Dict
             ):
                 violations.append(
                     f"{rel}:{node.lineno}: catálogo paralelo prohibido `{target_name}` fuera de `{CANONICAL_TRANSPILERS_REGISTRY.as_posix()}`"
@@ -91,7 +91,9 @@ def _find_parallel_catalog_name_violations(root: Path) -> list[str]:
     return violations
 
 
-def _resolve_relative_module(path: Path, module: str | None, level: int, root: Path) -> str | None:
+def _resolve_relative_module(
+    path: Path, module: str | None, level: int, root: Path
+) -> str | None:
     if level <= 0:
         return module
     try:

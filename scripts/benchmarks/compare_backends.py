@@ -28,6 +28,7 @@ from scripts.benchmarks.targets_policy import (
 
 try:
     import resource
+
     psutil = None
 except ImportError:
     resource = None
@@ -50,7 +51,10 @@ imprimir(x)
 # Metadata técnica común por backend (extensiones/comandos)
 BACKEND_METADATA = BENCHMARK_BACKEND_METADATA
 
-def run_and_measure(cmd: list[str], env: dict[str, str] | None = None) -> tuple[float, int]:
+
+def run_and_measure(
+    cmd: list[str], env: dict[str, str] | None = None
+) -> tuple[float, int]:
     """Ejecuta *cmd* y devuelve ``(tiempo_en_segundos, memoria_en_kb)``.
 
     Si no se dispone de ``resource`` ni de ``psutil``, la memoria se reporta como
@@ -149,7 +153,9 @@ def main() -> None:
             str(co_file),
         ]
         elapsed, mem = run_and_measure(cobra_cmd, env)
-        results.append({"backend": "cobra", "time": round(elapsed, 4), "memory_kb": mem})
+        results.append(
+            {"backend": "cobra", "time": round(elapsed, 4), "memory_kb": mem}
+        )
 
         for backend in executable_benchmark_backends(
             BACKEND_METADATA,
@@ -172,13 +178,19 @@ def main() -> None:
             except subprocess.CalledProcessError:
                 continue
             out = re.sub(r"\x1b\[[0-9;]*m", "", out)
-            lines = [l for l in out.splitlines() if not l.startswith("DEBUG:") and not l.startswith("INFO:")]
+            lines = [
+                l
+                for l in out.splitlines()
+                if not l.startswith("DEBUG:") and not l.startswith("INFO:")
+            ]
             if lines and lines[0].startswith("Código generado"):
                 lines = lines[1:]
             out = "\n".join(lines)
             src_file.write_text(out)
             if "compile" in cfg:
-                compile_cmd = [arg.format(file=src_file, tmp=tmpdir) for arg in cfg["compile"]]
+                compile_cmd = [
+                    arg.format(file=src_file, tmp=tmpdir) for arg in cfg["compile"]
+                ]
                 try:
                     subprocess.check_call(compile_cmd)
                 except Exception:
@@ -187,12 +199,14 @@ def main() -> None:
             if not shutil.which(cmd[0]) and not os.path.exists(cmd[0]):
                 continue
             elapsed, mem = run_and_measure(cmd, env)
-            results.append({
-                "backend": backend,
-                "time": round(elapsed, 4),
-                "memory_kb": mem,
-                "runtime_policy": cfg.get("runtime_policy", "unknown"),
-            })
+            results.append(
+                {
+                    "backend": backend,
+                    "time": round(elapsed, 4),
+                    "memory_kb": mem,
+                    "runtime_policy": cfg.get("runtime_policy", "unknown"),
+                }
+            )
 
     data = json.dumps(results, indent=2)
     if args.output:

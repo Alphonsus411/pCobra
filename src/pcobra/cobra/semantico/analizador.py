@@ -83,7 +83,7 @@ class AnalizadorSemantico(NodeVisitor):
 
     def _salir_ambito(self) -> Optional[Ambito]:
         """Sale del ámbito actual al ámbito padre.
-        
+
         Returns:
             El ámbito padre o None si ya estamos en el ámbito global
         """
@@ -95,10 +95,10 @@ class AnalizadorSemantico(NodeVisitor):
 
     def _validar_parametros(self, parametros: List[str]) -> None:
         """Valida que no haya parámetros duplicados.
-        
+
         Args:
             parametros: Lista de nombres de parámetros
-            
+
         Raises:
             ValueError: Si hay parámetros duplicados
         """
@@ -110,19 +110,21 @@ class AnalizadorSemantico(NodeVisitor):
 
     def _validar_nombre(self, nombre: Any) -> None:
         """Valida que el nombre sea una cadena válida.
-        
+
         Args:
             nombre: Nombre a validar
-            
+
         Raises:
             TypeError: Si el nombre no es una cadena
         """
         if not isinstance(nombre, str):
             raise TypeError(f"El nombre debe ser string, no {type(nombre)}")
 
-    def _procesar_bloque_codigo(self, parametros: List[str], cuerpo: NodoBloque) -> None:
+    def _procesar_bloque_codigo(
+        self, parametros: List[str], cuerpo: NodoBloque
+    ) -> None:
         """Procesa un bloque de código (función o método).
-        
+
         Args:
             parametros: Lista de parámetros
             cuerpo: Lista de instrucciones
@@ -137,7 +139,9 @@ class AnalizadorSemantico(NodeVisitor):
         finally:
             self._salir_ambito()
 
-    def _hay_camino(self, origen: str, destino: str, visitados: Optional[Set[str]] = None) -> bool:
+    def _hay_camino(
+        self, origen: str, destino: str, visitados: Optional[Set[str]] = None
+    ) -> bool:
         """Verifica si existe un camino de herencia entre dos clases."""
         if visitados is None:
             visitados = set()
@@ -221,7 +225,7 @@ class AnalizadorSemantico(NodeVisitor):
         self._validar_nombre(nodo.nombre)
         if self.current_scope.resolver_local(nodo.nombre):
             raise ValueError(f"Símbolo ya declarado: {nodo.nombre}")
-            
+
         self.current_scope.declarar(nodo.nombre, "funcion")
         self._procesar_bloque_codigo(nodo.parametros, nodo.cuerpo)
 
@@ -239,7 +243,9 @@ class AnalizadorSemantico(NodeVisitor):
             if not simbolo or simbolo.tipo != "clase":
                 raise ValueError(f"Clase base no encontrada: {base}")
             if base == nodo.nombre or self._hay_camino(base, nodo.nombre):
-                raise ValueError(f"Herencia circular detectada: {nodo.nombre} -> {base}")
+                raise ValueError(
+                    f"Herencia circular detectada: {nodo.nombre} -> {base}"
+                )
 
         self.herencia[nodo.nombre] = list(nodo.bases)
         self._con_nuevo_ambito()

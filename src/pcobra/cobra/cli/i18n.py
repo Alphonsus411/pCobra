@@ -41,22 +41,22 @@ _ = gettext.gettext
 def setup_gettext(lang: Optional[str] = None) -> Callable[[str], str]:
     """
     Inicializa gettext y devuelve la función de traducción.
-    
+
     Args:
-        lang: Código de idioma a utilizar. Si es None, usa COBRA_LANG del entorno 
+        lang: Código de idioma a utilizar. Si es None, usa COBRA_LANG del entorno
              o el valor por defecto.
-    
+
     Returns:
         Callable[[str], str]: Función de traducción configurada.
-        
+
     Raises:
         ValueError: Si el idioma no está soportado.
     """
     selected = lang or os.environ.get("COBRA_LANG", DEFAULT_LANG)
-    
+
     if selected not in SUPPORTED_LANGUAGES:
         raise ValueError(f"Idioma no soportado: {selected}")
-        
+
     if not LOCALE_DIR.exists():
         logger.debug(
             "Directorio de traducciones %s no encontrado; se utilizarán traducciones por defecto.",
@@ -64,12 +64,9 @@ def setup_gettext(lang: Optional[str] = None) -> Callable[[str], str]:
         )
 
     translation = gettext.translation(
-        "cobra",
-        localedir=str(LOCALE_DIR),
-        languages=[selected],
-        fallback=True
+        "cobra", localedir=str(LOCALE_DIR), languages=[selected], fallback=True
     )
-    
+
     global _
     _ = translation.gettext
     return _
@@ -78,12 +75,12 @@ def setup_gettext(lang: Optional[str] = None) -> Callable[[str], str]:
 def format_traceback(exc: BaseException, lang: Optional[str] = None) -> str:
     """
     Devuelve el traceback formateado en el idioma indicado.
-    
+
     Args:
         exc: Excepción a formatear.
-        lang: Código de idioma para la traducción. Si es None, usa COBRA_LANG 
+        lang: Código de idioma para la traducción. Si es None, usa COBRA_LANG
              del entorno o el valor por defecto.
-    
+
     Returns:
         str: Traceback formateado en el idioma especificado.
     """
@@ -92,7 +89,7 @@ def format_traceback(exc: BaseException, lang: Optional[str] = None) -> str:
 
     lines = traceback.format_exception(type(exc), exc, exc.__traceback__)
     out: list[str] = []
-    
+
     for line in lines:
         if line.startswith("Traceback (most recent call last):"):
             out.append(tr["header"] + "\n")
@@ -100,7 +97,7 @@ def format_traceback(exc: BaseException, lang: Optional[str] = None) -> str:
         if line.strip().startswith("File "):
             line = line.replace("File", tr["file"]).replace("line", tr["line"])
         out.append(line)
-        
+
     return "".join(out)
 
 

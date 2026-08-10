@@ -12,6 +12,7 @@ import warnings
 _pcobra_cli = importlib.import_module("pcobra.cli")
 
 import sys
+
 sys.modules.setdefault("pcobra.cli", _pcobra_cli)
 
 _pcobra_cli._activar_compatibilidad_legacy_si_corresponde("cli")

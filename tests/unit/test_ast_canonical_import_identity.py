@@ -10,7 +10,6 @@ from pathlib import Path
 
 from pcobra.core import ast_nodes
 
-
 ROOT = Path(__file__).resolve().parents[2]
 NEW_IMPORT_CONTRACT_TESTS = (Path(__file__).resolve(),)
 CANONICAL_MODULE_NAMES = (
@@ -26,8 +25,7 @@ CANONICAL_MODULE_NAMES = (
 )
 FORBIDDEN_IMPORT_SURFACES = ("core.ast_nodes", "cobra.core")
 CANONICAL_MODULES = {
-    name: importlib.import_module(name)
-    for name in CANONICAL_MODULE_NAMES
+    name: importlib.import_module(name) for name in CANONICAL_MODULE_NAMES
 }
 
 
@@ -75,7 +73,9 @@ for canonical_name, module in modules.items():
     assert result.returncode == 0, result.stderr
 
 
-def test_contrato_checkout_shim_ast_reutiliza_identidad_canonica_en_ambos_ordenes() -> None:
+def test_contrato_checkout_shim_ast_reutiliza_identidad_canonica_en_ambos_ordenes() -> (
+    None
+):
     """El shim del source tree conserva la identidad AST en ambos órdenes."""
 
     clases = ("NodoAST", "NodoValor", "NodoAsignacion", "NodoFuncion", "NodoUsar")

@@ -1,4 +1,5 @@
 import os
+
 try:
     import tomllib as tomli  # Python >= 3.11
 except ModuleNotFoundError:  # pragma: no cover - para entornos sin tomllib

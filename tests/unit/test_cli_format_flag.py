@@ -94,7 +94,6 @@ def test_profile_command_with_format_invokes_formatter(tmp_path):
     mock_formatear.assert_called_once_with(str(archivo))
 
 
-
 def _build_execute_args(archivo, **overrides):
     args = {
         "archivo": str(archivo),

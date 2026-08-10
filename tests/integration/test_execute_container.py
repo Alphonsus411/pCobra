@@ -2,6 +2,7 @@ import importlib
 import sys
 from pathlib import Path
 from types import SimpleNamespace
+
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
@@ -11,7 +12,6 @@ from unittest.mock import patch
 
 from pcobra.cobra.cli.commands.execute_cmd import ExecuteCommand
 from pcobra.cobra.transpilers import module_map
-
 
 run_service = importlib.import_module("pcobra.cobra.cli.services.run_service")
 
@@ -47,8 +47,12 @@ def test_execute_en_contenedor(tmp_path, monkeypatch):
         extra_validators=None,
         allow_insecure_fallback=False,
     )
-    with patch.object(run_service, "ejecutar_en_contenedor_docker", return_value="hola") as mock_run, \
-         patch("sys.stdout", new_callable=StringIO) as out:
+    with (
+        patch.object(
+            run_service, "ejecutar_en_contenedor_docker", return_value="hola"
+        ) as mock_run,
+        patch("sys.stdout", new_callable=StringIO) as out,
+    ):
         ret = ExecuteCommand().run(args)
 
     assert ret == 0

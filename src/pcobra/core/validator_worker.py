@@ -12,7 +12,6 @@ import math
 import os
 from typing import Any
 
-
 MAX_SOURCE_BYTES = 1_000_000
 MAX_DESCRIPTORS = 32
 MAX_CONTAINER_ITEMS = 128
@@ -37,14 +36,27 @@ def _apply_resource_limits() -> None:
 def _check_policy(source: str, filename: str) -> ast.AST:
     tree = ast.parse(source, filename=filename)
     sensitive = {
-        "__subclasses__", "__globals__", "__dict__", "__mro__", "__bases__",
-        "__getattribute__", "__setattr__", "__delattr__", "__code__",
-        "__closure__", "__func__", "__self__",
+        "__subclasses__",
+        "__globals__",
+        "__dict__",
+        "__mro__",
+        "__bases__",
+        "__getattribute__",
+        "__setattr__",
+        "__delattr__",
+        "__code__",
+        "__closure__",
+        "__func__",
+        "__self__",
     }
     for node in ast.walk(tree):
         if isinstance(node, (ast.Import, ast.ImportFrom)):
             raise PermissionError("import_no_permitido")
-        if isinstance(node, ast.Attribute) and node.attr.startswith("__") and node.attr != "__name__":
+        if (
+            isinstance(node, ast.Attribute)
+            and node.attr.startswith("__")
+            and node.attr != "__name__"
+        ):
             raise PermissionError("atributo_magico_no_permitido")
         if isinstance(node, ast.Constant) and isinstance(node.value, str):
             if any(token in node.value for token in sensitive):
@@ -76,9 +88,14 @@ def _normalize_descriptors(value: Any) -> list[dict[str, Any]]:
         raise TypeError("resultado_no_serializable")
     result = _primitive(value)
     for descriptor in result:
-        if not isinstance(descriptor, dict) or set(descriptor) != {"nombre", "parametros"}:
+        if not isinstance(descriptor, dict) or set(descriptor) != {
+            "nombre",
+            "parametros",
+        }:
             raise TypeError("descriptor_invalido")
-        if not isinstance(descriptor["nombre"], str) or not isinstance(descriptor["parametros"], dict):
+        if not isinstance(descriptor["nombre"], str) or not isinstance(
+            descriptor["parametros"], dict
+        ):
             raise TypeError("descriptor_invalido")
     return result
 
@@ -100,7 +117,9 @@ def run_validator_worker(connection, request: dict[str, Any]) -> None:
 
         symbols, available = cargar_simbolos_restrictedpython()
         if not available:
-            connection.send({"estado": "error", "codigo": "restrictedpython_no_disponible"})
+            connection.send(
+                {"estado": "error", "codigo": "restrictedpython_no_disponible"}
+            )
             return
         # La importación confiable puede consumir una parte apreciable del
         # presupuesto; los límites protegen exclusivamente el código externo.
@@ -121,7 +140,11 @@ def run_validator_worker(connection, request: dict[str, Any]) -> None:
     except (MemoryError, OverflowError):
         connection.send({"estado": "error", "codigo": "memoria_excedida"})
     except TypeError as exc:
-        codigo = str(exc) if str(exc) in {"resultado_no_serializable", "descriptor_invalido"} else "protocolo_invalido"
+        codigo = (
+            str(exc)
+            if str(exc) in {"resultado_no_serializable", "descriptor_invalido"}
+            else "protocolo_invalido"
+        )
         connection.send({"estado": "error", "codigo": codigo})
     except BaseException:
         connection.send({"estado": "error", "codigo": "error_en_ejecucion"})

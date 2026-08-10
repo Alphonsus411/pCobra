@@ -22,8 +22,9 @@ from tests.integration.test_repl_usar_entrypoints_contract import (
 )
 from tests.unit.test_backend_bootstrap_contract import _run_python_isolated
 
-
-USAR_RECHAZO_EXTERNO_MATCH = r"usar_error|no permitid[ao]|externo|fuera|no can[oó]nico|cat[aá]logo|m[oó]dulo"
+USAR_RECHAZO_EXTERNO_MATCH = (
+    r"usar_error|no permitid[ao]|externo|fuera|no can[oó]nico|cat[aá]logo|m[oó]dulo"
+)
 
 
 def _modulo_datos_publico_stub() -> ModuleType:
@@ -31,14 +32,18 @@ def _modulo_datos_publico_stub() -> ModuleType:
     mod.__all__ = ["filtrar", "mapear", "reducir"]
     mod.filtrar = lambda tabla, condicion: [fila for fila in tabla if condicion(fila)]
     mod.mapear = lambda valores, fn=None: valores
-    mod.reducir = lambda valores, fn=None, inicial=None: inicial if inicial is not None else valores[0]
+    mod.reducir = lambda valores, fn=None, inicial=None: (
+        inicial if inicial is not None else valores[0]
+    )
     mod.__file__ = "/workspace/pCobra/src/pcobra/corelibs/datos.py"
     return mod
 
 
 def test_usar_numero_y_texto_solo_espanol(monkeypatch):
     modulos = {"numero": _modulo_numero_stub(), "texto": _modulo_texto_stub()}
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: modulos[nombre])
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: modulos[nombre]
+    )
 
     cmd = InteractiveCommand(InterpretadorCobra())
     cmd.ejecutar_codigo('usar "numero"')
@@ -52,7 +57,9 @@ def test_usar_numero_y_texto_solo_espanol(monkeypatch):
 
 
 def test_usar_datos_expone_filtrar_mapear_reducir(monkeypatch):
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _nombre: _modulo_datos_publico_stub())
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo", lambda _nombre: _modulo_datos_publico_stub()
+    )
 
     interp = InterpretadorCobra()
     interp.configurar_restriccion_usar_repl(REPL_COBRA_MODULE_MAP)
@@ -70,7 +77,9 @@ def test_usar_datos_expone_filtrar_mapear_reducir(monkeypatch):
 
 
 def test_usar_datos_filtrar_contrato_publico_minimo(monkeypatch):
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _nombre: _modulo_datos_publico_stub())
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo", lambda _nombre: _modulo_datos_publico_stub()
+    )
 
     interp = InterpretadorCobra()
     interp.configurar_restriccion_usar_repl(REPL_COBRA_MODULE_MAP)
@@ -86,9 +95,15 @@ def test_usar_datos_filtrar_contrato_publico_minimo(monkeypatch):
     assert simbolos["filtrar"](tabla, lambda fila: fila["activo"]) == [{"activo": True}]
 
 
-@pytest.mark.parametrize("nombre", ["numpy", "np", "node-fetch", "serde", "holobit_sdk"] )
+@pytest.mark.parametrize(
+    "nombre", ["numpy", "np", "node-fetch", "serde", "holobit_sdk"]
+)
 def test_rechazo_usar_modulos_externos_y_no_canonicos(monkeypatch, nombre):
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: (_ for _ in ()).throw(ModuleNotFoundError(nombre)))
+    monkeypatch.setattr(
+        core_usar_loader,
+        "obtener_modulo_cobra_oficial",
+        lambda nombre: (_ for _ in ()).throw(ModuleNotFoundError(nombre)),
+    )
 
     cmd = InteractiveCommand(InterpretadorCobra())
     estado_pre = dict(cmd.interpretador.contextos[-1].values)
@@ -125,10 +140,20 @@ def test_usar_modulo_inexistente_falla_con_diagnostico_publico(monkeypatch):
 
 
 def test_rechazo_internals_holobit_sdk(monkeypatch):
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: _modulo_holobit_publico_stub() if nombre == "holobit" else (_ for _ in ()).throw(ModuleNotFoundError(nombre)))
+    monkeypatch.setattr(
+        core_usar_loader,
+        "obtener_modulo_cobra_oficial",
+        lambda nombre: (
+            _modulo_holobit_publico_stub()
+            if nombre == "holobit"
+            else (_ for _ in ()).throw(ModuleNotFoundError(nombre))
+        ),
+    )
 
     cmd = InteractiveCommand(InterpretadorCobra())
-    cmd.interpretador.configurar_restriccion_usar_repl({**REPL_COBRA_MODULE_MAP, "holobit": "holobit"})
+    cmd.interpretador.configurar_restriccion_usar_repl(
+        {**REPL_COBRA_MODULE_MAP, "holobit": "holobit"}
+    )
     estado_pre = dict(cmd.interpretador.contextos[-1].values)
 
     with pytest.raises(PermissionError, match=USAR_RECHAZO_EXTERNO_MATCH) as excinfo:
@@ -145,10 +170,20 @@ def test_rechazo_internals_holobit_sdk(monkeypatch):
 
 def test_usar_holobit_solo_api_cobra(monkeypatch):
     mod_holobit = _modulo_holobit_publico_stub()
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: mod_holobit if nombre == "holobit" else (_ for _ in ()).throw(ModuleNotFoundError(nombre)))
+    monkeypatch.setattr(
+        core_usar_loader,
+        "obtener_modulo_cobra_oficial",
+        lambda nombre: (
+            mod_holobit
+            if nombre == "holobit"
+            else (_ for _ in ()).throw(ModuleNotFoundError(nombre))
+        ),
+    )
 
     interp = InterpretadorCobra()
-    interp.configurar_restriccion_usar_repl({**REPL_COBRA_MODULE_MAP, "holobit": "holobit"})
+    interp.configurar_restriccion_usar_repl(
+        {**REPL_COBRA_MODULE_MAP, "holobit": "holobit"}
+    )
 
     class _NodoUsar:
         modulo = "holobit"
@@ -181,11 +216,10 @@ def test_runtime_startup_no_carga_legacy_backends():
     assert result.returncode == 0, result.stderr
 
 
-
-
 def test_usar_policy_publica_exacta_modulos_canonicos():
     assert tuple(REPL_COBRA_MODULE_MAP.keys()) == USAR_COBRA_PUBLIC_MODULES
     assert tuple(REPL_COBRA_MODULE_MAP.values()) == USAR_COBRA_PUBLIC_MODULES
+
 
 def test_public_backends_contrato_exacto_en_backend_policy():
     assert PUBLIC_BACKENDS == ("python", "javascript", "rust")
@@ -202,7 +236,10 @@ def test_rechaza_usar_ruta_backend_no_canonica_con_error_consistente():
     class _NodoUsar:
         modulo = "pcobra.corelibs.numero"
 
-    with pytest.raises((PermissionError, FileNotFoundError), match=r"backend_import_directo|Módulo de proyecto no encontrado"):
+    with pytest.raises(
+        (PermissionError, FileNotFoundError),
+        match=r"backend_import_directo|Módulo de proyecto no encontrado",
+    ):
         interp.ejecutar_usar(_NodoUsar())
 
 
@@ -222,5 +259,8 @@ def test_contrato_startup_rechaza_modulo_canonico_no_cobra_facing(monkeypatch):
 
     monkeypatch.setitem(usar_policy.USAR_COBRA_FACING_MODULE_FLAGS, "numero", False)
 
-    with pytest.raises(RuntimeError, match=r"Todos los módulos canónicos de `usar` deben estar marcados como Cobra-facing"):
+    with pytest.raises(
+        RuntimeError,
+        match=r"Todos los módulos canónicos de `usar` deben estar marcados como Cobra-facing",
+    ):
         validar_contrato_modulos_canonicos_usar()

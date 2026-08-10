@@ -15,7 +15,10 @@ def test_rechaza_nombres_prohibidos_explicitos():
     for nombre in ("self", "append", "map", "filter", "unwrap", "expect"):
         resultado = sanear_simbolo_para_usar(nombre, lambda: None)
         assert resultado.rechazado is True
-        assert resultado.codigo in {"explicit_forbidden_name", "cobra_public_equivalent"}
+        assert resultado.codigo in {
+            "explicit_forbidden_name",
+            "cobra_public_equivalent",
+        }
         assert "Usa el nombre Cobra canónico" in (resultado.mensaje or "")
 
 
@@ -50,7 +53,10 @@ def test_reglas_de_saneamiento_por_caso_especifico():
 
     r_backend_ingles = sanear_simbolo_para_usar("append", lambda: None)
     assert r_backend_ingles.rechazado is True
-    assert r_backend_ingles.codigo in {"explicit_forbidden_name", "cobra_public_equivalent"}
+    assert r_backend_ingles.codigo in {
+        "explicit_forbidden_name",
+        "cobra_public_equivalent",
+    }
 
 
 def test_saneamiento_centralizado_aplica_todas_las_reglas():
@@ -85,12 +91,28 @@ def test_rechaza_no_callable_que_no_es_constante_publica_canonica():
     assert resultado_ok.warning is True
     assert resultado_ok.codigo == "public_constant"
 
+
 def test_rechaza_todos_los_alias_ingleses_prohibidos():
-    prohibidos = ("self", "append", "map", "filter", "reduce", "keys", "values", "len", "length", "unwrap", "expect")
+    prohibidos = (
+        "self",
+        "append",
+        "map",
+        "filter",
+        "reduce",
+        "keys",
+        "values",
+        "len",
+        "length",
+        "unwrap",
+        "expect",
+    )
     for nombre in prohibidos:
         resultado = sanear_simbolo_para_usar(nombre, lambda: None)
         assert resultado.rechazado is True
-        assert resultado.codigo in {"explicit_forbidden_name", "cobra_public_equivalent"}
+        assert resultado.codigo in {
+            "explicit_forbidden_name",
+            "cobra_public_equivalent",
+        }
 
 
 def test_schema_usar_consistencia_interna():
@@ -118,7 +140,9 @@ def test_schema_usar_consistencia_interna():
 
 
 def test_modo_estricto_cobra_facing_rechaza_nombres_no_canonicos():
-    politica = PoliticaSaneamientoUsar(validar_nombre_canonico_espanol_en_cobra_facing=True)
+    politica = PoliticaSaneamientoUsar(
+        validar_nombre_canonico_espanol_en_cobra_facing=True
+    )
 
     resultado = sanear_simbolo_para_usar(
         "procesar",
@@ -132,7 +156,9 @@ def test_modo_estricto_cobra_facing_rechaza_nombres_no_canonicos():
 
 
 def test_modo_estricto_cobra_facing_permite_nombres_canonicos():
-    politica = PoliticaSaneamientoUsar(validar_nombre_canonico_espanol_en_cobra_facing=True)
+    politica = PoliticaSaneamientoUsar(
+        validar_nombre_canonico_espanol_en_cobra_facing=True
+    )
 
     resultado = sanear_simbolo_para_usar(
         "procesar_datos",
@@ -154,11 +180,26 @@ def test_constantes_publicas_canonicas_explicitas_se_permiten():
 
 
 def test_rechazo_estricto_alias_backend_hacia_cobra():
-    prohibidos = ("self", "append", "map", "filter", "unwrap", "expect", "keys", "values", "len", "lower", "upper")
+    prohibidos = (
+        "self",
+        "append",
+        "map",
+        "filter",
+        "unwrap",
+        "expect",
+        "keys",
+        "values",
+        "len",
+        "lower",
+        "upper",
+    )
     for nombre in prohibidos:
         resultado = sanear_simbolo_para_usar(nombre, lambda: None)
         assert resultado.rechazado is True
-        assert resultado.codigo in {"explicit_forbidden_name", "cobra_public_equivalent"}
+        assert resultado.codigo in {
+            "explicit_forbidden_name",
+            "cobra_public_equivalent",
+        }
 
 
 def test_objetos_envueltos_sdk_y_wrapped_se_bloquean_siempre():
@@ -250,7 +291,10 @@ def test_rechaza_conflicto_semantico_en_aliases_no_resoluble():
     except ValueError as exc:
         assert "aliases inconsistentes para origin_kind" in str(exc)
     else:
-        raise AssertionError("Se esperaba ValueError por conflicto semántico en aliases.")
+        raise AssertionError(
+            "Se esperaba ValueError por conflicto semántico en aliases."
+        )
+
 
 def test_rechaza_metadata_con_clave_desconocida_maliciosa():
     raw = {
@@ -289,13 +333,22 @@ def test_rechaza_metadata_con_contradiccion_backend_exposed_true_en_validacion_e
     except ValueError as exc:
         assert "backend_exposed debe ser False" in str(exc)
     else:
-        raise AssertionError("Se esperaba ValueError por contradicción maliciosa de metadata.")
+        raise AssertionError(
+            "Se esperaba ValueError por contradicción maliciosa de metadata."
+        )
 
 
 def test_claves_legacy_compatibles_forman_parte_del_set_permitido():
-    legacy_compatibles = {"introduced_by", "introduced_by_usar", "origen_tipo", "is_public_export"}
+    legacy_compatibles = {
+        "introduced_by",
+        "introduced_by_usar",
+        "origen_tipo",
+        "is_public_export",
+    }
     assert legacy_compatibles.issubset(USAR_SYMBOL_METADATA_ALLOWED_KEYS)
-    assert legacy_compatibles.issubset(set(CANONICAL_USAR_METADATA_SCHEMA["legacy_aliases"]))
+    assert legacy_compatibles.issubset(
+        set(CANONICAL_USAR_METADATA_SCHEMA["legacy_aliases"])
+    )
 
 
 def test_normalizacion_acepta_y_canonicaliza_claves_legacy_compatibles_sin_criticas():
@@ -407,4 +460,6 @@ def test_rechaza_contradicciones_criticas_de_metadata_usar():
         except ValueError:
             pass
         else:
-            raise AssertionError(f"Se esperaba rechazo para metadata inválida: {metadata}")
+            raise AssertionError(
+                f"Se esperaba rechazo para metadata inválida: {metadata}"
+            )

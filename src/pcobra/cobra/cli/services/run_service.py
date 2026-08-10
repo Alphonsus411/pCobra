@@ -30,7 +30,9 @@ from pcobra.cobra.core.runtime import (
     construir_cadena,
     limitar_cpu_segundos,  # compatibilidad para tests/plugins; no se invoca en anfitrión
 )
-from pcobra.cobra.core.sandbox import ejecutar_en_contenedor as ejecutar_en_contenedor_docker
+from pcobra.cobra.core.sandbox import (
+    ejecutar_en_contenedor as ejecutar_en_contenedor_docker,
+)
 from pcobra.cobra.transpilers import module_map
 
 from pcobra.cobra.core import sandbox as sandbox_module
@@ -82,7 +84,9 @@ class RunService:
             _abi, contrato, _bridge = RUNTIME_MANAGER.validate_command_runtime(
                 "python", command="run", sandbox=sandbox, containerized=False
             )
-            sandbox_module.validar_dependencias(contrato.language, module_map.get_toml_map(), base_dir=raiz_proyecto)
+            sandbox_module.validar_dependencias(
+                contrato.language, module_map.get_toml_map(), base_dir=raiz_proyecto
+            )
         except (ValueError, FileNotFoundError) as dep_err:
             mostrar_error(f"Error de dependencias: {dep_err}", registrar_log=False)
             return 1
@@ -127,10 +131,14 @@ class RunService:
         except FileNotFoundError as error:
             self.logger.debug("Validación de archivo falló: %s", error)
             raise ValueError(
-                _("No se encontró el archivo '{path}'. Verifica la ruta e inténtalo de nuevo.").format(path=archivo)
+                _(
+                    "No se encontró el archivo '{path}'. Verifica la ruta e inténtalo de nuevo."
+                ).format(path=archivo)
             ) from error
         if resolved_path.stat().st_size > self.max_file_size:
-            raise ValueError(f"El archivo excede el tamaño máximo permitido ({self.max_file_size} bytes)")
+            raise ValueError(
+                f"El archivo excede el tamaño máximo permitido ({self.max_file_size} bytes)"
+            )
         if es_ruta_paquete_cobra(resolved_path):
             raise ValueError(
                 "El archivo es un paquete Cobra .co, no una fuente ejecutable. "
@@ -266,7 +274,9 @@ class RunService:
             ejecutar_pipeline_explicito(
                 PipelineInput(
                     codigo=codigo,
-                    interpretador_cls=resolver_interpretador_cls(module_name=__name__, default_cls=InterpretadorCobra),
+                    interpretador_cls=resolver_interpretador_cls(
+                        module_name=__name__, default_cls=InterpretadorCobra
+                    ),
                     safe_mode=seguro,
                     extra_validators=extra_validators,
                     main_file=main_file,

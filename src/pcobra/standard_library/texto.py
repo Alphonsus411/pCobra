@@ -105,9 +105,7 @@ def quitar_acentos(texto: str) -> str:
 
     descompuesto = unicodedata.normalize("NFD", texto)
     sin_marcas = "".join(
-        caracter
-        for caracter in descompuesto
-        if unicodedata.category(caracter) != "Mn"
+        caracter for caracter in descompuesto if unicodedata.category(caracter) != "Mn"
     )
     return unicodedata.normalize("NFC", sin_marcas)
 
@@ -119,7 +117,9 @@ def normalizar_espacios(texto: str) -> str:
     return unir(" ", partes) if partes else ""
 
 
-def dividir(texto: str, separador: str | None = None, max_divisiones: int = -1) -> list[str]:
+def dividir(
+    texto: str, separador: str | None = None, max_divisiones: int = -1
+) -> list[str]:
     """Divide ``texto`` en una lista de subcadenas usando ``separador``."""
     return _dividir_texto(texto, separador=separador, max_divisiones=max_divisiones)
 
@@ -130,8 +130,7 @@ def encontrar(
     subcadena: str,
     inicio: int = 0,
     fin: int | None = None,
-) -> int:
-    ...
+) -> int: ...
 
 
 @overload
@@ -142,8 +141,7 @@ def encontrar(
     fin: int | None = None,
     *,
     por_defecto: _T,
-) -> int | _T:
-    ...
+) -> int | _T: ...
 
 
 def encontrar(
@@ -173,8 +171,7 @@ def encontrar_derecha(
     subcadena: str,
     inicio: int = 0,
     fin: int | None = None,
-) -> int:
-    ...
+) -> int: ...
 
 
 @overload
@@ -185,8 +182,7 @@ def encontrar_derecha(
     fin: int | None = None,
     *,
     por_defecto: _T,
-) -> int | _T:
-    ...
+) -> int | _T: ...
 
 
 def encontrar_derecha(
@@ -216,8 +212,7 @@ def indice(
     subcadena: str,
     inicio: int = 0,
     fin: int | None = None,
-) -> int:
-    ...
+) -> int: ...
 
 
 @overload
@@ -228,8 +223,7 @@ def indice(
     fin: int | None = None,
     *,
     por_defecto: _T,
-) -> int | _T:
-    ...
+) -> int | _T: ...
 
 
 def indice(
@@ -259,8 +253,7 @@ def indice_derecha(
     subcadena: str,
     inicio: int = 0,
     fin: int | None = None,
-) -> int:
-    ...
+) -> int: ...
 
 
 @overload
@@ -271,8 +264,7 @@ def indice_derecha(
     fin: int | None = None,
     *,
     por_defecto: _T,
-) -> int | _T:
-    ...
+) -> int | _T: ...
 
 
 def indice_derecha(
@@ -605,13 +597,11 @@ def dividir_derecha(
 
 
 @overload
-def subcadena_antes(texto: str, separador: str) -> str:
-    ...
+def subcadena_antes(texto: str, separador: str) -> str: ...
 
 
 @overload
-def subcadena_antes(texto: str, separador: str, por_defecto: _T) -> str | _T:
-    ...
+def subcadena_antes(texto: str, separador: str, por_defecto: _T) -> str | _T: ...
 
 
 def subcadena_antes(texto: str, separador: str, por_defecto: Any = _SIN_VALOR) -> Any:
@@ -628,13 +618,11 @@ def subcadena_antes(texto: str, separador: str, por_defecto: Any = _SIN_VALOR) -
 
 
 @overload
-def subcadena_despues(texto: str, separador: str) -> str:
-    ...
+def subcadena_despues(texto: str, separador: str) -> str: ...
 
 
 @overload
-def subcadena_despues(texto: str, separador: str, por_defecto: _T) -> str | _T:
-    ...
+def subcadena_despues(texto: str, separador: str, por_defecto: _T) -> str | _T: ...
 
 
 def subcadena_despues(texto: str, separador: str, por_defecto: Any = _SIN_VALOR) -> Any:
@@ -650,15 +638,11 @@ def subcadena_despues(texto: str, separador: str, por_defecto: Any = _SIN_VALOR)
 
 
 @overload
-def subcadena_antes_ultima(texto: str, separador: str) -> str:
-    ...
+def subcadena_antes_ultima(texto: str, separador: str) -> str: ...
 
 
 @overload
-def subcadena_antes_ultima(
-    texto: str, separador: str, por_defecto: _T
-) -> str | _T:
-    ...
+def subcadena_antes_ultima(texto: str, separador: str, por_defecto: _T) -> str | _T: ...
 
 
 def subcadena_antes_ultima(
@@ -677,15 +661,13 @@ def subcadena_antes_ultima(
 
 
 @overload
-def subcadena_despues_ultima(texto: str, separador: str) -> str:
-    ...
+def subcadena_despues_ultima(texto: str, separador: str) -> str: ...
 
 
 @overload
 def subcadena_despues_ultima(
     texto: str, separador: str, por_defecto: _T
-) -> str | _T:
-    ...
+) -> str | _T: ...
 
 
 def subcadena_despues_ultima(
@@ -891,7 +873,9 @@ def reemplazar(texto: str, antiguo: str, nuevo: str, maximo: int = -1) -> str:
     return _reemplazar(texto, antiguo, nuevo, maximo)
 
 
-def separar(texto: str, separador: str | None = None, maximo: int | None = None) -> list[str]:
+def separar(
+    texto: str, separador: str | None = None, maximo: int | None = None
+) -> list[str]:
     """Separa ``texto`` respetando la semántica vigente de ``dividir``."""
 
     return dividir(texto, separador, maximo)

@@ -1,4 +1,5 @@
 """Registro en memoria de plugins y metadatos."""
+
 from threading import Lock
 from packaging.version import InvalidVersion, Version
 

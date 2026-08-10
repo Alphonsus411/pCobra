@@ -18,13 +18,17 @@ def _build_parser():
 def test_compile_tipo_choices_usa_lang_choices_centrales():
     _, compile_parser = _build_parser()
     action = next(
-        a for a in compile_parser._actions if isinstance(a, _StoreAction) and a.dest == "tipo"
+        a
+        for a in compile_parser._actions
+        if isinstance(a, _StoreAction) and a.dest == "tipo"
     )
 
     assert tuple(action.choices) == tuple(get_lang_choices())
 
 
-def test_get_lang_choices_usa_solo_targets_publicos_tras_carga_de_entrypoints(monkeypatch):
+def test_get_lang_choices_usa_solo_targets_publicos_tras_carga_de_entrypoints(
+    monkeypatch,
+):
     from pcobra.cobra.cli.commands import compile_cmd
 
     monkeypatch.setattr(
@@ -42,7 +46,9 @@ def test_compile_register_subparser_evalua_choices_en_tiempo_de_registro(monkeyp
     monkeypatch.setattr(compile_cmd, "get_lang_choices", lambda: ("python", "rust"))
     _, compile_parser = _build_parser()
     action = next(
-        a for a in compile_parser._actions if isinstance(a, _StoreAction) and a.dest == "tipo"
+        a
+        for a in compile_parser._actions
+        if isinstance(a, _StoreAction) and a.dest == "tipo"
     )
 
     assert tuple(action.choices) == ("python", "rust")
@@ -51,7 +57,16 @@ def test_compile_register_subparser_evalua_choices_en_tiempo_de_registro(monkeyp
 def test_compile_parser_normaliza_targets_canonicos_en_tipo_y_tipos():
     parser, _ = _build_parser()
 
-    args = parser.parse_args(["compilar", "input.cobra", "--tipo", "rust", "--tipos", "python,javascript,rust"])
+    args = parser.parse_args(
+        [
+            "compilar",
+            "input.cobra",
+            "--tipo",
+            "rust",
+            "--tipos",
+            "python,javascript,rust",
+        ]
+    )
 
     assert args.tipo == "rust"
     assert args.tipos == ["python", "javascript", "rust"]
@@ -70,7 +85,9 @@ def test_compile_parser_tipos_rechaza_alias_legacy_explicito():
     legacy_assembly = "as" "sembly"
 
     with pytest.raises(SystemExit):
-        parser.parse_args(["compilar", "input.cobra", "--tipos", f"python,{legacy_assembly}"])
+        parser.parse_args(
+            ["compilar", "input.cobra", "--tipos", f"python,{legacy_assembly}"]
+        )
 
 
 def test_compile_help_refleja_solo_nombres_canonicos():

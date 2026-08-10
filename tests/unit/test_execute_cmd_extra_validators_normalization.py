@@ -14,11 +14,15 @@ class DummyNodo:
 
 
 def _preparar_parser_lexer(monkeypatch, execute_module):
-    monkeypatch.setattr(execute_module, "analizar_codigo", lambda _codigo: [DummyNodo()])
+    monkeypatch.setattr(
+        execute_module, "analizar_codigo", lambda _codigo: [DummyNodo()]
+    )
 
 
 def _preparar_construir_cadena(monkeypatch, execute_module):
-    monkeypatch.setattr(execute_module, "construir_cadena", lambda _extra: SimpleNamespace())
+    monkeypatch.setattr(
+        execute_module, "construir_cadena", lambda _extra: SimpleNamespace()
+    )
 
 
 def test_ejecutar_normal_carga_validadores_desde_una_ruta(monkeypatch):
@@ -79,7 +83,9 @@ def test_ejecutar_normal_carga_y_acumula_multiples_rutas(monkeypatch):
 
     monkeypatch.setattr(execute_module, "InterpretadorCobra", DummyInterp)
 
-    resultado = ExecuteCommand()._ejecutar_normal("imprimir(1)", True, ["uno.py", "dos.py"])
+    resultado = ExecuteCommand()._ejecutar_normal(
+        "imprimir(1)", True, ["uno.py", "dos.py"]
+    )
 
     assert resultado == 0
     assert rutas_cargadas == ["uno.py", "dos.py"]
@@ -140,9 +146,13 @@ def test_ejecutar_normal_muestra_error_claro_si_falla_una_ruta(monkeypatch):
             return [DummyValidator()]
 
     monkeypatch.setattr(execute_module, "InterpretadorCobra", DummyInterp)
-    monkeypatch.setattr(execute_module, "mostrar_error", lambda msg, **_kwargs: errores.append(msg))
+    monkeypatch.setattr(
+        execute_module, "mostrar_error", lambda msg, **_kwargs: errores.append(msg)
+    )
 
-    resultado = ExecuteCommand()._ejecutar_normal("imprimir(1)", True, ["buena.py", "mala.py"])
+    resultado = ExecuteCommand()._ejecutar_normal(
+        "imprimir(1)", True, ["buena.py", "mala.py"]
+    )
 
     assert resultado == 1
     assert errores

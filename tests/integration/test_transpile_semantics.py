@@ -20,7 +20,10 @@ from pcobra.core.lexer import Lexer
 from pcobra.core.parser import Parser
 from pcobra.cobra.transpilers.registry import get_transpilers
 from tests.utils.runtime import execute_transpiled_code
-from tests.utils.targets import BEST_EFFORT_INTERNAL_RUNTIME_TARGETS, OFFICIAL_RUNTIME_TARGETS
+from tests.utils.targets import (
+    BEST_EFFORT_INTERNAL_RUNTIME_TARGETS,
+    OFFICIAL_RUNTIME_TARGETS,
+)
 
 TRANSPILERS = get_transpilers()
 

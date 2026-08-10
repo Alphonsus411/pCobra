@@ -2,12 +2,12 @@ import pytest
 from cobra.transpilers import module_map
 
 
-def test_module_map_rechaza_target_fuera_de_public_backends_en_cobra_toml(tmp_path, monkeypatch):
+def test_module_map_rechaza_target_fuera_de_public_backends_en_cobra_toml(
+    tmp_path, monkeypatch
+):
     toml_file = tmp_path / "cobra.toml"
     toml_file.write_text(
-        "[modulos]\n"
-        "[modulos.'biblioteca.co']\n"
-        "go = 'biblioteca.go'\n",
+        "[modulos]\n" "[modulos.'biblioteca.co']\n" "go = 'biblioteca.go'\n",
         encoding="utf-8",
     )
 
@@ -25,9 +25,7 @@ def test_module_map_ignora_cobra_mod_para_resolucion(tmp_path, monkeypatch):
     toml_file.write_text("[modulos]\n", encoding="utf-8")
     mod_file = tmp_path / "cobra.mod"
     mod_file.write_text(
-        "[modulos]\n"
-        "[modulos.'biblioteca.co']\n"
-        "go = 'biblioteca.go'\n",
+        "[modulos]\n" "[modulos.'biblioteca.co']\n" "go = 'biblioteca.go'\n",
         encoding="utf-8",
     )
 

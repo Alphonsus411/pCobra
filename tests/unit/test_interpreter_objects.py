@@ -12,7 +12,6 @@ from core.ast_nodes import (
 )
 
 
-
 def test_creacion_instancia_y_metodo():
     inter = InterpretadorCobra()
 
@@ -21,9 +20,7 @@ def test_creacion_instancia_y_metodo():
     inter.ejecutar_nodo(clase)
 
     inter.ejecutar_nodo(NodoAsignacion("p", NodoInstancia("Persona")))
-    res = inter.ejecutar_nodo(
-        NodoLlamadaMetodo(NodoIdentificador("p"), "saludar", [])
-    )
+    res = inter.ejecutar_nodo(NodoLlamadaMetodo(NodoIdentificador("p"), "saludar", []))
     assert res == "hola"
 
 

@@ -6,7 +6,6 @@ import pytest
 
 from pcobra.contrato_capacidades_corelibs import CAPACIDADES_POR_MODULO
 
-
 MODULOS_CANONICOS = (
     "numero",
     "texto",
@@ -39,7 +38,9 @@ def test_api_canonica_es_callable_y_solo_espanol(modulo: str) -> None:
 
     for nombre in contrato["api_canonica"]:
         assert hasattr(modulo_stdlib, nombre), f"{modulo} no implementa {nombre}"
-        assert callable(getattr(modulo_stdlib, nombre)), f"{modulo}.{nombre} no es callable"
+        assert callable(
+            getattr(modulo_stdlib, nombre)
+        ), f"{modulo}.{nombre} no es callable"
         assert nombre == nombre.lower()
         assert all(letra.isalpha() or letra == "_" for letra in nombre)
 
@@ -50,4 +51,6 @@ def test_contrato_no_declara_aliases_ingles_en_api_canonica(modulo: str) -> None
     equivalencias = contrato.get("equivalencia_python", {})
 
     assert isinstance(equivalencias, dict)
-    assert all(destino in contrato["api_canonica"] for destino in equivalencias.values())
+    assert all(
+        destino in contrato["api_canonica"] for destino in equivalencias.values()
+    )

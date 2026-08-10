@@ -26,7 +26,9 @@ def _extract_block(text: str, *, start: str, end: str) -> str:
 def test_targets_policy_bloques_criticos_siguen_snapshot_generado():
     content = Path("docs/targets_policy.md").read_text(encoding="utf-8")
 
-    tiers_block = _extract_block(content, start=POLICY_TIERS_START, end=POLICY_TIERS_END)
+    tiers_block = _extract_block(
+        content, start=POLICY_TIERS_START, end=POLICY_TIERS_END
+    )
     status_block = _extract_block(
         content,
         start=POLICY_STATUS_TABLE_START,

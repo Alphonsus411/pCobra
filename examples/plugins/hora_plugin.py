@@ -5,6 +5,7 @@ from cobra.cli.plugin import PluginCommand
 
 class HoraCommand(PluginCommand):
     """Muestra la hora actual por pantalla."""
+
     name = "hora"
     version = "1.0"
     author = "Equipo Cobra"
@@ -12,7 +13,7 @@ class HoraCommand(PluginCommand):
 
     def register_subparser(self, subparsers):
         """Registra el subparser para el comando hora.
-        
+
         Args:
             subparsers: Objeto subparsers donde registrar el comando
         """
@@ -21,10 +22,10 @@ class HoraCommand(PluginCommand):
 
     def run(self, args):
         """Ejecuta el comando para mostrar la hora.
-        
+
         Args:
             args: Argumentos parseados del comando
-        
+
         Returns:
             None
         """

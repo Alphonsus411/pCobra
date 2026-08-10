@@ -100,7 +100,9 @@ def test_evaluar_identificador_delega_unicamente_en_resolver(monkeypatch):
     assert llamadas[0][0] == "alias"
 
 
-def test_resolver_identificador_lanza_error_si_materializacion_devuelve_ast(monkeypatch):
+def test_resolver_identificador_lanza_error_si_materializacion_devuelve_ast(
+    monkeypatch,
+):
     inter = InterpretadorCobra()
     inter.variables["a"] = NodoIdentificador("b")
 

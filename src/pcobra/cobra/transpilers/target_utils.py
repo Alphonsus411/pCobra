@@ -4,7 +4,11 @@ from __future__ import annotations
 
 from typing import Final, Iterable, Literal
 
-from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS, TIER1_TARGETS, TIER2_TARGETS
+from pcobra.cobra.transpilers.targets import (
+    OFFICIAL_TARGETS,
+    TIER1_TARGETS,
+    TIER2_TARGETS,
+)
 
 MarkupKind = Literal["plain", "markdown", "rst"]
 
@@ -74,7 +78,9 @@ def resolution_candidates(target: str) -> tuple[str, ...]:
     return (canonical,)
 
 
-def target_cli_choices(available_targets: tuple[str, ...] | list[str] | set[str]) -> tuple[str, ...]:
+def target_cli_choices(
+    available_targets: tuple[str, ...] | list[str] | set[str],
+) -> tuple[str, ...]:
     """Devuelve targets canónicos oficiales preservando el orden oficial."""
     available = set(available_targets)
     return tuple(target for target in OFFICIAL_TARGETS if target in available)
@@ -136,7 +142,9 @@ def require_exact_tier_targets(
     """Valida que un conjunto coincida exactamente con un tier oficial."""
     normalized = require_official_target_subset(available_targets, context=context)
     ordered = target_cli_choices(normalized)
-    expected_order = tuple(target for target in OFFICIAL_TARGETS if target in expected_tier)
+    expected_order = tuple(
+        target for target in OFFICIAL_TARGETS if target in expected_tier
+    )
     missing = [target for target in expected_order if target not in normalized]
     extras = sorted(set(normalized) - set(expected_order))
     if missing or extras or len(set(normalized)) != len(expected_order):
@@ -145,7 +153,9 @@ def require_exact_tier_targets(
             details.append(f"faltan: {', '.join(missing)}")
         if extras:
             details.append(f"sobran: {', '.join(extras)}")
-        duplicated = [target for target in expected_order if normalized.count(target) > 1]
+        duplicated = [
+            target for target in expected_order if normalized.count(target) > 1
+        ]
         if duplicated:
             details.append(f"duplicados: {', '.join(sorted(set(duplicated)))}")
         raise RuntimeError(
@@ -188,16 +198,24 @@ def format_target_sequence(
     separator: str = ", ",
 ) -> str:
     """Formatea una secuencia ordenada de targets canónicos."""
-    normalized = target_cli_choices(require_official_target_subset(targets, context="format_target_sequence"))
-    return separator.join(format_target_name(target, markup=markup) for target in normalized)
+    normalized = target_cli_choices(
+        require_official_target_subset(targets, context="format_target_sequence")
+    )
+    return separator.join(
+        format_target_name(target, markup=markup) for target in normalized
+    )
 
 
 def official_target_rows(
     targets: Iterable[str] | None = None,
 ) -> tuple[dict[str, str], ...]:
     """Devuelve filas documentales derivadas de la política canónica."""
-    chosen = OFFICIAL_TARGETS if targets is None else target_cli_choices(
-        require_official_target_subset(targets, context="official_target_rows")
+    chosen = (
+        OFFICIAL_TARGETS
+        if targets is None
+        else target_cli_choices(
+            require_official_target_subset(targets, context="official_target_rows")
+        )
     )
     return tuple(
         {

@@ -7,6 +7,7 @@ almacenar y recuperar ASTs, limpiar la caché y persistir el estado de
 "qualia" manteniendo compatibilidad con la configuración existente basada en
 variables de entorno.
 """
+
 from __future__ import annotations
 
 import base64
@@ -105,8 +106,12 @@ def _looks_like_base64_token(value: str) -> bool:
     candidate = value.strip()
     if len(candidate) < 16:
         return False
-    std_alphabet = set("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=")
-    url_alphabet = set("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_=")
+    std_alphabet = set(
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/="
+    )
+    url_alphabet = set(
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_="
+    )
     if all(ch in std_alphabet for ch in candidate):
         normalized = candidate
     elif all(ch in url_alphabet for ch in candidate):
@@ -209,9 +214,7 @@ def _load_sqliteplus_class(*, silent_optional: bool = False):
         )
         setattr(package_module, "utils", utils_module)
 
-    spec = importlib_util.spec_from_file_location(
-        "sqliteplus_utils_sync", module_path
-    )
+    spec = importlib_util.spec_from_file_location("sqliteplus_utils_sync", module_path)
     if spec is None or spec.loader is None:  # pragma: no cover - casos extremos
         return _use_optional_fallback(
             "Instalación incompleta de 'sqliteplus-enhanced' "
@@ -360,8 +363,7 @@ def _ensure_tables(connection: sqlite3.Connection) -> None:
         if _TABLES_READY:
             return
         cursor = connection.cursor()
-        cursor.execute(
-            """
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS ast_cache (
                 hash TEXT PRIMARY KEY,
                 source TEXT NOT NULL,
@@ -369,10 +371,8 @@ def _ensure_tables(connection: sqlite3.Connection) -> None:
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
             )
-            """
-        )
-        cursor.execute(
-            """
+            """)
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS ast_fragments (
                 hash TEXT NOT NULL,
                 fragment_name TEXT NOT NULL,
@@ -381,35 +381,28 @@ def _ensure_tables(connection: sqlite3.Connection) -> None:
                 PRIMARY KEY (hash, fragment_name),
                 FOREIGN KEY (hash) REFERENCES ast_cache(hash) ON DELETE CASCADE
             )
-            """
-        )
-        cursor.execute(
-            """
+            """)
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS qualia_state (
                 id INTEGER PRIMARY KEY CHECK (id = 1),
                 payload BLOB,
                 updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
             )
-            """
-        )
-        cursor.execute(
-            """
+            """)
+        cursor.execute("""
             CREATE TRIGGER IF NOT EXISTS trg_ast_cache_timestamp
             AFTER UPDATE ON ast_cache
             BEGIN
                 UPDATE ast_cache SET updated_at = CURRENT_TIMESTAMP WHERE hash = NEW.hash;
             END
-            """
-        )
-        cursor.execute(
-            """
+            """)
+        cursor.execute("""
             CREATE TRIGGER IF NOT EXISTS trg_qualia_state_timestamp
             AFTER UPDATE ON qualia_state
             BEGIN
                 UPDATE qualia_state SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
             END
-            """
-        )
+            """)
         connection.commit()
         _TABLES_READY = True
 
@@ -530,7 +523,9 @@ def save_qualia_state(state: Any) -> None:
     """Persiste el estado de "qualia" como JSON o BLOB genérico."""
 
     if isinstance(state, (dict, list, tuple, set)) or is_dataclass(state):
-        payload: bytes | str = json.dumps(state, ensure_ascii=False, default=_json_default)
+        payload: bytes | str = json.dumps(
+            state, ensure_ascii=False, default=_json_default
+        )
     elif isinstance(state, (bytes, bytearray)):
         payload = bytes(state)
     else:

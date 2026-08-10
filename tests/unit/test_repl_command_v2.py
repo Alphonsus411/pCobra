@@ -39,7 +39,9 @@ def _parser_error_con_metadata(
         ("Se encontró 'fin' inesperado", False),
     ],
 )
-def test_es_error_de_bloque_incompleto_fallback_textual_cubre_variantes_parser(mensaje, es_incompleto):
+def test_es_error_de_bloque_incompleto_fallback_textual_cubre_variantes_parser(
+    mensaje, es_incompleto
+):
     command = ReplCommandV2()
     assert command.es_error_de_bloque_incompleto(ParserError(mensaje)) is es_incompleto
 
@@ -195,7 +197,9 @@ def test_es_error_de_bloque_incompleto_con_metadata_parcial(atributos, es_incomp
 def test_extrae_token_desde_state_con_alias_de_parser_real():
     command = ReplCommandV2()
     err = ParserError("metadata state")
-    err.state = type("State", (), {"actual_token": type("Tok", (), {"tipo": TipoToken.EOF})()})()
+    err.state = type(
+        "State", (), {"actual_token": type("Tok", (), {"tipo": TipoToken.EOF})()}
+    )()
     token = command._extraer_token_desde_error(err)
     assert token is not None
     assert token.tipo == TipoToken.EOF
@@ -325,7 +329,9 @@ def test_repl_v2_prompts_primario_y_secundario_en_bloque(monkeypatch):
     assert prompts == [">>> ", "... ", "... ", ">>> "]
 
 
-def test_repl_v2_bloque_si_x_mayor_que_5_acumula_hasta_fin_y_muestra_prompt_secundario(monkeypatch):
+def test_repl_v2_bloque_si_x_mayor_que_5_acumula_hasta_fin_y_muestra_prompt_secundario(
+    monkeypatch,
+):
     command = ReplCommandV2()
     entradas = iter(["si x > 5:", "imprimir(x)", "fin", "exit"])
     parse_calls: list[str] = []
@@ -366,7 +372,11 @@ def test_repl_v2_bloque_si_x_mayor_que_5_acumula_hasta_fin_y_muestra_prompt_secu
     )
 
     assert status == 0
-    assert parse_calls == ["si x > 5:", "si x > 5:\nimprimir(x)", "si x > 5:\nimprimir(x)\nfin"]
+    assert parse_calls == [
+        "si x > 5:",
+        "si x > 5:\nimprimir(x)",
+        "si x > 5:\nimprimir(x)\nfin",
+    ]
     assert delegate_calls == ["si x > 5:\nimprimir(x)\nfin"]
     assert prompts == [">>> ", "... ", "... ", ">>> "]
 
@@ -420,7 +430,9 @@ def test_repl_v2_sale_por_salir_y_por_exit(monkeypatch):
 
 
 @pytest.mark.parametrize("comando_salida", ["exit", "salir"])
-def test_repl_v2_salida_cancela_bloque_pendiente_de_forma_explicita(monkeypatch, comando_salida):
+def test_repl_v2_salida_cancela_bloque_pendiente_de_forma_explicita(
+    monkeypatch, comando_salida
+):
     command = ReplCommandV2()
     entradas = iter(["si verdadero:", comando_salida, "fin", "exit"])
     parse_calls: list[str] = []
@@ -471,7 +483,9 @@ def test_repl_v2_limpia_buffer_ante_error_real(monkeypatch):
         raise ParserError("Se encontró 'fin' inesperado")
 
     monkeypatch.setattr(repl_module, "prevalidar_y_parsear_codigo", _fake_parse)
-    monkeypatch.setattr(command._delegate, "_log_error", lambda _cat, err: logged.append(str(err)))
+    monkeypatch.setattr(
+        command._delegate, "_log_error", lambda _cat, err: logged.append(str(err))
+    )
 
     status = command.run(
         argparse.Namespace(
@@ -488,7 +502,13 @@ def test_repl_v2_limpia_buffer_ante_error_real(monkeypatch):
 
 
 @pytest.mark.parametrize(
-    ("entradas", "errores_por_codigo", "parse_esperado", "pipeline_esperado", "errores_esperados"),
+    (
+        "entradas",
+        "errores_por_codigo",
+        "parse_esperado",
+        "pipeline_esperado",
+        "errores_esperados",
+    ),
     [
         (
             ["si verdadero :", "fin", "exit"],
@@ -571,7 +591,9 @@ def test_repl_v2_incompleto_vs_error_real_buffer(
         "ejecutar_codigo",
         lambda codigo: delegate_calls.append(codigo),
     )
-    monkeypatch.setattr(command._delegate, "_log_error", lambda _cat, err: logged.append(str(err)))
+    monkeypatch.setattr(
+        command._delegate, "_log_error", lambda _cat, err: logged.append(str(err))
+    )
 
     status = command.run(
         argparse.Namespace(
@@ -657,7 +679,9 @@ def test_repl_v2_error_sintaxis_real_limpia_buffer_y_continua(monkeypatch):
         "ejecutar_codigo",
         lambda codigo: delegate_calls.append(codigo),
     )
-    monkeypatch.setattr(command._delegate, "_log_error", lambda _cat, err: logged.append(str(err)))
+    monkeypatch.setattr(
+        command._delegate, "_log_error", lambda _cat, err: logged.append(str(err))
+    )
 
     status = command.run(
         argparse.Namespace(
@@ -674,7 +698,9 @@ def test_repl_v2_error_sintaxis_real_limpia_buffer_y_continua(monkeypatch):
     assert logged == ["Token inesperado: '('"]
 
 
-def test_repl_v2_error_sintactico_real_limpia_buffer_y_permite_entrada_nueva(monkeypatch):
+def test_repl_v2_error_sintactico_real_limpia_buffer_y_permite_entrada_nueva(
+    monkeypatch,
+):
     command = ReplCommandV2()
     entradas = iter(["si x > 5:", "imprimir(", "var y = 7", "exit"])
     parse_calls: list[str] = []
@@ -702,7 +728,9 @@ def test_repl_v2_error_sintactico_real_limpia_buffer_y_permite_entrada_nueva(mon
         "ejecutar_codigo",
         lambda codigo: delegate_calls.append(codigo),
     )
-    monkeypatch.setattr(command._delegate, "_log_error", lambda _cat, err: logged.append(str(err)))
+    monkeypatch.setattr(
+        command._delegate, "_log_error", lambda _cat, err: logged.append(str(err))
+    )
 
     status = command.run(
         argparse.Namespace(
@@ -730,7 +758,9 @@ def test_repl_v2_fallback_mensaje_se_esperaba_fin_sin_metadata_completa(monkeypa
     def _fake_parse(codigo: str):
         parse_calls.append(codigo)
         if codigo != "si x > 5:\nimprimir(x)\nfin":
-            raise ParserError("Se esperaba 'fin' para cerrar bloque al final de entrada")
+            raise ParserError(
+                "Se esperaba 'fin' para cerrar bloque al final de entrada"
+            )
         return []
 
     monkeypatch.setattr(repl_module, "prevalidar_y_parsear_codigo", _fake_parse)
@@ -750,7 +780,11 @@ def test_repl_v2_fallback_mensaje_se_esperaba_fin_sin_metadata_completa(monkeypa
     )
 
     assert status == 0
-    assert parse_calls == ["si x > 5:", "si x > 5:\nimprimir(x)", "si x > 5:\nimprimir(x)\nfin"]
+    assert parse_calls == [
+        "si x > 5:",
+        "si x > 5:\nimprimir(x)",
+        "si x > 5:\nimprimir(x)\nfin",
+    ]
     assert delegate_calls == ["si x > 5:\nimprimir(x)\nfin"]
 
 
@@ -780,7 +814,9 @@ def test_repl_v2_error_ejecucion_limpia_buffer_actual_y_continua(monkeypatch):
             raise RuntimeError("falló ejecución")
 
     monkeypatch.setattr(command._delegate, "ejecutar_codigo", _fake_delegate)
-    monkeypatch.setattr(command._delegate, "_log_error", lambda _cat, err: logged.append(str(err)))
+    monkeypatch.setattr(
+        command._delegate, "_log_error", lambda _cat, err: logged.append(str(err))
+    )
 
     status = command.run(
         argparse.Namespace(
@@ -833,7 +869,9 @@ def test_repl_v2_persiste_interpretador_entre_bloques(monkeypatch):
     assert interpretadores_recibidos == [{}, estado]
 
 
-def test_repl_v2_anidamiento_real_no_ejecuta_hasta_cierre_completo_y_persiste_estado(monkeypatch):
+def test_repl_v2_anidamiento_real_no_ejecuta_hasta_cierre_completo_y_persiste_estado(
+    monkeypatch,
+):
     command = ReplCommandV2()
     entradas = iter(
         [
@@ -947,12 +985,16 @@ def test_repl_v2_salida_homogenea_para_sentencia_y_expresion(
     assert capsys.readouterr().out == salida_esperada
 
 
-def test_repl_v2_no_hace_echo_automatico_para_estructuras_de_control(monkeypatch, capsys):
+def test_repl_v2_no_hace_echo_automatico_para_estructuras_de_control(
+    monkeypatch, capsys
+):
     command = ReplCommandV2()
     entradas = iter(["si verdadero:\nfin", "exit"])
 
     monkeypatch.setattr("builtins.input", lambda _prompt: next(entradas))
-    monkeypatch.setattr(repl_module, "prevalidar_y_parsear_codigo", lambda _codigo: [object()])
+    monkeypatch.setattr(
+        repl_module, "prevalidar_y_parsear_codigo", lambda _codigo: [object()]
+    )
     monkeypatch.setattr(repl_module, "mostrar_info", lambda *_args, **_kwargs: None)
 
     monkeypatch.setattr(
@@ -984,7 +1026,9 @@ def test_repl_v2_var_e_imprimir_persisten_estado_y_muestran_valor(monkeypatch, c
     estado: dict[str, int] = {}
 
     monkeypatch.setattr("builtins.input", lambda _prompt: next(entradas))
-    monkeypatch.setattr(repl_module, "prevalidar_y_parsear_codigo", lambda _codigo: [object()])
+    monkeypatch.setattr(
+        repl_module, "prevalidar_y_parsear_codigo", lambda _codigo: [object()]
+    )
 
     def _fake_delegate(codigo: str):
         interpretador = command._delegate.interpretador or estado
@@ -1056,8 +1100,12 @@ def test_repl_v2_bloque_incompleto_acumula_buffer_y_sesion_sigue_activa(monkeypa
     assert delegate_calls == ["si verdadero:\nimprimir(1)\nfin"]
 
 
-def test_regresion_paridad_interactive_vs_repl_v2_para_expresion_top_level(monkeypatch, capsys):
-    repl_interactivo = interactive_module.InteractiveCommand(repl_module.InterpretadorCobra())
+def test_regresion_paridad_interactive_vs_repl_v2_para_expresion_top_level(
+    monkeypatch, capsys
+):
+    repl_interactivo = interactive_module.InteractiveCommand(
+        repl_module.InterpretadorCobra()
+    )
     repl_interactivo.ejecutar_codigo("var x = 5")
     repl_interactivo.ejecutar_codigo("x + 10")
     salida_interactive = capsys.readouterr().out

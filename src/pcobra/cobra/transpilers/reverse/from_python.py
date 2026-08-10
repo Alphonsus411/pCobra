@@ -109,7 +109,9 @@ class ReverseFromPython(BaseReverseTranspiler):
 
     def generic_visit(self, node: ast.AST) -> NodoAST:
         """Maneja nodos no soportados explícitamente."""
-        raise NotImplementedError(f"Nodo de Python no soportado: {node.__class__.__name__}")
+        raise NotImplementedError(
+            f"Nodo de Python no soportado: {node.__class__.__name__}"
+        )
 
     # Nodos simples -----------------------------------------------------
     def visit_Name(self, node: ast.Name) -> NodoIdentificador:
@@ -139,9 +141,7 @@ class ReverseFromPython(BaseReverseTranspiler):
 
     def visit_Dict(self, node: ast.Dict) -> NodoDiccionario:
         """Convierte un diccionario de Python."""
-        pares = [
-            (self.visit(k), self.visit(v)) for k, v in zip(node.keys, node.values)
-        ]
+        pares = [(self.visit(k), self.visit(v)) for k, v in zip(node.keys, node.values)]
         return NodoDiccionario(pares)
 
     def visit_ListComp(self, node: ast.ListComp) -> NodoListaComprehension:
@@ -176,24 +176,28 @@ class ReverseFromPython(BaseReverseTranspiler):
         """Convierte una operación binaria."""
         op_token = self.OPERADORES_BINARIOS.get(type(node.op))
         if op_token is None:
-            raise NotImplementedError(f"Operador binario no soportado: {type(node.op).__name__}")
+            raise NotImplementedError(
+                f"Operador binario no soportado: {type(node.op).__name__}"
+            )
         return NodoOperacionBinaria(
-            self.visit(node.left),
-            op_token,
-            self.visit(node.right)
+            self.visit(node.left), op_token, self.visit(node.right)
         )
 
     def visit_UnaryOp(self, node: ast.UnaryOp) -> NodoOperacionUnaria:
         """Convierte una operación unaria."""
         op_token = self.OPERADORES_UNARIOS.get(type(node.op))
         if op_token is None:
-            raise NotImplementedError(f"Operador unario no soportado: {type(node.op).__name__}")
+            raise NotImplementedError(
+                f"Operador unario no soportado: {type(node.op).__name__}"
+            )
         return NodoOperacionUnaria(op_token, self.visit(node.operand))
 
     def visit_Compare(self, node: ast.Compare) -> NodoOperacionBinaria:
         """Convierte una comparación, manejando comparaciones encadenadas."""
 
-        comparadores = [self.visit(node.left)] + [self.visit(c) for c in node.comparators]
+        comparadores = [self.visit(node.left)] + [
+            self.visit(c) for c in node.comparators
+        ]
         ops: List[Token] = []
         for op_node in node.ops:
             token = self.OPERADORES_BINARIOS.get(type(op_node))
@@ -211,23 +215,23 @@ class ReverseFromPython(BaseReverseTranspiler):
         and_token = self.OPERADORES_BINARIOS[ast.And]
 
         for i in range(1, len(ops)):
-            comparacion = NodoOperacionBinaria(comparadores[i], ops[i], comparadores[i + 1])
+            comparacion = NodoOperacionBinaria(
+                comparadores[i], ops[i], comparadores[i + 1]
+            )
             resultado = NodoOperacionBinaria(resultado, and_token, comparacion)
 
         return resultado
 
     # Expresiones -------------------------------------------------------
-    def visit_Call(self, node: ast.Call) -> Union[NodoLlamadaMetodo, NodoLlamadaFuncion]:
+    def visit_Call(
+        self, node: ast.Call
+    ) -> Union[NodoLlamadaMetodo, NodoLlamadaFuncion]:
         """Convierte una llamada a función o método."""
         args = [self.visit(a) for a in node.args]
-        
+
         if isinstance(node.func, ast.Attribute):
-            return NodoLlamadaMetodo(
-                self.visit(node.func.value),
-                node.func.attr,
-                args
-            )
-        
+            return NodoLlamadaMetodo(self.visit(node.func.value), node.func.attr, args)
+
         if isinstance(node.func, ast.Name):
             nombre = node.func.id
             if nombre == "proyectar":
@@ -243,8 +247,10 @@ class ReverseFromPython(BaseReverseTranspiler):
                 hb = args[0] if args else NodoValor(None)
                 return NodoGraficar(hb)
             return NodoLlamadaFuncion(nombre, args)
-        
-        raise NotImplementedError(f"Tipo de llamada no soportado: {type(node.func).__name__}")
+
+        raise NotImplementedError(
+            f"Tipo de llamada no soportado: {type(node.func).__name__}"
+        )
 
     def visit_Attribute(self, node: ast.Attribute) -> NodoAtributo:
         """Convierte un acceso a atributo."""
@@ -279,24 +285,23 @@ class ReverseFromPython(BaseReverseTranspiler):
         return NodoCondicional(
             self.visit(node.test),
             [self.visit(n) for n in node.body],
-            [self.visit(n) for n in node.orelse]
+            [self.visit(n) for n in node.orelse],
         )
 
     def visit_While(self, node: ast.While) -> NodoBucleMientras:
         """Convierte un while."""
         return NodoBucleMientras(
-            self.visit(node.test),
-            [self.visit(n) for n in node.body]
+            self.visit(node.test), [self.visit(n) for n in node.body]
         )
 
     def visit_For(self, node: ast.For) -> NodoPara:
         """Convierte un for."""
-        var = node.target.id if isinstance(node.target, ast.Name) else self.visit(node.target)
-        return NodoPara(
-            var,
-            self.visit(node.iter),
-            [self.visit(n) for n in node.body]
+        var = (
+            node.target.id
+            if isinstance(node.target, ast.Name)
+            else self.visit(node.target)
         )
+        return NodoPara(var, self.visit(node.iter), [self.visit(n) for n in node.body])
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> NodoFuncion:
         """Convierte una definición de función."""
@@ -304,7 +309,7 @@ class ReverseFromPython(BaseReverseTranspiler):
             node.name,
             [arg.arg for arg in node.args.args],
             [self.visit(n) for n in node.body],
-            decoradores=[self.visit(d) for d in node.decorator_list]
+            decoradores=[self.visit(d) for d in node.decorator_list],
         )
 
     def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> NodoFuncion:
@@ -314,5 +319,5 @@ class ReverseFromPython(BaseReverseTranspiler):
             [arg.arg for arg in node.args.args],
             [self.visit(n) for n in node.body],
             decoradores=[self.visit(d) for d in node.decorator_list],
-            asincronica=True
+            asincronica=True,
         )

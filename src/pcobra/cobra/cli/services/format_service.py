@@ -11,7 +11,9 @@ def format_code_with_black(archivo: str) -> bool:
     """Formatea un archivo de código usando black."""
     try:
         if not shutil.which("black"):
-            mostrar_error(_("Herramienta 'black' no encontrada en el PATH"), registrar_log=False)
+            mostrar_error(
+                _("Herramienta 'black' no encontrada en el PATH"), registrar_log=False
+            )
             return False
 
         resultado = subprocess.run(
@@ -22,7 +24,9 @@ def format_code_with_black(archivo: str) -> bool:
             text=True,
         )
         if resultado.returncode != 0:
-            mostrar_error(f"Error al formatear: {resultado.stderr}", registrar_log=False)
+            mostrar_error(
+                f"Error al formatear: {resultado.stderr}", registrar_log=False
+            )
             return False
         return True
     except Exception as exc:  # pragma: no cover - salvaguarda defensiva CLI

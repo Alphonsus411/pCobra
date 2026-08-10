@@ -40,7 +40,9 @@ def test_tabla_equivalencias_y_superficie_publica(nombre: str, tabla: str):
     equivalencias = getattr(modulo, tabla)
     assert isinstance(equivalencias, dict)
     assert equivalencias
-    assert all(isinstance(k, str) and isinstance(v, str) for k, v in equivalencias.items())
+    assert all(
+        isinstance(k, str) and isinstance(v, str) for k, v in equivalencias.items()
+    )
 
     assert isinstance(modulo.__all__, list)
     assert modulo.__all__

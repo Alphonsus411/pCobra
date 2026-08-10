@@ -10,7 +10,9 @@ def _write(path: Path, content: str) -> None:
     path.write_text(content, encoding="utf-8")
 
 
-def test_detecta_lista_literal_publica_fuera_de_modulos_permitidos(tmp_path: Path) -> None:
+def test_detecta_lista_literal_publica_fuera_de_modulos_permitidos(
+    tmp_path: Path,
+) -> None:
     _write(
         tmp_path / "src" / "pcobra" / "cobra" / "foo.py",
         'PUBLIC_BACKENDS = ("python", "javascript", "rust")\n',

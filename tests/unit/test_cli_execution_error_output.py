@@ -6,7 +6,6 @@ from unittest.mock import patch
 
 import pytest
 
-
 cli_module = importlib.import_module("pcobra.cobra.cli.cli")
 CliApplication = cli_module.CliApplication
 
@@ -22,17 +21,22 @@ def test_handle_execution_error_normal_hides_traceback_and_keeps_logging_excepti
     app = CliApplication()
     exc = RuntimeError("boom")
 
-    with patch("pcobra.cobra.cli.cli.messages.mostrar_error") as mock_error, patch(
-        "pcobra.cobra.cli.cli.logging.exception"
-    ) as mock_logging_exception, patch("pcobra.cobra.cli.cli.print") as mock_print, patch(
-        "pcobra.cobra.cli.cli.format_traceback", return_value="TRACEBACK"
-    ) as mock_format_traceback:
+    with (
+        patch("pcobra.cobra.cli.cli.messages.mostrar_error") as mock_error,
+        patch("pcobra.cobra.cli.cli.logging.exception") as mock_logging_exception,
+        patch("pcobra.cobra.cli.cli.print") as mock_print,
+        patch(
+            "pcobra.cobra.cli.cli.format_traceback", return_value="TRACEBACK"
+        ) as mock_format_traceback,
+    ):
         result = app._handle_execution_error(exc, "es", debug_activo=False)
 
     assert result == 1
     assert mock_error.call_count == 1
     assert mock_error.call_args[0][0] == "boom"
-    mock_logging_exception.assert_called_once_with("Error interno inesperado en ejecución de comando")
+    mock_logging_exception.assert_called_once_with(
+        "Error interno inesperado en ejecución de comando"
+    )
     mock_print.assert_not_called()
     mock_format_traceback.assert_not_called()
 
@@ -42,14 +46,18 @@ def test_handle_execution_error_no_duplica_salida_si_ya_fue_mostrada():
     exc = RuntimeError("boom")
     setattr(exc, "error_ya_mostrado", True)
 
-    with patch("pcobra.cobra.cli.cli.messages.mostrar_error") as mock_error, patch(
-        "pcobra.cobra.cli.cli.logging.exception"
-    ) as mock_logging_exception, patch("pcobra.cobra.cli.cli.print") as mock_print:
+    with (
+        patch("pcobra.cobra.cli.cli.messages.mostrar_error") as mock_error,
+        patch("pcobra.cobra.cli.cli.logging.exception") as mock_logging_exception,
+        patch("pcobra.cobra.cli.cli.print") as mock_print,
+    ):
         result = app._handle_execution_error(exc, "es", debug_activo=False)
 
     assert result == 1
     mock_error.assert_not_called()
-    mock_logging_exception.assert_called_once_with("Error interno inesperado en ejecución de comando")
+    mock_logging_exception.assert_called_once_with(
+        "Error interno inesperado en ejecución de comando"
+    )
     mock_print.assert_not_called()
 
 
@@ -57,12 +65,14 @@ def test_handle_execution_error_debug_envia_traceback_a_logger_debug():
     app = CliApplication()
     exc = RuntimeError("boom")
 
-    with patch("pcobra.cobra.cli.cli.messages.mostrar_error") as mock_error, patch(
-        "pcobra.cobra.cli.cli.logging.exception"
-    ) as mock_logging_exception, patch(
-        "pcobra.cobra.cli.cli.logging.getLogger"
-    ) as mock_get_logger, patch(
-        "pcobra.cobra.cli.cli.format_traceback", return_value="TRACEBACK") as mock_format_traceback:
+    with (
+        patch("pcobra.cobra.cli.cli.messages.mostrar_error") as mock_error,
+        patch("pcobra.cobra.cli.cli.logging.exception") as mock_logging_exception,
+        patch("pcobra.cobra.cli.cli.logging.getLogger") as mock_get_logger,
+        patch(
+            "pcobra.cobra.cli.cli.format_traceback", return_value="TRACEBACK"
+        ) as mock_format_traceback,
+    ):
         result = app._handle_execution_error(exc, "es", debug_activo=True)
 
     assert result == 1
@@ -84,9 +94,11 @@ def test_handle_execution_error_con_root_logger_configurado_no_duplica_salida():
     root_logger.addHandler(logging.StreamHandler())
 
     try:
-        with patch("pcobra.cobra.cli.cli.messages.mostrar_error") as mock_error, patch(
-            "pcobra.cobra.cli.cli.logging.exception"
-        ) as mock_logging_exception, patch("pcobra.cobra.cli.cli.print") as mock_print:
+        with (
+            patch("pcobra.cobra.cli.cli.messages.mostrar_error") as mock_error,
+            patch("pcobra.cobra.cli.cli.logging.exception") as mock_logging_exception,
+            patch("pcobra.cobra.cli.cli.print") as mock_print,
+        ):
             result = app._handle_execution_error(exc, "es", debug_activo=False)
     finally:
         for handler in list(root_logger.handlers):
@@ -96,7 +108,9 @@ def test_handle_execution_error_con_root_logger_configurado_no_duplica_salida():
 
     assert result == 1
     mock_error.assert_called_once_with("boom", registrar_log=False)
-    mock_logging_exception.assert_called_once_with("Error interno inesperado en ejecución de comando")
+    mock_logging_exception.assert_called_once_with(
+        "Error interno inesperado en ejecución de comando"
+    )
     mock_print.assert_not_called()
 
 
@@ -111,11 +125,14 @@ def test_run_propaga_debug_activo_hacia_execute_command():
         cmd=None,
     )
 
-    with patch.object(app, "initialize"), patch.object(app, "_parse_arguments", return_value=args), patch.object(
-        app, "execute_command", return_value=0
-    ) as mock_execute_command, patch("pcobra.cobra.cli.cli.messages.mostrar_logo"), patch(
-        "pcobra.cobra.cli.cli.messages.disable_colors"
-    ), patch("pcobra.cobra.cli.cli.setup_gettext"):
+    with (
+        patch.object(app, "initialize"),
+        patch.object(app, "_parse_arguments", return_value=args),
+        patch.object(app, "execute_command", return_value=0) as mock_execute_command,
+        patch("pcobra.cobra.cli.cli.messages.mostrar_logo"),
+        patch("pcobra.cobra.cli.cli.messages.disable_colors"),
+        patch("pcobra.cobra.cli.cli.setup_gettext"),
+    ):
         result = app.run([])
 
     assert result == 0
@@ -126,11 +143,14 @@ def test_run_tolera_argumentos_opcionales_ausentes_fuera_de_comando():
     app = CliApplication()
     args = argparse.Namespace(cmd=None)
 
-    with patch.object(app, "initialize"), patch.object(app, "_parse_arguments", return_value=args), patch.object(
-        app, "execute_command", return_value=1
-    ) as mock_execute_command, patch("pcobra.cobra.cli.cli.messages.mostrar_logo"), patch(
-        "pcobra.cobra.cli.cli.messages.disable_colors"
-    ) as mock_disable_colors, patch("pcobra.cobra.cli.cli.setup_gettext") as mock_setup_gettext:
+    with (
+        patch.object(app, "initialize"),
+        patch.object(app, "_parse_arguments", return_value=args),
+        patch.object(app, "execute_command", return_value=1) as mock_execute_command,
+        patch("pcobra.cobra.cli.cli.messages.mostrar_logo"),
+        patch("pcobra.cobra.cli.cli.messages.disable_colors") as mock_disable_colors,
+        patch("pcobra.cobra.cli.cli.setup_gettext") as mock_setup_gettext,
+    ):
         result = app.run([])
 
     assert result == 1
@@ -154,13 +174,16 @@ def test_run_bloquea_fallback_inseguro_en_ci_sin_override(monkeypatch):
     )
     monkeypatch.setenv("CI", "1")
 
-    with patch.object(app, "initialize"), patch.object(app, "_parse_arguments", return_value=args), patch.object(
-        app, "execute_command", return_value=0
-    ) as mock_execute_command, patch("pcobra.cobra.cli.cli.messages.mostrar_logo"), patch(
-        "pcobra.cobra.cli.cli.messages.disable_colors"
-    ), patch("pcobra.cobra.cli.cli.setup_gettext"), patch("pcobra.cobra.cli.cli.messages.mostrar_advertencia"), patch(
-        "pcobra.cobra.cli.cli.messages.mostrar_error"
-    ) as mock_error:
+    with (
+        patch.object(app, "initialize"),
+        patch.object(app, "_parse_arguments", return_value=args),
+        patch.object(app, "execute_command", return_value=0) as mock_execute_command,
+        patch("pcobra.cobra.cli.cli.messages.mostrar_logo"),
+        patch("pcobra.cobra.cli.cli.messages.disable_colors"),
+        patch("pcobra.cobra.cli.cli.setup_gettext"),
+        patch("pcobra.cobra.cli.cli.messages.mostrar_advertencia"),
+        patch("pcobra.cobra.cli.cli.messages.mostrar_error") as mock_error,
+    ):
         result = app.run([])
 
     assert result == 1
@@ -183,13 +206,15 @@ def test_run_permite_override_explicito_en_ci_y_muestra_mensaje(monkeypatch):
     )
     monkeypatch.setenv("CI", "1")
 
-    with patch.object(app, "initialize"), patch.object(app, "_parse_arguments", return_value=args), patch.object(
-        app, "execute_command", return_value=0
-    ) as mock_execute_command, patch("pcobra.cobra.cli.cli.messages.mostrar_logo"), patch(
-        "pcobra.cobra.cli.cli.messages.disable_colors"
-    ), patch("pcobra.cobra.cli.cli.setup_gettext"), patch(
-        "pcobra.cobra.cli.cli.messages.mostrar_advertencia"
-    ) as mock_warning:
+    with (
+        patch.object(app, "initialize"),
+        patch.object(app, "_parse_arguments", return_value=args),
+        patch.object(app, "execute_command", return_value=0) as mock_execute_command,
+        patch("pcobra.cobra.cli.cli.messages.mostrar_logo"),
+        patch("pcobra.cobra.cli.cli.messages.disable_colors"),
+        patch("pcobra.cobra.cli.cli.setup_gettext"),
+        patch("pcobra.cobra.cli.cli.messages.mostrar_advertencia") as mock_warning,
+    ):
         result = app.run([])
 
     assert result == 0
@@ -245,30 +270,38 @@ def test_handle_execution_error_usuario_esperado_no_muestra_traceback_en_modo_no
     app = CliApplication()
     exc = RuntimeError("usar_error[conflicto_simbolo]: detalle técnico")
 
-    with patch("pcobra.cobra.cli.cli.messages.mostrar_error") as mock_error, patch(
-        "pcobra.cobra.cli.cli.logging.getLogger"
-    ) as mock_get_logger, patch(
-        "pcobra.cobra.cli.cli.format_traceback", return_value="Traceback técnico"
-    ) as mock_tb:
+    with (
+        patch("pcobra.cobra.cli.cli.messages.mostrar_error") as mock_error,
+        patch("pcobra.cobra.cli.cli.logging.getLogger") as mock_get_logger,
+        patch(
+            "pcobra.cobra.cli.cli.format_traceback", return_value="Traceback técnico"
+        ) as mock_tb,
+    ):
         result = app._handle_execution_error(exc, "es", debug_activo=False)
 
     assert result == 1
-    mock_error.assert_called_once_with("usar_error[conflicto_simbolo]: detalle técnico", registrar_log=False)
+    mock_error.assert_called_once_with(
+        "usar_error[conflicto_simbolo]: detalle técnico", registrar_log=False
+    )
     mock_tb.assert_called_once_with(exc, "es")
     assert not any("Traceback" in str(c.args[0]) for c in mock_error.call_args_list)
-    assert any("sin traceback en modo normal" in str(c.args[0]) for c in mock_get_logger.return_value.debug.call_args_list)
+    assert any(
+        "sin traceback en modo normal" in str(c.args[0])
+        for c in mock_get_logger.return_value.debug.call_args_list
+    )
 
 
 def test_handle_execution_error_debug_si_muestra_traceback_en_logs():
     app = CliApplication()
     exc = RuntimeError("usar_error[modulo_fuera_catalogo_publico]: numpy")
 
-    with patch("pcobra.cobra.cli.cli.messages.mostrar_error") as mock_error, patch(
-        "pcobra.cobra.cli.cli.logging.exception"
-    ) as mock_exception, patch(
-        "pcobra.cobra.cli.cli.logging.getLogger"
-    ) as mock_get_logger, patch(
-        "pcobra.cobra.cli.cli.format_traceback", return_value="Traceback detallado"
+    with (
+        patch("pcobra.cobra.cli.cli.messages.mostrar_error") as mock_error,
+        patch("pcobra.cobra.cli.cli.logging.exception") as mock_exception,
+        patch("pcobra.cobra.cli.cli.logging.getLogger") as mock_get_logger,
+        patch(
+            "pcobra.cobra.cli.cli.format_traceback", return_value="Traceback detallado"
+        ),
     ):
         result = app._handle_execution_error(exc, "es", debug_activo=True)
 

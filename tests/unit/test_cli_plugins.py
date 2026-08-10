@@ -21,7 +21,10 @@ def test_cli_saludo_plugin():
         group="cobra.plugins",
     )
     limpiar_registro()
-    with patch("cobra.cli.plugin.entry_points", return_value=importlib.metadata.EntryPoints((ep,))):
+    with patch(
+        "cobra.cli.plugin.entry_points",
+        return_value=importlib.metadata.EntryPoints((ep,)),
+    ):
         with patch("sys.stdout", new_callable=StringIO) as out:
             main(["--plugins-allowlist", "saludo_plugin:SaludoCommand", "saludo"])
     assert "¡Hola desde el plugin de ejemplo!" in out.getvalue()

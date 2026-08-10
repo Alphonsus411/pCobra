@@ -14,13 +14,17 @@ try:  # pragma: no cover - dependencia opcional
     from jsonschema import ValidationError as _JSONSchemaValidationError
 except ModuleNotFoundError:  # pragma: no cover - entornos sin jsonschema
     _JSONSchemaValidationError = None
+
     class _FallbackValidationError(RuntimeError):
         """Excepción básica usada cuando falta jsonschema."""
 
         pass
+
 else:
+
     class _FallbackValidationError(_JSONSchemaValidationError):  # type: ignore[misc]
         pass
+
 
 ValidationError = _FallbackValidationError
 
@@ -62,12 +66,16 @@ EXTENSIONES_POR_LENGUAJE: Dict[str, str] = {
     "java": ".java",
 }
 
+
 class UnsupportedLanguageError(Exception):
     """Error lanzado cuando se intenta usar un lenguaje no soportado."""
+
     pass
+
 
 class TranspilationError(Exception):
     """Error lanzado cuando ocurre un problema durante la transpilación."""
+
     pass
 
 
@@ -105,7 +113,7 @@ def _build_roundtrip_loss_report(
     imports_estandar = get_standard_imports(destino) or ""
     codigo_para_reverse = codigo_generado
     if imports_estandar and codigo_generado.startswith(imports_estandar):
-        codigo_para_reverse = codigo_generado[len(imports_estandar):]
+        codigo_para_reverse = codigo_generado[len(imports_estandar) :]
     try:
         ast_reconstruido = reverse_dest.generate_ast(codigo_para_reverse)
     except NotImplementedError as exc:
@@ -192,30 +200,32 @@ def validar_consistencia_reverse_transpilers() -> None:
 
 validar_consistencia_reverse_transpilers()
 
+
 @contextmanager
 def archivo_fuente(ruta: str, codificacion: str):
     """Context manager para manejar la apertura y cierre de archivos.
-    
+
     Args:
         ruta: Ruta al archivo
         codificacion: Codificación del archivo
-        
+
     Yields:
         El archivo abierto
-        
+
     Raises:
         OSError: Si hay problemas al abrir el archivo
     """
     try:
-        with open(ruta, 'r', encoding=codificacion) as f:
+        with open(ruta, "r", encoding=codificacion) as f:
             yield f
     except Exception as e:
         logger.error(f"Error al leer archivo: {e}")
         raise
 
+
 class TranspilarInversoCommand(BaseCommand):
     """Convierte código desde un origen reverse de entrada hacia un target oficial.
-    
+
     Esta clase implementa un comando que permite leer código desde uno de los
     orígenes reverse mantenidos por política y generar salida en uno de los 8
     targets oficiales de transpilación, pasando por el AST de Cobra.
@@ -226,29 +236,26 @@ class TranspilarInversoCommand(BaseCommand):
 
     def register_subparser(self, subparsers: Any) -> CustomArgumentParser:
         """Registra los argumentos del subcomando en el parser.
-        
+
         Args:
             subparsers: Objeto para registrar subcomandos
-            
+
         Returns:
             CustomArgumentParser: Parser configurado para el subcomando
         """
         parser = subparsers.add_parser(
             self.name,
-            help=_("Convierte desde un origen reverse de entrada hacia un target oficial de salida"),
+            help=_(
+                "Convierte desde un origen reverse de entrada hacia un target oficial de salida"
+            ),
         )
-        parser.add_argument(
-            "archivo",
-            help=_("Ruta al archivo fuente a transpilar")
-        )
+        parser.add_argument("archivo", help=_("Ruta al archivo fuente a transpilar"))
         parser.add_argument(
             "--origen",
             help=_(
                 "Lenguaje de origen para transpilación inversa "
                 "(solo orígenes reverse de entrada: {})"
-            ).format(
-                REVERSE_ORIGINS_HELP
-            ),
+            ).format(REVERSE_ORIGINS_HELP),
             required=True,
             type=parse_reverse_source_language,
             choices=ORIGIN_CHOICES,
@@ -276,11 +283,11 @@ class TranspilarInversoCommand(BaseCommand):
 
     def _validar_archivo(self, archivo: str, lenguaje: str) -> Optional[str]:
         """Valida que el archivo exista y sea legible.
-        
+
         Args:
             archivo: Ruta al archivo a validar
             lenguaje: Lenguaje de origen esperado
-            
+
         Returns:
             Optional[str]: Mensaje de error si hay problemas, None si todo está bien
         """
@@ -290,19 +297,19 @@ class TranspilarInversoCommand(BaseCommand):
             return f"No hay permisos de lectura para '{archivo}'"
         if os.path.getsize(archivo) > MAX_FILE_SIZE:
             return f"El archivo '{archivo}' excede el tamaño máximo permitido ({MAX_FILE_SIZE} bytes)"
-            
+
         extension_esperada = EXTENSIONES_POR_LENGUAJE.get(lenguaje)
         if extension_esperada and not archivo.lower().endswith(extension_esperada):
             return f"El archivo '{archivo}' no tiene la extensión esperada para {lenguaje} ({extension_esperada})"
-        
+
         return None
 
     def _detectar_codificacion(self, archivo: str) -> str:
         """Detecta la codificación del archivo.
-        
+
         Args:
             archivo: Ruta al archivo
-            
+
         Returns:
             str: Codificación detectada
         """
@@ -326,11 +333,11 @@ class TranspilarInversoCommand(BaseCommand):
 
     def _verificar_dependencias(self, origen: str, destino: str) -> None:
         """Verifica que los transpiladores necesarios estén disponibles.
-        
+
         Args:
             origen: Lenguaje de origen
             destino: Lenguaje de destino
-            
+
         Raises:
             UnsupportedLanguageError: Si algún transpilador no está disponible
         """
@@ -357,13 +364,13 @@ class TranspilarInversoCommand(BaseCommand):
 
     def run(self, args: Namespace) -> int:
         """Ejecuta la transpilación del código.
-        
+
         Args:
             args: Argumentos parseados del comando
-            
+
         Returns:
             int: 0 si la ejecución fue exitosa, otro valor en caso de error
-            
+
         Raises:
             CommandError: Si hay errores en la validación o transpilación
         """
@@ -431,7 +438,9 @@ class TranspilarInversoCommand(BaseCommand):
             )
 
             mostrar_info(
-                _("Código transpilado a target oficial ({name}) desde origen reverse {origin}:").format(
+                _(
+                    "Código transpilado a target oficial ({name}) desde origen reverse {origin}:"
+                ).format(
                     name=transp_cls.__name__,
                     origin=origen,
                 )
@@ -464,7 +473,12 @@ class TranspilarInversoCommand(BaseCommand):
                 f"nodo/constructo no soportado ({exc})"
             )
             return 1
-        except (CommandError, ValidationError, UnsupportedLanguageError, ValueError) as exc:
+        except (
+            CommandError,
+            ValidationError,
+            UnsupportedLanguageError,
+            ValueError,
+        ) as exc:
             mostrar_error(str(exc))
             return 1
         except TranspilationError as exc:

@@ -26,7 +26,9 @@ def test_optimize_constants_binaria():
     ast = [
         NodoAsignacion(
             "x",
-            NodoOperacionBinaria(NodoValor(2), Token(TipoToken.SUMA, "+"), NodoValor(3)),
+            NodoOperacionBinaria(
+                NodoValor(2), Token(TipoToken.SUMA, "+"), NodoValor(3)
+            ),
         )
     ]
     optimizado = optimize_constants(ast)
@@ -196,7 +198,14 @@ def test_eliminate_common_subexpressions_global():
     )
     ast = [
         NodoAsignacion("x", suma),
-        NodoAsignacion("y", NodoOperacionBinaria(NodoIdentificador("a"), Token(TipoToken.SUMA, "+"), NodoIdentificador("b"))),
+        NodoAsignacion(
+            "y",
+            NodoOperacionBinaria(
+                NodoIdentificador("a"),
+                Token(TipoToken.SUMA, "+"),
+                NodoIdentificador("b"),
+            ),
+        ),
     ]
     optimizado = eliminate_common_subexpressions(ast)
     assert len(optimizado) == 3
@@ -219,7 +228,14 @@ def test_eliminate_common_subexpressions_in_function():
         [],
         [
             NodoAsignacion("x", suma),
-            NodoAsignacion("y", NodoOperacionBinaria(NodoIdentificador("a"), Token(TipoToken.SUMA, "+"), NodoIdentificador("b"))),
+            NodoAsignacion(
+                "y",
+                NodoOperacionBinaria(
+                    NodoIdentificador("a"),
+                    Token(TipoToken.SUMA, "+"),
+                    NodoIdentificador("b"),
+                ),
+            ),
             NodoRetorno(NodoValor(0)),
         ],
     )

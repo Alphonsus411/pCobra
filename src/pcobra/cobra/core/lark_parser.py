@@ -1,4 +1,5 @@
 """Parser alternativo basado en Lark para cargar la gramática EBNF."""
+
 from __future__ import annotations
 
 from dataclasses import fields, is_dataclass
@@ -13,6 +14,7 @@ _LARK_DISPONIBLE = False
 try:  # pragma: no cover - ruta directa cuando ``lark`` está instalado.
     from lark import Lark, ParseError, Tree  # type: ignore[import-not-found]
 except ImportError:  # pragma: no cover - la rama se prueba con los tests existentes
+
     class ParseError(Exception):
         """Excepción compatible con :mod:`lark` para la ruta de reserva."""
 
@@ -71,9 +73,7 @@ class LarkParser:
             with open(grammar_path, "r", encoding="utf-8") as f:
                 grammar = f.read()
         except FileNotFoundError as exc:
-            raise FileNotFoundError(
-                "No se encuentra el archivo de gramática"
-            ) from exc
+            raise FileNotFoundError("No se encuentra el archivo de gramática") from exc
 
         if not grammar.strip():
             raise ValueError("El archivo de gramática está vacío")
@@ -86,7 +86,8 @@ class LarkParser:
         """Intenta localizar ``gramatica.ebnf`` ascendiendo desde el módulo."""
 
         candidatos: Iterable[Path] = (
-            parent / "docs" / "gramatica.ebnf" for parent in Path(__file__).resolve().parents
+            parent / "docs" / "gramatica.ebnf"
+            for parent in Path(__file__).resolve().parents
         )
         for candidato in candidatos:
             if candidato.is_file():
@@ -161,7 +162,9 @@ class LarkParser:
         try:
             from pcobra.cobra.core.parser import ClassicParser
         except ImportError as exc:  # pragma: no cover - protección adicional
-            raise ParseError("No es posible cargar el parser clásico de Cobra.") from exc
+            raise ParseError(
+                "No es posible cargar el parser clásico de Cobra."
+            ) from exc
 
         classic_parser = ClassicParser(self.tokens)
         try:
@@ -184,7 +187,9 @@ class LarkParser:
         }
 
         if isinstance(node, list):
-            children = [child for child in (self._ast_to_tree(item) for item in node) if child]
+            children = [
+                child for child in (self._ast_to_tree(item) for item in node) if child
+            ]
             if not children:
                 return None
             if len(children) == 1:

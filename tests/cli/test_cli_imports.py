@@ -4,7 +4,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SRC_ROOT = REPO_ROOT / "src"
 
@@ -12,10 +11,7 @@ SRC_ROOT = REPO_ROOT / "src"
 def _run_python_isolated(code: str) -> subprocess.CompletedProcess[str]:
     """Ejecuta Python aislado (-I) y sólo añade `src/` al sys.path dentro del proceso."""
 
-    bootstrap = (
-        "import sys; "
-        f"sys.path.insert(0, {str(SRC_ROOT)!r}); "
-    )
+    bootstrap = "import sys; " f"sys.path.insert(0, {str(SRC_ROOT)!r}); "
     return subprocess.run(
         [sys.executable, "-I", "-c", bootstrap + code],
         capture_output=True,
@@ -26,9 +22,7 @@ def _run_python_isolated(code: str) -> subprocess.CompletedProcess[str]:
 def test_import_pcobra_cli_no_depende_de_scripts_runtime() -> None:
     """`scripts/` es tooling de desarrollo y no debe ser dependencia de runtime."""
 
-    result = _run_python_isolated(
-        "import pcobra.cli; print('ok')"
-    )
+    result = _run_python_isolated("import pcobra.cli; print('ok')")
 
     assert result.returncode == 0, (
         f"Fallo importando pcobra.cli en entorno aislado. "

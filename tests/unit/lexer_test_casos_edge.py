@@ -20,14 +20,14 @@ def test_cadena_sin_cerrar():
 
 
 def test_caracter_no_valido():
-    codigo = 'var x = \u20AC'
+    codigo = "var x = \u20ac"
     lexer = Lexer(codigo)
     with pytest.raises(InvalidTokenError):
         lexer.tokenizar()
 
 
 def test_literal_extremo():
-    codigo = '999999999999999999'
+    codigo = "999999999999999999"
     tokens = Lexer(codigo).analizar_token()
     assert tokens[0].tipo == TipoToken.ENTERO
     assert tokens[0].valor == 999999999999999999

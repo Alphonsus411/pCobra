@@ -10,7 +10,9 @@ from pcobra.core import database, pybind_bridge
 
 def test_modulo_nuevo_fallido_no_permanece_en_sys_modules(tmp_path):
     nombre = "modulo_nuevo_fallido"
-    (tmp_path / f"{nombre}.py").write_text("parcial = True\nraise RuntimeError('fallo')\n")
+    (tmp_path / f"{nombre}.py").write_text(
+        "parcial = True\nraise RuntimeError('fallo')\n"
+    )
 
     with pytest.raises(RuntimeError, match="fallo"):
         usar_loader._cargar_modulo_local_desde_directorio(nombre, tmp_path)
@@ -66,7 +68,9 @@ def test_pybind_restaura_entrada_previa_tras_carga_exitosa(tmp_path, monkeypatch
             module.resultado = 42
 
     monkeypatch.setattr(pybind_bridge, "_ALLOWED_PREFIXES", [str(tmp_path)])
-    monkeypatch.setattr(pybind_bridge.importlib.machinery, "ExtensionFileLoader", LoaderExitoso)
+    monkeypatch.setattr(
+        pybind_bridge.importlib.machinery, "ExtensionFileLoader", LoaderExitoso
+    )
     monkeypatch.setitem(sys.modules, "extension", previo)
 
     cargado = pybind_bridge.cargar_extension(str(ruta))
@@ -121,7 +125,9 @@ def test_pybind_restaura_entrada_previa_si_falla_el_loader(tmp_path, monkeypatch
             raise RuntimeError("extension fallida")
 
     monkeypatch.setattr(pybind_bridge, "_ALLOWED_PREFIXES", [str(tmp_path)])
-    monkeypatch.setattr(pybind_bridge.importlib.machinery, "ExtensionFileLoader", LoaderFallido)
+    monkeypatch.setattr(
+        pybind_bridge.importlib.machinery, "ExtensionFileLoader", LoaderFallido
+    )
     monkeypatch.setitem(sys.modules, "extension", previo)
 
     with pytest.raises(RuntimeError, match="extension fallida"):
@@ -149,7 +155,9 @@ def test_database_elimina_modulo_principal_parcial_si_falla(monkeypatch, tmp_pat
     dist = SimpleNamespace(locate_file=lambda path: module_path)
     spec = SimpleNamespace(name="sqliteplus_utils_sync", loader=LoaderFallido())
     monkeypatch.setattr(database, "distribution", lambda name: dist)
-    monkeypatch.setattr(database.importlib_util, "spec_from_file_location", lambda *args: spec)
+    monkeypatch.setattr(
+        database.importlib_util, "spec_from_file_location", lambda *args: spec
+    )
     monkeypatch.setattr(
         database.importlib_util,
         "module_from_spec",
@@ -180,11 +188,15 @@ def test_database_elimina_modulo_constants_parcial_si_falla(monkeypatch, tmp_pat
     sync_path = tmp_path / "sqliteplus_sync.py"
     sync_path.touch()
     dist = SimpleNamespace(
-        locate_file=lambda path: constants_path if path == "utils/constants.py" else sync_path
+        locate_file=lambda path: (
+            constants_path if path == "utils/constants.py" else sync_path
+        )
     )
     spec = SimpleNamespace(name=constants_name, loader=LoaderFallido())
     monkeypatch.setattr(database, "distribution", lambda name: dist)
-    monkeypatch.setattr(database.importlib_util, "spec_from_file_location", lambda *args: spec)
+    monkeypatch.setattr(
+        database.importlib_util, "spec_from_file_location", lambda *args: spec
+    )
     monkeypatch.setattr(
         database.importlib_util,
         "module_from_spec",

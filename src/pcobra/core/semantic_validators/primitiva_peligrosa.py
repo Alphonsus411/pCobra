@@ -14,10 +14,12 @@ class PrimitivaPeligrosaError(Exception):
 class ValidadorPrimitivaPeligrosa(ValidadorBase):
     """Validador que detecta llamadas a primitivas peligrosas."""
 
-    WRAPPERS_PYTHON_MODULES_PERMITIDOS = frozenset({
-        "pcobra.standard_library.archivo",
-        "cobra.standard_library.archivo",
-    })
+    WRAPPERS_PYTHON_MODULES_PERMITIDOS = frozenset(
+        {
+            "pcobra.standard_library.archivo",
+            "cobra.standard_library.archivo",
+        }
+    )
 
     PRIMITIVAS_PELIGROSAS = {
         "leer_archivo",
@@ -32,8 +34,6 @@ class ValidadorPrimitivaPeligrosa(ValidadorBase):
         "ejecutar",
         "listar_dir",
     }
-
-
 
     def __init__(self):
         super().__init__()
@@ -66,7 +66,9 @@ class ValidadorPrimitivaPeligrosa(ValidadorBase):
         self._simbolos_publicos_usar.add((modulo, nombre))
         self._metadata_simbolos_usar[nombre] = dict(metadata_validada)
 
-    def _es_wrapper_publico_permitido(self, nodo: NodoLlamadaFuncion) -> tuple[bool, str | None]:
+    def _es_wrapper_publico_permitido(
+        self, nodo: NodoLlamadaFuncion
+    ) -> tuple[bool, str | None]:
         # Contrato de seguridad: No basta el nombre del símbolo.
         # Contrato de seguridad: Solo metadata canónica de `usar` + API pública sanitizada.
         if nodo.nombre != "existe":
@@ -80,7 +82,9 @@ class ValidadorPrimitivaPeligrosa(ValidadorBase):
 
         # Única puerta de validación del contrato canónico.
         try:
-            metadata_validada = validate_usar_symbol_metadata_normalized(nodo.nombre, metadata)
+            metadata_validada = validate_usar_symbol_metadata_normalized(
+                nodo.nombre, metadata
+            )
         except ValueError as exc:
             return False, str(exc)
 
@@ -95,7 +99,10 @@ class ValidadorPrimitivaPeligrosa(ValidadorBase):
         permitido, motivo_rechazo = self._es_wrapper_publico_permitido(nodo)
         if nodo.nombre in self.PRIMITIVAS_PELIGROSAS and not permitido:
             detalle = ""
-            if isinstance(self._metadata_simbolos_usar.get(nodo.nombre), dict) and motivo_rechazo is not None:
+            if (
+                isinstance(self._metadata_simbolos_usar.get(nodo.nombre), dict)
+                and motivo_rechazo is not None
+            ):
                 detalle = f" (metadata usar inválida: {motivo_rechazo})"
             raise PrimitivaPeligrosaError(
                 f"Uso de primitiva peligrosa: '{nodo.nombre}'{detalle}"
@@ -108,7 +115,10 @@ class ValidadorPrimitivaPeligrosa(ValidadorBase):
         permitido, motivo_rechazo = self._es_wrapper_publico_permitido(nodo.llamada)
         if nodo.llamada.nombre in self.PRIMITIVAS_PELIGROSAS and not permitido:
             detalle = ""
-            if isinstance(self._metadata_simbolos_usar.get(nodo.llamada.nombre), dict) and motivo_rechazo is not None:
+            if (
+                isinstance(self._metadata_simbolos_usar.get(nodo.llamada.nombre), dict)
+                and motivo_rechazo is not None
+            ):
                 detalle = f" (metadata usar inválida: {motivo_rechazo})"
             raise PrimitivaPeligrosaError(
                 f"Uso de primitiva peligrosa: '{nodo.llamada.nombre}'{detalle}"

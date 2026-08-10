@@ -63,10 +63,14 @@ def test_parse_target_rechaza_aliases_no_permitidos(alias):
 
 
 @pytest.mark.parametrize("legacy_name", ("js", "assembly", "nodejs", "python3"))
-def test_parse_target_rechaza_nombres_legacy_o_ambiguos_con_error_explicito(legacy_name):
+def test_parse_target_rechaza_nombres_legacy_o_ambiguos_con_error_explicito(
+    legacy_name,
+):
     with pytest.raises(argparse.ArgumentTypeError, match="legacy/ambiguo"):
         parse_target(legacy_name)
-    assert "nombres canónicos oficiales" in legacy_or_ambiguous_target_error(legacy_name)
+    assert "nombres canónicos oficiales" in legacy_or_ambiguous_target_error(
+        legacy_name
+    )
 
 
 def test_compile_parser_rechaza_alias_c_mas_mas():
@@ -127,15 +131,21 @@ def test_verify_parser_rechaza_alias_ensamblador():
     parser = _build_parser_with_command(VerifyCommand())
 
     with pytest.raises(SystemExit):
-        parser.parse_args(["verificar", "script.cobra", "--lenguajes", "python,Ensamblador"])
+        parser.parse_args(
+            ["verificar", "script.cobra", "--lenguajes", "python,Ensamblador"]
+        )
 
 
 def test_compile_parser_no_expone_aliases_en_choices_publicos():
     parser = _build_parser_with_command(CompileCommand())
     compile_parser = parser._subparsers._group_actions[0].choices["compilar"]
 
-    tipo_action = next(action for action in compile_parser._actions if action.dest == "tipo")
-    backend_action = next(action for action in compile_parser._actions if action.dest == "backend")
+    tipo_action = next(
+        action for action in compile_parser._actions if action.dest == "tipo"
+    )
+    backend_action = next(
+        action for action in compile_parser._actions if action.dest == "backend"
+    )
 
     assert tuple(tipo_action.choices) == tuple(get_lang_choices())
     assert tuple(backend_action.choices) == tuple(get_lang_choices())
@@ -184,9 +194,9 @@ def test_docs_publicas_activas_no_exponen_aliases_legacy():
         if rel not in monitored:
             continue
         content = path.read_text(encoding="utf-8")
-        assert not find_public_alias_errors(rel, content), (
-            f"{rel} expone aliases legacy en una superficie pública activa"
-        )
+        assert not find_public_alias_errors(
+            rel, content
+        ), f"{rel} expone aliases legacy en una superficie pública activa"
 
 
 def test_error_legacy_publico_no_reintroduce_aliases_en_texto():
@@ -196,7 +206,10 @@ def test_error_legacy_publico_no_reintroduce_aliases_en_texto():
     for target in EXPECTED_CANONICAL_TARGETS:
         assert target in error_text
 
-    for forbidden_token in (*REJECTED_ALIASES, *(alias.lower() for alias, _ in LEGACY_AMBIGUOUS_ALIASES)):
+    for forbidden_token in (
+        *REJECTED_ALIASES,
+        *(alias.lower() for alias, _ in LEGACY_AMBIGUOUS_ALIASES),
+    ):
         assert forbidden_token not in canonical_section
 
 

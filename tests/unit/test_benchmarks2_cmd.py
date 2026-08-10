@@ -23,10 +23,12 @@ def test_benchmarks2_generates_json(tmp_path, monkeypatch):
     monkeypatch.setattr(b2, "run_and_measure", lambda *a, **k: (0.1, 1))
     monkeypatch.setattr(b2.subprocess, "check_output", lambda *a, **k: "")
     created = []
+
     def fake_tmp(*args, **kwargs):
         tmp = orig_ntf(*args, **kwargs)
         created.append(Path(tmp.name))
         return tmp
+
     monkeypatch.setattr(b2.tempfile, "NamedTemporaryFile", fake_tmp)
     salida = tmp_path / "res.json"
     status = b2.BenchmarksV2Command().run(
@@ -47,11 +49,14 @@ def test_benchmarks2_generates_json(tmp_path, monkeypatch):
 def test_benchmarks2_without_resource(tmp_path, monkeypatch):
     monkeypatch.setattr(module_map, "get_toml_map", lambda: {})
     import cobra.cli.commands.benchmarks2_cmd as b2
+
     monkeypatch.setattr(b2, "resource", None)
 
     def fake_run(self, args):
         elapsed, mem = b2.run_and_measure([sys.executable, "-c", "print('ok')"])
-        data = json.dumps([{"modo": "cobra", "time": elapsed, "memory_kb": mem}], indent=2)
+        data = json.dumps(
+            [{"modo": "cobra", "time": elapsed, "memory_kb": mem}], indent=2
+        )
         Path(args.output).write_text(data)
         return 0
 

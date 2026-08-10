@@ -17,9 +17,9 @@ def test_repl_bloque_incompleto_con_fin_anidado_sigue_acumulando(monkeypatch):
         [
             "si verdadero:",
             "si verdadero:",
-            "    imprimir(\"interno\")",
+            '    imprimir("interno")',
             "fin",
-            "    imprimir(\"externo\")",
+            '    imprimir("externo")',
             "fin",
             "salir",
         ]
@@ -52,7 +52,9 @@ def test_repl_bloque_incompleto_con_fin_anidado_sigue_acumulando(monkeypatch):
 
 
 @pytest.mark.integration
-def test_repl_error_sintactico_por_cierre_extra_reporta_y_acepta_nuevas_entradas(monkeypatch):
+def test_repl_error_sintactico_por_cierre_extra_reporta_y_acepta_nuevas_entradas(
+    monkeypatch,
+):
     cmd = InteractiveCommand(MagicMock())
     entradas = iter(["fin", 'imprimir("ok")', "salir"])
     errores: list[str] = []

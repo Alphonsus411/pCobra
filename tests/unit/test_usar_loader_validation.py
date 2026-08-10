@@ -9,7 +9,10 @@ from pcobra.cobra.usar_loader import (
     validar_nombre_modulo_cobra_proyecto,
     validar_nombre_modulo_usar,
 )
-from pcobra.cobra.usar_policy import REPL_COBRA_MODULE_MAP, USAR_COBRA_FACING_MODULE_FLAGS
+from pcobra.cobra.usar_policy import (
+    REPL_COBRA_MODULE_MAP,
+    USAR_COBRA_FACING_MODULE_FLAGS,
+)
 
 
 def test_repl_alias_map_contiene_modulos_base_numero_texto_datos():
@@ -42,7 +45,9 @@ def test_rechaza_imports_directos_backend_en_usar():
 
 
 def test_flags_cobra_facing_cubren_modulos_repl():
-    assert tuple(USAR_COBRA_FACING_MODULE_FLAGS.keys()) == tuple(REPL_COBRA_MODULE_MAP.keys())
+    assert tuple(USAR_COBRA_FACING_MODULE_FLAGS.keys()) == tuple(
+        REPL_COBRA_MODULE_MAP.keys()
+    )
     assert all(USAR_COBRA_FACING_MODULE_FLAGS.values())
 
 
@@ -50,14 +55,18 @@ def test_fuera_de_catalogo_no_llega_a_resolucion_de_modulo(monkeypatch):
     from pcobra.cobra import usar_loader
 
     def _no_debe_llamarse(*_args, **_kwargs):
-        raise AssertionError("No debe intentarse resolver/cargar módulo fuera de catálogo.")
+        raise AssertionError(
+            "No debe intentarse resolver/cargar módulo fuera de catálogo."
+        )
 
     monkeypatch.setattr(usar_loader, "obtener_modulo_cobra_oficial", _no_debe_llamarse)
 
     with pytest.raises(PermissionError) as excinfo:
         usar_loader.obtener_modulo("numpy")
 
-    assert "fuera del catálogo público" in str(excinfo.value) or "Importación no permitida" in str(excinfo.value)
+    assert "fuera del catálogo público" in str(
+        excinfo.value
+    ) or "Importación no permitida" in str(excinfo.value)
 
 
 def test_modulo_no_publico_error_controlado_sin_traceback():
@@ -65,7 +74,10 @@ def test_modulo_no_publico_error_controlado_sin_traceback():
         validar_nombre_modulo_usar("modulo_interno_privado")
 
     mensaje = str(excinfo.value)
-    assert "fuera del catálogo público" in mensaje or "módulo externo no permitido" in mensaje
+    assert (
+        "fuera del catálogo público" in mensaje
+        or "módulo externo no permitido" in mensaje
+    )
     assert "Traceback" not in mensaje
 
 
@@ -135,7 +147,6 @@ def test_resolver_modulo_cobra_proyecto_valida_current_file_dentro_de_root(tmp_p
         )
 
 
-
 @pytest.mark.parametrize(
     "nombre",
     ["../secreto", "a/../b", "/tmp/x", r"C:\tmp\x", "C:tmp", r"a\b", "a/b"],
@@ -152,6 +163,7 @@ def test_verificar_path_dentro_de_root_canonicaliza_antes_de_commonpath(tmp_path
 
     with pytest.raises(ValueError, match="fuera de la raíz autorizada"):
         _verificar_path_dentro_de_root(ruta_manipulada, proyecto)
+
 
 def test_validacion_oficial_sigue_rechazando_nombres_punteados():
     with pytest.raises(ValueError):

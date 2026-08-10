@@ -38,9 +38,15 @@ class ExecuteCommand(BaseCommand):
 
     def register_subparser(self, subparsers):
         parser = subparsers.add_parser(self.name, help=_("Ejecuta un script Cobra"))
-        parser.add_argument("archivo", help=_("Ruta al archivo a ejecutar")).completer = files_completer()
-        parser.add_argument("--debug", action="store_true", default=False, help=_("Show debug messages"))
-        parser.add_argument("--sandbox", action="store_true", help=_("Ejecuta el código en una sandbox"))
+        parser.add_argument(
+            "archivo", help=_("Ruta al archivo a ejecutar")
+        ).completer = files_completer()
+        parser.add_argument(
+            "--debug", action="store_true", default=False, help=_("Show debug messages")
+        )
+        parser.add_argument(
+            "--sandbox", action="store_true", help=_("Ejecuta el código en una sandbox")
+        )
         parser.add_argument(
             "--contenedor",
             type=lambda value: parse_runtime_target(
@@ -76,7 +82,9 @@ class ExecuteCommand(BaseCommand):
             verbose=int(getattr(args, "verbose", 0) or 0),
             depurar=bool(getattr(args, "depurar", False)),
             extra_validators=getattr(args, "extra_validators", None),
-            allow_insecure_fallback=bool(getattr(args, "allow_insecure_fallback", False)),
+            allow_insecure_fallback=bool(
+                getattr(args, "allow_insecure_fallback", False)
+            ),
         )
         return self._service.run(request)
 

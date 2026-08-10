@@ -22,15 +22,23 @@ def _nodo(modulo: str):
 
 def test_holobit_export_only_runtime_override(monkeypatch):
     mod = ModuleType("holobit")
-    mod.__all__ = [*USAR_RUNTIME_EXPORT_OVERRIDES["holobit"], "holobit_sdk", "_to_sdk_holobit"]
+    mod.__all__ = [
+        *USAR_RUNTIME_EXPORT_OVERRIDES["holobit"],
+        "holobit_sdk",
+        "_to_sdk_holobit",
+    ]
     for name in USAR_RUNTIME_EXPORT_OVERRIDES["holobit"]:
         setattr(mod, name, lambda *args, **kwargs: (args, kwargs))
     mod.holobit_sdk = object()
     mod._to_sdk_holobit = lambda *_: None
     mod.__file__ = "/workspace/pCobra/src/pcobra/corelibs/holobit.py"
 
-    monkeypatch.setattr(cobra_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: mod)
-    monkeypatch.setattr(cobra_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: mod)
+    monkeypatch.setattr(
+        cobra_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: mod
+    )
+    monkeypatch.setattr(
+        cobra_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: mod
+    )
 
     interp = InterpretadorCobra()
     interp.configurar_restriccion_usar_repl({"holobit": "holobit"})
@@ -72,10 +80,14 @@ def test_sanear_exportables_clasifica_y_rechaza_wrappers_backend():
         ("wrapper", WrapperConWrapped()),
         ("wrapper_sdk", WrapperConSdk()),
     ]
-    permitidos, clasificacion, _warnings = usar_symbol_policy.sanear_exportables_para_usar(simbolos)
+    permitidos, clasificacion, _warnings = (
+        usar_symbol_policy.sanear_exportables_para_usar(simbolos)
+    )
 
     assert [nombre for nombre, _ in permitidos] == ["crear_holobit"]
-    codigos = {rechazo.nombre: rechazo.codigo for rechazo in clasificacion.rechazos_duros}
+    codigos = {
+        rechazo.nombre: rechazo.codigo for rechazo in clasificacion.rechazos_duros
+    }
     assert codigos["holobit_sdk"] == "cobra_public_equivalent"
     assert codigos["wrapper"] == "backend_module_object"
     assert codigos["wrapper_sdk"] == "backend_module_object"
@@ -91,7 +103,10 @@ def test_rechaza_numpy_en_repl_estricto_sin_inyeccion(monkeypatch):
     interp.configurar_restriccion_usar_repl({"numero": "numero"})
     estado_pre = dict(interp.contextos[-1].values)
 
-    with pytest.raises(PermissionError, match=r"módulo fuera del catálogo público|modulo_fuera_catalogo_publico") as exc:
+    with pytest.raises(
+        PermissionError,
+        match=r"módulo fuera del catálogo público|modulo_fuera_catalogo_publico",
+    ) as exc:
         interp.ejecutar_usar(_nodo("numpy"))
 
     assert estado_pre == interp.contextos[-1].values
@@ -107,8 +122,12 @@ def test_texto_simbolo_existente_fuera_de_override_falla_como_no_declarado(monke
     mod.normalizar_unicode = lambda texto, forma="NFC": texto
     mod.__file__ = "/workspace/pCobra/src/pcobra/standard_library/texto.py"
 
-    monkeypatch.setattr(cobra_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: mod)
-    monkeypatch.setattr(cobra_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: mod)
+    monkeypatch.setattr(
+        cobra_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: mod
+    )
+    monkeypatch.setattr(
+        cobra_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: mod
+    )
 
     interp = InterpretadorCobra()
     interp.configurar_restriccion_usar_repl({"texto": "texto"})
@@ -132,7 +151,8 @@ def test_regresion_texto_detecta_mapeo_interno_incompleto_y_filtra_fuera_de_api_
 
     assert "normalizar_unicode" not in mapa_limpio
     assert any(
-        conflicto.get("symbol") == "normalizar_unicode" and conflicto.get("code") == "outside_public_api"
+        conflicto.get("symbol") == "normalizar_unicode"
+        and conflicto.get("code") == "outside_public_api"
         for conflicto in conflictos
     )
 
@@ -140,7 +160,15 @@ def test_regresion_texto_detecta_mapeo_interno_incompleto_y_filtra_fuera_de_api_
 def test_usar_datos_expone_longitud_y_metadata_canonica(monkeypatch):
     monkeypatch.setattr(
         "pcobra.core.interpreter.build_and_validate_usar_symbol_metadata",
-        lambda module_name, symbol_name, callable_obj: {"origin_kind": "usar", "module": module_name, "symbol": symbol_name, "sanitized": True, "public_api": True, "backend_exposed": False, "callable": True},
+        lambda module_name, symbol_name, callable_obj: {
+            "origin_kind": "usar",
+            "module": module_name,
+            "symbol": symbol_name,
+            "sanitized": True,
+            "public_api": True,
+            "backend_exposed": False,
+            "callable": True,
+        },
     )
     mod = ModuleType("datos")
     mod.__all__ = ["longitud", "elemento"]
@@ -148,8 +176,12 @@ def test_usar_datos_expone_longitud_y_metadata_canonica(monkeypatch):
     mod.elemento = lambda coleccion, indice: coleccion[indice]
     mod.__file__ = "/workspace/pCobra/src/pcobra/corelibs/datos.py"
 
-    monkeypatch.setattr(cobra_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: mod)
-    monkeypatch.setattr(cobra_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: mod)
+    monkeypatch.setattr(
+        cobra_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: mod
+    )
+    monkeypatch.setattr(
+        cobra_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: mod
+    )
 
     interp = InterpretadorCobra()
     interp.configurar_restriccion_usar_repl({"datos": "datos"})
@@ -168,17 +200,22 @@ def test_usar_datos_expone_longitud_y_metadata_canonica(monkeypatch):
     assert metadata["backend_exposed"] is False
 
 
-
 def test_usar_texto_expone_recortar_repetir_quitar_acentos(monkeypatch):
     mod = ModuleType("texto")
     mod.__all__ = ["recortar", "repetir", "quitar_acentos"]
     mod.recortar = lambda texto: str(texto).strip()
     mod.repetir = lambda texto, veces=2: str(texto) * int(veces)
-    mod.quitar_acentos = lambda texto: str(texto).translate(str.maketrans("áéíóú", "aeiou"))
+    mod.quitar_acentos = lambda texto: str(texto).translate(
+        str.maketrans("áéíóú", "aeiou")
+    )
     mod.__file__ = "/workspace/pCobra/src/pcobra/corelibs/texto.py"
 
-    monkeypatch.setattr(cobra_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: mod)
-    monkeypatch.setattr(cobra_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: mod)
+    monkeypatch.setattr(
+        cobra_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: mod
+    )
+    monkeypatch.setattr(
+        cobra_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: mod
+    )
 
     interp = InterpretadorCobra()
     interp.configurar_restriccion_usar_repl({"texto": "texto"})
@@ -190,11 +227,23 @@ def test_usar_texto_expone_recortar_repetir_quitar_acentos(monkeypatch):
 
 def test_regresion_usar_texto_superficie_ligera_y_sin_importerror():
     modulo = cobra_usar_loader.obtener_modulo_cobra_oficial("texto")
-    mapa_limpio, conflictos = cobra_usar_loader.sanitizar_exports_publicos(modulo, "texto")
+    mapa_limpio, conflictos = cobra_usar_loader.sanitizar_exports_publicos(
+        modulo, "texto"
+    )
 
-    assert not any(conflicto.get("code") == "missing_export_attr" for conflicto in conflictos)
+    assert not any(
+        conflicto.get("code") == "missing_export_attr" for conflicto in conflictos
+    )
     assert set(USAR_RUNTIME_EXPORT_OVERRIDES["texto"]).issubset(set(mapa_limpio))
-    for simbolo in ("mayusculas", "minusculas", "prefijo_comun", "sufijo_comun", "recortar", "repetir", "quitar_acentos"):
+    for simbolo in (
+        "mayusculas",
+        "minusculas",
+        "prefijo_comun",
+        "sufijo_comun",
+        "recortar",
+        "repetir",
+        "quitar_acentos",
+    ):
         assert callable(mapa_limpio[simbolo])
 
 
@@ -205,8 +254,12 @@ def test_usar_numero_mantiene_es_finito_y_signo(monkeypatch):
     mod.signo = lambda valor: -1 if valor < 0 else (1 if valor > 0 else 0)
     mod.__file__ = "/workspace/pCobra/src/pcobra/corelibs/numero.py"
 
-    monkeypatch.setattr(cobra_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: mod)
-    monkeypatch.setattr(cobra_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: mod)
+    monkeypatch.setattr(
+        cobra_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: mod
+    )
+    monkeypatch.setattr(
+        cobra_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: mod
+    )
 
     interp = InterpretadorCobra()
     interp.configurar_restriccion_usar_repl({"numero": "numero"})
@@ -220,7 +273,15 @@ def test_usar_numero_mantiene_es_finito_y_signo(monkeypatch):
 def test_usar_archivo_carga_existe_sin_error_metadata(monkeypatch):
     monkeypatch.setattr(
         "pcobra.core.interpreter.build_and_validate_usar_symbol_metadata",
-        lambda module_name, symbol_name, callable_obj: {"origin_kind": "usar", "module": module_name, "symbol": symbol_name, "sanitized": True, "public_api": True, "backend_exposed": False, "callable": True},
+        lambda module_name, symbol_name, callable_obj: {
+            "origin_kind": "usar",
+            "module": module_name,
+            "symbol": symbol_name,
+            "sanitized": True,
+            "public_api": True,
+            "backend_exposed": False,
+            "callable": True,
+        },
     )
 
     interp = InterpretadorCobra()
@@ -239,7 +300,9 @@ def test_usar_archivo_carga_existe_sin_error_metadata(monkeypatch):
 
 def test_usar_modulos_validos_no_reporta_error_metadata():
     interp = InterpretadorCobra()
-    interp.configurar_restriccion_usar_repl({"datos": "datos", "numero": "numero", "texto": "texto", "archivo": "archivo"})
+    interp.configurar_restriccion_usar_repl(
+        {"datos": "datos", "numero": "numero", "texto": "texto", "archivo": "archivo"}
+    )
 
     interp.ejecutar_usar(_nodo("datos"))
     interp.ejecutar_usar(_nodo("numero"))
@@ -256,7 +319,9 @@ def test_usar_modulos_validos_no_reporta_error_metadata():
 
 def test_usar_carga_modulos_publicos_datos_numero_texto():
     interp = InterpretadorCobra()
-    interp.configurar_restriccion_usar_repl({"datos": "datos", "numero": "numero", "texto": "texto"})
+    interp.configurar_restriccion_usar_repl(
+        {"datos": "datos", "numero": "numero", "texto": "texto"}
+    )
     interp.ejecutar_usar(_nodo("datos"))
     interp.ejecutar_usar(_nodo("numero"))
     interp.ejecutar_usar(_nodo("texto"))
@@ -269,7 +334,9 @@ def test_usar_carga_modulos_publicos_datos_numero_texto():
 
 def test_repl_funcional_minimo_datos_numero_archivo_via_runtime():
     interp = InterpretadorCobra()
-    interp.configurar_restriccion_usar_repl({"datos": "datos", "numero": "numero", "archivo": "archivo"})
+    interp.configurar_restriccion_usar_repl(
+        {"datos": "datos", "numero": "numero", "archivo": "archivo"}
+    )
 
     interp.ejecutar_usar(_nodo("datos"))
     assert interp.contextos[-1].get("longitud")([1, 2, 3]) == 3
@@ -288,13 +355,18 @@ def test_sanear_exports_descarta_simbolo_fuera_api_publica_al_usar():
         setattr(modulo, nombre, lambda *args, **kwargs: (args, kwargs))
     modulo.normalizar_unicode = lambda texto, forma="NFC": texto
 
-    mapa_limpio, conflictos = cobra_usar_loader.sanitizar_exports_publicos(modulo, "texto")
-    permitidos, _clasificacion, _warnings = usar_symbol_policy.sanear_exportables_para_usar(list(mapa_limpio.items()))
+    mapa_limpio, conflictos = cobra_usar_loader.sanitizar_exports_publicos(
+        modulo, "texto"
+    )
+    permitidos, _clasificacion, _warnings = (
+        usar_symbol_policy.sanear_exportables_para_usar(list(mapa_limpio.items()))
+    )
 
     nombres = {nombre for nombre, _ in permitidos}
     assert "normalizar_unicode" not in nombres
     assert any(
-        conflicto.get("symbol") == "normalizar_unicode" and conflicto.get("code") == "outside_public_api"
+        conflicto.get("symbol") == "normalizar_unicode"
+        and conflicto.get("code") == "outside_public_api"
         for conflicto in conflictos
     )
 
@@ -308,8 +380,9 @@ def test_integridad_estatica_lexer_y_parser_sin_diff_inesperado():
     }
     for ruta, hash_esperado in hashes_esperados.items():
         contenido = Path(ruta).read_bytes().replace(b"\r\n", b"\n")
-        assert hashlib.sha256(contenido).hexdigest() == hash_esperado, f"Hash inesperado en {ruta}"
-
+        assert (
+            hashlib.sha256(contenido).hexdigest() == hash_esperado
+        ), f"Hash inesperado en {ruta}"
 
 
 def test_repl_incremental_usar_datos_preserva_estado_y_longitud(capsys):
@@ -344,6 +417,7 @@ def test_sintaxis_usar_cadena_sin_cerrar_falla_como_hoy():
     with pytest.raises(UnclosedStringError, match="Cadena sin cerrar"):
         cmd.ejecutar_codigo('usar "datos2')
 
+
 def test_runtime_metadata_legacy_aliases_se_normalizan_a_canonico():
     raw = {
         "introduced_by": "usar",
@@ -358,8 +432,12 @@ def test_runtime_metadata_legacy_aliases_se_normalizan_a_canonico():
         "callable": True,
     }
 
-    normalizada = usar_symbol_policy.normalizar_metadata_simbolo_usar(raw, "numero", "es_finito")
-    validada = usar_symbol_policy.validate_usar_symbol_metadata("es_finito", normalizada)
+    normalizada = usar_symbol_policy.normalizar_metadata_simbolo_usar(
+        raw, "numero", "es_finito"
+    )
+    validada = usar_symbol_policy.validate_usar_symbol_metadata(
+        "es_finito", normalizada
+    )
 
     assert validada["origin_kind"] == "usar"
     assert validada["public_api"] is True
@@ -382,5 +460,7 @@ def test_runtime_metadata_clave_desconocida_maliciosa_rechazada_fail_closed():
         "__inject_backend__": "pwn",
     }
 
-    with pytest.raises(ValueError, match=r"claves desconocidas|unexpected_keys|claves inesperadas"):
+    with pytest.raises(
+        ValueError, match=r"claves desconocidas|unexpected_keys|claves inesperadas"
+    ):
         usar_symbol_policy.validate_usar_symbol_metadata("es_finito", raw)

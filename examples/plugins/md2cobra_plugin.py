@@ -7,6 +7,7 @@ from cobra.cli.plugin import PluginCommand
 
 class MarkdownToCobraCommand(PluginCommand):
     """Extrae bloques de codigo ``cobra`` desde un Markdown."""
+
     name = "md2cobra"
     version = "1.0"
     description = "Convierte Markdown a script Cobra"
@@ -14,7 +15,9 @@ class MarkdownToCobraCommand(PluginCommand):
     def register_subparser(self, subparsers):
         parser = subparsers.add_parser(self.name, help=self.description)
         parser.add_argument("--input", required=True, help="Archivo Markdown (.md)")
-        parser.add_argument("--output", required=True, help="Archivo Cobra (.co) de salida")
+        parser.add_argument(
+            "--output", required=True, help="Archivo Cobra (.co) de salida"
+        )
         parser.set_defaults(cmd=self)
 
     def run(self, args) -> None:
@@ -24,9 +27,9 @@ class MarkdownToCobraCommand(PluginCommand):
         # Validaciones
         if not input_path.exists():
             raise FileNotFoundError(f"El archivo {input_path} no existe")
-        if not input_path.suffix.lower() == '.md':
+        if not input_path.suffix.lower() == ".md":
             raise ValueError("El archivo de entrada debe ser .md")
-        if not output_path.suffix.lower() == '.co':
+        if not output_path.suffix.lower() == ".co":
             raise ValueError("El archivo de salida debe ser .co")
 
         try:
@@ -42,14 +45,14 @@ class MarkdownToCobraCommand(PluginCommand):
             if not dentro and re.match(r"^\s*`{3,}cobra\s*$", linea):
                 dentro = True
                 continue
-            
+
             if dentro and re.match(r"^\s*`{3,}\s*$", linea):
                 if actual:  # Solo agregar si hay contenido
                     bloques.append("\n".join(actual))
                     actual = []
                 dentro = False
                 continue
-            
+
             if dentro:
                 actual.append(linea)
 

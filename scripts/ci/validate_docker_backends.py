@@ -37,7 +37,10 @@ def find_violations() -> list[str]:
     if forbidden_dockerfiles:
         violations.append(
             "Dockerfiles de backend no oficiales referenciados en docker/scripts/build.sh: "
-            + ", ".join(f"docker/backends/{backend}.Dockerfile" for backend in forbidden_dockerfiles)
+            + ", ".join(
+                f"docker/backends/{backend}.Dockerfile"
+                for backend in forbidden_dockerfiles
+            )
         )
     return violations
 

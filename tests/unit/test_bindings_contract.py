@@ -30,7 +30,9 @@ def test_contrato_declara_matriz_abi_y_limites_por_cada_ruta():
     for route in BindingRoute:
         assert route in ABI_POLICY_BY_ROUTE
         assert route in ROUTE_OPERATIONAL_LIMITS
-        assert ABI_POLICY_BY_ROUTE[route].current in ABI_POLICY_BY_ROUTE[route].supported
+        assert (
+            ABI_POLICY_BY_ROUTE[route].current in ABI_POLICY_BY_ROUTE[route].supported
+        )
 
 
 def test_contrato_publico_lenguajes_oficiales_no_admite_bindings_extra():

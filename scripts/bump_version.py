@@ -1,6 +1,7 @@
 #!/usr/bin/env python3.10
 import re
 import sys
+
 try:
     import tomllib  # Python >= 3.11
 except ModuleNotFoundError:  # pragma: no cover
@@ -20,7 +21,6 @@ FILES_TO_UPDATE = [
     Path("docs/frontend/avances.rst"),
     Path("tests/unit/test_cli_plugins_cmd.py"),
 ]
-
 
 
 def read_version() -> str:
@@ -65,15 +65,25 @@ def update_files(current: str, new_version: str) -> None:
         text = text.replace(current, new_version)
         text = re.sub(rf"\b{re.escape(short_current)}\b", short_new, text)
         if short_current == short_new:
-            text = re.sub(rf"Versión {re.escape(short_current)}(?![\.\d])", f"Versión {new_version}", text)
+            text = re.sub(
+                rf"Versión {re.escape(short_current)}(?![\.\d])",
+                f"Versión {new_version}",
+                text,
+            )
         else:
-            text = re.sub(rf"Versión {re.escape(short_current)}", f"Versión {short_new}", text)
+            text = re.sub(
+                rf"Versión {re.escape(short_current)}", f"Versión {short_new}", text
+            )
         text = re.sub(
             rf"(implementation_version\s*=\s*\"|language_version\s*=\s*\"){re.escape(short_current)}(\")",
             rf"\g<1>{new_version}\g<2>",
             text,
         )
-        text = re.sub(rf"version\s*=\s*\"{re.escape(short_current)}\"", f'version = "{new_version}"', text)
+        text = re.sub(
+            rf"version\s*=\s*\"{re.escape(short_current)}\"",
+            f'version = "{new_version}"',
+            text,
+        )
         text = text.replace(f"dummy {short_current}", f"dummy {new_version}")
         path.write_text(text)
 
@@ -95,5 +105,5 @@ def main():
     print(new)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

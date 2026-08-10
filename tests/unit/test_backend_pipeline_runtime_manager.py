@@ -26,9 +26,13 @@ def test_backend_pipeline_build_expone_contexto_runtime(monkeypatch):
     )
     monkeypatch.setattr(backend_pipeline, "obtener_ast", lambda _codigo: ["ast"])
     monkeypatch.setattr(backend_pipeline, "_validar_semantica_build", lambda _ast: None)
-    monkeypatch.setattr(backend_pipeline, "_official_transpilers", lambda: {"python": _DummyTranspiler})
+    monkeypatch.setattr(
+        backend_pipeline, "_official_transpilers", lambda: {"python": _DummyTranspiler}
+    )
 
-    result = backend_pipeline.build("imprimir(1)", hints={"preferred_backend": "python"})
+    result = backend_pipeline.build(
+        "imprimir(1)", hints={"preferred_backend": "python"}
+    )
 
     assert result["backend"] == "python"
     assert result["reason"] is None
@@ -54,9 +58,13 @@ def test_backend_pipeline_build_expone_reason_solo_en_debug(monkeypatch):
     )
     monkeypatch.setattr(backend_pipeline, "obtener_ast", lambda _codigo: ["ast"])
     monkeypatch.setattr(backend_pipeline, "_validar_semantica_build", lambda _ast: None)
-    monkeypatch.setattr(backend_pipeline, "_official_transpilers", lambda: {"python": _DummyTranspiler})
+    monkeypatch.setattr(
+        backend_pipeline, "_official_transpilers", lambda: {"python": _DummyTranspiler}
+    )
 
-    result = backend_pipeline.build("imprimir(1)", hints={"preferred_backend": "python", "debug": True})
+    result = backend_pipeline.build(
+        "imprimir(1)", hints={"preferred_backend": "python", "debug": True}
+    )
 
     assert result["reason"] == "debug-reason"
 
@@ -64,11 +72,17 @@ def test_backend_pipeline_build_expone_reason_solo_en_debug(monkeypatch):
 def test_backend_pipeline_resolve_backend_envia_scope_migracion(monkeypatch):
     captured = {}
 
-    def _fake_resolve_backend(self, *, source_file, preferred_backend, required_capabilities, route_scope):
+    def _fake_resolve_backend(
+        self, *, source_file, preferred_backend, required_capabilities, route_scope
+    ):
         captured["route_scope"] = route_scope
         return type("R", (), {"backend": "go", "reason": "migration"})()
 
-    monkeypatch.setattr(backend_pipeline, "ORCHESTRATOR", type("O", (), {"resolve_backend": _fake_resolve_backend})())
+    monkeypatch.setattr(
+        backend_pipeline,
+        "ORCHESTRATOR",
+        type("O", (), {"resolve_backend": _fake_resolve_backend})(),
+    )
 
     backend_pipeline.resolve_backend(
         "demo.co",

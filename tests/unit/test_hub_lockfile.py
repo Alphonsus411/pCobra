@@ -187,11 +187,7 @@ def test_rechaza_duplicados_despues_de_normalizar(tmp_path):
 def test_rechaza_dependencias_duplicadas_despues_de_normalizar(tmp_path):
     path = tmp_path / "cobra.lock"
     path.write_text(
-        json.dumps(
-            _v2_entry(
-                dependencies={"Base_Pkg": "1.0.0", "base_pkg": "1.0.0"}
-            )
-        ),
+        json.dumps(_v2_entry(dependencies={"Base_Pkg": "1.0.0", "base_pkg": "1.0.0"})),
         encoding="utf-8",
     )
 

@@ -8,6 +8,7 @@ from types import SimpleNamespace
 orig_ntf = tempfile.NamedTemporaryFile
 import pytest
 
+
 @pytest.mark.timeout(10)
 def test_benchthreads_generates_json(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)

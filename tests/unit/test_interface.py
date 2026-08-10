@@ -16,12 +16,14 @@ clase Doc(Printable):
 fin
 """
 
+
 def test_parser_interface():
     tokens = Lexer(CODIGO).tokenizar()
     ast = Parser(tokens).parsear()
     assert isinstance(ast[0], NodoInterface)
     assert isinstance(ast[1], NodoClase)
     assert ast[1].bases == ["Printable"]
+
 
 def test_transpiladores_interface_targets_publicos():
     tokens = Lexer("interface I:\n    func m()\nfin\n").tokenizar()

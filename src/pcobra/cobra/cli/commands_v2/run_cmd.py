@@ -29,9 +29,15 @@ class RunCommandV2(BaseCommand):
 
     def register_subparser(self, subparsers: Any):
         parser = subparsers.add_parser(self.name, help=_("Run a Cobra file"))
-        parser.add_argument("file", help=_("Path to Cobra file")).completer = files_completer()
-        parser.add_argument("--debug", action="store_true", default=False, help=_("Show debug messages"))
-        parser.add_argument("--sandbox", action="store_true", help=_("Execute code in sandbox"))
+        parser.add_argument("file", help=_("Path to Cobra file")).completer = (
+            files_completer()
+        )
+        parser.add_argument(
+            "--debug", action="store_true", default=False, help=_("Show debug messages")
+        )
+        parser.add_argument(
+            "--sandbox", action="store_true", help=_("Execute code in sandbox")
+        )
         # Compatibilidad interna: evitar exponer backend/runtime en la UX pública.
         parser.add_argument(
             "--container",
@@ -47,7 +53,9 @@ class RunCommandV2(BaseCommand):
         sandbox = bool(getattr(args, "sandbox", False))
         container = getattr(args, "container", None)
         binding_language = container or "python"
-        assert_public_command_uses_only_public_backends(command="run", targets=(binding_language,))
+        assert_public_command_uses_only_public_backends(
+            command="run", targets=(binding_language,)
+        )
         assert_backend_allowed_for_scope(backend=binding_language, scope="public")
         try:
             self._runtime_manager.validate_command_runtime(

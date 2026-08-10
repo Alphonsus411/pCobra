@@ -130,9 +130,7 @@ def test_asignacion_anidada_sin_nolocal_sombrea_binding_exterior() -> None:
 
 
 def test_nolocal_sin_binding_exterior_falla_inmediatamente_y_limpia_llamada() -> None:
-    inter = _ejecutar(
-        [NodoFuncion("invalida", [], [NodoNoLocal(["ausente"])])]
-    )
+    inter = _ejecutar([NodoFuncion("invalida", [], [NodoNoLocal(["ausente"])])])
 
     with pytest.raises(SyntaxError, match="No existe binding nolocal para 'ausente'"):
         inter.ejecutar_nodo(NodoLlamadaFuncion("invalida", []))
@@ -261,7 +259,9 @@ def test_mientras_reasigna_memoria_en_entorno_real_y_persiste_fuera() -> None:
 
 def test_variable_definida_fuera_y_mutada_en_mientras_persiste() -> None:
     inter = InterpretadorCobra()
-    inter.ejecutar_asignacion(NodoAsignacion("acumulado", NodoValor(0), declaracion=True))
+    inter.ejecutar_asignacion(
+        NodoAsignacion("acumulado", NodoValor(0), declaracion=True)
+    )
     inter.ejecutar_asignacion(NodoAsignacion("i", NodoValor(0), declaracion=True))
 
     condicion = NodoOperacionBinaria(
@@ -520,11 +520,7 @@ def test_closure_usa_environment_parent_en_llamadas() -> None:
                         NodoFuncion(
                             "interna",
                             [],
-                            [
-                                NodoRetorno(
-                                    NodoIdentificador("x")
-                                )
-                            ],
+                            [NodoRetorno(NodoIdentificador("x"))],
                         ),
                         NodoRetorno(NodoLlamadaFuncion("interna", [])),
                     ],
@@ -625,7 +621,9 @@ def test_environment_scope_sin_copy_ni_clonado_dict_en_define_set() -> None:
 
 
 def test_control_flow_si_sino_y_mientras_no_copian_entorno_ni_abren_scope() -> None:
-    codigo_condicional = inspect.getsource(InterpretadorCobra.ejecutar_condicional).lower()
+    codigo_condicional = inspect.getsource(
+        InterpretadorCobra.ejecutar_condicional
+    ).lower()
     codigo_mientras = inspect.getsource(InterpretadorCobra.ejecutar_mientras).lower()
     agregado = f"{codigo_condicional}\n{codigo_mientras}"
 
@@ -692,7 +690,9 @@ def test_contexto_repl_consistente_tras_multiples_ejecuciones() -> None:
 
 def test_interpreter_control_flow_sin_copy_ni_clonado_en_bloques_y_bucles() -> None:
     codigo_mientras = inspect.getsource(InterpretadorCobra.ejecutar_mientras).lower()
-    codigo_condicional = inspect.getsource(InterpretadorCobra.ejecutar_condicional).lower()
+    codigo_condicional = inspect.getsource(
+        InterpretadorCobra.ejecutar_condicional
+    ).lower()
     agregado = f"{codigo_mientras}\n{codigo_condicional}"
 
     assert "copy(" not in agregado

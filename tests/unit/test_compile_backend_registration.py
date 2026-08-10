@@ -29,7 +29,9 @@ def test_register_transpiler_backend_rechaza_backend_no_oficial():
 
 def test_register_transpiler_backend_rechaza_alias_no_canonico():
     with pytest.raises(ValueError, match=r"sin alias"):
-        transpiler_registry.register_transpiler_backend(" Python ", DummyTranspiler, context="tests")
+        transpiler_registry.register_transpiler_backend(
+            " Python ", DummyTranspiler, context="tests"
+        )
 
 
 def test_register_transpiler_backend_acepta_backend_canonico():
@@ -42,12 +44,18 @@ def test_register_transpiler_backend_acepta_backend_canonico():
 
 
 def test_register_transpiler_backend_rechaza_duplicados():
-    transpiler_registry.register_transpiler_backend("python", DummyTranspiler, context="tests")
+    transpiler_registry.register_transpiler_backend(
+        "python", DummyTranspiler, context="tests"
+    )
     with pytest.raises(ValueError, match=r"Registro duplicado"):
-        transpiler_registry.register_transpiler_backend("python", DummyTranspiler, context="tests")
+        transpiler_registry.register_transpiler_backend(
+            "python", DummyTranspiler, context="tests"
+        )
 
 
-def test_load_entrypoint_transpilers_omite_backend_fuera_del_set_oficial(monkeypatch, caplog):
+def test_load_entrypoint_transpilers_omite_backend_fuera_del_set_oficial(
+    monkeypatch, caplog
+):
     ep = importlib.metadata.EntryPoint(
         name="fantasy",
         value="tests.unit.test_compile_backend_registration:DummyTranspiler",
@@ -105,8 +113,12 @@ def test_load_entrypoint_transpilers_registra_backend_canonico(monkeypatch):
     assert dict(transpiler_registry.plugin_transpilers()) == {"python": DummyTranspiler}
 
 
-def test_load_entrypoint_transpilers_no_sobrescribe_backend_canonico_existente(monkeypatch, caplog):
-    transpiler_registry.register_transpiler_backend("python", DummyTranspiler, context="tests")
+def test_load_entrypoint_transpilers_no_sobrescribe_backend_canonico_existente(
+    monkeypatch, caplog
+):
+    transpiler_registry.register_transpiler_backend(
+        "python", DummyTranspiler, context="tests"
+    )
     ep = importlib.metadata.EntryPoint(
         name="python",
         value="fake.module:DummyExternalTranspiler",
@@ -129,7 +141,9 @@ def test_load_entrypoint_transpilers_no_sobrescribe_backend_canonico_existente(m
     assert "ya existe en el registro canónico" in caplog.text
 
 
-def test_load_entrypoint_transpilers_rechaza_clase_sin_generate_code(monkeypatch, caplog):
+def test_load_entrypoint_transpilers_rechaza_clase_sin_generate_code(
+    monkeypatch, caplog
+):
     class InvalidNoGenerateCode:
         pass
 
@@ -146,7 +160,9 @@ def test_load_entrypoint_transpilers_rechaza_clase_sin_generate_code(monkeypatch
     monkeypatch.setattr(
         transpiler_registry,
         "import_module",
-        lambda _name: types.SimpleNamespace(InvalidNoGenerateCode=InvalidNoGenerateCode),
+        lambda _name: types.SimpleNamespace(
+            InvalidNoGenerateCode=InvalidNoGenerateCode
+        ),
     )
 
     loaded, rejected, skipped = transpiler_registry.load_entrypoint_transpilers()
@@ -176,7 +192,9 @@ def test_get_transpilers_overlay_plugins(monkeypatch):
         def generate_code(self, ast):
             return "plugin"
 
-    transpiler_registry.register_transpiler_backend("python", PluginPython, context="tests")
+    transpiler_registry.register_transpiler_backend(
+        "python", PluginPython, context="tests"
+    )
 
     merged = transpiler_registry.get_transpilers(include_plugins=True)
     official_only = transpiler_registry.get_transpilers(include_plugins=False)

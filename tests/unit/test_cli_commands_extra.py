@@ -85,9 +85,7 @@ def test_cli_validadores_extra(tmp_path):
 def test_cli_modulos_comandos(tmp_path, monkeypatch):
     monkeypatch.setattr(yaml, "safe_load", _load_mapping)
     monkeypatch.setattr(yaml, "safe_dump", _dump_mapping)
-    monkeypatch.setattr(
-        cli_module, "resolve_command_profile", lambda: "development"
-    )
+    monkeypatch.setattr(cli_module, "resolve_command_profile", lambda: "development")
     monkeypatch.setattr(
         cli_module.AppConfig,
         "BASE_COMMAND_CLASSES",
@@ -201,9 +199,7 @@ def test_modulos_operan_en_directorio_de_usuario(tmp_path, monkeypatch):
 def test_cli_modulo_version_invalida(tmp_path, monkeypatch):
     monkeypatch.setattr(yaml, "safe_load", _load_mapping)
     monkeypatch.setattr(yaml, "safe_dump", _dump_mapping)
-    monkeypatch.setattr(
-        cli_module, "resolve_command_profile", lambda: "development"
-    )
+    monkeypatch.setattr(cli_module, "resolve_command_profile", lambda: "development")
     monkeypatch.setattr(
         cli_module.AppConfig,
         "BASE_COMMAND_CLASSES",
@@ -237,14 +233,11 @@ def test_cli_modulo_version_invalida(tmp_path, monkeypatch):
         cli_module.main(["modulos", "instalar", str(modulo)])
     assert "inválida" in out.getvalue().lower()
 
+
 @pytest.mark.timeout(5)
 def test_cli_crear_archivo(tmp_path, monkeypatch):
-    monkeypatch.setattr(
-        cli_module, "resolve_command_profile", lambda: "development"
-    )
-    monkeypatch.setattr(
-        cli_module.AppConfig, "BASE_COMMAND_CLASSES", [CrearCommand]
-    )
+    monkeypatch.setattr(cli_module, "resolve_command_profile", lambda: "development")
+    monkeypatch.setattr(cli_module.AppConfig, "BASE_COMMAND_CLASSES", [CrearCommand])
     ruta = tmp_path / "nuevo"
     with patch("sys.stdout", new_callable=StringIO) as out:
         cli_module.main(["crear", "archivo", str(ruta)])
@@ -254,12 +247,8 @@ def test_cli_crear_archivo(tmp_path, monkeypatch):
 
 @pytest.mark.timeout(5)
 def test_cli_crear_proyecto(tmp_path, monkeypatch):
-    monkeypatch.setattr(
-        cli_module, "resolve_command_profile", lambda: "development"
-    )
-    monkeypatch.setattr(
-        cli_module.AppConfig, "BASE_COMMAND_CLASSES", [CrearCommand]
-    )
+    monkeypatch.setattr(cli_module, "resolve_command_profile", lambda: "development")
+    monkeypatch.setattr(cli_module.AppConfig, "BASE_COMMAND_CLASSES", [CrearCommand])
     ruta = tmp_path / "proj"
     with patch("sys.stdout", new_callable=StringIO) as out:
         cli_module.main(["crear", "proyecto", str(ruta)])

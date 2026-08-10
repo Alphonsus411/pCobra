@@ -1,6 +1,7 @@
 """Funciones de rendimiento basadas en smooth-criminal."""
 
 from typing import Callable, Any
+
 try:
     from smooth_criminal.core import (
         bad,
@@ -9,6 +10,7 @@ try:
         jam,
     )
 except Exception:  # pragma: no cover - fallback when library is missing
+
     def bad(*, workers=4, fallback=None):
         def decorator(func):
             return func
@@ -18,9 +20,7 @@ except Exception:  # pragma: no cover - fallback when library is missing
     def profile_it(func, *, args=None, kwargs=None, repeat=1, parallel=False):
         return {}
 
-    def bad_and_dangerous(
-        func, *, args=None, kwargs=None, repeat=1, parallel=False
-    ):
+    def bad_and_dangerous(func, *, args=None, kwargs=None, repeat=1, parallel=False):
         return profile_it(
             func, args=args, kwargs=kwargs, repeat=repeat, parallel=parallel
         )
@@ -54,7 +54,7 @@ def perfilar(
     args: tuple | None = None,
     kwargs: dict | None = None,
     repeticiones: int = 5,
-    paralelo: bool = False
+    paralelo: bool = False,
 ) -> dict[str, Any]:
     """Ejecuta ``func`` varias veces y devuelve estadísticas de rendimiento."""
     args = args or ()

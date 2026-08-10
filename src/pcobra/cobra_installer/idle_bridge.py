@@ -95,7 +95,9 @@ def _build_options_from_idle(
     )
 
 
-def _ui_options_to_dict(ui_options: Mapping[str, Any] | object | None) -> dict[str, Any]:
+def _ui_options_to_dict(
+    ui_options: Mapping[str, Any] | object | None,
+) -> dict[str, Any]:
     if ui_options is None:
         return {}
     if isinstance(ui_options, Mapping):
@@ -115,7 +117,9 @@ def _merge_ui_options(
     return merged
 
 
-def _resolve_executable_path(executable_name: str | None, dist_dir: Path) -> Path | None:
+def _resolve_executable_path(
+    executable_name: str | None, dist_dir: Path
+) -> Path | None:
     if not executable_name:
         return None
     direct = dist_dir / executable_name

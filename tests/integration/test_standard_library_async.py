@@ -46,7 +46,9 @@ def _trabajo_bloqueante(marcas: list[str], demora: float) -> str:
 @pytest.mark.asyncio
 async def test_ejecutar_en_hilo_permite_proteger_resultados():
     marcas: list[str] = []
-    tarea = asyncio.create_task(stlib.ejecutar_en_hilo(_trabajo_bloqueante, marcas, 0.02))
+    tarea = asyncio.create_task(
+        stlib.ejecutar_en_hilo(_trabajo_bloqueante, marcas, 0.02)
+    )
     envoltura = stlib.proteger_tarea(tarea)
 
     envoltura.cancel()
@@ -63,7 +65,9 @@ async def test_ejecutar_en_hilo_permite_proteger_resultados():
 @pytest.mark.asyncio
 async def test_ejecutar_en_hilo_sigue_trabajando_si_se_cancela():
     marcas: list[str] = []
-    tarea = asyncio.create_task(stlib.ejecutar_en_hilo(_trabajo_bloqueante, marcas, 0.02))
+    tarea = asyncio.create_task(
+        stlib.ejecutar_en_hilo(_trabajo_bloqueante, marcas, 0.02)
+    )
 
     await asyncio.sleep(0)
     tarea.cancel()

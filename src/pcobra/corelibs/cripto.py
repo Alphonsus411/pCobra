@@ -7,7 +7,6 @@ import hmac
 import operator
 import secrets
 
-
 __all__ = [
     "sha256",
     "sha512",

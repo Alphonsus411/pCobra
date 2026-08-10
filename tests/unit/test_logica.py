@@ -62,7 +62,13 @@ def test_logica_colecciones():
         ([True, True, False], False, False, 2, True),
         ([True, True, True], False, False, 3, False),
     ]
-    for valores, ninguna_esperado, solo_uno_esperado, conteo_esperado, paridad_esperada in casos_coleccion:
+    for (
+        valores,
+        ninguna_esperado,
+        solo_uno_esperado,
+        conteo_esperado,
+        paridad_esperada,
+    ) in casos_coleccion:
         assert logica.ninguna(valores) is ninguna_esperado
         assert logica.solo_uno(*valores) is solo_uno_esperado
         assert logica.conteo_verdaderos(valores) == conteo_esperado
@@ -106,7 +112,9 @@ def test_coalesce_predicado_por_defecto():
 
 def test_coalesce_predicado_personalizado():
     assert logica.coalesce(1, 3, 4, predicado=lambda valor: valor % 2 == 0) == 4
-    assert logica.coalesce("", "texto", predicado=lambda valor: len(valor) > 3) == "texto"
+    assert (
+        logica.coalesce("", "texto", predicado=lambda valor: len(valor) > 3) == "texto"
+    )
 
 
 def test_coalesce_valida_predicado_y_argumentos():
@@ -118,4 +126,3 @@ def test_coalesce_valida_predicado_y_argumentos():
 
     with pytest.raises(TypeError):
         logica.coalesce(1, predicado=lambda _: "no bool")
-

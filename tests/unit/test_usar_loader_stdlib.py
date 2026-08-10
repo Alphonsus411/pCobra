@@ -4,7 +4,9 @@ from cobra import usar_loader
 
 
 @pytest.mark.parametrize("nombre", ["numero", "texto", "datos", "holobit"])
-def test_entrypoint_obtener_modulo_delega_en_obtener_modulo_cobra_oficial(monkeypatch, nombre):
+def test_entrypoint_obtener_modulo_delega_en_obtener_modulo_cobra_oficial(
+    monkeypatch, nombre
+):
     llamado = {"nombre": None}
 
     def _fake_oficial(n):
@@ -27,5 +29,7 @@ def test_entrypoint_obtener_modulo_delega_en_obtener_modulo_cobra_oficial(monkey
     ],
 )
 def test_rechaza_rutas_internas_y_backend(nombre):
-    with pytest.raises((ValueError, PermissionError), match="(usar|backend|interna|permitida)"):
+    with pytest.raises(
+        (ValueError, PermissionError), match="(usar|backend|interna|permitida)"
+    ):
         usar_loader.validar_nombre_modulo_usar(nombre)

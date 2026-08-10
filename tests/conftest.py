@@ -137,7 +137,9 @@ if "jsonschema" not in sys.modules:
     class ValidationError(Exception):
         pass
 
-    def _fake_validate(_instance=None, _schema=None, *args, **kwargs):  # pragma: no cover
+    def _fake_validate(
+        _instance=None, _schema=None, *args, **kwargs
+    ):  # pragma: no cover
         return None
 
     fake_jsonschema.ValidationError = ValidationError
@@ -333,13 +335,7 @@ def codigo_imprimir() -> str:
 @pytest.fixture
 def codigo_bucle_simple() -> str:
     """Snippet Cobra con un bucle ``mientras`` que imprime valores."""
-    return (
-        "x = 0\n"
-        "mientras x < 2:\n"
-        "    imprimir(x)\n"
-        "    x = x + 1\n"
-        "fin"
-    )
+    return "x = 0\n" "mientras x < 2:\n" "    imprimir(x)\n" "    x = x + 1\n" "fin"
 
 
 @pytest.fixture
@@ -370,28 +366,21 @@ def base_datos_temporal(tmp_path_factory, monkeypatch):
     monkeypatch.setattr(
         database_module, "_SQLITEPLUS_CLASS", _SQLitePlusStub, raising=False
     )
-    monkeypatch.setattr(
-        database_module, "_SQLITEPLUS_INSTANCE", None, raising=False
-    )
-    monkeypatch.setattr(
-        database_module, "_TABLES_READY", False, raising=False
-    )
+    monkeypatch.setattr(database_module, "_SQLITEPLUS_INSTANCE", None, raising=False)
+    monkeypatch.setattr(database_module, "_TABLES_READY", False, raising=False)
     monkeypatch.setitem(sys.modules, "core.database", database_module)
 
     # Recargar ast_cache_module para asegurar un estado fresco
     import pcobra.cobra.core.ast_cache as ast_cache_module
+
     ast_cache_module = importlib.reload(ast_cache_module)
     ast_cache_module.limpiar_cache()
 
     yield db_path
 
     # Explicitly close any lingering database connections before unlinking the file
-    monkeypatch.setattr(
-        database_module, "_SQLITEPLUS_INSTANCE", None, raising=False
-    )
-    monkeypatch.setattr(
-        database_module, "_TABLES_READY", False, raising=False
-    )
+    monkeypatch.setattr(database_module, "_SQLITEPLUS_INSTANCE", None, raising=False)
+    monkeypatch.setattr(database_module, "_TABLES_READY", False, raising=False)
 
     if db_path.exists():
         for _ in range(5):  # Retry up to 5 times

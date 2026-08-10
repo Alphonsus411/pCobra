@@ -141,7 +141,8 @@ ROUTE_OPERATIONAL_LIMITS: Final[dict[BindingRoute, RouteOperationalLimits]] = {
 }
 
 COMMAND_EVENT_SCHEMA: Final[dict[str, str]] = {
-    command: f"runtime.command.validation.{command}" for command in PUBLIC_RUNTIME_COMMANDS
+    command: f"runtime.command.validation.{command}"
+    for command in PUBLIC_RUNTIME_COMMANDS
 }
 
 

@@ -110,24 +110,28 @@ def _ejecutar_modo_repl(snippets: list[str]) -> dict[str, str]:
         ),
     ],
 )
-def test_parity_contract_run_service_vs_repl(caso: str, snippets: list[str], salida_esperada: str) -> None:
+def test_parity_contract_run_service_vs_repl(
+    caso: str, snippets: list[str], salida_esperada: str
+) -> None:
     resultado_script = _ejecutar_modo_script(snippets)
     resultado_repl = _ejecutar_modo_repl(snippets)
 
     assert resultado_script["rc"] == 0, f"{caso}: RunService debe finalizar con éxito"
-    assert resultado_script["stderr"] == resultado_repl["stderr"] == "", (
-        f"{caso}: no debe haber salida de error entre rutas"
-    )
-    assert resultado_script["stdout"] == resultado_repl["stdout"], (
-        f"{caso}: la salida observable debe ser idéntica entre script y REPL"
-    )
-    assert resultado_script["stdout"].endswith(salida_esperada), (
-        f"{caso}: la salida final observable debe reflejar el estado esperado"
-    )
+    assert (
+        resultado_script["stderr"] == resultado_repl["stderr"] == ""
+    ), f"{caso}: no debe haber salida de error entre rutas"
+    assert (
+        resultado_script["stdout"] == resultado_repl["stdout"]
+    ), f"{caso}: la salida observable debe ser idéntica entre script y REPL"
+    assert resultado_script["stdout"].endswith(
+        salida_esperada
+    ), f"{caso}: la salida final observable debe reflejar el estado esperado"
 
 
 @pytest.mark.parametrize("declaracion", ["var x = 3", "variable x := 3"])
-def test_parity_secuencia_run_vs_repl_con_declaraciones_equivalentes(declaracion: str) -> None:
+def test_parity_secuencia_run_vs_repl_con_declaraciones_equivalentes(
+    declaracion: str,
+) -> None:
     # Contrato de paridad: RUN y REPL deben ejecutar toda la secuencia y producir la misma salida observable.
     snippets = [
         'imprimir("antes")',
@@ -139,10 +143,12 @@ def test_parity_secuencia_run_vs_repl_con_declaraciones_equivalentes(declaracion
     resultado_script = _ejecutar_modo_script(snippets)
     resultado_repl = _ejecutar_modo_repl(snippets)
 
-    assert resultado_script["rc"] == 0, "RunService debe completar la secuencia sin cortar flujo"
-    assert resultado_script["stderr"] == resultado_repl["stderr"] == "", (
-        "No debe existir salida de error en RUN ni REPL para esta secuencia"
-    )
+    assert (
+        resultado_script["rc"] == 0
+    ), "RunService debe completar la secuencia sin cortar flujo"
+    assert (
+        resultado_script["stderr"] == resultado_repl["stderr"] == ""
+    ), "No debe existir salida de error en RUN ni REPL para esta secuencia"
     assert resultado_script["stdout"] == resultado_repl["stdout"] == salida_esperada
 
 

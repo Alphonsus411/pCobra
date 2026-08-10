@@ -32,6 +32,7 @@ def test_construir_cadena_sin_reutilizar(monkeypatch):
 
     with patch.object(ValidadorPrimitivaPeligrosa, "__init__", cuenta_init):
         import core.semantic_validators as sv
+
         monkeypatch.setattr(sv, "_CADENA_DEFECTO", None)
         construir_cadena()
         monkeypatch.setattr(sv, "_CADENA_DEFECTO", None)

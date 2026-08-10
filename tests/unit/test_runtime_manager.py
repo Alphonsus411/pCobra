@@ -17,7 +17,9 @@ def test_runtime_manager_valida_ruta_js_requiere_runtime_gestionado():
     manager = RuntimeManager()
 
     try:
-        manager.validate_security_route("javascript", sandbox=False, containerized=False)
+        manager.validate_security_route(
+            "javascript", sandbox=False, containerized=False
+        )
     except ValueError as exc:
         assert "[JavaScript runtime bridge]" in str(exc)
         assert "runtime gestionado" in str(exc)
@@ -42,7 +44,9 @@ def test_runtime_manager_politica_test_exige_sandbox_para_python():
     manager = RuntimeManager()
 
     try:
-        manager.validate_security_route("python", sandbox=False, containerized=False, command="test")
+        manager.validate_security_route(
+            "python", sandbox=False, containerized=False, command="test"
+        )
     except ValueError as exc:
         assert "exige sandbox" in str(exc)
     else:  # pragma: no cover
@@ -90,19 +94,15 @@ def test_runtime_manager_validate_command_runtime_loguea_contexto_estructurado(c
 def test_runtime_manager_negocia_abi_desde_config(monkeypatch, tmp_path: Path):
     manager = RuntimeManager()
     cobra_toml = tmp_path / "cobra.toml"
-    cobra_toml.write_text(
-        """
+    cobra_toml.write_text("""
 [project.abi_by_backend]
 rust = "1.0"
-""".strip()
-    )
+""".strip())
     pcobra_toml = tmp_path / "pcobra.toml"
-    pcobra_toml.write_text(
-        """
+    pcobra_toml.write_text("""
 [project.backend_abi]
 rust = "2.0"
-""".strip()
-    )
+""".strip())
 
     monkeypatch.setenv("COBRA_TOML", str(cobra_toml))
     monkeypatch.setenv("PCOBRA_CONFIG", str(pcobra_toml))
@@ -111,7 +111,9 @@ rust = "2.0"
     assert manager.validate_abi_route("rust") == "1.0"
 
 
-def test_runtime_manager_negocia_abi_actual_por_defecto_javascript(monkeypatch, tmp_path: Path):
+def test_runtime_manager_negocia_abi_actual_por_defecto_javascript(
+    monkeypatch, tmp_path: Path
+):
     manager = RuntimeManager()
     monkeypatch.setenv("COBRA_TOML", str(tmp_path / "missing-cobra.toml"))
     monkeypatch.setenv("PCOBRA_CONFIG", str(tmp_path / "missing-pcobra.toml"))
@@ -119,15 +121,15 @@ def test_runtime_manager_negocia_abi_actual_por_defecto_javascript(monkeypatch, 
     assert manager.validate_abi_route("javascript") == "1.1"
 
 
-def test_runtime_manager_rechaza_abi_no_compatible_hacia_atras(monkeypatch, tmp_path: Path):
+def test_runtime_manager_rechaza_abi_no_compatible_hacia_atras(
+    monkeypatch, tmp_path: Path
+):
     manager = RuntimeManager()
     cobra_toml = tmp_path / "cobra.toml"
-    cobra_toml.write_text(
-        """
+    cobra_toml.write_text("""
 [project.abi_by_backend]
 javascript = "1.2"
-""".strip()
-    )
+""".strip())
 
     monkeypatch.setenv("COBRA_TOML", str(cobra_toml))
     monkeypatch.delenv("PCOBRA_CONFIG", raising=False)
@@ -140,17 +142,17 @@ javascript = "1.2"
         raise AssertionError("Se esperaba rechazo de ABI no soportada")
 
 
-def test_runtime_manager_abi_contract_lee_abi_by_backend_desde_cobra_toml(monkeypatch, tmp_path: Path):
+def test_runtime_manager_abi_contract_lee_abi_by_backend_desde_cobra_toml(
+    monkeypatch, tmp_path: Path
+):
     manager = RuntimeManager()
     cobra_toml = tmp_path / "cobra.toml"
-    cobra_toml.write_text(
-        """
+    cobra_toml.write_text("""
 [project.abi_by_backend]
 python = "1.0"
 javascript = "1.0"
 rust = "1.1"
-""".strip()
-    )
+""".strip())
     monkeypatch.setenv("COBRA_TOML", str(cobra_toml))
     monkeypatch.delenv("PCOBRA_CONFIG", raising=False)
 
@@ -159,16 +161,16 @@ rust = "1.1"
     assert manager.validate_abi_route("rust") == "1.1"
 
 
-def test_runtime_manager_abi_contract_lee_backend_abi_desde_pcobra_toml(monkeypatch, tmp_path: Path):
+def test_runtime_manager_abi_contract_lee_backend_abi_desde_pcobra_toml(
+    monkeypatch, tmp_path: Path
+):
     manager = RuntimeManager()
     pcobra_toml = tmp_path / "pcobra.toml"
-    pcobra_toml.write_text(
-        """
+    pcobra_toml.write_text("""
 [project.backend_abi]
 javascript = "1.0"
 rust = "1.1"
-""".strip()
-    )
+""".strip())
     monkeypatch.setenv("COBRA_TOML", str(tmp_path / "missing-cobra.toml"))
     monkeypatch.setenv("PCOBRA_CONFIG", str(pcobra_toml))
 

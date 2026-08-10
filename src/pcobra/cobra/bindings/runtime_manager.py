@@ -30,19 +30,46 @@ DEFAULT_ABI_VERSION: Final[str] = "1.0"
 
 SECURITY_POLICY_BY_COMMAND: Final[dict[str, dict[BindingRoute, dict[str, bool]]]] = {
     "run": {
-        BindingRoute.PYTHON_DIRECT_IMPORT: {"sandbox_required": False, "container_required": False},
-        BindingRoute.JAVASCRIPT_RUNTIME_BRIDGE: {"sandbox_required": False, "container_required": False},
-        BindingRoute.RUST_COMPILED_FFI: {"sandbox_required": False, "container_required": False},
+        BindingRoute.PYTHON_DIRECT_IMPORT: {
+            "sandbox_required": False,
+            "container_required": False,
+        },
+        BindingRoute.JAVASCRIPT_RUNTIME_BRIDGE: {
+            "sandbox_required": False,
+            "container_required": False,
+        },
+        BindingRoute.RUST_COMPILED_FFI: {
+            "sandbox_required": False,
+            "container_required": False,
+        },
     },
     "test": {
-        BindingRoute.PYTHON_DIRECT_IMPORT: {"sandbox_required": True, "container_required": False},
-        BindingRoute.JAVASCRIPT_RUNTIME_BRIDGE: {"sandbox_required": False, "container_required": True},
-        BindingRoute.RUST_COMPILED_FFI: {"sandbox_required": False, "container_required": True},
+        BindingRoute.PYTHON_DIRECT_IMPORT: {
+            "sandbox_required": True,
+            "container_required": False,
+        },
+        BindingRoute.JAVASCRIPT_RUNTIME_BRIDGE: {
+            "sandbox_required": False,
+            "container_required": True,
+        },
+        BindingRoute.RUST_COMPILED_FFI: {
+            "sandbox_required": False,
+            "container_required": True,
+        },
     },
     "build": {
-        BindingRoute.PYTHON_DIRECT_IMPORT: {"sandbox_required": False, "container_required": False},
-        BindingRoute.JAVASCRIPT_RUNTIME_BRIDGE: {"sandbox_required": False, "container_required": False},
-        BindingRoute.RUST_COMPILED_FFI: {"sandbox_required": False, "container_required": False},
+        BindingRoute.PYTHON_DIRECT_IMPORT: {
+            "sandbox_required": False,
+            "container_required": False,
+        },
+        BindingRoute.JAVASCRIPT_RUNTIME_BRIDGE: {
+            "sandbox_required": False,
+            "container_required": False,
+        },
+        BindingRoute.RUST_COMPILED_FFI: {
+            "sandbox_required": False,
+            "container_required": False,
+        },
     },
 }
 
@@ -79,7 +106,9 @@ class RuntimeManager:
             route=BindingRoute.JAVASCRIPT_RUNTIME_BRIDGE,
             implementation="javascript_controlled_runtime_bridge",
             security_profile="managed_runtime_isolation",
-            abi_version=ABI_POLICY_BY_ROUTE[BindingRoute.JAVASCRIPT_RUNTIME_BRIDGE].current,
+            abi_version=ABI_POLICY_BY_ROUTE[
+                BindingRoute.JAVASCRIPT_RUNTIME_BRIDGE
+            ].current,
             internal_only=False,
         ),
         BindingRoute.RUST_COMPILED_FFI: RuntimeBridgeDescriptor(
@@ -95,7 +124,9 @@ class RuntimeManager:
     def __init__(self) -> None:
         self._validate_public_contracts()
 
-    def resolve_runtime(self, language: str) -> tuple[BindingCapabilities, RuntimeBridgeDescriptor]:
+    def resolve_runtime(
+        self, language: str
+    ) -> tuple[BindingCapabilities, RuntimeBridgeDescriptor]:
         """Resuelve contrato, negocia ABI y retorna bridge asociado."""
 
         capabilities = self._resolve_capabilities(language)
@@ -130,7 +161,9 @@ class RuntimeManager:
                 route,
                 "la ruta no puede marcarse como containerizada; use ejecución en mismo proceso",
             )
-        if route is BindingRoute.JAVASCRIPT_RUNTIME_BRIDGE and not (sandbox or containerized):
+        if route is BindingRoute.JAVASCRIPT_RUNTIME_BRIDGE and not (
+            sandbox or containerized
+        ):
             self._raise_route_error(
                 route,
                 "la ruta requiere runtime gestionado (sandbox o contenedor) para mantener aislamiento",
@@ -161,11 +194,15 @@ class RuntimeManager:
             stage="security",
         )
 
-    def negotiate_abi(self, capabilities: BindingCapabilities, abi_version: str | None = None) -> str:
+    def negotiate_abi(
+        self, capabilities: BindingCapabilities, abi_version: str | None = None
+    ) -> str:
         """Negocia ABI por ruta usando matriz canónica y compatibilidad hacia atrás."""
 
         policy = ABI_POLICY_BY_ROUTE[capabilities.route]
-        project_selected = abi_version or self._resolve_project_abi_for_backend(capabilities.language)
+        project_selected = abi_version or self._resolve_project_abi_for_backend(
+            capabilities.language
+        )
         selected = (project_selected or policy.current or DEFAULT_ABI_VERSION).strip()
 
         if selected not in policy.supported:
@@ -231,7 +268,9 @@ class RuntimeManager:
         )
         return negotiated_abi, capabilities, bridge
 
-    def select_bridge(self, capabilities: BindingCapabilities) -> RuntimeBridgeDescriptor:
+    def select_bridge(
+        self, capabilities: BindingCapabilities
+    ) -> RuntimeBridgeDescriptor:
         """Selecciona la implementación de bridge para una ruta contractual."""
 
         return self._BRIDGES[capabilities.route]

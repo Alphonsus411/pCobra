@@ -7,7 +7,6 @@ sys.path.append(str(Path(__file__).resolve().parent.parent / "src"))
 from pcobra.cobra.core.lexer import InvalidTokenError, Lexer, TipoToken
 
 
-
 def test_lexer_aritmetica_simple() -> None:
     codigo = "1 + 2"
     lexer = Lexer(codigo)

@@ -36,10 +36,12 @@ _VALID_NAME_RE = re.compile(r"^[a-z][a-z0-9_.]*$")
 
 # Segmentos seguros para módulos de proyecto: ruta lógica punteada, no ruta del sistema.
 _VALID_PROJECT_MODULE_SEGMENT_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
-_PROJECT_MODULE_FORBIDDEN_CHARS = frozenset('/\\@$%*?"\'<>|;`!()[]{}=+,')
+_PROJECT_MODULE_FORBIDDEN_CHARS = frozenset("/\\@$%*?\"'<>|;`!()[]{}=+,")
 _USAR_PROJECT_MODULE_CACHE: dict[Path, dict[str, Any]] = {}
 _USAR_PROJECT_LOADING_STACK: list[Path] = []
-_IMPORT_COBRA_AST_CACHE: dict[Path, list[Any]] = {} # Nueva caché para ASTs de fuentes .cobra
+_IMPORT_COBRA_AST_CACHE: dict[Path, list[Any]] = (
+    {}
+)  # Nueva caché para ASTs de fuentes .cobra
 _MODULO_AUSENTE = object()
 CobraImportResolver = imports_resolver.CobraImportResolver
 _DEFAULT_COBRA_IMPORT_RESOLVER = CobraImportResolver
@@ -51,6 +53,7 @@ def _obtener_resolver_imports_parcheable():
     if CobraImportResolver is not _DEFAULT_COBRA_IMPORT_RESOLVER:
         return CobraImportResolver
     return imports_resolver.CobraImportResolver
+
 
 # Compatibilidad con la API histórica de ``usar_loader``.  La política
 # canónica vive en ``usar_policy``, pero algunas integraciones y pruebas siguen
@@ -164,23 +167,26 @@ def _aplicar_capacidades(
                     CapacidadUsar.PROCESS_SPAWN in __capacidades
                     and kwargs.get("shell") is True
                 ):
-                    raise PermissionError("capacidad process.shell denegada en modo seguro")
+                    raise PermissionError(
+                        "capacidad process.shell denegada en modo seguro"
+                    )
                 capacidad = sorted(
                     (capacidad.value for capacidad in __capacidades),
                     key=lambda valor: (not valor.startswith("network."), valor),
                 )[0]
-                raise PermissionError(
-                    f"capacidad {capacidad} denegada en modo seguro"
-                )
+                raise PermissionError(f"capacidad {capacidad} denegada en modo seguro")
 
         if modulo == "red" and inspect.iscoroutinefunction(simbolo):
+
             @wraps(simbolo)
             async def protegido(
                 *args, __simbolo=simbolo, __verificar=verificar_permiso, **kwargs
             ):
                 __verificar(kwargs)
                 return await __simbolo(*args, **kwargs)
+
         else:
+
             @wraps(simbolo)
             def protegido(
                 *args, __simbolo=simbolo, __verificar=verificar_permiso, **kwargs
@@ -190,6 +196,7 @@ def _aplicar_capacidades(
 
         resultado.append((nombre, protegido))
     return resultado
+
 
 def normalizar_nombre_usar(nombre: str) -> str:
     """Normaliza nombre de módulo para validaciones canónicas de `usar`."""
@@ -201,8 +208,12 @@ def _rechazar_modulo_no_canonico(nombre: str) -> None:
     """Rechaza módulos backend/no-canónicos con error explícito para `usar`."""
 
     nombre_normalizado = normalizar_nombre_usar(nombre)
-    blocklist_normalizada = {normalizar_nombre_usar(item) for item in USAR_BACKEND_BLOCKLIST}
-    equivalentes_normalizados = {normalizar_nombre_usar(item) for item in _BACKEND_EQUIVALENTS}
+    blocklist_normalizada = {
+        normalizar_nombre_usar(item) for item in USAR_BACKEND_BLOCKLIST
+    }
+    equivalentes_normalizados = {
+        normalizar_nombre_usar(item) for item in _BACKEND_EQUIVALENTS
+    }
 
     partes_mensaje_error_no_canonico = [
         f"Importación no permitida en 'usar': '{nombre}'.",
@@ -221,7 +232,10 @@ def _rechazar_modulo_no_canonico(nombre: str) -> None:
         )
     mensaje_error_no_canonico = " ".join(partes_mensaje_error_no_canonico)
 
-    if nombre_normalizado in blocklist_normalizada or nombre_normalizado in equivalentes_normalizados:
+    if (
+        nombre_normalizado in blocklist_normalizada
+        or nombre_normalizado in equivalentes_normalizados
+    ):
         raise ModuloFueraCatalogoPublicoError(mensaje_error_no_canonico)
 
     if any(
@@ -229,6 +243,7 @@ def _rechazar_modulo_no_canonico(nombre: str) -> None:
         for prefijo in _BACKEND_PREFIXES
     ):
         raise ModuloFueraCatalogoPublicoError(mensaje_error_no_canonico)
+
 
 def validar_nombre_modulo_usar(nombre: str, *, require_allowlist: bool = True) -> str:
     """Valida nombre de `usar` y opcionalmente exige contrato canónico exacto."""
@@ -240,7 +255,7 @@ def validar_nombre_modulo_usar(nombre: str, *, require_allowlist: bool = True) -
     if not nombre_raw:
         raise ValueError("Nombre de módulo vacío en 'usar'.")
 
-    if any(sep in nombre_raw for sep in ('/', '\\')) or '..' in nombre_raw:
+    if any(sep in nombre_raw for sep in ("/", "\\")) or ".." in nombre_raw:
         raise ValueError(
             f"Nombre de módulo inválido en 'usar': '{nombre_raw}' parece ruta/traversal."
         )
@@ -270,7 +285,6 @@ def validar_nombre_modulo_usar(nombre: str, *, require_allowlist: bool = True) -
         )
 
     return nombre
-
 
 
 def validar_nombre_modulo_cobra_proyecto(nombre: str) -> tuple[str, ...]:
@@ -335,7 +349,9 @@ def _verificar_path_dentro_de_root(ruta: Path, root: Path) -> None:
     try:
         common = os.path.commonpath((str(root_canonico), str(ruta_canonica)))
     except ValueError as exc:
-        raise ValueError("Ruta de módulo de proyecto fuera de la raíz autorizada.") from exc
+        raise ValueError(
+            "Ruta de módulo de proyecto fuera de la raíz autorizada."
+        ) from exc
 
     if common != str(root_canonico):
         raise ValueError("Ruta de módulo de proyecto fuera de la raíz autorizada.")
@@ -386,7 +402,9 @@ def resolver_modulo_cobra_proyecto(
         ).resolve(nombre)
     except ImportResolutionError as exc:
         if exc.code == "IMP-PROJECT-PATH-001":
-            raise ValueError("Ruta de módulo de proyecto fuera de la raíz autorizada.") from exc
+            raise ValueError(
+                "Ruta de módulo de proyecto fuera de la raíz autorizada."
+            ) from exc
         raise FileNotFoundError(f"Módulo no encontrado: {nombre}") from exc
 
     if resolution.source != "project" or not resolution.file_path:
@@ -465,7 +483,9 @@ def formatear_ciclo_modulos_cobra_proyecto(
     """Construye una cadena clara del ciclo usando rutas relativas si es posible."""
 
     ruta_canonica = canonicalizar_ruta_usar_proyecto(ruta_modulo)
-    pila_origen = loading_stack if loading_stack is not None else _USAR_PROJECT_LOADING_STACK
+    pila_origen = (
+        loading_stack if loading_stack is not None else _USAR_PROJECT_LOADING_STACK
+    )
     pila: list[Path] = []
     for ruta in pila_origen:
         ruta_pila = canonicalizar_ruta_usar_proyecto(ruta)
@@ -516,7 +536,9 @@ def descubrir_raiz_proyecto(start: Path | None, main_file: Path | None = None) -
 
     if main_file is not None:
         principal = Path(main_file).expanduser().resolve(strict=False)
-        directorio = principal.parent if principal.suffix or principal.is_file() else principal
+        directorio = (
+            principal.parent if principal.suffix or principal.is_file() else principal
+        )
         return directorio.resolve(strict=False)
 
     return Path.cwd().resolve()
@@ -616,7 +638,9 @@ def _obtener_modulo_cobra_oficial_compat(nombre: str):
             f"Módulo oficial Cobra '{nombre}' permitido pero sin ruta interna canónica declarada."
         )
 
-    wrapper = sys.modules.get("pcobra.core.usar_loader") or sys.modules.get("core.usar_loader")
+    wrapper = sys.modules.get("pcobra.core.usar_loader") or sys.modules.get(
+        "core.usar_loader"
+    )
     wrapper_oficial = getattr(wrapper, "obtener_modulo_cobra_oficial", None)
     if (
         wrapper_oficial is not None
@@ -652,7 +676,9 @@ def _repo_root_desde_loader() -> Path:
     """Busca la raíz del proyecto/instalación partiendo de este archivo."""
 
     for candidato in Path(__file__).resolve().parents:
-        if (candidato / "cobra.toml").exists() or (candidato / "pyproject.toml").exists():
+        if (candidato / "cobra.toml").exists() or (
+            candidato / "pyproject.toml"
+        ).exists():
             return candidato
     return Path(__file__).resolve().parents[3]
 
@@ -719,16 +745,22 @@ def obtener_modulo(nombre: str, *, permitir_instalacion: bool = True):
         raise PermissionError(f"Paquete no permitido en 'usar': '{nombre}'.")
 
     resolver_cls = _obtener_resolver_imports_parcheable()
-    resolver_parcheado = getattr(resolver_cls, "__module__", "") != "pcobra.cobra.imports.resolver"
+    resolver_parcheado = (
+        getattr(resolver_cls, "__module__", "") != "pcobra.cobra.imports.resolver"
+    )
     if nombre not in USAR_COBRA_PUBLIC_MODULES and resolver_parcheado:
-        _resolution, modulo = resolver_cls().load_module(nombre, fallback_backend="python")
+        _resolution, modulo = resolver_cls().load_module(
+            nombre, fallback_backend="python"
+        )
         return modulo
 
     try:
         return importlib.import_module(nombre)
     except ModuleNotFoundError as import_exc:
         try:
-            _resolution, modulo = resolver_cls().load_module(nombre, fallback_backend="python")
+            _resolution, modulo = resolver_cls().load_module(
+                nombre, fallback_backend="python"
+            )
             return modulo
         except Exception:
             if not permitir_instalacion or os.environ.get("COBRA_USAR_INSTALL") != "1":
@@ -738,7 +770,13 @@ def obtener_modulo(nombre: str, *, permitir_instalacion: bool = True):
 
             spec = USAR_WHITELIST[nombre]
             subprocess.run(
-                [sys.executable, "-m", "pip", "install", *_argumentos_pip_desde_spec(spec)],
+                [
+                    sys.executable,
+                    "-m",
+                    "pip",
+                    "install",
+                    *_argumentos_pip_desde_spec(spec),
+                ],
                 check=True,
             )
             return importlib.import_module(nombre)
@@ -796,7 +834,9 @@ def _cargar_exports_modulo_cobra_proyecto(
 
     root_canonico = canonicalizar_ruta_usar_proyecto(project_root)
     cache = module_cache if module_cache is not None else _USAR_PROJECT_MODULE_CACHE
-    pila_carga = loading_stack if loading_stack is not None else _USAR_PROJECT_LOADING_STACK
+    pila_carga = (
+        loading_stack if loading_stack is not None else _USAR_PROJECT_LOADING_STACK
+    )
     current_canonico = (
         canonicalizar_ruta_usar_proyecto(current_file) if current_file else None
     )
@@ -835,9 +875,7 @@ def _cargar_exports_modulo_cobra_proyecto(
             safe_mode=False, main_file=current_canonico or ruta_modulo
         )
         interpretador._project_root = root_canonico
-        interpretador._main_file = (
-            current_canonico if current_canonico else ruta_modulo
-        )
+        interpretador._main_file = current_canonico if current_canonico else ruta_modulo
         interpretador._usar_module_cache = cache
         interpretador._usar_loading_stack = pila_carga
         interpretador._current_module_stack.append(ruta_modulo)
@@ -846,8 +884,11 @@ def _cargar_exports_modulo_cobra_proyecto(
         for subnodo in ast:
             if isinstance(subnodo, NodoExport):
                 continue
-            if isinstance(subnodo, NodoUsar) or subnodo.__class__.__name__ == "NodoUsar":
-                modulo_hijo = str(subnodo.modulo).strip().strip('\"\'')
+            if (
+                isinstance(subnodo, NodoUsar)
+                or subnodo.__class__.__name__ == "NodoUsar"
+            ):
+                modulo_hijo = str(subnodo.modulo).strip().strip("\"'")
                 ruta_hijo = resolver_ruta_canonica_modulo_cobra_proyecto(
                     modulo_hijo,
                     project_root=root_canonico,
@@ -925,11 +966,15 @@ def usar_modulo(
 
     # Caso 1: alias oficial presente en la superficie pública Cobra.
     try:
-        nombre_validado_oficial = validar_nombre_modulo_usar(nombre_raw, require_allowlist=True)
+        nombre_validado_oficial = validar_nombre_modulo_usar(
+            nombre_raw, require_allowlist=True
+        )
         modulo = obtener_modulo(nombre_validado_oficial)
-        simbolos_saneados, metadata_por_simbolo, conflictos = _sanitizar_exports_publicos_detallado(
-            modulo,
-            normalizar_nombre_usar(nombre_validado_oficial),
+        simbolos_saneados, metadata_por_simbolo, conflictos = (
+            _sanitizar_exports_publicos_detallado(
+                modulo,
+                normalizar_nombre_usar(nombre_validado_oficial),
+            )
         )
         if conflictos:
             logging.debug(
@@ -938,7 +983,9 @@ def usar_modulo(
                 conflictos,
             )
         if not simbolos_saneados:
-            raise ImportError(f"No se encontraron símbolos exportables para usar '{nombre_validado_oficial}'.")
+            raise ImportError(
+                f"No se encontraron símbolos exportables para usar '{nombre_validado_oficial}'."
+            )
         simbolos_saneados = _aplicar_capacidades(
             nombre_validado_oficial, simbolos_saneados, safe_mode=safe_mode
         )
@@ -954,7 +1001,9 @@ def usar_modulo(
 
         # Caso 2: sólo un contexto de proyecto autorizado puede continuar al
         # resolvedor Cobra de proyecto (incluida la compatibilidad legacy).
-        wrapper = sys.modules.get("pcobra.core.usar_loader") or sys.modules.get("core.usar_loader")
+        wrapper = sys.modules.get("pcobra.core.usar_loader") or sys.modules.get(
+            "core.usar_loader"
+        )
         wrapper_obtener = getattr(wrapper, "obtener_modulo", None)
         wrapper_obtener_oficial = getattr(wrapper, "obtener_modulo_cobra_oficial", None)
         wrapper_legacy = (
@@ -966,9 +1015,7 @@ def usar_modulo(
             and getattr(wrapper_obtener_oficial, "__module__", "")
             != "pcobra.core.usar_loader"
         )
-        if not (
-            wrapper_legacy or wrapper_oficial_legacy
-        ):
+        if not (wrapper_legacy or wrapper_oficial_legacy):
             try:
                 validar_nombre_modulo_cobra_proyecto(nombre_raw)
             except ValueError:
@@ -979,9 +1026,11 @@ def usar_modulo(
                     modulo = wrapper_obtener_oficial(nombre_raw)
                 else:
                     modulo = wrapper_obtener(nombre_raw)
-                simbolos_saneados, metadata_por_simbolo, conflictos = _sanitizar_exports_publicos_detallado(
-                    modulo,
-                    normalizar_nombre_usar(nombre_raw),
+                simbolos_saneados, metadata_por_simbolo, conflictos = (
+                    _sanitizar_exports_publicos_detallado(
+                        modulo,
+                        normalizar_nombre_usar(nombre_raw),
+                    )
                 )
                 if conflictos:
                     logging.debug(
@@ -990,7 +1039,9 @@ def usar_modulo(
                         conflictos,
                     )
                 if not simbolos_saneados:
-                    raise ImportError(f"No se encontraron símbolos exportables para usar '{nombre_raw}'.")
+                    raise ImportError(
+                        f"No se encontraron símbolos exportables para usar '{nombre_raw}'."
+                    )
                 return _construir_exports_usar(simbolos_saneados, metadata_por_simbolo)
             except ModuleNotFoundError:
                 raise permiso_exc
@@ -1009,9 +1060,7 @@ def usar_modulo(
         segmentos_proyecto = validar_nombre_modulo_cobra_proyecto(nombre_raw)
         nombre_validado_proyecto = ".".join(segmentos_proyecto)
 
-        current = (
-            Path(current_file).expanduser() if current_file is not None else None
-        )
+        current = Path(current_file).expanduser() if current_file is not None else None
         root = (
             canonicalizar_ruta_usar_proyecto(project_root)
             if project_root is not None
@@ -1068,7 +1117,9 @@ def _registrar_conflicto_saneamiento_usar(
         )
 
 
-def _sanitizar_exports_publicos_detallado(modulo: object, alias_modulo: str) -> tuple[list[tuple[str, Any]], dict[str, dict[str, Any]], list[dict[str, Any]]]:
+def _sanitizar_exports_publicos_detallado(
+    modulo: object, alias_modulo: str
+) -> tuple[list[tuple[str, Any]], dict[str, dict[str, Any]], list[dict[str, Any]]]:
     """Filtra exports públicos válidos para ``usar`` y reporta conflictos/rechazos.
 
     Devuelve un mapa limpio ``nombre -> símbolo`` y una lista estructurada de
@@ -1186,8 +1237,14 @@ def _sanitizar_exports_publicos_detallado(modulo: object, alias_modulo: str) -> 
             {
                 "module": alias_modulo,
                 "symbol": resultado.nombre,
-                "code": resultado.codigo or ("warning" if resultado.warning else "rejected"),
-                "message": resultado.mensaje or ("warning de saneamiento" if resultado.warning else "símbolo rechazado"),
+                "code": resultado.codigo
+                or ("warning" if resultado.warning else "rejected"),
+                "message": resultado.mensaje
+                or (
+                    "warning de saneamiento"
+                    if resultado.warning
+                    else "símbolo rechazado"
+                ),
                 "source_module": resultado.metadata.get("modulo_origen"),
             },
             depuracion_habilitada=depuracion_habilitada,
@@ -1196,7 +1253,9 @@ def _sanitizar_exports_publicos_detallado(modulo: object, alias_modulo: str) -> 
     metricas_rechazo_por_codigo: dict[str, int] = {}
     for conflicto in conflictos:
         codigo = str(conflicto.get("code") or "unknown")
-        metricas_rechazo_por_codigo[codigo] = metricas_rechazo_por_codigo.get(codigo, 0) + 1
+        metricas_rechazo_por_codigo[codigo] = (
+            metricas_rechazo_por_codigo.get(codigo, 0) + 1
+        )
     if metricas_rechazo_por_codigo:
         logging.info(
             "USAR_SANITIZE_REJECTION_METRICS %s",
@@ -1215,7 +1274,7 @@ def sanitizar_exports_publicos(
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     """Devuelve el mapa público saneado y sus conflictos."""
 
-    simbolos_saneados, _metadata, conflictos = (
-        _sanitizar_exports_publicos_detallado(modulo, alias_modulo)
+    simbolos_saneados, _metadata, conflictos = _sanitizar_exports_publicos_detallado(
+        modulo, alias_modulo
     )
     return dict(simbolos_saneados), conflictos

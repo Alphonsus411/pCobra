@@ -42,7 +42,10 @@ def _modulo_stub(nombre: str, exports: dict[str, object], file_path: str) -> Mod
 def _crear_numero() -> ModuleType:
     return _modulo_stub(
         "numero",
-        {"es_finito": lambda valor: valor == valor and valor not in (float("inf"), float("-inf"))},
+        {
+            "es_finito": lambda valor: valor == valor
+            and valor not in (float("inf"), float("-inf"))
+        },
         "/workspace/pCobra/src/pcobra/corelibs/numero.py",
     )
 
@@ -58,7 +61,9 @@ def _crear_texto() -> ModuleType:
             "recortar": lambda texto: str(texto).strip(),
             "repetir": lambda texto, veces=2: str(texto) * int(veces),
             "quitar_acentos": lambda texto: str(texto),
-            "dividir": lambda texto, separador=None, max_divisiones=-1: str(texto).split(separador, max_divisiones),
+            "dividir": lambda texto, separador=None, max_divisiones=-1: str(
+                texto
+            ).split(separador, max_divisiones),
         },
         "/workspace/pCobra/src/pcobra/corelibs/texto.py",
     )
@@ -84,7 +89,11 @@ def _crear_comando(factory):
     cmd = factory()
     if isinstance(cmd, InteractiveCommand):
         return cmd, (lambda code: cmd.ejecutar_codigo(code)), cmd.interpretador
-    return cmd, (lambda code: cmd._ejecutar_en_modo_normal(code)), cmd._delegate.interpretador
+    return (
+        cmd,
+        (lambda code: cmd._ejecutar_en_modo_normal(code)),
+        cmd._delegate.interpretador,
+    )
 
 
 def _patch_official_loader(monkeypatch, resolver):
@@ -92,10 +101,16 @@ def _patch_official_loader(monkeypatch, resolver):
     monkeypatch.setattr(cli_usar_loader, "obtener_modulo_cobra_oficial", resolver)
 
 
-@pytest.mark.parametrize("factory", [lambda: InteractiveCommand(InterpretadorCobra()), ReplCommandV2])
+@pytest.mark.parametrize(
+    "factory", [lambda: InteractiveCommand(InterpretadorCobra()), ReplCommandV2]
+)
 def test_caso_1_numero_superficie_publica_espanol(factory, monkeypatch):
     mod_numero = _crear_numero()
-    resolver = lambda nombre, **_kwargs: mod_numero if nombre == "numero" else (_ for _ in ()).throw(ModuleNotFoundError(nombre))
+    resolver = lambda nombre, **_kwargs: (
+        mod_numero
+        if nombre == "numero"
+        else (_ for _ in ()).throw(ModuleNotFoundError(nombre))
+    )
     _patch_official_loader(monkeypatch, resolver)
 
     _cmd, ejecutar, interp = _crear_comando(factory)
@@ -105,10 +120,16 @@ def test_caso_1_numero_superficie_publica_espanol(factory, monkeypatch):
     assert "isfinite" not in interp.contextos[-1].values
 
 
-@pytest.mark.parametrize("factory", [lambda: InteractiveCommand(InterpretadorCobra()), ReplCommandV2])
+@pytest.mark.parametrize(
+    "factory", [lambda: InteractiveCommand(InterpretadorCobra()), ReplCommandV2]
+)
 def test_caso_2_texto_superficie_publica_espanol(factory, monkeypatch):
     mod_texto = _crear_texto()
-    resolver = lambda nombre, **_kwargs: mod_texto if nombre == "texto" else (_ for _ in ()).throw(ModuleNotFoundError(nombre))
+    resolver = lambda nombre, **_kwargs: (
+        mod_texto
+        if nombre == "texto"
+        else (_ for _ in ()).throw(ModuleNotFoundError(nombre))
+    )
     _patch_official_loader(monkeypatch, resolver)
 
     _cmd, ejecutar, interp = _crear_comando(factory)
@@ -127,11 +148,21 @@ def test_caso_3_datos_superficie_publica_espanol():
     assert "read_csv" not in simbolos
 
 
-@pytest.mark.parametrize("modulo_externo", ["numpy", "node-fetch", "serde", "holobit_sdk"])
-@pytest.mark.parametrize("factory", [lambda: InteractiveCommand(InterpretadorCobra()), ReplCommandV2])
-def test_casos_4_a_7_rechaza_modulos_no_permitidos(modulo_externo, factory, monkeypatch):
+@pytest.mark.parametrize(
+    "modulo_externo", ["numpy", "node-fetch", "serde", "holobit_sdk"]
+)
+@pytest.mark.parametrize(
+    "factory", [lambda: InteractiveCommand(InterpretadorCobra()), ReplCommandV2]
+)
+def test_casos_4_a_7_rechaza_modulos_no_permitidos(
+    modulo_externo, factory, monkeypatch
+):
     mod_numero = _crear_numero()
-    resolver = lambda nombre, **_kwargs: mod_numero if nombre == "numero" else (_ for _ in ()).throw(ModuleNotFoundError(nombre))
+    resolver = lambda nombre, **_kwargs: (
+        mod_numero
+        if nombre == "numero"
+        else (_ for _ in ()).throw(ModuleNotFoundError(nombre))
+    )
     _patch_official_loader(monkeypatch, resolver)
 
     _cmd, ejecutar, interp = _crear_comando(factory)
@@ -149,22 +180,35 @@ def test_casos_4_a_7_rechaza_modulos_no_permitidos(modulo_externo, factory, monk
 
 def test_caso_8_no_exponer_simbolos_privados_ni_bloqueados_en_corelibs_publicas():
     bloqueados = {"self", "append", "map", "filter", "unwrap", "expect"}
-    for modulo in (_crear_numero(), _crear_texto(), _crear_datos(), core_usar_loader.obtener_modulo_cobra_oficial("holobit")):
+    for modulo in (
+        _crear_numero(),
+        _crear_texto(),
+        _crear_datos(),
+        core_usar_loader.obtener_modulo_cobra_oficial("holobit"),
+    ):
         for simbolo in modulo.__all__:
             assert "__" not in simbolo
             assert simbolo not in bloqueados
 
 
 @pytest.mark.parametrize("modulo", ["numero", "texto", "datos", "holobit"])
-@pytest.mark.parametrize("factory", [lambda: InteractiveCommand(InterpretadorCobra()), ReplCommandV2])
-def test_usar_modulos_canonicos_solo_exponen_superficie_espanol(modulo, factory, monkeypatch):
+@pytest.mark.parametrize(
+    "factory", [lambda: InteractiveCommand(InterpretadorCobra()), ReplCommandV2]
+)
+def test_usar_modulos_canonicos_solo_exponen_superficie_espanol(
+    modulo, factory, monkeypatch
+):
     stubs = {
         "numero": _crear_numero(),
         "texto": _crear_texto(),
         "datos": _crear_datos(),
         "holobit": _crear_holobit(),
     }
-    resolver = lambda nombre, **_kwargs: stubs[nombre] if nombre in stubs else (_ for _ in ()).throw(ModuleNotFoundError(nombre))
+    resolver = lambda nombre, **_kwargs: (
+        stubs[nombre]
+        if nombre in stubs
+        else (_ for _ in ()).throw(ModuleNotFoundError(nombre))
+    )
     _patch_official_loader(monkeypatch, resolver)
 
     _cmd, ejecutar, interp = _crear_comando(factory)
@@ -194,7 +238,10 @@ def test_caso_10_public_backends_contrato_exacto():
     assert PUBLIC_BACKENDS == ("python", "javascript", "rust")
 
 
-@pytest.mark.parametrize("factory", [lambda: InteractiveCommand(InterpretadorCobra(safe_mode=True)), ReplCommandV2])
+@pytest.mark.parametrize(
+    "factory",
+    [lambda: InteractiveCommand(InterpretadorCobra(safe_mode=True)), ReplCommandV2],
+)
 def test_usar_reimportes_reinyecciones_metadata_canonica_e_idempotente(factory):
     cmd, ejecutar, interp = _crear_comando(factory)
     if hasattr(cmd, "_delegate"):

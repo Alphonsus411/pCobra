@@ -1,5 +1,12 @@
 from core.ast_nodes import (
-    NodoAssert, NodoDel, NodoGlobal, NodoNoLocal, NodoLambda, NodoValor, NodoWith, NodoPasar
+    NodoAssert,
+    NodoDel,
+    NodoGlobal,
+    NodoNoLocal,
+    NodoLambda,
+    NodoValor,
+    NodoWith,
+    NodoPasar,
 )
 from cobra.transpilers.transpiler.to_python import TranspiladorPython
 

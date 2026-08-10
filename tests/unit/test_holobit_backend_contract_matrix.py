@@ -24,9 +24,11 @@ from pcobra.cobra.cli.target_policies import (
     build_runtime_capability_message,
 )
 from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
-from scripts.ci.validate_targets import validate_public_documentation_alignment, validate_python_policy_literals
+from scripts.ci.validate_targets import (
+    validate_public_documentation_alignment,
+    validate_python_policy_literals,
+)
 from tests.integration.transpilers.backend_contracts import generate_code
-
 
 HOLOBIT_FEATURES = CONTRACT_FEATURES[:4]
 
@@ -47,7 +49,7 @@ HOOK_CALL_MARKERS = {
         "holobit": "cobra_holobit(vec![1, 2, 3]);",
         "proyectar": 'cobra_runtime_expect(cobra_proyectar(&hb, &format!("{}", "2d")));',
         "transformar": 'cobra_runtime_expect(cobra_transformar(&hb, &format!("{}", "rotar"), &[format!("{}", 90)]));',
-        "graficar": 'cobra_runtime_expect(cobra_graficar(&hb));',
+        "graficar": "cobra_runtime_expect(cobra_graficar(&hb));",
     },
 }
 
@@ -66,7 +68,9 @@ def test_compatibility_matrix_matches_minimum_contract():
         for feature in CONTRACT_FEATURES:
             actual = BACKEND_COMPATIBILITY[backend][feature]
             minimum = MIN_REQUIRED_BACKEND_COMPATIBILITY[backend][feature]
-            assert COMPATIBILITY_LEVEL_ORDER[actual] >= COMPATIBILITY_LEVEL_ORDER[minimum]
+            assert (
+                COMPATIBILITY_LEVEL_ORDER[actual] >= COMPATIBILITY_LEVEL_ORDER[minimum]
+            )
 
 
 @pytest.mark.parametrize("backend", OFFICIAL_TARGETS)
@@ -146,13 +150,14 @@ def _parse_backend_matrix_table(doc_path: str) -> dict[str, dict[str, str]]:
     return rows
 
 
-
-
 def test_contrato_holobit_y_sdk_no_admite_backends_legacy_ni_promociones_full_fuera_de_python():
     assert OFFICIAL_TARGETS == ("python", "javascript", "rust")
     assert set(BACKEND_COMPATIBILITY) == set(OFFICIAL_TARGETS)
     assert not validate_python_policy_literals(tuple(OFFICIAL_TARGETS))
-    assert not validate_public_documentation_alignment(tuple(OFFICIAL_TARGETS), ("python", "javascript", "java"))
+    assert not validate_public_documentation_alignment(
+        tuple(OFFICIAL_TARGETS), ("python", "javascript", "java")
+    )
+
 
 def test_only_python_is_full_for_sdk_contract_features():
     assert SDK_FULL_BACKENDS == ("python",)
@@ -201,7 +206,10 @@ def test_cli_runtime_message_no_promociona_sdk_completo_fuera_de_python():
 
 def test_public_docs_match_backend_matrix_exactly_for_contract_features():
     expected = {
-        backend: {feature: BACKEND_COMPATIBILITY[backend][feature] for feature in ("tier", *CONTRACT_FEATURES)}
+        backend: {
+            feature: BACKEND_COMPATIBILITY[backend][feature]
+            for feature in ("tier", *CONTRACT_FEATURES)
+        }
         for backend in OFFICIAL_TARGETS
     }
 

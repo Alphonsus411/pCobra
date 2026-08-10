@@ -5,7 +5,6 @@ from pathlib import Path
 import pytest
 import yaml
 
-
 WORKFLOWS_DIR = Path(__file__).resolve().parent.parent / ".github" / "workflows"
 WORKFLOW_FILES = tuple(
     sorted(

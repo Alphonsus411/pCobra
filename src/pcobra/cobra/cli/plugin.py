@@ -72,7 +72,9 @@ def configure_plugin_policy(
     if allowlist is None or isinstance(allowlist, str):
         allowlist_values = _parse_allowlist(allowlist)
     else:
-        allowlist_values = tuple(item.strip() for item in allowlist if item and item.strip())
+        allowlist_values = tuple(
+            item.strip() for item in allowlist if item and item.strip()
+        )
 
     _PLUGIN_POLICY = PluginPolicy(safe_mode=bool(safe_mode), allowlist=allowlist_values)
     logging.getLogger(__name__).debug(
@@ -159,7 +161,7 @@ def _plugin_allowed(ruta: str, module_name: str, module: Any) -> bool:
 
 class PluginInterface(ABC):
     """Interfaz base para plugins de la CLI.
-    
+
     Attributes:
         name: Nombre del plugin o subcomando
         version: Versión del plugin
@@ -175,7 +177,7 @@ class PluginInterface(ABC):
     @abstractmethod
     def register_subparser(self, subparsers: Any) -> None:
         """Registra los argumentos del subcomando en el parser.
-        
+
         Args:
             subparsers: Objeto para registrar subcomandos
         """
@@ -184,10 +186,10 @@ class PluginInterface(ABC):
     @abstractmethod
     def run(self, args: Any) -> int:
         """Ejecuta la lógica del plugin.
-        
+
         Args:
             args: Argumentos parseados del comando
-            
+
         Returns:
             int: Código de salida (0 para éxito)
         """
@@ -208,10 +210,10 @@ class PluginCommand(BaseCommand, PluginInterface):
 
 def descubrir_plugins() -> List[PluginInterface]:
     """Descubre e instancia los plugins registrados bajo ``cobra.plugins``.
-    
+
     Returns:
         List[PluginInterface]: Lista de instancias de plugins cargados correctamente
-        
+
     Raises:
         ImportError: Si hay problemas al cargar los entry points
     """
@@ -230,16 +232,20 @@ def descubrir_plugins() -> List[PluginInterface]:
         except PluginPolicyError:
             if get_plugin_policy().safe_mode:
                 raise
-            logging.warning("Plugin bloqueado por política (modo inseguro): %s", ep.value)
+            logging.warning(
+                "Plugin bloqueado por política (modo inseguro): %s", ep.value
+            )
     return plugins
 
 
-def cargar_plugin_seguro(ruta: str, origen: Optional[str] = None) -> Optional[PluginInterface]:
+def cargar_plugin_seguro(
+    ruta: str, origen: Optional[str] = None
+) -> Optional[PluginInterface]:
     """Carga de forma segura un plugin a partir de ``modulo:Clase``.
-    
+
     Args:
         ruta: Ruta al plugin en formato "modulo:Clase"
-        
+
     Returns:
         Optional[PluginInterface]: Instancia del plugin o None si hay error
     """
@@ -277,7 +283,9 @@ def cargar_plugin_seguro(ruta: str, origen: Optional[str] = None) -> Optional[Pl
         return None
 
     try:
-        if not isinstance(plugin_cls, type) or not issubclass(plugin_cls, PluginInterface):
+        if not isinstance(plugin_cls, type) or not issubclass(
+            plugin_cls, PluginInterface
+        ):
             logging.warning(f"El plugin {ruta} no implementa PluginInterface")
             return None
     except TypeError:

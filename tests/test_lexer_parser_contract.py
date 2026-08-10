@@ -4,7 +4,6 @@ from pathlib import Path
 from pcobra.cobra.core.lexer import Lexer, TipoToken
 from pcobra.cobra.core.parser import ClassicParser
 
-
 ROOT = Path(__file__).resolve().parents[1]
 PARSER_PATH = ROOT / "src/pcobra/cobra/core/parser.py"
 
@@ -132,7 +131,7 @@ def test_lexer_no_tiene_especificaciones_reservadas_exactas_duplicadas() -> None
 def test_humo_lexer_parser_acepta_ejemplos_del_libro_programacion() -> None:
     ejemplos_documentados = [
         'imprimir("Hola, Cobra")',
-        'var x = 10\nimprimir(x)',
+        "var x = 10\nimprimir(x)",
     ]
 
     for codigo in ejemplos_documentados:

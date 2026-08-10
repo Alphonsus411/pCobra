@@ -39,7 +39,9 @@ def test_build_orchestrator_aplica_capacidad_sdk_full(monkeypatch):
 def test_build_orchestrator_respeta_preferencia_legacy(monkeypatch):
     monkeypatch.setattr("cobra.build.orchestrator.get_toml_map", lambda: {})
 
-    resolution = BuildOrchestrator().resolve_backend(source_file="demo.cobra", preferred_backend="rust")
+    resolution = BuildOrchestrator().resolve_backend(
+        source_file="demo.cobra", preferred_backend="rust"
+    )
 
     assert resolution.backend == "rust"
     assert "legacy" in resolution.reason
@@ -49,7 +51,9 @@ def test_build_orchestrator_bloquea_backend_legacy_en_ruta_publica(monkeypatch):
     monkeypatch.setattr("cobra.build.orchestrator.get_toml_map", lambda: {})
 
     try:
-        BuildOrchestrator().resolve_backend(source_file="demo.cobra", preferred_backend="go")
+        BuildOrchestrator().resolve_backend(
+            source_file="demo.cobra", preferred_backend="go"
+        )
     except ValueError as exc:
         assert "ruta pública" in str(exc)
         return

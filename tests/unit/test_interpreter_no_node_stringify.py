@@ -14,7 +14,6 @@ import textwrap
 
 from pcobra.core.interpreter import InterpretadorCobra
 
-
 FORBIDDEN_PATTERNS = (
     "print(nodo)",
     "print(expresion)",
@@ -50,7 +49,9 @@ class _PrintNodoExpresionVisitor(ast.NodeVisitor):
             if isinstance(child, ast.Call) and isinstance(child.func, ast.Name):
                 if child.func.id == "repr" and child.args:
                     if _is_name(child.args[0], {"nodo", "expresion"}):
-                        self.violations.append("Uso de repr(...) con nodo/expresion en print")
+                        self.violations.append(
+                            "Uso de repr(...) con nodo/expresion en print"
+                        )
             if isinstance(child, ast.Name) and child.id in {"nodo", "expresion"}:
                 if not _is_name_used_in_allowed_wrapper(arg, child):
                     self.violations.append(
@@ -94,7 +95,9 @@ def test_ejecutar_nodo_no_contiene_stringify_peligroso_literal() -> None:
     src = _source_ejecutar_nodo()
 
     for pattern in FORBIDDEN_PATTERNS:
-        assert pattern not in src, f"Patrón peligroso detectado en ejecutar_nodo: {pattern}"
+        assert (
+            pattern not in src
+        ), f"Patrón peligroso detectado en ejecutar_nodo: {pattern}"
 
 
 def test_ejecutar_nodo_prints_solo_type_name_e_id_para_nodo_y_expresion() -> None:

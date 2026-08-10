@@ -7,7 +7,6 @@ import sys
 import venv
 from pathlib import Path
 
-
 REPO_ROOT = Path(__file__).resolve().parents[2]
 WRAPPER = REPO_ROOT / "scripts" / "bin" / "cobra"
 
@@ -52,11 +51,7 @@ def test_wrapper_ejecuta_entry_point_instalado_sin_importar_checkout(
         # El directorio del wrapper primero reproduce el caso propenso a recursión.
         "PATH": os.pathsep.join((str(WRAPPER.parent), str(python.parent))),
     }
-    command = (
-        [str(python), str(WRAPPER)]
-        if os.name == "nt"
-        else [str(WRAPPER)]
-    )
+    command = [str(python), str(WRAPPER)] if os.name == "nt" else [str(WRAPPER)]
     result = subprocess.run(
         command,
         cwd=tmp_path,

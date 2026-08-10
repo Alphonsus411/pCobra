@@ -1,4 +1,3 @@
-
 def visit_condicional(self, nodo):
     bloque_si = getattr(nodo, "bloque_si", getattr(nodo, "cuerpo_si", []))
     bloque_sino = getattr(nodo, "bloque_sino", getattr(nodo, "cuerpo_sino", []))

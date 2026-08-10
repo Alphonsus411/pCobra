@@ -91,7 +91,9 @@ def _is_forbidden_module_name(module: str) -> bool:
     return False
 
 
-def _resolve_relative_module(path: Path, module: str | None, level: int, root: Path) -> str | None:
+def _resolve_relative_module(
+    path: Path, module: str | None, level: int, root: Path
+) -> str | None:
     if level <= 0:
         return module
     try:
@@ -150,7 +152,9 @@ def _scan_restricted_command_imports(path: Path, root: Path) -> list[tuple[int, 
                 if _is_forbidden_module_name(alias.name):
                     violations.append((node.lineno, alias.name))
         elif isinstance(node, ast.ImportFrom):
-            resolved_module = _resolve_relative_module(path, node.module, node.level, root)
+            resolved_module = _resolve_relative_module(
+                path, node.module, node.level, root
+            )
             if not resolved_module:
                 continue
             if resolved_module in ALLOWED_BASE_IMPORT_MODULES:
@@ -185,7 +189,9 @@ def _scan_cross_cmd_pattern_imports(path: Path, root: Path) -> list[tuple[int, s
     return violations
 
 
-def _scan_explicit_cross_command_from_imports(path: Path, root: Path) -> list[tuple[int, str]]:
+def _scan_explicit_cross_command_from_imports(
+    path: Path, root: Path
+) -> list[tuple[int, str]]:
     """Detecta `from ...commands.<modulo> import ...` (excepto commands.base)."""
     tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
     violations: list[tuple[int, str]] = []
@@ -244,7 +250,9 @@ def _scan_transpiler_shared_access(path: Path, root: Path) -> list[tuple[int, st
             if module in FORBIDDEN_TRANSPILER_SHARED_MODULES:
                 violations.append((node.lineno, module))
                 continue
-            if module.startswith("pcobra.cobra.transpilers.") and module.endswith(".module_map"):
+            if module.startswith("pcobra.cobra.transpilers.") and module.endswith(
+                ".module_map"
+            ):
                 violations.append((node.lineno, module))
                 continue
             if module.startswith("pcobra.cobra.transpilers.targets"):
@@ -272,11 +280,17 @@ def _is_backend_constant_literal(value: ast.AST) -> bool:
     if isinstance(value, ast.Dict):
         if not value.keys:
             return False
-        return all(isinstance(key, ast.Constant) and isinstance(key.value, str) for key in value.keys)
+        return all(
+            isinstance(key, ast.Constant) and isinstance(key.value, str)
+            for key in value.keys
+        )
     if isinstance(value, (ast.Tuple, ast.List, ast.Set)):
         if not value.elts:
             return False
-        return all(isinstance(elt, ast.Constant) and isinstance(elt.value, str) for elt in value.elts)
+        return all(
+            isinstance(elt, ast.Constant) and isinstance(elt.value, str)
+            for elt in value.elts
+        )
     return False
 
 
@@ -295,7 +309,12 @@ def _scan_backend_constant_violations(path: Path) -> list[tuple[int, str]]:
             value = node.value
         if not target_name or value is None:
             continue
-        if target_name in {"TRANSPILERS", "BACKENDS", "LANG_CHOICES", "LANGUAGES"} and _is_backend_constant_literal(value):
+        if target_name in {
+            "TRANSPILERS",
+            "BACKENDS",
+            "LANG_CHOICES",
+            "LANGUAGES",
+        } and _is_backend_constant_literal(value):
             violations.append((node.lineno, target_name))
     return violations
 
@@ -337,7 +356,9 @@ def find_violations(root: Path = ROOT) -> list[str]:
                         f"{rel}:{line}: patrón *_cmd no permitido ({target}); "
                         "los comandos no deben importar otros *_cmd.py (solo BaseCommand desde commands.base)"
                     )
-                for line, target in _scan_explicit_cross_command_from_imports(path, root):
+                for line, target in _scan_explicit_cross_command_from_imports(
+                    path, root
+                ):
                     if _is_allowed_command_edge(path, target, root):
                         continue
                     failures.append(
@@ -367,12 +388,16 @@ def find_violations(root: Path = ROOT) -> list[str]:
 def main() -> int:
     failures = find_violations(ROOT)
     if failures:
-        print("[ERROR] Lint de contratos en comandos (grafo imports + fronteras + contrato transpiladores): FALLÓ")
+        print(
+            "[ERROR] Lint de contratos en comandos (grafo imports + fronteras + contrato transpiladores): FALLÓ"
+        )
         for item in failures:
             print(f" - {item}")
         return 1
 
-    print("[OK] Lint de contratos en comandos (grafo imports + fronteras + contrato transpiladores): OK")
+    print(
+        "[OK] Lint de contratos en comandos (grafo imports + fronteras + contrato transpiladores): OK"
+    )
     return 0
 
 

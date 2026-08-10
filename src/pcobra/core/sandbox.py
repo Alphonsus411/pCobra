@@ -25,6 +25,7 @@ from pcobra.core.resource_limits import (
 )
 from packaging.version import Version
 
+
 def cargar_simbolos_restrictedpython() -> tuple[dict[str, Any], bool]:
     """Carga la API estable de RestrictedPython usada por Cobra.
 
@@ -224,6 +225,7 @@ if HAS_RESTRICTED_PYTHON:
 else:  # pragma: no cover - ejecución sin RestrictedPython
     _SANDBOX_BASE_BUILTINS = {}
 
+
 class SandboxSecurityError(RuntimeError):
     """Excepción lanzada cuando el código viola las políticas de la sandbox."""
 
@@ -347,10 +349,9 @@ def _verificar_codigo_prohibido(codigo: str) -> None:
                 base_expr = expr.args[0] if expr.args else None
                 attr_expr = expr.args[1] if len(expr.args) > 1 else None
                 attr_name = _extract_string(attr_expr)
-                if (
-                    attr_name in (_FORBIDDEN_ATTRIBUTES | _FORBIDDEN_NAMES)
-                    and _is_builtins_reference(base_expr)
-                ):
+                if attr_name in (
+                    _FORBIDDEN_ATTRIBUTES | _FORBIDDEN_NAMES
+                ) and _is_builtins_reference(base_expr):
                     return True
             info = _import_call_info(expr)
             if info and info[0] == "builtins":
@@ -460,13 +461,11 @@ def _verificar_codigo_prohibido(codigo: str) -> None:
                 )
             ):
                 raise SandboxSecurityError(
-                    "Acceso bloqueado en sandbox: "
-                    f"{base_nombre}.{node.attr}"
+                    "Acceso bloqueado en sandbox: " f"{base_nombre}.{node.attr}"
                 )
             if node.attr in _FORBIDDEN_IMPORT_HELPERS:
                 raise SandboxSecurityError(
-                    "Acceso bloqueado en sandbox: "
-                    f"{base_nombre}.{node.attr}"
+                    "Acceso bloqueado en sandbox: " f"{base_nombre}.{node.attr}"
                 )
 
         elif isinstance(node, ast.Subscript):
@@ -475,39 +474,34 @@ def _verificar_codigo_prohibido(codigo: str) -> None:
             if (
                 clave in _FORBIDDEN_NAMES
                 and base_name
-                and (
-                    base_name in module_aliases or base_name in _KNOWN_MODULE_SOURCES
-                )
+                and (base_name in module_aliases or base_name in _KNOWN_MODULE_SOURCES)
             ):
                 raise SandboxSecurityError(
-                    "Acceso bloqueado en sandbox: "
-                    f"{base_name}[{clave!r}]"
+                    "Acceso bloqueado en sandbox: " f"{base_name}[{clave!r}]"
                 )
             if clave in (_FORBIDDEN_NAMES | _FORBIDDEN_IMPORT_HELPERS) and (
                 _is_builtins_reference(node.value) or base_name in module_aliases
             ):
                 raise SandboxSecurityError(
-                    "Acceso bloqueado en sandbox: "
-                    f"{base_name}[{clave!r}]"
+                    "Acceso bloqueado en sandbox: " f"{base_name}[{clave!r}]"
                 )
 
             if (
                 isinstance(node.value, ast.Call)
                 and clave in _FORBIDDEN_NAMES
                 and _call_matches(node.value.func, {"getattr", "vars"})
-                and _is_builtins_reference(node.value.args[0] if node.value.args else None)
+                and _is_builtins_reference(
+                    node.value.args[0] if node.value.args else None
+                )
             ):
                 # Bloquea patrones como vars(__builtins__)["open"] o
                 # getattr(__builtins__, "__dict__")["exec"], que recuperan
                 # funciones vetadas de contenedores aparentemente seguros.
                 descripcion_llamada = (
-                    ast.unparse(node.value)
-                    if hasattr(ast, "unparse")
-                    else "llamada"
+                    ast.unparse(node.value) if hasattr(ast, "unparse") else "llamada"
                 )
                 raise SandboxSecurityError(
-                    "Acceso bloqueado en sandbox: "
-                    f"{descripcion_llamada}[{clave!r}]"
+                    "Acceso bloqueado en sandbox: " f"{descripcion_llamada}[{clave!r}]"
                 )
             if (
                 isinstance(node.value, ast.Call)
@@ -520,8 +514,13 @@ def _verificar_codigo_prohibido(codigo: str) -> None:
                 )
 
 
-def _safe_import(name: str, globals: Any | None = None, locals: Any | None = None,
-                 fromlist: tuple[str, ...] = (), level: int = 0) -> Any:
+def _safe_import(
+    name: str,
+    globals: Any | None = None,
+    locals: Any | None = None,
+    fromlist: tuple[str, ...] = (),
+    level: int = 0,
+) -> Any:
     """Importador restringido con política de allowlist explícita."""
 
     root = name.split(".", 1)[0]
@@ -903,9 +902,7 @@ def compilar_en_sandbox_cpp(codigo: str) -> str:
         raise RuntimeError(f"Contenedor de C++ no disponible: {exc}") from exc
 
 
-def ejecutar_en_contenedor(
-    codigo: str, backend: str, timeout: int | None = 30
-) -> str:
+def ejecutar_en_contenedor(codigo: str, backend: str, timeout: int | None = 30) -> str:
     """Ejecuta ``codigo`` dentro de un contenedor Docker según ``backend``.
 
     Los runtimes Docker oficiales soportados son ``python``, ``javascript`` y ``rust``.
@@ -1097,9 +1094,7 @@ def _resolver_raiz_proyecto(base_dir: str | None = None) -> str:
     if cobra_toml:
         return os.path.realpath(os.path.dirname(cobra_toml))
 
-    return os.path.realpath(
-        os.path.join(os.path.dirname(__file__), "..", "..", "..")
-    )
+    return os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 
 
 def validar_dependencias(

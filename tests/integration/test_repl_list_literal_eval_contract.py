@@ -14,7 +14,7 @@ from pcobra.cobra.core.runtime import InterpretadorCobra
 def _assert_valores_numericos_salida(out: StringIO, esperados: list[str]) -> None:
     lineas = [linea.strip() for linea in out.getvalue().splitlines() if linea.strip()]
     valores = [linea for linea in lineas if linea.isdigit()]
-    assert valores[-len(esperados):] == esperados
+    assert valores[-len(esperados) :] == esperados
 
 
 def _estado(factory, executor, getter, codigo: str):
@@ -79,9 +79,9 @@ def test_repl_interpreter_longitud_lista_literal_y_variable_desde_datos():
 
     with redirect_stdout(out):
         repl.ejecutar_codigo('usar "datos"')
-        repl.ejecutar_codigo('var xs = [1, 2, 3]')
-        repl.ejecutar_codigo('imprimir(longitud(xs))')
-        repl.ejecutar_codigo('imprimir(longitud([1, 2, 3]))')
+        repl.ejecutar_codigo("var xs = [1, 2, 3]")
+        repl.ejecutar_codigo("imprimir(longitud(xs))")
+        repl.ejecutar_codigo("imprimir(longitud([1, 2, 3]))")
 
     _assert_valores_numericos_salida(out, ["3", "3"])
 
@@ -92,7 +92,7 @@ def test_repl_interpreter_datos_longitud_lista_literal_directa():
 
     with redirect_stdout(out):
         repl.ejecutar_codigo('usar "datos"')
-        repl.ejecutar_codigo('imprimir(longitud([1, 2, 3]))')
+        repl.ejecutar_codigo("imprimir(longitud([1, 2, 3]))")
 
     lineas = [linea.strip() for linea in out.getvalue().splitlines() if linea.strip()]
     valores = [linea for linea in lineas if linea.isdigit()]
@@ -105,9 +105,9 @@ def test_repl_interpreter_lista_literal_con_variables_longitud_dos():
 
     with redirect_stdout(out):
         repl.ejecutar_codigo('usar "datos"')
-        repl.ejecutar_codigo('var a = 10')
-        repl.ejecutar_codigo('var xs = [a, a + 1]')
-        repl.ejecutar_codigo('imprimir(longitud(xs))')
+        repl.ejecutar_codigo("var a = 10")
+        repl.ejecutar_codigo("var xs = [a, a + 1]")
+        repl.ejecutar_codigo("imprimir(longitud(xs))")
 
     lineas = [linea.strip() for linea in out.getvalue().splitlines() if linea.strip()]
     valores = [linea for linea in lineas if linea.isdigit()]
@@ -120,10 +120,10 @@ def test_repl_interpreter_longitud_lista_con_expresiones_y_repr_razonable():
 
     with redirect_stdout(out):
         repl.ejecutar_codigo('usar "datos"')
-        repl.ejecutar_codigo('var a = 10')
-        repl.ejecutar_codigo('var xs = [a, a + 1, 3]')
-        repl.ejecutar_codigo('imprimir(longitud(xs))')
-        repl.ejecutar_codigo('imprimir(xs)')
+        repl.ejecutar_codigo("var a = 10")
+        repl.ejecutar_codigo("var xs = [a, a + 1, 3]")
+        repl.ejecutar_codigo("imprimir(longitud(xs))")
+        repl.ejecutar_codigo("imprimir(xs)")
 
     lineas = [linea.strip() for linea in out.getvalue().splitlines() if linea.strip()]
     assert lineas[-2] == "3"
@@ -138,11 +138,11 @@ def test_repl_interpreter_datos_elemento_variable_y_literal():
 
     with redirect_stdout(out):
         repl.ejecutar_codigo('usar "datos"')
-        repl.ejecutar_codigo('var ys = [10, 20, 30]')
-        repl.ejecutar_codigo('imprimir(elemento(ys, 0))')
-        repl.ejecutar_codigo('imprimir(elemento(ys, 1))')
-        repl.ejecutar_codigo('imprimir(elemento(ys, 2))')
-        repl.ejecutar_codigo('imprimir(elemento([1, 2, 3], 2))')
+        repl.ejecutar_codigo("var ys = [10, 20, 30]")
+        repl.ejecutar_codigo("imprimir(elemento(ys, 0))")
+        repl.ejecutar_codigo("imprimir(elemento(ys, 1))")
+        repl.ejecutar_codigo("imprimir(elemento(ys, 2))")
+        repl.ejecutar_codigo("imprimir(elemento([1, 2, 3], 2))")
 
     lineas = [linea.strip() for linea in out.getvalue().splitlines() if linea.strip()]
     valores = [linea for linea in lineas if linea.isdigit()]
@@ -163,10 +163,10 @@ def test_repl_interpreter_datos_elemento_regresion_variante_solicitada():
 
     with redirect_stdout(out):
         repl.ejecutar_codigo('usar "datos"')
-        repl.ejecutar_codigo('imprimir(elemento([10, 20, 30], 0))')
-        repl.ejecutar_codigo('var ys = [10, 20, 30]')
-        repl.ejecutar_codigo('imprimir(elemento(ys, 1))')
-        repl.ejecutar_codigo('imprimir(elemento([1, 2, 3], 2))')
+        repl.ejecutar_codigo("imprimir(elemento([10, 20, 30], 0))")
+        repl.ejecutar_codigo("var ys = [10, 20, 30]")
+        repl.ejecutar_codigo("imprimir(elemento(ys, 1))")
+        repl.ejecutar_codigo("imprimir(elemento([1, 2, 3], 2))")
 
     _assert_valores_numericos_salida(out, ["10", "20", "3"])
 
@@ -174,15 +174,19 @@ def test_repl_interpreter_datos_elemento_regresion_variante_solicitada():
 def test_repl_interpreter_datos_elemento_errores_limpios():
     repl = InteractiveCommand(InterpretadorCobra())
     repl.ejecutar_codigo('usar "datos"')
-    repl.ejecutar_codigo('var ys = [10, 20, 30]')
+    repl.ejecutar_codigo("var ys = [10, 20, 30]")
 
-    with pytest.raises(IndexError, match=r"^Error: índice fuera de rango$") as err_indice:
+    with pytest.raises(
+        IndexError, match=r"^Error: índice fuera de rango$"
+    ) as err_indice:
         repl.ejecutar_codigo("elemento(ys, 99)")
     assert "Traceback" not in str(err_indice.value)
     assert "File " not in str(err_indice.value)
     assert "line " not in str(err_indice.value)
 
-    with pytest.raises(TypeError, match=r"^Error: índice debe ser entero$") as err_tipo_indice:
+    with pytest.raises(
+        TypeError, match=r"^Error: índice debe ser entero$"
+    ) as err_tipo_indice:
         repl.ejecutar_codigo('elemento(ys, "0")')
     assert "Traceback" not in str(err_tipo_indice.value)
     assert "File " not in str(err_tipo_indice.value)
@@ -198,9 +202,11 @@ def test_repl_interpreter_datos_elemento_errores_limpios():
 def test_repl_v2_datos_elemento_errores_cortos_sin_traceback(capsys):
     cmd = ReplCommandV2()
     cmd._ejecutar_en_modo_normal('usar "datos"')
-    cmd._ejecutar_en_modo_normal('var ys = [10, 20, 30]')
+    cmd._ejecutar_en_modo_normal("var ys = [10, 20, 30]")
 
-    def _assert_error_esperado_sin_traceback(linea: str, tipo_exc: type[Exception], detalle: str):
+    def _assert_error_esperado_sin_traceback(
+        linea: str, tipo_exc: type[Exception], detalle: str
+    ):
         with pytest.raises(tipo_exc, match=detalle) as excinfo:
             cmd._ejecutar_en_modo_normal(linea)
         salida = capsys.readouterr().out
@@ -208,13 +214,13 @@ def test_repl_v2_datos_elemento_errores_cortos_sin_traceback(capsys):
         assert "Traceback" not in salida
 
     _assert_error_esperado_sin_traceback(
-        'imprimir(elemento([10, 20, 30], 99))', IndexError, 'índice fuera de rango'
+        "imprimir(elemento([10, 20, 30], 99))", IndexError, "índice fuera de rango"
     )
     _assert_error_esperado_sin_traceback(
-        'imprimir(elemento([10, 20, 30], "0"))', TypeError, 'índice debe ser entero'
+        'imprimir(elemento([10, 20, 30], "0"))', TypeError, "índice debe ser entero"
     )
     _assert_error_esperado_sin_traceback(
-        'imprimir(elemento(10, 0))', TypeError, 'objeto no indexable'
+        "imprimir(elemento(10, 0))", TypeError, "objeto no indexable"
     )
 
 
@@ -222,12 +228,18 @@ def test_repl_v2_usar_fronteras_rechaza_numpy_y_sintaxis_invalida(capsys):
     """Fase actual: validar fronteras de `usar` sin tocar gramática/tokenización."""
     cmd = ReplCommandV2()
 
-    with pytest.raises(PermissionError, match=r"Importación no permitida en 'usar': 'numpy'. Es un módulo backend/no canónico y no forma parte de la API pública."):
+    with pytest.raises(
+        PermissionError,
+        match=r"Importación no permitida en 'usar': 'numpy'. Es un módulo backend/no canónico y no forma parte de la API pública.",
+    ):
         cmd._ejecutar_en_modo_normal('usar "numpy"')
     salida_numpy = capsys.readouterr().out
     assert "Traceback" not in salida_numpy
 
-    with pytest.raises(ParserError, match=r"Se esperaba una ruta de módulo entre comillas \(ej\. 'usar \"modulo\"'\) o identificadores separados por puntos \(ej\. 'usar modulo\.submodulo'\)\. Un solo identificador sin comillas no es válido\."):
+    with pytest.raises(
+        ParserError,
+        match=r"Se esperaba una ruta de módulo entre comillas \(ej\. 'usar \"modulo\"'\) o identificadores separados por puntos \(ej\. 'usar modulo\.submodulo'\)\. Un solo identificador sin comillas no es válido\.",
+    ):
         cmd._ejecutar_en_modo_normal("usar archivo")
     salida_archivo = capsys.readouterr().out
     assert "Traceback" not in salida_archivo
@@ -243,7 +255,9 @@ def test_repl_v2_usar_fronteras_rechaza_numpy_y_sintaxis_invalida(capsys):
 def test_repl_v2_usar_bloquea_primitiva_peligrosa_sin_origen_permitido(capsys):
     cmd = ReplCommandV2()
 
-    with pytest.raises(Exception, match=r"Uso de primitiva peligrosa: 'existe'") as excinfo:
+    with pytest.raises(
+        Exception, match=r"Uso de primitiva peligrosa: 'existe'"
+    ) as excinfo:
         cmd._ejecutar_en_modo_normal('imprimir(existe("/tmp"))')
 
     assert "Traceback" not in capsys.readouterr().out
@@ -276,5 +290,9 @@ imprimir(g)
 """.strip()
 
     cmd._ejecutar_en_modo_normal(programa)
-    salida = [ln.strip() for ln in capsys.readouterr().out.splitlines() if ln.strip().isdigit()]
+    salida = [
+        ln.strip()
+        for ln in capsys.readouterr().out.splitlines()
+        if ln.strip().isdigit()
+    ]
     assert salida[-3:] == ["1", "2", "9"]

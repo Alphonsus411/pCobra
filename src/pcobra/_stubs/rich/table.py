@@ -14,7 +14,9 @@ class _Column:
 
 
 class Table:
-    def __init__(self, *, title: str | None = None, header_style: str | None = None) -> None:
+    def __init__(
+        self, *, title: str | None = None, header_style: str | None = None
+    ) -> None:
         self.title = title
         self.header_style = header_style
         self.columns: list[_Column] = []
@@ -29,7 +31,7 @@ class Table:
         for columna, valor in zip(self.columns, valores):
             columna._cells.append(str(valor))
         if len(valores) < len(self.columns):
-            for columna in self.columns[len(valores):]:
+            for columna in self.columns[len(valores) :]:
                 columna._cells.append("")
 
 

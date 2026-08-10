@@ -18,8 +18,12 @@ def test_normalize_run_request_defaults_and_aliases() -> None:
 
 
 def test_normalize_test_request_parses_languajes_string() -> None:
-    req = normalize_test_request({"archivo": "main.cobra", "lenguajes": "python,javascript"})
-    assert req == CliTestRequest(archivo="main.cobra", lenguajes=["python", "javascript"])
+    req = normalize_test_request(
+        {"archivo": "main.cobra", "lenguajes": "python,javascript"}
+    )
+    assert req == CliTestRequest(
+        archivo="main.cobra", lenguajes=["python", "javascript"]
+    )
 
 
 def test_normalize_mod_request_requires_action_fields() -> None:

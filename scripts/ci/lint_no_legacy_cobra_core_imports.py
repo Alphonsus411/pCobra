@@ -48,7 +48,9 @@ def find_violations(root: Path = ROOT) -> list[str]:
 
 def main() -> int:
     if not COBRA_SRC.exists():
-        print("[SKIP] Lint imports legacy cobra/core: src/pcobra/cobra/ no existe, se omite.")
+        print(
+            "[SKIP] Lint imports legacy cobra/core: src/pcobra/cobra/ no existe, se omite."
+        )
         return 0
 
     failures = find_violations(ROOT)

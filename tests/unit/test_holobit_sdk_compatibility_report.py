@@ -64,7 +64,10 @@ def test_holobit_sdk_compatibility_report_exists_and_contains_matrix_and_gate() 
     content = DOC_PATH.read_text(encoding="utf-8")
 
     assert "Compatibilidad Holobit SDK" in content
-    assert "| Target | Tier | Runtime | Serialización | IPC | Módulos nativos | Import hooks | Estado general |" in content
+    assert (
+        "| Target | Tier | Runtime | Serialización | IPC | Módulos nativos | Import hooks | Estado general |"
+        in content
+    )
     assert "`python`" in content
     assert "`javascript`" in content
     assert "`rust`" in content

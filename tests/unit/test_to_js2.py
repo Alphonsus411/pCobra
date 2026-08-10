@@ -1,7 +1,7 @@
 from cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
 
-
 # Definición de clases de nodo simuladas con los atributos necesarios para las pruebas
+
 
 class NodoAsignacion:
     def __init__(self, identificador, valor):
@@ -43,6 +43,7 @@ class NodoHolobit:
 
 # Pruebas para verificar la funcionalidad del transpilador
 
+
 def test_transpilar_asignacion():
     nodo = NodoAsignacion("variable", "10")
     transpiler = TranspiladorJavaScript()
@@ -51,7 +52,9 @@ def test_transpilar_asignacion():
 
 
 def test_transpilar_condicional():
-    nodo = NodoCondicional("x > 5", [NodoAsignacion("y", "10")], [NodoAsignacion("y", "0")])
+    nodo = NodoCondicional(
+        "x > 5", [NodoAsignacion("y", "10")], [NodoAsignacion("y", "0")]
+    )
     transpiler = TranspiladorJavaScript()
     result = transpiler.generate_code([nodo])
     expected = "if (x > 5) {\ny = 10;\n}\nelse {\ny = 0;\n}"
@@ -85,4 +88,6 @@ def test_transpilar_holobit():
     nodo = NodoHolobit("miHolobit", [1, 2, 3])
     transpiler = TranspiladorJavaScript()
     result = transpiler.generate_code([nodo])
-    assert result == "let miHolobit = new Holobit([1, 2, 3]);", "Error en la transpilación de Holobit"
+    assert (
+        result == "let miHolobit = new Holobit([1, 2, 3]);"
+    ), "Error en la transpilación de Holobit"

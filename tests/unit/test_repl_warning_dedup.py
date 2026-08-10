@@ -48,15 +48,16 @@ def test_regresion_warning_test_1_se_emite_una_sola_vez() -> None:
     cmd = InteractiveCommand(InterpretadorCobra())
 
     with patch("sys.stdout", new_callable=StringIO):
-        cmd.ejecutar_codigo(
-            """
+        cmd.ejecutar_codigo("""
 func test(x):
     retorno x
 fin
-"""
-        )
+""")
 
-    with patch("sys.stdout", new_callable=StringIO), patch("logging.warning") as warning_mock:
+    with (
+        patch("sys.stdout", new_callable=StringIO),
+        patch("logging.warning") as warning_mock,
+    ):
         cmd.ejecutar_codigo("test(1)")
 
     assert warning_mock.call_count == 1

@@ -10,6 +10,5 @@ import sys
 
 from pcobra.cli import main
 
-
 if __name__ == "__main__":
     sys.exit(main())

@@ -9,7 +9,7 @@ DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 
 
 def test_parser_condicional_si_en_sino():
-    codigo = '''
+    codigo = """
     si x > 0:
         imprimir(x)
     sino:
@@ -17,7 +17,7 @@ def test_parser_condicional_si_en_sino():
             imprimir(x)
         fin
     fin
-    '''
+    """
     tokens = Lexer(codigo).analizar_token()
     ast = Parser(tokens).parsear()
 

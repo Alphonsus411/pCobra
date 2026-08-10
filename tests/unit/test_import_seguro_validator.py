@@ -9,8 +9,8 @@ from pcobra.core.interpreter import InterpretadorCobra, IMPORT_WHITELIST
 def test_import_seguro_fuera_de_ruta(tmp_path, monkeypatch):
     validator = ValidadorImportSeguro()
     nodo = NodoImport(str(tmp_path / "m.co"))
-    monkeypatch.setattr('pcobra.core.interpreter.MODULES_PATH', str(tmp_path / 'mods'))
-    monkeypatch.setattr('pcobra.core.interpreter.IMPORT_WHITELIST', set())
+    monkeypatch.setattr("pcobra.core.interpreter.MODULES_PATH", str(tmp_path / "mods"))
+    monkeypatch.setattr("pcobra.core.interpreter.IMPORT_WHITELIST", set())
     with pytest.raises(PrimitivaPeligrosaError):
         nodo.aceptar(validator)
 

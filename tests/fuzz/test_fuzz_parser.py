@@ -16,7 +16,6 @@ from cobra.core import Lexer
 from cobra.core import Parser
 from cobra.transpilers.transpiler.to_python import TranspiladorPython
 
-
 # Estrategias para construir identificadores y valores simples
 identificadores = st.text("xyz", min_size=1, max_size=5)
 

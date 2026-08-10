@@ -50,7 +50,9 @@ class CommandFactory:
     )
 
     def __init__(self) -> None:
-        self._spec_by_name: dict[str, CommandSpec] = {spec.name: spec for spec in self._SPECS}
+        self._spec_by_name: dict[str, CommandSpec] = {
+            spec.name: spec for spec in self._SPECS
+        }
 
     def create(self, command_name: str) -> BaseCommand:
         """Crea una instancia de comando por nombre lógico."""

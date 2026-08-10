@@ -54,10 +54,15 @@ def _args() -> SimpleNamespace:
 def test_repl_incremental_var_var_evalua_resultado_sin_error_temporal_cse() -> None:
     entradas = ["var x = 10", "var y = x * 2", "y", "salir"]
 
-    with patch("cobra.cli.commands.interactive_cmd.validar_dependencias"), \
-         patch("prompt_toolkit.PromptSession.prompt", side_effect=entradas), \
-         patch("cobra.cli.commands.interactive_cmd.InteractiveCommand.validar_entrada", return_value=True), \
-         patch("sys.stdout", new_callable=StringIO) as salida:
+    with (
+        patch("cobra.cli.commands.interactive_cmd.validar_dependencias"),
+        patch("prompt_toolkit.PromptSession.prompt", side_effect=entradas),
+        patch(
+            "cobra.cli.commands.interactive_cmd.InteractiveCommand.validar_entrada",
+            return_value=True,
+        ),
+        patch("sys.stdout", new_callable=StringIO) as salida,
+    ):
         cmd = InteractiveCommand(InterpretadorCobra())
         ret = cmd.run(_args())
 
@@ -69,7 +74,9 @@ def test_repl_incremental_var_var_evalua_resultado_sin_error_temporal_cse() -> N
     assert re.search(r"Variable no declarada:\s*_cse\d*", evidencia) is None
 
 
-def test_repl_incremental_con_bloque_si_comparte_entorno_sin_error_temporal_cse() -> None:
+def test_repl_incremental_con_bloque_si_comparte_entorno_sin_error_temporal_cse() -> (
+    None
+):
     entradas = [
         "var x = 10",
         "si verdadero:",
@@ -79,10 +86,15 @@ def test_repl_incremental_con_bloque_si_comparte_entorno_sin_error_temporal_cse(
         "salir",
     ]
 
-    with patch("cobra.cli.commands.interactive_cmd.validar_dependencias"), \
-         patch("prompt_toolkit.PromptSession.prompt", side_effect=entradas), \
-         patch("cobra.cli.commands.interactive_cmd.InteractiveCommand.validar_entrada", return_value=True), \
-         patch("sys.stdout", new_callable=StringIO) as salida:
+    with (
+        patch("cobra.cli.commands.interactive_cmd.validar_dependencias"),
+        patch("prompt_toolkit.PromptSession.prompt", side_effect=entradas),
+        patch(
+            "cobra.cli.commands.interactive_cmd.InteractiveCommand.validar_entrada",
+            return_value=True,
+        ),
+        patch("sys.stdout", new_callable=StringIO) as salida,
+    ):
         cmd = InteractiveCommand(InterpretadorCobra())
         ret = cmd.run(_args())
 

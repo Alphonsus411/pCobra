@@ -34,7 +34,9 @@ def _spawn(args="repl", extra_env=None):
 
 
 @pytest.mark.integration
-@pytest.mark.skipif(sys.platform == "win32", reason="pexpect no es compatible con Windows")
+@pytest.mark.skipif(
+    sys.platform == "win32", reason="pexpect no es compatible con Windows"
+)
 def test_interactive_persistence():
     child = _spawn()
     child.expect(">>> ")

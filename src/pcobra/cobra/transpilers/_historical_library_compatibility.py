@@ -11,7 +11,9 @@ from typing import Final
 
 from pcobra.cobra.transpilers.library_compatibility import LibraryCompatibilityRecord
 
-HISTORICAL_LIBRARY_COMPATIBILITY: Final[dict[str, dict[str, LibraryCompatibilityRecord]]] = {
+HISTORICAL_LIBRARY_COMPATIBILITY: Final[
+    dict[str, dict[str, LibraryCompatibilityRecord]]
+] = {
     "wasm": {
         "runtime": LibraryCompatibilityRecord(
             level="partial",

@@ -211,8 +211,9 @@ def test_transpilador_js_garantia() -> None:
     assert "return 0" in codigo
 
 
-
-def test_transpilador_python_usar_proyecto_incluye_contexto_estable(tmp_path, monkeypatch) -> None:
+def test_transpilador_python_usar_proyecto_incluye_contexto_estable(
+    tmp_path, monkeypatch
+) -> None:
     proyecto = tmp_path / "proyecto"
     principal = proyecto / "src" / "main.cobra"
     principal.parent.mkdir(parents=True)
@@ -250,8 +251,9 @@ def test_transpilador_python_usar_proyecto_incluye_contexto_estable(tmp_path, mo
     ]
 
 
-
-def test_transpilado_python_usar_proyecto_funciona_fuera_del_cwd(tmp_path, monkeypatch) -> None:
+def test_transpilado_python_usar_proyecto_funciona_fuera_del_cwd(
+    tmp_path, monkeypatch
+) -> None:
     from pcobra.cobra.usar_loader import obtener_cache_modulos_cobra_proyecto
     from pcobra.core import import_utils
 
@@ -270,7 +272,9 @@ def test_transpilado_python_usar_proyecto_funciona_fuera_del_cwd(tmp_path, monke
     rutas_cargadas = []
 
     def cargar_ast_falso(ruta, *, modules_path, whitelist, **_kwargs):
-        rutas_cargadas.append((Path(ruta).resolve(), Path(modules_path).resolve(), whitelist))
+        rutas_cargadas.append(
+            (Path(ruta).resolve(), Path(modules_path).resolve(), whitelist)
+        )
         assert Path.cwd() == externo
         return [
             NodoAsignacion("hoy", NodoValor(1), declaracion=True),
@@ -292,6 +296,7 @@ def test_transpilado_python_usar_proyecto_funciona_fuera_del_cwd(tmp_path, monke
     ]
     assert f"project_root={str(proyecto.resolve())!r}" in codigo
     assert f"current_file={str(principal.resolve())!r}" in codigo
+
 
 def test_python_adapter_usar_proyecto_propaga_contexto_estable(tmp_path) -> None:
     proyecto = tmp_path / "proyecto"
@@ -319,7 +324,9 @@ def test_transpilador_python_usar_oficial_acepta_contexto(tmp_path) -> None:
     (proyecto / "cobra.toml").write_text("[project]\nname = 'demo'\n", encoding="utf-8")
     principal.write_text("usar texto\n", encoding="utf-8")
 
-    codigo = TranspiladorPython(source_file=principal).generate_code([NodoUsar("texto")])
+    codigo = TranspiladorPython(source_file=principal).generate_code(
+        [NodoUsar("texto")]
+    )
     entorno: dict[str, object] = {}
 
     exec(codigo, entorno)

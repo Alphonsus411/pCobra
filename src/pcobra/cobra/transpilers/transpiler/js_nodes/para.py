@@ -1,5 +1,6 @@
 from pcobra.cobra.transpilers.semantica import procesar_bloque
 
+
 def visit_para(self, nodo):
     cuerpo = nodo.cuerpo
     if self.usa_indentacion is None:

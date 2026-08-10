@@ -1238,6 +1238,7 @@ def ejecutar_o_transpilar(
         return transpilar_codigo(codigo, target)
     return ejecutar_codigo(codigo, main_file=main_file)
 
+
 def crear_handler_ejecucion(
     *,
     entrada: Any | None = None,
@@ -1278,6 +1279,7 @@ def crear_handler_ejecucion(
             page.update()
 
     return ejecutar_handler
+
 
 def _guardar_archivo(
     page: Any, entrada: Any, estado_archivo: GuiFileState, ruta: Path

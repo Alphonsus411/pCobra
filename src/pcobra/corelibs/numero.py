@@ -175,9 +175,7 @@ def distancia_euclidiana(punto_a, punto_b) -> float:
     componentes_a = _normalizar_componentes(punto_a, "distancia_euclidiana")
     componentes_b = _normalizar_componentes(punto_b, "distancia_euclidiana")
     if len(componentes_a) != len(componentes_b):
-        raise ValueError(
-            "distancia_euclidiana requiere puntos con la misma dimensión"
-        )
+        raise ValueError("distancia_euclidiana requiere puntos con la misma dimensión")
     return math.dist(componentes_a, componentes_b)
 
 
@@ -554,7 +552,9 @@ def limitar(valor, minimo, maximo):
     if isinstance(maximo, bool):
         maximo = int(maximo)
 
-    origen_entero = all(isinstance(argumento, int) for argumento in (valor, minimo, maximo))
+    origen_entero = all(
+        isinstance(argumento, int) for argumento in (valor, minimo, maximo)
+    )
     valor_es_int = isinstance(valor, int)
     if origen_entero:
         if minimo > maximo:
@@ -642,7 +642,9 @@ def envolver_modular(valor, modulo):
     return resultado
 
 
-def aleatorio(inicio: float = 0.0, fin: float = 1.0, semilla: int | None = None) -> float:
+def aleatorio(
+    inicio: float = 0.0, fin: float = 1.0, semilla: int | None = None
+) -> float:
     """Genera un número aleatorio uniforme entre ``inicio`` y ``fin``."""
 
     if inicio > fin:
@@ -676,7 +678,9 @@ def desviacion_estandar(valores, *, muestral: bool = False) -> float:
     """Obtiene la desviación estándar de ``valores``."""
 
     if not valores:
-        raise ValueError("No se puede calcular la desviación estándar de una secuencia vacía")
+        raise ValueError(
+            "No se puede calcular la desviación estándar de una secuencia vacía"
+        )
     funcion = stdev if muestral else pstdev
     try:
         return funcion(valores)
@@ -693,7 +697,7 @@ def es_primo(n: int) -> bool:
     """Determina si *n* es un número primo."""
     if n <= 1:
         return False
-    for i in range(2, int(n ** 0.5) + 1):
+    for i in range(2, int(n**0.5) + 1):
         if n % i == 0:
             return False
     return True
@@ -844,12 +848,13 @@ def coeficiente_variacion(valores, *, muestral: bool = False) -> float:
 
     if muestral:
         if len(datos) < 2:
-            raise ValueError("El coeficiente de variación muestral requiere al menos dos valores")
+            raise ValueError(
+                "El coeficiente de variación muestral requiere al menos dos valores"
+            )
         dispersion = stdev(datos)
     else:
         dispersion = pstdev(datos)
     return dispersion / abs(media)
-
 
 
 def aleatorio_entero(minimo: int, maximo: int, semilla: int | None = None) -> int:
@@ -857,6 +862,7 @@ def aleatorio_entero(minimo: int, maximo: int, semilla: int | None = None) -> in
 
     generador = random.Random(semilla) if semilla is not None else random
     return generador.randint(minimo, maximo)
+
 
 __all__ = [
     "absoluto",

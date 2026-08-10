@@ -40,12 +40,16 @@ def _ejecutar_codigo_y_capturar_salida(codigo: str) -> str:
 
     try:
         with patch("sys.stdout", new_callable=StringIO) as out:
-            with patch("core.qualia_bridge.register_execution", return_value=None), patch(
-                "pcobra.core.qualia_bridge.register_execution", return_value=None
-            ), patch.object(
-                InterpretadorCobra,
-                "ejecutar_asignacion",
-                new=_ejecutar_asignacion_sin_retorno,
+            with (
+                patch("core.qualia_bridge.register_execution", return_value=None),
+                patch(
+                    "pcobra.core.qualia_bridge.register_execution", return_value=None
+                ),
+                patch.object(
+                    InterpretadorCobra,
+                    "ejecutar_asignacion",
+                    new=_ejecutar_asignacion_sin_retorno,
+                ),
             ):
                 inter.ejecutar_ast(ast)
     except RecursionError as exc:  # pragma: no cover - contrato explícito
@@ -68,12 +72,16 @@ def _ejecutar_codigo_y_capturar_stdout_completo(codigo: str) -> str:
 
     try:
         with patch("sys.stdout", new_callable=StringIO) as out:
-            with patch("core.qualia_bridge.register_execution", return_value=None), patch(
-                "pcobra.core.qualia_bridge.register_execution", return_value=None
-            ), patch.object(
-                InterpretadorCobra,
-                "ejecutar_asignacion",
-                new=_ejecutar_asignacion_sin_retorno,
+            with (
+                patch("core.qualia_bridge.register_execution", return_value=None),
+                patch(
+                    "pcobra.core.qualia_bridge.register_execution", return_value=None
+                ),
+                patch.object(
+                    InterpretadorCobra,
+                    "ejecutar_asignacion",
+                    new=_ejecutar_asignacion_sin_retorno,
+                ),
             ):
                 inter.ejecutar_ast(ast)
     except RecursionError as exc:  # pragma: no cover - contrato explícito
@@ -83,32 +91,26 @@ def _ejecutar_codigo_y_capturar_stdout_completo(codigo: str) -> str:
 
 
 def test_comparacion_identificador_en_imprimir_sin_recursionerror() -> None:
-    salida = _ejecutar_codigo_y_capturar_salida(
-        """
+    salida = _ejecutar_codigo_y_capturar_salida("""
 x = 10
 imprimir x == 10
-"""
-    )
+""")
     assert salida == "verdadero"
 
 
 def test_comparacion_identificador_con_suma_en_imprimir_sin_recursionerror() -> None:
-    salida = _ejecutar_codigo_y_capturar_salida(
-        """
+    salida = _ejecutar_codigo_y_capturar_salida("""
 x = 5
 imprimir x + 5 == 10
-"""
-    )
+""")
     assert salida == "verdadero"
 
 
 def test_comparacion_identificador_con_suma_en_imprimir_desde_x_diez() -> None:
-    salida = _ejecutar_codigo_y_capturar_salida(
-        """
+    salida = _ejecutar_codigo_y_capturar_salida("""
 x = 10
 imprimir x + 5 == 10
-"""
-    )
+""")
     assert salida == "falso"
 
 
@@ -132,16 +134,12 @@ def test_imprimir_cadena_literal_conserva_salida_previa() -> None:
     assert salida == "hola"
 
 
-
-
 def test_regresion_imprimir_suma_y_comparacion_sin_recursionerror() -> None:
-    salida = _ejecutar_codigo_y_capturar_stdout_completo(
-        """
+    salida = _ejecutar_codigo_y_capturar_stdout_completo("""
 x = 5
 imprimir x + 5
 imprimir x == 10
-"""
-    )
+""")
 
     lineas = [
         linea.strip()
@@ -150,31 +148,30 @@ imprimir x == 10
     ]
     assert lineas[-2:] == ["10", "falso"]
 
+
 def test_comparacion_identificador_en_condicional_sin_recursionerror() -> None:
-    salida = _ejecutar_codigo_y_capturar_salida(
-        """
+    salida = _ejecutar_codigo_y_capturar_salida("""
 x = 10
 si x == 10:
     imprimir "ok"
 fin
-"""
-    )
+""")
     assert salida == "ok"
 
 
 def test_comparacion_identificador_con_suma_en_condicional_sin_recursionerror() -> None:
-    salida = _ejecutar_codigo_y_capturar_salida(
-        """
+    salida = _ejecutar_codigo_y_capturar_salida("""
 x = 5
 si x + 5 == 10:
     imprimir "ok"
 fin
-"""
-    )
+""")
     assert salida == "ok"
 
 
-def test_identificador_indefinido_en_comparacion_controlado_sin_recursionerror() -> None:
+def test_identificador_indefinido_en_comparacion_controlado_sin_recursionerror() -> (
+    None
+):
     codigo = "imprimir y == 10\n"
 
     try:
@@ -187,7 +184,9 @@ def test_identificador_indefinido_en_comparacion_controlado_sin_recursionerror()
         pytest.fail("Se esperaba NameError para identificador no declarado")
 
 
-def test_identificador_derecho_indefinido_en_comparacion_controlado_sin_recursionerror() -> None:
+def test_identificador_derecho_indefinido_en_comparacion_controlado_sin_recursionerror() -> (
+    None
+):
     codigo = """
 x = 10
 imprimir x == y
@@ -218,12 +217,16 @@ def test_ast_directo_comparacion_identificador_sin_recursionerror() -> None:
 
     try:
         with patch("sys.stdout", new_callable=StringIO) as out:
-            with patch("core.qualia_bridge.register_execution", return_value=None), patch(
-                "pcobra.core.qualia_bridge.register_execution", return_value=None
-            ), patch.object(
-                InterpretadorCobra,
-                "ejecutar_asignacion",
-                new=_ejecutar_asignacion_sin_retorno,
+            with (
+                patch("core.qualia_bridge.register_execution", return_value=None),
+                patch(
+                    "pcobra.core.qualia_bridge.register_execution", return_value=None
+                ),
+                patch.object(
+                    InterpretadorCobra,
+                    "ejecutar_asignacion",
+                    new=_ejecutar_asignacion_sin_retorno,
+                ),
             ):
                 inter.ejecutar_ast(ast)
     except RecursionError as exc:  # pragma: no cover - contrato explícito
@@ -251,12 +254,16 @@ def test_ast_directo_comparacion_identificador_con_suma_sin_recursionerror() -> 
 
     try:
         with patch("sys.stdout", new_callable=StringIO) as out:
-            with patch("core.qualia_bridge.register_execution", return_value=None), patch(
-                "pcobra.core.qualia_bridge.register_execution", return_value=None
-            ), patch.object(
-                InterpretadorCobra,
-                "ejecutar_asignacion",
-                new=_ejecutar_asignacion_sin_retorno,
+            with (
+                patch("core.qualia_bridge.register_execution", return_value=None),
+                patch(
+                    "pcobra.core.qualia_bridge.register_execution", return_value=None
+                ),
+                patch.object(
+                    InterpretadorCobra,
+                    "ejecutar_asignacion",
+                    new=_ejecutar_asignacion_sin_retorno,
+                ),
             ):
                 inter.ejecutar_ast(ast)
     except RecursionError as exc:  # pragma: no cover - contrato explícito
@@ -282,12 +289,16 @@ def test_ast_directo_condicional_identificador_sin_recursionerror() -> None:
 
     try:
         with patch("sys.stdout", new_callable=StringIO) as out:
-            with patch("core.qualia_bridge.register_execution", return_value=None), patch(
-                "pcobra.core.qualia_bridge.register_execution", return_value=None
-            ), patch.object(
-                InterpretadorCobra,
-                "ejecutar_asignacion",
-                new=_ejecutar_asignacion_sin_retorno,
+            with (
+                patch("core.qualia_bridge.register_execution", return_value=None),
+                patch(
+                    "pcobra.core.qualia_bridge.register_execution", return_value=None
+                ),
+                patch.object(
+                    InterpretadorCobra,
+                    "ejecutar_asignacion",
+                    new=_ejecutar_asignacion_sin_retorno,
+                ),
             ):
                 inter.ejecutar_ast(ast)
     except RecursionError as exc:  # pragma: no cover - contrato explícito
@@ -315,7 +326,9 @@ def test_ast_directo_alias_encadenado_en_comparacion_materializa_booleano() -> N
     assert resultado is True
 
 
-def test_comparacion_con_ciclo_alias_lanza_error_controlado_y_no_recursionerror() -> None:
+def test_comparacion_con_ciclo_alias_lanza_error_controlado_y_no_recursionerror() -> (
+    None
+):
     inter = InterpretadorCobra()
     inter.variables["a"] = NodoIdentificador("b")
     inter.variables["b"] = NodoIdentificador("a")
@@ -327,7 +340,9 @@ def test_comparacion_con_ciclo_alias_lanza_error_controlado_y_no_recursionerror(
     )
 
     try:
-        with pytest.raises(RuntimeError, match=r"^Ciclo de variables detectado en 'a'$"):
+        with pytest.raises(
+            RuntimeError, match=r"^Ciclo de variables detectado en 'a'$"
+        ):
             inter.evaluar_expresion(expresion)
     except RecursionError as exc:  # pragma: no cover - contrato explícito
         pytest.fail(f"No debía lanzar RecursionError: {exc}")
@@ -392,12 +407,10 @@ def test_operacion_or_materializa_identificador_y_alias() -> None:
 
 def test_debug_traces_en_comparacion_identificador_simple() -> None:
     with patch.dict("os.environ", {"PCOBRA_DEBUG_TRACES": "1"}):
-        salida = _ejecutar_codigo_y_capturar_stdout_completo(
-            """
+        salida = _ejecutar_codigo_y_capturar_stdout_completo("""
 x = 10
 imprimir x == 10
-"""
-        )
+""")
 
     assert "[AST BEFORE OPT]" in salida
     assert "[AST AFTER OPT]" in salida
@@ -411,12 +424,10 @@ imprimir x == 10
 
 def test_debug_traces_en_comparacion_identificador_con_suma() -> None:
     with patch.dict("os.environ", {"PCOBRA_DEBUG_TRACES": "1"}):
-        salida = _ejecutar_codigo_y_capturar_stdout_completo(
-            """
+        salida = _ejecutar_codigo_y_capturar_stdout_completo("""
 x = 5
 imprimir x + 5 == 10
-"""
-        )
+""")
 
     assert "[AST BEFORE OPT]" in salida
     assert "[AST AFTER OPT]" in salida
@@ -428,7 +439,9 @@ imprimir x + 5 == 10
     assert _ultima_linea_no_vacia(salida) == "verdadero"
 
 
-def test_debug_traces_identificador_derecho_indefinido_nameerror_sin_recursionerror() -> None:
+def test_debug_traces_identificador_derecho_indefinido_nameerror_sin_recursionerror() -> (
+    None
+):
     codigo = """
 x = 10
 imprimir x == y
@@ -500,12 +513,16 @@ def test_ast_minimo_identificador_mas_valor_con_x_diez() -> None:
 
     try:
         with patch("sys.stdout", new_callable=StringIO) as out:
-            with patch("core.qualia_bridge.register_execution", return_value=None), patch(
-                "pcobra.core.qualia_bridge.register_execution", return_value=None
-            ), patch.object(
-                InterpretadorCobra,
-                "ejecutar_asignacion",
-                new=_ejecutar_asignacion_sin_retorno,
+            with (
+                patch("core.qualia_bridge.register_execution", return_value=None),
+                patch(
+                    "pcobra.core.qualia_bridge.register_execution", return_value=None
+                ),
+                patch.object(
+                    InterpretadorCobra,
+                    "ejecutar_asignacion",
+                    new=_ejecutar_asignacion_sin_retorno,
+                ),
             ):
                 inter.ejecutar_ast(ast)
     except RecursionError as exc:  # pragma: no cover - contrato explícito
@@ -534,12 +551,16 @@ def test_ast_minimo_identificador_igual_valor_con_x_diez() -> None:
 
     try:
         with patch("sys.stdout", new_callable=StringIO) as out:
-            with patch("core.qualia_bridge.register_execution", return_value=None), patch(
-                "pcobra.core.qualia_bridge.register_execution", return_value=None
-            ), patch.object(
-                InterpretadorCobra,
-                "ejecutar_asignacion",
-                new=_ejecutar_asignacion_sin_retorno,
+            with (
+                patch("core.qualia_bridge.register_execution", return_value=None),
+                patch(
+                    "pcobra.core.qualia_bridge.register_execution", return_value=None
+                ),
+                patch.object(
+                    InterpretadorCobra,
+                    "ejecutar_asignacion",
+                    new=_ejecutar_asignacion_sin_retorno,
+                ),
             ):
                 inter.ejecutar_ast(ast)
     except RecursionError as exc:  # pragma: no cover - contrato explícito
@@ -567,12 +588,16 @@ def test_ast_control_no_regresion_print_cinco_mas_cinco() -> None:
 
     try:
         with patch("sys.stdout", new_callable=StringIO) as out:
-            with patch("core.qualia_bridge.register_execution", return_value=None), patch(
-                "pcobra.core.qualia_bridge.register_execution", return_value=None
-            ), patch.object(
-                InterpretadorCobra,
-                "ejecutar_asignacion",
-                new=_ejecutar_asignacion_sin_retorno,
+            with (
+                patch("core.qualia_bridge.register_execution", return_value=None),
+                patch(
+                    "pcobra.core.qualia_bridge.register_execution", return_value=None
+                ),
+                patch.object(
+                    InterpretadorCobra,
+                    "ejecutar_asignacion",
+                    new=_ejecutar_asignacion_sin_retorno,
+                ),
             ):
                 inter.ejecutar_ast(ast)
     except RecursionError as exc:  # pragma: no cover - contrato explícito

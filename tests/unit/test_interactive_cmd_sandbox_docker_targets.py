@@ -37,7 +37,7 @@ def test_sandbox_docker_help_deriva_de_targets_publicos_activos():
     help_text = interactive_parser.format_help()
 
     assert "{python,javascript,rust}" in help_text
-    choices_fragment = help_text[help_text.index("{python,javascript,rust}"):]
+    choices_fragment = help_text[help_text.index("{python,javascript,rust}") :]
     choices_fragment = choices_fragment.split("]", 1)[0]
     assert "python" in choices_fragment
     assert "javascript" in choices_fragment

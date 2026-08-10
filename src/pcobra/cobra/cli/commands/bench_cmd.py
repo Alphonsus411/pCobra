@@ -36,6 +36,7 @@ def run_and_measure(*_args, **_kwargs) -> tuple[float, int]:
     inicio = time.perf_counter()
     return time.perf_counter() - inicio, 0
 
+
 class BenchCommand(BaseCommand):
     """Ejecuta benchmarks y opcionalmente los perfila."""
 
@@ -52,9 +53,7 @@ class BenchCommand(BaseCommand):
         """
         parser = subparsers.add_parser(self.name, help=_("Ejecuta benchmarks"))
         parser.add_argument(
-            "--profile",
-            action="store_true",
-            help=_("Activa el modo de profiling")
+            "--profile", action="store_true", help=_("Activa el modo de profiling")
         )
         parser.add_argument(
             "--binary",
@@ -65,7 +64,9 @@ class BenchCommand(BaseCommand):
             "--perfil",
             choices=("publico", "avanzado"),
             default="publico",
-            help=_("Perfil de exposición: use 'avanzado' para comparativas multi-backend."),
+            help=_(
+                "Perfil de exposición: use 'avanzado' para comparativas multi-backend."
+            ),
         )
         parser.set_defaults(cmd=self)
         return parser
@@ -87,7 +88,7 @@ class BenchCommand(BaseCommand):
         Returns:
             0 si la ejecución fue exitosa, 1 en caso de error
         """
-        if not hasattr(args, 'profile') or not hasattr(args, 'binary'):
+        if not hasattr(args, "profile") or not hasattr(args, "binary"):
             mostrar_error(_("Argumentos inválidos"))
             return 1
 
@@ -105,7 +106,13 @@ class BenchCommand(BaseCommand):
                 with profiler:
                     if BACKENDS == {}:
                         elapsed, memory_kb = run_and_measure()
-                        results = [{"backend": "cobra", "time": elapsed, "memory_kb": memory_kb}]
+                        results = [
+                            {
+                                "backend": "cobra",
+                                "time": elapsed,
+                                "memory_kb": memory_kb,
+                            }
+                        ]
                     else:
                         results = self._run_benchmarks()
                 Path("bench_results.json").write_text(json.dumps(results, indent=2))

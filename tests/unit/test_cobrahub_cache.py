@@ -180,7 +180,9 @@ def test_cli_hub_publicar_e_instalar_devuelven_error_si_falla_operacion():
     assert codigo_instalar != 0
 
 
-def test_cli_hub_cache_listar_conserva_salida_ordenada(tmp_path: Path, monkeypatch, capsys):
+def test_cli_hub_cache_listar_conserva_salida_ordenada(
+    tmp_path: Path, monkeypatch, capsys
+):
     monkeypatch.setenv("COBRAHUB_CACHE_DIR", str(tmp_path))
     (tmp_path / "b.co").write_text("x", encoding="utf-8")
     (tmp_path / "a.co").write_text("x", encoding="utf-8")

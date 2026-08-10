@@ -9,7 +9,6 @@ import tomllib
 
 from packaging.version import Version
 
-
 _VERSION_CONSTRAINT_RE = re.compile(
     r"(?:>=|<=|>|<|==|!=)?"
     r"(?:0|[1-9]\d*)(?:\.(?:0|[1-9]\d*)){0,2}"

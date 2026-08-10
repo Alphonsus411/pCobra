@@ -14,16 +14,21 @@ def test_kernel_transpiler_mode(monkeypatch):
     outputs = []
 
     core_mod = types.ModuleType("cobra.core")
+
     class DummyLexer:
         def __init__(self, code):
             pass
+
         def tokenizar(self):
             return []
+
     class DummyParser:
         def __init__(self, tokens):
             pass
+
         def parsear(self):
             return []
+
     core_mod.Lexer = DummyLexer
     core_mod.Parser = DummyParser
     core_mod.utils = types.SimpleNamespace(PALABRAS_RESERVADAS=[])
@@ -34,11 +39,14 @@ def test_kernel_transpiler_mode(monkeypatch):
     sys.modules["cobra.core.utils"] = core_mod.utils
 
     interp_mod = types.ModuleType("core.interpreter")
+
     class FakeInterpreter:
         def __init__(self):
             self.variables = {}
+
         def ejecutar_ast(self, ast):
             return None
+
     interp_mod.InterpretadorCobra = FakeInterpreter
     qualia_mod = types.ModuleType("core.qualia_bridge")
     qualia_mod.get_suggestions = lambda: []

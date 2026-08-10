@@ -20,9 +20,9 @@ _MODULO_AUSENTE = object()
 # Prefijos permitidos para cargar extensiones
 _ALLOWED_PREFIXES: list[str] = [
     os.path.abspath(p)
-    for p in os.environ.get(
-        "COBRA_ALLOWED_EXT_PATHS", "/usr/lib:/usr/local/lib"
-    ).split(os.pathsep)
+    for p in os.environ.get("COBRA_ALLOWED_EXT_PATHS", "/usr/lib:/usr/local/lib").split(
+        os.pathsep
+    )
     if p
 ]
 
@@ -59,9 +59,7 @@ def compilar_extension(
     with open(cpp, "w", encoding="utf-8") as fh:
         fh.write(codigo)
 
-    ext = Pybind11Extension(
-        nombre, [cpp], extra_compile_args=list(extra_cflags or [])
-    )
+    ext = Pybind11Extension(nombre, [cpp], extra_compile_args=list(extra_cflags or []))
     dist = Distribution({"name": nombre, "ext_modules": [ext]})
     cmd = build_ext(dist)
     cmd.build_lib = directorio
@@ -109,9 +107,7 @@ def compilar_y_cargar(
 ) -> ModuleType:
     """Compila ``codigo`` y devuelve el módulo resultante."""
     propio = directorio is None
-    path = compilar_extension(
-        nombre, codigo, directorio, extra_cflags, conservar=True
-    )
+    path = compilar_extension(nombre, codigo, directorio, extra_cflags, conservar=True)
     mod = cargar_extension(path)
     if propio and not conservar:
         shutil.rmtree(os.path.dirname(path), ignore_errors=True)

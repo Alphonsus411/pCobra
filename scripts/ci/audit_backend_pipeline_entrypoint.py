@@ -19,7 +19,8 @@ FORBIDDEN_IMPORTS = {
 }
 ALLOWED_GENERATE_CODE_CALLERS = {
     SRC / "pcobra/cobra/build/backend_pipeline.py",
-    SRC / "pcobra/cobra/cli/commands/compile_cmd.py",  # plugins externos, no transpilador oficial
+    SRC
+    / "pcobra/cobra/cli/commands/compile_cmd.py",  # plugins externos, no transpilador oficial
 }
 
 
@@ -32,7 +33,10 @@ def _targets_from_import(node: ast.AST) -> list[str]:
 
 
 def _is_forbidden_import(target: str) -> bool:
-    return any(target == prefix or target.startswith(prefix + ".") for prefix in FORBIDDEN_IMPORTS)
+    return any(
+        target == prefix or target.startswith(prefix + ".")
+        for prefix in FORBIDDEN_IMPORTS
+    )
 
 
 def _is_generate_code_call(node: ast.Call) -> bool:
@@ -48,7 +52,12 @@ def _audit_file(path: Path) -> list[tuple[int, str]]:
                 issues.append((node.lineno, f"import directo prohibido: {target}"))
         if isinstance(node, ast.Call) and _is_generate_code_call(node):
             if path not in ALLOWED_GENERATE_CODE_CALLERS:
-                issues.append((node.lineno, "llamada directa a generate_code() fuera de backend_pipeline"))
+                issues.append(
+                    (
+                        node.lineno,
+                        "llamada directa a generate_code() fuera de backend_pipeline",
+                    )
+                )
     return issues
 
 
@@ -67,7 +76,9 @@ def main() -> int:
             print(f" - {path.relative_to(ROOT)}:{lineno}: {issue}")
         return 1
 
-    print("✅ Auditoría backend_pipeline: CLI/imports/stdlib sin llamadas directas a transpiladores oficiales.")
+    print(
+        "✅ Auditoría backend_pipeline: CLI/imports/stdlib sin llamadas directas a transpiladores oficiales."
+    )
     return 0
 
 

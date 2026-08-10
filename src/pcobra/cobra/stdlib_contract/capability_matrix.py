@@ -33,7 +33,9 @@ MODULE_CAPABILITY_MATRIX: dict[str, ModuleCapabilityMatrix] = {
 
 
 for _module, _cap in MODULE_CAPABILITY_MATRIX.items():
-    if tuple(_cap.required_functions) != tuple(CANONICAL_MODULE_SURFACE_CONTRACTS[_module].required_functions):
+    if tuple(_cap.required_functions) != tuple(
+        CANONICAL_MODULE_SURFACE_CONTRACTS[_module].required_functions
+    ):
         raise RuntimeError(
             f"[STARTUP CONTRACT] Matriz de capacidades desalineada para módulo canónico: {_module}."
         )

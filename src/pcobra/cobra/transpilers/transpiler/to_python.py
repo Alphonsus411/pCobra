@@ -56,7 +56,11 @@ from pcobra.cobra.core import Parser
 from pcobra.cobra.core import TipoToken, Lexer
 from pcobra.cobra.core.visitor import NodeVisitor
 from pcobra.cobra.transpilers.common.utils import BaseTranspiler
-from pcobra.cobra.core.optimizations import optimize_constants, remove_dead_code, inline_functions
+from pcobra.cobra.core.optimizations import (
+    optimize_constants,
+    remove_dead_code,
+    inline_functions,
+)
 from pcobra.cobra.macro import expandir_macros
 from pcobra.cobra.usar_loader import descubrir_raiz_proyecto
 from pcobra.cobra.transpilers.common.utils import (
@@ -78,7 +82,9 @@ from pcobra.cobra.transpilers.transpiler.python_nodes.garantia import (
 from pcobra.cobra.transpilers.transpiler.python_nodes.bucle_mientras import (
     visit_bucle_mientras as _visit_bucle_mientras,
 )
-from pcobra.cobra.transpilers.transpiler.python_nodes.for_ import visit_for as _visit_for
+from pcobra.cobra.transpilers.transpiler.python_nodes.for_ import (
+    visit_for as _visit_for,
+)
 from pcobra.cobra.transpilers.transpiler.python_nodes.funcion import (
     visit_funcion as _visit_funcion,
 )
@@ -97,23 +103,33 @@ from pcobra.cobra.transpilers.transpiler.python_nodes.retorno import (
 from pcobra.cobra.transpilers.transpiler.python_nodes.holobit import (
     visit_holobit as _visit_holobit,
 )
-from pcobra.cobra.transpilers.transpiler.python_nodes.lista import visit_lista as _visit_lista
+from pcobra.cobra.transpilers.transpiler.python_nodes.lista import (
+    visit_lista as _visit_lista,
+)
 from pcobra.cobra.transpilers.transpiler.python_nodes.diccionario import (
     visit_diccionario as _visit_diccionario,
 )
-from pcobra.cobra.transpilers.transpiler.python_nodes.clase import visit_clase as _visit_clase
+from pcobra.cobra.transpilers.transpiler.python_nodes.clase import (
+    visit_clase as _visit_clase,
+)
 from pcobra.cobra.transpilers.transpiler.python_nodes.metodo import (
     visit_metodo as _visit_metodo,
 )
 from pcobra.cobra.transpilers.transpiler.python_nodes.try_catch import (
     visit_try_catch as _visit_try_catch,
 )
-from pcobra.cobra.transpilers.transpiler.python_nodes.throw import visit_throw as _visit_throw
+from pcobra.cobra.transpilers.transpiler.python_nodes.throw import (
+    visit_throw as _visit_throw,
+)
 from pcobra.cobra.transpilers.transpiler.python_nodes.importar import (
     visit_import as _visit_import,
 )
-from pcobra.cobra.transpilers.transpiler.python_nodes.usar import visit_usar as _visit_usar
-from pcobra.cobra.transpilers.transpiler.python_nodes.hilo import visit_hilo as _visit_hilo
+from pcobra.cobra.transpilers.transpiler.python_nodes.usar import (
+    visit_usar as _visit_usar,
+)
+from pcobra.cobra.transpilers.transpiler.python_nodes.hilo import (
+    visit_hilo as _visit_hilo,
+)
 from pcobra.cobra.transpilers.transpiler.python_nodes.instancia import (
     visit_instancia as _visit_instancia,
 )
@@ -135,16 +151,24 @@ from pcobra.cobra.transpilers.transpiler.python_nodes.operacion_binaria import (
 from pcobra.cobra.transpilers.transpiler.python_nodes.operacion_unaria import (
     visit_operacion_unaria as _visit_operacion_unaria,
 )
-from pcobra.cobra.transpilers.transpiler.python_nodes.valor import visit_valor as _visit_valor
+from pcobra.cobra.transpilers.transpiler.python_nodes.valor import (
+    visit_valor as _visit_valor,
+)
 from pcobra.cobra.transpilers.transpiler.python_nodes.identificador import (
     visit_identificador as _visit_identificador,
 )
-from pcobra.cobra.transpilers.transpiler.python_nodes.para import visit_para as _visit_para
+from pcobra.cobra.transpilers.transpiler.python_nodes.para import (
+    visit_para as _visit_para,
+)
 from pcobra.cobra.transpilers.transpiler.python_nodes.decorador import (
     visit_decorador as _visit_decorador,
 )
-from pcobra.cobra.transpilers.transpiler.python_nodes.yield_ import visit_yield as _visit_yield
-from pcobra.cobra.transpilers.transpiler.python_nodes.defer import visit_defer as _visit_defer
+from pcobra.cobra.transpilers.transpiler.python_nodes.yield_ import (
+    visit_yield as _visit_yield,
+)
+from pcobra.cobra.transpilers.transpiler.python_nodes.defer import (
+    visit_defer as _visit_defer,
+)
 from pcobra.cobra.transpilers.transpiler.python_nodes.esperar import (
     visit_esperar as _visit_esperar,
 )
@@ -154,7 +178,9 @@ from pcobra.cobra.transpilers.transpiler.python_nodes.romper import (
 from pcobra.cobra.transpilers.transpiler.python_nodes.continuar import (
     visit_continuar as _visit_continuar,
 )
-from pcobra.cobra.transpilers.transpiler.python_nodes.pasar import visit_pasar as _visit_pasar
+from pcobra.cobra.transpilers.transpiler.python_nodes.pasar import (
+    visit_pasar as _visit_pasar,
+)
 from pcobra.cobra.transpilers.transpiler.python_nodes.switch import (
     visit_switch as _visit_switch,
 )
@@ -259,7 +285,9 @@ class TranspiladorPython(BaseTranspiler):
         self.source_file = self._normalizar_ruta_contexto(source_file)
         self.project_root = self._normalizar_ruta_contexto(project_root)
         if self.project_root is None and self.source_file is not None:
-            self.project_root = descubrir_raiz_proyecto(self.source_file, self.source_file)
+            self.project_root = descubrir_raiz_proyecto(
+                self.source_file, self.source_file
+            )
 
     @staticmethod
     def _normalizar_ruta_contexto(ruta):
@@ -275,7 +303,9 @@ class TranspiladorPython(BaseTranspiler):
         if project_root is not None:
             self.project_root = self._normalizar_ruta_contexto(project_root)
         if self.project_root is None and self.source_file is not None:
-            self.project_root = descubrir_raiz_proyecto(self.source_file, self.source_file)
+            self.project_root = descubrir_raiz_proyecto(
+                self.source_file, self.source_file
+            )
 
     def contexto_usar_kwargs(self):
         """Devuelve argumentos estables para ``usar_modulo`` cuando hay contexto."""
@@ -288,7 +318,9 @@ class TranspiladorPython(BaseTranspiler):
         return kwargs
 
     def generate_code(self, ast, *, source_file=None, project_root=None):
-        self.set_contexto_compilacion(source_file=source_file, project_root=project_root)
+        self.set_contexto_compilacion(
+            source_file=source_file, project_root=project_root
+        )
         self.codigo = self.transpilar(ast)
         return self.codigo
 
@@ -427,7 +459,9 @@ class TranspiladorPython(BaseTranspiler):
             valores = ", ".join(self.obtener_valor(v) for v in nodo.valores)
             return f"cobra_holobit([{valores}])"
         elif hasattr(nodo, "nombre") and hasattr(nodo, "argumentos"):
-            args = ", ".join(self.obtener_valor(a) for a in getattr(nodo, "argumentos", []))
+            args = ", ".join(
+                self.obtener_valor(a) for a in getattr(nodo, "argumentos", [])
+            )
             return f"{getattr(nodo, 'nombre', nodo)}({args})"
         elif isinstance(nodo, NodoOperacionBinaria):
             izq = self.obtener_valor(nodo.izquierda)
@@ -516,7 +550,12 @@ PYTHON_FEATURE_NODE_SUPPORT = {
     "imports_corelibs": ("visit_usar", "visit_import", "visit_llamada_funcion"),
     "manejo_errores": ("visit_try_catch", "visit_throw"),
     "async": ("visit_funcion", "visit_esperar"),
-    "tipos_compuestos": ("visit_lista", "visit_diccionario", "visit_lista_tipo", "visit_diccionario_tipo"),
+    "tipos_compuestos": (
+        "visit_lista",
+        "visit_diccionario",
+        "visit_lista_tipo",
+        "visit_diccionario_tipo",
+    ),
 }
 
 

@@ -29,4 +29,6 @@ def test_gestor_memoria_genetico_intensivo():
         gestor.evolucionar()
 
     # Comprobar que todas las generaciones se realizaron correctamente
-    assert len(gestor.poblacion) > 0, "No hay estrategias activas después de 10 generaciones"
+    assert (
+        len(gestor.poblacion) > 0
+    ), "No hay estrategias activas después de 10 generaciones"

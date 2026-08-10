@@ -11,7 +11,6 @@ import pytest
 import pcobra.corelibs as core
 import pcobra.corelibs.sistema as core_sistema
 
-
 CASE_INSENSITIVE_OS = os.path.normcase("Aa") == os.path.normcase("aa")
 
 
@@ -43,9 +42,7 @@ def test_ejecutar_error(monkeypatch, tmp_path):
 
     monkeypatch.setattr(core_sistema.shutil, "which", fake_which)
     permitido_real = core_sistema.os.path.realpath(str(permitido))
-    assert (
-        core.ejecutar(["bad"], permitidos=[permitido_real], timeout=1) == "fallo"
-    )
+    assert core.ejecutar(["bad"], permitidos=[permitido_real], timeout=1) == "fallo"
 
     def raise_err2(*a, **k):
         raise subprocess.CalledProcessError(1, a[0])
@@ -167,9 +164,7 @@ def test_ejecutar_linux_hereda_descriptor_del_ejecutable(tmp_path):
     ejecutable.write_text('#!/bin/sh\ncat "$0"\n')
     ejecutable.chmod(0o755)
 
-    salida = core_sistema.ejecutar(
-        [str(ejecutable)], permitidos=[str(ejecutable)]
-    )
+    salida = core_sistema.ejecutar([str(ejecutable)], permitidos=[str(ejecutable)])
 
     assert 'cat "$0"' in salida
 
@@ -243,9 +238,7 @@ async def test_ejecutar_stream_no_usa_proc_self_en_darwin(monkeypatch):
 
     resultado = [
         linea
-        async for linea in core_sistema.ejecutar_stream(
-            comando, permitidos=[permitido]
-        )
+        async for linea in core_sistema.ejecutar_stream(comando, permitidos=[permitido])
     ]
 
     assert resultado == ["linea\n"]

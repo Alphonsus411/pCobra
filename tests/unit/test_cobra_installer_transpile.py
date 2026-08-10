@@ -55,7 +55,9 @@ def test_transpile_project_prepara_build_python_y_recursos(tmp_path: Path) -> No
     assert (result.runtime_dir / "__init__.py").is_file()
     assert result.corelibs_dir.is_dir()
     assert (result.runtime_dir / "standard_library").is_dir()
-    assert (result.assets_dir / "assets" / "logo.txt").read_text(encoding="utf-8") == "asset"
+    assert (result.assets_dir / "assets" / "logo.txt").read_text(
+        encoding="utf-8"
+    ) == "asset"
     assert (result.config_dir / "config" / "settings.json").is_file()
     assert (result.documentation_dir / "README.md").is_file()
     assert (result.auxiliary_dir / "cobra.toml").is_file()
@@ -70,7 +72,9 @@ def test_transpile_project_permite_omitir_resolucion_cobrahub(tmp_path: Path) ->
     project_root.mkdir()
     entrypoint = project_root / "main.cobra"
     entrypoint.write_text("imprimir('sin deps')\n", encoding="utf-8")
-    (project_root / "cobra.toml").write_text("[dependencies]\nremoto = '1.0.0'\n", encoding="utf-8")
+    (project_root / "cobra.toml").write_text(
+        "[dependencies]\nremoto = '1.0.0'\n", encoding="utf-8"
+    )
 
     result = transpile_project(
         CobraProject(project_root=project_root, entrypoint=entrypoint),

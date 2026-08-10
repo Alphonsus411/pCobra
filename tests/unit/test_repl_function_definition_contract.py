@@ -63,19 +63,26 @@ def _capturar_repl(cmd: InteractiveCommand, codigo: str) -> tuple[str, list[str]
     try:
         with patch("sys.stdout", new_callable=StringIO) as out:
             cmd.ejecutar_codigo(codigo)
-        return out.getvalue(), [ln.strip() for ln in stream_logs.getvalue().splitlines() if ln.strip()]
+        return out.getvalue(), [
+            ln.strip() for ln in stream_logs.getvalue().splitlines() if ln.strip()
+        ]
     finally:
         logger.handlers = prev_handlers
         logger.setLevel(prev_level)
 
 
-def test_repl_modo_normal_no_muestra_warning_llamada_funcion_y_resultado_visible() -> None:
+def test_repl_modo_normal_no_muestra_warning_llamada_funcion_y_resultado_visible() -> (
+    None
+):
     cmd = InteractiveCommand(InterpretadorCobra())
-    _capturar_repl(cmd, """
+    _capturar_repl(
+        cmd,
+        """
 func test(x):
     retorno x
 fin
-""")
+""",
+    )
     salida_stdout, salida_logging = _capturar_repl(cmd, "test(1)")
 
     assert "WARNING: Llamada a funcion: test" not in salida_stdout
@@ -85,14 +92,17 @@ fin
 
 def test_repl_modo_normal_llamada_anidada_sin_warning_y_resultado() -> None:
     cmd = InteractiveCommand(InterpretadorCobra())
-    salida_def, logs_def = _capturar_repl(cmd, """
+    salida_def, logs_def = _capturar_repl(
+        cmd,
+        """
 func doble(x):
     retorno x + x
 fin
 func triple(x):
     retorno doble(x) + x
 fin
-""")
+""",
+    )
     assert salida_def == ""
     assert logs_def == []
 

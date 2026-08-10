@@ -25,7 +25,9 @@ def _reload_ast_cache(monkeypatch):
 
 @pytest.fixture(autouse=True)
 def _stub_gettext(monkeypatch):
-    monkeypatch.setattr(cli_module, "setup_gettext", lambda _lang=None: (lambda msg: msg))
+    monkeypatch.setattr(
+        cli_module, "setup_gettext", lambda _lang=None: (lambda msg: msg)
+    )
 
 
 def test_cli_help():

@@ -34,12 +34,14 @@ PROGRAM_DIR = (
 )
 MEDIUM_SIZE = 100
 LARGE_SIZE = 1000
-VALID_SIZES = ['small', 'medium', 'large']
+VALID_SIZES = ["small", "medium", "large"]
 PROFILE_OUTPUT = "bench_transpilers.prof"
+
+
 @contextlib.contextmanager
 def profile_context(profiler: cProfile.Profile | None):
     """Context manager para el profiler.
-    
+
     Args:
         profiler: Instancia de cProfile.Profile o None
     """
@@ -73,10 +75,10 @@ class BenchTranspilersCommand(BaseCommand):
 
     def register_subparser(self, subparsers: Any) -> CustomArgumentParser:
         """Registra los argumentos del subcomando.
-        
+
         Args:
             subparsers: Objeto para registrar subcomandos
-            
+
         Returns:
             CustomArgumentParser: Parser configurado para este subcomando
         """
@@ -97,27 +99,29 @@ class BenchTranspilersCommand(BaseCommand):
             "--perfil",
             choices=("publico", "avanzado"),
             default="publico",
-            help=_("Perfil de exposición: use 'avanzado' para comparativas multi-backend."),
+            help=_(
+                "Perfil de exposición: use 'avanzado' para comparativas multi-backend."
+            ),
         )
         parser.set_defaults(cmd=self)
         return parser
 
     def _ensure_program(self, size: str) -> str:
         """Devuelve el contenido del programa del tamaño especificado.
-        
+
         Args:
             size: Tamaño del programa ('small', 'medium', 'large')
-        
+
         Returns:
             str: Código del programa
-            
+
         Raises:
             ValueError: Si el tamaño no es válido
             IOError: Si hay errores de E/S al escribir o leer archivos
         """
         if size not in VALID_SIZES:
-            raise ValueError(_('Tamaño de programa no válido'))
-        
+            raise ValueError(_("Tamaño de programa no válido"))
+
         file = PROGRAM_DIR / f"{size}.cobra"
         try:
             if not file.exists():
@@ -125,21 +129,23 @@ class BenchTranspilersCommand(BaseCommand):
                 if size == "small":
                     code = "imprimir('hola')\n"
                 elif size == "medium":
-                    code = "\n".join(f"imprimir({i})" for i in range(MEDIUM_SIZE)) + "\n"
+                    code = (
+                        "\n".join(f"imprimir({i})" for i in range(MEDIUM_SIZE)) + "\n"
+                    )
                 else:  # large
                     code = "\n".join(f"imprimir({i})" for i in range(LARGE_SIZE)) + "\n"
-                file.write_text(code, encoding='utf-8')
-            return file.read_text(encoding='utf-8')
+                file.write_text(code, encoding="utf-8")
+            return file.read_text(encoding="utf-8")
         except (IOError, OSError) as e:
             raise IOError(f"Error de E/S al manipular archivo {file}: {e}") from e
 
     def _save_results(self, data: str, output_path: str) -> None:
         """Guarda los resultados en un archivo.
-        
+
         Args:
             data: Datos a guardar en formato JSON
             output_path: Ruta del archivo de salida
-            
+
         Raises:
             IOError: Si hay problemas al escribir el archivo
         """
@@ -147,14 +153,16 @@ class BenchTranspilersCommand(BaseCommand):
             Path(output_path).write_text(data)
             mostrar_info(_("Resultados guardados en {file}").format(file=output_path))
         except (IOError, OSError) as e:
-            raise IOError(_("No se pudo escribir el archivo: {err}").format(err=e)) from e
+            raise IOError(
+                _("No se pudo escribir el archivo: {err}").format(err=e)
+            ) from e
 
     def run(self, args: Any) -> int:
         """Ejecuta la lógica del comando.
-        
+
         Args:
             args: Argumentos parseados del comando
-            
+
         Returns:
             int: 0 si la ejecución fue exitosa, 1 en caso de error
         """
@@ -171,14 +179,18 @@ class BenchTranspilersCommand(BaseCommand):
                 for size, code in programs.items():
                     ast = obtener_ast(code)
                     for lang in transpilers:
-                        elapsed = timeit(lambda: transpilers[lang]().generate_code(ast), number=1)
+                        elapsed = timeit(
+                            lambda: transpilers[lang]().generate_code(ast), number=1
+                        )
                         results.append({"size": size, "lang": lang, "time": elapsed})
 
             if profiler:
                 profiler.dump_stats(PROFILE_OUTPUT)
-                mostrar_info(_("Resultados de perfil guardados en {file}").format(
-                    file=PROFILE_OUTPUT
-                ))
+                mostrar_info(
+                    _("Resultados de perfil guardados en {file}").format(
+                        file=PROFILE_OUTPUT
+                    )
+                )
 
             data = json.dumps(results, indent=2)
             if args.output:
@@ -190,7 +202,7 @@ class BenchTranspilersCommand(BaseCommand):
             else:
                 print(data)
             return 0
-            
+
         except Exception as e:
             mostrar_error(_("Error inesperado: {err}").format(err=str(e)))
             return 1

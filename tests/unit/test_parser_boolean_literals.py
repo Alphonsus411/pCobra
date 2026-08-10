@@ -36,7 +36,9 @@ def test_si_falso_condicion_booleana_acepta_nodovalor_bool() -> None:
     assert nodo_si.condicion.valor is False
 
 
-def test_verdadero_igual_verdadero_parsea_como_binaria_con_nodovalor_booleanos() -> None:
+def test_verdadero_igual_verdadero_parsea_como_binaria_con_nodovalor_booleanos() -> (
+    None
+):
     tokens, ast = _parsear_sin_error_booleano_en_termino("verdadero == verdadero")
 
     assert any(t.tipo == TipoToken.IGUAL for t in tokens)
@@ -75,7 +77,7 @@ def test_no_regresion_literal_string_en_condicion_si() -> None:
 
 
 def test_no_regresion_literal_numero_en_condicion_si() -> None:
-    _, ast = _parsear_sin_error_booleano_en_termino("si 1: \"ok\" fin")
+    _, ast = _parsear_sin_error_booleano_en_termino('si 1: "ok" fin')
 
     assert len(ast) == 1
     nodo_si = ast[0]

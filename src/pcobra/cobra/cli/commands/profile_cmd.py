@@ -17,7 +17,10 @@ from pcobra.cobra.core import Lexer
 from pcobra.cobra.core import Parser
 from pcobra.cobra.core.interpreter import InterpretadorCobra
 from pcobra.cobra.core.sandbox import validar_dependencias
-from pcobra.cobra.core.semantic_validators import PrimitivaPeligrosaError, construir_cadena
+from pcobra.cobra.core.semantic_validators import (
+    PrimitivaPeligrosaError,
+    construir_cadena,
+)
 from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.cli.execution_pipeline import construir_interprete_seguro_canonico
 from pcobra.cobra.cli.i18n import _
@@ -44,15 +47,16 @@ class ProfileCommand(BaseCommand):
         except OSError as e:
             self.logger.warning(f"Error al eliminar archivo temporal {archivo}: {e}")
 
-    def _obtener_argumento(self, args: Namespace, nombre: str, default: Optional[any] = None) -> any:
+    def _obtener_argumento(
+        self, args: Namespace, nombre: str, default: Optional[any] = None
+    ) -> any:
         """Obtiene un argumento del namespace de argumentos con valor por defecto."""
         return getattr(args, nombre, default)
 
     def _mostrar_error_herramienta_no_encontrada(self, herramienta: str) -> int:
         """Muestra un mensaje de error para una herramienta no encontrada."""
         msg = _(
-            "Herramienta {tool} no encontrada. "
-            "Instálala con 'pip install {tool}'"
+            "Herramienta {tool} no encontrada. " "Instálala con 'pip install {tool}'"
         ).format(tool=herramienta)
         mostrar_error(msg)
         return 1
@@ -99,14 +103,18 @@ class ProfileCommand(BaseCommand):
         try:
             extra_validators = normalizar_validadores_extra(raw_extra_validators)
         except TypeError:
-            mostrar_error(_("Los validadores extra deben ser una ruta o lista de rutas"))
+            mostrar_error(
+                _("Los validadores extra deben ser una ruta o lista de rutas")
+            )
             return 1
         analysis: bool = self._obtener_argumento(args, "analysis", False)
 
         validar_archivo_existente(archivo)
 
         if output and not self._validar_directorio_salida(output):
-            mostrar_error(f"No se puede escribir en el directorio de salida para '{output}'")
+            mostrar_error(
+                f"No se puede escribir en el directorio de salida para '{output}'"
+            )
             return 1
 
         try:
@@ -137,9 +145,11 @@ class ProfileCommand(BaseCommand):
         if seguro:
             try:
                 validador = construir_cadena(
-                    InterpretadorCobra._cargar_validadores(extra_validators)
-                    if isinstance(extra_validators, str)
-                    else extra_validators,
+                    (
+                        InterpretadorCobra._cargar_validadores(extra_validators)
+                        if isinstance(extra_validators, str)
+                        else extra_validators
+                    ),
                     emitir_side_effects=False,
                 )
                 for nodo in ast:
@@ -160,17 +170,19 @@ class ProfileCommand(BaseCommand):
                 extra_validators=extra_validators,
             ).ejecutar_ast(ast)
             profiler.disable()
-            
+
             stats_file = output
             if ui:
                 if shutil.which(ui) is None:
                     return self._mostrar_error_herramienta_no_encontrada(ui)
-                
+
                 if not stats_file:
-                    with tempfile.NamedTemporaryFile(mode="w", suffix=".prof", delete=False) as tmp:
+                    with tempfile.NamedTemporaryFile(
+                        mode="w", suffix=".prof", delete=False
+                    ) as tmp:
                         tmp_file = tmp.name
                         stats_file = tmp_file
-                
+
                 profiler.dump_stats(stats_file)
                 try:
                     subprocess.run([ui, stats_file], check=True)
@@ -192,7 +204,7 @@ class ProfileCommand(BaseCommand):
                     stats.print_stats(10)
                     print(s.getvalue())
             return 0
-            
+
         except (RuntimeError, ValueError, TypeError) as e:
             self.logger.error(f"Error de ejecución: {e}")
             mostrar_error(f"Error de ejecución: {e}")

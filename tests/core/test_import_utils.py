@@ -8,9 +8,7 @@ from pcobra.core import import_utils
 from pcobra.core.ast_nodes import NodoAsignacion, NodoClase, NodoFuncion
 
 
-def test_cargar_ast_modulo_rechaza_co_sin_invocar_lexer(
-    tmp_path, monkeypatch
-):
+def test_cargar_ast_modulo_rechaza_co_sin_invocar_lexer(tmp_path, monkeypatch):
     modulo = tmp_path / "modulo.co"
     modulo.write_text("imprimir('no parsear')\n", encoding="utf-8")
 

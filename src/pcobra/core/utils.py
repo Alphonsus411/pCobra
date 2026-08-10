@@ -35,8 +35,7 @@ _ATRIBUTOS_BLOQUE = {
 
 _MENSAJES_BLOQUE_ESPECIFICOS = {
     ("NodoGarantia", "bloque_continuacion"): (
-        "NodoGarantia.bloque_continuacion debe ser NodoBloque, "
-        "no una lista"
+        "NodoGarantia.bloque_continuacion debe ser NodoBloque, " "no una lista"
     ),
     ("NodoGarantia", "bloque_escape"): (
         "NodoGarantia.bloque_escape debe ser NodoBloque, no una lista"

@@ -18,7 +18,9 @@ from pcobra.core.interpreter import InterpretadorCobra
 @pytest.mark.integration
 def test_mutacion_en_loop_persiste_entre_iteraciones_y_fuera_del_bucle() -> None:
     inter = InterpretadorCobra()
-    inter.ejecutar_asignacion(NodoAsignacion("contador", NodoValor(0), declaracion=True))
+    inter.ejecutar_asignacion(
+        NodoAsignacion("contador", NodoValor(0), declaracion=True)
+    )
     inter.ejecutar_asignacion(NodoAsignacion("ultimo", NodoValor(0), declaracion=True))
 
     condicion = NodoOperacionBinaria(

@@ -28,4 +28,3 @@ def test_metodo_definido_en_base_se_ejecuta_desde_subclase():
     )
 
     assert resultado == "hola"
-

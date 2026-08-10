@@ -347,7 +347,9 @@ async def test_obtener_url_async(monkeypatch):
 
     if red.httpx is None:
         monkeypatch.setattr(red, "httpx", SimpleNamespace())
-    monkeypatch.setattr(red.httpx, "AsyncClient", lambda **_kwargs: cliente, raising=False)
+    monkeypatch.setattr(
+        red.httpx, "AsyncClient", lambda **_kwargs: cliente, raising=False
+    )
 
     texto = await red.obtener_url_async("https://example.com")
     assert texto == "hola"
@@ -366,7 +368,9 @@ async def test_descargar_archivo_async_elimina_si_falla(monkeypatch, tmp_path):
     cliente = _FakeAsyncClient([_ResponseGrande()])
     if red.httpx is None:
         monkeypatch.setattr(red, "httpx", SimpleNamespace())
-    monkeypatch.setattr(red.httpx, "AsyncClient", lambda **_kwargs: cliente, raising=False)
+    monkeypatch.setattr(
+        red.httpx, "AsyncClient", lambda **_kwargs: cliente, raising=False
+    )
 
     destino = tmp_path / "archivo.bin"
     with pytest.raises(ValueError):
@@ -382,7 +386,9 @@ async def test_descargar_archivo_async(monkeypatch, tmp_path):
     cliente = _FakeAsyncClient([respuesta])
     if red.httpx is None:
         monkeypatch.setattr(red, "httpx", SimpleNamespace())
-    monkeypatch.setattr(red.httpx, "AsyncClient", lambda **_kwargs: cliente, raising=False)
+    monkeypatch.setattr(
+        red.httpx, "AsyncClient", lambda **_kwargs: cliente, raising=False
+    )
 
     destino = tmp_path / "datos.bin"
     ruta = await red.descargar_archivo("https://example.com", "datos.bin")
@@ -686,7 +692,9 @@ async def test_carrera_propaga_excepcion_y_cancela():
 
 @pytest.mark.asyncio
 async def test_esperar_timeout_devuelve_resultado():
-    resultado = await asincrono.esperar_timeout(asyncio.sleep(0.01, result="hecho"), 0.5)
+    resultado = await asincrono.esperar_timeout(
+        asyncio.sleep(0.01, result="hecho"), 0.5
+    )
     assert resultado == "hecho"
 
 

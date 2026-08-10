@@ -193,9 +193,7 @@ def pylsp_format_document(config, workspace, document):
             formatted = fh.read()
     except Exception as exc:
         logging.exception("Error al formatear el documento %s", path)
-        raise RuntimeError(
-            f"No se pudo formatear el documento {path}: {exc}"
-        ) from exc
+        raise RuntimeError(f"No se pudo formatear el documento {path}: {exc}") from exc
     return [
         {
             "range": {

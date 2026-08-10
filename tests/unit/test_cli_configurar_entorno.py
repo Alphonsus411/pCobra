@@ -5,7 +5,6 @@ import os
 import sys
 import types
 
-
 yaml_stub = types.ModuleType("yaml")
 yaml_stub.safe_load = lambda _stream: {}
 
@@ -141,8 +140,12 @@ def test_main_reconfigura_consola_antes_de_logging_y_cli(monkeypatch):
 
     monkeypatch.setenv("COBRA_CLI_COMMAND_PROFILE", "development")
     monkeypatch.setattr(cli, "configure_encoding", lambda: orden.append("utf8"))
-    monkeypatch.setattr(cli, "_bootstrap_dev_path_si_opt_in", lambda: orden.append("bootstrap"))
-    monkeypatch.setattr(cli, "configure_logging", lambda debug, verbose=0: orden.append("logging"))
+    monkeypatch.setattr(
+        cli, "_bootstrap_dev_path_si_opt_in", lambda: orden.append("bootstrap")
+    )
+    monkeypatch.setattr(
+        cli, "configure_logging", lambda debug, verbose=0: orden.append("logging")
+    )
     monkeypatch.setattr(cli, "configurar_entorno", lambda: orden.append("entorno"))
 
     class _DummyApp:
@@ -167,7 +170,9 @@ def test_main_devuelve_exit_code_1_si_falla_configuracion_entorno(monkeypatch, c
     monkeypatch.setattr(
         cli,
         "configurar_entorno",
-        lambda: (_ for _ in ()).throw(RuntimeError("Falta SQLITE_DB_KEY en el entorno")),
+        lambda: (_ for _ in ()).throw(
+            RuntimeError("Falta SQLITE_DB_KEY en el entorno")
+        ),
     )
 
     caplog.set_level(logging.ERROR, logger="pcobra.cli")

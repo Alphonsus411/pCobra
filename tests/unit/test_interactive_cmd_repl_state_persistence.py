@@ -55,10 +55,15 @@ def _args() -> SimpleNamespace:
 def test_repl_normal_persiste_estado_entre_snippets_y_no_filtra_cse() -> None:
     entradas = ["var x = 21", "var y = x * 2", "y", "salir"]
 
-    with patch("pcobra.cobra.cli.commands.interactive_cmd.validar_dependencias"), \
-         patch("prompt_toolkit.PromptSession.prompt", side_effect=entradas), \
-         patch("pcobra.cobra.cli.commands.interactive_cmd.InteractiveCommand.validar_entrada", return_value=True), \
-         patch("sys.stdout", new_callable=StringIO) as salida:
+    with (
+        patch("pcobra.cobra.cli.commands.interactive_cmd.validar_dependencias"),
+        patch("prompt_toolkit.PromptSession.prompt", side_effect=entradas),
+        patch(
+            "pcobra.cobra.cli.commands.interactive_cmd.InteractiveCommand.validar_entrada",
+            return_value=True,
+        ),
+        patch("sys.stdout", new_callable=StringIO) as salida,
+    ):
         cmd = InteractiveCommand(InterpretadorCobra())
         ret = cmd.run(_args())
 
@@ -117,11 +122,15 @@ def test_fallback_imprimir_top_level_aplica_solo_en_expresiones() -> None:
             return (ast, None)
         raise AssertionError(f"AST inesperado en fallback: {ast!r}")
 
-    with patch.object(cmd, "_ejecutar_ast_en_repl", side_effect=_fake_ejecutar), patch.object(
-        cmd,
-        "_debe_intentar_fallback_expresion_top_level",
-        side_effect=lambda codigo, _err: codigo == "1 + 2",
-    ), patch.object(cmd, "_imprimir_resultado_repl"):
+    with (
+        patch.object(cmd, "_ejecutar_ast_en_repl", side_effect=_fake_ejecutar),
+        patch.object(
+            cmd,
+            "_debe_intentar_fallback_expresion_top_level",
+            side_effect=lambda codigo, _err: codigo == "1 + 2",
+        ),
+        patch.object(cmd, "_imprimir_resultado_repl"),
+    ):
         cmd.ejecutar_codigo("1 + 2")
 
     assert len(llamadas) == 2
@@ -136,13 +145,19 @@ def test_fallback_no_modifica_statements_normales() -> None:
     def _fake_ejecutar(ast: list[object], validador=None):
         del validador
         llamadas.append(ast)
-        raise ValueError("Nodo no soportado: <class 'pcobra.core.ast_nodes.NodoAsignacion'>")
+        raise ValueError(
+            "Nodo no soportado: <class 'pcobra.core.ast_nodes.NodoAsignacion'>"
+        )
 
-    with patch.object(cmd, "_ejecutar_ast_en_repl", side_effect=_fake_ejecutar), patch.object(
-        cmd,
-        "_debe_intentar_fallback_expresion_top_level",
-        return_value=False,
-    ), patch.object(cmd, "_imprimir_resultado_repl"):
+    with (
+        patch.object(cmd, "_ejecutar_ast_en_repl", side_effect=_fake_ejecutar),
+        patch.object(
+            cmd,
+            "_debe_intentar_fallback_expresion_top_level",
+            return_value=False,
+        ),
+        patch.object(cmd, "_imprimir_resultado_repl"),
+    ):
         with pytest.raises(ValueError):
             cmd.ejecutar_codigo("var a = 5")
 

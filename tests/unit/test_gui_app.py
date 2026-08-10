@@ -337,7 +337,9 @@ def test_gui_runtime_no_usa_ft_icons_ni_ft_colors_legacy():
     referencias_legacy = {}
 
     for path in gui_dir.rglob("*.py"):
-        for line_no, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+        for line_no, line in enumerate(
+            path.read_text(encoding="utf-8").splitlines(), 1
+        ):
             for referencia in ("ft.icons", "ft.colors"):
                 if referencia in line:
                     referencias_legacy.setdefault(path.relative_to(gui_dir), []).append(

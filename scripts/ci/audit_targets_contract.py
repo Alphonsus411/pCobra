@@ -30,7 +30,10 @@ FORBIDDEN_TERMS: tuple[tuple[re.Pattern[str], str], ...] = (
     (re.compile(r"(?<![\\w/-])hololang(?![\\w/-])", re.IGNORECASE), "hololang"),
     (re.compile(r"(?<![\\w/-])llvm(?![\\w/-])", re.IGNORECASE), "llvm"),
     (re.compile(r"(?<![\\w/-])latex(?![\\w/-])", re.IGNORECASE), "latex"),
-    (re.compile(r"(?<![\\w/-])reverse[ -]wasm(?![\\w/-])", re.IGNORECASE), "reverse wasm"),
+    (
+        re.compile(r"(?<![\\w/-])reverse[ -]wasm(?![\\w/-])", re.IGNORECASE),
+        "reverse wasm",
+    ),
 )
 
 MIN_DOC_PATHS_FOR_MATRIX_CHANGE: tuple[str, ...] = (
@@ -153,13 +156,17 @@ def validate_minimal_doc_consistency() -> list[str]:
     return errors
 
 
-def validate_matrix_change_requires_contract_updates(changed_files: set[str]) -> list[str]:
+def validate_matrix_change_requires_contract_updates(
+    changed_files: set[str],
+) -> list[str]:
     errors: list[str] = []
     matrix_path = "src/pcobra/cobra/transpilers/compatibility_matrix.py"
     if matrix_path not in changed_files:
         return errors
 
-    doc_updates = [path for path in MIN_DOC_PATHS_FOR_MATRIX_CHANGE if path in changed_files]
+    doc_updates = [
+        path for path in MIN_DOC_PATHS_FOR_MATRIX_CHANGE if path in changed_files
+    ]
     test_updates = [path for path in CONTRACT_TEST_HINTS if path in changed_files]
 
     if not doc_updates:
@@ -194,7 +201,9 @@ def main() -> int:
             for error in errors[:5]:
                 print(f" - {error}", file=sys.stderr)
             if len(errors) > 5:
-                print(f" - y {len(errors) - 5} error(es) adicional(es)", file=sys.stderr)
+                print(
+                    f" - y {len(errors) - 5} error(es) adicional(es)", file=sys.stderr
+                )
             return 1
 
     print("✅ Audit gate de targets: OK")

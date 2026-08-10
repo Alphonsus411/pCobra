@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Transpiladores inversos basados en tree-sitter."""
+
 from __future__ import annotations
 from typing import Any, List, Optional, Union
 import importlib
@@ -78,12 +79,15 @@ else:
         )
 
 
-if "TreeSitterError" not in globals():  # pragma: no cover - solo cuando faltan dependencias
+if (
+    "TreeSitterError" not in globals()
+):  # pragma: no cover - solo cuando faltan dependencias
 
     class TreeSitterError(Exception):
         """Excepción genérica utilizada cuando tree-sitter no está disponible."""
 
         pass
+
 
 from pcobra.cobra.transpilers.reverse.base import BaseReverseTranspiler
 from pcobra.cobra.core.ast_nodes import (
@@ -111,6 +115,7 @@ CODIFICACION = "utf-8"
 @dataclass
 class TreeSitterNode:
     """Wrapper para nodos de tree-sitter con validación."""
+
     node: Node
 
     def get_text(self) -> str:
@@ -168,9 +173,7 @@ class TreeSitterReverseTranspiler(BaseReverseTranspiler):
             encoded_code = code.encode(CODIFICACION)
             tree = self.parser.parse(encoded_code)
             self.ast = [
-                self.visit(child)
-                for child in tree.root_node.children
-                if child.is_named
+                self.visit(child) for child in tree.root_node.children if child.is_named
             ]
             return self.ast
         except UnicodeEncodeError as e:
@@ -267,9 +270,7 @@ class TreeSitterReverseTranspiler(BaseReverseTranspiler):
 
         if args:
             argumentos = [
-                self.visit(child)
-                for child in args.children
-                if child.is_named
+                self.visit(child) for child in args.children if child.is_named
             ]
 
         if nombre_txt == "proyectar":
@@ -337,17 +338,11 @@ class TreeSitterReverseTranspiler(BaseReverseTranspiler):
         conseq = node.child_by_field_name("consequence")
         alt = node.child_by_field_name("alternative")
 
-        bloque_si = [
-            self.visit(c)
-            for c in conseq.children
-            if c.is_named
-        ] if conseq else []
+        bloque_si = (
+            [self.visit(c) for c in conseq.children if c.is_named] if conseq else []
+        )
 
-        bloque_sino = [
-            self.visit(c)
-            for c in alt.children
-            if c.is_named
-        ] if alt else []
+        bloque_sino = [self.visit(c) for c in alt.children if c.is_named] if alt else []
 
         return NodoCondicional(cond, bloque_si, bloque_sino)
 
@@ -366,16 +361,18 @@ class TreeSitterReverseTranspiler(BaseReverseTranspiler):
 
         nombre = TreeSitterNode(nombre_n).get_text() if nombre_n else ""
 
-        params = [
-            TreeSitterNode(c).get_text()
-            for c in params_n.children
-            if c.type == "identifier"
-        ] if params_n else []
+        params = (
+            [
+                TreeSitterNode(c).get_text()
+                for c in params_n.children
+                if c.type == "identifier"
+            ]
+            if params_n
+            else []
+        )
 
-        cuerpo = [
-            self.visit(c)
-            for c in body_n.children
-            if c.is_named
-        ] if body_n else []
+        cuerpo = (
+            [self.visit(c) for c in body_n.children if c.is_named] if body_n else []
+        )
 
         return NodoFuncion(nombre, params, cuerpo)

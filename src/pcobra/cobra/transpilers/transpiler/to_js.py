@@ -41,7 +41,11 @@ from pcobra.cobra.core.ast_nodes import (
 from pcobra.cobra.core import TipoToken
 from pcobra.cobra.core.visitor import NodeVisitor
 from pcobra.cobra.transpilers.common.utils import BaseTranspiler
-from pcobra.cobra.core.optimizations import optimize_constants, remove_dead_code, inline_functions
+from pcobra.cobra.core.optimizations import (
+    optimize_constants,
+    remove_dead_code,
+    inline_functions,
+)
 from pcobra.cobra.macro import expandir_macros
 from pcobra.cobra.transpilers.common.utils import (
     ast_requires_holobit_runtime,
@@ -51,49 +55,123 @@ from pcobra.cobra.transpilers.common.utils import (
 from pcobra.cobra.transpilers.module_map import get_mapped_path
 from pcobra.cobra.transpilers.internal_ir_bridge import normalize_to_cobra_ast
 
-from pcobra.cobra.transpilers.transpiler.js_nodes.asignacion import visit_asignacion as _visit_asignacion
-from pcobra.cobra.transpilers.transpiler.js_nodes.condicional import visit_condicional as _visit_condicional
-from pcobra.cobra.transpilers.transpiler.js_nodes.garantia import visit_garantia as _visit_garantia
-from pcobra.cobra.transpilers.transpiler.js_nodes.bucle_mientras import visit_bucle_mientras as _visit_bucle_mientras
-from pcobra.cobra.transpilers.transpiler.js_nodes.funcion import visit_funcion as _visit_funcion
-from pcobra.cobra.transpilers.transpiler.js_nodes.llamada_funcion import visit_llamada_funcion as _visit_llamada_funcion
+from pcobra.cobra.transpilers.transpiler.js_nodes.asignacion import (
+    visit_asignacion as _visit_asignacion,
+)
+from pcobra.cobra.transpilers.transpiler.js_nodes.condicional import (
+    visit_condicional as _visit_condicional,
+)
+from pcobra.cobra.transpilers.transpiler.js_nodes.garantia import (
+    visit_garantia as _visit_garantia,
+)
+from pcobra.cobra.transpilers.transpiler.js_nodes.bucle_mientras import (
+    visit_bucle_mientras as _visit_bucle_mientras,
+)
+from pcobra.cobra.transpilers.transpiler.js_nodes.funcion import (
+    visit_funcion as _visit_funcion,
+)
+from pcobra.cobra.transpilers.transpiler.js_nodes.llamada_funcion import (
+    visit_llamada_funcion as _visit_llamada_funcion,
+)
 from pcobra.cobra.transpilers.transpiler.js_nodes.hilo import visit_hilo as _visit_hilo
-from pcobra.cobra.transpilers.transpiler.js_nodes.llamada_metodo import visit_llamada_metodo as _visit_llamada_metodo
-from pcobra.cobra.transpilers.transpiler.js_nodes.imprimir import visit_imprimir as _visit_imprimir
-from pcobra.cobra.transpilers.transpiler.js_nodes.retorno import visit_retorno as _visit_retorno
-from pcobra.cobra.transpilers.transpiler.js_nodes.holobit import visit_holobit as _visit_holobit
+from pcobra.cobra.transpilers.transpiler.js_nodes.llamada_metodo import (
+    visit_llamada_metodo as _visit_llamada_metodo,
+)
+from pcobra.cobra.transpilers.transpiler.js_nodes.imprimir import (
+    visit_imprimir as _visit_imprimir,
+)
+from pcobra.cobra.transpilers.transpiler.js_nodes.retorno import (
+    visit_retorno as _visit_retorno,
+)
+from pcobra.cobra.transpilers.transpiler.js_nodes.holobit import (
+    visit_holobit as _visit_holobit,
+)
 from pcobra.cobra.transpilers.transpiler.js_nodes.for_ import visit_for as _visit_for
-from pcobra.cobra.transpilers.transpiler.js_nodes.lista import visit_lista as _visit_lista
-from pcobra.cobra.transpilers.transpiler.js_nodes.diccionario import visit_diccionario as _visit_diccionario
-from pcobra.cobra.transpilers.transpiler.js_nodes.elemento import visit_elemento as _visit_elemento
-from pcobra.cobra.transpilers.transpiler.js_nodes.clase import visit_clase as _visit_clase
-from pcobra.cobra.transpilers.transpiler.js_nodes.metodo import visit_metodo as _visit_metodo
-from pcobra.cobra.transpilers.transpiler.js_nodes.try_catch import visit_try_catch as _visit_try_catch
-from pcobra.cobra.transpilers.transpiler.js_nodes.throw import visit_throw as _visit_throw
-from pcobra.cobra.transpilers.transpiler.js_nodes.importar import visit_import as _visit_import
-from pcobra.cobra.transpilers.transpiler.js_nodes.instancia import visit_instancia as _visit_instancia
-from pcobra.cobra.transpilers.transpiler.js_nodes.atributo import visit_atributo as _visit_atributo
-from pcobra.cobra.transpilers.transpiler.js_nodes.proyectar import visit_proyectar as _visit_proyectar
-from pcobra.cobra.transpilers.transpiler.js_nodes.transformar import visit_transformar as _visit_transformar
-from pcobra.cobra.transpilers.transpiler.js_nodes.graficar import visit_graficar as _visit_graficar
+from pcobra.cobra.transpilers.transpiler.js_nodes.lista import (
+    visit_lista as _visit_lista,
+)
+from pcobra.cobra.transpilers.transpiler.js_nodes.diccionario import (
+    visit_diccionario as _visit_diccionario,
+)
+from pcobra.cobra.transpilers.transpiler.js_nodes.elemento import (
+    visit_elemento as _visit_elemento,
+)
+from pcobra.cobra.transpilers.transpiler.js_nodes.clase import (
+    visit_clase as _visit_clase,
+)
+from pcobra.cobra.transpilers.transpiler.js_nodes.metodo import (
+    visit_metodo as _visit_metodo,
+)
+from pcobra.cobra.transpilers.transpiler.js_nodes.try_catch import (
+    visit_try_catch as _visit_try_catch,
+)
+from pcobra.cobra.transpilers.transpiler.js_nodes.throw import (
+    visit_throw as _visit_throw,
+)
+from pcobra.cobra.transpilers.transpiler.js_nodes.importar import (
+    visit_import as _visit_import,
+)
+from pcobra.cobra.transpilers.transpiler.js_nodes.instancia import (
+    visit_instancia as _visit_instancia,
+)
+from pcobra.cobra.transpilers.transpiler.js_nodes.atributo import (
+    visit_atributo as _visit_atributo,
+)
+from pcobra.cobra.transpilers.transpiler.js_nodes.proyectar import (
+    visit_proyectar as _visit_proyectar,
+)
+from pcobra.cobra.transpilers.transpiler.js_nodes.transformar import (
+    visit_transformar as _visit_transformar,
+)
+from pcobra.cobra.transpilers.transpiler.js_nodes.graficar import (
+    visit_graficar as _visit_graficar,
+)
 from pcobra.cobra.transpilers.transpiler.js_nodes.operacion_binaria import (
     visit_operacion_binaria as _visit_operacion_binaria,
 )
-from pcobra.cobra.transpilers.transpiler.js_nodes.operacion_unaria import visit_operacion_unaria as _visit_operacion_unaria
-from pcobra.cobra.transpilers.transpiler.js_nodes.valor import visit_valor as _visit_valor
-from pcobra.cobra.transpilers.transpiler.js_nodes.identificador import visit_identificador as _visit_identificador
+from pcobra.cobra.transpilers.transpiler.js_nodes.operacion_unaria import (
+    visit_operacion_unaria as _visit_operacion_unaria,
+)
+from pcobra.cobra.transpilers.transpiler.js_nodes.valor import (
+    visit_valor as _visit_valor,
+)
+from pcobra.cobra.transpilers.transpiler.js_nodes.identificador import (
+    visit_identificador as _visit_identificador,
+)
 from pcobra.cobra.transpilers.transpiler.js_nodes.para import visit_para as _visit_para
-from pcobra.cobra.transpilers.transpiler.js_nodes.decorador import visit_decorador as _visit_decorador
-from pcobra.cobra.transpilers.transpiler.js_nodes.yield_ import visit_yield as _visit_yield
-from pcobra.cobra.transpilers.transpiler.js_nodes.defer import visit_defer as _visit_defer
-from pcobra.cobra.transpilers.transpiler.js_nodes.esperar import visit_esperar as _visit_esperar
-from pcobra.cobra.transpilers.transpiler.js_nodes.romper import visit_romper as _visit_romper
-from pcobra.cobra.transpilers.transpiler.js_nodes.continuar import visit_continuar as _visit_continuar
-from pcobra.cobra.transpilers.transpiler.js_nodes.pasar import visit_pasar as _visit_pasar
-from pcobra.cobra.transpilers.transpiler.js_nodes.switch import visit_switch as _visit_switch
-from pcobra.cobra.transpilers.transpiler.js_nodes.exportar import visit_export as _visit_export
-from pcobra.cobra.transpilers.transpiler.js_nodes.option import visit_option as _visit_option
-from pcobra.cobra.transpilers.transpiler.js_nodes.pattern import visit_pattern as _visit_pattern
+from pcobra.cobra.transpilers.transpiler.js_nodes.decorador import (
+    visit_decorador as _visit_decorador,
+)
+from pcobra.cobra.transpilers.transpiler.js_nodes.yield_ import (
+    visit_yield as _visit_yield,
+)
+from pcobra.cobra.transpilers.transpiler.js_nodes.defer import (
+    visit_defer as _visit_defer,
+)
+from pcobra.cobra.transpilers.transpiler.js_nodes.esperar import (
+    visit_esperar as _visit_esperar,
+)
+from pcobra.cobra.transpilers.transpiler.js_nodes.romper import (
+    visit_romper as _visit_romper,
+)
+from pcobra.cobra.transpilers.transpiler.js_nodes.continuar import (
+    visit_continuar as _visit_continuar,
+)
+from pcobra.cobra.transpilers.transpiler.js_nodes.pasar import (
+    visit_pasar as _visit_pasar,
+)
+from pcobra.cobra.transpilers.transpiler.js_nodes.switch import (
+    visit_switch as _visit_switch,
+)
+from pcobra.cobra.transpilers.transpiler.js_nodes.exportar import (
+    visit_export as _visit_export,
+)
+from pcobra.cobra.transpilers.transpiler.js_nodes.option import (
+    visit_option as _visit_option,
+)
+from pcobra.cobra.transpilers.transpiler.js_nodes.pattern import (
+    visit_pattern as _visit_pattern,
+)
 from pcobra.cobra.transpilers.transpiler.js_nodes.enum import visit_enum as _visit_enum
 
 
@@ -260,9 +338,7 @@ class TranspiladorJavaScript(BaseTranspiler):
                 if nodo.condicion
                 else ""
             )
-            return (
-                f"Object.fromEntries(Array.from({it}){cond}.map({nodo.variable} => [ {key}, {val} ]))"
-            )
+            return f"Object.fromEntries(Array.from({it}){cond}.map({nodo.variable} => [ {key}, {val} ]))"
         elif isinstance(nodo, NodoLista) or isinstance(nodo, NodoDiccionario):
             temp = []
             original = self.codigo
@@ -278,7 +354,8 @@ class TranspiladorJavaScript(BaseTranspiler):
             return f"[{elems}]"
         elif isinstance(nodo, NodoDiccionarioTipo):
             pares = ", ".join(
-                f"{self.obtener_valor(k)}: {self.obtener_valor(v)}" for k, v in nodo.elementos
+                f"{self.obtener_valor(k)}: {self.obtener_valor(v)}"
+                for k, v in nodo.elementos
             )
             return f"{{{pares}}}"
         else:
@@ -312,7 +389,12 @@ JAVASCRIPT_FEATURE_NODE_SUPPORT = {
     "imports_corelibs": ("visit_import", "visit_llamada_funcion"),
     "manejo_errores": ("visit_try_catch", "visit_throw"),
     "async": ("visit_funcion", "visit_esperar"),
-    "tipos_compuestos": ("visit_lista", "visit_diccionario", "visit_lista_tipo", "visit_diccionario_tipo"),
+    "tipos_compuestos": (
+        "visit_lista",
+        "visit_diccionario",
+        "visit_lista_tipo",
+        "visit_diccionario_tipo",
+    ),
 }
 
 

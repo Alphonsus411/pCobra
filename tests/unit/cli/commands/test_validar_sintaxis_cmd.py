@@ -5,7 +5,11 @@ from argparse import Namespace
 from pcobra.cobra.cli.commands import validar_sintaxis_cmd as cmd_module
 from pcobra.cobra.cli.commands.validar_sintaxis_cmd import ValidarSintaxisCommand
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
-from pcobra.cobra.qa.syntax_validation import SyntaxReport, SyntaxValidationExecution, ValidationResult
+from pcobra.cobra.qa.syntax_validation import (
+    SyntaxReport,
+    SyntaxValidationExecution,
+    ValidationResult,
+)
 
 
 def _build_parser() -> CustomArgumentParser:
@@ -43,7 +47,16 @@ def test_run_propagacion_strict_targets_y_perfil(monkeypatch):
 
     monkeypatch.setattr(cmd_module, "execute_syntax_validation", _fake_execute)
 
-    rc = command.run(Namespace(modo="mixto", strict=True, perfil="transpiladores", solo_cobra=False, targets="javascript,go", report_json=None))
+    rc = command.run(
+        Namespace(
+            modo="mixto",
+            strict=True,
+            perfil="transpiladores",
+            solo_cobra=False,
+            targets="javascript,go",
+            report_json=None,
+        )
+    )
 
     assert rc == 0
     assert captured["profile"] == "transpiladores"
@@ -72,7 +85,16 @@ def test_run_solo_cobra_por_flag_propagado_a_unificada(monkeypatch):
 
     monkeypatch.setattr(cmd_module, "execute_syntax_validation", _fake_execute)
 
-    rc = command.run(Namespace(modo="mixto", strict=False, perfil="transpiladores", solo_cobra=True, targets="", report_json=None))
+    rc = command.run(
+        Namespace(
+            modo="mixto",
+            strict=False,
+            perfil="transpiladores",
+            solo_cobra=True,
+            targets="",
+            report_json=None,
+        )
+    )
 
     assert rc == 0
     assert captured["profile"] == "solo-cobra"
@@ -98,6 +120,15 @@ def test_run_exit_code_1_si_unificada_reporta_fallos(monkeypatch):
         ),
     )
 
-    rc = command.run(Namespace(modo="mixto", strict=True, perfil="completo", solo_cobra=False, targets="javascript", report_json=None))
+    rc = command.run(
+        Namespace(
+            modo="mixto",
+            strict=True,
+            perfil="completo",
+            solo_cobra=False,
+            targets="javascript",
+            report_json=None,
+        )
+    )
 
     assert rc == 1

@@ -15,7 +15,6 @@ from pcobra.cobra.usar_loader import usar_modulo
 from pcobra.cobra.usar_policy import CANONICAL_MODULE_SURFACE_CONTRACTS
 from pcobra.corelibs import red
 
-
 CASOS_RED = (
     ("obtener_url", "obtener_url", CapacidadUsar.NETWORK_GET, False, ("url",)),
     ("enviar_post", "enviar_post", CapacidadUsar.NETWORK_POST, False, ("url", {})),
@@ -86,6 +85,7 @@ async def test_modo_no_seguro_conserva_resultados_y_forma_publica(
 
         async def doble(*_args, **_kwargs):
             return esperado
+
     else:
 
         def doble(*_args, **_kwargs):

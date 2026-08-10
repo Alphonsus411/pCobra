@@ -176,7 +176,11 @@ def test_hub_resolver_v2_rechaza_version_cobra_incompatible(tmp_path, monkeypatc
 
     with pytest.raises(CobraInstallerError) as exc_info:
         CobraHubResolver(cache_dir=tmp_path / "cache").resolve(
-            "dep-v2", "2.1.0", source=str(package), platform="linux", architecture="x86_64"
+            "dep-v2",
+            "2.1.0",
+            source=str(package),
+            platform="linux",
+            architecture="x86_64",
         )
 
     message = str(exc_info.value)
@@ -191,7 +195,11 @@ def test_hub_resolver_v2_rechaza_restriccion_cobra_invalida(tmp_path):
 
     with pytest.raises(CobraInstallerError, match="requires_cobra.*restricción"):
         CobraHubResolver(cache_dir=tmp_path / "cache").resolve(
-            "dep-v2", "2.1.0", source=str(package), platform="linux", architecture="x86_64"
+            "dep-v2",
+            "2.1.0",
+            source=str(package),
+            platform="linux",
+            architecture="x86_64",
         )
 
 

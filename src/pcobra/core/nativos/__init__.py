@@ -8,6 +8,7 @@ from ..ctypes_bridge import (
     obtener_funcion,
     cargar_funcion,
 )
+
 try:
     from ..pybind_bridge import (
         compilar_extension,
@@ -15,6 +16,7 @@ try:
         compilar_y_cargar,
     )
 except ModuleNotFoundError:  # pragma: no cover - depende de entorno opcional
+
     def _missing_pybind11(*_args, **_kwargs):
         raise RuntimeError(
             "pybind11 no está disponible. Instala 'pybind11' para usar las primitivas C++"
@@ -29,6 +31,7 @@ try:
         compilar_y_cargar_crate,
     )
 except ModuleNotFoundError:  # pragma: no cover - depende de entorno opcional
+
     def _missing_rust(*_args, **_kwargs):
         raise RuntimeError(
             "Soporte de Rust no disponible. Instala dependencias opcionales para usarlo"

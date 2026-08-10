@@ -25,7 +25,10 @@ PUBLIC_BACKENDS = ("python", "javascript", "rust")
 def _is_allowed_module(rel_path: Path) -> bool:
     if rel_path in ALLOWED_FILES:
         return True
-    return any(rel_path.parts[: len(prefix.parts)] == prefix.parts for prefix in ALLOWED_PREFIXES)
+    return any(
+        rel_path.parts[: len(prefix.parts)] == prefix.parts
+        for prefix in ALLOWED_PREFIXES
+    )
 
 
 def _literal_strings(value: ast.AST) -> tuple[str, ...] | None:
@@ -43,7 +46,9 @@ def _public_backend_literal(value: ast.AST) -> bool:
     literal_items = _literal_strings(value)
     if literal_items is None:
         return False
-    return tuple(literal_items) == PUBLIC_BACKENDS or set(literal_items) == set(PUBLIC_BACKENDS)
+    return tuple(literal_items) == PUBLIC_BACKENDS or set(literal_items) == set(
+        PUBLIC_BACKENDS
+    )
 
 
 def find_violations(root: Path = ROOT) -> list[str]:

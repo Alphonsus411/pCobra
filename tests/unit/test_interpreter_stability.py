@@ -40,39 +40,33 @@ def _ejecutar_codigo(codigo: str) -> InterpretadorCobra:
 
 
 def test_condicional_valido_con_variable_definida() -> None:
-    inter = _ejecutar_codigo(
-        """
+    inter = _ejecutar_codigo("""
 var x = 1
 si x == 1:
     var z = 99
 fin
-"""
-    )
+""")
     assert inter.variables["z"] == 99
 
 
 def test_condicional_con_variable_no_definida_lanza_nameerror() -> None:
     with pytest.raises(NameError, match=r"^Variable no declarada: y$"):
-        _ejecutar_codigo(
-            """
+        _ejecutar_codigo("""
 si y == 1:
     pasar
 fin
-"""
-        )
+""")
 
 
 def test_condicional_con_tipo_no_booleano_lanza_error_semantico() -> None:
     with pytest.raises(
         CondicionNoBooleanaError, match=r"^La condición debe ser booleana$"
     ):
-        _ejecutar_codigo(
-            """
+        _ejecutar_codigo("""
 si 1:
     pasar
 fin
-"""
-        )
+""")
 
 
 def test_si_verdadero_ejecuta_bloque_y_emite_salida() -> None:
@@ -99,105 +93,98 @@ def test_si_falso_no_ejecuta_bloque_y_no_imprime() -> None:
     assert lineas == []
 
 
-def test_si_numero_literal_lanza_error_semantico_strict_boolean_sin_truthiness() -> None:
+def test_si_numero_literal_lanza_error_semantico_strict_boolean_sin_truthiness() -> (
+    None
+):
     with pytest.raises(
         CondicionNoBooleanaError, match=r"^La condición debe ser booleana$"
     ):
-        _ejecutar_codigo(
-            """
+        _ejecutar_codigo("""
 si 5:
     pasar
 fin
-"""
-        )
+""")
 
 
-def test_si_cadena_literal_lanza_error_semantico_strict_boolean_sin_truthiness() -> None:
+def test_si_cadena_literal_lanza_error_semantico_strict_boolean_sin_truthiness() -> (
+    None
+):
     with pytest.raises(
         CondicionNoBooleanaError, match=r"^La condición debe ser booleana$"
     ):
-        _ejecutar_codigo(
-            """
+        _ejecutar_codigo("""
 si "hola":
     pasar
 fin
-"""
-        )
+""")
 
 
-def test_si_variable_numerica_lanza_error_semantico_strict_boolean_sin_truthiness() -> None:
+def test_si_variable_numerica_lanza_error_semantico_strict_boolean_sin_truthiness() -> (
+    None
+):
     with pytest.raises(
         CondicionNoBooleanaError, match=r"^La condición debe ser booleana$"
     ):
-        _ejecutar_codigo(
-            """
+        _ejecutar_codigo("""
 var x = 5
 si x:
     pasar
 fin
-"""
-        )
+""")
 
 
 def test_mientras_variable_numerica_lanza_error_semantico() -> None:
     with pytest.raises(
         CondicionNoBooleanaError, match=r"^La condición debe ser booleana$"
     ):
-        _ejecutar_codigo(
-            """
+        _ejecutar_codigo("""
 var x = 1
 mientras x:
     pasar
 fin
-"""
-        )
+""")
 
 
 def test_clase_condicion_no_booleana_error_usa_mensaje_estable() -> None:
     assert str(CondicionNoBooleanaError()) == "La condición debe ser booleana"
 
 
-def test_condicional_con_comparacion_mantiene_comportamiento_correcto_strict_boolean() -> None:
-    inter = _ejecutar_codigo(
-        """
+def test_condicional_con_comparacion_mantiene_comportamiento_correcto_strict_boolean() -> (
+    None
+):
+    inter = _ejecutar_codigo("""
 var x = 5
 si x == 5:
     var ok = 1
 fin
-"""
-    )
+""")
     assert inter.variables["ok"] == 1
 
 
 def test_condicional_con_comparacion_no_ejecuta_bloque_cuando_no_corresponde() -> None:
-    inter = _ejecutar_codigo(
-        """
+    inter = _ejecutar_codigo("""
 var x = 4
 si x == 5:
     var ok = 1
 fin
-"""
-    )
+""")
     assert "ok" not in inter.variables
 
 
 def test_condicional_false_no_ejecuta_bloque_si_y_ejecuta_sino() -> None:
-    inter = _ejecutar_codigo(
-        """
+    inter = _ejecutar_codigo("""
 var salida = 0
 si 1 == 2:
     var salida = 1
 sino:
     var salida = 2
 fin
-"""
-    )
+""")
     assert inter.variables["salida"] == 2
 
 
 def test_condicionales_anidados_se_ejecutan_correctamente() -> None:
-    inter = _ejecutar_codigo(
-        """
+    inter = _ejecutar_codigo("""
 var bandera = 1
 si bandera == 1:
     si 2 > 1:
@@ -206,8 +193,7 @@ si bandera == 1:
         var valor = 0
     fin
 fin
-"""
-    )
+""")
     assert inter.variables["valor"] == 7
 
 
@@ -227,12 +213,10 @@ def test_anidamiento_profundo_no_lanza_recursion_error() -> None:
 
 
 def test_identificador_y_en_declaracion_y_uso() -> None:
-    inter = _ejecutar_codigo(
-        """
+    inter = _ejecutar_codigo("""
 var y = 3
 var resultado = y + 4
-"""
-    )
+""")
     assert inter.variables["resultado"] == 7
 
 
@@ -318,7 +302,11 @@ def test_expresiones_booleanas_validas_siguen_funcionando_en_condicional() -> No
     ast = [
         NodoAsignacion("x", NodoValor(5), inferencia=True),
         NodoAsignacion("y", NodoValor(0), inferencia=True),
-        NodoCondicional(condicion_compuesta, [NodoAsignacion("ok", NodoValor(1), inferencia=True)], []),
+        NodoCondicional(
+            condicion_compuesta,
+            [NodoAsignacion("ok", NodoValor(1), inferencia=True)],
+            [],
+        ),
     ]
 
     for nodo in ast:
@@ -327,7 +315,9 @@ def test_expresiones_booleanas_validas_siguen_funcionando_en_condicional() -> No
     assert inter.variables["ok"] == 1
 
 
-def test_ast_comparacion_identificador_indefinido_controla_nameerror_sin_recursionerror() -> None:
+def test_ast_comparacion_identificador_indefinido_controla_nameerror_sin_recursionerror() -> (
+    None
+):
     inter = InterpretadorCobra()
     nodo = NodoImprimir(
         NodoOperacionBinaria(
@@ -351,7 +341,9 @@ class _ValidadorCiclicoControlado(ValidadorBase):
             raise ValueError("error controlado de validación")
 
 
-def test_validador_base_en_ast_ciclico_no_lanza_recursion_error_y_propaga_error_controlado() -> None:
+def test_validador_base_en_ast_ciclico_no_lanza_recursion_error_y_propaga_error_controlado() -> (
+    None
+):
     raiz = NodoLlamadaFuncion("raiz", [])
     nodo_bloqueado = NodoLlamadaFuncion("bloquear", [])
     raiz.argumentos.append(nodo_bloqueado)

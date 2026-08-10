@@ -8,7 +8,6 @@ import os
 
 import pytest
 
-
 ALIASES_RELEVANTES = ("pcobra.cli", "pcobra.cli.cli", "cli", "cli.cli")
 
 
@@ -106,7 +105,10 @@ def test_python_m_cli_cli_no_colisiona(
             "pcobra.cobra.cli.cli",
         }
 
-def test_main_con_legacy_imports_activa_aliases_en_runtime(monkeypatch: pytest.MonkeyPatch):
+
+def test_main_con_legacy_imports_activa_aliases_en_runtime(
+    monkeypatch: pytest.MonkeyPatch,
+):
     _limpiar_aliases()
     monkeypatch.setenv("PCOBRA_LEGACY_IMPORT_PHASE", "2")
     monkeypatch.delenv("PCOBRA_ENABLE_LEGACY_IMPORTS", raising=False)

@@ -8,16 +8,23 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 
 import pcobra.cobra.macro as cobra_macro
+
 cobra_macro.expandir_macros = lambda nodos: nodos
 
 import types
+
 jk = types.ModuleType("jupyter_kernel")
+
+
 class CobraKernel: ...
+
+
 jk.CobraKernel = CobraKernel
 sys.modules["jupyter_kernel"] = jk
 
 from pcobra.cobra.cli.commands.base import BaseCommand
 import pcobra.cobra.cli.utils as cli_utils
+
 config_mod = types.ModuleType("cobra.cli.utils.config")
 config_mod.load_config = lambda: {}
 sys.modules["cobra.cli.utils.config"] = config_mod
@@ -25,9 +32,11 @@ cli_utils.config = config_mod
 
 import pcobra.core.interpreter as core_interpreter
 
+
 class DummyInterpreter:
     def cleanup(self):
         pass
+
 
 core_interpreter.InterpretadorCobra = DummyInterpreter
 
@@ -124,14 +133,14 @@ def test_menu_compile(monkeypatch):
     called = {}
 
     def fake_run(self, args):
-        called['args'] = args
+        called["args"] = args
         return 0
 
     monkeypatch.setattr(CompileCommand, "run", fake_run)
 
     assert main(["menu"]) == 0
-    assert called['args'].archivo == "archivo.cobra"
-    assert called['args'].tipo == "python"
+    assert called["args"].archivo == "archivo.cobra"
+    assert called["args"].tipo == "python"
 
 
 def test_menu_transpilar_inverso(monkeypatch):
@@ -142,15 +151,15 @@ def test_menu_transpilar_inverso(monkeypatch):
     called = {}
 
     def fake_run(self, args):
-        called['args'] = args
+        called["args"] = args
         return 0
 
     monkeypatch.setattr(TranspilarInversoCommand, "run", fake_run)
 
     assert main(["menu"]) == 0
-    assert called['args'].archivo == "archivo.py"
-    assert called['args'].origen == "python"
-    assert called['args'].destino == "javascript"
+    assert called["args"].archivo == "archivo.py"
+    assert called["args"].origen == "python"
+    assert called["args"].destino == "javascript"
 
 
 def test_menu_ejecutar_en_modo_mixto(monkeypatch):
@@ -172,7 +181,10 @@ def test_menu_ejecutar_en_modo_mixto(monkeypatch):
 
 def test_menu_no_tty_aborta_con_error(monkeypatch):
     _set_tty(monkeypatch, False)
-    monkeypatch.setattr("builtins.input", lambda _: (_ for _ in ()).throw(AssertionError("no debe leer input")))
+    monkeypatch.setattr(
+        "builtins.input",
+        lambda _: (_ for _ in ()).throw(AssertionError("no debe leer input")),
+    )
     assert main(["menu"]) == 1
 
 
@@ -198,7 +210,9 @@ def test_menu_eof_inmediato_devuelve_cancelacion(monkeypatch):
 
 def test_menu_keyboardinterrupt_devuelve_cancelacion(monkeypatch):
     _set_tty(monkeypatch, True)
-    monkeypatch.setattr("builtins.input", lambda _: (_ for _ in ()).throw(KeyboardInterrupt()))
+    monkeypatch.setattr(
+        "builtins.input", lambda _: (_ for _ in ()).throw(KeyboardInterrupt())
+    )
     assert main(["menu"]) == 0
 
 
@@ -293,12 +307,16 @@ def test_menu_modo_cobra_solo_pide_ruta_archivo(monkeypatch):
     monkeypatch.setattr(
         CompileCommand,
         "run",
-        lambda *_: (_ for _ in ()).throw(AssertionError("no debe ejecutar compilar en modo cobra")),
+        lambda *_: (_ for _ in ()).throw(
+            AssertionError("no debe ejecutar compilar en modo cobra")
+        ),
     )
     monkeypatch.setattr(
         TranspilarInversoCommand,
         "run",
-        lambda *_: (_ for _ in ()).throw(AssertionError("no debe ejecutar transpilar-inverso en modo cobra")),
+        lambda *_: (_ for _ in ()).throw(
+            AssertionError("no debe ejecutar transpilar-inverso en modo cobra")
+        ),
     )
 
     assert main(["--modo", "cobra", "menu"]) == 0

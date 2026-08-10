@@ -3,7 +3,6 @@ from __future__ import annotations
 import ast
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[2]
 LEGACY_PUBLIC_COMMANDS = (
     ROOT / "src/pcobra/cobra/cli/commands/compile_cmd.py",
@@ -43,11 +42,15 @@ def test_public_commands_only_use_allowed_backend_pipeline_members() -> None:
         tree = _parse(path)
         for node in ast.walk(tree):
             if isinstance(node, ast.Attribute) and isinstance(node.value, ast.Name):
-                if node.value.id == "backend_pipeline" and node.attr not in ALLOWED_BACKEND_PIPELINE_MEMBERS:
-                    violations.append(f"{path}:{node.lineno}: backend_pipeline.{node.attr}")
+                if (
+                    node.value.id == "backend_pipeline"
+                    and node.attr not in ALLOWED_BACKEND_PIPELINE_MEMBERS
+                ):
+                    violations.append(
+                        f"{path}:{node.lineno}: backend_pipeline.{node.attr}"
+                    )
 
     assert not violations, (
         "Contrato público: CLI solo puede usar backend_pipeline.resolve_backend_runtime/build/transpile. "
         f"Violaciones={violations}"
     )
-

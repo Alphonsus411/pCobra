@@ -2,7 +2,12 @@ from cobra.transpilers.transpiler.to_python import TranspiladorPython
 from cobra.transpilers.import_helper import get_standard_imports
 
 IMPORTS = get_standard_imports("python")
-from core.ast_nodes import NodoInstancia, NodoLlamadaMetodo, NodoIdentificador, NodoValor
+from core.ast_nodes import (
+    NodoInstancia,
+    NodoLlamadaMetodo,
+    NodoIdentificador,
+    NodoValor,
+)
 
 
 def test_transpilar_instancia():

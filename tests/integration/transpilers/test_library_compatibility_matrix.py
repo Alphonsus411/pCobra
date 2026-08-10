@@ -22,7 +22,9 @@ def test_library_compatibility_matrix_covers_exactly_3_official_backends(backend
 
 @pytest.mark.parametrize("backend", OFFICIAL_TARGETS)
 @pytest.mark.parametrize("area", LIBRARY_AREAS)
-def test_library_compatibility_record_has_stable_contract_shape(backend: str, area: str):
+def test_library_compatibility_record_has_stable_contract_shape(
+    backend: str, area: str
+):
     record = get_library_compatibility(backend, area)
     assert record.level in {"none", "partial", "full"}
     assert record.severity in SEVERITY_ORDER

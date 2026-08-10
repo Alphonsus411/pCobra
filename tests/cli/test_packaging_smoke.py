@@ -84,7 +84,7 @@ def test_wheel_instalado_resuelve_usar_sin_checkout(tmp_path: Path) -> None:
         "from pcobra.cobra.core.parser import Parser\n"
         "from pcobra.cobra.core.runtime import InterpretadorCobra\n"
         "from pcobra.cobra.usar_loader import usar_modulo\n"
-        "codigo = 'usar \\\"texto\\\"\\nvariable saludo := mayusculas(\\\"cobra\\\")\\nusar \\\"proceso\\\"'\n"
+        'codigo = \'usar \\"texto\\"\\nvariable saludo := mayusculas(\\"cobra\\")\\nusar \\"proceso\\"\'\n'
         "interprete = InterpretadorCobra(safe_mode=False)\n"
         "interprete.ejecutar_ast(Parser(Lexer(codigo).tokenizar()).parsear())\n"
         "assert interprete.obtener_variable('saludo') == 'COBRA'\n"

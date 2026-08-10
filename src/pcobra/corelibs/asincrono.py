@@ -31,6 +31,7 @@ EQUIVALENCIAS_SEMANTICAS_ASINCRONO: dict[str, str] = {
 try:  # pragma: no cover - Python >= 3.11 lo define de forma nativa
     ExceptionGroup
 except NameError:  # pragma: no cover - compatibilidad para Python < 3.11
+
     class ExceptionGroup(Exception):
         """Implementación mínima para entornos sin ``ExceptionGroup``."""
 
@@ -45,13 +46,11 @@ if TYPE_CHECKING:  # pragma: no cover - solo para tipado
     class _TaskGroupProtocol(Protocol):
         def create_task(
             self, corutina: Coroutine[Any, Any, Any], *, name: str | None = ...
-        ) -> asyncio.Task[Any]:
-            ...
-
+        ) -> asyncio.Task[Any]: ...
 
 
 def _asegurar_tarea(
-    awaitable: Awaitable[T] | Coroutine[Any, Any, T]
+    awaitable: Awaitable[T] | Coroutine[Any, Any, T],
 ) -> asyncio.Future[T]:
     """Crea o reutiliza una tarea asociada a ``awaitable``."""
 
@@ -65,7 +64,7 @@ def _asegurar_tarea(
 
 
 def proteger_tarea(
-    awaitable: Awaitable[T] | Coroutine[Any, Any, T]
+    awaitable: Awaitable[T] | Coroutine[Any, Any, T],
 ) -> asyncio.Future[T]:
     """Impide que las cancelaciones externas afecten a ``awaitable``."""
 
@@ -133,9 +132,7 @@ async def limitar_tiempo(
                     raise
 
 
-async def ejecutar_en_hilo(
-    funcion: Callable[..., T], *args: Any, **kwargs: Any
-) -> T:
+async def ejecutar_en_hilo(funcion: Callable[..., T], *args: Any, **kwargs: Any) -> T:
     """Ejecuta ``funcion`` en un hilo auxiliar respetando la interfaz de asyncio."""
 
     if not callable(funcion):
@@ -181,9 +178,7 @@ async def recolectar(
         await asyncio.gather(*tareas, return_exceptions=True)
 
 
-async def carrera(
-    *corutinas: Awaitable[T] | Coroutine[Any, Any, T]
-) -> T:
+async def carrera(*corutinas: Awaitable[T] | Coroutine[Any, Any, T]) -> T:
     """Devuelve el primer resultado disponible entre ``corutinas``.
 
     Internamente usa :func:`asyncio.wait` con ``FIRST_COMPLETED`` igual que un
@@ -222,9 +217,7 @@ async def carrera(
                 await tarea
 
 
-async def primero_exitoso(
-    *corutinas: Awaitable[T] | Coroutine[Any, Any, T]
-) -> T:
+async def primero_exitoso(*corutinas: Awaitable[T] | Coroutine[Any, Any, T]) -> T:
     """Devuelve el primer resultado satisfactorio de ``corutinas``.
 
     Opera de manera análoga a ``Promise.any`` en JavaScript: se ejecutan todas
@@ -301,16 +294,11 @@ async def reintentar_async(
     funcion: Callable[[], Awaitable[T] | Coroutine[Any, Any, T]],
     *,
     intentos: int = 3,
-    excepciones: type[BaseException]
-    | Sequence[type[BaseException]] = (Exception,),
+    excepciones: type[BaseException] | Sequence[type[BaseException]] = (Exception,),
     retardo_inicial: float = 0.1,
     factor_backoff: float = 2.0,
     max_retardo: float | None = None,
-    jitter: Callable[[float], float]
-    | tuple[float, float]
-    | float
-    | bool
-    | None = None,
+    jitter: Callable[[float], float] | tuple[float, float] | float | bool | None = None,
 ) -> T:
     """Ejecuta ``funcion`` reintentando ante errores con *backoff* exponencial.
 
@@ -460,9 +448,7 @@ async def grupo_tareas() -> AsyncIterator["_TaskGroupProtocol"]:
             modo = asyncio.FIRST_EXCEPTION
 
         while pendientes:
-            terminadas, pendientes = await asyncio.wait(
-                pendientes, return_when=modo
-            )
+            terminadas, pendientes = await asyncio.wait(pendientes, return_when=modo)
             for tarea in terminadas:
                 try:
                     await tarea
@@ -493,7 +479,9 @@ async def grupo_tareas() -> AsyncIterator["_TaskGroupProtocol"]:
     except BaseException as exc:
         errores, cancelaciones = await _esperar_finalizacion(cancelar=True)
         if errores:
-            raise ExceptionGroup("Errores en grupo de tareas", [exc, *errores]) from None
+            raise ExceptionGroup(
+                "Errores en grupo de tareas", [exc, *errores]
+            ) from None
         if cancelaciones:
             raise ExceptionGroup(
                 "Errores en grupo de tareas", [exc, *cancelaciones]
@@ -503,9 +491,7 @@ async def grupo_tareas() -> AsyncIterator["_TaskGroupProtocol"]:
         tareas.clear()
 
 
-def crear_tarea(
-    corutina: Coroutine[Any, Any, T] | Awaitable[T]
-) -> asyncio.Task[T]:
+def crear_tarea(corutina: Coroutine[Any, Any, T] | Awaitable[T]) -> asyncio.Task[T]:
     """Envuelve :func:`asyncio.create_task` para integrar corrutinas Cobra."""
 
     if isinstance(corutina, asyncio.Task):
@@ -670,11 +656,11 @@ async def recolectar_resultados(
         await asyncio.gather(*tareas, return_exceptions=True)
 
 
-
 async def dormir_async(segundos: float) -> None:
     """Suspende la corrutina actual durante ``segundos``."""
 
     await asyncio.sleep(segundos)
+
 
 __all__ = [
     "proteger_tarea",

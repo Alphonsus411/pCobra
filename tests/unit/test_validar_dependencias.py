@@ -12,7 +12,7 @@ def test_compilar_dependencia_invalida_python(tmp_path, monkeypatch):
     mod.write_text("var x = 1")
     prog = tmp_path / "p.cobra"
     prog.write_text(f"import '{mod}'\nimprimir(x)")
-    mapping = {str(mod): {"python": str(tmp_path / 'no.py')}}
+    mapping = {str(mod): {"python": str(tmp_path / "no.py")}}
     monkeypatch.setattr(module_map, "get_toml_map", lambda: mapping)
     with patch("sys.stdout", new_callable=StringIO) as out:
         main(["compilar", str(prog)])
@@ -25,7 +25,7 @@ def test_compilar_dependencia_invalida_javascript(tmp_path, monkeypatch):
     mod.write_text("var x = 1")
     prog = tmp_path / "p.cobra"
     prog.write_text(f"import '{mod}'\nimprimir(x)")
-    mapping = {str(mod): {"javascript": str(tmp_path / 'no.js')}}
+    mapping = {str(mod): {"javascript": str(tmp_path / "no.js")}}
     monkeypatch.setattr(module_map, "get_toml_map", lambda: mapping)
     with patch("sys.stdout", new_callable=StringIO) as out:
         main(["compilar", str(prog), "--tipo=javascript"])
@@ -38,7 +38,7 @@ def test_compilar_dependencia_invalida_cpp(tmp_path, monkeypatch):
     mod.write_text("var x = 1")
     prog = tmp_path / "p.cobra"
     prog.write_text(f"import '{mod}'\nimprimir(x)")
-    mapping = {str(mod): {"cpp": str(tmp_path / 'no.cpp')}}
+    mapping = {str(mod): {"cpp": str(tmp_path / "no.cpp")}}
     monkeypatch.setattr(module_map, "get_toml_map", lambda: mapping)
     with patch("sys.stdout", new_callable=StringIO) as out:
         main(["compilar", str(prog), "--tipo=cpp"])
@@ -49,7 +49,7 @@ def test_compilar_dependencia_invalida_cpp(tmp_path, monkeypatch):
 def test_ejecutar_dependencia_invalida(tmp_path, monkeypatch):
     prog = tmp_path / "p.cobra"
     prog.write_text("imprimir(1)")
-    mapping = {"x": {"python": str(tmp_path / 'no.py')}}
+    mapping = {"x": {"python": str(tmp_path / "no.py")}}
     monkeypatch.setattr(module_map, "get_toml_map", lambda: mapping)
     with patch("sys.stdout", new_callable=StringIO) as out:
         main(["ejecutar", str(prog)])
@@ -60,7 +60,9 @@ def test_ejecutar_dependencia_invalida(tmp_path, monkeypatch):
 def test_interactive_dependencia_invalida(monkeypatch):
     mapping = {"x": {"python": "/no/dep.py"}}
     monkeypatch.setattr(module_map, "get_toml_map", lambda: mapping)
-    with patch("builtins.input", return_value="salir()"), \
-         patch("sys.stdout", new_callable=StringIO) as out:
+    with (
+        patch("builtins.input", return_value="salir()"),
+        patch("sys.stdout", new_callable=StringIO) as out,
+    ):
         main(["interactive"])
     assert "dependencia" in out.getvalue().lower()

@@ -59,7 +59,9 @@ TARGET_METADATA: Final[dict[str, TargetMetadata]] = {
 def _validate_target_config() -> None:
     allowed = set(ALLOWED_TARGETS)
 
-    assert_public_targets_contract(ALLOWED_TARGETS, source="config.transpile_targets.ALLOWED_TARGETS")
+    assert_public_targets_contract(
+        ALLOWED_TARGETS, source="config.transpile_targets.ALLOWED_TARGETS"
+    )
 
     if set(TARGETS_BY_TIER) != {"tier_1", "tier_2"}:
         raise RuntimeError(
@@ -93,7 +95,6 @@ def _validate_target_config() -> None:
             f"missing={missing or '∅'}; extras={extras or '∅'}"
         )
 
-
     # No need to validate internal_compat as it's being removed
 
     legacy_collisions = tuple(sorted(set(LEGACY_INTERNAL_TARGETS) & allowed))
@@ -109,7 +110,9 @@ def _validate_target_config() -> None:
                 f"Target '{target}' tiene estado inválido '{meta['status']}'. Debe ser 'supported'."
             )
         if not isinstance(meta["release_priority"], int):
-            raise RuntimeError(f"Target '{target}' debe declarar release_priority entero")
+            raise RuntimeError(
+                f"Target '{target}' debe declarar release_priority entero"
+            )
         if meta["maintainer"] is not None and not isinstance(meta["maintainer"], str):
             raise RuntimeError(f"Target '{target}' debe usar maintainer string o None")
         if meta["holobit_contract"] not in {"none", "partial", "full"}:

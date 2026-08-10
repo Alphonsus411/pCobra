@@ -22,6 +22,7 @@ from pcobra.cobra.architecture.backend_policy import PUBLIC_BACKENDS
 from pcobra.cobra.transpilers.runtime_api_matrix import build_runtime_api_matrix
 from pcobra.cobra.transpilers.target_utils import normalize_target_name
 from pcobra.cobra.config.transpile_targets import TIER1_TARGETS
+
 CONTRACT_FEATURES: Final[tuple[str, ...]] = (
     "holobit",
     "proyectar",
@@ -154,14 +155,24 @@ _BACKEND_FEATURE_NODE_SUPPORT_MODEL: Final[dict[str, dict[str, tuple[str, ...]]]
         "imports_corelibs": ("visit_usar", "visit_import", "visit_llamada_funcion"),
         "manejo_errores": ("visit_try_catch", "visit_throw"),
         "async": ("visit_funcion", "visit_esperar"),
-        "tipos_compuestos": ("visit_lista", "visit_diccionario", "visit_lista_tipo", "visit_diccionario_tipo"),
+        "tipos_compuestos": (
+            "visit_lista",
+            "visit_diccionario",
+            "visit_lista_tipo",
+            "visit_diccionario_tipo",
+        ),
     },
     "javascript": {
         "decoradores": ("visit_decorador", "visit_funcion"),
         "imports_corelibs": ("visit_import", "visit_llamada_funcion"),
         "manejo_errores": ("visit_try_catch", "visit_throw"),
         "async": ("visit_funcion", "visit_esperar"),
-        "tipos_compuestos": ("visit_lista", "visit_diccionario", "visit_lista_tipo", "visit_diccionario_tipo"),
+        "tipos_compuestos": (
+            "visit_lista",
+            "visit_diccionario",
+            "visit_lista_tipo",
+            "visit_diccionario_tipo",
+        ),
     },
     "rust": {
         "decoradores": ("visit_decorador", "visit_funcion"),
@@ -215,7 +226,9 @@ AST_FEATURE_MINIMUM_CONTRACT: Final[dict[str, dict[str, str]]] = {
 }
 
 # Baseline sincronizada con evidencia real de tests parametrizados.
-AST_FEATURE_EVIDENCE_BASELINE: Final[dict[str, dict[str, str]]] = AST_FEATURE_MINIMUM_CONTRACT
+AST_FEATURE_EVIDENCE_BASELINE: Final[dict[str, dict[str, str]]] = (
+    AST_FEATURE_MINIMUM_CONTRACT
+)
 
 AST_FEATURE_EVIDENCE_SOURCE: Final[str] = (
     "tests/unit/test_transpiler_feature_parity.py::test_feature_parity_matrix_evidence_matches_contract"
@@ -265,7 +278,9 @@ _BACKEND_FEATURE_GAPS_MODEL: Final[dict[str, dict[str, tuple[str, ...]]]] = {
     "rust": {
         "holobit": ("No replica paridad SDK Python completa.",),
         "proyectar": ("Limitado a modos 1d/2d/3d/vector del adaptador oficial.",),
-        "transformar": ("Rotación soportada solo sobre eje z y parámetros parseados en runtime.",),
+        "transformar": (
+            "Rotación soportada solo sobre eje z y parámetros parseados en runtime.",
+        ),
         "graficar": ("Solo vista textual via `mostrar`.",),
         "corelibs": (),
         "standard_library": (),
@@ -400,9 +415,7 @@ def _validate_contract_shape(name: str, matrix: dict[str, dict[str, str]]) -> No
                 f"{name}[{backend}] no define features requeridas: {missing_features}"
             )
 
-        extra_features = sorted(
-            set(contract) - {"tier", *CONTRACT_FEATURES}
-        )
+        extra_features = sorted(set(contract) - {"tier", *CONTRACT_FEATURES})
         if extra_features:
             raise RuntimeError(
                 f"{name}[{backend}] contiene features no reconocidas: {extra_features}"
@@ -498,12 +511,18 @@ def validate_backend_compatibility_contract() -> None:
             f"transpilation_only={TRANSPILATION_ONLY_BACKENDS}; official={PUBLIC_BACKENDS}"
         )
 
-    missing_notes_backends = [backend for backend in PUBLIC_BACKENDS if backend not in BACKEND_COMPATIBILITY_NOTES]
+    missing_notes_backends = [
+        backend
+        for backend in PUBLIC_BACKENDS
+        if backend not in BACKEND_COMPATIBILITY_NOTES
+    ]
     if missing_notes_backends:
         raise RuntimeError(
             f"BACKEND_COMPATIBILITY_NOTES no define backends oficiales: {missing_notes_backends}"
         )
-    extra_notes_backends = sorted(set(BACKEND_COMPATIBILITY_NOTES) - set(PUBLIC_BACKENDS))
+    extra_notes_backends = sorted(
+        set(BACKEND_COMPATIBILITY_NOTES) - set(PUBLIC_BACKENDS)
+    )
     if extra_notes_backends:
         raise RuntimeError(
             f"BACKEND_COMPATIBILITY_NOTES contiene backends no oficiales: {extra_notes_backends}"
@@ -528,7 +547,9 @@ def validate_backend_compatibility_contract() -> None:
                 f"BACKEND_COMPATIBILITY_NOTES[{backend}] debe declarar evidence no vacío"
             )
 
-    missing_gaps_backends = [backend for backend in PUBLIC_BACKENDS if backend not in BACKEND_FEATURE_GAPS]
+    missing_gaps_backends = [
+        backend for backend in PUBLIC_BACKENDS if backend not in BACKEND_FEATURE_GAPS
+    ]
     if missing_gaps_backends:
         raise RuntimeError(
             f"BACKEND_FEATURE_GAPS no define backends oficiales: {missing_gaps_backends}"
@@ -540,7 +561,9 @@ def validate_backend_compatibility_contract() -> None:
         )
     for backend in PUBLIC_BACKENDS:
         missing_features = [
-            feature for feature in CONTRACT_FEATURES if feature not in BACKEND_FEATURE_GAPS[backend]
+            feature
+            for feature in CONTRACT_FEATURES
+            if feature not in BACKEND_FEATURE_GAPS[backend]
         ]
         if missing_features:
             raise RuntimeError(
@@ -563,7 +586,9 @@ def validate_backend_compatibility_contract() -> None:
                 )
 
     missing_capability_backends = [
-        backend for backend in PUBLIC_BACKENDS if backend not in BACKEND_HOLOBIT_SDK_CAPABILITIES
+        backend
+        for backend in PUBLIC_BACKENDS
+        if backend not in BACKEND_HOLOBIT_SDK_CAPABILITIES
     ]
     if missing_capability_backends:
         raise RuntimeError(
@@ -590,9 +615,7 @@ def validate_backend_compatibility_contract() -> None:
             raise RuntimeError(
                 f"BACKEND_HOLOBIT_SDK_CAPABILITIES[{backend}] no define capacidades requeridas: {missing_capabilities}"
             )
-        extra_capabilities = sorted(
-            set(capabilities) - set(HOLOBIT_SDK_CAPABILITIES)
-        )
+        extra_capabilities = sorted(set(capabilities) - set(HOLOBIT_SDK_CAPABILITIES))
         if extra_capabilities:
             raise RuntimeError(
                 f"BACKEND_HOLOBIT_SDK_CAPABILITIES[{backend}] contiene capacidades no reconocidas: {extra_capabilities}"
@@ -607,7 +630,9 @@ def validate_backend_compatibility_contract() -> None:
     validate_tier1_holobit_release_gate(BACKEND_HOLOBIT_SDK_CAPABILITIES)
 
     missing_fallback_backends = [
-        backend for backend in PUBLIC_BACKENDS if backend not in HOLOBIT_CAPABILITY_FALLBACKS
+        backend
+        for backend in PUBLIC_BACKENDS
+        if backend not in HOLOBIT_CAPABILITY_FALLBACKS
     ]
     if missing_fallback_backends:
         raise RuntimeError(
@@ -727,7 +752,10 @@ def build_feature_gap_report(
                 or actual_level not in COMPATIBILITY_LEVEL_ORDER
             ):
                 continue
-            if COMPATIBILITY_LEVEL_ORDER[actual_level] >= COMPATIBILITY_LEVEL_ORDER[expected_level]:
+            if (
+                COMPATIBILITY_LEVEL_ORDER[actual_level]
+                >= COMPATIBILITY_LEVEL_ORDER[expected_level]
+            ):
                 continue
 
             missing_nodes: tuple[str, ...] | None = None
@@ -751,6 +779,7 @@ def build_feature_gap_report(
         report[backend] = backend_rows
 
     return report
+
 
 def get_backend_compatibility(backend: str) -> dict[str, str] | None:
     """Obtiene compatibilidad por backend aplicando normalización canónica."""
@@ -804,8 +833,3 @@ def get_live_runtime_api_matrix() -> dict[str, object]:
     """Devuelve una copia ligera de la matriz viva de API runtime por backend."""
 
     return LIVE_RUNTIME_API_MATRIX
-
-
-
-
-

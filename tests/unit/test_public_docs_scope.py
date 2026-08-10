@@ -43,13 +43,17 @@ def test_guias_publicas_no_reintroducen_reverse_wasm_ni_extras_retirados():
     for path in PUBLIC_GUIDES_WITHOUT_RETIRED_REVERSE_REFERENCES:
         contenido = path.read_text(encoding="utf-8").lower()
         for termino in RETIRED_REVERSE_PUBLIC_TERMS:
-            assert termino not in contenido, (
-                f"La guía pública {path} no debe reintroducir menciones retiradas: {termino}"
-            )
+            assert (
+                termino not in contenido
+            ), f"La guía pública {path} no debe reintroducir menciones retiradas: {termino}"
 
 
 def test_documentacion_de_tiers_no_sobredimensiona_contrato_holobit():
-    plan = Path("docs/frontend/transpilers_tier_plan.md").read_text(encoding="utf-8").lower()
+    plan = (
+        Path("docs/frontend/transpilers_tier_plan.md")
+        .read_text(encoding="utf-8")
+        .lower()
+    )
     assert "javascript figura como `partial`" in plan
     assert "javascript figura como `full`" not in plan
 
@@ -85,7 +89,9 @@ PUBLIC_CANONICAL_NAME_DOCS = [
     Path("docs/frontend/arquitectura.rst"),
 ]
 
-FORBIDDEN_PUBLIC_JS_ALIAS_PATTERN = re.compile(r"(?<![\w.-])js(?![\w.-])", re.IGNORECASE)
+FORBIDDEN_PUBLIC_JS_ALIAS_PATTERN = re.compile(
+    r"(?<![\w.-])js(?![\w.-])", re.IGNORECASE
+)
 FORBIDDEN_PUBLIC_ALIAS_PATTERNS = [
     re.compile(r"(?<![\w.+/-])c\+\+(?![\w.+/-])", re.IGNORECASE),
     re.compile(r"(?<![\w.+/-])assembly(?![\w.+/-])", re.IGNORECASE),
@@ -107,8 +113,6 @@ def _normalized_public_line(line: str) -> str:
     )
 
 
-
-
 def test_validador_documental_ci_no_detecta_divergencias_publicas():
     assert not validate_public_documentation_alignment(
         tuple(OFFICIAL_TARGETS), tuple(REVERSE_SCOPE_LANGUAGES)
@@ -123,33 +127,53 @@ def test_docs_publicas_enumeran_exactamente_los_3_backends_oficiales_en_tablas_c
         Path("docs/matriz_transpiladores.md"),
         Path("docs/contrato_runtime_holobit.md"),
     ):
-        rows = {line.split("|")[1].strip().strip("`") for line in path.read_text(encoding="utf-8").splitlines() if line.strip().startswith("| `")}
-        assert rows == expected, f"{path} debe documentar exactamente los 3 backends oficiales"
-
+        rows = {
+            line.split("|")[1].strip().strip("`")
+            for line in path.read_text(encoding="utf-8").splitlines()
+            if line.strip().startswith("| `")
+        }
+        assert (
+            rows == expected
+        ), f"{path} debe documentar exactamente los 3 backends oficiales"
 
 
 def test_libro_programacion_cobra_declara_solo_backend_oficial_publico():
-    contenido = Path("docs/LIBRO_PROGRAMACION_COBRA.md").read_text(encoding="utf-8").lower()
-    assert "backend oficial público está compuesto solo por `python`, `javascript` y `rust`" in contenido
-    for forbidden in ("target final es c/asm", "soporte limitado o legacy según política vigente"):
+    contenido = (
+        Path("docs/LIBRO_PROGRAMACION_COBRA.md").read_text(encoding="utf-8").lower()
+    )
+    assert (
+        "backend oficial público está compuesto solo por `python`, `javascript` y `rust`"
+        in contenido
+    )
+    for forbidden in (
+        "target final es c/asm",
+        "soporte limitado o legacy según política vigente",
+    ):
         assert forbidden not in contenido
+
 
 def test_docs_publicas_no_promocionan_backends_no_python_a_sdk_full():
     for path in PUBLIC_HOLOBIT_CONTRACT_DOCS:
         contenido = path.read_text(encoding="utf-8")
         lowered = contenido.lower()
         for pattern in FORBIDDEN_NON_PYTHON_HOLOBIT_PROMOTION_PATTERNS:
-            assert not pattern.search(contenido), (
-                f"La documentación pública {path} no debe promocionar backends no Python a SDK full"
-            )
-        if path in {Path("docs/contrato_runtime_holobit.md"), Path("docs/matriz_transpiladores.md"), Path("docs/targets_policy.md")}:
+            assert not pattern.search(
+                contenido
+            ), f"La documentación pública {path} no debe promocionar backends no Python a SDK full"
+        if path in {
+            Path("docs/contrato_runtime_holobit.md"),
+            Path("docs/matriz_transpiladores.md"),
+            Path("docs/targets_policy.md"),
+        }:
             assert "python" in lowered and "full" in lowered
             assert "javascript" in lowered and "partial" in lowered
             assert "rust" in lowered and "partial" in lowered
 
 
 def test_docs_publicas_exigen_error_explicito_para_backends_partial_en_holobit():
-    contenido = Path("docs/contrato_runtime_holobit.md").read_text(encoding="utf-8").lower()
+    contenido = (
+        Path("docs/contrato_runtime_holobit.md").read_text(encoding="utf-8").lower()
+    )
     assert "no-op silencioso" in contenido
     assert "error explícito" in contenido or "fallos explícitos" in contenido
 
@@ -172,7 +196,10 @@ def test_docs_contractuales_no_mezclan_helpers_python_con_contrato_holobit():
 
 
 def test_docs_frontend_marcan_escalar_y_mover_como_helpers_python():
-    for path in (Path("docs/frontend/referencia.rst"), Path("docs/frontend/caracteristicas.rst")):
+    for path in (
+        Path("docs/frontend/referencia.rst"),
+        Path("docs/frontend/caracteristicas.rst"),
+    ):
         contenido = " ".join(path.read_text(encoding="utf-8").lower().split())
         assert "escalar" in contenido
         assert "mover" in contenido
@@ -183,9 +210,9 @@ def test_docs_frontend_marcan_escalar_y_mover_como_helpers_python():
 def test_docs_publicas_clave_no_reintroducen_js_como_nombre_canonico():
     for path in PUBLIC_CANONICAL_NAME_DOCS:
         contenido = path.read_text(encoding="utf-8")
-        assert not FORBIDDEN_PUBLIC_JS_ALIAS_PATTERN.search(contenido), (
-            f"La documentación pública {path} no debe usar 'js' como nombre canónico público"
-        )
+        assert not FORBIDDEN_PUBLIC_JS_ALIAS_PATTERN.search(
+            contenido
+        ), f"La documentación pública {path} no debe usar 'js' como nombre canónico público"
 
 
 def test_scope_publico_vigilado_no_reintroduce_aliases_legacy_ni_flags_obsoletos():
@@ -197,17 +224,17 @@ def test_scope_publico_vigilado_no_reintroduce_aliases_legacy_ni_flags_obsoletos
         ):
             line = _normalized_public_line(raw_line)
             for pattern in FORBIDDEN_PUBLIC_ALIAS_PATTERNS:
-                assert not pattern.search(line), (
-                    f"La ruta pública {path}:{line_no} reintroduce un alias legacy fuera de política: {raw_line.strip()}"
-                )
+                assert not pattern.search(
+                    line
+                ), f"La ruta pública {path}:{line_no} reintroduce un alias legacy fuera de política: {raw_line.strip()}"
             for pattern in FORBIDDEN_PUBLIC_LEGACY_OPTION_PATTERNS:
-                assert not pattern.search(line), (
-                    f"La ruta pública {path}:{line_no} reintroduce una flag de CLI obsoleta: {raw_line.strip()}"
-                )
+                assert not pattern.search(
+                    line
+                ), f"La ruta pública {path}:{line_no} reintroduce una flag de CLI obsoleta: {raw_line.strip()}"
             # Add check for FORBIDDEN_PUBLIC_JS_ALIAS_PATTERN to consolidate forbidden alias checks
-            assert not FORBIDDEN_PUBLIC_JS_ALIAS_PATTERN.search(line), (
-                f"La ruta pública {path}:{line_no} no debe usar 'js' como nombre canónico público: {raw_line.strip()}"
-            )
+            assert not FORBIDDEN_PUBLIC_JS_ALIAS_PATTERN.search(
+                line
+            ), f"La ruta pública {path}:{line_no} no debe usar 'js' como nombre canónico público: {raw_line.strip()}"
 
 
 def test_el_historial_de_aliases_sale_del_arbol_documental_publico():
@@ -225,9 +252,9 @@ def test_guias_publicas_no_reintroducen_artefactos_retirados_en_recorrido_normal
     ):
         contenido = path.read_text(encoding="utf-8").lower()
         for termino in forbidden_terms:
-            assert termino not in contenido, (
-                f"La guía pública {path} no debe mencionar artefactos retirados del recorrido normal: {termino}"
-            )
+            assert (
+                termino not in contenido
+            ), f"La guía pública {path} no debe mencionar artefactos retirados del recorrido normal: {termino}"
 
 
 def test_snippets_generados_siguen_sincronizados_con_la_fuente_canonica():

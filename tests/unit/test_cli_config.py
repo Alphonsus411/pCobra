@@ -16,15 +16,13 @@ def _clear_env(monkeypatch):
 
 def test_load_config_from_valid_file(tmp_path, monkeypatch):
     cfg = tmp_path / "cobra-cli.toml"
-    cfg.write_text(
-        """
+    cfg.write_text("""
 language = "en"
 default_command = "run"
 log_format = "%(levelname)s"
 log_formatter = "json"
 program_name = "cobrax"
-"""
-    )
+""")
     monkeypatch.chdir(tmp_path)
     _clear_env(monkeypatch)
 
@@ -50,7 +48,7 @@ def test_load_config_defaults_when_file_missing(tmp_path, monkeypatch):
 
 def test_load_config_with_partial_config(tmp_path, monkeypatch):
     cfg = tmp_path / "cobra-cli.toml"
-    cfg.write_text("language = \"en\"")
+    cfg.write_text('language = "en"')
     monkeypatch.chdir(tmp_path)
     _clear_env(monkeypatch)
 

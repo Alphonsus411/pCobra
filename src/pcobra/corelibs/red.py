@@ -50,7 +50,7 @@ def _obtener_hosts_permitidos() -> set[str]:
     allowed = os.environ.get("COBRA_HOST_WHITELIST")
     if not allowed:
         raise ValueError("COBRA_HOST_WHITELIST no establecido")
-    hosts = {h.strip().lower() for h in allowed.split(',') if h.strip()}
+    hosts = {h.strip().lower() for h in allowed.split(",") if h.strip()}
     if not hosts:
         raise ValueError("COBRA_HOST_WHITELIST vacío")
     return hosts
@@ -77,9 +77,7 @@ def _validar_host(url: str, hosts: set[str]) -> None:
         raise ValueError("Host no permitido")
 
 
-def _resolver_redireccion(
-    url_actual: str, destino: str | None, hosts: set[str]
-) -> str:
+def _resolver_redireccion(url_actual: str, destino: str | None, hosts: set[str]) -> str:
     if not destino:
         raise ValueError("Redirección sin encabezado Location")
     nueva_url = urllib.parse.urljoin(url_actual, destino)
@@ -101,9 +99,7 @@ def obtener_url(url: str, permitir_redirecciones: bool = False) -> str:
     redirecciones_restantes = _MAX_REDIRECTS
     while True:
         _validar_host(url_actual, hosts)
-        resp = requests.get(
-            url_actual, timeout=5, allow_redirects=False, stream=True
-        )
+        resp = requests.get(url_actual, timeout=5, allow_redirects=False, stream=True)
         if permitir_redirecciones and 300 <= resp.status_code < 400:
             if redirecciones_restantes == 0:
                 resp.close()
@@ -228,9 +224,7 @@ async def _realizar_peticion_async(
                 return await _leer_respuesta_async(resp)
 
 
-async def obtener_url_async(
-    url: str, permitir_redirecciones: bool = False
-) -> str:
+async def obtener_url_async(url: str, permitir_redirecciones: bool = False) -> str:
     """Versión asíncrona de :func:`obtener_url`."""
 
     resultado = await _realizar_peticion_async(
@@ -301,13 +295,16 @@ async def descargar_archivo(
 async def obtener_url_texto(url: str, permitir_redirecciones: bool = False) -> str:
     """Alias estable en español para obtener contenido web asíncrono."""
     try:
-        return await obtener_url_async(url, permitir_redirecciones=permitir_redirecciones)
+        return await obtener_url_async(
+            url, permitir_redirecciones=permitir_redirecciones
+        )
     except Exception as exc:
         raise _error_red("obtener_url_texto", exc) from None
 
 
-
-def obtener_json(url: str, permitir_redirecciones: bool = False) -> dict[str, Any] | list[Any]:
+def obtener_json(
+    url: str, permitir_redirecciones: bool = False
+) -> dict[str, Any] | list[Any]:
     """Obtiene una URL HTTPS y la interpreta como JSON."""
 
     import json
@@ -317,6 +314,7 @@ def obtener_json(url: str, permitir_redirecciones: bool = False) -> dict[str, An
     if not isinstance(datos, (dict, list)):
         raise TypeError("La respuesta JSON debe ser un objeto o una lista")
     return datos
+
 
 PUBLIC_API_RED: tuple[str, ...] = (
     "obtener_url",

@@ -9,7 +9,10 @@ SRC_ROOT = Path(__file__).resolve().parents[2] / "src"
 
 def _is_forbidden_import(node: ast.AST) -> bool:
     if isinstance(node, ast.Import):
-        return any(alias.name == "scripts" or alias.name.startswith("scripts.") for alias in node.names)
+        return any(
+            alias.name == "scripts" or alias.name.startswith("scripts.")
+            for alias in node.names
+        )
     if isinstance(node, ast.ImportFrom):
         if node.module is None:
             return False
@@ -23,7 +26,11 @@ def main() -> int:
         tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
         for node in ast.walk(tree):
             if _is_forbidden_import(node):
-                snippet = (node.module if isinstance(node, ast.ImportFrom) else ", ".join(a.name for a in node.names))
+                snippet = (
+                    node.module
+                    if isinstance(node, ast.ImportFrom)
+                    else ", ".join(a.name for a in node.names)
+                )
                 violations.append((path, node.lineno, snippet))
 
     if violations:

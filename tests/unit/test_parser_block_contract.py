@@ -14,33 +14,27 @@ def _error_de_parseo(codigo: str) -> str:
 
 
 def test_parser_falla_si_falta_dos_puntos_en_bloque() -> None:
-    mensaje = _error_de_parseo(
-        """
+    mensaje = _error_de_parseo("""
 si 1 == 1
     pasar
 fin
-"""
-    )
+""")
     assert mensaje == "Se esperaba ':' después de la condición del 'si'"
 
 
 def test_parser_falla_si_falta_fin_en_bloque() -> None:
-    mensaje = _error_de_parseo(
-        """
+    mensaje = _error_de_parseo("""
 si 1 == 1:
     pasar
-"""
-    )
+""")
     assert mensaje == "Se esperaba 'fin' para cerrar el bloque condicional"
 
 
 def test_parser_falla_si_faltan_dos_puntos_y_fin() -> None:
-    mensaje = _error_de_parseo(
-        """
+    mensaje = _error_de_parseo("""
 si 1 == 1
     pasar
-"""
-    )
+""")
     assert mensaje == "Se esperaba ':' después de la condición del 'si'"
 
 

@@ -96,7 +96,9 @@ def test_pyarrow_optional_extra_import_and_table_usage() -> None:
     assert table.column("lenguaje").to_pylist() == ["cobra"]
 
 
-def test_packaging_import_and_basic_version_usage(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_packaging_import_and_basic_version_usage(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     _purge_modules(monkeypatch, "packaging")
 
     version_module = importlib.import_module("packaging.version")

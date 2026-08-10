@@ -545,7 +545,7 @@ centrar_texto.__doc__ = (
 
 rellenar_ceros.__doc__ = (
     "Reexporta :func:`pcobra.corelibs.texto.rellenar_ceros`. Es análogo a ``str.zfill``"
-    " de Python, a ``fmt.Sprintf(\"%0*d\", ancho, valor)`` en Go y a ``padStart``"
+    ' de Python, a ``fmt.Sprintf("%0*d", ancho, valor)`` en Go y a ``padStart``'
     " con ceros en JavaScript."
 )
 

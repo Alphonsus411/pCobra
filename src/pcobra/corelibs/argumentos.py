@@ -132,7 +132,9 @@ def parsear_pares(argv: Sequence[object] | None = None) -> dict[str, str | bool]
             else:
                 nombre = _normalizar_nombre(nombre_valor)
                 siguiente = indice + 1
-                if siguiente < len(argumentos) and not _es_opcion(argumentos[siguiente]):
+                if siguiente < len(argumentos) and not _es_opcion(
+                    argumentos[siguiente]
+                ):
                     pares[nombre] = argumentos[siguiente]
                     indice += 1
                 else:

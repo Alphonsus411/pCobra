@@ -6,10 +6,13 @@ import inspect
 
 import pytest
 
-from pcobra.cobra.usar_capabilities import CapacidadUsar, capacidades_de, simbolo_canonico
+from pcobra.cobra.usar_capabilities import (
+    CapacidadUsar,
+    capacidades_de,
+    simbolo_canonico,
+)
 from pcobra.cobra.usar_loader import usar_modulo
 from pcobra.corelibs import proceso
-
 
 EXPORTS_QUE_CREAN_PROCESOS = (
     "ejecutar",
@@ -38,7 +41,9 @@ def test_modo_seguro_deniega_todos_los_exports_que_crean_procesos(nombre):
 
 def test_capturar_no_alcanza_subprocess_si_ejecutar_publico_esta_bloqueado(monkeypatch):
     llamadas = []
-    monkeypatch.setattr(proceso.subprocess, "run", lambda *a, **k: llamadas.append((a, k)))
+    monkeypatch.setattr(
+        proceso.subprocess, "run", lambda *a, **k: llamadas.append((a, k))
+    )
     exports = usar_modulo("proceso", safe_mode=True)
 
     with pytest.raises(PermissionError, match="process.spawn"):

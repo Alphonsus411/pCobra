@@ -8,17 +8,18 @@ from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 from pcobra.cobra.cli.utils.messages import mostrar_info, mostrar_error
 
+
 class InitCommand(BaseCommand):
     """Inicializa un proyecto Cobra básico."""
-    
+
     name = "init"
 
     def register_subparser(self, subparsers: Any) -> CustomArgumentParser:
         """Registra los argumentos del subcomando.
-        
+
         Args:
             subparsers: Objeto para registrar subcomandos
-            
+
         Returns:
             CustomArgumentParser: El parser configurado para este subcomando
         """
@@ -31,10 +32,10 @@ class InitCommand(BaseCommand):
 
     def run(self, args: Any) -> int:
         """Ejecuta la lógica del comando.
-        
+
         Args:
             args: Argumentos parseados del comando
-            
+
         Returns:
             int: 0 si la ejecución fue exitosa, 1 en caso de error
         """
@@ -56,7 +57,7 @@ class InitCommand(BaseCommand):
 
             # Crear directorio si no existe
             ruta.mkdir(parents=True, exist_ok=True)
-            
+
             # Crear archivo main.cobra con template básico
             main = ruta / "main.cobra"
             if not main.exists():
@@ -68,12 +69,14 @@ class InitCommand(BaseCommand):
                     "}\n"
                 )
                 main.write_text(template, encoding="utf-8")
-                    
+
             mostrar_info(_("Proyecto Cobra inicializado en {path}").format(path=ruta))
             return 0
-            
+
         except PermissionError:
-            mostrar_error(_("Error: No hay permisos para escribir en {path}").format(path=ruta))
+            mostrar_error(
+                _("Error: No hay permisos para escribir en {path}").format(path=ruta)
+            )
             return 1
         except FileExistsError:
             mostrar_error(_("Error: Ya existe un archivo con ese nombre"))

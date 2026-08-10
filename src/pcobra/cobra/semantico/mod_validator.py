@@ -41,7 +41,11 @@ from pcobra.cobra.transpilers.target_utils import (
     LEGACY_OR_AMBIGUOUS_TARGETS,
     normalize_target_name,
 )
-from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS, TIER1_TARGETS, TIER2_TARGETS
+from pcobra.cobra.transpilers.targets import (
+    OFFICIAL_TARGETS,
+    TIER1_TARGETS,
+    TIER2_TARGETS,
+)
 
 # Constantes
 MAX_FILE_SIZE = 10_000_000  # 10MB
@@ -54,9 +58,11 @@ DEFAULT_REQUIRED_TARGETS: tuple[str, ...] = TIER1_TARGETS
 DEFAULT_REQUIRED_TARGETS_V2: tuple[str, ...] = PUBLIC_BACKENDS
 
 
-
 def _official_targets_with_tier_text() -> str:
-    tier_rows = [*(f"{target}=tier1" for target in TIER1_TARGETS), *(f"{target}=tier2" for target in TIER2_TARGETS)]
+    tier_rows = [
+        *(f"{target}=tier1" for target in TIER1_TARGETS),
+        *(f"{target}=tier2" for target in TIER2_TARGETS),
+    ]
     return ", ".join(tier_rows)
 
 
@@ -122,7 +128,9 @@ def _schema_flag_from_metadata(datos: Dict[str, Any]) -> int | None:
     return None
 
 
-def _use_v2_for_module(datos: Dict[str, Any], modulo: str, info: Dict[str, Any]) -> bool:
+def _use_v2_for_module(
+    datos: Dict[str, Any], modulo: str, info: Dict[str, Any]
+) -> bool:
     metadata_version = _schema_flag_from_metadata(datos)
     if metadata_version is not None:
         return metadata_version >= 2
@@ -174,8 +182,9 @@ def cargar_mod(path: str | None = None) -> Dict[str, Any]:
             raise ValueError(f"Error al parsear archivo: {e}") from None
 
 
-
-def _required_targets_from_policy(allowed_targets: tuple[str, ...], default_required: tuple[str, ...]) -> tuple[str, ...]:
+def _required_targets_from_policy(
+    allowed_targets: tuple[str, ...], default_required: tuple[str, ...]
+) -> tuple[str, ...]:
     """Obtiene targets requeridos desde ``cobra.toml`` según política de proyecto."""
     toml_map = module_map.get_toml_map()
     if not isinstance(toml_map, dict):
@@ -238,7 +247,9 @@ def _warn_if_tier2_used_as_optional_mapping(modulo: str, info: dict[str, Any]) -
         )
 
 
-def _find_noncanonical_backend_keys(info: dict[str, Any], allowed_targets: tuple[str, ...]) -> list[str]:
+def _find_noncanonical_backend_keys(
+    info: dict[str, Any], allowed_targets: tuple[str, ...]
+) -> list[str]:
     """Devuelve claves backend no canónicas presentes en un mapping de módulo."""
     ignored_keys = {"version"}
     noncanonical: list[str] = []
@@ -250,27 +261,38 @@ def _find_noncanonical_backend_keys(info: dict[str, Any], allowed_targets: tuple
     return sorted(noncanonical)
 
 
-def _schema_for_module(datos: Dict[str, Any], modulo: str, info: Dict[str, Any]) -> tuple[dict[str, Any] | None, tuple[str, ...], tuple[str, ...], str]:
+def _schema_for_module(
+    datos: Dict[str, Any], modulo: str, info: Dict[str, Any]
+) -> tuple[dict[str, Any] | None, tuple[str, ...], tuple[str, ...], str]:
     if _use_v2_for_module(datos, modulo, info):
         return SCHEMA_V2, PUBLIC_BACKENDS, DEFAULT_REQUIRED_TARGETS_V2, "v2"
     return SCHEMA_V1, OFFICIAL_TARGETS, DEFAULT_REQUIRED_TARGETS, "v1"
 
 
-
-
-def _validate_stdlib_contract_manifest(name: str, contract: Dict[str, Any]) -> list[str]:
+def _validate_stdlib_contract_manifest(
+    name: str, contract: Dict[str, Any]
+) -> list[str]:
     errors: list[str] = []
     if not isinstance(contract, dict):
-        return [f"Manifest contractual inválido para {name}: contenido no es objeto TOML."]
+        return [
+            f"Manifest contractual inválido para {name}: contenido no es objeto TOML."
+        ]
 
     public_api = contract.get("public_api")
-    if not isinstance(public_api, list) or not public_api or not all(isinstance(item, str) and item.strip() for item in public_api):
+    if (
+        not isinstance(public_api, list)
+        or not public_api
+        or not all(isinstance(item, str) and item.strip() for item in public_api)
+    ):
         errors.append(
             f"Manifest contractual inválido para {name}: public_api debe ser lista no vacía de strings."
         )
 
     preferred = contract.get("backend_preferido")
-    if not isinstance(preferred, str) or normalize_target_name(preferred) not in OFFICIAL_TARGETS:
+    if (
+        not isinstance(preferred, str)
+        or normalize_target_name(preferred) not in OFFICIAL_TARGETS
+    ):
         errors.append(
             f"Manifest contractual inválido para {name}: backend_preferido debe ser un backend canónico oficial."
         )
@@ -325,6 +347,7 @@ def _validate_stdlib_contracts() -> list[str]:
         errors.extend(_validate_stdlib_contract_manifest(name, contract))
     return errors
 
+
 def validar_mod(path: str | None = None) -> None:
     """Valida el contenido de ``cobra.mod``.
 
@@ -342,8 +365,12 @@ def validar_mod(path: str | None = None) -> None:
     backend_archivos: dict[str, set[str]] = {
         target: set() for target in OFFICIAL_TARGETS
     }
-    required_targets_v1 = _required_targets_from_policy(OFFICIAL_TARGETS, DEFAULT_REQUIRED_TARGETS)
-    required_targets_v2 = _required_targets_from_policy(PUBLIC_BACKENDS, DEFAULT_REQUIRED_TARGETS_V2)
+    required_targets_v1 = _required_targets_from_policy(
+        OFFICIAL_TARGETS, DEFAULT_REQUIRED_TARGETS
+    )
+    required_targets_v2 = _required_targets_from_policy(
+        PUBLIC_BACKENDS, DEFAULT_REQUIRED_TARGETS_V2
+    )
     warned_v1 = False
 
     for modulo, info in datos.items():
@@ -356,7 +383,9 @@ def validar_mod(path: str | None = None) -> None:
 
         info_normalized = dict(info)
 
-        schema, allowed_targets, _, schema_name = _schema_for_module(datos, modulo, info_normalized)
+        schema, allowed_targets, _, schema_name = _schema_for_module(
+            datos, modulo, info_normalized
+        )
 
         if schema_name == "v1" and not warned_v1:
             logger.warning(MIGRATION_WARNING)
@@ -375,7 +404,9 @@ def validar_mod(path: str | None = None) -> None:
 
         _warn_if_tier2_used_as_optional_mapping(modulo, info_normalized)
 
-        invalid_backend_keys = _find_noncanonical_backend_keys(info_normalized, allowed_targets)
+        invalid_backend_keys = _find_noncanonical_backend_keys(
+            info_normalized, allowed_targets
+        )
         if invalid_backend_keys:
             errores.append(
                 "Backends no canónicos en {modulo}: {targets}. "
@@ -395,7 +426,9 @@ def validar_mod(path: str | None = None) -> None:
             except (TypeError, ValueError):
                 errores.append(f"Formato de versión inválido para {modulo}")
 
-        required_targets = required_targets_v2 if schema_name == "v2" else required_targets_v1
+        required_targets = (
+            required_targets_v2 if schema_name == "v2" else required_targets_v1
+        )
         missing_required = [
             target for target in required_targets if not info_normalized.get(target)
         ]

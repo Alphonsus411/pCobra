@@ -38,10 +38,5 @@ def test_integracion_condicional_python():
     tokens = Lexer(codigo).analizar_token()
     ast = Parser(tokens).parsear()
     resultado = TranspiladorPython().generate_code(ast)
-    esperado = (
-        IMPORTS
-        + "x = 10\n"
-        + "if x > 5:\n"
-        + "    print(x)\n"
-    )
+    esperado = IMPORTS + "x = 10\n" + "if x > 5:\n" + "    print(x)\n"
     assert resultado == esperado

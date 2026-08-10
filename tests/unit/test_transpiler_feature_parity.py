@@ -141,9 +141,9 @@ def _compute_feature_evidence() -> dict[str, dict[str, str]]:
 
             assert output.strip(), f"Salida vacía para {backend}.{feature}"
             if feature == "holobit":
-                assert "cobra_holobit" in output, (
-                    f"Salida de holobit incoherente para {backend}: faltó hook cobra_holobit."
-                )
+                assert (
+                    "cobra_holobit" in output
+                ), f"Salida de holobit incoherente para {backend}: faltó hook cobra_holobit."
 
             if expected_level == "full":
                 evidence[backend][feature] = "full"
@@ -155,7 +155,9 @@ def _compute_feature_evidence() -> dict[str, dict[str, str]]:
 
 @pytest.mark.parametrize("backend", OFFICIAL_TARGETS)
 @pytest.mark.parametrize("feature", AST_FEATURES)
-def test_official_transpilers_feature_contract_is_executable(backend: str, feature: str):
+def test_official_transpilers_feature_contract_is_executable(
+    backend: str, feature: str
+):
     evidence = _compute_feature_evidence()
     assert evidence[backend][feature] == AST_FEATURE_EVIDENCE_BASELINE[backend][feature]
 
@@ -170,12 +172,18 @@ def test_wasm_lowering_error_is_contractual_and_homogeneous():
     from pcobra.cobra.transpilers.transpiler.to_wasm import TranspiladorWasm
 
     transpiler = TranspiladorWasm()
-    with pytest.raises(RuntimeError, match="WASM_CONTRACT_ERROR: lowering i32 no soportado"):
+    with pytest.raises(
+        RuntimeError, match="WASM_CONTRACT_ERROR: lowering i32 no soportado"
+    ):
         transpiler._obtener_i32(NodoLista([NodoValor(1)]), "tests.wasm.lowering")
 
 
 @pytest.mark.parametrize("backend", ("rust", "go", "cpp", "java", "wasm", "asm"))
-@pytest.mark.parametrize("feature", ("decoradores", "imports_corelibs", "manejo_errores"))
-def test_phase_1_and_2_backends_generate_code_for_priority_features(backend: str, feature: str):
+@pytest.mark.parametrize(
+    "feature", ("decoradores", "imports_corelibs", "manejo_errores")
+)
+def test_phase_1_and_2_backends_generate_code_for_priority_features(
+    backend: str, feature: str
+):
     salida = _transpile(backend, _phase_nodes(feature))
     assert salida.strip(), f"Salida vacía para {backend}.{feature}"

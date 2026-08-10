@@ -1,7 +1,14 @@
 import pytest
 
 from cobra.core import Token, TipoToken
-from core.ast_nodes import NodoAsignacion, NodoCondicional, NodoFuncion, NodoRetorno, NodoBucleMientras, NodoValor
+from core.ast_nodes import (
+    NodoAsignacion,
+    NodoCondicional,
+    NodoFuncion,
+    NodoRetorno,
+    NodoBucleMientras,
+    NodoValor,
+)
 from cobra.core import Parser, ParserError
 
 

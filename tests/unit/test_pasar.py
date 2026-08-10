@@ -40,4 +40,3 @@ def test_transpilar_pasar_js():
         + ";"
     )
     assert resultado == esperado
-

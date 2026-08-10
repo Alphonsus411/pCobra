@@ -20,11 +20,17 @@ from typing import Final
 
 from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
 
-RETIRED_BACKENDS: Final[frozenset[str]] = frozenset({"wasm", "go", "cpp", "java", "asm"})
+RETIRED_BACKENDS: Final[frozenset[str]] = frozenset(
+    {"wasm", "go", "cpp", "java", "asm"}
+)
 
-STANDARD_LIBRARY_INIT: Final[Path] = Path(str(files("pcobra.standard_library").joinpath("__init__.py")))
+STANDARD_LIBRARY_INIT: Final[Path] = Path(
+    str(files("pcobra.standard_library").joinpath("__init__.py"))
+)
 CORELIBS_INIT: Final[Path] = Path(str(files("pcobra.corelibs").joinpath("__init__.py")))
-SNAPSHOT_PATH: Final[Path] = Path(str(files("pcobra.cobra.transpilers").joinpath("runtime_api_parity_snapshot.json")))
+SNAPSHOT_PATH: Final[Path] = Path(
+    str(files("pcobra.cobra.transpilers").joinpath("runtime_api_parity_snapshot.json"))
+)
 
 
 @dataclass(frozen=True)
@@ -47,7 +53,11 @@ def _read_all_exports(path: Path) -> tuple[str, ...]:
                 if isinstance(target, ast.Name) and target.id == "__all__":
                     value = node.value
                     break
-        elif isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name) and node.target.id == "__all__":
+        elif (
+            isinstance(node, ast.AnnAssign)
+            and isinstance(node.target, ast.Name)
+            and node.target.id == "__all__"
+        ):
             value = node.value
 
         if value is None:
@@ -78,7 +88,9 @@ def _validate_snapshot_backend_sections(snapshot: dict[str, object]) -> None:
     """Asegura que la sección activa del snapshot no mezcle backends retirados."""
     backend_runtime_api = snapshot.get("backend_runtime_api")
     if not isinstance(backend_runtime_api, dict):
-        raise RuntimeError("runtime_api_parity_snapshot.json: backend_runtime_api inválido")
+        raise RuntimeError(
+            "runtime_api_parity_snapshot.json: backend_runtime_api inválido"
+        )
 
     active_backends = set(backend_runtime_api)
     legacy_in_active = sorted(active_backends & RETIRED_BACKENDS)
@@ -105,7 +117,9 @@ def build_runtime_api_matrix() -> dict[str, object]:
 
     backend_runtime_api = snapshot["backend_runtime_api"]
     if not isinstance(backend_runtime_api, dict):
-        raise RuntimeError("runtime_api_parity_snapshot.json: backend_runtime_api inválido")
+        raise RuntimeError(
+            "runtime_api_parity_snapshot.json: backend_runtime_api inválido"
+        )
 
     global_api = set(exports.global_api)
     corelibs_api = set(exports.corelibs)

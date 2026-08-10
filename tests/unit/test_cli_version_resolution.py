@@ -5,7 +5,6 @@ from pathlib import Path
 from types import SimpleNamespace
 from typing import Optional
 
-
 ROOT = Path(__file__).resolve().parents[2]
 CLI_PATH = ROOT / "src" / "pcobra" / "cli.py"
 

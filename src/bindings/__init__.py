@@ -8,6 +8,7 @@ Alcance explícito de compatibilidad:
 
 Implementación: delega en :mod:`pcobra.cobra.bindings`.
 """
+
 # pcobra-compat: allow-legacy-imports
 
 from __future__ import annotations

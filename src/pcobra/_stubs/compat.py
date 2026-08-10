@@ -38,7 +38,9 @@ def import_optional_module(module_name: str, *, safe_stub: bool = False) -> Any:
         return importlib.import_module(f"{stub_root}{suffix}")
 
 
-def import_optional_attr(module_name: str, attr_name: str, *, safe_stub: bool = False) -> Any:
+def import_optional_attr(
+    module_name: str, attr_name: str, *, safe_stub: bool = False
+) -> Any:
     """Importa un atributo desde una dependencia opcional con fallback controlado."""
 
     module = import_optional_module(module_name, safe_stub=safe_stub)

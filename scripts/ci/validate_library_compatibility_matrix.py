@@ -29,7 +29,9 @@ def main() -> int:
 
     content = DOC_PATH.read_text(encoding="utf-8")
 
-    missing_targets = [target for target in OFFICIAL_TARGETS if f"`{target}`" not in content]
+    missing_targets = [
+        target for target in OFFICIAL_TARGETS if f"`{target}`" not in content
+    ]
     if missing_targets:
         raise SystemExit(f"Targets faltantes en documentación: {missing_targets}")
 

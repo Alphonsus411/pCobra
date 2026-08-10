@@ -34,7 +34,9 @@ var y = 2
         value="md2cobra_plugin:MarkdownToCobraCommand",
         group="cobra.plugins",
     )
-    with patch("cli.plugin.entry_points", return_value=importlib.metadata.EntryPoints((ep,))):
+    with patch(
+        "cli.plugin.entry_points", return_value=importlib.metadata.EntryPoints((ep,))
+    ):
         main(["md2cobra", "--input", str(md), "--output", str(salida)])
 
     assert salida.exists()

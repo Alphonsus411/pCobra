@@ -5,7 +5,11 @@ from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.services.contracts import TestRequest
 from pcobra.cobra.cli.services.test_service import TestService, VALID_EXTENSIONS
 from pcobra.cobra.build import backend_pipeline
-from pcobra.cobra.core.sandbox import ejecutar_en_contenedor, ejecutar_en_sandbox, ejecutar_en_sandbox_js
+from pcobra.cobra.core.sandbox import (
+    ejecutar_en_contenedor,
+    ejecutar_en_sandbox,
+    ejecutar_en_sandbox_js,
+)
 from pcobra.cobra.cli.target_policies import (
     OFFICIAL_TRANSPILATION_TARGETS,
     OFFICIAL_TRANSPILATION_TARGETS_HELP,
@@ -42,7 +46,11 @@ class VerifyCommand(BaseCommand):
     def _compile_and_execute(self, ast: Any, lang: str, transpiler: Any | None = None):
         """Compatibilidad: compila/ejecuta un AST o transpilador explícito."""
         try:
-            codigo_gen = transpiler.generate_code(ast) if transpiler is not None else backend_pipeline.transpile(ast, lang)
+            codigo_gen = (
+                transpiler.generate_code(ast)
+                if transpiler is not None
+                else backend_pipeline.transpile(ast, lang)
+            )
             if lang == "python":
                 salida = ejecutar_en_sandbox(codigo_gen)
             elif lang == "javascript":
@@ -58,7 +66,9 @@ class VerifyCommand(BaseCommand):
             return None, str(exc)
 
     def register_subparser(self, subparsers: Any) -> CustomArgumentParser:
-        parser = subparsers.add_parser(self.name, help=_("Comprueba la salida en varios lenguajes"))
+        parser = subparsers.add_parser(
+            self.name, help=_("Comprueba la salida en varios lenguajes")
+        )
         parser.add_argument("archivo", help=_("Archivo de código fuente a verificar"))
         parser.add_argument(
             "--lenguajes",

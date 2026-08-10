@@ -1,4 +1,5 @@
 """Funciones auxiliares para manejar autocompletado opcional en la CLI."""
+
 from __future__ import annotations
 
 import logging

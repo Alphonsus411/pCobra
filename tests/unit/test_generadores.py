@@ -14,7 +14,9 @@ def test_interpretador_generador_simple():
 
 def test_generador_limpia_contexto_exactamente_una_vez_en_finally():
     inter = InterpretadorCobra()
-    inter.ejecutar_asignacion(NodoAsignacion("global_previa", NodoValor(7), declaracion=True))
+    inter.ejecutar_asignacion(
+        NodoAsignacion("global_previa", NodoValor(7), declaracion=True)
+    )
     contextos_iniciales = len(inter.contextos)
     mem_contextos_iniciales = len(inter.mem_contextos)
 
