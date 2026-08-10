@@ -38,9 +38,15 @@ def test_codeql_custom_queries_resolve_from_repository_root() -> None:
         assert (ROOT / query_path).is_file(), query_path
 
 
-def test_missing_codegen_exception_uses_supported_try_type() -> None:
-    """Evita reintroducir el tipo inexistente ``TryStmt`` en la query."""
+def test_missing_codegen_exception_uses_supported_try_api() -> None:
+    """Evita reintroducir tipos o relaciones inexistentes para ``Try``."""
     query = MISSING_CODEGEN_EXCEPTION_QUERY.read_text(encoding="utf-8")
 
+    assert "from Function m, File f" in query
+    assert "m.getLocation().getFile() = f" in query
+    assert 'regexpMatch("^src/cobra/transpilers/transpiler/.*")' in query
     assert "exists(Try t |" in query
+    assert "t.getScope() = m" in query
+    assert "from Method" not in query
     assert "TryStmt" not in query
+    assert "getEnclosingCallable" not in query
