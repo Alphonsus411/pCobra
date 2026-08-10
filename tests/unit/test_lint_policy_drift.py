@@ -31,6 +31,20 @@ def test_no_confunde_identificador_node_con_target_prohibido(
     assert lint_policy_drift._find_policy_drift(script, script.read_text()) == []
 
 
+def test_no_confunde_node_ids_de_auditoria_con_target_prohibido(
+    tmp_path, monkeypatch
+) -> None:
+    report = tmp_path / "docs" / "auditorias" / "README.md"
+    report.parent.mkdir(parents=True)
+    report.write_text(
+        "Los fallos actuales de targets son los mismos node IDs que en baseline.\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(lint_policy_drift, "ROOT", tmp_path)
+
+    assert lint_policy_drift._find_policy_drift(report, report.read_text()) == []
+
+
 def test_sigue_detectando_target_prohibido_en_literal_python(
     tmp_path, monkeypatch
 ) -> None:

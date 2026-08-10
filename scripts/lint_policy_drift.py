@@ -43,6 +43,7 @@ assert_public_targets_contract(
 OFFICIAL = set(PUBLIC_BACKENDS)
 CONTEXT = re.compile(r"(?i)(targets?|backends?|destinos?|--tipo|--destino|--origen)")
 TOKEN = re.compile(r"(?<![\w.+/-])([a-z][a-z0-9_+-]{1,20})(?![\w.+/-])", re.IGNORECASE)
+NODE_IDENTIFIER = re.compile(r"\bnode\s+ids?\b", re.IGNORECASE)
 KNOWN_DISALLOWED = {
     "assembly",
     "assembler",
@@ -135,6 +136,8 @@ def _find_policy_drift(path: Path, content: str) -> list[str]:
         for match in TOKEN.finditer(lowered):
             token = match.group(1).strip()
             if token in OFFICIAL or token in STOPWORDS:
+                continue
+            if token == "node" and NODE_IDENTIFIER.search(line):
                 continue
             if token in KNOWN_DISALLOWED and match.span(1) not in python_names:
                 errors.append(
