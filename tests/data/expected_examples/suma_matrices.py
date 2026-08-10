@@ -1,23 +1,8 @@
 from pcobra.cobra.core.nativos import *
 import pcobra.corelibs as _pcobra_corelibs
 import pcobra.standard_library as _pcobra_standard_library
-
-globals().update(
-    {
-        name: getattr(_pcobra_corelibs, name)
-        for name in dir(_pcobra_corelibs)
-        if not name.startswith("_")
-    }
-)
-globals().update(
-    {
-        name: getattr(_pcobra_standard_library, name)
-        for name in dir(_pcobra_standard_library)
-        if not name.startswith("_")
-    }
-)
-
-
+globals().update({name: getattr(_pcobra_corelibs, name) for name in dir(_pcobra_corelibs) if not name.startswith('_')})
+globals().update({name: getattr(_pcobra_standard_library, name) for name in dir(_pcobra_standard_library) if not name.startswith('_')})
 def sumar_matriz():
     a11 = 1
     a12 = 2
@@ -31,6 +16,4 @@ def sumar_matriz():
     print(a12 + b12)
     print(a21 + b21)
     print(a22 + b22)
-
-
 sumar_matriz()
