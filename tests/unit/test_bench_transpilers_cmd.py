@@ -14,10 +14,14 @@ class DummyTranspiler:
 @pytest.mark.timeout(10)
 def test_bench_transpilers_generates_results(tmp_path, monkeypatch):
     bt = importlib.import_module("cobra.cli.commands.bench_transpilers_cmd")
-    bt_pcobra = importlib.import_module("pcobra.cobra.cli.commands.bench_transpilers_cmd")
+    bt_pcobra = importlib.import_module(
+        "pcobra.cobra.cli.commands.bench_transpilers_cmd"
+    )
 
     for module in (bt, bt_pcobra):
-        monkeypatch.setattr(module, "cli_transpilers", lambda: {"dummy": DummyTranspiler})
+        monkeypatch.setattr(
+            module, "cli_transpilers", lambda: {"dummy": DummyTranspiler}
+        )
         monkeypatch.setattr(module, "timeit", lambda func, number=1: 0.01)
         monkeypatch.setattr(module, "obtener_ast", lambda _code: object())
         monkeypatch.setattr(module, "PROGRAM_DIR", tmp_path)
@@ -37,11 +41,15 @@ def test_bench_transpilers_generates_results(tmp_path, monkeypatch):
 @pytest.mark.timeout(10)
 def test_bench_transpilers_profile_creates_file(tmp_path, monkeypatch):
     bt = importlib.import_module("cobra.cli.commands.bench_transpilers_cmd")
-    bt_pcobra = importlib.import_module("pcobra.cobra.cli.commands.bench_transpilers_cmd")
+    bt_pcobra = importlib.import_module(
+        "pcobra.cobra.cli.commands.bench_transpilers_cmd"
+    )
 
     monkeypatch.chdir(tmp_path)
     for module in (bt, bt_pcobra):
-        monkeypatch.setattr(module, "cli_transpilers", lambda: {"dummy": DummyTranspiler})
+        monkeypatch.setattr(
+            module, "cli_transpilers", lambda: {"dummy": DummyTranspiler}
+        )
         monkeypatch.setattr(module, "timeit", lambda func, number=1: 0.01)
         monkeypatch.setattr(module, "obtener_ast", lambda _code: object())
         monkeypatch.setattr(module, "PROGRAM_DIR", tmp_path)

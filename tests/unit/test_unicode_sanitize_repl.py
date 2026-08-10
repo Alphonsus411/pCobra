@@ -61,9 +61,7 @@ def test_arranque_unicode_compila_importa_sanea_y_muestra_ayuda():
 
     assert importacion.returncode == 0, importacion.stderr
 
-    env["PATH"] = os.pathsep.join(
-        [str(repo_root / "scripts/bin"), env.get("PATH", "")]
-    )
+    env["PATH"] = os.pathsep.join([str(repo_root / "scripts/bin"), env.get("PATH", "")])
     ayuda = subprocess.run(
         ["cobra", "--help"],
         cwd=repo_root,
@@ -148,7 +146,9 @@ def test_interactive_command_sanitiza_surrogate_invalido_y_no_crashea(tmp_path):
         def append_string(self, value: str) -> None:
             saneado = sanitize_input(value)
             if "\ud83d" in saneado or "\udc00" in saneado:
-                raise UnicodeEncodeError("utf-8", saneado, 0, 1, "surrogates not allowed")
+                raise UnicodeEncodeError(
+                    "utf-8", saneado, 0, 1, "surrogates not allowed"
+                )
             capturado["history"].append(saneado)
 
     class DummyPromptSession:
@@ -164,14 +164,31 @@ def test_interactive_command_sanitiza_surrogate_invalido_y_no_crashea(tmp_path):
                 return entrada_rota
             return "salir"
 
-    with patch("pcobra.cobra.cli.commands.interactive_cmd.validar_dependencias"), \
-         patch("pcobra.cobra.cli.commands.interactive_cmd.limitar_memoria_mb"), \
-         patch("pcobra.cobra.cli.commands.interactive_cmd.os.path.expanduser", return_value=str(tmp_path / ".cobra_history")), \
-         patch("pcobra.cobra.cli.commands.interactive_cmd.SafeFileHistory", DummySafeHistory), \
-         patch("pcobra.cobra.cli.commands.interactive_cmd.PromptSession", DummyPromptSession), \
-         patch.object(cmd, "validar_entrada", side_effect=lambda linea: capturado["validar"].append(linea) or True), \
-         patch.object(cmd, "_procesar_comando_especial", return_value=False), \
-         patch.object(cmd, "_actualizar_buffer_y_obtener_codigo_listo", return_value=None):
+    with (
+        patch("pcobra.cobra.cli.commands.interactive_cmd.validar_dependencias"),
+        patch("pcobra.cobra.cli.commands.interactive_cmd.limitar_memoria_mb"),
+        patch(
+            "pcobra.cobra.cli.commands.interactive_cmd.os.path.expanduser",
+            return_value=str(tmp_path / ".cobra_history"),
+        ),
+        patch(
+            "pcobra.cobra.cli.commands.interactive_cmd.SafeFileHistory",
+            DummySafeHistory,
+        ),
+        patch(
+            "pcobra.cobra.cli.commands.interactive_cmd.PromptSession",
+            DummyPromptSession,
+        ),
+        patch.object(
+            cmd,
+            "validar_entrada",
+            side_effect=lambda linea: capturado["validar"].append(linea) or True,
+        ),
+        patch.object(cmd, "_procesar_comando_especial", return_value=False),
+        patch.object(
+            cmd, "_actualizar_buffer_y_obtener_codigo_listo", return_value=None
+        ),
+    ):
         ret = cmd.run(_args())
 
     assert ret == 0
@@ -207,7 +224,9 @@ def test_run_repl_loop_debug_detecta_surrogate_remanente_en_frontera():
             assert "pre-validacion" in str(exc)
 
 
-def test_safe_file_history_append_string_none_se_coacciona_y_sanea(tmp_path, monkeypatch):
+def test_safe_file_history_append_string_none_se_coacciona_y_sanea(
+    tmp_path, monkeypatch
+):
     if SafeFileHistory is None:
         return
 
@@ -263,7 +282,9 @@ def test_safe_file_history_append_string_surrogate_aislado_no_lanza_unicode_enco
 
     try:
         history.append_string("\ud83d")
-    except UnicodeEncodeError as exc:  # pragma: no cover - condición de regresión explícita
+    except (
+        UnicodeEncodeError
+    ) as exc:  # pragma: no cover - condición de regresión explícita
         assert False, f"No debía propagarse UnicodeEncodeError: {exc}"
 
     payload = capturado[0]
@@ -272,7 +293,9 @@ def test_safe_file_history_append_string_surrogate_aislado_no_lanza_unicode_enco
     assert payload.encode("utf-8") == "�".encode("utf-8")
 
 
-def test_safe_file_history_append_string_muy_larga_multilenguaje_surrogate(tmp_path, monkeypatch):
+def test_safe_file_history_append_string_muy_larga_multilenguaje_surrogate(
+    tmp_path, monkeypatch
+):
     if SafeFileHistory is None:
         return
 

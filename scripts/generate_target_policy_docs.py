@@ -58,51 +58,88 @@ POLICY_RUNTIME_SPLIT_END = "<!-- END GENERATED TARGET RUNTIME SPLIT -->"
 
 
 def _policy_summary_md() -> str:
-    return "\n".join(
-        [
-            render_public_policy_summary(markup="markdown"),
-            render_reverse_scope_summary(tuple(REVERSE_SCOPE_LANGUAGES), markup="markdown"),
-            "",
-            "Tiers oficiales de soporte de backends:",
-            "",
-            *[f"- {line}" for line in build_tier_summary_lines(markup="markdown")],
-        ]
-    ).strip() + "\n"
+    return (
+        "\n".join(
+            [
+                render_public_policy_summary(markup="markdown"),
+                render_reverse_scope_summary(
+                    tuple(REVERSE_SCOPE_LANGUAGES), markup="markdown"
+                ),
+                "",
+                "Tiers oficiales de soporte de backends:",
+                "",
+                *[f"- {line}" for line in build_tier_summary_lines(markup="markdown")],
+            ]
+        ).strip()
+        + "\n"
+    )
 
 
 def _policy_summary_en_md() -> str:
-    return "\n".join(
-        [
-            "- **Official transpilation targets**: " + format_target_sequence(PUBLIC_BACKENDS, markup="markdown") + ".",
-            "- **Targets with official verifiable runtime**: " + format_target_sequence(OFFICIAL_RUNTIME_TARGETS, markup="markdown") + ".",
-            "- **Targets with explicit executable CLI verification**: " + format_target_sequence(VERIFICATION_EXECUTABLE_TARGETS, markup="markdown") + ".",
-            "- **Targets with best-effort runtime**: " + format_target_sequence(BEST_EFFORT_RUNTIME_TARGETS, markup="markdown") + ".",
-            "- **Targets with maintained `corelibs`/`standard_library` runtime support**: " + format_target_sequence(OFFICIAL_STANDARD_LIBRARY_TARGETS, markup="markdown") + ".",
-            "- **Targets with project-maintained Holobit adapter**: " + format_target_sequence(OFFICIAL_RUNTIME_TARGETS, markup="markdown") + ".",
-            "- **Full SDK compatibility**: " + format_target_sequence(SDK_COMPATIBLE_TARGETS, markup="markdown") + ".",
-            "- **Transpilation-only targets**: " + format_target_sequence(NO_RUNTIME_TARGETS, markup="markdown") + ".",
-            "- **Reverse transpilation input origins**: " + ", ".join(f"`{target}`" for target in REVERSE_SCOPE_LANGUAGES) + ".",
-            "",
-            "Official backend support tiers:",
-            "",
-            "- **Tier 1**: " + format_target_sequence(TIER1_TARGETS, markup="markdown") + ".",
-            "- **Tier 2**: " + format_target_sequence(TIER2_TARGETS, markup="markdown") + ".",
-        ]
-    ).strip() + "\n"
+    return (
+        "\n".join(
+            [
+                "- **Official transpilation targets**: "
+                + format_target_sequence(PUBLIC_BACKENDS, markup="markdown")
+                + ".",
+                "- **Targets with official verifiable runtime**: "
+                + format_target_sequence(OFFICIAL_RUNTIME_TARGETS, markup="markdown")
+                + ".",
+                "- **Targets with explicit executable CLI verification**: "
+                + format_target_sequence(
+                    VERIFICATION_EXECUTABLE_TARGETS, markup="markdown"
+                )
+                + ".",
+                "- **Targets with best-effort runtime**: "
+                + format_target_sequence(BEST_EFFORT_RUNTIME_TARGETS, markup="markdown")
+                + ".",
+                "- **Targets with maintained `corelibs`/`standard_library` runtime support**: "
+                + format_target_sequence(
+                    OFFICIAL_STANDARD_LIBRARY_TARGETS, markup="markdown"
+                )
+                + ".",
+                "- **Targets with project-maintained Holobit adapter**: "
+                + format_target_sequence(OFFICIAL_RUNTIME_TARGETS, markup="markdown")
+                + ".",
+                "- **Full SDK compatibility**: "
+                + format_target_sequence(SDK_COMPATIBLE_TARGETS, markup="markdown")
+                + ".",
+                "- **Transpilation-only targets**: "
+                + format_target_sequence(NO_RUNTIME_TARGETS, markup="markdown")
+                + ".",
+                "- **Reverse transpilation input origins**: "
+                + ", ".join(f"`{target}`" for target in REVERSE_SCOPE_LANGUAGES)
+                + ".",
+                "",
+                "Official backend support tiers:",
+                "",
+                "- **Tier 1**: "
+                + format_target_sequence(TIER1_TARGETS, markup="markdown")
+                + ".",
+                "- **Tier 2**: "
+                + format_target_sequence(TIER2_TARGETS, markup="markdown")
+                + ".",
+            ]
+        ).strip()
+        + "\n"
+    )
 
 
 def _policy_tiers_md() -> str:
-    return "\n".join(
-        [
-            "### Tier 1",
-            "",
-            *[f"- `{target}`" for target in TIER1_TARGETS],
-            "",
-            "### Tier 2",
-            "",
-            *[f"- `{target}`" for target in TIER2_TARGETS],
-        ]
-    ).strip() + "\n"
+    return (
+        "\n".join(
+            [
+                "### Tier 1",
+                "",
+                *[f"- `{target}`" for target in TIER1_TARGETS],
+                "",
+                "### Tier 2",
+                "",
+                *[f"- `{target}`" for target in TIER2_TARGETS],
+            ]
+        ).strip()
+        + "\n"
+    )
 
 
 def _policy_status_table_md() -> str:
@@ -115,18 +152,24 @@ def _policy_status_table_md() -> str:
         holobit_status = (
             "`full`; usa el contrato completo del SDK Python"
             if backend in SDK_COMPATIBLE_TARGETS
-            else "adaptador mantenido por el proyecto; estado contractual `partial`"
-            if backend in OFFICIAL_RUNTIME_TARGETS
-            else "hooks/adaptadores `partial` sobre runtime best-effort"
-            if backend in BEST_EFFORT_RUNTIME_TARGETS
-            else "hooks simbólicos/diagnóstico `partial`; requiere runtime externo"
+            else (
+                "adaptador mantenido por el proyecto; estado contractual `partial`"
+                if backend in OFFICIAL_RUNTIME_TARGETS
+                else (
+                    "hooks/adaptadores `partial` sobre runtime best-effort"
+                    if backend in BEST_EFFORT_RUNTIME_TARGETS
+                    else "hooks simbólicos/diagnóstico `partial`; requiere runtime externo"
+                )
+            )
         )
         runtime_status = (
             "oficial verificable"
             if backend in OFFICIAL_RUNTIME_TARGETS
-            else "best-effort no público"
-            if backend in BEST_EFFORT_RUNTIME_TARGETS
-            else "solo transpilación"
+            else (
+                "best-effort no público"
+                if backend in BEST_EFFORT_RUNTIME_TARGETS
+                else "solo transpilación"
+            )
         )
         sdk_status = "completa" if backend in SDK_COMPATIBLE_TARGETS else "parcial"
         lines.append(
@@ -136,18 +179,21 @@ def _policy_status_table_md() -> str:
 
 
 def _policy_runtime_split_md() -> str:
-    return "\n".join(
-        [
-            f"- `OFFICIAL_RUNTIME_TARGETS`: {format_target_sequence(OFFICIAL_RUNTIME_TARGETS, markup='markdown')}",
-            f"- `VERIFICATION_EXECUTABLE_TARGETS`: {format_target_sequence(VERIFICATION_EXECUTABLE_TARGETS, markup='markdown')}",
-            f"- `BEST_EFFORT_RUNTIME_TARGETS`: {format_target_sequence(BEST_EFFORT_RUNTIME_TARGETS, markup='markdown')}",
-            f"- `TRANSPILATION_ONLY_TARGETS`: {format_target_sequence(NO_RUNTIME_TARGETS, markup='markdown')}",
-            f"- `NO_RUNTIME_TARGETS`: {format_target_sequence(NO_RUNTIME_TARGETS, markup='markdown')}",
-            f"- `OFFICIAL_STANDARD_LIBRARY_TARGETS`: {format_target_sequence(OFFICIAL_STANDARD_LIBRARY_TARGETS, markup='markdown')}",
-            f"- `ADVANCED_HOLOBIT_RUNTIME_TARGETS`: {format_target_sequence(OFFICIAL_RUNTIME_TARGETS, markup='markdown')}",
-            f"- `SDK_COMPATIBLE_TARGETS`: {format_target_sequence(SDK_COMPATIBLE_TARGETS, markup='markdown')}",
-        ]
-    ).strip() + "\n"
+    return (
+        "\n".join(
+            [
+                f"- `OFFICIAL_RUNTIME_TARGETS`: {format_target_sequence(OFFICIAL_RUNTIME_TARGETS, markup='markdown')}",
+                f"- `VERIFICATION_EXECUTABLE_TARGETS`: {format_target_sequence(VERIFICATION_EXECUTABLE_TARGETS, markup='markdown')}",
+                f"- `BEST_EFFORT_RUNTIME_TARGETS`: {format_target_sequence(BEST_EFFORT_RUNTIME_TARGETS, markup='markdown')}",
+                f"- `TRANSPILATION_ONLY_TARGETS`: {format_target_sequence(NO_RUNTIME_TARGETS, markup='markdown')}",
+                f"- `NO_RUNTIME_TARGETS`: {format_target_sequence(NO_RUNTIME_TARGETS, markup='markdown')}",
+                f"- `OFFICIAL_STANDARD_LIBRARY_TARGETS`: {format_target_sequence(OFFICIAL_STANDARD_LIBRARY_TARGETS, markup='markdown')}",
+                f"- `ADVANCED_HOLOBIT_RUNTIME_TARGETS`: {format_target_sequence(OFFICIAL_RUNTIME_TARGETS, markup='markdown')}",
+                f"- `SDK_COMPATIBLE_TARGETS`: {format_target_sequence(SDK_COMPATIBLE_TARGETS, markup='markdown')}",
+            ]
+        ).strip()
+        + "\n"
+    )
 
 
 def _official_targets_table_rst() -> str:
@@ -167,16 +213,20 @@ def _official_targets_table_rst() -> str:
         holobit_status = (
             "full"
             if backend in SDK_COMPATIBLE_TARGETS
-            else "adaptador mantenido (partial)"
-            if backend in OFFICIAL_RUNTIME_TARGETS
-            else "partial"
+            else (
+                "adaptador mantenido (partial)"
+                if backend in OFFICIAL_RUNTIME_TARGETS
+                else "partial"
+            )
         )
         runtime_status = (
             "oficial verificable"
             if backend in OFFICIAL_RUNTIME_TARGETS
-            else "best-effort no público"
-            if backend in BEST_EFFORT_RUNTIME_TARGETS
-            else "solo transpilación"
+            else (
+                "best-effort no público"
+                if backend in BEST_EFFORT_RUNTIME_TARGETS
+                else "solo transpilación"
+            )
         )
         sdk_status = "completa" if backend in SDK_COMPATIBLE_TARGETS else "parcial"
         lines.extend(
@@ -247,16 +297,21 @@ def _cli_backend_examples_rst() -> str:
 
 
 def _policy_summary_rst() -> str:
-    return "\n".join(
-        [
-            render_public_policy_summary(markup="rst"),
-            render_reverse_scope_summary(tuple(REVERSE_SCOPE_LANGUAGES), markup="rst"),
-            "",
-            "Tiers oficiales de soporte de backends:",
-            "",
-            *[f"- {line}" for line in build_tier_summary_lines(markup="rst")],
-        ]
-    ).strip() + "\n"
+    return (
+        "\n".join(
+            [
+                render_public_policy_summary(markup="rst"),
+                render_reverse_scope_summary(
+                    tuple(REVERSE_SCOPE_LANGUAGES), markup="rst"
+                ),
+                "",
+                "Tiers oficiales de soporte de backends:",
+                "",
+                *[f"- {line}" for line in build_tier_summary_lines(markup="rst")],
+            ]
+        ).strip()
+        + "\n"
+    )
 
 
 def _write(path: Path, content: str) -> None:
@@ -275,12 +330,16 @@ def _inject_between_markers(text: str, *, start: str, end: str, body: str) -> st
 def sync_readme_blocks() -> None:
     readme = ROOT / "README.md"
     text = readme.read_text(encoding="utf-8")
-    updated = _inject_between_markers(text, start=MARKER_START, end=MARKER_END, body=_policy_summary_md())
+    updated = _inject_between_markers(
+        text, start=MARKER_START, end=MARKER_END, body=_policy_summary_md()
+    )
     readme.write_text(updated, encoding="utf-8")
 
     readme_en = ROOT / "docs" / "README.en.md"
     text_en = readme_en.read_text(encoding="utf-8")
-    updated_en = _inject_between_markers(text_en, start=EN_MARKER_START, end=EN_MARKER_END, body=_policy_summary_en_md())
+    updated_en = _inject_between_markers(
+        text_en, start=EN_MARKER_START, end=EN_MARKER_END, body=_policy_summary_en_md()
+    )
     readme_en.write_text(updated_en, encoding="utf-8")
 
     policy_doc = ROOT / "docs" / "targets_policy.md"
@@ -309,7 +368,10 @@ def sync_readme_blocks() -> None:
 def generate() -> None:
     _write(GENERATED_DIR / "target_policy_summary.rst", _policy_summary_rst())
     _write(GENERATED_DIR / "official_targets_table.rst", _official_targets_table_rst())
-    _write(GENERATED_DIR / "runtime_capability_matrix.rst", _runtime_capability_matrix_rst())
+    _write(
+        GENERATED_DIR / "runtime_capability_matrix.rst",
+        _runtime_capability_matrix_rst(),
+    )
     _write(GENERATED_DIR / "reverse_scope_table.rst", _reverse_scope_table_rst())
     _write(GENERATED_DIR / "cli_backend_examples.rst", _cli_backend_examples_rst())
     _write(GENERATED_DIR / "target_policy_summary.md", _policy_summary_md())

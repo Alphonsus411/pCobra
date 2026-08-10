@@ -16,28 +16,34 @@ except ImportError:
     def _(text: str) -> str:
         return text
 
+
 # Definición de tipos
 LogLevel = Literal["info", "warning", "error"]
 VALID_LOG_LEVELS: Tuple[LogLevel, ...] = get_args(LogLevel)
 
+
 class ColorCode(Enum):
     """Códigos ANSI para colores."""
+
     RED: Final = "\033[91m"
     GREEN: Final = "\033[92m"
     YELLOW: Final = "\033[93m"
     RESET: Final = "\033[0m"
 
+
 @dataclass
 class MessageConfig:
     """Configuración para el manejo de mensajes."""
+
     use_color: bool = True
-    
+
     def __post_init__(self) -> None:
         self._validate()
-    
+
     def _validate(self) -> None:
         if not isinstance(self.use_color, bool):
             raise TypeError("use_color debe ser un booleano")
+
 
 # Instancia global de configuración
 config = MessageConfig()
@@ -51,6 +57,7 @@ COBRA_LOGO: Final = r"""
  \____\___/  |_.__/ \___|_|   \____|_____|___|
 """
 
+
 @contextmanager
 def color_disabled():
     """Contexto para deshabilitar temporalmente los colores."""
@@ -61,14 +68,16 @@ def color_disabled():
     finally:
         config.use_color = previous
 
+
 def disable_colors(disable: bool = True) -> None:
     """
     Activa o desactiva la salida de colores.
-    
+
     Args:
         disable: True para desactivar colores, False para activarlos
     """
     config.use_color = not disable
+
 
 def mostrar_logo() -> None:
     """Muestra el logo de Cobra en verde cuando procede."""
@@ -77,6 +86,7 @@ def mostrar_logo() -> None:
     color = ColorCode.GREEN.value if config.use_color else ""
     reset = ColorCode.RESET.value if config.use_color else ""
     print(f"{color}{COBRA_LOGO}{reset}")
+
 
 def _mostrar(msg: str, nivel: LogLevel = "info", registrar_log: bool = True) -> None:
     """
@@ -92,26 +102,26 @@ def _mostrar(msg: str, nivel: LogLevel = "info", registrar_log: bool = True) -> 
 
     try:
         texto = _(" ".join(str(msg).splitlines()).strip())
-        
+
         # Determinar el color según el nivel
         color_map: Dict[LogLevel, ColorCode] = {
             "info": ColorCode.GREEN,
             "warning": ColorCode.YELLOW,
-            "error": ColorCode.RED
+            "error": ColorCode.RED,
         }
-        
+
         color = color_map[nivel].value if config.use_color else ""
         reset = ColorCode.RESET.value if config.use_color else ""
-        
+
         # Prefijos para los diferentes niveles
         prefijos: Dict[LogLevel, str] = {
             "warning": _("Advertencia"),
-            "error": _("Error")
+            "error": _("Error"),
         }
-        
+
         prefijo = f"{prefijos[nivel]}: " if nivel in prefijos else ""
         print(f"{color}{prefijo}{texto}{reset}")
-        
+
         if registrar_log:
             # Registrar en el log
             log_func = getattr(logging, nivel)
@@ -123,32 +133,36 @@ def _mostrar(msg: str, nivel: LogLevel = "info", registrar_log: bool = True) -> 
     except (TypeError, ValueError) as e:
         logging.error(_("Error al mostrar mensaje: %s") % e)
 
+
 def mostrar_info(msg: str, registrar_log: bool = True) -> None:
     """
     Muestra un mensaje informativo en verde.
-    
+
     Args:
         msg: Mensaje a mostrar
     """
     _mostrar(msg, "info", registrar_log=registrar_log)
 
+
 def mostrar_advertencia(msg: str, registrar_log: bool = True) -> None:
     """
     Muestra un mensaje de advertencia en amarillo.
-    
+
     Args:
         msg: Mensaje a mostrar
     """
     _mostrar(msg, "warning", registrar_log=registrar_log)
 
+
 def mostrar_error(msg: str, registrar_log: bool = True) -> None:
     """
     Muestra un mensaje de error en rojo.
-    
+
     Args:
         msg: Mensaje a mostrar
     """
     _mostrar(msg, "error", registrar_log=registrar_log)
+
 
 # Aliases para mantener compatibilidad con versiones anteriores
 info = mostrar_info

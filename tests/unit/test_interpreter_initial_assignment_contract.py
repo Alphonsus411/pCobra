@@ -58,9 +58,7 @@ def test_primera_asignacion_superior_de_instancia() -> None:
     inter = InterpretadorCobra()
     inter.ejecutar_nodo(NodoClase("Vacia", []))
 
-    instancia = inter.ejecutar_nodo(
-        NodoAsignacion("objeto", NodoInstancia("Vacia"))
-    )
+    instancia = inter.ejecutar_nodo(NodoAsignacion("objeto", NodoInstancia("Vacia")))
 
     assert inter.obtener_variable("objeto") is instancia
     assert instancia["__clase__"]["nombre"] == "Vacia"
@@ -69,9 +67,7 @@ def test_primera_asignacion_superior_de_instancia() -> None:
 def test_declaracion_explicita_define_binding() -> None:
     inter = InterpretadorCobra()
 
-    inter.ejecutar_nodo(
-        NodoAsignacion("declarada", NodoValor(11), declaracion=True)
-    )
+    inter.ejecutar_nodo(NodoAsignacion("declarada", NodoValor(11), declaracion=True))
 
     assert inter.obtener_variable("declarada") == 11
 

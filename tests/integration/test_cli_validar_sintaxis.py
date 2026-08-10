@@ -3,11 +3,17 @@ from __future__ import annotations
 from cobra.cli.commands import validar_sintaxis_cmd as cmd_module
 from pcobra.cobra.cli.commands.validar_sintaxis_cmd import ValidarSintaxisCommand
 from pcobra.cobra.cli.commands import validar_sintaxis_cmd as pcobra_cmd_module
-from pcobra.cobra.qa.syntax_validation import SyntaxReport, SyntaxValidationExecution, ValidationResult
+from pcobra.cobra.qa.syntax_validation import (
+    SyntaxReport,
+    SyntaxValidationExecution,
+    ValidationResult,
+)
 from argparse import Namespace
 
 
-def _execution(*, has_failures: bool = False, profile: str = "completo") -> SyntaxValidationExecution:
+def _execution(
+    *, has_failures: bool = False, profile: str = "completo"
+) -> SyntaxValidationExecution:
     return SyntaxValidationExecution(
         report=SyntaxReport(
             python=ValidationResult("ok", "py"),
@@ -85,7 +91,9 @@ def test_cli_validar_sintaxis_solo_cobra_por_flag(monkeypatch):
     monkeypatch.setattr(cmd_module, "execute_syntax_validation", _fake_execute)
     monkeypatch.setattr(pcobra_cmd_module, "execute_syntax_validation", _fake_execute)
     monkeypatch.setattr(cmd_module, "validar_politica_modo", lambda *_, **__: None)
-    monkeypatch.setattr(pcobra_cmd_module, "validar_politica_modo", lambda *_, **__: None)
+    monkeypatch.setattr(
+        pcobra_cmd_module, "validar_politica_modo", lambda *_, **__: None
+    )
 
     rc = ValidarSintaxisCommand().run(
         Namespace(

@@ -14,7 +14,10 @@ from pcobra.cobra.cli.commands_v2.repl_cmd import ReplCommandV2
 def _modulo_numero_stub() -> ModuleType:
     mod = ModuleType("numero")
     mod.__all__ = ["es_finito", "es_nan", "signo", "desviacion_estandar", "_interno"]
-    mod.es_finito = lambda valor: valor == valor and valor not in (float("inf"), float("-inf"))
+    mod.es_finito = lambda valor: valor == valor and valor not in (
+        float("inf"),
+        float("-inf"),
+    )
     mod.es_nan = lambda valor: valor != valor
     mod.signo = lambda valor: -1 if valor < 0 else (1 if valor > 0 else 0)
     mod.desviacion_estandar = lambda _valores: 0.0
@@ -37,13 +40,19 @@ def _modulo_datos_stub() -> ModuleType:
     return mod
 
 
-def test_entrypoint_repl_real_numero_callable_y_stdout_canonico_sin_error_no_implementada(monkeypatch, capsys):
+def test_entrypoint_repl_real_numero_callable_y_stdout_canonico_sin_error_no_implementada(
+    monkeypatch, capsys
+):
     mod_numero = _modulo_numero_stub()
 
     monkeypatch.setattr(
         core_usar_loader,
         "obtener_modulo_cobra_oficial",
-        lambda nombre: mod_numero if nombre == "numero" else (_ for _ in ()).throw(ModuleNotFoundError(nombre)),
+        lambda nombre: (
+            mod_numero
+            if nombre == "numero"
+            else (_ for _ in ()).throw(ModuleNotFoundError(nombre))
+        ),
     )
 
     cmd = ReplCommandV2()
@@ -58,16 +67,20 @@ def test_entrypoint_repl_real_numero_callable_y_stdout_canonico_sin_error_no_imp
     assert "Función 'es_nan' no implementada" not in salida
 
 
-
-
-def test_entrypoint_repl_numero_callable_output_regresion_binding_runtime(monkeypatch, capsys):
+def test_entrypoint_repl_numero_callable_output_regresion_binding_runtime(
+    monkeypatch, capsys
+):
     # Contexto: regresión del bug de binding runtime (callable Python en contexto de `usar`).
     mod_numero = _modulo_numero_stub()
 
     monkeypatch.setattr(
         core_usar_loader,
         "obtener_modulo_cobra_oficial",
-        lambda nombre: mod_numero if nombre == "numero" else (_ for _ in ()).throw(ModuleNotFoundError(nombre)),
+        lambda nombre: (
+            mod_numero
+            if nombre == "numero"
+            else (_ for _ in ()).throw(ModuleNotFoundError(nombre))
+        ),
     )
 
     cmd = ReplCommandV2()
@@ -83,13 +96,21 @@ def test_entrypoint_repl_numero_callable_output_regresion_binding_runtime(monkey
     assert "Función 'es_finito' no implementada" not in salida
     assert "Función 'es_nan' no implementada" not in salida
     assert "Función 'signo' no implementada" not in salida
-def test_entrypoint_repl_real_numero_callable_directo_sin_no_implementada(monkeypatch, capsys):
+
+
+def test_entrypoint_repl_real_numero_callable_directo_sin_no_implementada(
+    monkeypatch, capsys
+):
     mod_numero = _modulo_numero_stub()
 
     monkeypatch.setattr(
         core_usar_loader,
         "obtener_modulo_cobra_oficial",
-        lambda nombre: mod_numero if nombre == "numero" else (_ for _ in ()).throw(ModuleNotFoundError(nombre)),
+        lambda nombre: (
+            mod_numero
+            if nombre == "numero"
+            else (_ for _ in ()).throw(ModuleNotFoundError(nombre))
+        ),
     )
 
     cmd = ReplCommandV2()
@@ -108,7 +129,11 @@ def test_entrypoint_repl_real_expone_desviacion_estandar_publica(monkeypatch, ca
     monkeypatch.setattr(
         core_usar_loader,
         "obtener_modulo_cobra_oficial",
-        lambda nombre: mod_numero if nombre == "numero" else (_ for _ in ()).throw(ModuleNotFoundError(nombre)),
+        lambda nombre: (
+            mod_numero
+            if nombre == "numero"
+            else (_ for _ in ()).throw(ModuleNotFoundError(nombre))
+        ),
     )
 
     cmd = ReplCommandV2()
@@ -126,29 +151,38 @@ def test_entrypoint_repl_real_rechaza_numpy_externo(monkeypatch):
     monkeypatch.setattr(
         core_usar_loader,
         "obtener_modulo_cobra_oficial",
-        lambda nombre: mod_numero if nombre == "numero" else (_ for _ in ()).throw(ModuleNotFoundError(nombre)),
+        lambda nombre: (
+            mod_numero
+            if nombre == "numero"
+            else (_ for _ in ()).throw(ModuleNotFoundError(nombre))
+        ),
     )
 
     cmd = ReplCommandV2()
-    with pytest.raises(PermissionError, match=r"Importación no permitida en 'usar': 'numpy'. Es un módulo backend/no canónico y no forma parte de la API pública."):
+    with pytest.raises(
+        PermissionError,
+        match=r"Importación no permitida en 'usar': 'numpy'. Es un módulo backend/no canónico y no forma parte de la API pública.",
+    ):
         cmd._ejecutar_en_modo_normal('usar "numpy"')
 
 
-def test_entrypoint_repl_real_funcion_usuario_sigue_operativa_tras_usar(monkeypatch, capsys):
+def test_entrypoint_repl_real_funcion_usuario_sigue_operativa_tras_usar(
+    monkeypatch, capsys
+):
     mod_numero = _modulo_numero_stub()
 
     monkeypatch.setattr(
         core_usar_loader,
         "obtener_modulo_cobra_oficial",
-        lambda nombre: mod_numero if nombre == "numero" else (_ for _ in ()).throw(ModuleNotFoundError(nombre)),
+        lambda nombre: (
+            mod_numero
+            if nombre == "numero"
+            else (_ for _ in ()).throw(ModuleNotFoundError(nombre))
+        ),
     )
 
     cmd = ReplCommandV2()
-    cmd._ejecutar_en_modo_normal(
-        "func doble(n):\n"
-        "    retorno n * 2\n"
-        "fin"
-    )
+    cmd._ejecutar_en_modo_normal("func doble(n):\n" "    retorno n * 2\n" "fin")
     cmd._ejecutar_en_modo_normal('usar "numero"')
     cmd._ejecutar_en_modo_normal("imprimir(doble(5))")
 
@@ -156,13 +190,19 @@ def test_entrypoint_repl_real_funcion_usuario_sigue_operativa_tras_usar(monkeypa
     assert "10" in salida
 
 
-def test_entrypoint_repl_real_imprimir_booleanos_canonicos_no_regresion(monkeypatch, capsys):
+def test_entrypoint_repl_real_imprimir_booleanos_canonicos_no_regresion(
+    monkeypatch, capsys
+):
     mod_numero = _modulo_numero_stub()
 
     monkeypatch.setattr(
         core_usar_loader,
         "obtener_modulo_cobra_oficial",
-        lambda nombre: mod_numero if nombre == "numero" else (_ for _ in ()).throw(ModuleNotFoundError(nombre)),
+        lambda nombre: (
+            mod_numero
+            if nombre == "numero"
+            else (_ for _ in ()).throw(ModuleNotFoundError(nombre))
+        ),
     )
 
     cmd = ReplCommandV2()
@@ -183,7 +223,9 @@ def test_entrypoint_repl_texto_flujo_integral_callable_output(capsys):
     cmd._ejecutar_en_modo_normal('imprimir(repetir("ja", 3))')
     cmd._ejecutar_en_modo_normal('imprimir(quitar_acentos("canción"))')
 
-    salida = [linea.strip() for linea in capsys.readouterr().out.splitlines() if linea.strip()]
+    salida = [
+        linea.strip() for linea in capsys.readouterr().out.splitlines() if linea.strip()
+    ]
     assert "Cobra" in salida
     assert "jajaja" in salida
     assert "cancion" in salida
@@ -204,10 +246,10 @@ def test_entrypoint_repl_usar_datos_longitud_argumento_inline(capsys):
     cmd._ejecutar_en_modo_normal('usar "datos"')
     cmd._ejecutar_en_modo_normal("imprimir(longitud([1, 2, 3]))")
 
-    salida = [linea.strip() for linea in capsys.readouterr().out.splitlines() if linea.strip()]
+    salida = [
+        linea.strip() for linea in capsys.readouterr().out.splitlines() if linea.strip()
+    ]
     assert "3" in salida
-
-
 
 
 def test_entrypoint_repl_usar_datos_longitud_variable_y_literal_exactos(capsys):
@@ -217,8 +259,12 @@ def test_entrypoint_repl_usar_datos_longitud_variable_y_literal_exactos(capsys):
     cmd._ejecutar_en_modo_normal("imprimir(longitud(xs))")
     cmd._ejecutar_en_modo_normal("imprimir(longitud([1, 2, 3]))")
 
-    salida = [linea.strip() for linea in capsys.readouterr().out.splitlines() if linea.strip()]
+    salida = [
+        linea.strip() for linea in capsys.readouterr().out.splitlines() if linea.strip()
+    ]
     assert salida.count("3") >= 2
+
+
 def test_entrypoint_repl_lista_con_expresiones_y_longitud(capsys):
     cmd = ReplCommandV2()
     cmd._ejecutar_en_modo_normal('usar "datos"')
@@ -226,22 +272,34 @@ def test_entrypoint_repl_lista_con_expresiones_y_longitud(capsys):
     cmd._ejecutar_en_modo_normal("var xs = [a, a + 1]")
     cmd._ejecutar_en_modo_normal("imprimir(longitud(xs))")
 
-    salida = [linea.strip() for linea in capsys.readouterr().out.splitlines() if linea.strip()]
+    salida = [
+        linea.strip() for linea in capsys.readouterr().out.splitlines() if linea.strip()
+    ]
     assert "2" in salida
 
 
-def test_entrypoint_repl_metadata_longitud_persistente_entre_sentencias(monkeypatch, capsys):
+def test_entrypoint_repl_metadata_longitud_persistente_entre_sentencias(
+    monkeypatch, capsys
+):
     """Regresión REPL: metadata de `usar` persiste entre sentencias incrementales."""
     mod_datos = _modulo_datos_stub()
     monkeypatch.setattr(
         core_usar_loader,
         "obtener_modulo_cobra_oficial",
-        lambda nombre: mod_datos if nombre == "datos" else (_ for _ in ()).throw(ModuleNotFoundError(nombre)),
+        lambda nombre: (
+            mod_datos
+            if nombre == "datos"
+            else (_ for _ in ()).throw(ModuleNotFoundError(nombre))
+        ),
     )
     monkeypatch.setattr(
         core_usar_loader,
         "obtener_modulo",
-        lambda nombre, **_kwargs: mod_datos if nombre == "datos" else (_ for _ in ()).throw(ModuleNotFoundError(nombre)),
+        lambda nombre, **_kwargs: (
+            mod_datos
+            if nombre == "datos"
+            else (_ for _ in ()).throw(ModuleNotFoundError(nombre))
+        ),
     )
     # monkeypatch.setattr(
     #     core_interpreter,
@@ -263,7 +321,9 @@ def test_entrypoint_repl_metadata_longitud_persistente_entre_sentencias(monkeypa
     # Sentencia 1
     cmd._ejecutar_en_modo_normal('usar "datos"')
     metadata_s1 = dict(getattr(interp, "_usar_symbol_metadata", {}))
-    metadata_validador_s1 = dict(getattr(interp._validador, "_metadata_simbolos_usar", {}))
+    metadata_validador_s1 = dict(
+        getattr(interp._validador, "_metadata_simbolos_usar", {})
+    )
     ref_metadata_interp = getattr(interp, "_usar_symbol_metadata", None)
     ref_metadata_validador = getattr(interp._validador, "_metadata_simbolos_usar", None)
 
@@ -273,9 +333,14 @@ def test_entrypoint_repl_metadata_longitud_persistente_entre_sentencias(monkeypa
     # Sentencia 2
     cmd._ejecutar_en_modo_normal("var xs = [1,2,3]")
     metadata_s2 = dict(getattr(interp, "_usar_symbol_metadata", {}))
-    metadata_validador_s2 = dict(getattr(interp._validador, "_metadata_simbolos_usar", {}))
+    metadata_validador_s2 = dict(
+        getattr(interp._validador, "_metadata_simbolos_usar", {})
+    )
     assert getattr(interp, "_usar_symbol_metadata", None) is ref_metadata_interp
-    assert getattr(interp._validador, "_metadata_simbolos_usar", None) is ref_metadata_validador
+    assert (
+        getattr(interp._validador, "_metadata_simbolos_usar", None)
+        is ref_metadata_validador
+    )
 
     # Snapshot interno: para claves existentes, mismo contenido (se permiten adiciones).
     for clave, valor_s1 in metadata_s1.items():
@@ -287,14 +352,21 @@ def test_entrypoint_repl_metadata_longitud_persistente_entre_sentencias(monkeypa
 
     # Sentencia 3
     cmd._ejecutar_en_modo_normal("imprimir(longitud(xs))")
-    salida = [linea.strip() for linea in capsys.readouterr().out.splitlines() if linea.strip()]
+    salida = [
+        linea.strip() for linea in capsys.readouterr().out.splitlines() if linea.strip()
+    ]
 
     assert "3" in salida
 
     metadata_s3 = dict(getattr(interp, "_usar_symbol_metadata", {}))
-    metadata_validador_s3 = dict(getattr(interp._validador, "_metadata_simbolos_usar", {}))
+    metadata_validador_s3 = dict(
+        getattr(interp._validador, "_metadata_simbolos_usar", {})
+    )
     assert getattr(interp, "_usar_symbol_metadata", None) is ref_metadata_interp
-    assert getattr(interp._validador, "_metadata_simbolos_usar", None) is ref_metadata_validador
+    assert (
+        getattr(interp._validador, "_metadata_simbolos_usar", None)
+        is ref_metadata_validador
+    )
 
     # Invariante: no se pierde metadata previa ni se degrada a NoneType en llamadas posteriores.
     for clave, valor_s1 in metadata_s1.items():

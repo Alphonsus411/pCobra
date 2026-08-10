@@ -44,7 +44,9 @@ def test_sandbox_js_sin_process():
     if not shutil.which("node"):
         pytest.skip("node no disponible")
     try:
-        subprocess.run(["node", "-e", "require('vm2')"], check=True, capture_output=True)
+        subprocess.run(
+            ["node", "-e", "require('vm2')"], check=True, capture_output=True
+        )
     except subprocess.CalledProcessError:
         pytest.skip("vm2 no disponible")
     salida = ejecutar_en_sandbox_js("process.exit(0)")
@@ -56,7 +58,9 @@ def test_sandbox_js_sin_comandos_externos():
     if not shutil.which("node"):
         pytest.skip("node no disponible")
     try:
-        subprocess.run(["node", "-e", "require('vm2')"], check=True, capture_output=True)
+        subprocess.run(
+            ["node", "-e", "require('vm2')"], check=True, capture_output=True
+        )
     except subprocess.CalledProcessError:
         pytest.skip("vm2 no disponible")
     codigo = "require('child_process').exec('echo hola')"
@@ -69,7 +73,9 @@ def test_sandbox_js_ignora_node_options(monkeypatch):
     if not shutil.which("node"):
         pytest.skip("node no disponible")
     try:
-        subprocess.run(["node", "-e", "require('vm2')"], check=True, capture_output=True)
+        subprocess.run(
+            ["node", "-e", "require('vm2')"], check=True, capture_output=True
+        )
     except subprocess.CalledProcessError:
         pytest.skip("vm2 no disponible")
     monkeypatch.setenv("NODE_OPTIONS", "--eval \"process.stdout.write('pwned')\"")
@@ -83,7 +89,9 @@ def test_sandbox_js_filtra_env_vars(monkeypatch):
     if not shutil.which("node"):
         pytest.skip("node no disponible")
     try:
-        subprocess.run(["node", "-e", "require('vm2')"], check=True, capture_output=True)
+        subprocess.run(
+            ["node", "-e", "require('vm2')"], check=True, capture_output=True
+        )
     except subprocess.CalledProcessError:
         pytest.skip("vm2 no disponible")
     env_vars = {
@@ -102,7 +110,9 @@ def test_sandbox_js_env_vars_permitidas(monkeypatch):
     if not shutil.which("node"):
         pytest.skip("node no disponible")
     try:
-        subprocess.run(["node", "-e", "require('vm2')"], check=True, capture_output=True)
+        subprocess.run(
+            ["node", "-e", "require('vm2')"], check=True, capture_output=True
+        )
     except subprocess.CalledProcessError:
         pytest.skip("vm2 no disponible")
 
@@ -136,7 +146,9 @@ def test_sandbox_js_filtra_ld_vars(monkeypatch):
     if not shutil.which("node"):
         pytest.skip("node no disponible")
     try:
-        subprocess.run(["node", "-e", "require('vm2')"], check=True, capture_output=True)
+        subprocess.run(
+            ["node", "-e", "require('vm2')"], check=True, capture_output=True
+        )
     except subprocess.CalledProcessError:
         pytest.skip("vm2 no disponible")
 
@@ -169,7 +181,9 @@ def test_sandbox_js_trunca_salida_grande():
     if not shutil.which("node"):
         pytest.skip("node no disponible")
     try:
-        subprocess.run(["node", "-e", "require('vm2')"], check=True, capture_output=True)
+        subprocess.run(
+            ["node", "-e", "require('vm2')"], check=True, capture_output=True
+        )
     except subprocess.CalledProcessError:
         pytest.skip("vm2 no disponible")
     codigo = "console.log('a'.repeat(20000))"
@@ -183,7 +197,9 @@ def test_sandbox_js_trunca_stderr_grande_no_bloquea():
     if not shutil.which("node"):
         pytest.skip("node no disponible")
     try:
-        subprocess.run(["node", "-e", "require('vm2')"], check=True, capture_output=True)
+        subprocess.run(
+            ["node", "-e", "require('vm2')"], check=True, capture_output=True
+        )
     except subprocess.CalledProcessError:
         pytest.skip("vm2 no disponible")
     codigo = "console.error('e'.repeat(20000))"
@@ -198,7 +214,9 @@ def test_sandbox_js_limita_memoria():
     if not shutil.which("node"):
         pytest.skip("node no disponible")
     try:
-        subprocess.run(["node", "-e", "require('vm2')"], check=True, capture_output=True)
+        subprocess.run(
+            ["node", "-e", "require('vm2')"], check=True, capture_output=True
+        )
     except subprocess.CalledProcessError:
         pytest.skip("vm2 no disponible")
     codigo = "const a=[]; while(true) a.push(new Array(1e6).fill('x'));"
@@ -211,7 +229,9 @@ def test_sandbox_js_elimina_archivo_inexistente(monkeypatch):
     if not shutil.which("node"):
         pytest.skip("node no disponible")
     try:
-        subprocess.run(["node", "-e", "require('vm2')"], check=True, capture_output=True)
+        subprocess.run(
+            ["node", "-e", "require('vm2')"], check=True, capture_output=True
+        )
     except subprocess.CalledProcessError:
         pytest.skip("vm2 no disponible")
 
@@ -252,7 +272,9 @@ def test_sandbox_js_no_escribe_en_directorio_del_modulo(monkeypatch, tmp_path):
     if not shutil.which("node"):
         pytest.skip("node no disponible")
     try:
-        subprocess.run(["node", "-e", "require('vm2')"], check=True, capture_output=True)
+        subprocess.run(
+            ["node", "-e", "require('vm2')"], check=True, capture_output=True
+        )
     except subprocess.CalledProcessError:
         pytest.skip("vm2 no disponible")
 
@@ -267,7 +289,9 @@ def test_sandbox_js_no_escribe_en_directorio_del_modulo(monkeypatch, tmp_path):
         llamadas_dir.append(kwargs.get("dir"))
         return original_named_temporary_file(*args, **kwargs)
 
-    monkeypatch.setattr(sandbox.tempfile, "NamedTemporaryFile", fake_named_temporary_file)
+    monkeypatch.setattr(
+        sandbox.tempfile, "NamedTemporaryFile", fake_named_temporary_file
+    )
 
     salida = ejecutar_en_sandbox_js("console.log('hola')")
     assert salida.strip() == "hola"

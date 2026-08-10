@@ -38,9 +38,12 @@ def test_cli_empaquetar_invoca_pyinstaller(tmp_path):
 
 def test_cli_empaquetar_sin_pyinstaller(tmp_path):
     profile, commands = _cli_context()
-    with profile, commands, \
-            patch.object(empaquetar_cmd.subprocess, "run", side_effect=FileNotFoundError), \
-            patch("sys.stdout", new_callable=StringIO) as out:
+    with (
+        profile,
+        commands,
+        patch.object(empaquetar_cmd.subprocess, "run", side_effect=FileNotFoundError),
+        patch("sys.stdout", new_callable=StringIO) as out,
+    ):
         cli_module.main(["empaquetar", f"--output={tmp_path}", "--name", "cobra"])
     assert "No se encontró PyInstaller" in out.getvalue()
 
@@ -71,14 +74,16 @@ def test_cli_empaquetar_con_datos(tmp_path):
     spam.touch()
     profile, commands = _cli_context()
     with profile, commands, patch.object(empaquetar_cmd.subprocess, "run") as mock_run:
-        cli_module.main([
-            "empaquetar",
-            f"--output={tmp_path}",
-            "--add-data",
-            f"{foo};bar",
-            "--add-data",
-            f"{spam};eggs",
-        ])
+        cli_module.main(
+            [
+                "empaquetar",
+                f"--output={tmp_path}",
+                "--add-data",
+                f"{foo};bar",
+                "--add-data",
+                f"{spam};eggs",
+            ]
+        )
         raiz = Path(__file__).resolve().parents[2]
         cli_path = raiz / "src" / "cli" / "cli.py"
         mock_run.assert_called_once_with(

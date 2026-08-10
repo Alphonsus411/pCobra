@@ -27,9 +27,8 @@ from pcobra.cobra.transpilers.target_utils import (
     require_official_target_subset,
     target_cli_choices,
 )
+
 RenderMarkup = Literal["plain", "markdown", "rst"]
-
-
 
 
 ACCEPTED_TARGET_ALIASES: tuple[tuple[str, str], ...] = ()
@@ -39,6 +38,7 @@ OFFICIAL_PUBLIC_BACKENDS = require_exact_official_targets(
     PUBLIC_BACKENDS,
     context="pcobra.cobra.cli.target_policies.OFFICIAL_PUBLIC_BACKENDS",
 )
+
 
 def accepted_target_aliases_examples_text() -> str:
     """No existen aliases aceptados en la superficie pública actual."""
@@ -53,7 +53,11 @@ OFFICIAL_TRANSPILATION_TARGETS = require_exact_official_targets(
 
 # Targets oficiales con tooling oficial de ejecución en contenedor/sandbox Docker.
 OFFICIAL_RUNTIME_TARGETS = target_cli_choices(
-    tuple(target for target in OFFICIAL_RUNTIME_BACKENDS if target in OFFICIAL_TRANSPILATION_TARGETS)
+    tuple(
+        target
+        for target in OFFICIAL_RUNTIME_BACKENDS
+        if target in OFFICIAL_TRANSPILATION_TARGETS
+    )
 )
 require_exact_official_targets(
     OFFICIAL_RUNTIME_BACKENDS,
@@ -62,12 +66,20 @@ require_exact_official_targets(
 
 # Targets best-effort conservados fuera del contrato oficial de runtime.
 BEST_EFFORT_RUNTIME_TARGETS = target_cli_choices(
-    tuple(target for target in BEST_EFFORT_RUNTIME_BACKENDS if target in OFFICIAL_TRANSPILATION_TARGETS)
+    tuple(
+        target
+        for target in BEST_EFFORT_RUNTIME_BACKENDS
+        if target in OFFICIAL_TRANSPILATION_TARGETS
+    )
 )
 
 # Targets oficiales que hoy son solo de generación y no prometen runtime.
 TRANSPILATION_ONLY_TARGETS = target_cli_choices(
-    tuple(target for target in TRANSPILATION_ONLY_BACKENDS if target in OFFICIAL_TRANSPILATION_TARGETS)
+    tuple(
+        target
+        for target in TRANSPILATION_ONLY_BACKENDS
+        if target in OFFICIAL_TRANSPILATION_TARGETS
+    )
 )
 
 # Targets sin runtime automatizado en la CLI/suite actual.
@@ -77,7 +89,9 @@ NO_RUNTIME_TARGETS = TRANSPILATION_ONLY_TARGETS
 DOCKER_EXECUTABLE_TARGETS = OFFICIAL_RUNTIME_TARGETS
 
 # Backend runtime que espera ``core.sandbox.ejecutar_en_contenedor``.
-DOCKER_RUNTIME_BY_TARGET: dict[str, str] = {target: target for target in OFFICIAL_RUNTIME_TARGETS}
+DOCKER_RUNTIME_BY_TARGET: dict[str, str] = {
+    target: target for target in OFFICIAL_RUNTIME_TARGETS
+}
 
 # Targets oficiales cuyo runtime también puede verificarse ejecutando realmente
 # el código generado desde la CLI/suite actual.
@@ -94,7 +108,11 @@ ADVANCED_HOLOBIT_RUNTIME_TARGETS = OFFICIAL_RUNTIME_TARGETS
 
 # Compatibilidad SDK completa: se deriva de la matriz contractual.
 SDK_COMPATIBLE_TARGETS = target_cli_choices(
-    tuple(target for target in SDK_FULL_BACKENDS if target in OFFICIAL_TRANSPILATION_TARGETS)
+    tuple(
+        target
+        for target in SDK_FULL_BACKENDS
+        if target in OFFICIAL_TRANSPILATION_TARGETS
+    )
 )
 
 require_official_target_subset(
@@ -167,7 +185,9 @@ def _validate_runtime_categories_contract() -> None:
         | category_sets["TRANSPILATION_ONLY_TARGETS"]
     )
     missing_from_partition = tuple(
-        target for target in OFFICIAL_TRANSPILATION_TARGETS if target not in partition_union
+        target
+        for target in OFFICIAL_TRANSPILATION_TARGETS
+        if target not in partition_union
     )
     extras_in_partition = tuple(
         target for target in partition_union if target not in canonical_set
@@ -208,9 +228,13 @@ def _validate_public_routes_contract() -> None:
 
 _validate_public_routes_contract()
 
-OFFICIAL_TRANSPILATION_TARGETS_HELP = build_target_help_by_tier(OFFICIAL_TRANSPILATION_TARGETS)
+OFFICIAL_TRANSPILATION_TARGETS_HELP = build_target_help_by_tier(
+    OFFICIAL_TRANSPILATION_TARGETS
+)
 OFFICIAL_RUNTIME_TARGETS_HELP = build_target_help_by_tier(OFFICIAL_RUNTIME_TARGETS)
-VERIFICATION_EXECUTABLE_TARGETS_HELP = build_target_help_by_tier(VERIFICATION_EXECUTABLE_TARGETS)
+VERIFICATION_EXECUTABLE_TARGETS_HELP = build_target_help_by_tier(
+    VERIFICATION_EXECUTABLE_TARGETS
+)
 
 
 def official_transpilation_targets_text() -> str:
@@ -256,10 +280,26 @@ def build_cli_compile_examples(
 def iter_public_policy_items() -> tuple[tuple[str, str, tuple[str, ...]], ...]:
     """Devuelve las categorías públicas que deben reutilizar CLI/docs/tests."""
     return (
-        ("official_targets", "Targets oficiales de transpilación", OFFICIAL_TRANSPILATION_TARGETS),
-        ("official_runtime_targets", "Targets con runtime oficial verificable (full SDK solo en python)", OFFICIAL_RUNTIME_TARGETS),
-        ("verification_targets", "Targets con verificación ejecutable explícita en CLI", VERIFICATION_EXECUTABLE_TARGETS),
-        ("best_effort_runtime_targets", "Targets con runtime best-effort", BEST_EFFORT_RUNTIME_TARGETS),
+        (
+            "official_targets",
+            "Targets oficiales de transpilación",
+            OFFICIAL_TRANSPILATION_TARGETS,
+        ),
+        (
+            "official_runtime_targets",
+            "Targets con runtime oficial verificable (full SDK solo en python)",
+            OFFICIAL_RUNTIME_TARGETS,
+        ),
+        (
+            "verification_targets",
+            "Targets con verificación ejecutable explícita en CLI",
+            VERIFICATION_EXECUTABLE_TARGETS,
+        ),
+        (
+            "best_effort_runtime_targets",
+            "Targets con runtime best-effort",
+            BEST_EFFORT_RUNTIME_TARGETS,
+        ),
         (
             "official_standard_library_targets",
             "Targets con soporte oficial mantenido de `corelibs`/`standard_library` (partial fuera de python)",
@@ -270,7 +310,11 @@ def iter_public_policy_items() -> tuple[tuple[str, str, tuple[str, ...]], ...]:
             "Targets con adaptador Holobit mantenido por el proyecto (partial fuera de python)",
             ADVANCED_HOLOBIT_RUNTIME_TARGETS,
         ),
-        ("sdk_compatible_targets", "Compatibilidad SDK completa (solo python)", SDK_COMPATIBLE_TARGETS),
+        (
+            "sdk_compatible_targets",
+            "Compatibilidad SDK completa (solo python)",
+            SDK_COMPATIBLE_TARGETS,
+        ),
         (
             "transpilation_only_targets",
             "Targets solo de transpilación",
@@ -292,7 +336,9 @@ def render_public_policy_summary(*, markup: RenderMarkup = "plain") -> str:
     return "\n".join(lines)
 
 
-def render_reverse_scope_summary(reverse_scope: tuple[str, ...], *, markup: RenderMarkup = "plain") -> str:
+def render_reverse_scope_summary(
+    reverse_scope: tuple[str, ...], *, markup: RenderMarkup = "plain"
+) -> str:
     """Renderiza la línea pública de orígenes reverse oficiales."""
     official_targets_count = len(OFFICIAL_TRANSPILATION_TARGETS)
     reverse_rendered = ", ".join(reverse_scope)
@@ -303,7 +349,9 @@ def render_reverse_scope_summary(reverse_scope: tuple[str, ...], *, markup: Rend
     )
 
 
-def build_runtime_capability_message(*, capability: str, allowed_targets: tuple[str, ...]) -> str:
+def build_runtime_capability_message(
+    *, capability: str, allowed_targets: tuple[str, ...]
+) -> str:
     official_targets_count = len(OFFICIAL_TRANSPILATION_TARGETS)
     return (
         "Targets oficiales de salida: {official}. "
@@ -328,7 +376,10 @@ def _sdk_full_targets_from_matrix() -> tuple[str, ...]:
     return tuple(
         backend
         for backend in OFFICIAL_TRANSPILATION_TARGETS
-        if all(BACKEND_COMPATIBILITY[backend][feature] == "full" for feature in CONTRACT_FEATURES)
+        if all(
+            BACKEND_COMPATIBILITY[backend][feature] == "full"
+            for feature in CONTRACT_FEATURES
+        )
     )
 
 
@@ -359,7 +410,10 @@ def validate_runtime_support_contract() -> None:
             f"best_effort={BEST_EFFORT_RUNTIME_TARGETS}, transpilation_only={TRANSPILATION_ONLY_TARGETS}"
         )
 
-    if runtime_targets | best_effort_targets | transpilation_only_targets != official_targets:
+    if (
+        runtime_targets | best_effort_targets | transpilation_only_targets
+        != official_targets
+    ):
         raise RuntimeError(
             "Los targets oficiales deben particionarse exactamente en runtime oficial, best-effort y solo transpilación: "
             f"official={OFFICIAL_TRANSPILATION_TARGETS}, runtime={OFFICIAL_RUNTIME_TARGETS}, "
@@ -483,9 +537,15 @@ def official_targets_with_tier_text() -> str:
     )
 
 
-def restricted_target_error(*, unsupported: list[str], capability: str, allowed_targets: tuple[str, ...]) -> str:
-    best_effort_unsupported = [target for target in unsupported if target in BEST_EFFORT_RUNTIME_TARGETS]
-    transpilation_only_unsupported = [target for target in unsupported if target in TRANSPILATION_ONLY_TARGETS]
+def restricted_target_error(
+    *, unsupported: list[str], capability: str, allowed_targets: tuple[str, ...]
+) -> str:
+    best_effort_unsupported = [
+        target for target in unsupported if target in BEST_EFFORT_RUNTIME_TARGETS
+    ]
+    transpilation_only_unsupported = [
+        target for target in unsupported if target in TRANSPILATION_ONLY_TARGETS
+    ]
     unsupported_labels: list[str] = []
     if best_effort_unsupported:
         unsupported_labels.append(
@@ -516,9 +576,6 @@ def restricted_target_error(*, unsupported: list[str], capability: str, allowed_
     )
 
 
-
-
-
 def parse_target(value: str) -> str:
     """Valida target CLI público."""
     raw = value.strip()
@@ -533,7 +590,9 @@ def parse_target(value: str) -> str:
     return canonical
 
 
-def parse_runtime_target(value: str, *, allowed_targets: tuple[str, ...], capability: str) -> str:
+def parse_runtime_target(
+    value: str, *, allowed_targets: tuple[str, ...], capability: str
+) -> str:
     """Valida un target oficial restringido a una capacidad con runtime."""
     canonical = parse_target(value)
     if canonical not in allowed_targets:
@@ -547,7 +606,6 @@ def parse_runtime_target(value: str, *, allowed_targets: tuple[str, ...], capabi
     return canonical
 
 
-
 def resolve_docker_backend(target: str) -> str:
     """Resuelve el backend de runtime Docker solo para nombres canónicos oficiales."""
     canonical = parse_runtime_target(
@@ -557,6 +615,7 @@ def resolve_docker_backend(target: str) -> str:
     )
     return DOCKER_RUNTIME_BY_TARGET[canonical]
 
+
 def parse_target_list(value: str) -> list[str]:
     """Valida una lista de targets separados por comas."""
     parsed = [parse_target(item) for item in value.split(",") if item.strip()]
@@ -565,7 +624,9 @@ def parse_target_list(value: str) -> list[str]:
     return parsed
 
 
-def parse_restricted_target_list(value: str, allowed_targets: tuple[str, ...], capability: str) -> list[str]:
+def parse_restricted_target_list(
+    value: str, allowed_targets: tuple[str, ...], capability: str
+) -> list[str]:
     """Valida una lista de targets oficiales restringida a una capacidad concreta."""
     parsed = parse_target_list(value)
     unsupported = [target for target in parsed if target not in allowed_targets]

@@ -210,7 +210,9 @@ class NodoTipo(NodoAST):
     def __post_init__(self) -> None:
         from pcobra.core.lexer import Token
 
-        if isinstance(self.nombre, NodoTipo):  # Compatibilidad con construcciones anidadas
+        if isinstance(
+            self.nombre, NodoTipo
+        ):  # Compatibilidad con construcciones anidadas
             self.genericos = list(self.nombre.genericos)
             self.nombre = self.nombre.nombre
         if isinstance(self.nombre, Token):
@@ -246,6 +248,7 @@ class NodoFuncion(NodoAST):
 
     def __post_init__(self) -> None:
         self.cuerpo = _asegurar_bloque(self.cuerpo)
+
 
 @dataclass(repr=False)
 class NodoMetodoAbstracto(NodoAST):
@@ -324,7 +327,7 @@ class NodoLlamadaMetodo(NodoAST):
 @dataclass(repr=False)
 class NodoOperacionBinaria(NodoAST):
     izquierda: Any
-    operador: 'Token'
+    operador: "Token"
     derecha: Any
 
     """Operación que combina dos expresiones mediante un operador."""
@@ -338,7 +341,7 @@ class NodoOperacionBinaria(NodoAST):
 
 @dataclass(repr=False)
 class NodoOperacionUnaria(NodoAST):
-    operador: 'Token'
+    operador: "Token"
     operando: Any
 
     """Operación aplicada a un único operando."""

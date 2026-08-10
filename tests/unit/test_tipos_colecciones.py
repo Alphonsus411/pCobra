@@ -30,4 +30,3 @@ def test_reverse_from_python_lista_diccionario():
     ast_nodes = transpiler.generate_ast(code)
     assert any(isinstance(n, NodoListaTipo) for n in ast_nodes)
     assert any(isinstance(n, NodoDiccionarioTipo) for n in ast_nodes)
-

@@ -6,7 +6,10 @@ from pcobra.cobra.transpilers.common.utils import get_standard_imports
 from tests.integration.transpilers.backend_contracts import generate_code
 
 IMPORT_MARKERS = {
-    "python": ("import pcobra.corelibs as _pcobra_corelibs", "import pcobra.standard_library as _pcobra_standard_library"),
+    "python": (
+        "import pcobra.corelibs as _pcobra_corelibs",
+        "import pcobra.standard_library as _pcobra_standard_library",
+    ),
     "javascript": (
         "import * as io from './nativos/io.js';",
         "import * as texto from './nativos/texto.js';",
@@ -21,7 +24,10 @@ IMPORT_MARKERS = {
 
 CALL_SITE_MARKERS = {
     "python": {"corelibs": "longitud('cobra')", "standard_library": "mostrar('hola')"},
-    "javascript": {"corelibs": "longitud('cobra');", "standard_library": "mostrar('hola');"},
+    "javascript": {
+        "corelibs": "longitud('cobra');",
+        "standard_library": "mostrar('hola');",
+    },
     "rust": {"corelibs": 'longitud("cobra");', "standard_library": 'mostrar("hola");'},
 }
 
@@ -40,7 +46,9 @@ def test_minimal_runtime_import_markers_are_emitted_per_backend(backend: str):
 
 
 @pytest.mark.parametrize("backend", tuple(IMPORT_MARKERS))
-def test_import_bridge_desde_corelibs_y_standard_library_se_inyecta_en_codigo(backend: str):
+def test_import_bridge_desde_corelibs_y_standard_library_se_inyecta_en_codigo(
+    backend: str,
+):
     generated = generate_code(backend, "corelibs")
     imports = get_standard_imports(backend)
     if isinstance(imports, str):
@@ -51,9 +59,15 @@ def test_import_bridge_desde_corelibs_y_standard_library_se_inyecta_en_codigo(ba
 
 @pytest.mark.parametrize(
     ("backend", "feature"),
-    [(backend, feature) for backend in CALL_SITE_MARKERS for feature in ("corelibs", "standard_library")],
+    [
+        (backend, feature)
+        for backend in CALL_SITE_MARKERS
+        for feature in ("corelibs", "standard_library")
+    ],
 )
-def test_minimal_runtime_call_sites_are_preserved_per_backend(backend: str, feature: str):
+def test_minimal_runtime_call_sites_are_preserved_per_backend(
+    backend: str, feature: str
+):
     generated = generate_code(backend, feature)
     assert CALL_SITE_MARKERS[backend][feature] in generated
 

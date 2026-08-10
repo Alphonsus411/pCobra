@@ -1147,9 +1147,9 @@ class InteractiveCommand(BaseCommand):
 
     def _manejar_linea_blanca(self, estado: dict[str, Any]) -> None:
         """Aplica política de líneas en blanco en sesión REPL."""
-        dentro_de_bloque = bool(estado["buffer_lineas"]) or int(
-            estado.get("nivel_bloque", 0)
-        ) > 0
+        dentro_de_bloque = (
+            bool(estado["buffer_lineas"]) or int(estado.get("nivel_bloque", 0)) > 0
+        )
         if dentro_de_bloque:
             estado["lineas_blanco_consecutivas"] += 1
             if (

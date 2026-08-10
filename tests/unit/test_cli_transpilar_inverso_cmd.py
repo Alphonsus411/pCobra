@@ -16,6 +16,7 @@ class FakeTranspiler:
     def generate_code(self, ast):
         return "resultado"
 
+
 class FakeReverseWithUnsupportedNode:
     def load_file(self, path):
         return []
@@ -27,10 +28,24 @@ class FakeReverseWithUnsupportedNode:
 def test_transpilar_inverso_ok(tmp_path):
     archivo = tmp_path / "a.py"
     archivo.write_text("x = 1")
-    args = ["--no-color", "transpilar-inverso", str(archivo), "--origen=python", "--destino=python"]
-    with patch("pcobra.cobra.cli.commands.transpilar_inverso_cmd.REVERSE_TRANSPILERS", {"python": FakeReverse}), \
-         patch("pcobra.cobra.cli.commands.transpilar_inverso_cmd._runtime_transpilers", lambda: {"python": FakeTranspiler}), \
-         patch("sys.stdout", new_callable=StringIO) as out:
+    args = [
+        "--no-color",
+        "transpilar-inverso",
+        str(archivo),
+        "--origen=python",
+        "--destino=python",
+    ]
+    with (
+        patch(
+            "pcobra.cobra.cli.commands.transpilar_inverso_cmd.REVERSE_TRANSPILERS",
+            {"python": FakeReverse},
+        ),
+        patch(
+            "pcobra.cobra.cli.commands.transpilar_inverso_cmd._runtime_transpilers",
+            lambda: {"python": FakeTranspiler},
+        ),
+        patch("sys.stdout", new_callable=StringIO) as out,
+    ):
         main(args)
     lineas = [l for l in out.getvalue().splitlines() if "Código transpilado" in l]
     assert lineas[0].startswith("Código transpilado")
@@ -40,12 +55,14 @@ def test_transpilar_inverso_ok(tmp_path):
 def test_transpilar_inverso_archivo_inexistente(tmp_path):
     archivo = tmp_path / "no.py"
     with patch("sys.stdout", new_callable=StringIO) as out:
-        main([
-            "transpilar-inverso",
-            str(archivo),
-            "--origen=python",
-            "--destino=python",
-        ])
+        main(
+            [
+                "transpilar-inverso",
+                str(archivo),
+                "--origen=python",
+                "--destino=python",
+            ]
+        )
     assert "no existe o no es un archivo regular" in out.getvalue()
 
 
@@ -76,12 +93,14 @@ def test_regresion_transpilar_inverso_rechaza_origen_reverse_retirado_rust(tmp_p
     transpilar_inverso_cmd.TranspilarInversoCommand().register_subparser(subparsers)
 
     with pytest.raises(SystemExit):
-        parser.parse_args([
-            "transpilar-inverso",
-            str(archivo),
-            "--origen=rust",
-            "--destino=python",
-        ])
+        parser.parse_args(
+            [
+                "transpilar-inverso",
+                str(archivo),
+                "--origen=rust",
+                "--destino=python",
+            ]
+        )
 
 
 def test_transpilar_inverso_destino_fuera_tier_rechazado_explicitamente():
@@ -89,20 +108,31 @@ def test_transpilar_inverso_destino_fuera_tier_rechazado_explicitamente():
 
     cmd = transpilar_inverso_cmd.TranspilarInversoCommand()
 
-    with patch.object(transpilar_inverso_cmd, "_runtime_transpilers", lambda: {"python": FakeTranspiler, "externo": FakeTranspiler}):
+    with patch.object(
+        transpilar_inverso_cmd,
+        "_runtime_transpilers",
+        lambda: {"python": FakeTranspiler, "externo": FakeTranspiler},
+    ):
         try:
             cmd._verificar_dependencias("python", "externo")
-        except (transpilar_inverso_cmd.UnsupportedLanguageError, argparse.ArgumentTypeError) as exc:
+        except (
+            transpilar_inverso_cmd.UnsupportedLanguageError,
+            argparse.ArgumentTypeError,
+        ) as exc:
             mensaje = str(exc)
         else:
-            raise AssertionError("Se esperaba UnsupportedLanguageError para destino externo")
+            raise AssertionError(
+                "Se esperaba UnsupportedLanguageError para destino externo"
+            )
 
     assert "soportado" in mensaje or "fuera de Tier 1/Tier 2" in mensaje
     assert "externo" in mensaje
 
 
 def test_transpilar_inverso_acepta_origen_canonico_javascript(tmp_path):
-    from pcobra.cobra.cli.commands.transpilar_inverso_cmd import TranspilarInversoCommand
+    from pcobra.cobra.cli.commands.transpilar_inverso_cmd import (
+        TranspilarInversoCommand,
+    )
     from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 
     archivo = tmp_path / "a.py"
@@ -112,18 +142,22 @@ def test_transpilar_inverso_acepta_origen_canonico_javascript(tmp_path):
     subparsers = parser.add_subparsers(dest="command")
     TranspilarInversoCommand().register_subparser(subparsers)
 
-    args = parser.parse_args([
-        "transpilar-inverso",
-        str(archivo),
-        "--origen=javascript",
-        "--destino=python",
-    ])
+    args = parser.parse_args(
+        [
+            "transpilar-inverso",
+            str(archivo),
+            "--origen=javascript",
+            "--destino=python",
+        ]
+    )
 
     assert args.origen == "javascript"
 
 
 def test_transpilar_inverso_ayuda_acota_origen_y_targets_oficiales():
-    from pcobra.cobra.cli.commands.transpilar_inverso_cmd import TranspilarInversoCommand
+    from pcobra.cobra.cli.commands.transpilar_inverso_cmd import (
+        TranspilarInversoCommand,
+    )
     from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 
     parser = CustomArgumentParser(prog="cobra")
@@ -171,9 +205,17 @@ def test_transpilar_inverso_reporta_cuando_no_hay_reverse_para_destino(tmp_path)
         "--origen=python",
         "--destino=rust",
     ]
-    with patch("pcobra.cobra.cli.commands.transpilar_inverso_cmd.REVERSE_TRANSPILERS", {"python": FakeReverse}), \
-         patch("pcobra.cobra.cli.commands.transpilar_inverso_cmd._runtime_transpilers", lambda: {"rust": FakeTranspiler}), \
-         patch("sys.stdout", new_callable=StringIO) as out:
+    with (
+        patch(
+            "pcobra.cobra.cli.commands.transpilar_inverso_cmd.REVERSE_TRANSPILERS",
+            {"python": FakeReverse},
+        ),
+        patch(
+            "pcobra.cobra.cli.commands.transpilar_inverso_cmd._runtime_transpilers",
+            lambda: {"rust": FakeTranspiler},
+        ),
+        patch("sys.stdout", new_callable=StringIO) as out,
+    ):
         main(args)
 
     salida = out.getvalue()
@@ -190,13 +232,17 @@ def test_transpilar_inverso_reporta_degradacion_por_nodo_no_soportado(tmp_path):
         "--origen=python",
         "--destino=python",
     ]
-    with patch(
-        "pcobra.cobra.cli.commands.transpilar_inverso_cmd.REVERSE_TRANSPILERS",
-        {"python": FakeReverseWithUnsupportedNode},
-    ), patch(
-        "pcobra.cobra.cli.commands.transpilar_inverso_cmd._runtime_transpilers",
-        lambda: {"python": FakeTranspiler},
-    ), patch("sys.stdout", new_callable=StringIO) as out:
+    with (
+        patch(
+            "pcobra.cobra.cli.commands.transpilar_inverso_cmd.REVERSE_TRANSPILERS",
+            {"python": FakeReverseWithUnsupportedNode},
+        ),
+        patch(
+            "pcobra.cobra.cli.commands.transpilar_inverso_cmd._runtime_transpilers",
+            lambda: {"python": FakeTranspiler},
+        ),
+        patch("sys.stdout", new_callable=StringIO) as out,
+    ):
         main(args)
 
     salida = out.getvalue()

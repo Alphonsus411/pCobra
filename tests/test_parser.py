@@ -16,7 +16,6 @@ from pcobra.core.ast_nodes import (
 from pcobra.core.lexer import TipoToken
 
 
-
 def test_parser_asignacion_simple() -> None:
     codigo = "var x = 5"
     tokens = Lexer(codigo).tokenizar()

@@ -10,18 +10,28 @@ from typing import Any, Awaitable, Callable
 
 import pytest
 
-MODULO = Path(__file__).resolve().parents[2] / "src" / "pcobra" / "standard_library" / "decoradores.py"
+MODULO = (
+    Path(__file__).resolve().parents[2]
+    / "src"
+    / "pcobra"
+    / "standard_library"
+    / "decoradores.py"
+)
 ESPEC = importlib.util.spec_from_file_location("standard_library.decoradores", MODULO)
 assert ESPEC is not None and ESPEC.loader is not None
 
 pcobra_pkg = sys.modules.setdefault("pcobra", types.ModuleType("pcobra"))
-corelibs_pkg = sys.modules.setdefault("pcobra.corelibs", types.ModuleType("pcobra.corelibs"))
+corelibs_pkg = sys.modules.setdefault(
+    "pcobra.corelibs", types.ModuleType("pcobra.corelibs")
+)
 standard_library_pkg = sys.modules.setdefault(
     "pcobra.standard_library", types.ModuleType("pcobra.standard_library")
 )
 
 rich_pkg = sys.modules.setdefault("rich", types.ModuleType("rich"))
-rich_console_pkg = sys.modules.setdefault("rich.console", types.ModuleType("rich.console"))
+rich_console_pkg = sys.modules.setdefault(
+    "rich.console", types.ModuleType("rich.console")
+)
 
 
 class _ConsoleStub:
@@ -215,7 +225,9 @@ async def test_reintentar_async_envuelve_corelibs(monkeypatch: pytest.MonkeyPatc
 
     monkeypatch.setattr(decoradores, "_reintentar_async", reintentar_falso)
 
-    @reintentar_async(intentos=3, excepciones=(RuntimeError,), consola=consola, etiqueta="tarea")
+    @reintentar_async(
+        intentos=3, excepciones=(RuntimeError,), consola=consola, etiqueta="tarea"
+    )
     async def fragil() -> str:
         llamadas["contador"] += 1
         if llamadas["contador"] < 2:

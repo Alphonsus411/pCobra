@@ -8,8 +8,10 @@ from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
 
+
 class DocsCommand(BaseCommand):
     """Genera la documentación HTML del proyecto."""
+
     name = "docs"
     requires_sqlite_key: bool = False
     SPHINX_TIMEOUT = 300  # segundos
@@ -18,9 +20,9 @@ class DocsCommand(BaseCommand):
         """Registra los argumentos del subcomando."""
         parser = subparsers.add_parser(
             self.name,
-            help=_(
-                "Genera la documentación del proyecto (límite {t} s)"
-            ).format(t=self.SPHINX_TIMEOUT),
+            help=_("Genera la documentación del proyecto (límite {t} s)").format(
+                t=self.SPHINX_TIMEOUT
+            ),
         )
         parser.set_defaults(cmd=self)
         return parser
@@ -43,13 +45,19 @@ class DocsCommand(BaseCommand):
             try:
                 dir.mkdir(parents=True, exist_ok=True)
             except OSError as e:
-                mostrar_error(_("Error al crear directorio {dir}: {err}").format(dir=dir, err=e))
+                mostrar_error(
+                    _("Error al crear directorio {dir}: {err}").format(dir=dir, err=e)
+                )
                 return 1
 
         try:
             import sphinx
         except ImportError:
-            mostrar_error(_("No se encontró Sphinx. Instala el extra de documentación con 'pip install .[docs]'."))
+            mostrar_error(
+                _(
+                    "No se encontró Sphinx. Instala el extra de documentación con 'pip install .[docs]'."
+                )
+            )
             return 1
 
         try:
@@ -67,18 +75,28 @@ class DocsCommand(BaseCommand):
     def _validar_directorios(self, source: Path, codigo: Path) -> bool:
         """Valida la existencia de directorios requeridos."""
         if not source.exists():
-            mostrar_error(_("No se encuentra el directorio de documentación en {path}").format(path=source))
+            mostrar_error(
+                _("No se encuentra el directorio de documentación en {path}").format(
+                    path=source
+                )
+            )
             return False
         if not codigo.exists():
-            mostrar_error(_("No se encuentra el directorio de código fuente en {path}").format(path=codigo))
+            mostrar_error(
+                _("No se encuentra el directorio de código fuente en {path}").format(
+                    path=codigo
+                )
+            )
             return False
         return True
 
-    def _ejecutar_sphinx(self, api: Path, codigo: Path, source: Path, build: Path) -> None:
+    def _ejecutar_sphinx(
+        self, api: Path, codigo: Path, source: Path, build: Path
+    ) -> None:
         """Ejecuta los comandos de Sphinx."""
         for cmd in [
             ["sphinx-apidoc", "-o", str(api), str(codigo)],
-            ["sphinx-build", "-b", "html", str(source), str(build)]
+            ["sphinx-build", "-b", "html", str(source), str(build)],
         ]:
             try:
                 subprocess.run(
@@ -89,12 +107,10 @@ class DocsCommand(BaseCommand):
                     timeout=self.SPHINX_TIMEOUT,
                 )
             except subprocess.CalledProcessError as e:
-                raise RuntimeError(
-                    f"Error ejecutando {cmd[0]}: {e.stderr}"
-                ) from e
+                raise RuntimeError(f"Error ejecutando {cmd[0]}: {e.stderr}") from e
             except subprocess.TimeoutExpired as e:
                 raise RuntimeError(
-                    _( "El comando {cmd} excedió el tiempo límite de {t} s" ).format(
+                    _("El comando {cmd} excedió el tiempo límite de {t} s").format(
                         cmd=cmd[0], t=self.SPHINX_TIMEOUT
                     )
                 ) from e

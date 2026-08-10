@@ -9,6 +9,7 @@ Ejemplos:
     >>> transpiler = ReverseFromJS()
     >>> ast = transpiler.generate_ast("function main() { return 0; }")
 """
+
 from typing import Any, List, TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -37,7 +38,10 @@ from pcobra.cobra.core.ast_nodes import (
     NodoOption,
 )
 
-from pcobra.cobra.transpilers.reverse.tree_sitter_base import TreeSitterReverseTranspiler, TreeSitterNode
+from pcobra.cobra.transpilers.reverse.tree_sitter_base import (
+    TreeSitterReverseTranspiler,
+    TreeSitterNode,
+)
 
 
 class ReverseFromJS(TreeSitterReverseTranspiler):
@@ -83,17 +87,19 @@ class ReverseFromJS(TreeSitterReverseTranspiler):
         body_n = node.child_by_field_name("body")
 
         nombre = TreeSitterNode(nombre_n).get_text() if nombre_n else ""
-        params = [
-            TreeSitterNode(c).get_text()
-            for c in params_n.children
-            if c.type == "identifier"
-        ] if params_n else []
+        params = (
+            [
+                TreeSitterNode(c).get_text()
+                for c in params_n.children
+                if c.type == "identifier"
+            ]
+            if params_n
+            else []
+        )
 
-        cuerpo = [
-            self.visit(c)
-            for c in body_n.children
-            if c.is_named
-        ] if body_n else []
+        cuerpo = (
+            [self.visit(c) for c in body_n.children if c.is_named] if body_n else []
+        )
 
         return NodoFuncion(nombre, params, cuerpo)
 
@@ -103,11 +109,9 @@ class ReverseFromJS(TreeSitterReverseTranspiler):
         body_n = node.child_by_field_name("body")
 
         nombre = TreeSitterNode(nombre_n).get_text() if nombre_n else ""
-        metodos = [
-            self.visit(c)
-            for c in body_n.children
-            if c.is_named
-        ] if body_n else []
+        metodos = (
+            [self.visit(c) for c in body_n.children if c.is_named] if body_n else []
+        )
 
         return NodoClase(nombre, metodos)
 
@@ -118,17 +122,19 @@ class ReverseFromJS(TreeSitterReverseTranspiler):
         body_n = node.child_by_field_name("body")
 
         nombre = TreeSitterNode(nombre_n).get_text() if nombre_n else ""
-        params = [
-            TreeSitterNode(c).get_text()
-            for c in params_n.children
-            if c.type == "identifier"
-        ] if params_n else []
+        params = (
+            [
+                TreeSitterNode(c).get_text()
+                for c in params_n.children
+                if c.type == "identifier"
+            ]
+            if params_n
+            else []
+        )
 
-        cuerpo = [
-            self.visit(c)
-            for c in body_n.children
-            if c.is_named
-        ] if body_n else []
+        cuerpo = (
+            [self.visit(c) for c in body_n.children if c.is_named] if body_n else []
+        )
 
         return NodoMetodo(nombre, params, cuerpo)
 
@@ -138,22 +144,18 @@ class ReverseFromJS(TreeSitterReverseTranspiler):
         """Convierte un bucle while."""
         cond = self.visit(node.child_by_field_name("condition"))
         body_n = node.child_by_field_name("body")
-        cuerpo = [
-            self.visit(c)
-            for c in body_n.children
-            if c.is_named
-        ] if body_n else []
+        cuerpo = (
+            [self.visit(c) for c in body_n.children if c.is_named] if body_n else []
+        )
         return NodoBucleMientras(cond, cuerpo)
 
     def visit_for_statement(self, node: Node) -> NodoBucleMientras:
         """Convierte un bucle for en un mientras simplificado."""
         cond = self.visit(node.child_by_field_name("condition"))
         body_n = node.child_by_field_name("body")
-        cuerpo = [
-            self.visit(c)
-            for c in body_n.children
-            if c.is_named
-        ] if body_n else []
+        cuerpo = (
+            [self.visit(c) for c in body_n.children if c.is_named] if body_n else []
+        )
         return NodoBucleMientras(cond, cuerpo)
 
     def visit_switch_statement(self, node: Node) -> NodoSwitch:
@@ -166,7 +168,9 @@ class ReverseFromJS(TreeSitterReverseTranspiler):
         if body_n:
             for child in body_n.children:
                 if child.type == "switch_case":
-                    val_n = child.child_by_field_name("value") or self._first_named_child(child)
+                    val_n = child.child_by_field_name(
+                        "value"
+                    ) or self._first_named_child(child)
                     val = self.visit(val_n) if val_n else NodoValor(None)
                     if not isinstance(val, NodoPattern):
                         val = NodoPattern(val)
@@ -208,7 +212,9 @@ class ReverseFromJS(TreeSitterReverseTranspiler):
         return self.visit_variable_declaration(node)
 
     def visit_variable_declaration(self, node: Node) -> NodoAsignacion:
-        declarator = next((c for c in node.children if c.type == "variable_declarator"), None)
+        declarator = next(
+            (c for c in node.children if c.type == "variable_declarator"), None
+        )
         if declarator is None:
             return self.generic_visit(node)
         name_n = declarator.child_by_field_name("name")
@@ -234,12 +240,15 @@ class ReverseFromJS(TreeSitterReverseTranspiler):
                 return NodoDiccionarioTipo(nombre, "Any", "Any", right.elementos)
             return NodoAsignacion(nombre, right)
         return NodoAsignacion(left, right)
+
     def visit_binary_expression(self, node: Node) -> NodoOperacionBinaria:
         """Convierte una expresión binaria."""
         izquierda = self.visit(node.children[0])
         derecha = self.visit(node.children[2])
         operador_txt = TreeSitterNode(node.children[1]).get_text()
-        token = self.OPERADORES.get(operador_txt, Token(TipoToken.DIFERENTE, operador_txt))
+        token = self.OPERADORES.get(
+            operador_txt, Token(TipoToken.DIFERENTE, operador_txt)
+        )
         return NodoOperacionBinaria(izquierda, token, derecha)
 
     def visit_parenthesized_expression(self, node: Node) -> NodoValor:

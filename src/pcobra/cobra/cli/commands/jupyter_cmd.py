@@ -14,6 +14,7 @@ from pcobra.cobra.cli.utils.validators import validar_archivo_existente
 
 class JupyterCommand(BaseCommand):
     """Lanza Jupyter Notebook con el kernel Cobra instalado."""
+
     name = "jupyter"
 
     class EjecutableNoEncontradoError(FileNotFoundError):
@@ -67,7 +68,9 @@ class JupyterCommand(BaseCommand):
             import jupyter
         except ImportError:
             mostrar_error(
-                _("No se encontró el módulo 'jupyter'. Instala Jupyter con 'pip install jupyter'")
+                _(
+                    "No se encontró el módulo 'jupyter'. Instala Jupyter con 'pip install jupyter'"
+                )
             )
             return 1
 
@@ -77,9 +80,9 @@ class JupyterCommand(BaseCommand):
                 validar_archivo_existente(args.notebook)
             except FileNotFoundError:
                 mostrar_error(
-                    _("No se encontró el notebook indicado: {path}. Verifica la ruta e inténtalo de nuevo.").format(
-                        path=args.notebook
-                    )
+                    _(
+                        "No se encontró el notebook indicado: {path}. Verifica la ruta e inténtalo de nuevo."
+                    ).format(path=args.notebook)
                 )
                 return 1
 
@@ -89,24 +92,38 @@ class JupyterCommand(BaseCommand):
                 [sys.executable, "-m", "pcobra.jupyter_kernel", "install"],
                 check=True,
                 capture_output=True,
-                text=True
+                text=True,
             )
 
             if result.returncode != 0:
-                mostrar_error(_("Error al instalar el kernel canónico 'pcobra.jupyter_kernel': {err}").format(err=result.stderr))
+                mostrar_error(
+                    _(
+                        "Error al instalar el kernel canónico 'pcobra.jupyter_kernel': {err}"
+                    ).format(err=result.stderr)
+                )
                 return 1
 
             python_executable = self._resolver_ejecutable(sys.executable)
         except JupyterCommand.EjecutableNoEncontradoError:
             mostrar_error(
-                _("No se encontró el ejecutable de Python para lanzar Jupyter. Verifica la instalación.")
+                _(
+                    "No se encontró el ejecutable de Python para lanzar Jupyter. Verifica la instalación."
+                )
             )
             return 1
         except subprocess.CalledProcessError as e:
-            mostrar_error(_("Error al instalar o preparar el kernel de Cobra: {err}").format(err=e))
+            mostrar_error(
+                _("Error al instalar o preparar el kernel de Cobra: {err}").format(
+                    err=e
+                )
+            )
             return 1
         except Exception as e:
-            mostrar_error(_("Error inesperado durante la preparación del kernel: {err}").format(err=str(e)))
+            mostrar_error(
+                _("Error inesperado durante la preparación del kernel: {err}").format(
+                    err=str(e)
+                )
+            )
             return 1
 
         # Preparar comando de Jupyter
@@ -125,8 +142,14 @@ class JupyterCommand(BaseCommand):
             subprocess.run(cmd, check=True)
             return 0
         except subprocess.CalledProcessError as e:
-            mostrar_error(_("Error al ejecutar 'jupyter notebook': {err}").format(err=e))
+            mostrar_error(
+                _("Error al ejecutar 'jupyter notebook': {err}").format(err=e)
+            )
             return 1
         except Exception as e:
-            mostrar_error(_("Error inesperado al iniciar Jupyter Notebook: {err}").format(err=str(e)))
+            mostrar_error(
+                _("Error inesperado al iniciar Jupyter Notebook: {err}").format(
+                    err=str(e)
+                )
+            )
             return 1

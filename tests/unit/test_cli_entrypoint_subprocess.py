@@ -18,7 +18,6 @@ from textwrap import dedent
 
 import pytest
 
-
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
@@ -36,7 +35,9 @@ def _create_stub_environment(tmp_path: Path) -> dict[str, str]:
     numpy==1.0.0
     cobra-lib==0.0.1
     """
-    (project_root / "requirements.txt").write_text(dedent(requirements).strip(), encoding="utf-8")
+    (project_root / "requirements.txt").write_text(
+        dedent(requirements).strip(), encoding="utf-8"
+    )
 
     pyproject = """\
     [project]
@@ -45,7 +46,9 @@ def _create_stub_environment(tmp_path: Path) -> dict[str, str]:
         "matplotlib==1.0.0",
     ]
     """
-    (project_root / "pyproject.toml").write_text(dedent(pyproject).strip(), encoding="utf-8")
+    (project_root / "pyproject.toml").write_text(
+        dedent(pyproject).strip(), encoding="utf-8"
+    )
 
     _write_stub(
         stubs_dir / "yaml.py",
@@ -314,7 +317,10 @@ def _create_stub_environment(tmp_path: Path) -> dict[str, str]:
     env = os.environ.copy()
     original_path = env.get("PYTHONPATH", "")
     env["PYTHONPATH"] = os.pathsep.join(
-        filter(None, [str(stubs_dir), str(REPO_ROOT / "src"), str(REPO_ROOT), original_path])
+        filter(
+            None,
+            [str(stubs_dir), str(REPO_ROOT / "src"), str(REPO_ROOT), original_path],
+        )
     )
     env["PCOBRA_CODE_ROOT"] = str(REPO_ROOT)
     env["PCOBRA_PROJECT_ROOT"] = str(project_root)
@@ -352,7 +358,9 @@ def _run_cli(args: list[str], env: dict[str, str]) -> subprocess.CompletedProces
         ) from exc
 
 
-def _run_module_pcobra(args: list[str], env: dict[str, str]) -> subprocess.CompletedProcess[str]:
+def _run_module_pcobra(
+    args: list[str], env: dict[str, str]
+) -> subprocess.CompletedProcess[str]:
     cmd = [sys.executable, "-m", "pcobra", *args]
     return subprocess.run(
         cmd,
@@ -364,21 +372,21 @@ def _run_module_pcobra(args: list[str], env: dict[str, str]) -> subprocess.Compl
     )
 
 
-def _run_cobra_script(args: list[str], env: dict[str, str], tmp_path: Path) -> subprocess.CompletedProcess[str]:
+def _run_cobra_script(
+    args: list[str], env: dict[str, str], tmp_path: Path
+) -> subprocess.CompletedProcess[str]:
     bin_dir = tmp_path / "bin"
     bin_dir.mkdir(parents=True, exist_ok=True)
     cobra_script = bin_dir / "cobra"
     cobra_script.write_text(
-        dedent(
-            """
+        dedent("""
             #!/usr/bin/env python3
             import sys
             from pcobra.cli import main
 
             if __name__ == "__main__":
                 sys.exit(main())
-            """
-        ).lstrip(),
+            """).lstrip(),
         encoding="utf-8",
     )
     cobra_script.chmod(0o755)
@@ -419,7 +427,9 @@ def test_cli_agix_help(tmp_path: Path) -> None:
 
 
 @pytest.mark.timeout(30)
-def test_cli_y_kernel_arrancan_con_namespace_canonico_en_entorno_minimo(tmp_path: Path) -> None:
+def test_cli_y_kernel_arrancan_con_namespace_canonico_en_entorno_minimo(
+    tmp_path: Path,
+) -> None:
     env = _create_stub_environment(tmp_path)
     env["PCOBRA_ENABLE_LEGACY_IMPORTS"] = "0"
     env["PCOBRA_LEGACY_IMPORT_PHASE"] = "2"
@@ -445,7 +455,9 @@ def test_cli_y_kernel_arrancan_con_namespace_canonico_en_entorno_minimo(tmp_path
 
 
 @pytest.mark.timeout(30)
-def test_entrypoints_python_m_pcobra_y_cobra_comparten_inicializacion(tmp_path: Path) -> None:
+def test_entrypoints_python_m_pcobra_y_cobra_comparten_inicializacion(
+    tmp_path: Path,
+) -> None:
     env = _create_stub_environment(tmp_path)
     env["PCOBRA_TRACE_ENTRYPOINT"] = "1"
 

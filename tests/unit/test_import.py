@@ -39,13 +39,13 @@ def test_import_interpreter(tmp_path):
 
     IMPORT_WHITELIST.add(str(mod))
 
-    mod_path_str = str(mod).replace('\\', '/')
+    mod_path_str = str(mod).replace("\\", "/")
     codigo = f"import '{mod_path_str}'\nimprimir(dato)"
     tokens = Lexer(codigo).analizar_token()
     ast = Parser(tokens).parsear()
     interp = InterpretadorCobra()
 
-    with patch('sys.stdout', new_callable=StringIO) as mock_stdout:
+    with patch("sys.stdout", new_callable=StringIO) as mock_stdout:
         interp.ejecutar_ast(ast)
 
     IMPORT_WHITELIST.remove(str(mod))
@@ -57,17 +57,19 @@ def test_import_interpreter(tmp_path):
 def test_import_co_carga_unica(tmp_path):
     mod_path = tmp_path / "mod_contador.cobra"
     # Cambiar el contenido para evitar la auto-referencia
-    mod_path.write_text("var _contador_interno = 0\nfunc incrementar_contador() { _contador_interno = _contador_interno + 1 }\nincrementar_contador()")
+    mod_path.write_text(
+        "var _contador_interno = 0\nfunc incrementar_contador() { _contador_interno = _contador_interno + 1 }\nincrementar_contador()"
+    )
 
     IMPORT_WHITELIST.add(str(mod_path))
 
-    mod_path_str = str(mod_path).replace('\\', '/')
-    codigo = f"import '{mod_path_str}'\nimport '{mod_path_str}'\nimprimir(_contador_interno)" # Ahora imprimimos _contador_interno
+    mod_path_str = str(mod_path).replace("\\", "/")
+    codigo = f"import '{mod_path_str}'\nimport '{mod_path_str}'\nimprimir(_contador_interno)"  # Ahora imprimimos _contador_interno
     tokens = Lexer(codigo).analizar_token()
     ast = Parser(tokens).parsear()
     interp = InterpretadorCobra()
 
-    with patch('sys.stdout', new_callable=StringIO) as mock_stdout:
+    with patch("sys.stdout", new_callable=StringIO) as mock_stdout:
         interp.ejecutar_ast(ast)
 
     IMPORT_WHITELIST.remove(str(mod_path))
@@ -80,9 +82,9 @@ def test_import_co_ciclo_directo(tmp_path):
     mod_a_path = tmp_path / "mod_a.cobra"
     mod_b_path = tmp_path / "mod_b.cobra"
 
-    mod_b_path_str = str(mod_b_path).replace('\\', '/')
+    mod_b_path_str = str(mod_b_path).replace("\\", "/")
     mod_a_path.write_text(f"import '{mod_b_path_str}'")
-    mod_a_path_str = str(mod_a_path).replace('\\', '/')
+    mod_a_path_str = str(mod_a_path).replace("\\", "/")
     mod_b_path.write_text(f"import '{mod_a_path_str}'")
 
     IMPORT_WHITELIST.add(str(mod_a_path))
@@ -107,13 +109,13 @@ def test_import_co_compatibilidad_ambito(tmp_path):
 
     IMPORT_WHITELIST.add(str(mod_path))
 
-    mod_path_str = str(mod_path).replace('\\', '/')
+    mod_path_str = str(mod_path).replace("\\", "/")
     codigo = f"import '{mod_path_str}'\nimprimir(x + y)"
     tokens = Lexer(codigo).analizar_token()
     ast = Parser(tokens).parsear()
     interp = InterpretadorCobra()
 
-    with patch('sys.stdout', new_callable=StringIO) as mock_stdout:
+    with patch("sys.stdout", new_callable=StringIO) as mock_stdout:
         interp.ejecutar_ast(ast)
 
     IMPORT_WHITELIST.remove(str(mod_path))
@@ -128,7 +130,7 @@ def test_import_cobra_proteccion_path_traversal(tmp_path):
     malicious_file.write_text("var secreto = 'informacion_sensible'")
 
     # Intentar importar usando ../
-    malicious_file_str = str(malicious_file).replace('\\', '/')
+    malicious_file_str = str(malicious_file).replace("\\", "/")
     codigo = f"import '{malicious_file_str}'"
     tokens = Lexer(codigo).analizar_token()
     ast = Parser(tokens).parsear()

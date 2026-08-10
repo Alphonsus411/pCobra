@@ -9,4 +9,3 @@ def test_sugerencia_palabra_clave():
     parser = Parser(tokens)
     with pytest.raises(ParserError, match="¿Quiso decir 'imprimir'?"):
         parser.parsear()
-

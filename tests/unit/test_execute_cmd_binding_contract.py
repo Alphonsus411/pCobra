@@ -17,10 +17,13 @@ def test_ejecutar_en_contenedor_resuelve_contrato(monkeypatch):
     monkeypatch.setattr(
         execute_module.RUNTIME_MANAGER,
         "validate_command_runtime",
-        lambda target, **kwargs: llamadas.append((target, kwargs["command"])) or ("1.0", _Contrato(), _Bridge()),
+        lambda target, **kwargs: llamadas.append((target, kwargs["command"]))
+        or ("1.0", _Contrato(), _Bridge()),
     )
     monkeypatch.setattr(execute_module, "resolve_docker_backend", lambda value: value)
-    monkeypatch.setattr(execute_module, "ejecutar_en_contenedor", lambda _codigo, _backend: "ok")
+    monkeypatch.setattr(
+        execute_module, "ejecutar_en_contenedor", lambda _codigo, _backend: "ok"
+    )
 
     assert ExecuteCommand()._ejecutar_en_contenedor("imprimir(1)", "javascript") == 0
     assert llamadas == [("javascript", "run")]

@@ -7,6 +7,7 @@ directories. It records which grammar rules are used when parsing and
 computes the percentage of rules that were exercised. If the coverage is
 below a configurable threshold the script exits with a non-zero status.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -15,7 +16,6 @@ from pathlib import Path
 from typing import Iterable, Set
 
 from lark import Lark, Tree, exceptions
-
 
 GRAMMAR_PATH = Path("docs/gramatica.ebnf")
 SAMPLE_DIRS = [Path("examples"), Path("tests")]
@@ -66,7 +66,9 @@ def main(threshold: float) -> int:
     coverage = 100.0 * len(used_rules) / len(all_rules) if all_rules else 100.0
 
     missing = sorted(all_rules - used_rules)
-    print(f"Cobertura de gramática: {coverage:.2f}% ({len(used_rules)}/{len(all_rules)})")
+    print(
+        f"Cobertura de gramática: {coverage:.2f}% ({len(used_rules)}/{len(all_rules)})"
+    )
     if missing:
         print("Reglas no utilizadas:")
         for rule in missing:

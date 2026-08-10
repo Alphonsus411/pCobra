@@ -31,7 +31,9 @@ PUBLIC_REGISTRY_FILES = (
     Path("src/pcobra/cobra/transpilers/targets.py"),
     Path("src/pcobra/cobra/config/transpile_targets.py"),
 )
-ACTIVE_RUNTIME_SNAPSHOT = Path("src/pcobra/cobra/transpilers/runtime_api_parity_snapshot.json")
+ACTIVE_RUNTIME_SNAPSHOT = Path(
+    "src/pcobra/cobra/transpilers/runtime_api_parity_snapshot.json"
+)
 CHOICE_ROOTS = (
     Path("src/pcobra/cobra/cli"),
     Path("src/pcobra/gui"),
@@ -39,7 +41,14 @@ CHOICE_ROOTS = (
 )
 DOC_ROOTS = (Path("README.md"), Path("docs"))
 
-HISTORICAL_DOC_PARTS = {"historico", "compatibility", "ADR", "issues", "proposals", "informes"}
+HISTORICAL_DOC_PARTS = {
+    "historico",
+    "compatibility",
+    "ADR",
+    "issues",
+    "proposals",
+    "informes",
+}
 HISTORICAL_DOC_FILES = {
     Path("docs/migracion_targets_retirados.md"),
     Path("docs/language_equivalence_matrix.md"),
@@ -49,9 +58,36 @@ HISTORICAL_DOC_FILES = {
 REJECTION_TEST_PREFIXES = (Path("tests"),)
 LEGACY_SHIM_PREFIXES = (Path("src/cobra"),)
 
-CHOICE_MARKERS = ("choices", "choice", "target_cli_choices", "gui_target_choices", "dropdown", "option(")
-HISTORICAL_MARKERS = ("histórico", "historico", "legacy", "retirad", "migración", "migracion", "depreca")
-DOC_EXPOSURE_MARKERS = ("backend", "target", "transpil", "lenguaje", "lenguajes", "destino", "origen", "runtime oficial", "tiers", "tier ", "disponible")
+CHOICE_MARKERS = (
+    "choices",
+    "choice",
+    "target_cli_choices",
+    "gui_target_choices",
+    "dropdown",
+    "option(",
+)
+HISTORICAL_MARKERS = (
+    "histórico",
+    "historico",
+    "legacy",
+    "retirad",
+    "migración",
+    "migracion",
+    "depreca",
+)
+DOC_EXPOSURE_MARKERS = (
+    "backend",
+    "target",
+    "transpil",
+    "lenguaje",
+    "lenguajes",
+    "destino",
+    "origen",
+    "runtime oficial",
+    "tiers",
+    "tier ",
+    "disponible",
+)
 
 
 @dataclass(frozen=True)
@@ -71,7 +107,10 @@ def _is_under(path: Path, prefix: Path) -> bool:
 
 
 def _is_rejection_test(path: Path) -> bool:
-    return any(_is_under(path, prefix) for prefix in REJECTION_TEST_PREFIXES) and "rechaz" in path.read_text(encoding="utf-8", errors="ignore").lower()
+    return (
+        any(_is_under(path, prefix) for prefix in REJECTION_TEST_PREFIXES)
+        and "rechaz" in path.read_text(encoding="utf-8", errors="ignore").lower()
+    )
 
 
 def _is_legacy_shim(path: Path) -> bool:
@@ -90,11 +129,21 @@ def _is_historical_doc(path: Path, text: str) -> bool:
 def _text_files(root: Path) -> list[Path]:
     if root.is_file():
         return [root]
-    return [p for p in root.rglob("*") if p.is_file() and p.suffix.lower() in {".md", ".rst", ".txt"}]
+    return [
+        p
+        for p in root.rglob("*")
+        if p.is_file() and p.suffix.lower() in {".md", ".rst", ".txt"}
+    ]
 
 
-def _scan_lines(path: Path, scope: str, *, require_choice_marker: bool = False, root: Path = ROOT) -> list[Violation]:
-    display_path = path.relative_to(root) if path.is_absolute() and path.is_relative_to(root) else path
+def _scan_lines(
+    path: Path, scope: str, *, require_choice_marker: bool = False, root: Path = ROOT
+) -> list[Violation]:
+    display_path = (
+        path.relative_to(root)
+        if path.is_absolute() and path.is_relative_to(root)
+        else path
+    )
     text = path.read_text(encoding="utf-8", errors="ignore")
     if _is_rejection_test(display_path) or _is_legacy_shim(display_path):
         return []
@@ -104,7 +153,9 @@ def _scan_lines(path: Path, scope: str, *, require_choice_marker: bool = False, 
     violations: list[Violation] = []
     for line_no, line in enumerate(text.splitlines(), start=1):
         lowered = line.lower()
-        if require_choice_marker and not any(marker in lowered for marker in CHOICE_MARKERS):
+        if require_choice_marker and not any(
+            marker in lowered for marker in CHOICE_MARKERS
+        ):
             continue
         if scope == "documentación pública":
             if any(marker in lowered for marker in HISTORICAL_MARKERS):
@@ -112,7 +163,9 @@ def _scan_lines(path: Path, scope: str, *, require_choice_marker: bool = False, 
             if not any(marker in lowered for marker in DOC_EXPOSURE_MARKERS):
                 continue
         for match in _TERM_RE.finditer(line):
-            violations.append(Violation(display_path, line_no, match.group(1), scope, line))
+            violations.append(
+                Violation(display_path, line_no, match.group(1), scope, line)
+            )
     return violations
 
 
@@ -122,7 +175,9 @@ def find_violations(root: Path = ROOT) -> list[Violation]:
     for rel in PUBLIC_REGISTRY_FILES:
         path = root / rel
         if path.exists():
-            violations.extend(_scan_lines(path, "registro público de transpiladores", root=root))
+            violations.extend(
+                _scan_lines(path, "registro público de transpiladores", root=root)
+            )
 
     for choice_root in CHOICE_ROOTS:
         absolute = root / choice_root
@@ -130,7 +185,14 @@ def find_violations(root: Path = ROOT) -> list[Violation]:
             continue
         for path in sorted(absolute.rglob("*.py")):
             rel = path.relative_to(root)
-            violations.extend(_scan_lines(path, "choices públicos CLI/GUI", require_choice_marker=True, root=root))
+            violations.extend(
+                _scan_lines(
+                    path,
+                    "choices públicos CLI/GUI",
+                    require_choice_marker=True,
+                    root=root,
+                )
+            )
 
     for doc_root in DOC_ROOTS:
         absolute = root / doc_root
@@ -183,7 +245,10 @@ def main() -> int:
     violations = find_violations(ROOT)
     violations.extend(_audit_active_runtime_snapshot(ROOT))
     if violations:
-        print("❌ Auditor de exposiciones públicas de backends/alias retirados: FALLÓ", file=sys.stderr)
+        print(
+            "❌ Auditor de exposiciones públicas de backends/alias retirados: FALLÓ",
+            file=sys.stderr,
+        )
         for violation in violations:
             print(f"  - {violation.format()}", file=sys.stderr)
         print(

@@ -5,7 +5,6 @@ import types
 
 import pytest
 
-
 BENCH_CMD_MODULE = "pcobra.cobra.cli.commands.bench_cmd"
 TARGETS_POLICY_MODULE = "pcobra.cobra.benchmarks.targets_policy"
 
@@ -64,7 +63,9 @@ def test_bench_cmd_missing_dependency_reports_real_module(monkeypatch):
     blocked_module = "pcobra.cobra.cli.target_policies"
     original_import = builtins.__import__
 
-    def block_real_missing_module(name, globals=None, locals=None, fromlist=(), level=0):
+    def block_real_missing_module(
+        name, globals=None, locals=None, fromlist=(), level=0
+    ):
         if name == blocked_module:
             raise ModuleNotFoundError(
                 f"No module named '{blocked_module}'",

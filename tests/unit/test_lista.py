@@ -52,6 +52,7 @@ def test_lista():
         lista.scanear([1, 2], "no callable")
     with pytest.raises(TypeError):
         lista.mapear_aplanado([1], lambda _: 42)
+
     def reventar(acc, x):  # pragma: no cover - auxiliar para excepciones
         raise RuntimeError("boom")
 
@@ -61,4 +62,3 @@ def test_lista():
         lista.ventanas(datos, 0)
     with pytest.raises(ValueError):
         lista.chunk(datos, 0)
-

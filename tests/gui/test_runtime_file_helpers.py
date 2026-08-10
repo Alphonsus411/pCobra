@@ -72,15 +72,15 @@ def test_listar_directorio_cobra_delega_en_politica_idle(tmp_path: Path):
     ]
 
 
-def test_listar_directorio_idle_muestra_desconocidos_por_defecto_y_permite_ocultarlos(tmp_path: Path):
+def test_listar_directorio_idle_muestra_desconocidos_por_defecto_y_permite_ocultarlos(
+    tmp_path: Path,
+):
     (tmp_path / "script.py").write_text("", encoding="utf-8")
 
     assert [path.name for path in runtime.listar_directorio_idle(tmp_path)] == [
         "script.py"
     ]
-    assert runtime.listar_directorio_idle(
-        tmp_path, incluir_desconocidos=False
-    ) == []
+    assert runtime.listar_directorio_idle(tmp_path, incluir_desconocidos=False) == []
 
 
 def test_construir_entradas_directorio_muestra_readme_markdown(tmp_path: Path):
@@ -104,9 +104,10 @@ def test_resolver_ruta_archivo_en_project_root_acepta_cobra_y_normaliza_sin_exte
 ):
     (tmp_path / "src").mkdir()
 
-    assert runtime.resolver_ruta_archivo_en_project_root(ruta, tmp_path) == (
-        tmp_path / esperado
-    ).resolve()
+    assert (
+        runtime.resolver_ruta_archivo_en_project_root(ruta, tmp_path)
+        == (tmp_path / esperado).resolve()
+    )
 
 
 def test_resolver_ruta_archivo_en_project_root_rechaza_extension_ajena_txt(
@@ -121,12 +122,14 @@ def test_resolver_ruta_texto_en_project_root_no_agrega_extension_ni_exige_cobra(
 ):
     (tmp_path / "src").mkdir()
 
-    assert runtime.resolver_ruta_texto_en_project_root("src/nota.txt", tmp_path) == (
-        tmp_path / "src" / "nota.txt"
-    ).resolve()
-    assert runtime.resolver_ruta_texto_en_project_root("src/programa", tmp_path) == (
-        tmp_path / "src" / "programa"
-    ).resolve()
+    assert (
+        runtime.resolver_ruta_texto_en_project_root("src/nota.txt", tmp_path)
+        == (tmp_path / "src" / "nota.txt").resolve()
+    )
+    assert (
+        runtime.resolver_ruta_texto_en_project_root("src/programa", tmp_path)
+        == (tmp_path / "src" / "programa").resolve()
+    )
 
 
 def test_resolver_ruta_texto_en_project_root_bloquea_escapes_y_symlinks(

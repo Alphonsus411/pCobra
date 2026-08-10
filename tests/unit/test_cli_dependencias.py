@@ -23,15 +23,27 @@ def test_cli_dependencias_instalar_invoca_pip(tmp_path):
         return f
 
     venv_path = tmp_path / ".venv"
-    pip_path = venv_path / ("Scripts" if dependencias_cmd.sys.platform == "win32" else "bin") / ("pip.exe" if dependencias_cmd.sys.platform == "win32" else "pip")
+    pip_path = (
+        venv_path
+        / ("Scripts" if dependencias_cmd.sys.platform == "win32" else "bin")
+        / ("pip.exe" if dependencias_cmd.sys.platform == "win32" else "pip")
+    )
     pip_path.parent.mkdir(parents=True)
     pip_path.touch()
 
-    with patch.object(DependenciasCommand, "_ruta_requirements", return_value=req_file) as mock_req, \
-         patch.object(DependenciasCommand, "_ruta_pyproject", return_value=py_file) as mock_proj, \
-         patch.object(DependenciasCommand, "_crear_entorno_virtual", return_value=str(venv_path)), \
-         patch("tempfile.NamedTemporaryFile", side_effect=fake_tmp) as mock_tmp, \
-         patch.object(dependencias_cmd.subprocess, "run") as mock_run:
+    with (
+        patch.object(
+            DependenciasCommand, "_ruta_requirements", return_value=req_file
+        ) as mock_req,
+        patch.object(
+            DependenciasCommand, "_ruta_pyproject", return_value=py_file
+        ) as mock_proj,
+        patch.object(
+            DependenciasCommand, "_crear_entorno_virtual", return_value=str(venv_path)
+        ),
+        patch("tempfile.NamedTemporaryFile", side_effect=fake_tmp) as mock_tmp,
+        patch.object(dependencias_cmd.subprocess, "run") as mock_run,
+    ):
         DependenciasCommand._instalar_dependencias()
         tmp_path_generated = created[0].name
         mock_run.assert_called_once_with(
@@ -50,9 +62,15 @@ def test_cli_dependencias_listar_muestra_paquetes(tmp_path):
     py_file = tmp_path / "pyproject.toml"
     py_file.write_text("[project]\ndependencies=['paqueteB==2.0']\n")
 
-    with patch.object(DependenciasCommand, "_ruta_requirements", return_value=req_file) as mock_req, \
-         patch.object(DependenciasCommand, "_ruta_pyproject", return_value=py_file) as mock_proj, \
-         patch("sys.stdout", new_callable=io.StringIO) as out:
+    with (
+        patch.object(
+            DependenciasCommand, "_ruta_requirements", return_value=req_file
+        ) as mock_req,
+        patch.object(
+            DependenciasCommand, "_ruta_pyproject", return_value=py_file
+        ) as mock_proj,
+        patch("sys.stdout", new_callable=io.StringIO) as out,
+    ):
         DependenciasCommand._listar_dependencias()
         salida = out.getvalue().strip().splitlines()
         salida = [s.replace("\x1b[92m", "").replace("\x1b[0m", "") for s in salida]

@@ -20,6 +20,7 @@ def test_cli_profile_shows_stats(tmp_path, monkeypatch):
     archivo.write_text("imprimir(2)")
     with StringIO() as buf:
         from unittest.mock import patch
+
         with patch("sys.stdout", buf):
             main(["profile", str(archivo)])
         data = buf.getvalue()
@@ -33,6 +34,7 @@ def test_cli_profile_analysis_flag(tmp_path, monkeypatch):
     archivo.write_text("imprimir(3)")
     with StringIO() as buf:
         from unittest.mock import patch
+
         with patch("sys.stdout", buf):
             main(["profile", str(archivo), "--analysis"])
         data = buf.getvalue()
@@ -46,6 +48,7 @@ def test_cli_profile_invalid_ui(tmp_path, monkeypatch):
     archivo.write_text("imprimir(4)")
     with StringIO() as buf:
         from unittest.mock import patch
+
         with patch("sys.stdout", buf):
             main(["profile", str(archivo), "--ui", "fake_tool"])
         data = buf.getvalue()

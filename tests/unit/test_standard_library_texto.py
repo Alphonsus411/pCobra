@@ -6,7 +6,9 @@ import pytest
 
 try:  # pragma: no cover - entorno de CI sin dependencias opcionales
     import numpy  # noqa: F401
-except ModuleNotFoundError:  # pragma: no cover - fallback para ejecutar pruebas sin numpy
+except (
+    ModuleNotFoundError
+):  # pragma: no cover - fallback para ejecutar pruebas sin numpy
     modulo_numpy = ModuleType("numpy")
     modulo_numpy.isscalar = lambda obj: False
     modulo_numpy.ndarray = type("ndarray", (), {})
@@ -14,7 +16,9 @@ except ModuleNotFoundError:  # pragma: no cover - fallback para ejecutar pruebas
 
 try:  # pragma: no cover - entorno de CI sin dependencias opcionales
     import pandas  # noqa: F401
-except ModuleNotFoundError:  # pragma: no cover - fallback para ejecutar pruebas sin pandas
+except (
+    ModuleNotFoundError
+):  # pragma: no cover - fallback para ejecutar pruebas sin pandas
     sys.modules.setdefault("pandas", ModuleType("pandas"))
 
 try:  # pragma: no cover - simplifica las pruebas cuando rich no está instalado
@@ -91,7 +95,10 @@ def test_a_snake_y_a_camel():
     assert texto.a_snake("mañana-tarde Noche") == "mañana_tarde_noche"
     assert texto.a_snake("JSONDataLoader") == "json_data_loader"
     assert texto.a_camel("hola mundo") == "holaMundo"
-    assert texto.a_camel("mañana_tarde noche", inicial_mayuscula=True) == "MañanaTardeNoche"
+    assert (
+        texto.a_camel("mañana_tarde noche", inicial_mayuscula=True)
+        == "MañanaTardeNoche"
+    )
     assert texto.a_camel("datos-JSON_parser") == "datosJsonParser"
 
 
@@ -121,20 +128,26 @@ def test_codificar_decodificar_control_errores():
 
 def test_prefijo_y_sufijo_comun():
     assert texto.prefijo_comun("mañana", "Mañanita", ignorar_mayusculas=True) == "mañan"
-    assert texto.prefijo_comun(
-        "Canción",
-        "cancio\u0301n",
-        ignorar_mayusculas=True,
-        normalizar="NFC",
-    ) == "Canción"
+    assert (
+        texto.prefijo_comun(
+            "Canción",
+            "cancio\u0301n",
+            ignorar_mayusculas=True,
+            normalizar="NFC",
+        )
+        == "Canción"
+    )
     assert texto.prefijo_comun("東京タワー", "東京ドーム") == "東京"
     assert texto.sufijo_comun("astronomía", "economía") == "onomía"
-    assert texto.sufijo_comun(
-        "Αθηναϊκό",
-        "Λαϊκό",
-        ignorar_mayusculas=True,
-        normalizar="NFC",
-    ) == "αϊκό"
+    assert (
+        texto.sufijo_comun(
+            "Αθηναϊκό",
+            "Λαϊκό",
+            ignorar_mayusculas=True,
+            normalizar="NFC",
+        )
+        == "αϊκό"
+    )
     assert texto.sufijo_comun("hola", "mundo") == ""
 
 
@@ -153,7 +166,10 @@ def test_dividir_lineas_y_contar():
 def test_indentar_y_desindentar():
     bloque = "uno\n  dos\n\n"
     assert texto.indentar_texto(bloque, "-> ") == "-> uno\n->   dos\n-> \n"
-    assert texto.indentar_texto(bloque, "-> ", solo_lineas_no_vacias=True) == "-> uno\n->   dos\n\n"
+    assert (
+        texto.indentar_texto(bloque, "-> ", solo_lineas_no_vacias=True)
+        == "-> uno\n->   dos\n\n"
+    )
     sangrado = "    uno\n        dos\n    tres"
     assert texto.desindentar_texto(sangrado) == "uno\n    dos\ntres"
 
@@ -166,12 +182,15 @@ def test_envolver_y_acortar_texto():
         "  portables y",
         "  claros.",
     ]
-    assert texto.envolver_texto(
-        parrafo,
-        18,
-        indentacion_inicial="* ",
-        indentacion_subsecuente="  ",
-    ) == esperado
+    assert (
+        texto.envolver_texto(
+            parrafo,
+            18,
+            indentacion_inicial="* ",
+            indentacion_subsecuente="  ",
+        )
+        == esperado
+    )
     como_parrafo = texto.envolver_texto(
         parrafo,
         18,
@@ -180,7 +199,10 @@ def test_envolver_y_acortar_texto():
         como_texto=True,
     )
     assert como_parrafo == "\n".join(esperado)
-    assert texto.acortar_texto("Cobra facilita herramientas", 32) == "Cobra facilita herramientas"
+    assert (
+        texto.acortar_texto("Cobra facilita herramientas", 32)
+        == "Cobra facilita herramientas"
+    )
     assert texto.acortar_texto("Cobra facilita herramientas", 18) == "Cobra [...]"
 
 
@@ -195,7 +217,10 @@ def test_centrar_rellenar_y_casefold():
 
 def test_intercambiar_y_expandir():
     assert texto.intercambiar_mayusculas("ÁRBOL y Cobra") == "árbol Y cOBRA"
-    assert texto.expandir_tabulaciones("uno\t dos\tfin", tabulaciones=4) == "uno  dos    fin"
+    assert (
+        texto.expandir_tabulaciones("uno\t dos\tfin", tabulaciones=4)
+        == "uno  dos    fin"
+    )
 
 
 def test_subcadenas():

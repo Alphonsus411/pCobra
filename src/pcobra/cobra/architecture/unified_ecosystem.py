@@ -17,7 +17,6 @@ from typing import Final
 
 from pcobra.cobra.architecture.backend_policy import PUBLIC_BACKENDS
 
-
 OFFICIAL_USER_LANGUAGE: Final[str] = "cobra"
 OFFICIAL_EXECUTION_BACKENDS: Final[tuple[str, ...]] = PUBLIC_BACKENDS
 
@@ -248,6 +247,7 @@ def validate_unified_ecosystem_contract() -> None:
             "El blueprint unificado debe usar exactamente PUBLIC_BACKENDS "
             f"({PUBLIC_BACKENDS}), actual={OFFICIAL_EXECUTION_BACKENDS}."
         )
+
 
 validate_unified_ecosystem_contract()
 

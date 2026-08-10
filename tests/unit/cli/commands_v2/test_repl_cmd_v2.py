@@ -41,6 +41,7 @@ def test_repl_v2_contrato_llama_prevalidacion_y_pipeline_compartido(monkeypatch)
         return [object()]
 
     monkeypatch.setattr(repl_module, "prevalidar_y_parsear_codigo", _fake_parse)
+
     def _fake_ejecutar(codigo, _validador=None, *, ast_preparseado=None):
         ejecucion_calls.append(codigo)
         ast_ejecucion.extend(ast_preparseado or [])
@@ -96,7 +97,11 @@ def test_repl_v2_sandbox_docker_no_usa_camino_normal(monkeypatch):
     normal_calls: list[str] = []
 
     monkeypatch.setattr("builtins.input", lambda _prompt: next(entradas))
-    monkeypatch.setattr(repl_module, "prevalidar_y_parsear_codigo", lambda codigo: prevalidaciones.append(codigo))
+    monkeypatch.setattr(
+        repl_module,
+        "prevalidar_y_parsear_codigo",
+        lambda codigo: prevalidaciones.append(codigo),
+    )
     monkeypatch.setattr(
         command._delegate,
         "_ejecutar_en_docker",
@@ -126,7 +131,9 @@ def test_repl_v2_persistencia_estado_var_x_e_imprimir_x(monkeypatch, capsys):
     estado: dict[str, int] = {}
 
     monkeypatch.setattr("builtins.input", lambda _prompt: next(entradas))
-    monkeypatch.setattr(repl_module, "prevalidar_y_parsear_codigo", lambda _codigo: [object()])
+    monkeypatch.setattr(
+        repl_module, "prevalidar_y_parsear_codigo", lambda _codigo: [object()]
+    )
     monkeypatch.setattr(repl_module, "mostrar_info", lambda *_args, **_kwargs: None)
 
     def _fake_delegate(codigo: str, _validador=None, *, ast_preparseado=None):
@@ -150,7 +157,9 @@ def test_repl_v2_persistencia_estado_var_x_e_imprimir_x(monkeypatch, capsys):
     assert capsys.readouterr().out == "10\n"
 
 
-def test_repl_v2_bloque_anidado_real_mientras_si_fin_fin_acumula_hasta_completar(monkeypatch):
+def test_repl_v2_bloque_anidado_real_mientras_si_fin_fin_acumula_hasta_completar(
+    monkeypatch,
+):
     command = repl_module.ReplCommandV2()
     entradas = iter(["mientras verdadero:", "si verdadero:", "fin", "fin", "exit"])
     parse_calls: list[str] = []
@@ -281,7 +290,9 @@ def test_repl_v2_ejecutar_modo_normal_reutiliza_interpretador_persistente(monkey
     assert command._interpretador_persistente is interpretador_persistente
 
 
-def test_repl_v2_bloque_multilinea_y_sentencias_subsiguientes_comparten_runtime(monkeypatch):
+def test_repl_v2_bloque_multilinea_y_sentencias_subsiguientes_comparten_runtime(
+    monkeypatch,
+):
     command = repl_module.ReplCommandV2()
     interpretador_persistente = object()
     command._interpretador_persistente = interpretador_persistente
@@ -333,11 +344,17 @@ def test_repl_v2_bloque_incompleto_no_ejecuta_ni_limpia_hasta_completar(monkeypa
     status = command.run(_args_repl())
 
     assert status == 0
-    assert parse_calls == ["si verdadero:", "si verdadero:\nimprimir(1)", bloque_completo]
+    assert parse_calls == [
+        "si verdadero:",
+        "si verdadero:\nimprimir(1)",
+        bloque_completo,
+    ]
     assert ejecucion_calls == [bloque_completo]
 
 
-def test_repl_v2_regresion_sesion_interactiva_var_var_imprimir_sin_error_cse0(monkeypatch, capsys):
+def test_repl_v2_regresion_sesion_interactiva_var_var_imprimir_sin_error_cse0(
+    monkeypatch, capsys
+):
     command = repl_module.ReplCommandV2()
     entradas = iter(["var x = 5", "var y = x * 2", "imprimir(y)", "exit"])
 
@@ -374,7 +391,9 @@ def test_repl_v2_regresion_sesion_interactiva_var_var_evaluar_identificador_sin_
     assert salida.out.strip().endswith("20")
 
 
-def test_repl_v2_regresion_bloque_si_fin_comparte_entorno_sin_temporales_cse(monkeypatch, capsys):
+def test_repl_v2_regresion_bloque_si_fin_comparte_entorno_sin_temporales_cse(
+    monkeypatch, capsys
+):
     command = repl_module.ReplCommandV2()
     entradas = iter(
         [

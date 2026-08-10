@@ -19,4 +19,3 @@ def test_pyinstaller_script(tmp_path):
     result = subprocess.run(["bash", str(script)], cwd=ROOT, env=env)
     assert result.returncode == 0
     assert any(out_dir.iterdir())
-

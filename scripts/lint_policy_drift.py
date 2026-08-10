@@ -14,7 +14,10 @@ SRC_ROOT = ROOT / "src"
 if str(SRC_ROOT) not in sys.path:
     sys.path.insert(0, str(SRC_ROOT))
 
-from pcobra.cobra.architecture.backend_policy import PUBLIC_BACKENDS, assert_public_targets_contract
+from pcobra.cobra.architecture.backend_policy import (
+    PUBLIC_BACKENDS,
+    assert_public_targets_contract,
+)
 
 SCAN_ROOTS = (
     ROOT / "README.md",
@@ -34,11 +37,11 @@ SKIP_FILES = {
     "scripts/audit_retired_targets.py",
     "scripts/targets_policy_common.py",
 }
-assert_public_targets_contract(tuple(PUBLIC_BACKENDS), source="scripts/lint_policy_drift.py")
-OFFICIAL = set(PUBLIC_BACKENDS)
-CONTEXT = re.compile(
-    r"(?i)(targets?|backends?|destinos?|--tipo|--destino|--origen)"
+assert_public_targets_contract(
+    tuple(PUBLIC_BACKENDS), source="scripts/lint_policy_drift.py"
 )
+OFFICIAL = set(PUBLIC_BACKENDS)
+CONTEXT = re.compile(r"(?i)(targets?|backends?|destinos?|--tipo|--destino|--origen)")
 TOKEN = re.compile(r"(?<![\w.+/-])([a-z][a-z0-9_+-]{1,20})(?![\w.+/-])", re.IGNORECASE)
 KNOWN_DISALLOWED = {
     "assembly",
@@ -126,7 +129,9 @@ def _find_policy_drift(path: Path, content: str) -> list[str]:
             continue
         if any(context in lowered for context in exceptions):
             continue
-        python_names = _python_name_spans(line) if path.suffix.lower() == ".py" else set()
+        python_names = (
+            _python_name_spans(line) if path.suffix.lower() == ".py" else set()
+        )
         for match in TOKEN.finditer(lowered):
             token = match.group(1).strip()
             if token in OFFICIAL or token in STOPWORDS:

@@ -8,7 +8,6 @@ import subprocess
 import sys
 import tomllib
 
-
 FORBIDDEN_STARTUP_MODULE_PARTS = (
     "interpreter",
     "transpiler",

@@ -9,7 +9,9 @@ from pcobra.cobra.cli.commands.interactive_cmd import InteractiveCommand
 
 def _run_interactive_and_capture_debug_traces(debug: bool) -> str:
     configure_logging(debug=debug)
-    cmd = InteractiveCommand(SimpleNamespace(ejecutar_ast=lambda ast: None, ejecutar_nodo=lambda nodo: None))
+    cmd = InteractiveCommand(
+        SimpleNamespace(ejecutar_ast=lambda ast: None, ejecutar_nodo=lambda nodo: None)
+    )
     cmd.procesar_ast = lambda codigo, validador=None: []  # type: ignore[assignment]
     buffer = StringIO()
     root_logger = logging.getLogger()

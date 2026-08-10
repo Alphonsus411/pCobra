@@ -58,18 +58,28 @@ def _extraer_reglas(reglas_path: Path = REGLAS_PATH) -> list[ReglaAuditada]:
 
 def _extraer_reglas_desde_tuple(node: ast.AST) -> list[ReglaAuditada]:
     if not isinstance(node, ast.Tuple):
-        raise ValueError("REGLAS_LIBRO_PROGRAMACION debe declararse como una tupla literal")
+        raise ValueError(
+            "REGLAS_LIBRO_PROGRAMACION debe declararse como una tupla literal"
+        )
 
     reglas: list[ReglaAuditada] = []
     for index, element in enumerate(node.elts, start=1):
         if not isinstance(element, ast.Call):
-            raise ValueError(f"Regla #{index}: se esperaba una llamada a ReglaLibroProgramacion")
-        kwargs = {keyword.arg: keyword.value for keyword in element.keywords if keyword.arg}
+            raise ValueError(
+                f"Regla #{index}: se esperaba una llamada a ReglaLibroProgramacion"
+            )
+        kwargs = {
+            keyword.arg: keyword.value for keyword in element.keywords if keyword.arg
+        }
         regla_id = _literal_str(
-            kwargs.get("id", ast.Constant(value="")), campo="id", regla=f"Regla #{index}"
+            kwargs.get("id", ast.Constant(value="")),
+            campo="id",
+            regla=f"Regla #{index}",
         )
         seccion = _literal_str(
-            kwargs.get("seccion", ast.Constant(value="")), campo="seccion", regla=regla_id
+            kwargs.get("seccion", ast.Constant(value="")),
+            campo="seccion",
+            regla=regla_id,
         )
         fragmento_valido = _literal_str(
             kwargs.get("fragmento_valido", ast.Constant(value="")),
@@ -95,7 +105,9 @@ def _extraer_secciones_libro(libro_path: Path = LIBRO_PATH) -> set[tuple[str, st
     contenido = libro_path.read_text(encoding="utf-8")
     secciones: set[tuple[str, str]] = set()
     for line in contenido.splitlines():
-        match = re.match(r"^#{2,6}\s+(?P<num>\d+(?:\.\d+)*)(?:\)|\.)?\s+(?P<title>.+?)\s*$", line)
+        match = re.match(
+            r"^#{2,6}\s+(?P<num>\d+(?:\.\d+)*)(?:\)|\.)?\s+(?P<title>.+?)\s*$", line
+        )
         if match:
             secciones.add(
                 (match.group("num"), " ".join(match.group("title").split()).casefold())

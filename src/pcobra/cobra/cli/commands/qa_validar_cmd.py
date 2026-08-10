@@ -54,7 +54,9 @@ class QaValidarCommand(BaseCommand):
         parser.add_argument(
             "archivo",
             nargs="?",
-            help=_("Archivo Cobra para verificación de equivalencia runtime (scope runtime/all)"),
+            help=_(
+                "Archivo Cobra para verificación de equivalencia runtime (scope runtime/all)"
+            ),
         )
         parser.add_argument(
             "--solo-cobra",
@@ -89,7 +91,9 @@ class QaValidarCommand(BaseCommand):
             "--feature-gap-report",
             nargs="?",
             const="-",
-            help=_("Exporta reporte de gaps AST en JSON/Markdown (stdout si se omite ruta)"),
+            help=_(
+                "Exporta reporte de gaps AST en JSON/Markdown (stdout si se omite ruta)"
+            ),
         )
         parser.add_argument(
             "--feature-gap-format",
@@ -111,7 +115,9 @@ class QaValidarCommand(BaseCommand):
         output_path.write_text(serialized + "\n", encoding="utf-8")
         mostrar_info(_("Reporte JSON escrito en {path}").format(path=output_path))
 
-    def _build_feature_gap_markdown(self, report: dict[str, list[dict[str, Any]]]) -> str:
+    def _build_feature_gap_markdown(
+        self, report: dict[str, list[dict[str, Any]]]
+    ) -> str:
         lines = ["# Reporte de gaps de features AST", ""]
         for backend, rows in report.items():
             lines.append(f"## {backend}")
@@ -131,7 +137,9 @@ class QaValidarCommand(BaseCommand):
             lines.append("")
         return "\n".join(lines).rstrip() + "\n"
 
-    def _emit_feature_gap_report(self, destination: str | None, report_format: str) -> None:
+    def _emit_feature_gap_report(
+        self, destination: str | None, report_format: str
+    ) -> None:
         if not destination:
             return
 
@@ -149,9 +157,13 @@ class QaValidarCommand(BaseCommand):
         output_path.write_text(serialized, encoding="utf-8")
         mostrar_info(_("Reporte de gaps escrito en {path}").format(path=output_path))
 
-    def _run_syntax_scope(self, args: Any) -> tuple[dict[str, Any], dict[str, Any], bool]:
+    def _run_syntax_scope(
+        self, args: Any
+    ) -> tuple[dict[str, Any], dict[str, Any], bool]:
         strict = bool(getattr(args, "strict", False))
-        profile = "solo-cobra" if bool(getattr(args, "solo_cobra", False)) else "completo"
+        profile = (
+            "solo-cobra" if bool(getattr(args, "solo_cobra", False)) else "completo"
+        )
 
         execution = execute_syntax_validation(
             profile=profile,
@@ -161,10 +173,22 @@ class QaValidarCommand(BaseCommand):
         )
 
         transpilers: dict[str, Any] = {
-            "status": "fail" if execution.has_failures and profile != "solo-cobra" and execution.report.targets else "ok",
-            "targets": {key: asdict(value) for key, value in execution.report.targets.items()},
+            "status": (
+                "fail"
+                if execution.has_failures
+                and profile != "solo-cobra"
+                and execution.report.targets
+                else "ok"
+            ),
+            "targets": {
+                key: asdict(value) for key, value in execution.report.targets.items()
+            },
             "strict": strict,
-            "message": "omitido por --solo-cobra" if profile == "solo-cobra" else "validación de transpiladores completada",
+            "message": (
+                "omitido por --solo-cobra"
+                if profile == "solo-cobra"
+                else "validación de transpiladores completada"
+            ),
         }
         if profile == "solo-cobra":
             transpilers["status"] = "skipped"
@@ -192,9 +216,13 @@ class QaValidarCommand(BaseCommand):
             )
 
         if not getattr(args, "archivo", None):
-            raise ValueError(_("El argumento 'archivo' es obligatorio para scope runtime/all"))
+            raise ValueError(
+                _("El argumento 'archivo' es obligatorio para scope runtime/all")
+            )
 
-        requested_targets = parse_verification_targets(str(getattr(args, "targets", "")))
+        requested_targets = parse_verification_targets(
+            str(getattr(args, "targets", ""))
+        )
         executable_targets = resolve_executable_targets(requested_targets)
 
         if not executable_targets:
@@ -216,7 +244,11 @@ class QaValidarCommand(BaseCommand):
             executable_targets,
         )
         has_failures = rc != 0
-        message = "equivalencia runtime verificada" if rc == 0 else "falló equivalencia runtime"
+        message = (
+            "equivalencia runtime verificada"
+            if rc == 0
+            else "falló equivalencia runtime"
+        )
 
         return (
             RuntimeEquivalenceReport(
@@ -256,7 +288,9 @@ class QaValidarCommand(BaseCommand):
             )
 
             if scope in {"syntax", "all"}:
-                syntax_section, transpilers_section, syntax_failed = self._run_syntax_scope(args)
+                syntax_section, transpilers_section, syntax_failed = (
+                    self._run_syntax_scope(args)
+                )
                 has_failures = has_failures or syntax_failed
 
             if scope in {"runtime", "all"}:
@@ -271,7 +305,8 @@ class QaValidarCommand(BaseCommand):
             self._emit_report(report, getattr(args, "report_json", None))
             self._emit_feature_gap_report(
                 getattr(args, "feature_gap_report", None),
-                str(getattr(args, "feature_gap_format", "json")).strip().lower() or "json",
+                str(getattr(args, "feature_gap_format", "json")).strip().lower()
+                or "json",
             )
 
             if has_failures:
@@ -284,5 +319,5 @@ class QaValidarCommand(BaseCommand):
             mostrar_error(str(exc))
             return 1
         except Exception as exc:
-            mostrar_error(_("Error en qa-validar: {}" ).format(exc))
+            mostrar_error(_("Error en qa-validar: {}").format(exc))
             return 1

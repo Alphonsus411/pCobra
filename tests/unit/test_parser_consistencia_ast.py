@@ -38,7 +38,11 @@ def _simplify_classic(obj):
                 if simplified is not None:
                     children.append(simplified)
         if name == "NodoFuncion":
-            tipo = "funcion_asincronica" if getattr(obj, "asincronica", False) else "funcion"
+            tipo = (
+                "funcion_asincronica"
+                if getattr(obj, "asincronica", False)
+                else "funcion"
+            )
             return {"type": tipo, "children": children}
         if name in mapping:
             return {"type": mapping[name], "children": children}

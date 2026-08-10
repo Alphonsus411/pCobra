@@ -52,4 +52,3 @@ def test_reverse_from_js_basic_function():
     assert len(fn.cuerpo) == 2
     assert isinstance(fn.cuerpo[0], NodoAsignacion)
     assert isinstance(fn.cuerpo[1], NodoRetorno)
-

@@ -20,7 +20,17 @@ from collections import Counter, defaultdict
 from contextlib import suppress
 from itertools import groupby
 from pathlib import Path
-from typing import Any, Callable, Iterable, Iterator, Mapping, MutableMapping, Sequence, Sized, TYPE_CHECKING
+from typing import (
+    Any,
+    Callable,
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    Sequence,
+    Sized,
+    TYPE_CHECKING,
+)
 
 from pcobra._stubs.compat import import_optional_module
 
@@ -106,9 +116,9 @@ def _copiar_tabla(tabla: Tabla) -> Tabla:
 
 
 def _materializar_tabla(
-    datos: Iterable[Registro]
-    | Mapping[str, Sequence[Any]]
-    | "DataFrame"  # type: ignore[name-defined]
+    datos: (
+        Iterable[Registro] | Mapping[str, Sequence[Any]] | "DataFrame"
+    ),  # type: ignore[name-defined]
 ) -> Tabla:
     if isinstance(datos, list):
         return [dict(fila) for fila in datos]
@@ -177,7 +187,9 @@ def _valores_columna(
     return valores
 
 
-def _pares_columnas(tabla: Tabla, columna_a: str, columna_b: str) -> list[tuple[float, float]]:
+def _pares_columnas(
+    tabla: Tabla, columna_a: str, columna_b: str
+) -> list[tuple[float, float]]:
     pares: list[tuple[float, float]] = []
     for fila in tabla:
         valor_a = fila.get(columna_a)
@@ -188,7 +200,9 @@ def _pares_columnas(tabla: Tabla, columna_a: str, columna_b: str) -> list[tuple[
 
 
 def _valores_numericos(tabla: Tabla, columna: str) -> list[float]:
-    return [float(valor) for valor in _valores_columna(tabla, columna, solo_numeros=True)]
+    return [
+        float(valor) for valor in _valores_columna(tabla, columna, solo_numeros=True)
+    ]
 
 
 def _percentil_lineal(valores: Sequence[float], percentil: float) -> float:
@@ -197,7 +211,9 @@ def _percentil_lineal(valores: Sequence[float], percentil: float) -> float:
     return float(np.percentile(valores, percentil, method="linear"))
 
 
-def _valores_numericos_alineados(tabla: Tabla, columnas: Sequence[str]) -> list[list[float]]:
+def _valores_numericos_alineados(
+    tabla: Tabla, columnas: Sequence[str]
+) -> list[list[float]]:
     alineados: list[list[float]] = []
     for fila in tabla:
         fila_convertida: list[float] = []
@@ -231,7 +247,9 @@ def _aplicar_agregacion(nombre: str, valores: Sequence[Any]) -> Any:
     raise ValueError(f"Agregación desconocida: {nombre}")
 
 
-def _calcular_covarianza(valores_a: Sequence[float], valores_b: Sequence[float]) -> float:
+def _calcular_covarianza(
+    valores_a: Sequence[float], valores_b: Sequence[float]
+) -> float:
     n = len(valores_a)
     if n < 2:
         return 0.0
@@ -288,7 +306,12 @@ def leer_csv(
                     break
                 if None in fila or len(fila) != len(columnas):
                     raise ValueError("No fue posible leer el CSV: formato inválido")
-                resultado.append({clave: _convertir_valor_crudo(valor) for clave, valor in fila.items()})
+                resultado.append(
+                    {
+                        clave: _convertir_valor_crudo(valor)
+                        for clave, valor in fila.items()
+                    }
+                )
             return resultado
     except (csv.Error, OSError, UnicodeDecodeError) as exc:
         raise ValueError(f"No fue posible leer el CSV: {exc}") from exc
@@ -325,7 +348,9 @@ def escribir_csv(
             escritor.writerow(fila_a_escribir)
 
 
-def leer_json(ruta: str | Path, *, orient: str | None = None, lineas: bool = False) -> Tabla:
+def leer_json(
+    ruta: str | Path, *, orient: str | None = None, lineas: bool = False
+) -> Tabla:
     try:
         texto = Path(ruta).read_text(encoding="utf-8")
     except OSError as exc:
@@ -333,7 +358,9 @@ def leer_json(ruta: str | Path, *, orient: str | None = None, lineas: bool = Fal
 
     try:
         if lineas:
-            registros = [json.loads(linea) for linea in texto.splitlines() if linea.strip()]
+            registros = [
+                json.loads(linea) for linea in texto.splitlines() if linea.strip()
+            ]
         else:
             datos = json.loads(texto)
             if isinstance(datos, list):
@@ -388,7 +415,9 @@ def _asegurar_openpyxl() -> Any:
     try:
         import openpyxl  # type: ignore[import-not-found]
     except ModuleNotFoundError as exc:  # pragma: no cover - depende del entorno
-        raise ValueError("Para trabajar con Excel instala el extra opcional con 'pip install .[excel]' (incluye 'openpyxl').") from exc
+        raise ValueError(
+            "Para trabajar con Excel instala el extra opcional con 'pip install .[excel]' (incluye 'openpyxl')."
+        ) from exc
     return openpyxl
 
 
@@ -632,7 +661,9 @@ def elemento(coleccion: Any, indice: int) -> Any:
     if not isinstance(indice, int) or isinstance(indice, bool):
         raise TypeError("índice debe ser entero")
 
-    if not isinstance(coleccion, Sequence) or isinstance(coleccion, (str, bytes, bytearray)):
+    if not isinstance(coleccion, Sequence) or isinstance(
+        coleccion, (str, bytes, bytearray)
+    ):
         raise TypeError("objeto no indexable")
 
     try:
@@ -784,10 +815,14 @@ def agrupar_y_resumir(
             valores = datos_grupo.get(columna, [])
             if isinstance(agg, Sequence) and not isinstance(agg, str):
                 for nombre in agg:
-                    fila_salida[f"{columna}_{nombre}"] = _aplicar_agregacion(nombre, valores)
+                    fila_salida[f"{columna}_{nombre}"] = _aplicar_agregacion(
+                        nombre, valores
+                    )
             else:
                 nombre = str(agg)
-                fila_salida[f"{columna}_{nombre}"] = _aplicar_agregacion(nombre, valores)
+                fila_salida[f"{columna}_{nombre}"] = _aplicar_agregacion(
+                    nombre, valores
+                )
         resultado.append(fila_salida)
     return resultado
 
@@ -906,11 +941,13 @@ def pivotar_largo(
             valor = fila.get(columna)
             if valor is None and eliminar_nulos:
                 continue
-            resultado.append({
-                id_columnas: identificador,
-                nombres_a: columna,
-                valores_a: valor,
-            })
+            resultado.append(
+                {
+                    id_columnas: identificador,
+                    nombres_a: columna,
+                    valores_a: valor,
+                }
+            )
     return resultado
 
 
@@ -930,7 +967,10 @@ def ordenar_tabla(
 
     resultado = _copiar_tabla(filas)
     for columna, asc in reversed(list(zip(por, ordenes))):
-        resultado.sort(key=lambda fila: (fila.get(columna) is None, fila.get(columna)), reverse=not asc)
+        resultado.sort(
+            key=lambda fila: (fila.get(columna) is None, fila.get(columna)),
+            reverse=not asc,
+        )
     return resultado
 
 
@@ -1019,8 +1059,14 @@ def desplegar_tabla(
     value_name: str = "value",
 ) -> Tabla:
     filas = _materializar_tabla(tabla)
-    ids = [identificadores] if isinstance(identificadores, str) else list(identificadores)
-    columnas = valores if valores is not None else [col for col in _columnas(filas) if col not in ids]
+    ids = (
+        [identificadores] if isinstance(identificadores, str) else list(identificadores)
+    )
+    columnas = (
+        valores
+        if valores is not None
+        else [col for col in _columnas(filas) if col not in ids]
+    )
 
     resultado: Tabla = []
     for columna in columnas:
@@ -1062,7 +1108,9 @@ def pivotar_tabla(
             orden_indices.append(clave_indice)
         if clave_columna not in orden_columnas:
             orden_columnas.append(clave_columna)
-        destino = acumulados[clave_indice].setdefault(clave_columna, {valor: [] for valor in valores_lista})
+        destino = acumulados[clave_indice].setdefault(
+            clave_columna, {valor: [] for valor in valores_lista}
+        )
         for valor in valores_lista:
             destino.setdefault(valor, []).append(fila.get(valor))
 
@@ -1076,10 +1124,14 @@ def pivotar_tabla(
                 valores_celda = valores_columna.get(valor, [])
                 if isinstance(agreg, Sequence) and not isinstance(agreg, str):
                     for nombre in agreg:
-                        fila_salida[f"{valor}_{nombre}_{clave_columna}"] = _aplicar_agregacion(nombre, valores_celda)
+                        fila_salida[f"{valor}_{nombre}_{clave_columna}"] = (
+                            _aplicar_agregacion(nombre, valores_celda)
+                        )
                 else:
                     nombre = str(agreg)
-                    fila_salida[f"{valor}_{nombre}_{clave_columna}"] = _aplicar_agregacion(nombre, valores_celda)
+                    fila_salida[f"{valor}_{nombre}_{clave_columna}"] = (
+                        _aplicar_agregacion(nombre, valores_celda)
+                    )
         resultado.append(fila_salida)
     return resultado
 
@@ -1093,12 +1145,17 @@ def describir(datos: Iterable[Registro]) -> dict[str, dict[str, float]]:
     tabla = _materializar_tabla(datos)
     resultado: dict[str, dict[str, float]] = {}
     for columna in _columnas_numericas(tabla):
-        valores = [float(valor) for valor in _valores_columna(tabla, columna, solo_numeros=True)]
+        valores = [
+            float(valor)
+            for valor in _valores_columna(tabla, columna, solo_numeros=True)
+        ]
         if not valores:
             continue
         media = sum(valores) / len(valores)
         if len(valores) > 1:
-            varianza = sum((valor - media) ** 2 for valor in valores) / (len(valores) - 1)
+            varianza = sum((valor - media) ** 2 for valor in valores) / (
+                len(valores) - 1
+            )
             desviacion = math.sqrt(varianza)
         else:
             desviacion = 0.0
@@ -1121,7 +1178,9 @@ def correlacion_pearson(
     columnas: Sequence[str] | None = None,
 ) -> dict[str, dict[str, float]]:
     tabla = _materializar_tabla(datos)
-    columnas_objetivo = list(columnas) if columnas is not None else _columnas_numericas(tabla)
+    columnas_objetivo = (
+        list(columnas) if columnas is not None else _columnas_numericas(tabla)
+    )
     if not columnas_objetivo:
         raise ValueError("No hay columnas numéricas para calcular la correlación")
 
@@ -1157,7 +1216,9 @@ def correlacion_spearman(
     columnas: Sequence[str] | None = None,
 ) -> dict[str, dict[str, float]]:
     tabla = _materializar_tabla(datos)
-    columnas_objetivo = list(columnas) if columnas is not None else _columnas_numericas(tabla)
+    columnas_objetivo = (
+        list(columnas) if columnas is not None else _columnas_numericas(tabla)
+    )
     if not columnas_objetivo:
         raise ValueError("No hay columnas numéricas para calcular la correlación")
 
@@ -1190,7 +1251,9 @@ def matriz_covarianza(
     columnas: Sequence[str] | None = None,
 ) -> dict[str, dict[str, float]]:
     tabla = _materializar_tabla(datos)
-    columnas_objetivo = list(columnas) if columnas is not None else _columnas_numericas(tabla)
+    columnas_objetivo = (
+        list(columnas) if columnas is not None else _columnas_numericas(tabla)
+    )
     if not columnas_objetivo:
         raise ValueError("No hay columnas numéricas para calcular la covarianza")
 
@@ -1231,7 +1294,9 @@ def calcular_percentiles(
         raise ValueError("Los percentiles deben estar entre 0 y 100")
 
     tabla = _materializar_tabla(datos)
-    columnas_objetivo = list(columnas) if columnas is not None else _columnas_numericas(tabla)
+    columnas_objetivo = (
+        list(columnas) if columnas is not None else _columnas_numericas(tabla)
+    )
     resultado: dict[str, dict[str, float]] = {}
     for columna in columnas_objetivo:
         valores = _valores_numericos(tabla, columna)

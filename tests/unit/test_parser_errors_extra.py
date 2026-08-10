@@ -25,6 +25,7 @@ def test_unclosed_macro():
     with pytest.raises(ParserError):
         parse(codigo).parsear()
 
+
 def test_condicional_sino_sin_fin():
     codigo = """
     si x > 0:

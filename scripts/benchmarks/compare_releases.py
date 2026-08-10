@@ -74,8 +74,8 @@ def comparar(actuales: list[dict], previos: list[dict]) -> list[dict]:
             "current_memory_kb": cur["memory_kb"] if cur else None,
             "previous_memory_kb": prev["memory_kb"] if prev else None,
             "diff_memory_kb": (
-                cur["memory_kb"] - prev["memory_kb"]
-            ) if cur and prev else None,
+                (cur["memory_kb"] - prev["memory_kb"]) if cur and prev else None
+            ),
         }
         resumen.append(entry)
     return resumen
@@ -136,12 +136,9 @@ def main() -> None:
             exceeded = True
 
     if exceeded:
-        print(
-            f"Regresión mayor al {args.max_regression}% detectada", file=sys.stderr
-        )
+        print(f"Regresión mayor al {args.max_regression}% detectada", file=sys.stderr)
         raise SystemExit(1)
 
 
 if __name__ == "__main__":
     main()
-

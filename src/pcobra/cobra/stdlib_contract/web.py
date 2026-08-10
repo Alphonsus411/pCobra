@@ -7,7 +7,6 @@ from pcobra.cobra.stdlib_contract.base import (
     RuntimeMapping,
 )
 
-
 WEB_CONTRACT = ContractDescriptor(
     module="cobra.web",
     public_api=(
@@ -17,14 +16,22 @@ WEB_CONTRACT = ContractDescriptor(
         "cobra.web.obtener_url_texto",
     ),
     public_exports=(
-        PublicApiExport("cobra.web.obtener_url", "src/pcobra/corelibs/red.py", "obtener_url"),
-        PublicApiExport("cobra.web.enviar_post", "src/pcobra/corelibs/red.py", "enviar_post"),
+        PublicApiExport(
+            "cobra.web.obtener_url", "src/pcobra/corelibs/red.py", "obtener_url"
+        ),
+        PublicApiExport(
+            "cobra.web.enviar_post", "src/pcobra/corelibs/red.py", "enviar_post"
+        ),
         PublicApiExport(
             "cobra.web.descargar_archivo",
             "src/pcobra/corelibs/red.py",
             "descargar_archivo",
         ),
-        PublicApiExport("cobra.web.obtener_url_texto", "src/pcobra/corelibs/red.py", "obtener_url_texto"),
+        PublicApiExport(
+            "cobra.web.obtener_url_texto",
+            "src/pcobra/corelibs/red.py",
+            "obtener_url_texto",
+        ),
     ),
     primary_backend="javascript",
     allowed_fallback=("python",),
@@ -34,12 +41,18 @@ WEB_CONTRACT = ContractDescriptor(
         core_nativos=("src/pcobra/core/nativos/red.js",),
     ),
     coverage=(
-        FunctionCoverage("cobra.web.obtener_url", {"javascript": "partial", "python": "full"}),
-        FunctionCoverage("cobra.web.enviar_post", {"javascript": "partial", "python": "full"}),
+        FunctionCoverage(
+            "cobra.web.obtener_url", {"javascript": "partial", "python": "full"}
+        ),
+        FunctionCoverage(
+            "cobra.web.enviar_post", {"javascript": "partial", "python": "full"}
+        ),
         FunctionCoverage(
             "cobra.web.descargar_archivo",
             {"javascript": "partial", "python": "full"},
         ),
-        FunctionCoverage("cobra.web.obtener_url_texto", {"javascript": "partial", "python": "full"}),
+        FunctionCoverage(
+            "cobra.web.obtener_url_texto", {"javascript": "partial", "python": "full"}
+        ),
     ),
 )

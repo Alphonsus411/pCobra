@@ -19,7 +19,9 @@ def _leer_snapshot_texto(path: Path) -> str:
 
 @pytest.fixture(autouse=True)
 def _stub_gettext(monkeypatch):
-    monkeypatch.setattr(cli_module, "setup_gettext", lambda _lang=None: (lambda msg: msg))
+    monkeypatch.setattr(
+        cli_module, "setup_gettext", lambda _lang=None: (lambda msg: msg)
+    )
 
 
 def _normalizar(texto: str) -> str:
@@ -38,12 +40,21 @@ def test_cli_ui_v2_help_snapshot_publico_no_expone_legacy():
     assert _normalizar(texto) == _normalizar(expected_snapshot.lower())
     for command in ("run", "build", "test", "mod", "repl", "gui"):
         assert f" {command} " in f" {texto} "
-    for command in ("installer", "paquete", "hub", "compilar", "ejecutar", "interactive"):
+    for command in (
+        "installer",
+        "paquete",
+        "hub",
+        "compilar",
+        "ejecutar",
+        "interactive",
+    ):
         assert f"\n  {command} " not in texto
     assert "\n  legacy " not in texto
 
 
-def test_cli_ui_v2_help_publico_no_expone_comandos_internos_con_flag_interno(monkeypatch):
+def test_cli_ui_v2_help_publico_no_expone_comandos_internos_con_flag_interno(
+    monkeypatch,
+):
     monkeypatch.setenv("COBRA_INTERNAL_ENABLE_LEGACY_CLI", "1")
     for module_name in (
         "cobra.cli.commands_v2",
@@ -53,11 +64,20 @@ def test_cli_ui_v2_help_publico_no_expone_comandos_internos_con_flag_interno(mon
     ):
         sys.modules.pop(module_name, None)
     import cobra.cli.cli as cli_reloaded
+
     registry = cli_reloaded.CommandRegistry()
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(dest="command")
     commands = registry.register_base_commands(subparsers, ui="v2", profile="public")
-    for command in ("installer", "paquete", "hub", "compilar", "ejecutar", "interactive", "legacy"):
+    for command in (
+        "installer",
+        "paquete",
+        "hub",
+        "compilar",
+        "ejecutar",
+        "interactive",
+        "legacy",
+    ):
         assert command not in commands
     assert set(commands) == {"run", "build", "test", "mod", "repl", "gui"}
 
@@ -72,6 +92,7 @@ def test_cli_ui_v2_sin_flag_no_registra_legacy(monkeypatch):
     ):
         sys.modules.pop(module_name, None)
     import cobra.cli.cli as cli_reloaded
+
     registry = cli_reloaded.CommandRegistry()
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(dest="command")

@@ -36,16 +36,13 @@ def construir_cadena(
     global _CADENA_DEFECTO, _CACHE_INFO
 
     auditoria = auditoria_activa()
-    usar_cache = (
-        extra_validators is None
-        and main_file is None
-        and project_root is None
-    )
+    usar_cache = extra_validators is None and main_file is None and project_root is None
 
     if (
         usar_cache
         and _CADENA_DEFECTO is not None
-        and _CACHE_INFO == (ValidadorPrimitivaPeligrosa.__init__, auditoria, emitir_side_effects)
+        and _CACHE_INFO
+        == (ValidadorPrimitivaPeligrosa.__init__, auditoria, emitir_side_effects)
     ):
         return _CADENA_DEFECTO
 
@@ -70,9 +67,14 @@ def construir_cadena(
 
     if usar_cache:
         _CADENA_DEFECTO = primero
-        _CACHE_INFO = (ValidadorPrimitivaPeligrosa.__init__, auditoria, emitir_side_effects)
+        _CACHE_INFO = (
+            ValidadorPrimitivaPeligrosa.__init__,
+            auditoria,
+            emitir_side_effects,
+        )
 
     return primero
+
 
 __all__ = [
     "PrimitivaPeligrosaError",

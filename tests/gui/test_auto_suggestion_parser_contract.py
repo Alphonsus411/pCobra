@@ -12,7 +12,6 @@ from pcobra.cobra.core import Lexer, Parser, ParserError
 from pcobra.core.errors import LexerError
 from pcobra.gui import runtime
 
-
 RECOMENDACIONES_GUI = [
     pytest.param(
         "retorno_en_funciones",
@@ -188,9 +187,11 @@ def test_reporte_sugerencias_codigo_valido_agrupa_por_categorias_del_libro(
         "Usar `retorno` como sentencia de salida en funciones [regla: LP-3.3-RETORNO-CANONICO; §3.3 Sentencias]",
         "Agregar una sentencia imprimir solo si aporta observabilidad [regla: LP-3.3-IMPRESION-CANONICA; §3.3 Sentencias]",
         "Declarar funciones con `func` o `definir`, no con `funcion` [regla: LP-3.9-FUNCIONES-CON-FUNC; §3.9 Contrato]",
-        "Usar módulos con `usar \"modulo\"` y llamadas planas, sin alias `como` [regla: LP-3.6-USAR-SIN-ALIAS; §3.6 Módulos]",
+        'Usar módulos con `usar "modulo"` y llamadas planas, sin alias `como` [regla: LP-3.6-USAR-SIN-ALIAS; §3.6 Módulos]',
     ]
-    monkeypatch.setattr(runtime, "generar_sugerencias", lambda _codigo: sugerencias_libro)
+    monkeypatch.setattr(
+        runtime, "generar_sugerencias", lambda _codigo: sugerencias_libro
+    )
 
     reporte = runtime.generar_reporte_sugerencias("total = 10\nimprimir(total)")
 
@@ -293,7 +294,9 @@ def test_reglas_libro_programacion_declaran_fragmentos_soportados_por_parser() -
 
         if regla.fragmento_no_recomendado is not None:
             assert regla.fragmento_no_recomendado.strip(), regla.id
-            assert regla.fragmento_no_recomendado.strip() != regla.fragmento_valido.strip()
+            assert (
+                regla.fragmento_no_recomendado.strip() != regla.fragmento_valido.strip()
+            )
             try:
                 ast_no_recomendado = _parsear(regla.fragmento_no_recomendado)
             except (LexerError, ParserError) as exc:
@@ -312,7 +315,9 @@ def test_reglas_libro_programacion_declaran_fragmentos_soportados_por_parser() -
         assert isinstance(regla.aplicable_automaticamente, bool)
 
 
-def test_regla_retorno_canonico_acepta_retorno_y_retornar_pero_prefiere_retorno() -> None:
+def test_regla_retorno_canonico_acepta_retorno_y_retornar_pero_prefiere_retorno() -> (
+    None
+):
     from pcobra.ia.reglas_libro_programacion import REGLAS_LIBRO_PROGRAMACION
 
     fragmento_retorno = """

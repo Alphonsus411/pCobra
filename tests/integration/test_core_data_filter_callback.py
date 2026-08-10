@@ -3,13 +3,16 @@ from io import StringIO
 
 import pytest
 
-from pcobra.cobra.cli.execution_pipeline import PipelineInput, ejecutar_pipeline_explicito
+from pcobra.cobra.cli.execution_pipeline import (
+    PipelineInput,
+    ejecutar_pipeline_explicito,
+)
 from pcobra.cobra.core.runtime import InterpretadorCobra
 
 
 @pytest.mark.integration
 def test_filtrar_acepta_tabla_declarada_con_var_antes_del_callback() -> None:
-    codigo = '''usar "datos"
+    codigo = """usar "datos"
 
 var registros = [[["activo", verdadero]], [["activo", falso]]]
 func condicion(fila):
@@ -17,7 +20,7 @@ func condicion(fila):
 fin
 
 imprimir(filtrar(registros, condicion))
-'''
+"""
     salida = StringIO()
     errores = StringIO()
 
@@ -46,11 +49,11 @@ def test_filtrar_callback_no_declarado_falla_antes_de_stdlib(monkeypatch) -> Non
         "pcobra.corelibs.datos.filtrar",
         filtrar_no_debe_ejecutarse,
     )
-    codigo = '''usar "datos"
+    codigo = """usar "datos"
 
 var tabla = [["activo", verdadero]]
 imprimir(filtrar(tabla, callback_no_declarado))
-'''
+"""
     salida = StringIO()
     errores = StringIO()
 

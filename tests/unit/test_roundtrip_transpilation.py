@@ -37,7 +37,7 @@ def _normalize_ast(value: Any) -> Any:
 def _strip_standard_imports(code: str, target: str) -> str:
     imports = get_standard_imports(target) or ""
     if imports and code.startswith(imports):
-        code = code[len(imports):]
+        code = code[len(imports) :]
     return code.lstrip("\n")
 
 
@@ -50,14 +50,18 @@ def test_roundtrip_cobra_python_cobra_ast_equivalente_snapshot():
     codigo_python = TranspiladorPython().generate_code(ast_cobra)
     codigo_intermedio = _strip_standard_imports(codigo_python, "python")
 
-    expected_snapshot = (SNAPSHOT_DIR / "python_intermediate.py.snap").read_text(encoding="utf-8")
+    expected_snapshot = (SNAPSHOT_DIR / "python_intermediate.py.snap").read_text(
+        encoding="utf-8"
+    )
     assert codigo_intermedio == expected_snapshot
 
     ast_reconstruido = ReverseFromPython().generate_ast(codigo_intermedio)
     assert _normalize_ast(ast_reconstruido) == _normalize_ast(ast_cobra)
 
 
-@pytest.mark.skipif(not hasattr(ReverseFromJS, "generate_ast"), reason="Reverse JS no disponible")
+@pytest.mark.skipif(
+    not hasattr(ReverseFromJS, "generate_ast"), reason="Reverse JS no disponible"
+)
 def test_roundtrip_cobra_js_cobra_ast_equivalente_snapshot():
     try:
         reverse = ReverseFromJS()
@@ -81,7 +85,9 @@ def test_roundtrip_cobra_js_cobra_ast_equivalente_snapshot():
     codigo_js = TranspiladorJavaScript().generate_code(ast_cobra)
     codigo_intermedio = _strip_standard_imports(codigo_js, "javascript")
 
-    expected_snapshot = (SNAPSHOT_DIR / "javascript_intermediate.js.snap").read_text(encoding="utf-8")
+    expected_snapshot = (SNAPSHOT_DIR / "javascript_intermediate.js.snap").read_text(
+        encoding="utf-8"
+    )
     assert codigo_intermedio == expected_snapshot
 
     ast_reconstruido = reverse.generate_ast(codigo_intermedio)

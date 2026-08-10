@@ -14,7 +14,10 @@ def main() -> int:
     sys.path.insert(0, str(SRC_DIR))
 
     from pcobra.cobra.qa.syntax_validation import execute_syntax_validation
-    from pcobra.cobra.transpilers.registry import build_official_transpilers, official_transpiler_targets
+    from pcobra.cobra.transpilers.registry import (
+        build_official_transpilers,
+        official_transpiler_targets,
+    )
 
     ordered_targets = official_transpiler_targets()
 
@@ -31,7 +34,9 @@ def main() -> int:
     print("\n📊 Resumen por target")
     for target in ordered_targets:
         summary = execution.report.targets[target]
-        print(f" - {target}: ok={summary.ok} fail={summary.fail} skipped={summary.skipped}")
+        print(
+            f" - {target}: ok={summary.ok} fail={summary.fail} skipped={summary.skipped}"
+        )
 
     if execution.has_failures:
         print("\n🚨 Smoke de transpiladores con fallos en targets oficiales.")

@@ -25,13 +25,16 @@ def test_operaciones_regex_respetan_limites_flags_y_listas() -> None:
     ]
 
 
-@pytest.mark.parametrize("funcion,args", [
-    (regex.buscar, ("[", "texto")),
-    (regex.coincidir, ("[", "texto")),
-    (regex.reemplazar, ("[", "x", "texto")),
-    (regex.dividir, ("[", "texto")),
-    (regex.encontrar_todos, ("[", "texto")),
-])
+@pytest.mark.parametrize(
+    "funcion,args",
+    [
+        (regex.buscar, ("[", "texto")),
+        (regex.coincidir, ("[", "texto")),
+        (regex.reemplazar, ("[", "x", "texto")),
+        (regex.dividir, ("[", "texto")),
+        (regex.encontrar_todos, ("[", "texto")),
+    ],
+)
 def test_patrones_invalidos_generan_value_error_en_espanol(funcion, args) -> None:
     with pytest.raises(ValueError, match="patrón de expresión regular inválido"):
         funcion(*args)

@@ -2,7 +2,9 @@ from argparse import SUPPRESS
 from typing import Any
 
 from pcobra.cobra.build import backend_pipeline
-from pcobra.cobra.architecture.backend_policy import assert_public_command_uses_only_public_backends
+from pcobra.cobra.architecture.backend_policy import (
+    assert_public_command_uses_only_public_backends,
+)
 from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.architecture.contracts import assert_backend_allowed_for_scope
 from pcobra.cobra.bindings.runtime_manager import RuntimeManager
@@ -30,8 +32,12 @@ class TestCommandV2(BaseCommand):
         self._default_langs = ",".join(VERIFICATION_EXECUTABLE_TARGETS)
 
     def register_subparser(self, subparsers: Any):
-        parser = subparsers.add_parser(self.name, help=_("Validate project output across runtimes"))
-        parser.add_argument("file", help=_("Source Cobra file")).completer = files_completer()
+        parser = subparsers.add_parser(
+            self.name, help=_("Validate project output across runtimes")
+        )
+        parser.add_argument("file", help=_("Source Cobra file")).completer = (
+            files_completer()
+        )
         # Compatibilidad interna: selección explícita de runtimes queda fuera de la UX pública.
         parser.add_argument(
             "--langs",
@@ -54,7 +60,9 @@ class TestCommandV2(BaseCommand):
             )
         else:
             langs = list(raw_langs)
-        assert_public_command_uses_only_public_backends(command="test", targets=tuple(langs))
+        assert_public_command_uses_only_public_backends(
+            command="test", targets=tuple(langs)
+        )
         for lang in langs:
             assert_backend_allowed_for_scope(backend=lang, scope="public")
             try:

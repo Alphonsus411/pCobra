@@ -4,16 +4,16 @@ from unittest.mock import patch
 import sys
 
 # Evitar dependencias externas durante la importación de los módulos de pruebas
-fake_yaml = ModuleType('yaml')
+fake_yaml = ModuleType("yaml")
 fake_yaml.safe_load = lambda *_args, **_kwargs: {}
-sys.modules.setdefault('yaml', fake_yaml)
-fake_jsonschema = ModuleType('jsonschema')
+sys.modules.setdefault("yaml", fake_yaml)
+fake_jsonschema = ModuleType("jsonschema")
 fake_jsonschema.validate = lambda *_args, **_kwargs: None
 fake_jsonschema.ValidationError = Exception
-sys.modules.setdefault('jsonschema', fake_jsonschema)
-ts_mod = ModuleType('tree_sitter_languages')
+sys.modules.setdefault("jsonschema", fake_jsonschema)
+ts_mod = ModuleType("tree_sitter_languages")
 ts_mod.get_parser = lambda *_args, **_kwargs: None
-sys.modules.setdefault('tree_sitter_languages', ts_mod)
+sys.modules.setdefault("tree_sitter_languages", ts_mod)
 
 import pytest
 from pcobra.cobra.core.parser import ParserError
@@ -28,93 +28,115 @@ from core import usar_loader as core_usar_loader
 
 
 def test_obtener_modulo_instala_si_no_existe(monkeypatch):
-    mock_mod = ModuleType('demo')
-    monkeypatch.setitem(usar_loader.USAR_WHITELIST, 'demo', 'demo')
-    monkeypatch.setenv('COBRA_USAR_INSTALL', '1')
+    mock_mod = ModuleType("demo")
+    monkeypatch.setitem(usar_loader.USAR_WHITELIST, "demo", "demo")
+    monkeypatch.setenv("COBRA_USAR_INSTALL", "1")
     real_import = usar_loader.importlib.import_module
+
     def _side_effect(name, *args, **kwargs):
-        if name.startswith('pcobra.'):
+        if name.startswith("pcobra."):
             return real_import(name, *args, **kwargs)
-        if name == 'demo':
+        if name == "demo":
             _side_effect.calls += 1
             if _side_effect.calls == 1:
                 raise ModuleNotFoundError()
             return mock_mod
         return real_import(name, *args, **kwargs)
+
     _side_effect.calls = 0
-    with patch.object(usar_loader.importlib, 'import_module', side_effect=_side_effect) as mock_import, \
-         patch.object(usar_loader.subprocess, 'run') as mock_run:
+    with (
+        patch.object(
+            usar_loader.importlib, "import_module", side_effect=_side_effect
+        ) as mock_import,
+        patch.object(usar_loader.subprocess, "run") as mock_run,
+    ):
         mock_run.return_value.returncode = 0
-        mod = usar_loader.obtener_modulo('demo')
-    mock_run.assert_called_once_with([sys.executable, '-m', 'pip', 'install', 'demo'], check=True)
+        mod = usar_loader.obtener_modulo("demo")
+    mock_run.assert_called_once_with(
+        [sys.executable, "-m", "pip", "install", "demo"], check=True
+    )
     assert mod is mock_mod
 
 
 def test_obtener_modulo_desde_corelibs_sin_pip():
-    usar_loader.USAR_WHITELIST['texto'] = 'texto'
-    with patch.object(usar_loader.subprocess, 'run') as mock_run:
-        mod = usar_loader.obtener_modulo('texto')
-    del usar_loader.USAR_WHITELIST['texto']
+    usar_loader.USAR_WHITELIST["texto"] = "texto"
+    with patch.object(usar_loader.subprocess, "run") as mock_run:
+        mod = usar_loader.obtener_modulo("texto")
+    del usar_loader.USAR_WHITELIST["texto"]
     mock_run.assert_not_called()
-    assert mod.mayusculas('hola') == 'HOLA'
+    assert mod.mayusculas("hola") == "HOLA"
 
 
 def test_obtener_modulo_rechaza_paquete_fuera_de_lista():
     original = usar_loader.USAR_WHITELIST.copy()
     try:
         usar_loader.USAR_WHITELIST.clear()
-        usar_loader.USAR_WHITELIST['ok'] = 'ok'
+        usar_loader.USAR_WHITELIST["ok"] = "ok"
         with pytest.raises(PermissionError):
-            usar_loader.obtener_modulo('malo')
+            usar_loader.obtener_modulo("malo")
     finally:
         usar_loader.USAR_WHITELIST.clear()
         usar_loader.USAR_WHITELIST.update(original)
 
 
 def test_obtener_modulo_instalacion_deshabilitada(monkeypatch):
-    monkeypatch.setitem(usar_loader.USAR_WHITELIST, 'demo', 'demo')
-    monkeypatch.delenv('COBRA_USAR_INSTALL', raising=False)
-    with patch.object(usar_loader.importlib, 'import_module', side_effect=ModuleNotFoundError()):
-        with patch.object(usar_loader.subprocess, 'run') as mock_run:
+    monkeypatch.setitem(usar_loader.USAR_WHITELIST, "demo", "demo")
+    monkeypatch.delenv("COBRA_USAR_INSTALL", raising=False)
+    with patch.object(
+        usar_loader.importlib, "import_module", side_effect=ModuleNotFoundError()
+    ):
+        with patch.object(usar_loader.subprocess, "run") as mock_run:
             with pytest.raises(RuntimeError):
-                usar_loader.obtener_modulo('demo')
+                usar_loader.obtener_modulo("demo")
             mock_run.assert_not_called()
 
 
 def test_obtener_modulo_instala_spec_estricto(monkeypatch):
-    mock_mod = ModuleType('demo')
-    spec = 'demo==1.0.0'
-    monkeypatch.setitem(usar_loader.USAR_WHITELIST, 'demo', spec)
-    monkeypatch.setenv('COBRA_USAR_INSTALL', '1')
-    with patch.object(usar_loader.importlib, 'import_module', side_effect=[ModuleNotFoundError(), mock_mod]), \
-         patch.object(usar_loader.subprocess, 'run') as mock_run:
+    mock_mod = ModuleType("demo")
+    spec = "demo==1.0.0"
+    monkeypatch.setitem(usar_loader.USAR_WHITELIST, "demo", spec)
+    monkeypatch.setenv("COBRA_USAR_INSTALL", "1")
+    with (
+        patch.object(
+            usar_loader.importlib,
+            "import_module",
+            side_effect=[ModuleNotFoundError(), mock_mod],
+        ),
+        patch.object(usar_loader.subprocess, "run") as mock_run,
+    ):
         mock_run.return_value.returncode = 0
-        mod = usar_loader.obtener_modulo('demo')
+        mod = usar_loader.obtener_modulo("demo")
     mock_run.assert_called_once_with(
-        [sys.executable, '-m', 'pip', 'install', 'demo==1.0.0'],
+        [sys.executable, "-m", "pip", "install", "demo==1.0.0"],
         check=True,
     )
     assert mod is mock_mod
 
 
 def test_obtener_modulo_modo_inseguro_permite_flags(monkeypatch):
-    mock_mod = ModuleType('demo')
-    spec = 'demo==1.0 --hash=sha256:abc123'
-    monkeypatch.setitem(usar_loader.USAR_WHITELIST, 'demo', spec)
-    monkeypatch.setenv('COBRA_USAR_INSTALL', '1')
-    monkeypatch.setenv('COBRA_USAR_INSTALL_UNSAFE_SPECS', '1')
-    with patch.object(usar_loader.importlib, 'import_module', side_effect=[ModuleNotFoundError(), mock_mod]), \
-         patch.object(usar_loader.subprocess, 'run') as mock_run:
+    mock_mod = ModuleType("demo")
+    spec = "demo==1.0 --hash=sha256:abc123"
+    monkeypatch.setitem(usar_loader.USAR_WHITELIST, "demo", spec)
+    monkeypatch.setenv("COBRA_USAR_INSTALL", "1")
+    monkeypatch.setenv("COBRA_USAR_INSTALL_UNSAFE_SPECS", "1")
+    with (
+        patch.object(
+            usar_loader.importlib,
+            "import_module",
+            side_effect=[ModuleNotFoundError(), mock_mod],
+        ),
+        patch.object(usar_loader.subprocess, "run") as mock_run,
+    ):
         mock_run.return_value.returncode = 0
-        mod = usar_loader.obtener_modulo('demo')
+        mod = usar_loader.obtener_modulo("demo")
     mock_run.assert_called_once_with(
         [
             sys.executable,
-            '-m',
-            'pip',
-            'install',
-            'demo==1.0',
-            '--hash=sha256:abc123',
+            "-m",
+            "pip",
+            "install",
+            "demo==1.0",
+            "--hash=sha256:abc123",
         ],
         check=True,
     )
@@ -128,7 +150,7 @@ def test_cargar_lista_blanca_detecta_cobra_toml_en_raiz(monkeypatch, tmp_path):
     archivo_modulo = modulo_dir / "usar_loader.py"
     archivo_modulo.write_text("# archivo simulado", encoding="utf-8")
     (proyecto / "cobra.toml").write_text(
-        "[usar]\npermitidos = [\"paquete-demo==1.2.3\"]\n", encoding="utf-8"
+        '[usar]\npermitidos = ["paquete-demo==1.2.3"]\n', encoding="utf-8"
     )
 
     monkeypatch.setattr(usar_loader, "__file__", str(archivo_modulo))
@@ -156,38 +178,42 @@ def test_cargar_lista_blanca_sin_cobra_toml_mantiene_hardcoded(monkeypatch, tmp_
 
 @pytest.mark.timeout(5)
 def test_interpreter_usar_registra_modulo(monkeypatch):
-    mod = ModuleType('texto')
+    mod = ModuleType("texto")
     mod.a_snake = lambda texto: texto.lower()
-    mod.__all__ = ['a_snake']
-    monkeypatch.setattr(core_usar_loader, 'obtener_modulo_cobra_oficial', lambda _name: mod)
+    mod.__all__ = ["a_snake"]
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo_cobra_oficial", lambda _name: mod
+    )
     interp = InterpretadorCobra()
-    interp.ejecutar_nodo(NodoUsar('texto'))
-    assert interp.obtener_variable('a_snake')('TEXTO') == 'texto'
+    interp.ejecutar_nodo(NodoUsar("texto"))
+    assert interp.obtener_variable("a_snake")("TEXTO") == "texto"
 
 
 def test_obtener_modulo_delega_en_nuevo_resolver(monkeypatch):
-    mock_mod = ModuleType('json')
-    monkeypatch.setitem(usar_loader.USAR_WHITELIST, 'json', 'json')
+    mock_mod = ModuleType("json")
+    monkeypatch.setitem(usar_loader.USAR_WHITELIST, "json", "json")
 
     class FakeResolver:
         def __init__(self, *args, **kwargs):
             pass
 
-        def load_module(self, nombre, fallback_backend='python'):
-            assert nombre == 'json'
-            assert fallback_backend == 'python'
+        def load_module(self, nombre, fallback_backend="python"):
+            assert nombre == "json"
+            assert fallback_backend == "python"
             return object(), mock_mod
 
     from pcobra.cobra.imports import resolver as imports_resolver
 
-    monkeypatch.setattr(imports_resolver, 'CobraImportResolver', FakeResolver)
+    monkeypatch.setattr(imports_resolver, "CobraImportResolver", FakeResolver)
 
-    mod = usar_loader.obtener_modulo('json')
+    mod = usar_loader.obtener_modulo("json")
 
     assert mod is mock_mod
 
 
-def _ejecutar_codigo(codigo: str, interp: InterpretadorCobra | None = None) -> InterpretadorCobra:
+def _ejecutar_codigo(
+    codigo: str, interp: InterpretadorCobra | None = None
+) -> InterpretadorCobra:
     tokens = Lexer(codigo).analizar_token()
     ast = Parser(tokens).parsear()
     interprete = interp or InterpretadorCobra()
@@ -195,12 +221,12 @@ def _ejecutar_codigo(codigo: str, interp: InterpretadorCobra | None = None) -> I
     return interprete
 
 
-
-
 def test_repl_usar_numero_inyecta_funciones_globales(monkeypatch):
     import pcobra.corelibs.numero as modulo_numero
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre, **_kwargs: modulo_numero)
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo", lambda nombre, **_kwargs: modulo_numero
+    )
     interp = InterpretadorCobra()
     interp.configurar_restriccion_usar_repl({"numero": "numero", "texto": "texto"})
 
@@ -213,7 +239,9 @@ def test_repl_usar_numero_inyecta_funciones_globales(monkeypatch):
 def test_repl_usar_texto_inyecta_funciones_globales(monkeypatch):
     import pcobra.corelibs.texto as modulo_texto
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre, **_kwargs: modulo_texto)
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo", lambda nombre, **_kwargs: modulo_texto
+    )
     interp = InterpretadorCobra()
     interp.configurar_restriccion_usar_repl({"numero": "numero", "texto": "texto"})
 
@@ -221,10 +249,14 @@ def test_repl_usar_texto_inyecta_funciones_globales(monkeypatch):
 
     assert "a_snake" in interp.variables
     assert interp.obtener_variable("a_snake")("HolaMundo") == "hola_mundo"
+
+
 def test_repl_usar_numero_permite_es_finito_sin_prefijo(monkeypatch):
     import pcobra.corelibs.numero as modulo_numero
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre, **_kwargs: modulo_numero)
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo", lambda nombre, **_kwargs: modulo_numero
+    )
     interp = _ejecutar_codigo('usar "numero"\nes_finito(10)')
 
     assert "es_finito" in interp.variables
@@ -234,20 +266,22 @@ def test_repl_usar_numero_permite_es_finito_sin_prefijo(monkeypatch):
 def test_repl_usar_texto_permite_a_snake_sin_prefijo(monkeypatch):
     import pcobra.corelibs.texto as modulo_texto
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre, **_kwargs: modulo_texto)
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo", lambda nombre, **_kwargs: modulo_texto
+    )
     interp = _ejecutar_codigo('usar "texto"\na_snake("HolaMundo")')
 
     assert "a_snake" in interp.variables
     assert interp.obtener_variable("a_snake")("HolaMundo") == "hola_mundo"
 
 
-
-
 def test_repl_usar_numero_ejecuta_callable_runtime_es_finito(monkeypatch):
     import pcobra.corelibs.numero as modulo_numero
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre, **_kwargs: modulo_numero)
-    interp = _ejecutar_codigo('usar \"numero\"\nes_finito(10)')
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo", lambda nombre, **_kwargs: modulo_numero
+    )
+    interp = _ejecutar_codigo('usar "numero"\nes_finito(10)')
 
     llamada = NodoLlamadaFuncion("es_finito", [NodoValor(10)])
     assert interp.ejecutar_llamada_funcion(llamada) is True
@@ -257,9 +291,11 @@ def test_repl_usar_numero_ejecuta_callable_runtime_es_nan_con_math_nan(monkeypat
     import math
     import pcobra.corelibs.numero as modulo_numero
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre, **_kwargs: modulo_numero)
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo", lambda nombre, **_kwargs: modulo_numero
+    )
     # Caso explícito: validar es_nan(math.nan) en runtime.
-    interp = _ejecutar_codigo('usar \"numero\"\nes_nan(math.nan)')
+    interp = _ejecutar_codigo('usar "numero"\nes_nan(math.nan)')
 
     llamada = NodoLlamadaFuncion("es_nan", [NodoValor(math.nan)])
     assert interp.ejecutar_llamada_funcion(llamada) is True
@@ -268,18 +304,21 @@ def test_repl_usar_numero_ejecuta_callable_runtime_es_nan_con_math_nan(monkeypat
 def test_repl_usar_numero_ejecuta_callable_runtime_es_nan_con_entero(monkeypatch):
     import pcobra.corelibs.numero as modulo_numero
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre, **_kwargs: modulo_numero)
-    interp = _ejecutar_codigo('usar \"numero\"\nes_nan(10)')
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo", lambda nombre, **_kwargs: modulo_numero
+    )
+    interp = _ejecutar_codigo('usar "numero"\nes_nan(10)')
 
     llamada = NodoLlamadaFuncion("es_nan", [NodoValor(10)])
     assert interp.ejecutar_llamada_funcion(llamada) is False
 
 
-
 def test_repl_usar_texto_ejecuta_callables_runtime_basicos(monkeypatch):
     import pcobra.corelibs.texto as modulo_texto
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: modulo_texto)
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: modulo_texto
+    )
     interp = _ejecutar_codigo('usar "texto"\nrecortar("  cobra  ")')
 
     assert interp.obtener_variable("recortar")("  cobra  ") == "cobra"
@@ -292,7 +331,9 @@ def test_repl_usar_texto_ejecuta_callables_runtime_basicos(monkeypatch):
 def test_repl_usar_detecta_colision_de_simbolo_existente(monkeypatch):
     import pcobra.corelibs.texto as modulo_texto
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre, **_kwargs: modulo_texto)
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo", lambda nombre, **_kwargs: modulo_texto
+    )
     interp = InterpretadorCobra()
     interp.contextos[-1].define("a_snake", lambda x: x)
 
@@ -332,7 +373,9 @@ def test_repl_usar_colision_no_inyecta_ningun_simbolo(monkeypatch):
 def test_repl_usar_colision_en_ancestro_no_inyecta_exportables(monkeypatch):
     import pcobra.corelibs.numero as modulo_numero
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: modulo_numero)
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: modulo_numero
+    )
     interp = InterpretadorCobra()
     contexto_padre = interp.contextos[-1]
     contexto_hijo = Environment(parent=contexto_padre)
@@ -357,24 +400,29 @@ def test_repl_usar_colision_en_ancestro_no_inyecta_exportables(monkeypatch):
     interp.contextos.pop()
 
 
-
-
-
 def test_repl_usar_numero_regresion_es_finito_y_signo(monkeypatch):
     import pcobra.corelibs.numero as modulo_numero
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: modulo_numero)
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: modulo_numero
+    )
     interp = _ejecutar_codigo('usar "numero"\nes_finito(10)\nsigno(0-5)')
 
     assert interp.obtener_variable("es_finito")(10) is True
     assert interp.obtener_variable("signo")(-5) == -1
 
 
-def test_repl_usar_texto_regresion_mayusculas_recortar_repetir_quitar_acentos(monkeypatch):
+def test_repl_usar_texto_regresion_mayusculas_recortar_repetir_quitar_acentos(
+    monkeypatch,
+):
     import pcobra.corelibs.texto as modulo_texto
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: modulo_texto)
-    interp = _ejecutar_codigo('usar "texto"\nmayusculas("cobra")\nrecortar("  cobra  ")\nrepetir("co", 2)\nquitar_acentos("canción")')
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: modulo_texto
+    )
+    interp = _ejecutar_codigo(
+        'usar "texto"\nmayusculas("cobra")\nrecortar("  cobra  ")\nrepetir("co", 2)\nquitar_acentos("canción")'
+    )
 
     assert interp.obtener_variable("mayusculas")("cobra") == "COBRA"
     assert interp.obtener_variable("recortar")("  cobra  ") == "cobra"
@@ -385,8 +433,12 @@ def test_repl_usar_texto_regresion_mayusculas_recortar_repetir_quitar_acentos(mo
 def test_repl_usar_logica_regresion_conjuncion_y_negacion(monkeypatch):
     import pcobra.corelibs.logica as modulo_logica
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: modulo_logica)
-    interp = _ejecutar_codigo('usar "logica"\nconjuncion(verdadero, falso)\nnegacion(falso)')
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: modulo_logica
+    )
+    interp = _ejecutar_codigo(
+        'usar "logica"\nconjuncion(verdadero, falso)\nnegacion(falso)'
+    )
 
     assert interp.obtener_variable("conjuncion")(True, False) is False
     assert interp.obtener_variable("negacion")(False) is True
@@ -395,7 +447,9 @@ def test_repl_usar_logica_regresion_conjuncion_y_negacion(monkeypatch):
 def test_repl_usar_tiempo_regresion_epoch_valida_tipo_y_rango(monkeypatch):
     import pcobra.corelibs.tiempo as modulo_tiempo
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: modulo_tiempo)
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: modulo_tiempo
+    )
     interp = _ejecutar_codigo('usar "tiempo"\nepoch()')
 
     valor_epoch = interp.obtener_variable("epoch")()
@@ -406,15 +460,20 @@ def test_repl_usar_tiempo_regresion_epoch_valida_tipo_y_rango(monkeypatch):
 def test_repl_usar_datos_regresion_longitud_cobra(monkeypatch):
     import pcobra.corelibs.datos as modulo_datos
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: modulo_datos)
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: modulo_datos
+    )
     interp = _ejecutar_codigo('usar "datos"\nlongitud("cobra")')
 
     assert interp.obtener_variable("longitud")("cobra") == 5
 
+
 def test_repl_usar_texto_colision_en_ancestro_es_atomico(monkeypatch):
     import pcobra.corelibs.texto as modulo_texto
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: modulo_texto)
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: modulo_texto
+    )
     interp = InterpretadorCobra()
     contexto_padre = interp.contextos[-1]
     contexto_hijo = Environment(parent=contexto_padre)
@@ -443,7 +502,10 @@ def test_repl_usar_texto_colision_en_ancestro_es_atomico(monkeypatch):
 def test_usar_modulos_externos_rechazados_en_runtime_general(nombre):
     interp = InterpretadorCobra()
 
-    with pytest.raises(PermissionError, match=r"módulo externo no permitido en REPL estricto \(solo alias oficiales Cobra\)"):
+    with pytest.raises(
+        PermissionError,
+        match=r"módulo externo no permitido en REPL estricto \(solo alias oficiales Cobra\)",
+    ):
         interp.ejecutar_nodo(NodoUsar(nombre))
 
 
@@ -465,7 +527,10 @@ def test_repl_usar_numpy_falla_sin_estado_parcial():
     simbolos_iniciales = set(interp.contextos[-1].values.keys())
     interp.configurar_restriccion_usar_repl({"numero": "numero", "texto": "texto"})
 
-    with pytest.raises(PermissionError, match=r"módulo externo no permitido en REPL estricto \(solo alias oficiales Cobra\)"):
+    with pytest.raises(
+        PermissionError,
+        match=r"módulo externo no permitido en REPL estricto \(solo alias oficiales Cobra\)",
+    ):
         _ejecutar_codigo('usar "numpy"', interp)
 
     assert interp.variables == estado_inicial
@@ -473,10 +538,10 @@ def test_repl_usar_numpy_falla_sin_estado_parcial():
     assert "numpy" not in interp.variables
 
 
-@pytest.mark.parametrize(
-    "escenario", ["modulo_sin___file__", "ruta_no_oficial"]
-)
-def test_repl_usar_resolver_oficial_parcheado_autoriza_alias_canonico(monkeypatch, escenario):
+@pytest.mark.parametrize("escenario", ["modulo_sin___file__", "ruta_no_oficial"])
+def test_repl_usar_resolver_oficial_parcheado_autoriza_alias_canonico(
+    monkeypatch, escenario
+):
     modulo = ModuleType("numero")
     modulo.__all__ = ["es_finito"]
     modulo.es_finito = lambda valor: True
@@ -512,11 +577,16 @@ def test_repl_usar_alias_no_permitido_no_invoca_resolver_oficial(monkeypatch):
     interp = InterpretadorCobra()
     interp.configurar_restriccion_usar_repl({"numero": "numero", "texto": "texto"})
 
-    with pytest.raises(PermissionError, match=r"módulo externo no permitido en REPL estricto \(solo alias oficiales Cobra\)"):
+    with pytest.raises(
+        PermissionError,
+        match=r"módulo externo no permitido en REPL estricto \(solo alias oficiales Cobra\)",
+    ):
         interp.ejecutar_nodo(NodoUsar("numpy"))
 
 
-def test_cargador_oficial_sustituible_sanea_module_type_sin_relajar_allowlist(monkeypatch):
+def test_cargador_oficial_sustituible_sanea_module_type_sin_relajar_allowlist(
+    monkeypatch,
+):
     modulo = ModuleType("texto")
     bloqueados = ["__self__", "append", "map", "filter", "unwrap", "expect"]
     modulo.__all__ = ["a_snake", "_privado", *bloqueados]
@@ -534,9 +604,7 @@ def test_cargador_oficial_sustituible_sanea_module_type_sin_relajar_allowlist(mo
 
     exports = usar_loader.usar_modulo("texto")
 
-    assert dict(exports["simbolos"]) == {
-        "a_snake": modulo.a_snake
-    }
+    assert dict(exports["simbolos"]) == {"a_snake": modulo.a_snake}
     with pytest.raises(PermissionError, match=r"fuera del catálogo público"):
         usar_loader.usar_modulo("modulo_python_local")
 
@@ -552,7 +620,9 @@ def test_compat_exige_alias_en_mapa_antes_de_invocar_resolver(monkeypatch):
         _no_debe_llamarse,
     )
 
-    with pytest.raises(ModuleNotFoundError, match="sin ruta interna canónica declarada"):
+    with pytest.raises(
+        ModuleNotFoundError, match="sin ruta interna canónica declarada"
+    ):
         usar_loader._obtener_modulo_cobra_oficial_compat("numero")
 
 
@@ -594,8 +664,12 @@ def test_obtener_modulo_alias_cobra_usa_origen_oficial(monkeypatch):
     from pcobra.cobra.imports import resolver as imports_resolver
 
     monkeypatch.setattr(imports_resolver, "CobraImportResolver", FakeResolver)
-    monkeypatch.setattr(usar_loader.importlib, "import_module", _import_module_controlado)
-    monkeypatch.setattr(usar_loader, "obtener_modulo_cobra_oficial", _oficial_controlado)
+    monkeypatch.setattr(
+        usar_loader.importlib, "import_module", _import_module_controlado
+    )
+    monkeypatch.setattr(
+        usar_loader, "obtener_modulo_cobra_oficial", _oficial_controlado
+    )
 
     modulo = usar_loader.obtener_modulo("numero")
 
@@ -603,33 +677,45 @@ def test_obtener_modulo_alias_cobra_usa_origen_oficial(monkeypatch):
     assert llamadas == {"oficial": 1, "importlib": 0}
 
 
-def test_repl_semantica_oficial_plana_libro_parser_legacy_usar_numero_es_finito(monkeypatch):
+def test_repl_semantica_oficial_plana_libro_parser_legacy_usar_numero_es_finito(
+    monkeypatch,
+):
     """Semántica oficial plana del libro con parser legacy `usar "..."`: numero exporta es_finito."""
     import pcobra.corelibs.numero as modulo_numero
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre, **_kwargs: modulo_numero)
-    interp = _ejecutar_codigo('usar \"numero\"\nimprimir(es_finito(10))')
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo", lambda nombre, **_kwargs: modulo_numero
+    )
+    interp = _ejecutar_codigo('usar "numero"\nimprimir(es_finito(10))')
 
     assert "es_finito" in interp.variables
     assert interp.obtener_variable("es_finito")(10) is True
 
 
-def test_repl_semantica_oficial_plana_libro_parser_legacy_usar_texto_a_snake(monkeypatch):
+def test_repl_semantica_oficial_plana_libro_parser_legacy_usar_texto_a_snake(
+    monkeypatch,
+):
     """Semántica oficial plana del libro con parser legacy `usar "..."`: texto exporta a_snake."""
     import pcobra.corelibs.texto as modulo_texto
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre, **_kwargs: modulo_texto)
-    interp = _ejecutar_codigo('usar \"texto\"\nimprimir(a_snake(\"HolaMundo\"))')
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo", lambda nombre, **_kwargs: modulo_texto
+    )
+    interp = _ejecutar_codigo('usar "texto"\nimprimir(a_snake("HolaMundo"))')
 
     assert "a_snake" in interp.variables
     assert interp.obtener_variable("a_snake")("HolaMundo") == "hola_mundo"
 
 
-def test_repl_semantica_oficial_plana_libro_parser_legacy_colision_es_atomica(monkeypatch):
+def test_repl_semantica_oficial_plana_libro_parser_legacy_colision_es_atomica(
+    monkeypatch,
+):
     """Semántica oficial plana del libro con parser legacy `usar "..."`: colisión sin inyección parcial."""
     import pcobra.corelibs.numero as modulo_numero
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre, **_kwargs: modulo_numero)
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo", lambda nombre, **_kwargs: modulo_numero
+    )
     interp = InterpretadorCobra()
     interp.contextos[-1].define("es_finito", lambda _x: "ocupado")
 
@@ -647,7 +733,9 @@ def test_repl_semantica_oficial_plana_libro_parser_legacy_colision_es_atomica(mo
 def test_repl_no_habilita_acceso_por_punto_para_usar_numero(monkeypatch):
     import pcobra.corelibs.numero as modulo_numero
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre, **_kwargs: modulo_numero)
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo", lambda nombre, **_kwargs: modulo_numero
+    )
     with pytest.raises(
         ValueError,
         match=r"Nodo no soportado: .*NodoAtributo",
@@ -667,10 +755,14 @@ def test_repl_usar_modulo_oficial_sin_all_inyecta_callables_publicos(monkeypatch
     ).resolve()
     setattr(modulo, "__file__", str(ruta_oficial))
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: modulo)
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: modulo
+    )
 
     interp = InterpretadorCobra()
-    interp.configurar_restriccion_usar_repl({"numero": "numero", "texto": "texto", "logica": "logica"})
+    interp.configurar_restriccion_usar_repl(
+        {"numero": "numero", "texto": "texto", "logica": "logica"}
+    )
     _ejecutar_codigo('usar "numero"\nes_finito(10)', interp)
 
     assert "es_finito" in interp.variables
@@ -678,7 +770,9 @@ def test_repl_usar_modulo_oficial_sin_all_inyecta_callables_publicos(monkeypatch
     assert "_interna" not in interp.variables
 
 
-def test_repl_usar_numero_callables_policy_funcion_usuario_e_imprimir(monkeypatch, capsys):
+def test_repl_usar_numero_callables_policy_funcion_usuario_e_imprimir(
+    monkeypatch, capsys
+):
     import math
     import pcobra.corelibs.numero as modulo_numero
 
@@ -709,7 +803,10 @@ def test_repl_usar_numero_callables_policy_funcion_usuario_e_imprimir(monkeypatc
     assert isinstance(resultado_desviacion, (int, float))
     assert resultado_desviacion >= 0
 
-    with pytest.raises(PermissionError, match=r"módulo externo no permitido en REPL estricto \(solo alias oficiales Cobra\)"):
+    with pytest.raises(
+        PermissionError,
+        match=r"módulo externo no permitido en REPL estricto \(solo alias oficiales Cobra\)",
+    ):
         _ejecutar_codigo('usar "numpy"', interp)
 
     _ejecutar_codigo(
@@ -736,10 +833,14 @@ def test_repl_usar_modulo_oficial_con_all_mixto_filtra_callables_publicos(monkey
     ).resolve()
     setattr(modulo, "__file__", str(ruta_oficial))
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: modulo)
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: modulo
+    )
 
     interp = InterpretadorCobra()
-    interp.configurar_restriccion_usar_repl({"numero": "numero", "texto": "texto", "logica": "logica"})
+    interp.configurar_restriccion_usar_repl(
+        {"numero": "numero", "texto": "texto", "logica": "logica"}
+    )
     _ejecutar_codigo('usar "texto"\na_snake("HolaMundo")', interp)
 
     assert "a_snake" in interp.variables
@@ -747,6 +848,7 @@ def test_repl_usar_modulo_oficial_con_all_mixto_filtra_callables_publicos(monkey
     assert "_privada" not in interp.variables
     assert "NO_CALLABLE" not in interp.variables
     assert "faltante" not in interp.variables
+
 
 def test_repl_usar_colision_policy_warn_alias_required_no_overwrite(monkeypatch):
     modulo = ModuleType("texto")
@@ -759,7 +861,9 @@ def test_repl_usar_colision_policy_warn_alias_required_no_overwrite(monkeypatch)
     ).resolve()
     setattr(modulo, "__file__", str(ruta_oficial))
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: modulo)
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: modulo
+    )
 
     interp = InterpretadorCobra()
     interp.configurar_restriccion_usar_repl({"texto": "texto"})
@@ -791,7 +895,9 @@ def test_repl_usar_colision_multiple_sin_inyeccion_parcial(monkeypatch):
     ).resolve()
     setattr(modulo, "__file__", str(ruta_oficial))
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: modulo)
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: modulo
+    )
 
     interp = InterpretadorCobra()
     interp.configurar_restriccion_usar_repl({"texto": "texto"})
@@ -807,7 +913,9 @@ def test_repl_usar_colision_multiple_sin_inyeccion_parcial(monkeypatch):
 def test_usar_numero_exporta_solo_nombres_espanoles(monkeypatch):
     import pcobra.corelibs.numero as modulo_numero
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre, **_kwargs: modulo_numero)
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo", lambda nombre, **_kwargs: modulo_numero
+    )
     interp = InterpretadorCobra()
     interp.configurar_restriccion_usar_repl({"numero": "numero"})
     interp.ejecutar_nodo(NodoUsar("numero"))
@@ -819,7 +927,9 @@ def test_usar_numero_exporta_solo_nombres_espanoles(monkeypatch):
 def test_usar_texto_exporta_solo_nombres_espanoles(monkeypatch):
     import pcobra.corelibs.texto as modulo_texto
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre, **_kwargs: modulo_texto)
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo", lambda nombre, **_kwargs: modulo_texto
+    )
     interp = InterpretadorCobra()
     interp.configurar_restriccion_usar_repl({"texto": "texto"})
     interp.ejecutar_nodo(NodoUsar("texto"))
@@ -831,7 +941,9 @@ def test_usar_texto_exporta_solo_nombres_espanoles(monkeypatch):
 def test_usar_logica_dos_veces_es_idempotente(monkeypatch):
     import pcobra.corelibs.logica as modulo_logica
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: modulo_logica)
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: modulo_logica
+    )
     interp = InterpretadorCobra()
     interp.configurar_restriccion_usar_repl({"logica": "logica"})
 
@@ -843,7 +955,9 @@ def test_usar_logica_dos_veces_es_idempotente(monkeypatch):
 def test_usar_numero_dos_veces_es_idempotente(monkeypatch):
     import pcobra.corelibs.numero as modulo_numero
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: modulo_numero)
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: modulo_numero
+    )
     interp = InterpretadorCobra()
     interp.configurar_restriccion_usar_repl({"numero": "numero"})
 
@@ -855,7 +969,9 @@ def test_usar_numero_dos_veces_es_idempotente(monkeypatch):
 def test_usar_numero_conflicto_real_por_redefinicion_usuario(monkeypatch):
     import pcobra.corelibs.numero as modulo_numero
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: modulo_numero)
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: modulo_numero
+    )
     interp = InterpretadorCobra()
     interp.configurar_restriccion_usar_repl({"numero": "numero"})
     interp.contextos[-1].define("es_finito", 123)
@@ -895,8 +1011,6 @@ def test_usar_simbolo_fuera_api_en_modulos_distintos_no_genera_colision(monkeypa
 
     _ejecutar_codigo('usar "logica"', interp)
     assert "compartido" not in interp.variables
-
-
 
 
 def test_repl_usar_datos_imprimir_longitud_lista_produce_3(monkeypatch, capsys):
@@ -956,12 +1070,20 @@ def test_repl_usar_texto_oficial_mayusculas_contrato_actual(capsys):
 def test_usar_texto_expone_superficie_publica_clave(monkeypatch):
     import pcobra.corelibs.texto as modulo_texto
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: modulo_texto)
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: modulo_texto
+    )
     interp = InterpretadorCobra()
     interp.configurar_restriccion_usar_repl({"texto": "texto"})
     interp.ejecutar_nodo(NodoUsar("texto"))
 
-    for simbolo in ("recortar", "repetir", "quitar_acentos", "prefijo_comun", "sufijo_comun"):
+    for simbolo in (
+        "recortar",
+        "repetir",
+        "quitar_acentos",
+        "prefijo_comun",
+        "sufijo_comun",
+    ):
         assert simbolo in interp.variables
 
     assert interp.obtener_variable("recortar")("  cobra  ") == "cobra"
@@ -974,7 +1096,9 @@ def test_usar_texto_expone_superficie_publica_clave(monkeypatch):
 def test_usar_numero_conserva_es_finito_y_signo_operativos(monkeypatch):
     import pcobra.corelibs.numero as modulo_numero
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: modulo_numero)
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: modulo_numero
+    )
     interp = InterpretadorCobra()
     interp.configurar_restriccion_usar_repl({"numero": "numero"})
     interp.ejecutar_nodo(NodoUsar("numero"))
@@ -985,7 +1109,17 @@ def test_usar_numero_conserva_es_finito_y_signo_operativos(monkeypatch):
 
 def test_usar_datos_no_exporta_objetos_backend_sdk_wrappers(monkeypatch):
     modulo = ModuleType("datos")
-    modulo.__all__ = ["longitud", "backend", "sdk", "wrapper", "modulo_externo", "module_object", "backend_module_object", "USAR_RUNTIME_EXPORT_OVERRIDES", "REPL_COBRA_MODULE_INTERNAL_PATH_MAP"]
+    modulo.__all__ = [
+        "longitud",
+        "backend",
+        "sdk",
+        "wrapper",
+        "modulo_externo",
+        "module_object",
+        "backend_module_object",
+        "USAR_RUNTIME_EXPORT_OVERRIDES",
+        "REPL_COBRA_MODULE_INTERNAL_PATH_MAP",
+    ]
     modulo.longitud = lambda xs: len(xs)
     modulo.backend = ModuleType("backend")
     modulo.sdk = ModuleType("sdk")
@@ -1001,7 +1135,9 @@ def test_usar_datos_no_exporta_objetos_backend_sdk_wrappers(monkeypatch):
     ).resolve()
     setattr(modulo, "__file__", str(ruta_oficial))
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: modulo)
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: modulo
+    )
 
     interp = InterpretadorCobra()
     interp.configurar_restriccion_usar_repl({"datos": "datos"})
@@ -1021,10 +1157,14 @@ def test_usar_datos_no_exporta_objetos_backend_sdk_wrappers(monkeypatch):
         "REPL_COBRA_MODULE_INTERNAL_PATH_MAP",
     ):
         assert simbolo not in interp.variables
+
+
 def test_usar_datos_incluye_filtrar_mapear_reducir(monkeypatch):
     import pcobra.standard_library.datos as modulo_datos
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre, **_kwargs: modulo_datos)
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo", lambda nombre, **_kwargs: modulo_datos
+    )
     interp = InterpretadorCobra()
     interp.configurar_restriccion_usar_repl({"datos": "datos"})
     interp.ejecutar_nodo(NodoUsar("datos"))
@@ -1033,11 +1173,12 @@ def test_usar_datos_incluye_filtrar_mapear_reducir(monkeypatch):
         assert simbolo in interp.variables
 
 
-
 def test_usar_datos_operaciones_basicas_agregar_mapear_filtrar(monkeypatch):
     import pcobra.standard_library.datos as modulo_datos
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre, **_kwargs: modulo_datos)
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo", lambda nombre, **_kwargs: modulo_datos
+    )
     interp = InterpretadorCobra()
     interp.configurar_restriccion_usar_repl({"datos": "datos"})
     interp.ejecutar_nodo(NodoUsar("datos"))
@@ -1045,15 +1186,22 @@ def test_usar_datos_operaciones_basicas_agregar_mapear_filtrar(monkeypatch):
     tabla = [{"valor": 1}, {"valor": 2}]
 
     assert interp.obtener_variable("agregar")(tabla, {"valor": 3})[-1]["valor"] == 3
-    assert interp.obtener_variable("mapear")(tabla, lambda fila: {**fila, "valor": fila["valor"] * 2}) == [
+    assert interp.obtener_variable("mapear")(
+        tabla, lambda fila: {**fila, "valor": fila["valor"] * 2}
+    ) == [
         {"valor": 2},
         {"valor": 4},
     ]
-    assert interp.obtener_variable("filtrar")(tabla, lambda fila: fila["valor"] % 2 == 0) == [{"valor": 2}]
+    assert interp.obtener_variable("filtrar")(
+        tabla, lambda fila: fila["valor"] % 2 == 0
+    ) == [{"valor": 2}]
+
 
 def test_usar_numpy_rechazado_en_superficie_publica():
     interp = InterpretadorCobra()
-    interp.configurar_restriccion_usar_repl({"numero": "numero", "texto": "texto", "datos": "datos"})
+    interp.configurar_restriccion_usar_repl(
+        {"numero": "numero", "texto": "texto", "datos": "datos"}
+    )
 
     with pytest.raises(PermissionError, match=r"solo alias oficiales Cobra"):
         interp.ejecutar_nodo(NodoUsar("numpy"))
@@ -1068,7 +1216,9 @@ def test_internals_holobit_sdk_no_importables_por_usar_loader():
 def test_usar_holobit_expone_solo_api_publica(monkeypatch):
     import pcobra.corelibs.holobit as modulo_holobit
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre, **_kwargs: modulo_holobit)
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo", lambda nombre, **_kwargs: modulo_holobit
+    )
     interp = InterpretadorCobra()
     interp.configurar_restriccion_usar_repl({"holobit": "holobit"})
     interp.ejecutar_nodo(NodoUsar("holobit"))
@@ -1082,7 +1232,9 @@ def test_usar_holobit_expone_solo_api_publica(monkeypatch):
 def test_simbolos_exportados_por_usar_no_contienen_doble_guion_bajo(monkeypatch):
     import pcobra.corelibs.numero as modulo_numero
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre, **_kwargs: modulo_numero)
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo", lambda nombre, **_kwargs: modulo_numero
+    )
     interp = InterpretadorCobra()
     interp.configurar_restriccion_usar_repl({"numero": "numero"})
     interp.ejecutar_nodo(NodoUsar("numero"))
@@ -1093,7 +1245,9 @@ def test_simbolos_exportados_por_usar_no_contienen_doble_guion_bajo(monkeypatch)
 def test_usar_no_exporta_simbolos_bloqueados(monkeypatch):
     import pcobra.standard_library.datos as modulo_datos
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre, **_kwargs: modulo_datos)
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo", lambda nombre, **_kwargs: modulo_datos
+    )
     interp = InterpretadorCobra()
     interp.configurar_restriccion_usar_repl({"datos": "datos"})
     interp.ejecutar_nodo(NodoUsar("datos"))
@@ -1151,7 +1305,9 @@ def test_repl_usar_colision_warn_emite_runtimewarning_y_error_estructurado(monke
     ).resolve()
     setattr(modulo, "__file__", str(ruta_oficial))
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: modulo)
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: modulo
+    )
 
     interp = InterpretadorCobra()
     interp.configurar_restriccion_usar_repl({"texto": "texto"})
@@ -1182,16 +1338,18 @@ def test_usar_rechaza_modulo_no_canonico_en_repl_estricto():
     interp = InterpretadorCobra()
     interp.configurar_restriccion_usar_repl({"num": "numero"})
 
-    with pytest.raises(PermissionError, match=r"usar_error\[modulo_fuera_catalogo_publico\]"):
+    with pytest.raises(
+        PermissionError, match=r"usar_error\[modulo_fuera_catalogo_publico\]"
+    ):
         interp.ejecutar_nodo(NodoUsar("num"))
-
-
 
 
 def test_repl_usar_texto_simbolo_fuera_de_overrides_no_disponible(monkeypatch):
     import pcobra.corelibs.texto as modulo_texto
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: modulo_texto)
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: modulo_texto
+    )
 
     interp = InterpretadorCobra()
     interp.configurar_restriccion_usar_repl({"texto": "texto"})
@@ -1206,14 +1364,18 @@ def test_usar_texto_inyecta_a_snake_desde_all_y_no_capitalizar(monkeypatch):
     assert "a_snake" in modulo_texto.__all__
     assert "capitalizar" not in modulo_texto.__all__
 
-    simbolos_saneados, conflictos = core_usar_loader.sanitizar_exports_publicos(modulo_texto, "texto")
+    simbolos_saneados, conflictos = core_usar_loader.sanitizar_exports_publicos(
+        modulo_texto, "texto"
+    )
     simbolos = dict(simbolos_saneados)
 
     assert "a_snake" in simbolos
     assert "capitalizar" not in simbolos
     assert not any(c.get("symbol") == "capitalizar" for c in conflictos)
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: modulo_texto)
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: modulo_texto
+    )
     interp = InterpretadorCobra()
     interp.configurar_restriccion_usar_repl({"texto": "texto"})
 
@@ -1234,7 +1396,9 @@ def test_usar_error_export_invalido_es_diferenciado(monkeypatch):
     ).resolve()
     setattr(modulo, "__file__", str(ruta_oficial))
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: modulo)
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: modulo
+    )
 
     interp = InterpretadorCobra()
     interp.configurar_restriccion_usar_repl({"texto": "texto"})
@@ -1243,7 +1407,9 @@ def test_usar_error_export_invalido_es_diferenciado(monkeypatch):
         interp.ejecutar_nodo(NodoUsar("texto"))
 
 
-def test_usar_muestra_error_estructurado_sin_traceback_en_modo_normal(monkeypatch, caplog):
+def test_usar_muestra_error_estructurado_sin_traceback_en_modo_normal(
+    monkeypatch, caplog
+):
     modulo = ModuleType("texto")
     modulo.__all__ = ["a_snake"]
     modulo.a_snake = lambda texto: texto
@@ -1253,7 +1419,9 @@ def test_usar_muestra_error_estructurado_sin_traceback_en_modo_normal(monkeypatc
     ).resolve()
     setattr(modulo, "__file__", str(ruta_oficial))
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: modulo)
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: modulo
+    )
     monkeypatch.delenv("PCOBRA_DEBUG_RUNTIME", raising=False)
     monkeypatch.delenv("PCOBRA_DEBUG_TRACES", raising=False)
 
@@ -1284,7 +1452,9 @@ def test_usar_muestra_detalle_extendido_en_debug(monkeypatch, caplog):
     ).resolve()
     setattr(modulo, "__file__", str(ruta_oficial))
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: modulo)
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: modulo
+    )
     monkeypatch.setenv("PCOBRA_DEBUG_RUNTIME", "1")
 
     interp = InterpretadorCobra()
@@ -1426,7 +1596,9 @@ def test_usar_warning_colision_alias_formato_compacto(monkeypatch, caplog):
     ).resolve()
     setattr(modulo, "__file__", str(ruta_oficial))
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: modulo)
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: modulo
+    )
     monkeypatch.delenv("PCOBRA_DEBUG_RUNTIME", raising=False)
     monkeypatch.delenv("PCOBRA_DEBUG_TRACES", raising=False)
 
@@ -1449,39 +1621,59 @@ def test_usar_warning_colision_alias_formato_compacto(monkeypatch, caplog):
     assert "'phase': 'preflight'" in mensaje
 
 
-def test_repl_runtime_usar_datos_elemento_y_regresiones_con_errores_limpios(monkeypatch, capsys):
+def test_repl_runtime_usar_datos_elemento_y_regresiones_con_errores_limpios(
+    monkeypatch, capsys
+):
     import pcobra.standard_library.datos as modulo_datos
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: modulo_datos)
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: modulo_datos
+    )
     interp = InterpretadorCobra()
     interp.configurar_restriccion_usar_repl({"datos": "datos"})
 
-    _ejecutar_codigo('''usar "datos"
+    _ejecutar_codigo(
+        """usar "datos"
 var ys = [10, 20, 30]
 imprimir(elemento(ys, 0))
 imprimir(elemento([1, 2, 3], 2))
 imprimir(elemento(ys, 1))
-imprimir(longitud([1, 2, 3]))''', interp)
+imprimir(longitud([1, 2, 3]))""",
+        interp,
+    )
 
     out = capsys.readouterr().out.strip().splitlines()
     assert "elemento" in interp.variables
     assert out[-4:] == ["10", "3", "20", "3"]
 
-    with pytest.raises(IndexError, match="^Error: índice fuera de rango$") as err_indice:
-        _ejecutar_codigo('''usar "datos"
+    with pytest.raises(
+        IndexError, match="^Error: índice fuera de rango$"
+    ) as err_indice:
+        _ejecutar_codigo(
+            """usar "datos"
 var ys = [10, 20, 30]
-elemento(ys, 99)''', interp)
+elemento(ys, 99)""",
+            interp,
+        )
     assert "Traceback" not in str(err_indice.value)
 
-    with pytest.raises(TypeError, match="^Error: índice debe ser entero$") as err_tipo_indice:
-        _ejecutar_codigo('''usar "datos"
+    with pytest.raises(
+        TypeError, match="^Error: índice debe ser entero$"
+    ) as err_tipo_indice:
+        _ejecutar_codigo(
+            """usar "datos"
 var ys = [10, 20, 30]
-elemento(ys, "0")''', interp)
+elemento(ys, "0")""",
+            interp,
+        )
     assert "Traceback" not in str(err_tipo_indice.value)
 
     with pytest.raises(TypeError, match="^Error: objeto no indexable$") as err_objeto:
-        _ejecutar_codigo('''usar "datos"
-elemento(10, 0)''', interp)
+        _ejecutar_codigo(
+            """usar "datos"
+elemento(10, 0)""",
+            interp,
+        )
     assert "Traceback" not in str(err_objeto.value)
 
     with pytest.raises(
@@ -1494,4 +1686,4 @@ elemento(10, 0)''', interp)
         ParserError,
         match=r"Se esperaba una ruta de módulo entre comillas",
     ):
-        _ejecutar_codigo('usar archivo', interp)
+        _ejecutar_codigo("usar archivo", interp)

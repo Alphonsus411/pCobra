@@ -14,32 +14,38 @@ def test_register_base_commands_includes_interactive():
     registry = CommandRegistry(MagicMock())
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers()
-    with patch('cobra.cli.cli.descubrir_plugins', return_value=[]):
-        commands = registry.register_base_commands(subparsers, ui="v1", profile=PROFILE_DEVELOPMENT)
-    assert 'interactive' in commands
-    assert commands['interactive'].__class__.__name__ == InteractiveCommand.__name__
+    with patch("cobra.cli.cli.descubrir_plugins", return_value=[]):
+        commands = registry.register_base_commands(
+            subparsers, ui="v1", profile=PROFILE_DEVELOPMENT
+        )
+    assert "interactive" in commands
+    assert commands["interactive"].__class__.__name__ == InteractiveCommand.__name__
 
 
 def test_command_registry_no_expone_default_command_operativo():
     registry = CommandRegistry(MagicMock())
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers()
-    with patch('cobra.cli.cli.descubrir_plugins', return_value=[]):
-        commands = registry.register_base_commands(subparsers, ui="v1", profile=PROFILE_DEVELOPMENT)
-    assert 'interactive' in commands
+    with patch("cobra.cli.cli.descubrir_plugins", return_value=[]):
+        commands = registry.register_base_commands(
+            subparsers, ui="v1", profile=PROFILE_DEVELOPMENT
+        )
+    assert "interactive" in commands
     assert not hasattr(registry, "default_command_name")
     assert not hasattr(registry, "get_default_command")
 
 
 def test_register_base_commands_ignora_default_command_configurado(monkeypatch, caplog):
-    monkeypatch.setattr(AppConfig, 'DEFAULT_COMMAND', 'missing')
+    monkeypatch.setattr(AppConfig, "DEFAULT_COMMAND", "missing")
     registry = CommandRegistry(MagicMock())
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers()
-    with patch('cobra.cli.cli.descubrir_plugins', return_value=[]):
+    with patch("cobra.cli.cli.descubrir_plugins", return_value=[]):
         with caplog.at_level(logging.WARNING):
-            commands = registry.register_base_commands(subparsers, ui="v1", profile=PROFILE_DEVELOPMENT)
-    assert AppConfig.DEFAULT_COMMAND == 'missing'
+            commands = registry.register_base_commands(
+                subparsers, ui="v1", profile=PROFILE_DEVELOPMENT
+            )
+    assert AppConfig.DEFAULT_COMMAND == "missing"
     assert "interactive" in commands
     assert "Default command 'missing' not found" not in caplog.text
 
@@ -50,22 +56,28 @@ def test_command_registry_no_acopla_default_entre_instancias(monkeypatch):
     subparsers_one = parser_one.add_subparsers()
     subparsers_two = parser_two.add_subparsers()
 
-    with patch('cobra.cli.cli.descubrir_plugins', return_value=[]):
-        monkeypatch.setattr(AppConfig, 'DEFAULT_COMMAND', 'interactive')
+    with patch("cobra.cli.cli.descubrir_plugins", return_value=[]):
+        monkeypatch.setattr(AppConfig, "DEFAULT_COMMAND", "interactive")
         first_registry = CommandRegistry(MagicMock())
-        first_commands = first_registry.register_base_commands(subparsers_one, ui="v1", profile=PROFILE_DEVELOPMENT)
-        monkeypatch.setattr(AppConfig, 'DEFAULT_COMMAND', 'missing')
+        first_commands = first_registry.register_base_commands(
+            subparsers_one, ui="v1", profile=PROFILE_DEVELOPMENT
+        )
+        monkeypatch.setattr(AppConfig, "DEFAULT_COMMAND", "missing")
         second_registry = CommandRegistry(MagicMock())
-        second_commands = second_registry.register_base_commands(subparsers_two, ui="v1", profile=PROFILE_DEVELOPMENT)
+        second_commands = second_registry.register_base_commands(
+            subparsers_two, ui="v1", profile=PROFILE_DEVELOPMENT
+        )
 
     assert "interactive" in first_commands
     assert "interactive" in second_commands
     assert not hasattr(first_registry, "default_command_name")
     assert not hasattr(second_registry, "default_command_name")
-    assert AppConfig.DEFAULT_COMMAND == 'missing'
+    assert AppConfig.DEFAULT_COMMAND == "missing"
 
 
-def test_register_base_commands_degrada_si_ruta_no_cumple_basecommand(monkeypatch, caplog):
+def test_register_base_commands_degrada_si_ruta_no_cumple_basecommand(
+    monkeypatch, caplog
+):
     module_name = "tests.fake_cli_registry_routes"
     fake_module = types.ModuleType(module_name)
 
@@ -100,7 +112,7 @@ def test_register_base_commands_degrada_si_ruta_no_cumple_basecommand(monkeypatc
     )
     monkeypatch.setattr(AppConfig, "V2_COMMAND_CLASSES", [])
     try:
-        with patch('cobra.cli.cli.descubrir_plugins', return_value=[]):
+        with patch("cobra.cli.cli.descubrir_plugins", return_value=[]):
             with caplog.at_level(logging.ERROR):
                 commands = registry.register_base_commands(subparsers, ui="v2")
         assert "run" in commands

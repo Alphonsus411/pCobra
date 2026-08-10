@@ -2,7 +2,11 @@ from pathlib import Path
 from pcobra.cobra.core import Lexer
 from pcobra.cobra.core import Parser
 from pcobra.cobra.transpilers.common.utils import load_mapped_module
-from pcobra.cobra.usar_loader import obtener_cache_ast_import_cobra, canonicalizar_ruta_usar_proyecto, obtener_pila_carga_modulos_cobra_proyecto
+from pcobra.cobra.usar_loader import (
+    obtener_cache_ast_import_cobra,
+    canonicalizar_ruta_usar_proyecto,
+    obtener_pila_carga_modulos_cobra_proyecto,
+)
 from pcobra.cobra.core.import_utils import cargar_ast_modulo
 
 

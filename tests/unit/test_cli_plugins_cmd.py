@@ -30,6 +30,7 @@ class HolaPlugin(PluginCommand):
     def run(self, args):
         print("¡Hola desde un plugin!")
 
+
 sys.modules.setdefault("tests.test_cli_plugins_cmd", sys.modules[__name__])
 
 
@@ -41,10 +42,17 @@ def test_cli_plugins_muestra_registro():
     )
     limpiar_registro()
     with patch(
-        "cobra.cli.plugin.entry_points", return_value=importlib.metadata.EntryPoints((ep,))
+        "cobra.cli.plugin.entry_points",
+        return_value=importlib.metadata.EntryPoints((ep,)),
     ):
         with patch("sys.stdout", new_callable=StringIO) as out:
-            main(["--plugins-allowlist", "tests.test_cli_plugins_cmd:DummyPlugin", "plugins"])
+            main(
+                [
+                    "--plugins-allowlist",
+                    "tests.test_cli_plugins_cmd:DummyPlugin",
+                    "plugins",
+                ]
+            )
     assert "dummy 10.0.12" in out.getvalue().strip()
 
 
@@ -56,10 +64,13 @@ def test_cli_plugin_ejemplo_hola():
     )
     limpiar_registro()
     with patch(
-        "cobra.cli.plugin.entry_points", return_value=importlib.metadata.EntryPoints((ep,))
+        "cobra.cli.plugin.entry_points",
+        return_value=importlib.metadata.EntryPoints((ep,)),
     ):
         with patch("sys.stdout", new_callable=StringIO) as out:
-            main(["--plugins-allowlist", "tests.test_cli_plugins_cmd:HolaPlugin", "hola"])
+            main(
+                ["--plugins-allowlist", "tests.test_cli_plugins_cmd:HolaPlugin", "hola"]
+            )
     assert "¡Hola desde un plugin!" in out.getvalue().strip()
 
 

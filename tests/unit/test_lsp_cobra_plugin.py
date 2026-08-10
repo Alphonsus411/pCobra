@@ -32,7 +32,9 @@ def test_pylsp_format_document_devuelve_edits_si_formatea(monkeypatch, tmp_path)
     assert edits[0]["range"]["start"] == {"line": 0, "character": 0}
 
 
-def test_pylsp_format_document_lanza_runtimeerror_si_falla_formateo(monkeypatch, tmp_path):
+def test_pylsp_format_document_lanza_runtimeerror_si_falla_formateo(
+    monkeypatch, tmp_path
+):
     archivo = tmp_path / "demo.cobra"
     archivo.write_text("imprimir(1)\n", encoding="utf-8")
     documento = _DummyDocument(path=archivo, source=archivo.read_text(encoding="utf-8"))
@@ -45,4 +47,3 @@ def test_pylsp_format_document_lanza_runtimeerror_si_falla_formateo(monkeypatch,
 
 def test_lsp_plugin_no_depende_de_executecommand():
     assert not hasattr(cobra_plugin, "ExecuteCommand")
-

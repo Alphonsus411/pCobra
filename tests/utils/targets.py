@@ -13,7 +13,11 @@ from pcobra.cobra.cli.target_policies import (
     VERIFICATION_EXECUTABLE_TARGETS,
 )
 from pcobra.cobra.transpilers.compatibility_matrix import BACKEND_COMPATIBILITY
-from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS, TIER1_TARGETS, TIER2_TARGETS
+from pcobra.cobra.transpilers.targets import (
+    OFFICIAL_TARGETS,
+    TIER1_TARGETS,
+    TIER2_TARGETS,
+)
 
 TierName = Literal["tier1", "tier2"]
 EXPECTED_CANONICAL_TARGETS = ("python", "javascript", "rust")

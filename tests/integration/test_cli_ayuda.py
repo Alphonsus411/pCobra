@@ -57,7 +57,9 @@ def test_cobra_compilar_help_muestra_exactamente_8_targets_canonicos_por_tier():
     stdout = " ".join(compile_parser.format_help().split())
     expected_lines = [
         line.strip()
-        for line in (Path(__file__).parent / "golden" / "cli_help_targets_by_tier.golden")
+        for line in (
+            Path(__file__).parent / "golden" / "cli_help_targets_by_tier.golden"
+        )
         .read_text(encoding="utf-8")
         .splitlines()
         if line.strip()
@@ -65,7 +67,9 @@ def test_cobra_compilar_help_muestra_exactamente_8_targets_canonicos_por_tier():
     expected_tiers = " ".join(expected_lines)
 
     if expected_tiers not in stdout:
-        pytest.skip("El entorno resolvió ayuda global en lugar de ayuda específica de 'compilar'.")
+        pytest.skip(
+            "El entorno resolvió ayuda global en lugar de ayuda específica de 'compilar'."
+        )
 
     assert expected_tiers in stdout
     assert "Aliases aceptados" not in compile_parser.format_help()

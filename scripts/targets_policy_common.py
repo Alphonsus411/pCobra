@@ -24,7 +24,11 @@ from pcobra.cobra.transpilers.compatibility_matrix import (
     BACKEND_COMPATIBILITY,
     CONTRACT_FEATURES,
 )
-from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS, TIER1_TARGETS, TIER2_TARGETS
+from pcobra.cobra.transpilers.targets import (
+    OFFICIAL_TARGETS,
+    TIER1_TARGETS,
+    TIER2_TARGETS,
+)
 
 PUBLIC_CANONICAL_TARGETS: tuple[str, ...] = OFFICIAL_TARGETS
 PUBLIC_ACCEPTED_TARGET_NAMES: tuple[str, ...] = OFFICIAL_TARGETS
@@ -152,7 +156,6 @@ def normalized_public_line(line: str) -> str:
     )
 
 
-
 def find_public_alias_errors(rel: str, content: str) -> list[str]:
     if rel not in PUBLIC_TEXT_PATH_STRS:
         return []
@@ -160,7 +163,9 @@ def find_public_alias_errors(rel: str, content: str) -> list[str]:
     for line_no, raw_line in enumerate(content.splitlines(), start=1):
         line = normalized_public_line(raw_line)
         for alias, canonical in FORBIDDEN_PUBLIC_TARGET_ALIASES:
-            pattern = re.compile(rf"(?<![\w.+/-]){re.escape(alias)}(?![\w.+/-])", re.IGNORECASE)
+            pattern = re.compile(
+                rf"(?<![\w.+/-]){re.escape(alias)}(?![\w.+/-])", re.IGNORECASE
+            )
             if pattern.search(line):
                 errors.append(
                     f"{rel}:{line_no}: alias público no canónico -> '{alias}' (usar: {canonical})"
@@ -168,16 +173,21 @@ def find_public_alias_errors(rel: str, content: str) -> list[str]:
     return errors
 
 
-
 def find_non_python_sdk_promotion_errors(rel: str, content: str) -> list[str]:
     errors: list[str] = []
     for line_no, raw_line in enumerate(content.splitlines(), start=1):
         lowered = raw_line.lower()
-        if not any(pattern.search(raw_line) for pattern in FORBIDDEN_NON_PYTHON_SDK_PROMOTION_PATTERNS):
+        if not any(
+            pattern.search(raw_line)
+            for pattern in FORBIDDEN_NON_PYTHON_SDK_PROMOTION_PATTERNS
+        ):
             continue
         if "solo python" in lowered or "only python" in lowered:
             continue
-        if any(pattern.search(raw_line) for pattern in SDK_PROMOTION_NEGATIVE_CONTEXT_PATTERNS):
+        if any(
+            pattern.search(raw_line)
+            for pattern in SDK_PROMOTION_NEGATIVE_CONTEXT_PATTERNS
+        ):
             continue
         offending = [
             backend
@@ -189,8 +199,6 @@ def find_non_python_sdk_promotion_errors(rel: str, content: str) -> list[str]:
                 f"{rel}:{line_no}: promoción inválida de compatibilidad SDK completa en backend no Python -> {tuple(offending)}"
             )
     return errors
-
-
 
 
 def read_target_policy() -> dict[str, Any]:

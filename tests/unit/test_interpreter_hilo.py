@@ -27,10 +27,12 @@ from pcobra.core.interpreter import InterpretadorCobra
 
 def test_hilo_es_daemon():
     interp = InterpretadorCobra()
-    funcion = NodoFuncion('marca', [], [NodoLlamadaFuncion('imprimir', [NodoValor('ok')])])
+    funcion = NodoFuncion(
+        "marca", [], [NodoLlamadaFuncion("imprimir", [NodoValor("ok")])]
+    )
     interp.ejecutar_funcion(funcion)
-    with patch('sys.stdout', new_callable=StringIO):
-        hilo = interp.ejecutar_hilo(NodoHilo(NodoLlamadaFuncion('marca', [])))
+    with patch("sys.stdout", new_callable=StringIO):
+        hilo = interp.ejecutar_hilo(NodoHilo(NodoLlamadaFuncion("marca", [])))
         assert hilo.daemon
         hilo.join()
 

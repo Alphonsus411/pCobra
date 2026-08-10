@@ -50,16 +50,18 @@ def _assert_ruta_interna_es_modulo_soportado(alias: str, ruta_relativa: str) -> 
     """Valida que la ruta canónica apunte a un módulo Python permitido."""
 
     ruta_interna = RAIZ_REPO / ruta_relativa
-    assert ruta_interna.exists(), (
-        f"No existe la ruta interna para usar {alias}: {ruta_relativa}"
-    )
-    assert ruta_interna.is_file(), (
-        f"La ruta interna para usar {alias} debe ser un archivo: {ruta_relativa}"
-    )
-    assert ruta_interna.suffix == ".py", (
-        f"La ruta interna para usar {alias} debe ser un módulo Python: {ruta_relativa}"
-    )
-    assert any(ruta_interna.is_relative_to(base) for base in RUTAS_BASE_CORELIBS_USAR), (
+    assert (
+        ruta_interna.exists()
+    ), f"No existe la ruta interna para usar {alias}: {ruta_relativa}"
+    assert (
+        ruta_interna.is_file()
+    ), f"La ruta interna para usar {alias} debe ser un archivo: {ruta_relativa}"
+    assert (
+        ruta_interna.suffix == ".py"
+    ), f"La ruta interna para usar {alias} debe ser un módulo Python: {ruta_relativa}"
+    assert any(
+        ruta_interna.is_relative_to(base) for base in RUTAS_BASE_CORELIBS_USAR
+    ), (
         f"La ruta interna para usar {alias} debe estar bajo corelibs/ o "
         f"standard_library/: {ruta_relativa}"
     )
@@ -112,7 +114,9 @@ def test_repl_resuelve_nueva_corelib_con_nodo_usar_sin_parser_lexer(alias: str) 
 def test_usar_modulo_inexistente_falla_con_excepcion_controlada() -> None:
     assert "modulo_inexistente" not in USAR_COBRA_PUBLIC_MODULES
 
-    with pytest.raises((PermissionError, ValueError, FileNotFoundError, ImportError)) as excinfo:
+    with pytest.raises(
+        (PermissionError, ValueError, FileNotFoundError, ImportError)
+    ) as excinfo:
         usar_modulo("modulo_inexistente")
 
     mensaje = str(excinfo.value).lower()
@@ -147,7 +151,9 @@ def test_corelibs_datos_mapear_permanece_wrapper_de_standard_library() -> None:
     )
 
 
-def test_usar_datos_apunta_a_standard_library_y_loader_importa_nombre_correcto() -> None:
+def test_usar_datos_apunta_a_standard_library_y_loader_importa_nombre_correcto() -> (
+    None
+):
     ruta_relativa = REPL_COBRA_MODULE_INTERNAL_PATH_MAP["datos"]
 
     assert ruta_relativa == "src/pcobra/standard_library/datos.py"

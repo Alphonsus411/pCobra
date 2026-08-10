@@ -15,4 +15,3 @@ def test_fecha():
     assert form == "2020"
     futuro = fecha.sumar_dias(datetime(2020, 1, 1), 5)
     assert futuro == datetime(2020, 1, 6)
-

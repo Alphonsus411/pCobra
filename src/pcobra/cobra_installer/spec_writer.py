@@ -45,7 +45,9 @@ def write_spec(build_context: SpecBuildContext) -> Path:
 
     datas = _collect_datas(runtime, context.additional_datas)
     hidden_imports = _collect_hidden_imports(context.hidden_imports)
-    icon_line = f"    icon={_python_literal(str(options.icon))},\n" if options.icon else ""
+    icon_line = (
+        f"    icon={_python_literal(str(options.icon))},\n" if options.icon else ""
+    )
 
     analysis = _analysis_block(runtime, options, datas, hidden_imports)
     if mode is BuildMode.ONEFILE:
@@ -150,7 +152,9 @@ def _collect_datas(
         (runtime.documentation_dir, "docs"),
         (runtime.auxiliary_dir, "resources"),
     ]
-    candidates.extend((Path(source), destination) for source, destination in additional_datas)
+    candidates.extend(
+        (Path(source), destination) for source, destination in additional_datas
+    )
 
     datas: list[tuple[str, str]] = []
     seen: set[tuple[str, str]] = set()

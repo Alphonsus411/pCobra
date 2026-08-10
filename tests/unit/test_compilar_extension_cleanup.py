@@ -6,8 +6,8 @@ import importlib
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
-fake_pybind11 = ModuleType('pybind11')
-fake_helpers = ModuleType('pybind11.setup_helpers')
+fake_pybind11 = ModuleType("pybind11")
+fake_helpers = ModuleType("pybind11.setup_helpers")
 
 
 class DummyExt:
@@ -18,8 +18,8 @@ class DummyExt:
 
 class DummyCmd:
     def __init__(self, dist):
-        self.build_lib = ''
-        self.build_temp = ''
+        self.build_lib = ""
+        self.build_temp = ""
         self.ext_modules = dist.ext_modules
 
     def finalize_options(self):
@@ -35,10 +35,10 @@ class DummyCmd:
 
 fake_helpers.Pybind11Extension = DummyExt
 fake_helpers.build_ext = DummyCmd
-sys.modules.setdefault('pybind11', fake_pybind11)
-sys.modules.setdefault('pybind11.setup_helpers', fake_helpers)
+sys.modules.setdefault("pybind11", fake_pybind11)
+sys.modules.setdefault("pybind11.setup_helpers", fake_helpers)
 
-fake_setuptools = ModuleType('setuptools')
+fake_setuptools = ModuleType("setuptools")
 
 
 class DummyDist:
@@ -47,13 +47,14 @@ class DummyDist:
 
 
 fake_setuptools.Distribution = DummyDist
-sys.modules.setdefault('setuptools', fake_setuptools)
+sys.modules.setdefault("setuptools", fake_setuptools)
 
 
 def test_compilar_extension_elimina_directorio():
     import core.pybind_bridge as bridge
+
     importlib.reload(bridge)
 
-    path = bridge.compilar_extension('mod', 'codigo')
+    path = bridge.compilar_extension("mod", "codigo")
     assert not Path(path).exists()
     assert not Path(path).parent.exists()

@@ -1,5 +1,6 @@
 from pcobra.cobra.transpilers.semantica import datos_asignacion
 
+
 def visit_asignacion(self, nodo):
     nombre, valor, es_attr = datos_asignacion(self, nodo)
     if es_attr:

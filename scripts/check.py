@@ -19,11 +19,17 @@ TOOLS_BY_PROFILE = {
         ("mypy", ["mypy", "src"]),
     ],
     "transpiladores": [
-        ("smoke-transpilers-syntax", [sys.executable, "scripts/smoke_transpilers_syntax.py"]),
+        (
+            "smoke-transpilers-syntax",
+            [sys.executable, "scripts/smoke_transpilers_syntax.py"],
+        ),
     ],
     "completo": [
         ("smoke-syntax", [sys.executable, "scripts/smoke_syntax.py"]),
-        ("smoke-transpilers-syntax", [sys.executable, "scripts/smoke_transpilers_syntax.py"]),
+        (
+            "smoke-transpilers-syntax",
+            [sys.executable, "scripts/smoke_transpilers_syntax.py"],
+        ),
         ("ruff", ["ruff", "check", "src"]),
         ("mypy", ["mypy", "src"]),
         ("bandit", ["bandit", "-r", "src"]),
@@ -48,7 +54,9 @@ def run_check(name, command):
 
 
 def _parse_args() -> tuple[str, bool]:
-    parser = ArgumentParser(description="Ejecuta checks por perfil para pipelines de Cobra.")
+    parser = ArgumentParser(
+        description="Ejecuta checks por perfil para pipelines de Cobra."
+    )
     parser.add_argument(
         "--perfil",
         default="completo",

@@ -44,9 +44,6 @@ _REGISTERED_REVERSE_CLASSES: Dict[str, Type[BaseReverseTranspiler]] = {}
 _EXPORTED_CLASS_NAMES: List[str] = []
 
 
-
-
-
 for language in REVERSE_SCOPE_LANGUAGES:
     mod_name = REVERSE_SCOPE_MODULES[language]
     class_name = REVERSE_SCOPE_CLASS_NAMES[language]

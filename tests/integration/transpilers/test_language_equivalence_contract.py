@@ -23,7 +23,9 @@ from pcobra.core.ast_nodes import (
 )
 from tests.integration.transpilers.backend_contracts import TRANSPILERS
 
-CONTRACT_PATH = Path(__file__).resolve().parents[3] / "data" / "language_equivalence.yml"
+CONTRACT_PATH = (
+    Path(__file__).resolve().parents[3] / "data" / "language_equivalence.yml"
+)
 SNAPSHOTS_DIR = Path(__file__).resolve().parent / "golden_language_equivalence"
 CRITICAL_FEATURES = ("decoradores", "manejo_errores", "async", "imports_corelibs")
 
@@ -44,8 +46,14 @@ def _validate_syntax_output(backend: str, code: str) -> tuple[str, str]:
         with tempfile.TemporaryDirectory(prefix="leq_js_") as tmp:
             p = Path(tmp) / "main.js"
             p.write_text(code, encoding="utf-8")
-            result = subprocess.run(["node", "--check", str(p)], text=True, capture_output=True)
-        return ("ok", "node --check") if result.returncode == 0 else ("fail", result.stderr.strip())
+            result = subprocess.run(
+                ["node", "--check", str(p)], text=True, capture_output=True
+            )
+        return (
+            ("ok", "node --check")
+            if result.returncode == 0
+            else ("fail", result.stderr.strip())
+        )
 
     if backend == "rust":
         opens = code.count("{")
@@ -61,8 +69,14 @@ def _validate_syntax_output(backend: str, code: str) -> tuple[str, str]:
         with tempfile.TemporaryDirectory(prefix="leq_go_") as tmp:
             p = Path(tmp) / "main.go"
             p.write_text(code, encoding="utf-8")
-            result = subprocess.run([gofmt, "-w", str(p)], text=True, capture_output=True)
-        return ("ok", "gofmt parse correcto") if result.returncode == 0 else ("fail", result.stderr.strip())
+            result = subprocess.run(
+                [gofmt, "-w", str(p)], text=True, capture_output=True
+            )
+        return (
+            ("ok", "gofmt parse correcto")
+            if result.returncode == 0
+            else ("fail", result.stderr.strip())
+        )
 
     if backend == "cpp":
         if "#include" in code or ("{" in code and "}" in code):
@@ -70,15 +84,23 @@ def _validate_syntax_output(backend: str, code: str) -> tuple[str, str]:
         return "fail", "cabecera/bloques C++ ausentes"
 
     if backend == "java":
-        return ("ok", "estructura Java no vacía") if "class Main" in code else ("fail", "class Main ausente")
+        return (
+            ("ok", "estructura Java no vacía")
+            if "class Main" in code
+            else ("fail", "class Main ausente")
+        )
 
     if backend == "wasm":
-        if "(module" in code or "(import \"pcobra:" in code:
+        if "(module" in code or '(import "pcobra:' in code:
             return "ok", "estructura WAT mínima válida"
         return "fail", "estructura WAT ausente"
 
     if backend == "asm":
-        return ("ok", "salida asm no vacía") if code.strip() else ("fail", "salida asm vacía")
+        return (
+            ("ok", "salida asm no vacía")
+            if code.strip()
+            else ("fail", "salida asm vacía")
+        )
 
     return "fail", f"backend no soportado: {backend}"
 
@@ -104,7 +126,9 @@ def _feature_map() -> dict[str, dict]:
     payload = _load_contract()
     features = payload.get("features")
     if not isinstance(features, list):
-        raise RuntimeError(f"Contrato inválido en {CONTRACT_PATH}: claves={list(payload)}")
+        raise RuntimeError(
+            f"Contrato inválido en {CONTRACT_PATH}: claves={list(payload)}"
+        )
     return {item["id"]: item for item in features}
 
 
@@ -157,12 +181,16 @@ def _expected_markers(feature_id: str, backend: str) -> tuple[str, ...]:
     features = _feature_map()
     if backend == "python":
         return tuple(features[feature_id].get("python_expected_markers", []))
-    return tuple(features[feature_id]["backend_equivalents"][backend].get("expected_markers", []))
+    return tuple(
+        features[feature_id]["backend_equivalents"][backend].get("expected_markers", [])
+    )
 
 
 @pytest.mark.parametrize("feature_id", CRITICAL_FEATURES)
 @pytest.mark.parametrize("backend", OFFICIAL_TARGETS)
-def test_language_equivalence_contract_transpiles_and_validates_syntax(backend: str, feature_id: str):
+def test_language_equivalence_contract_transpiles_and_validates_syntax(
+    backend: str, feature_id: str
+):
     generated = _generate(backend, _feature_nodes(feature_id))
     assert generated.strip(), f"{backend} no generó salida para {feature_id}"
 
@@ -170,13 +198,15 @@ def test_language_equivalence_contract_transpiles_and_validates_syntax(backend: 
     syntax_status, syntax_message = _validate_syntax_output(backend, generated)
 
     if status == "full":
-        assert syntax_status in {"ok", "skipped"}, (
-            f"{backend}/{feature_id} (full) debe validar sintaxis, obtenido={syntax_status}: {syntax_message}"
-        )
+        assert syntax_status in {
+            "ok",
+            "skipped",
+        }, f"{backend}/{feature_id} (full) debe validar sintaxis, obtenido={syntax_status}: {syntax_message}"
     else:
-        assert syntax_status in {"ok", "skipped"}, (
-            f"{backend}/{feature_id} no debe romper validación mínima: {syntax_status}: {syntax_message}"
-        )
+        assert syntax_status in {
+            "ok",
+            "skipped",
+        }, f"{backend}/{feature_id} no debe romper validación mínima: {syntax_status}: {syntax_message}"
 
 
 @pytest.mark.parametrize("feature_id", CRITICAL_FEATURES)
@@ -184,12 +214,16 @@ def test_language_equivalence_contract_transpiles_and_validates_syntax(backend: 
 def test_language_equivalence_contract_minimum_markers(feature_id: str, backend: str):
     generated = _generate(backend, _feature_nodes(feature_id))
     for marker in _expected_markers(feature_id, backend):
-        assert marker in generated, f"No se encontró marcador `{marker}` en {backend}/{feature_id}"
+        assert (
+            marker in generated
+        ), f"No se encontró marcador `{marker}` en {backend}/{feature_id}"
 
 
 @pytest.mark.parametrize("feature_id", CRITICAL_FEATURES)
 @pytest.mark.parametrize("backend", OFFICIAL_TARGETS)
-def test_language_equivalence_contract_critical_snapshots(feature_id: str, backend: str):
+def test_language_equivalence_contract_critical_snapshots(
+    feature_id: str, backend: str
+):
     snapshot = SNAPSHOTS_DIR / f"{backend}.{feature_id}.golden"
     assert snapshot.exists(), f"Falta snapshot crítico: {snapshot}"
 

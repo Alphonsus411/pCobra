@@ -41,16 +41,26 @@ class DataFrame:
             filas = list(datos)
             if filas and isinstance(filas[0], Mapping):
                 registros = [dict(fila) for fila in filas]  # type: ignore[arg-type]
-                columnas = list(registros[0].keys()) if registros else list(columns or [])
+                columnas = (
+                    list(registros[0].keys()) if registros else list(columns or [])
+                )
             else:
                 filas_secuencias = [list(fila) for fila in filas]
                 columnas = (
                     list(columns)
                     if columns is not None
-                    else [f"col_{indice}" for indice in range(len(filas_secuencias[0]) if filas_secuencias else 0)]
+                    else [
+                        f"col_{indice}"
+                        for indice in range(
+                            len(filas_secuencias[0]) if filas_secuencias else 0
+                        )
+                    ]
                 )
                 registros = [
-                    {columna: fila[indice] if indice < len(fila) else None for indice, columna in enumerate(columnas)}
+                    {
+                        columna: fila[indice] if indice < len(fila) else None
+                        for indice, columna in enumerate(columnas)
+                    }
                     for fila in filas_secuencias
                 ]
         self._records = registros

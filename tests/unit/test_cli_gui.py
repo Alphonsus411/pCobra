@@ -13,6 +13,6 @@ def test_cli_gui_invokes_flet_app():
         ElevatedButton=MagicMock(),
         Page=MagicMock(),
     )
-    with patch.dict('sys.modules', {'flet': fake_flet}):
-        main(['gui'])
+    with patch.dict("sys.modules", {"flet": fake_flet}):
+        main(["gui"])
     mock_app.assert_called_once()

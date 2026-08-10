@@ -2,6 +2,7 @@
 
 Fuente de verdad: :mod:`pcobra.cobra.bindings.contract`.
 """
+
 # pcobra-compat: allow-legacy-imports
 
 from __future__ import annotations

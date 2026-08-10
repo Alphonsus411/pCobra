@@ -120,12 +120,20 @@ def tabla_estadistica() -> list[dict[str, object | None]]:
     ]
 
 
-
-
 def test_funciones_coleccion_basicas_y_bordes():
     tabla = _tabla_base()
-    assert agregar(tabla, {"categoria": "C", "valor": 1, "etiqueta": "qux"})[-1]["categoria"] == "C"
-    assert mapear(tabla, lambda fila: {**fila, "valor": int(fila["valor"]) * 2})[0]["valor"] == 20
+    assert (
+        agregar(tabla, {"categoria": "C", "valor": 1, "etiqueta": "qux"})[-1][
+            "categoria"
+        ]
+        == "C"
+    )
+    assert (
+        mapear(tabla, lambda fila: {**fila, "valor": int(fila["valor"]) * 2})[0][
+            "valor"
+        ]
+        == 20
+    )
     assert filtrar(tabla, lambda fila: int(fila["valor"]) > 5) == [
         {"categoria": "A", "valor": 10, "etiqueta": "foo"}
     ]
@@ -150,7 +158,9 @@ def test_reducir_con_y_sin_acumulador_inicial():
     total = reducir(tabla, lambda acc, fila: acc + int(fila["valor"]), 0)
     assert total == 18
 
-    combinado = reducir(tabla, lambda acc, fila: {"valor": int(acc["valor"]) + int(fila["valor"])})
+    combinado = reducir(
+        tabla, lambda acc, fila: {"valor": int(acc["valor"]) + int(fila["valor"])}
+    )
     assert combinado == {"valor": 18}
 
 
@@ -172,6 +182,7 @@ def test_validaciones_tipos_funciones_coleccion():
         valores([1, 2, 3])
     with pytest.raises(TypeError):
         longitud(10)
+
 
 def test_a_listas_y_de_listas_bidireccional():
     tabla = _tabla_base()
@@ -336,7 +347,9 @@ def test_tabla_cruzada_normalizacion_filas_columnas():
 
 def test_mutar_columna_exige_existente():
     with pytest.raises(KeyError):
-        mutar_columna(_tabla_base(), "nueva", lambda fila: fila["valor"], crear_si_no_existe=False)
+        mutar_columna(
+            _tabla_base(), "nueva", lambda fila: fila["valor"], crear_si_no_existe=False
+        )
 
 
 def test_filtrar_condicion_erronea():
@@ -356,7 +369,9 @@ def test_seleccionar_columnas_inexistentes():
 
 def test_agrupar_y_resumir():
     tabla = _tabla_base()
-    resultado = agrupar_y_resumir(tabla, por=["categoria"], agregaciones={"valor": "sum"})
+    resultado = agrupar_y_resumir(
+        tabla, por=["categoria"], agregaciones={"valor": "sum"}
+    )
     esperado = [
         {"categoria": "A", "valor_sum": 15},
         {"categoria": "B", "valor_sum": 3},
@@ -404,7 +419,9 @@ def test_pivotar_largo_elimina_nulos():
 
 
 def test_ordenar_tabla_multiple(tabla_pedidos: list[dict[str, object | None]]):
-    ordenado = ordenar_tabla(tabla_pedidos, por=["cliente", "unidades"], ascendente=[True, False])
+    ordenado = ordenar_tabla(
+        tabla_pedidos, por=["cliente", "unidades"], ascendente=[True, False]
+    )
     esperado = [
         {"cliente": 1, "mes": "enero", "monto": 120.0, "unidades": 5},
         {"cliente": 1, "mes": None, "monto": None, "unidades": 2},
@@ -423,7 +440,9 @@ def test_describir_contiene_metricas():
 
 
 def test_correlaciones_controladas(tabla_estadistica: list[dict[str, object | None]]):
-    pearson = correlacion_pearson(tabla_estadistica, columnas=["ventas", "costos", "unidades"])
+    pearson = correlacion_pearson(
+        tabla_estadistica, columnas=["ventas", "costos", "unidades"]
+    )
     assert pearson["ventas"]["costos"] == pytest.approx(1.0)
     assert pearson["ventas"]["unidades"] == pytest.approx(1.0)
     assert pearson["ventas"]["ventas"] == pytest.approx(1.0)
@@ -443,7 +462,9 @@ def test_correlacion_sin_numericos():
 
 
 def test_matriz_covarianza(tabla_estadistica: list[dict[str, object | None]]):
-    matriz = matriz_covarianza(tabla_estadistica, columnas=["ventas", "costos", "unidades"])
+    matriz = matriz_covarianza(
+        tabla_estadistica, columnas=["ventas", "costos", "unidades"]
+    )
     assert matriz["ventas"]["costos"] == pytest.approx(150.0)
     assert matriz["ventas"]["unidades"] == pytest.approx(70.0)
     assert matriz["costos"]["unidades"] == pytest.approx(22.5)
@@ -478,7 +499,10 @@ def test_leer_csv_y_json(tmp_path: Path):
     csv_path = tmp_path / "datos.csv"
     csv_path.write_text("categoria,valor\nA,10\nB,\n", encoding="utf-8")
     datos_csv = leer_csv(csv_path)
-    assert datos_csv == [{"categoria": "A", "valor": 10}, {"categoria": "B", "valor": None}]
+    assert datos_csv == [
+        {"categoria": "A", "valor": 10},
+        {"categoria": "B", "valor": None},
+    ]
 
     json_path = tmp_path / "datos.json"
     json_path.write_text('[{"categoria": "C", "valor": 7}]', encoding="utf-8")
@@ -514,7 +538,9 @@ def test_escribir_json(tmp_path: Path):
 
     ruta_jsonl = tmp_path / "datos.jsonl"
     escribir_json(tabla[:2], ruta_jsonl, lineas=True)
-    escribir_json([{"categoria": "C", "valor": None}], ruta_jsonl, lineas=True, aniadir=True)
+    escribir_json(
+        [{"categoria": "C", "valor": None}], ruta_jsonl, lineas=True, aniadir=True
+    )
     assert leer_json(ruta_jsonl, lineas=True) == [
         {"categoria": "A", "valor": 10, "etiqueta": "foo"},
         {"categoria": "A", "valor": 5, "etiqueta": "bar"},
@@ -633,7 +659,9 @@ def test_desplegar_tabla_con_varias_columnas(tabla_metricas):
     registro_descuento = next(
         fila
         for fila in desplegada
-        if fila["region"] == "norte" and fila["mes"] == "febrero" and fila["metrica"] == "descuento"
+        if fila["region"] == "norte"
+        and fila["mes"] == "febrero"
+        and fila["metrica"] == "descuento"
     )
     assert registro_descuento["valor"] is None
 

@@ -21,7 +21,9 @@ def hash_sha256(texto: str) -> str:
 
 
 def firmar_hmac_sha256(mensaje: str, clave: str) -> str:
-    return hmac.new(clave.encode("utf-8"), mensaje.encode("utf-8"), hashlib.sha256).hexdigest()
+    return hmac.new(
+        clave.encode("utf-8"), mensaje.encode("utf-8"), hashlib.sha256
+    ).hexdigest()
 
 
 def comparar_seguro(valor_a: str, valor_b: str) -> bool:

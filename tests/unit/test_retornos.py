@@ -16,6 +16,8 @@ from cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
 
 
 from cobra.transpilers.transpiler.to_python import TranspiladorPython
+
+
 def test_interpreter_funcion_con_retorno():
     inter = InterpretadorCobra()
     func = NodoFuncion("dame_cinco", [], [NodoRetorno(NodoValor(5))])
@@ -65,11 +67,7 @@ def test_definicion_triple_no_evalua_cuerpo_ni_dispara_warning_o_nameerror(monke
     triple = NodoFuncion(
         "triple",
         ["x"],
-        [
-            NodoRetorno(
-                NodoLlamadaFuncion("doble", [NodoIdentificador("x")])
-            )
-        ],
+        [NodoRetorno(NodoLlamadaFuncion("doble", [NodoIdentificador("x")]))],
     )
 
     with patch("sys.stdout", new_callable=StringIO) as out:

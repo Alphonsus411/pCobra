@@ -30,7 +30,9 @@ def _exports_filtrar():
 
 
 def test_usar_filtrar_acepta_funcion_cobra_como_callback(monkeypatch):
-    monkeypatch.setattr(interpreter_module, "usar_modulo", lambda *_args, **_kwargs: _exports_filtrar())
+    monkeypatch.setattr(
+        interpreter_module, "usar_modulo", lambda *_args, **_kwargs: _exports_filtrar()
+    )
     interp = InterpretadorCobra()
 
     interp.ejecutar_nodo(NodoUsar("datos"))
@@ -46,10 +48,12 @@ def test_usar_filtrar_acepta_funcion_cobra_como_callback(monkeypatch):
         NodoLlamadaFuncion(
             "filtrar",
             [
-                NodoLista([
-                    NodoValor({"activo": True}),
-                    NodoValor({"activo": False}),
-                ]),
+                NodoLista(
+                    [
+                        NodoValor({"activo": True}),
+                        NodoValor({"activo": False}),
+                    ]
+                ),
                 NodoIdentificador("activo"),
             ],
         )
@@ -59,7 +63,9 @@ def test_usar_filtrar_acepta_funcion_cobra_como_callback(monkeypatch):
 
 
 def test_usar_filtrar_callback_cobra_respeta_scope_lexico(monkeypatch):
-    monkeypatch.setattr(interpreter_module, "usar_modulo", lambda *_args, **_kwargs: _exports_filtrar())
+    monkeypatch.setattr(
+        interpreter_module, "usar_modulo", lambda *_args, **_kwargs: _exports_filtrar()
+    )
     interp = InterpretadorCobra()
 
     interp.ejecutar_nodo(NodoUsar("datos"))
@@ -84,10 +90,12 @@ def test_usar_filtrar_callback_cobra_respeta_scope_lexico(monkeypatch):
         NodoLlamadaFuncion(
             "filtrar",
             [
-                NodoLista([
-                    NodoValor({"activo": True}),
-                    NodoValor({"activo": False}),
-                ]),
+                NodoLista(
+                    [
+                        NodoValor({"activo": True}),
+                        NodoValor({"activo": False}),
+                    ]
+                ),
                 NodoIdentificador("limite_activo"),
             ],
         )

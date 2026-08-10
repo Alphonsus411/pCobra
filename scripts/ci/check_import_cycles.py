@@ -37,10 +37,15 @@ FORBIDDEN_SCOPE_SCCS: dict[str, tuple[frozenset[str], ...]] = {
     "pcobra.cobra.transpilers": (),
     "pcobra.core": (),
 }
-ALLOWED_LAYER_EDGES: frozenset[tuple[str, str]] = frozenset({
-    ("pcobra.core.sandbox", "pcobra.cobra.cli.target_policies"),
-    ("pcobra.cobra.cli.commands_v2.repl_cmd", "pcobra.cobra.cli.commands.interactive_cmd"),
-})
+ALLOWED_LAYER_EDGES: frozenset[tuple[str, str]] = frozenset(
+    {
+        ("pcobra.core.sandbox", "pcobra.cobra.cli.target_policies"),
+        (
+            "pcobra.cobra.cli.commands_v2.repl_cmd",
+            "pcobra.cobra.cli.commands.interactive_cmd",
+        ),
+    }
+)
 
 
 @dataclass(frozen=True)
@@ -61,7 +66,9 @@ def _iter_python_files(src_dir: Path) -> list[Path]:
     return sorted(path for path in src_dir.rglob("*.py") if path.is_file())
 
 
-def _resolve_relative_module(current_module: str, level: int, module: str | None) -> str | None:
+def _resolve_relative_module(
+    current_module: str, level: int, module: str | None
+) -> str | None:
     parts = current_module.split(".")
     if level > len(parts):
         return None
@@ -79,7 +86,9 @@ def _extract_imported_modules(tree: ast.AST, current_module: str) -> set[str]:
                 imports.add(alias.name)
         elif isinstance(node, ast.ImportFrom):
             if node.level:
-                resolved = _resolve_relative_module(current_module, node.level, node.module)
+                resolved = _resolve_relative_module(
+                    current_module, node.level, node.module
+                )
                 if resolved:
                     imports.add(resolved)
                 continue
@@ -123,7 +132,10 @@ def build_import_graph(src_dir: Path = SRC_DIR) -> dict[str, set[str]]:
 
 
 def _is_command_module(module: str) -> bool:
-    return any(module == prefix or module.startswith(f"{prefix}.") for prefix in COMMAND_MODULE_PREFIXES)
+    return any(
+        module == prefix or module.startswith(f"{prefix}.")
+        for prefix in COMMAND_MODULE_PREFIXES
+    )
 
 
 def _is_cross_command_forbidden(source: str, target: str) -> bool:
@@ -145,9 +157,14 @@ def _is_cross_command_forbidden(source: str, target: str) -> bool:
 
 
 def _is_core_to_cli_forbidden(source: str, target: str) -> bool:
-    if not any(source == prefix or source.startswith(f"{prefix}.") for prefix in CORE_PREFIXES):
+    if not any(
+        source == prefix or source.startswith(f"{prefix}.") for prefix in CORE_PREFIXES
+    ):
         return False
-    if any(source == prefix or source.startswith(f"{prefix}.") for prefix in CORE_TO_CLI_EXEMPT_PREFIXES):
+    if any(
+        source == prefix or source.startswith(f"{prefix}.")
+        for prefix in CORE_TO_CLI_EXEMPT_PREFIXES
+    ):
         return False
     return target == CLI_PREFIX or target.startswith(f"{CLI_PREFIX}.")
 
@@ -234,7 +251,9 @@ def _scc_components(graph: dict[str, set[str]]) -> list[set[str]]:
 
 def _scope_graph(graph: dict[str, set[str]], scope_prefix: str) -> dict[str, set[str]]:
     scoped_nodes = {
-        module for module in graph if module == scope_prefix or module.startswith(f"{scope_prefix}.")
+        module
+        for module in graph
+        if module == scope_prefix or module.startswith(f"{scope_prefix}.")
     }
     return {
         module: {target for target in targets if target in scoped_nodes}
@@ -247,15 +266,26 @@ def find_scope_cycle_components(
     graph: dict[str, set[str]], scope_prefix: str
 ) -> tuple[list[set[str]], list[set[str]], list[set[str]]]:
     scoped = _scope_graph(graph, scope_prefix)
-    cyclic_components = [component for component in _scc_components(scoped) if len(component) > 1]
+    cyclic_components = [
+        component for component in _scc_components(scoped) if len(component) > 1
+    ]
     allowed_baseline = set(ALLOWED_SCOPE_SCCS.get(scope_prefix, ()))
     forbidden_baseline = set(FORBIDDEN_SCOPE_SCCS.get(scope_prefix, ()))
-    allowed = [component for component in cyclic_components if frozenset(component) in allowed_baseline]
-    forbidden = [component for component in cyclic_components if frozenset(component) in forbidden_baseline]
+    allowed = [
+        component
+        for component in cyclic_components
+        if frozenset(component) in allowed_baseline
+    ]
+    forbidden = [
+        component
+        for component in cyclic_components
+        if frozenset(component) in forbidden_baseline
+    ]
     new = [
         component
         for component in cyclic_components
-        if frozenset(component) not in allowed_baseline and frozenset(component) not in forbidden_baseline
+        if frozenset(component) not in allowed_baseline
+        and frozenset(component) not in forbidden_baseline
     ]
     return allowed, forbidden, new
 
@@ -264,16 +294,24 @@ def _module_to_file(module: str, src_dir: Path = SRC_DIR) -> Path:
     return src_dir / Path(*module.split(".")).with_suffix(".py")
 
 
-def format_cycle_report(cycle: list[str], src_dir: Path = SRC_DIR, root: Path = ROOT) -> str:
+def format_cycle_report(
+    cycle: list[str], src_dir: Path = SRC_DIR, root: Path = ROOT
+) -> str:
     chain = " -> ".join(cycle)
-    lines = ["❌ Se detectó ciclo de imports.", f"   Cadena: {chain}", "   Archivos implicados:"]
+    lines = [
+        "❌ Se detectó ciclo de imports.",
+        f"   Cadena: {chain}",
+        "   Archivos implicados:",
+    ]
     for module in cycle[:-1]:
         rel = _module_to_file(module, src_dir).relative_to(root)
         lines.append(f"   - {module} ({rel})")
     return "\n".join(lines)
 
 
-def format_layer_report(violations: list[Violation], src_dir: Path = SRC_DIR, root: Path = ROOT) -> str:
+def format_layer_report(
+    violations: list[Violation], src_dir: Path = SRC_DIR, root: Path = ROOT
+) -> str:
     lines = ["❌ Violaciones de capas detectadas:"]
     for item in violations:
         source_file = _module_to_file(item.source, src_dir).relative_to(root)

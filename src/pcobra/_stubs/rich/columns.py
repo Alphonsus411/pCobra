@@ -13,7 +13,16 @@ class Columns:
     equal: bool = True
     padding: int | None = None
 
-    def __init__(self, renderables: Iterable[Any], *, title: str | None = None, equal: bool = True, padding: int | None = None, expand: bool | None = None, **_: Any) -> None:
+    def __init__(
+        self,
+        renderables: Iterable[Any],
+        *,
+        title: str | None = None,
+        equal: bool = True,
+        padding: int | None = None,
+        expand: bool | None = None,
+        **_: Any,
+    ) -> None:
         self.renderables = list(renderables)
         self.title = title
         self.equal = equal

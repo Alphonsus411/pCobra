@@ -18,16 +18,22 @@ def test_lint_policy_drift_script_passes_on_repo() -> None:
     assert result.returncode == 0, result.stdout + result.stderr
 
 
-def test_no_confunde_identificador_node_con_target_prohibido(tmp_path, monkeypatch) -> None:
+def test_no_confunde_identificador_node_con_target_prohibido(
+    tmp_path, monkeypatch
+) -> None:
     script = tmp_path / "scripts" / "ci" / "auditor.py"
     script.parent.mkdir(parents=True)
-    script.write_text("def targets_from_import(node):\n    return node\n", encoding="utf-8")
+    script.write_text(
+        "def targets_from_import(node):\n    return node\n", encoding="utf-8"
+    )
     monkeypatch.setattr(lint_policy_drift, "ROOT", tmp_path)
 
     assert lint_policy_drift._find_policy_drift(script, script.read_text()) == []
 
 
-def test_sigue_detectando_target_prohibido_en_literal_python(tmp_path, monkeypatch) -> None:
+def test_sigue_detectando_target_prohibido_en_literal_python(
+    tmp_path, monkeypatch
+) -> None:
     script = tmp_path / "scripts" / "config.py"
     script.parent.mkdir(parents=True)
     script.write_text('target = "node"\n', encoding="utf-8")

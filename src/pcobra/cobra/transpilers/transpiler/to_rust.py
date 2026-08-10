@@ -45,26 +45,63 @@ from pcobra.cobra.transpilers.common.utils import (
     get_standard_imports,
 )
 from pcobra.cobra.transpilers.internal_ir_bridge import normalize_to_cobra_ast
-from pcobra.cobra.transpilers.transpiler.rust_nodes.asignacion import visit_asignacion as _visit_asignacion
-from pcobra.cobra.transpilers.transpiler.rust_nodes.bucle_mientras import visit_bucle_mientras as _visit_bucle_mientras
-from pcobra.cobra.transpilers.transpiler.rust_nodes.clase import visit_clase as _visit_clase
-from pcobra.cobra.transpilers.transpiler.rust_nodes.condicional import visit_condicional as _visit_condicional
-from pcobra.cobra.transpilers.transpiler.rust_nodes.continuar import visit_continuar as _visit_continuar
-from pcobra.cobra.transpilers.transpiler.rust_nodes.defer import visit_defer as _visit_defer
-from pcobra.cobra.transpilers.transpiler.rust_nodes.funcion import visit_funcion as _visit_funcion
-from pcobra.cobra.transpilers.transpiler.rust_nodes.holobit import visit_holobit as _visit_holobit
-from pcobra.cobra.transpilers.transpiler.rust_nodes.llamada_funcion import \
-    visit_llamada_funcion as _visit_llamada_funcion
-from pcobra.cobra.transpilers.transpiler.rust_nodes.metodo import visit_metodo as _visit_metodo
-from pcobra.cobra.transpilers.transpiler.rust_nodes.option import visit_option as _visit_option
-from pcobra.cobra.transpilers.transpiler.rust_nodes.pasar import visit_pasar as _visit_pasar
-from pcobra.cobra.transpilers.transpiler.rust_nodes.retorno import visit_retorno as _visit_retorno
-from pcobra.cobra.transpilers.transpiler.rust_nodes.romper import visit_romper as _visit_romper
-from pcobra.cobra.transpilers.transpiler.rust_nodes.switch import visit_switch as _visit_switch
-from pcobra.cobra.transpilers.transpiler.rust_nodes.throw import visit_throw as _visit_throw
-from pcobra.cobra.transpilers.transpiler.rust_nodes.try_catch import visit_try_catch as _visit_try_catch
-from pcobra.cobra.transpilers.transpiler.rust_nodes.yield_ import visit_yield as _visit_yield
-from pcobra.cobra.transpilers.transpiler.rust_nodes.imprimir import visit_imprimir as _visit_imprimir
+from pcobra.cobra.transpilers.transpiler.rust_nodes.asignacion import (
+    visit_asignacion as _visit_asignacion,
+)
+from pcobra.cobra.transpilers.transpiler.rust_nodes.bucle_mientras import (
+    visit_bucle_mientras as _visit_bucle_mientras,
+)
+from pcobra.cobra.transpilers.transpiler.rust_nodes.clase import (
+    visit_clase as _visit_clase,
+)
+from pcobra.cobra.transpilers.transpiler.rust_nodes.condicional import (
+    visit_condicional as _visit_condicional,
+)
+from pcobra.cobra.transpilers.transpiler.rust_nodes.continuar import (
+    visit_continuar as _visit_continuar,
+)
+from pcobra.cobra.transpilers.transpiler.rust_nodes.defer import (
+    visit_defer as _visit_defer,
+)
+from pcobra.cobra.transpilers.transpiler.rust_nodes.funcion import (
+    visit_funcion as _visit_funcion,
+)
+from pcobra.cobra.transpilers.transpiler.rust_nodes.holobit import (
+    visit_holobit as _visit_holobit,
+)
+from pcobra.cobra.transpilers.transpiler.rust_nodes.llamada_funcion import (
+    visit_llamada_funcion as _visit_llamada_funcion,
+)
+from pcobra.cobra.transpilers.transpiler.rust_nodes.metodo import (
+    visit_metodo as _visit_metodo,
+)
+from pcobra.cobra.transpilers.transpiler.rust_nodes.option import (
+    visit_option as _visit_option,
+)
+from pcobra.cobra.transpilers.transpiler.rust_nodes.pasar import (
+    visit_pasar as _visit_pasar,
+)
+from pcobra.cobra.transpilers.transpiler.rust_nodes.retorno import (
+    visit_retorno as _visit_retorno,
+)
+from pcobra.cobra.transpilers.transpiler.rust_nodes.romper import (
+    visit_romper as _visit_romper,
+)
+from pcobra.cobra.transpilers.transpiler.rust_nodes.switch import (
+    visit_switch as _visit_switch,
+)
+from pcobra.cobra.transpilers.transpiler.rust_nodes.throw import (
+    visit_throw as _visit_throw,
+)
+from pcobra.cobra.transpilers.transpiler.rust_nodes.try_catch import (
+    visit_try_catch as _visit_try_catch,
+)
+from pcobra.cobra.transpilers.transpiler.rust_nodes.yield_ import (
+    visit_yield as _visit_yield,
+)
+from pcobra.cobra.transpilers.transpiler.rust_nodes.imprimir import (
+    visit_imprimir as _visit_imprimir,
+)
 
 
 def visit_assert(self, nodo):
@@ -137,8 +174,6 @@ def visit_interface(self, nodo):
     self.agregar_linea("}")
 
 
-
-
 def visit_proyectar(self, nodo):
     hb = self.obtener_valor(nodo.holobit)
     modo = self.obtener_valor(nodo.modo)
@@ -151,8 +186,10 @@ def visit_proyectar(self, nodo):
 def visit_transformar(self, nodo):
     hb = self.obtener_valor(nodo.holobit)
     op = self.obtener_valor(nodo.operacion)
-    params = ", ".join(f'format!("{{}}", {self.obtener_valor(param)})' for param in nodo.parametros)
-    params_slice = f'&[{params}]' if params else '&[]'
+    params = ", ".join(
+        f'format!("{{}}", {self.obtener_valor(param)})' for param in nodo.parametros
+    )
+    params_slice = f"&[{params}]" if params else "&[]"
     self.usa_runtime_holobit = True
     self.agregar_linea(
         f'cobra_runtime_expect(cobra_transformar(&{hb}, &format!("{{}}", {op}), {params_slice}));'
@@ -162,13 +199,13 @@ def visit_transformar(self, nodo):
 def visit_graficar(self, nodo):
     hb = self.obtener_valor(nodo.holobit)
     self.usa_runtime_holobit = True
-    self.agregar_linea(f'cobra_runtime_expect(cobra_graficar(&{hb}));')
-
+    self.agregar_linea(f"cobra_runtime_expect(cobra_graficar(&{hb}));")
 
 
 def visit_esperar(self, nodo):
     expr = self.obtener_valor(nodo.expresion)
     self.agregar_linea(f"{expr}.await;")
+
 
 class TranspiladorRust(BaseTranspiler):
     """Transpila el AST de Cobra a código Rust sencillo."""
@@ -247,7 +284,9 @@ class TranspiladorRust(BaseTranspiler):
             guardia = self.obtener_valor(nodo.condicion)
             return f"{patron} if {guardia}"
         if hasattr(nodo, "argumentos") and hasattr(nodo, "nombre"):
-            args = ", ".join(self.obtener_valor(a) for a in getattr(nodo, "argumentos", []))
+            args = ", ".join(
+                self.obtener_valor(a) for a in getattr(nodo, "argumentos", [])
+            )
             return f"{getattr(nodo, 'nombre', nodo)}({args})"
         return str(getattr(nodo, "valor", nodo))
 

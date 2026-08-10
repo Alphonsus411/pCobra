@@ -19,7 +19,10 @@ from scripts.targets_policy_common import read_target_policy
 WORKFLOWS_DIR = ROOT / ".github" / "workflows"
 
 RETIRED_REFERENCE_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = (
-    (re.compile(r"(?<![\w/-])hololang(?![\w/-])", re.IGNORECASE), "backend retirado 'hololang'"),
+    (
+        re.compile(r"(?<![\w/-])hololang(?![\w/-])", re.IGNORECASE),
+        "backend retirado 'hololang'",
+    ),
     (
         re.compile(r"(?<![\w/-])reverse[ -]wasm(?![\w/-])", re.IGNORECASE),
         "pipeline retirado 'reverse wasm'",
@@ -43,7 +46,9 @@ LEGACY_COBRA_SOURCE_COMMAND_PATTERN = re.compile(
     r"\s+[^\n]*?\.co\b"
 )
 
-TARGET_KEY_PATTERN = re.compile(r"^\s*(?:target|targets|backend|backends)\s*:\s*(.+?)\s*$", re.IGNORECASE)
+TARGET_KEY_PATTERN = re.compile(
+    r"^\s*(?:target|targets|backend|backends)\s*:\s*(.+?)\s*$", re.IGNORECASE
+)
 LIST_ITEM_PATTERN = re.compile(r"^\s*-\s*([a-zA-Z0-9_+\- ]+)\s*$")
 RUN_KEY_PATTERN = re.compile(r"^(\s*)(?:-\s*)?run:\s*(.*?)\s*$")
 
@@ -58,7 +63,9 @@ def _extract_inline_items(raw_value: str) -> tuple[str, ...]:
         inner = value[1:-1]
         if not inner.strip():
             return tuple()
-        return tuple(_normalize_target(item) for item in inner.split(",") if item.strip())
+        return tuple(
+            _normalize_target(item) for item in inner.split(",") if item.strip()
+        )
     return tuple()
 
 
@@ -111,9 +118,7 @@ def validate_workflow(path: Path, allowed_targets: set[str]) -> list[str]:
     for pattern, label in RETIRED_REFERENCE_PATTERNS:
         for match in pattern.finditer(full_text):
             line_no = full_text.count("\n", 0, match.start()) + 1
-            errors.append(
-                f"{path.relative_to(ROOT).as_posix()}:{line_no}: {label}"
-            )
+            errors.append(f"{path.relative_to(ROOT).as_posix()}:{line_no}: {label}")
 
     for idx, line in enumerate(lines, start=1):
         match = TARGET_KEY_PATTERN.match(line)
@@ -153,7 +158,9 @@ def main() -> int:
         errors.extend(validate_workflow(workflow, allowed_targets))
 
     if errors:
-        print("❌ Validación de política de targets en workflows: FALLÓ", file=sys.stderr)
+        print(
+            "❌ Validación de política de targets en workflows: FALLÓ", file=sys.stderr
+        )
         for error in errors:
             print(f" - {error}", file=sys.stderr)
         return 1

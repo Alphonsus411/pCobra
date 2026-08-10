@@ -27,9 +27,7 @@ class CacheCommand(BaseCommand):
         parser.add_argument(
             "--vacuum",
             action="store_true",
-            help=_(
-                "Recompacta la base de datos SQLite después de limpiar la caché"
-            ),
+            help=_("Recompacta la base de datos SQLite después de limpiar la caché"),
         )
         parser.set_defaults(cmd=self)
         return parser
@@ -54,9 +52,9 @@ class CacheCommand(BaseCommand):
             return 1
         except DatabaseDependencyError as exc:
             mostrar_error(
-                _("No fue posible inicializar la base de datos de caché: {error}").format(
-                    error=str(exc)
-                )
+                _(
+                    "No fue posible inicializar la base de datos de caché: {error}"
+                ).format(error=str(exc))
             )
             return 1
         except sqlite3.Error as exc:

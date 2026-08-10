@@ -23,7 +23,11 @@ def test_validador_auditoria_diagnostico_solo_en_debug(caplog):
     with caplog.at_level(logging.INFO):
         validador.visit_llamada_funcion(NodoLlamadaFuncion("main", []))
         validador.visit_usar(NodoUsar("archivo"))
-    assert not [r for r in caplog.records if "Llamada a funcion" in r.message or "Usar modulo" in r.message]
+    assert not [
+        r
+        for r in caplog.records
+        if "Llamada a funcion" in r.message or "Usar modulo" in r.message
+    ]
 
     caplog.clear()
     with caplog.at_level(logging.DEBUG):

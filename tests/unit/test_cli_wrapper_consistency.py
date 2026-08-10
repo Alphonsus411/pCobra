@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[2]
 CANONICAL_WRAPPER = ROOT / "src/cobra/cli/cli.py"
 PROXY_WRAPPER = ROOT / "cobra/cli/cli.py"

@@ -40,8 +40,12 @@ def test_to_sdk_holobit_builds_stub_object_even_without_sdk_in_misaligned_env():
         (transformar, (Holobit([1, 2, 3]), "rotar", "z", 45)),
     ),
 )
-def test_holobit_sdk_fallback_raises_explicit_error_when_required_sdk_is_missing(funcion, args):
-    with pytest.raises(ModuleNotFoundError, match="holobit_sdk|dependencia obligatoria"):
+def test_holobit_sdk_fallback_raises_explicit_error_when_required_sdk_is_missing(
+    funcion, args
+):
+    with pytest.raises(
+        ModuleNotFoundError, match="holobit_sdk|dependencia obligatoria"
+    ):
         funcion(*args)
 
 
@@ -56,8 +60,12 @@ def test_holobit_sdk_fallback_raises_explicit_error_when_required_sdk_is_missing
         (mover, (Holobit([1, 2, 3]), 1, 2, 3)),
     ),
 )
-def test_holobit_sdk_helpers_also_raise_explicit_error_without_required_sdk(funcion, args):
-    with pytest.raises(ModuleNotFoundError, match="holobit_sdk|dependencia obligatoria"):
+def test_holobit_sdk_helpers_also_raise_explicit_error_without_required_sdk(
+    funcion, args
+):
+    with pytest.raises(
+        ModuleNotFoundError, match="holobit_sdk|dependencia obligatoria"
+    ):
         funcion(*args)
 
 

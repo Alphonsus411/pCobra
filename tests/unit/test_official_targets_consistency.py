@@ -149,7 +149,11 @@ def test_auditoria_textual_y_documental_no_detecta_desalineaciones_publicas():
     )
     assert not validate_python_policy_literals(tuple(OFFICIAL_TARGETS))
     audit_violations = validate_final_backend_repo_audit()
-    assert not [v for v in audit_violations if "scripts/ci/audit_public_backend_exposure_terms.py" not in v]
+    assert not [
+        v
+        for v in audit_violations
+        if "scripts/ci/audit_public_backend_exposure_terms.py" not in v
+    ]
 
 
 def test_rutas_bajo_vigilancia_siguen_incluyendo_docs_y_tests_relevantes():
@@ -222,7 +226,9 @@ def test_registry_rechaza_targets_legacy_como_publicos_activos(monkeypatch):
         "pcobra.cobra.transpilers.transpiler.to_cpp",
         "TranspiladorCPP",
     )
-    monkeypatch.setattr(transpiler_registry, "PUBLIC_TRANSPILER_CLASS_PATHS", registry_with_legacy)
+    monkeypatch.setattr(
+        transpiler_registry, "PUBLIC_TRANSPILER_CLASS_PATHS", registry_with_legacy
+    )
 
     with pytest.raises(RuntimeError, match="debe usar exactamente PUBLIC_BACKENDS"):
         transpiler_registry._validate_complete_registry_contract()

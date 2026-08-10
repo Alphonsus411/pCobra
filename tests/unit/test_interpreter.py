@@ -19,6 +19,8 @@ from pcobra.core.ast_nodes import (
     NodoValor,
     NodoWith,
 )
+
+
 def test_interpretador_asignacion_y_llamada_funcion():
 
     # Crea una instancia del intérprete
@@ -108,7 +110,9 @@ def test_funcion_actualiza_scope_lexico_capturado():
 def test_definicion_funcion_no_ejecuta_cuerpo_ni_evalua_parametros(monkeypatch):
     """Regresión: definir una función no debe ejecutar su cuerpo."""
     inter = InterpretadorCobra()
-    inter.ejecutar_asignacion(NodoAsignacion("contador", NodoValor(0), declaracion=True))
+    inter.ejecutar_asignacion(
+        NodoAsignacion("contador", NodoValor(0), declaracion=True)
+    )
 
     llamadas = []
     evaluaciones_x = []
@@ -153,7 +157,9 @@ def test_definicion_funcion_no_ejecuta_cuerpo_ni_evalua_parametros(monkeypatch):
 def test_regresion_llamada_funcion_no_yield_limpia_contexto_una_sola_vez():
     """Evita doble limpieza de contexto y underflow de pilas internas."""
     inter = InterpretadorCobra()
-    inter.ejecutar_asignacion(NodoAsignacion("global_previa", NodoValor(99), declaracion=True))
+    inter.ejecutar_asignacion(
+        NodoAsignacion("global_previa", NodoValor(99), declaracion=True)
+    )
     contextos_iniciales = len(inter.contextos)
     mem_contextos_iniciales = len(inter.mem_contextos)
 
@@ -290,7 +296,9 @@ def test_del_libera_memoria_del_scope_ancestro():
 def test_del_objetivo_no_identificador_lanza_typeerror():
     inter = InterpretadorCobra()
 
-    with pytest.raises(TypeError, match=r"^del requiere un identificador como objetivo"):
+    with pytest.raises(
+        TypeError, match=r"^del requiere un identificador como objetivo"
+    ):
         inter.ejecutar_nodo(NodoDel(NodoValor(1)))
 
 
@@ -427,9 +435,7 @@ def test_ejecutar_funcion_solo_registra_en_entorno_sin_recorrer_cuerpo():
     triple = NodoFuncion(
         "triple",
         ["x"],
-        [
-            NodoRetorno(NodoLlamadaFuncion("doble", [NodoValor(3)]))
-        ],
+        [NodoRetorno(NodoLlamadaFuncion("doble", [NodoValor(3)]))],
     )
 
     with patch("sys.stdout", new_callable=StringIO) as out:
@@ -514,7 +520,9 @@ def test_definicion_triple_no_emite_warning_ni_error_variable_x(monkeypatch):
     assert warnings_emitidos == []
 
 
-def test_validacion_llamada_funcion_no_duplica_warning_en_invocacion_simple(monkeypatch):
+def test_validacion_llamada_funcion_no_duplica_warning_en_invocacion_simple(
+    monkeypatch,
+):
     inter = InterpretadorCobra()
     warnings_emitidos = []
 
@@ -600,8 +608,14 @@ def test_llamada_funcion_ejecuta_cuerpo_una_sola_vez_por_invocacion(monkeypatch)
 
     monkeypatch.setattr(inter, "ejecutar_nodo", _spy)
 
-    assert inter.ejecutar_llamada_funcion(NodoLlamadaFuncion("identidad", [NodoValor(10)])) == 10
-    assert inter.ejecutar_llamada_funcion(NodoLlamadaFuncion("identidad", [NodoValor(20)])) == 20
+    assert (
+        inter.ejecutar_llamada_funcion(NodoLlamadaFuncion("identidad", [NodoValor(10)]))
+        == 10
+    )
+    assert (
+        inter.ejecutar_llamada_funcion(NodoLlamadaFuncion("identidad", [NodoValor(20)]))
+        == 20
+    )
     assert len(ejecuciones_retorno) == 2
 
 
@@ -665,7 +679,9 @@ def test_mode_se_restaura_en_import_si_falla_validacion(monkeypatch):
     inter = InterpretadorCobra()
     modo_inicial = inter.mode
 
-    monkeypatch.setattr("pcobra.core.interpreter.cargar_ast_modulo", lambda *a, **k: [NodoValor(1)])
+    monkeypatch.setattr(
+        "pcobra.core.interpreter.cargar_ast_modulo", lambda *a, **k: [NodoValor(1)]
+    )
 
     def _falla_validacion(_nodo):
         raise RuntimeError("validacion import")
@@ -684,7 +700,9 @@ def test_mode_se_restaura_en_import_si_falla_ejecucion(monkeypatch):
     inter = InterpretadorCobra()
     modo_inicial = inter.mode
 
-    monkeypatch.setattr("pcobra.core.interpreter.cargar_ast_modulo", lambda *a, **k: [NodoValor(3)])
+    monkeypatch.setattr(
+        "pcobra.core.interpreter.cargar_ast_modulo", lambda *a, **k: [NodoValor(3)]
+    )
     monkeypatch.setattr(inter, "_validar", lambda _nodo: None)
 
     def _falla_ejecucion(_nodo):
@@ -717,7 +735,9 @@ def test_longitud_recibe_lista_literal_como_argumento():
     inter = InterpretadorCobra()
 
     resultado = inter.ejecutar_llamada_funcion(
-        NodoLlamadaFuncion("longitud", [NodoLista([NodoValor(1), NodoValor(2), NodoValor(3)])])
+        NodoLlamadaFuncion(
+            "longitud", [NodoLista([NodoValor(1), NodoValor(2), NodoValor(3)])]
+        )
     )
 
     assert resultado == 3
@@ -746,19 +766,25 @@ def test_lista_literal_evalua_elementos_recursivos():
     )
 
     assert inter.obtener_variable("xs") == [10, 11, 3]
-    assert inter.ejecutar_llamada_funcion(
-        NodoLlamadaFuncion("longitud", [NodoIdentificador("xs")])
-    ) == 3
+    assert (
+        inter.ejecutar_llamada_funcion(
+            NodoLlamadaFuncion("longitud", [NodoIdentificador("xs")])
+        )
+        == 3
+    )
+
 
 def test_lista_literal_propaga_error_semantico_en_elemento_invalido():
     inter = InterpretadorCobra()
 
     with pytest.raises(NameError, match="Variable no declarada: no_existe"):
         inter.evaluar_expresion(
-            NodoLista([
-                NodoValor(1),
-                NodoIdentificador("no_existe"),
-            ])
+            NodoLista(
+                [
+                    NodoValor(1),
+                    NodoIdentificador("no_existe"),
+                ]
+            )
         )
 
 
@@ -797,7 +823,9 @@ def test_lista_literal_cubre_escenarios_solicitados():
 
     # longitud([1, 2, 3]) como argumento inline
     inline = inter.ejecutar_llamada_funcion(
-        NodoLlamadaFuncion("longitud", [NodoLista([NodoValor(1), NodoValor(2), NodoValor(3)])])
+        NodoLlamadaFuncion(
+            "longitud", [NodoLista([NodoValor(1), NodoValor(2), NodoValor(3)])]
+        )
     )
 
     assert inter.obtener_variable("base") == [1, 2, 3]

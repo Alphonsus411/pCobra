@@ -189,7 +189,9 @@ def test_migrates_legacy_state(tmp_path, monkeypatch, caplog):
         "history": ["print('hola')"],
         "knowledge": {"node_counts": {"NodoImprimir": 1}},
     }
-    legacy_file.write_text(json.dumps(legacy_payload, ensure_ascii=False), encoding="utf-8")
+    legacy_file.write_text(
+        json.dumps(legacy_payload, ensure_ascii=False), encoding="utf-8"
+    )
 
     caplog.set_level("INFO")
     module, _ = _reload_qualia(tmp_path, monkeypatch)
@@ -269,14 +271,17 @@ def test_qualia_optional_dependency_logs_info_once(tmp_path, monkeypatch, caplog
         rec.message
         for rec in caplog.records
         if rec.levelname in {"INFO", "DEBUG"}
-        and "Qualia subsystem disabled: optional dependency not installed." in rec.message
+        and "Qualia subsystem disabled: optional dependency not installed."
+        in rec.message
     ]
     error_logs = [rec for rec in caplog.records if rec.levelname == "ERROR"]
     assert len(disable_logs) == 1
     assert not error_logs
 
 
-def test_qualia_status_reports_optional_dependency_missing(tmp_path, monkeypatch, caplog):
+def test_qualia_status_reports_optional_dependency_missing(
+    tmp_path, monkeypatch, caplog
+):
     module, _ = _reload_qualia(tmp_path, monkeypatch)
     monkeypatch.setattr(module.database, "is_sqliteplus_available", lambda: False)
     monkeypatch.setattr(module, "QUALIA_AVAILABLE", None)
@@ -292,7 +297,9 @@ def test_qualia_status_reports_optional_dependency_missing(tmp_path, monkeypatch
     assert not [rec for rec in caplog.records if rec.levelname == "ERROR"]
 
 
-def test_qualia_optional_loader_failure_does_not_log_error(tmp_path, monkeypatch, caplog):
+def test_qualia_optional_loader_failure_does_not_log_error(
+    tmp_path, monkeypatch, caplog
+):
     module, _ = _reload_qualia(tmp_path, monkeypatch)
     monkeypatch.setattr(module.database, "is_sqliteplus_available", lambda: True)
     monkeypatch.setattr(
@@ -312,7 +319,8 @@ def test_qualia_optional_loader_failure_does_not_log_error(tmp_path, monkeypatch
         rec.message
         for rec in caplog.records
         if rec.levelname in {"INFO", "DEBUG"}
-        and rec.message == "Qualia subsystem disabled: optional dependency not installed."
+        and rec.message
+        == "Qualia subsystem disabled: optional dependency not installed."
     ]
     assert status["enabled"] is False
     assert status["reason_code"] == "optional_dependency_missing"
@@ -336,5 +344,6 @@ def test_qualia_status_ok_when_dependency_is_available(tmp_path, monkeypatch, ca
     assert not [
         rec
         for rec in caplog.records
-        if "Qualia subsystem disabled: optional dependency not installed." in rec.message
+        if "Qualia subsystem disabled: optional dependency not installed."
+        in rec.message
     ]

@@ -11,12 +11,18 @@ def test_transpilador_inexistente(monkeypatch, tmp_path):
     archivo.write_text("x = 1")
     mensajes = []
 
-    monkeypatch.setattr("cobra.cli.commands.compile_cmd.validar_dependencias", lambda *a, **k: None)
+    monkeypatch.setattr(
+        "cobra.cli.commands.compile_cmd.validar_dependencias", lambda *a, **k: None
+    )
     monkeypatch.setattr("cobra.cli.commands.compile_cmd.obtener_ast", lambda codigo: [])
-    monkeypatch.setattr("cobra.cli.commands.compile_cmd.mostrar_error", lambda msg: mensajes.append(msg))
+    monkeypatch.setattr(
+        "cobra.cli.commands.compile_cmd.mostrar_error", lambda msg: mensajes.append(msg)
+    )
     monkeypatch.setattr("cobra.cli.commands.compile_cmd.cli_toml_map", lambda: {})
 
-    args = SimpleNamespace(archivo=str(archivo), tipo="fantasia", backend=None, tipos=None)
+    args = SimpleNamespace(
+        archivo=str(archivo), tipo="fantasia", backend=None, tipos=None
+    )
     rc = CompileCommand().run(args)
 
     assert rc == 1
@@ -32,12 +38,18 @@ def test_dependencia_faltante(monkeypatch, tmp_path):
     def fake_validar(lang, mod_info):
         raise FileNotFoundError("dep faltante")
 
-    monkeypatch.setattr("cobra.cli.commands.compile_cmd.validar_dependencias", fake_validar)
+    monkeypatch.setattr(
+        "cobra.cli.commands.compile_cmd.validar_dependencias", fake_validar
+    )
     monkeypatch.setattr("cobra.cli.commands.compile_cmd.obtener_ast", lambda codigo: [])
-    monkeypatch.setattr("cobra.cli.commands.compile_cmd.mostrar_error", lambda msg: mensajes.append(msg))
+    monkeypatch.setattr(
+        "cobra.cli.commands.compile_cmd.mostrar_error", lambda msg: mensajes.append(msg)
+    )
     monkeypatch.setattr("cobra.cli.commands.compile_cmd.cli_toml_map", lambda: {})
 
-    args = SimpleNamespace(archivo=str(archivo), tipo="python", backend=None, tipos=None)
+    args = SimpleNamespace(
+        archivo=str(archivo), tipo="python", backend=None, tipos=None
+    )
     rc = CompileCommand().run(args)
 
     assert rc == 1
@@ -49,11 +61,17 @@ def test_archivo_invalido(monkeypatch, tmp_path):
     archivo = tmp_path / "no_existe.cobra"
     mensajes = []
 
-    monkeypatch.setattr("cobra.cli.commands.compile_cmd.validar_dependencias", lambda *a, **k: None)
+    monkeypatch.setattr(
+        "cobra.cli.commands.compile_cmd.validar_dependencias", lambda *a, **k: None
+    )
     monkeypatch.setattr("cobra.cli.commands.compile_cmd.obtener_ast", lambda codigo: [])
-    monkeypatch.setattr("cobra.cli.commands.compile_cmd.mostrar_error", lambda msg: mensajes.append(msg))
+    monkeypatch.setattr(
+        "cobra.cli.commands.compile_cmd.mostrar_error", lambda msg: mensajes.append(msg)
+    )
 
-    args = SimpleNamespace(archivo=str(archivo), tipo="python", backend=None, tipos=None)
+    args = SimpleNamespace(
+        archivo=str(archivo), tipo="python", backend=None, tipos=None
+    )
     rc = CompileCommand().run(args)
 
     assert rc == 1
@@ -66,13 +84,19 @@ def test_exceso_tipos(monkeypatch, tmp_path):
     archivo.write_text("x = 1")
     mensajes = []
 
-    monkeypatch.setattr("cobra.cli.commands.compile_cmd.validar_dependencias", lambda *a, **k: None)
+    monkeypatch.setattr(
+        "cobra.cli.commands.compile_cmd.validar_dependencias", lambda *a, **k: None
+    )
     monkeypatch.setattr("cobra.cli.commands.compile_cmd.obtener_ast", lambda codigo: [])
-    monkeypatch.setattr("cobra.cli.commands.compile_cmd.mostrar_error", lambda msg: mensajes.append(msg))
+    monkeypatch.setattr(
+        "cobra.cli.commands.compile_cmd.mostrar_error", lambda msg: mensajes.append(msg)
+    )
     monkeypatch.setattr("cobra.cli.commands.compile_cmd.cli_toml_map", lambda: {})
 
     many_langs = "python,javascript,cpp,go,java,asm,rust,wasm,python,javascript,rust"
-    args = SimpleNamespace(archivo=str(archivo), tipo="python", backend=None, tipos=many_langs)
+    args = SimpleNamespace(
+        archivo=str(archivo), tipo="python", backend=None, tipos=many_langs
+    )
     rc = CompileCommand().run(args)
 
     assert rc == 1
@@ -85,23 +109,37 @@ def test_backend_legacy_muestra_warning_deprecacion(monkeypatch, tmp_path):
     archivo.write_text("x = 1")
     advertencias = []
 
-    monkeypatch.setattr("cobra.cli.commands.compile_cmd._ensure_entrypoints_loaded_once", lambda: None)
+    monkeypatch.setattr(
+        "cobra.cli.commands.compile_cmd._ensure_entrypoints_loaded_once", lambda: None
+    )
     monkeypatch.setattr(
         "cobra.cli.commands.compile_cmd.ORCHESTRATOR.resolve_backend",
         lambda **kwargs: SimpleNamespace(backend="python", reason="legacy"),
     )
-    monkeypatch.setattr("cobra.cli.commands.compile_cmd.validar_dependencias", lambda *a, **k: None)
+    monkeypatch.setattr(
+        "cobra.cli.commands.compile_cmd.validar_dependencias", lambda *a, **k: None
+    )
     monkeypatch.setattr("cobra.cli.commands.compile_cmd.obtener_ast", lambda codigo: [])
-    monkeypatch.setattr("cobra.cli.commands.compile_cmd.construir_cadena", lambda: SimpleNamespace())
+    monkeypatch.setattr(
+        "cobra.cli.commands.compile_cmd.construir_cadena", lambda: SimpleNamespace()
+    )
 
     class _DummyTranspiler:
         def generate_code(self, _ast):
             return "ok"
 
-    monkeypatch.setattr("cobra.cli.commands.compile_cmd._transpile_with_pipeline_or_plugin", lambda ast, lang: "ok")
-    monkeypatch.setattr("cobra.cli.commands.compile_cmd.mostrar_advertencia", lambda msg, registrar_log=True: advertencias.append(msg))
+    monkeypatch.setattr(
+        "cobra.cli.commands.compile_cmd._transpile_with_pipeline_or_plugin",
+        lambda ast, lang: "ok",
+    )
+    monkeypatch.setattr(
+        "cobra.cli.commands.compile_cmd.mostrar_advertencia",
+        lambda msg, registrar_log=True: advertencias.append(msg),
+    )
 
-    args = SimpleNamespace(archivo=str(archivo), tipo="python", backend="python", tipos=None, modo="mixto")
+    args = SimpleNamespace(
+        archivo=str(archivo), tipo="python", backend="python", tipos=None, modo="mixto"
+    )
     rc = CompileCommand().run(args)
 
     assert rc == 0

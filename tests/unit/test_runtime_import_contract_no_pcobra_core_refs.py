@@ -37,6 +37,9 @@ def test_runtime_critico_no_referencia_pcobra_core_directo() -> None:
 
     for path in RUNTIME_SCOPES:
         violations = _collect_pcobra_core_imports(path)
-        failures.extend(f"{path.relative_to(ROOT)}:{line} -> {target}" for line, target in violations)
+        failures.extend(
+            f"{path.relative_to(ROOT)}:{line} -> {target}"
+            for line, target in violations
+        )
 
     assert failures == []

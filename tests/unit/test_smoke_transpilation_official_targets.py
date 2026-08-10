@@ -27,12 +27,45 @@ def ast_holobit_runtime():
 @pytest.mark.parametrize(
     "transpilador, fragmentos",
     [
-        (TranspiladorPython, ["import pcobra.corelibs as _pcobra_corelibs", "import pcobra.standard_library as _pcobra_standard_library", "def cobra_holobit(", "def cobra_proyectar(", "def cobra_transformar(", "def cobra_graficar("]),
-        (TranspiladorJavaScript, ["import * as io from './nativos/io.js';", "import * as interfaz from './nativos/interfaz.js';", "function cobra_holobit(valores)", "function cobra_proyectar(hb, modo)", "function cobra_transformar(hb, op", "function cobra_graficar(hb)"]),
-        (TranspiladorRust, ["use crate::corelibs::*;", "use crate::standard_library::*;", "fn longitud<T: ToString>(valor: T) -> usize {", "fn cobra_holobit(", "fn cobra_proyectar(", "fn cobra_transformar(", "fn cobra_graficar("]),
+        (
+            TranspiladorPython,
+            [
+                "import pcobra.corelibs as _pcobra_corelibs",
+                "import pcobra.standard_library as _pcobra_standard_library",
+                "def cobra_holobit(",
+                "def cobra_proyectar(",
+                "def cobra_transformar(",
+                "def cobra_graficar(",
+            ],
+        ),
+        (
+            TranspiladorJavaScript,
+            [
+                "import * as io from './nativos/io.js';",
+                "import * as interfaz from './nativos/interfaz.js';",
+                "function cobra_holobit(valores)",
+                "function cobra_proyectar(hb, modo)",
+                "function cobra_transformar(hb, op",
+                "function cobra_graficar(hb)",
+            ],
+        ),
+        (
+            TranspiladorRust,
+            [
+                "use crate::corelibs::*;",
+                "use crate::standard_library::*;",
+                "fn longitud<T: ToString>(valor: T) -> usize {",
+                "fn cobra_holobit(",
+                "fn cobra_proyectar(",
+                "fn cobra_transformar(",
+                "fn cobra_graficar(",
+            ],
+        ),
     ],
 )
-def test_smoke_runtime_holobit_incluye_imports_y_hooks_validos(transpilador, fragmentos, ast_holobit_runtime):
+def test_smoke_runtime_holobit_incluye_imports_y_hooks_validos(
+    transpilador, fragmentos, ast_holobit_runtime
+):
     code = transpilador().generate_code(ast_holobit_runtime)
     for fragmento in fragmentos:
         assert fragmento in code
@@ -46,13 +79,16 @@ def test_smoke_runtime_holobit_incluye_imports_y_hooks_validos(transpilador, fra
     ],
 )
 def test_corelibs_y_standard_library_se_mantienen_sin_holobit(transpilador, fragmentos):
-    code = transpilador().generate_code([NodoAsignacion(variable="x", expresion=NodoValor(1))])
+    code = transpilador().generate_code(
+        [NodoAsignacion(variable="x", expresion=NodoValor(1))]
+    )
     for fragmento in fragmentos:
         assert fragmento in code
 
 
-
-def test_module_map_resuelve_targets_publicos_solo_desde_cobra_toml(tmp_path, monkeypatch):
+def test_module_map_resuelve_targets_publicos_solo_desde_cobra_toml(
+    tmp_path, monkeypatch
+):
     modulo = "biblioteca.cobra"
     toml_file = tmp_path / "cobra.toml"
     toml_file.write_text(
@@ -79,9 +115,7 @@ def test_module_map_resuelve_targets_publicos_solo_desde_cobra_toml(tmp_path, mo
 def test_module_map_falla_si_toml_declara_target_no_publico(tmp_path, monkeypatch):
     toml_file = tmp_path / "cobra.toml"
     toml_file.write_text(
-        "[modulos]\n"
-        "[modulos.'biblioteca.cobra']\n"
-        "go = 'biblioteca.go'\n",
+        "[modulos]\n" "[modulos.'biblioteca.cobra']\n" "go = 'biblioteca.go'\n",
         encoding="utf-8",
     )
 

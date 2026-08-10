@@ -74,7 +74,6 @@ from pcobra.cobra.cli.utils.autocomplete import (
     files_completer,
 )
 
-
 assert_public_targets_contract(tuple(PUBLIC_BACKENDS), source="cobra cli bootstrap")
 LANG_CHOICES = tuple(PUBLIC_BACKENDS)
 

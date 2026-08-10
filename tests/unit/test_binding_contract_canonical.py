@@ -1,4 +1,8 @@
-from pcobra.cobra.bindings.contract import BindingRoute, OFFICIAL_PUBLIC_ROUTE_MATRIX, resolve_binding
+from pcobra.cobra.bindings.contract import (
+    BindingRoute,
+    OFFICIAL_PUBLIC_ROUTE_MATRIX,
+    resolve_binding,
+)
 
 
 def test_binding_contract_canonical_route_python():

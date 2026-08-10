@@ -117,7 +117,9 @@ class CobraHubService:
                 else install_dir() / downloaded.name
             )
             packaging.extraer_paquete(cache_path, install_path)
-            self._mostrar_info(_("Paquete instalado en {dest}").format(dest=install_path))
+            self._mostrar_info(
+                _("Paquete instalado en {dest}").format(dest=install_path)
+            )
             return True
         except CobraHubError as exc:
             logger.error("Error instalando paquete: %s", exc)

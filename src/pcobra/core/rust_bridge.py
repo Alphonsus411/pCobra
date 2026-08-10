@@ -43,9 +43,7 @@ def compilar_crate(ruta: str, release: bool = True, timeout: int = 300) -> str:
             timeout=timeout,
         )
     except subprocess.TimeoutExpired as exc:
-        raise RuntimeError(
-            "Tiempo de espera excedido al ejecutar cbindgen"
-        ) from exc
+        raise RuntimeError("Tiempo de espera excedido al ejecutar cbindgen") from exc
 
     cmd = [
         "cargo",
@@ -58,9 +56,7 @@ def compilar_crate(ruta: str, release: bool = True, timeout: int = 300) -> str:
     try:
         subprocess.run(cmd, check=True, timeout=timeout)
     except subprocess.TimeoutExpired as exc:
-        raise RuntimeError(
-            "Tiempo de espera excedido al ejecutar cargo"
-        ) from exc
+        raise RuntimeError("Tiempo de espera excedido al ejecutar cargo") from exc
 
     target = path / "target" / ("release" if release else "debug")
     base = f"lib{path.name}"
@@ -81,11 +77,15 @@ def cargar_crate(ruta: str, release: bool = True, timeout: int = 300) -> Any:
     return cargar_biblioteca(lib_path)
 
 
-def compilar_y_cargar_crate(ruta: str, nombre: str, *,
-                            release: bool = True,
-                            timeout: int = 300,
-                            restype: Any | None = None,
-                            argtypes: Iterable[Any] | None = None) -> Any:
+def compilar_y_cargar_crate(
+    ruta: str,
+    nombre: str,
+    *,
+    release: bool = True,
+    timeout: int = 300,
+    restype: Any | None = None,
+    argtypes: Iterable[Any] | None = None,
+) -> Any:
     """Compila ``ruta`` y devuelve la funci\u00f3n ``nombre`` lista para usar.
 
     ``timeout`` establece el tiempo m\u00e1ximo en segundos para cada comando

@@ -31,13 +31,11 @@ def test_readme_lista_de_reverse_scope_alineada_con_policy():
     linea = next(
         l
         for l in contenido.splitlines()
-        if "Actualmente la transpilación inversa soportada por política acepta código de entrada" in l
+        if "Actualmente la transpilación inversa soportada por política acepta código de entrada"
+        in l
     )
     prefix = linea.split(". Esos tres nombres", maxsplit=1)[0]
-    encontrados = {
-        _normalizar(token)
-        for token in re.findall(r"`([^`]+)`", prefix)
-    }
+    encontrados = {_normalizar(token) for token in re.findall(r"`([^`]+)`", prefix)}
     assert encontrados == set(REVERSE_SCOPE_LANGUAGES)
 
 

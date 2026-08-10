@@ -97,7 +97,9 @@ imprimir(contador)
 imprimir("base")
 imprimir(base)
 """
-    salida_ejecutar = _lineas_sin_trazas(_ejecutar_codigo_y_capturar_stdout(codigo_archivo))
+    salida_ejecutar = _lineas_sin_trazas(
+        _ejecutar_codigo_y_capturar_stdout(codigo_archivo)
+    )
     salida_interactive = _lineas_sin_trazas(_ejecutar_via_interactive(codigo_archivo))
 
     esperadas = ["contador", "2", "base", "15"]

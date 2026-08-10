@@ -20,13 +20,15 @@ def test_build_installer_still_accepts_hidden_target_option():
     app = CliApplication()
     app.initialize()
 
-    args = app._parse_arguments([
-        "build",
-        "--installer",
-        ".",
-        "--target",
-        "current",
-    ])
+    args = app._parse_arguments(
+        [
+            "build",
+            "--installer",
+            ".",
+            "--target",
+            "current",
+        ]
+    )
 
     assert args.command == "build"
     assert args.installer is True

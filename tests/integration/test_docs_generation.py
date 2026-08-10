@@ -40,7 +40,13 @@ def test_docs_generation():
     if linkcheck_dir.exists():
         shutil.rmtree(linkcheck_dir)
     result = subprocess.run(
-        ["sphinx-build", "-b", "linkcheck", str(ROOT / "docs" / "frontend"), str(linkcheck_dir)],
+        [
+            "sphinx-build",
+            "-b",
+            "linkcheck",
+            str(ROOT / "docs" / "frontend"),
+            str(linkcheck_dir),
+        ],
         capture_output=True,
         text=True,
         cwd=str(ROOT),
@@ -53,4 +59,4 @@ def test_docs_generation():
     assert manual.is_file() or especificacion.is_file()
 
     index_content = (build_dir / "index.html").read_text(encoding="utf-8")
-    assert "toctree-wrapper" in index_content or "class=\"toc\"" in index_content
+    assert "toctree-wrapper" in index_content or 'class="toc"' in index_content

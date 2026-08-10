@@ -114,11 +114,16 @@ def _scan_file(path: Path, token_pattern: re.Pattern[str]) -> list[Finding]:
 
 
 def run_audit(root: Path, *, globs: tuple[str, ...]) -> list[Finding]:
-    retired_tokens = tuple(sorted(set(LEGACY_OR_AMBIGUOUS_TARGETS) | set(TARGET_ALIASES)))
+    retired_tokens = tuple(
+        sorted(set(LEGACY_OR_AMBIGUOUS_TARGETS) | set(TARGET_ALIASES))
+    )
     token_pattern = _build_token_pattern(retired_tokens)
     findings: list[Finding] = []
     for path in _iter_candidate_files(root, globs):
-        if any(part in {".git", ".venv", "__pycache__", "node_modules"} for part in path.parts):
+        if any(
+            part in {".git", ".venv", "__pycache__", "node_modules"}
+            for part in path.parts
+        ):
             continue
         findings.extend(_scan_file(path, token_pattern))
     return findings

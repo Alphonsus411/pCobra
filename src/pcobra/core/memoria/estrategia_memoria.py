@@ -5,6 +5,7 @@ import random
 
 class EstrategiaMemoria:
     """Simula la gestión de memoria para programas Cobra."""
+
     def __init__(self, tam_bloque, frecuencia_recoleccion):
         """Inicializa la estrategia de manejo de memoria.
 
@@ -25,10 +26,10 @@ class EstrategiaMemoria:
         """
         for i in range(len(self.memoria) - tam + 1):
             # Verifica si todos los bloques en el rango son None
-            if all(block is None for block in self.memoria[i:i + tam]):
+            if all(block is None for block in self.memoria[i : i + tam]):
                 # Asignar el bloque
                 # Se marca como True (bloque asignado)
-                self.memoria[i:i + tam] = [True] * tam
+                self.memoria[i : i + tam] = [True] * tam
                 return i  # Retorna el índice donde se asignó
         return -1  # Si no hay espacio suficiente para asignar
 
@@ -38,7 +39,7 @@ class EstrategiaMemoria:
         :param index: Índice de inicio del bloque.
         :param tam: Tamaño del bloque a liberar.
         """
-        self.memoria[index:index + tam] = [None] * tam  # Se marca como libre (None)
+        self.memoria[index : index + tam] = [None] * tam  # Se marca como libre (None)
 
     def recolectar_basura(self):
         """
@@ -53,5 +54,5 @@ class EstrategiaMemoria:
         """
         Muestra el estado actual de la memoria para propósitos de depuración.
         """
-        estado = ''.join(['X' if block else '.' for block in self.memoria])
+        estado = "".join(["X" if block else "." for block in self.memoria])
         print(f"Estado de la memoria: {estado}")

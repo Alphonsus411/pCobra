@@ -14,7 +14,6 @@ from tests.integration.transpilers.backend_contracts import (
 )
 from tests.utils.targets import assert_tier_targets_match_policy
 
-
 TIER1_BACKENDS = assert_tier_targets_match_policy("tier1", transpilers=TRANSPILERS)
 
 
@@ -29,7 +28,9 @@ def test_tier1_matrix_declares_minimum_battery_for_every_target(backend: str):
     "backend, feature",
     [(backend, feature) for backend in TIER1_BACKENDS for feature in REQUIRED_FEATURES],
 )
-def test_tier1_backend_contract_matches_compatibility_matrix(backend: str, feature: str):
+def test_tier1_backend_contract_matches_compatibility_matrix(
+    backend: str, feature: str
+):
     generated = generate_code(backend, feature)
     assert generated.strip(), f"{backend} no generó salida para {feature}"
 
@@ -47,7 +48,9 @@ def test_tier1_backend_contract_matches_compatibility_matrix(backend: str, featu
 
 @pytest.mark.parametrize("backend", TIER1_BACKENDS)
 @pytest.mark.parametrize("feature", HOLOBIT_FEATURES)
-def test_tier1_holobit_primitives_generate_code_for_every_official_target(backend: str, feature: str):
+def test_tier1_holobit_primitives_generate_code_for_every_official_target(
+    backend: str, feature: str
+):
     generated = generate_code(backend, feature)
     assert generated.strip(), f"{backend} no generó código para {feature}"
 
@@ -71,7 +74,10 @@ def test_tier1_backend_runtime_hooks_are_present_when_expected(backend: str):
 
 
 def test_tier1_suite_targets_only_official_backends():
-    assert assert_tier_targets_match_policy("tier1", transpilers=TRANSPILERS) == TIER1_BACKENDS
+    assert (
+        assert_tier_targets_match_policy("tier1", transpilers=TRANSPILERS)
+        == TIER1_BACKENDS
+    )
 
 
 def test_tier1_suite_no_admite_backends_extra_ni_perdidos():

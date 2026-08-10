@@ -1,8 +1,14 @@
 from pathlib import Path
 
-
 DOC = Path("docs/seguimiento_auditoria_tecnica.md")
-ESTADOS = {"pendiente", "en investigación", "parcial", "corregido", "verificado", "regresión"}
+ESTADOS = {
+    "pendiente",
+    "en investigación",
+    "parcial",
+    "corregido",
+    "verificado",
+    "regresión",
+}
 
 
 def test_seguimiento_auditoria_tecnica_cubre_problemas_y_estados_permitidos():

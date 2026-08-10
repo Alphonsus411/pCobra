@@ -47,7 +47,9 @@ def _runtime_tree(tmp_path: Path) -> RuntimePreparationResult:
     )
 
 
-def test_write_spec_onedir_incluye_runtime_recursos_imports_y_nombre(tmp_path: Path) -> None:
+def test_write_spec_onedir_incluye_runtime_recursos_imports_y_nombre(
+    tmp_path: Path,
+) -> None:
     runtime = _runtime_tree(tmp_path)
     extra_data = tmp_path / "extra-data"
     extra_data.mkdir()
@@ -88,7 +90,9 @@ def test_write_spec_onefile_incluye_icono_y_sin_collect(tmp_path: Path) -> None:
 
     spec_path = write_spec(
         SpecBuildContext(
-            options=BuildOptions(project_root=tmp_path, mode=BuildMode.ONEFILE, icon=icon),
+            options=BuildOptions(
+                project_root=tmp_path, mode=BuildMode.ONEFILE, icon=icon
+            ),
             runtime=runtime,
             output_dir=tmp_path / "dist",
             executable_name="demo_onefile",
@@ -104,7 +108,9 @@ def test_write_spec_onefile_incluye_icono_y_sin_collect(tmp_path: Path) -> None:
     assert "name='demo_onefile'" in content
 
 
-def test_write_spec_con_fixture_imports_dinamicos_declara_hiddenimports(tmp_path: Path) -> None:
+def test_write_spec_con_fixture_imports_dinamicos_declara_hiddenimports(
+    tmp_path: Path,
+) -> None:
     """El spec debe declarar imports que PyInstaller no infiere estáticamente.
 
     El fixture modela un proyecto Cobra con imports dinámicos o equivalentes:
@@ -171,7 +177,9 @@ def test_write_spec_con_fixture_imports_dinamicos_declara_hiddenimports(tmp_path
     assert "COLLECT" in content
 
     hiddenimports_line = next(
-        line for line in content.splitlines() if line.strip().startswith("hiddenimports=")
+        line
+        for line in content.splitlines()
+        if line.strip().startswith("hiddenimports=")
     )
     hiddenimports = ast.literal_eval(hiddenimports_line.split("=", 1)[1].rstrip(","))
 

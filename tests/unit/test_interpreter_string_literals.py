@@ -12,7 +12,6 @@ from pcobra.core.ast_nodes import (
 from pcobra.core.interpreter import InterpretadorCobra
 from pcobra.core.lexer import TipoToken, Token
 
-
 TEXTOS_RUNTIME = (
     'texto con "comillas"',
     "texto con 'comillas'",

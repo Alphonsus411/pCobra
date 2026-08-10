@@ -10,7 +10,6 @@ import textwrap
 import unicodedata
 from typing import Any, TypeVar, overload
 
-
 _T = TypeVar("_T")
 _SIN_VALOR = object()
 
@@ -52,7 +51,9 @@ def _tokenizar_componentes(texto: str) -> list[str]:
     if not texto:
         return []
     normalizado = normalizar_unicode(texto, "NFKC")
-    con_espacios = _PATRON_TRANSICION_CASO.sub(_insertar_espacio_transicion, normalizado)
+    con_espacios = _PATRON_TRANSICION_CASO.sub(
+        _insertar_espacio_transicion, normalizado
+    )
     reemplazado = _PATRON_SEPARADORES.sub(" ", con_espacios)
     return [
         normalizar_unicode(fragmento, "NFC")
@@ -227,7 +228,9 @@ def quitar_espacios(
     return texto.rstrip(caracteres) if caracteres is not None else texto.rstrip()
 
 
-def dividir(texto: str, separador: str | None = None, maximo: int | None = None) -> list[str]:
+def dividir(
+    texto: str, separador: str | None = None, maximo: int | None = None
+) -> list[str]:
     """Divide ``texto`` en una lista de subcadenas.
 
     El comportamiento replica a :meth:`str.split`. Cuando ``separador`` es ``None`` se
@@ -282,8 +285,7 @@ def encontrar(
     subcadena: str,
     inicio: int = 0,
     fin: int | None = None,
-) -> int:
-    ...
+) -> int: ...
 
 
 @overload
@@ -294,8 +296,7 @@ def encontrar(
     fin: int | None = None,
     *,
     por_defecto: _T,
-) -> int | _T:
-    ...
+) -> int | _T: ...
 
 
 def encontrar(
@@ -327,8 +328,7 @@ def encontrar_derecha(
     subcadena: str,
     inicio: int = 0,
     fin: int | None = None,
-) -> int:
-    ...
+) -> int: ...
 
 
 @overload
@@ -339,8 +339,7 @@ def encontrar_derecha(
     fin: int | None = None,
     *,
     por_defecto: _T,
-) -> int | _T:
-    ...
+) -> int | _T: ...
 
 
 def encontrar_derecha(
@@ -372,8 +371,7 @@ def indice(
     subcadena: str,
     inicio: int = 0,
     fin: int | None = None,
-) -> int:
-    ...
+) -> int: ...
 
 
 @overload
@@ -384,8 +382,7 @@ def indice(
     fin: int | None = None,
     *,
     por_defecto: _T,
-) -> int | _T:
-    ...
+) -> int | _T: ...
 
 
 def indice(
@@ -418,8 +415,7 @@ def indice_derecha(
     subcadena: str,
     inicio: int = 0,
     fin: int | None = None,
-) -> int:
-    ...
+) -> int: ...
 
 
 @overload
@@ -430,8 +426,7 @@ def indice_derecha(
     fin: int | None = None,
     *,
     por_defecto: _T,
-) -> int | _T:
-    ...
+) -> int | _T: ...
 
 
 def indice_derecha(
@@ -459,13 +454,11 @@ def indice_derecha(
 
 
 @overload
-def subcadena_antes(texto: str, separador: str) -> str:
-    ...
+def subcadena_antes(texto: str, separador: str) -> str: ...
 
 
 @overload
-def subcadena_antes(texto: str, separador: str, por_defecto: _T) -> str | _T:
-    ...
+def subcadena_antes(texto: str, separador: str, por_defecto: _T) -> str | _T: ...
 
 
 def subcadena_antes(texto: str, separador: str, por_defecto: Any = _SIN_VALOR) -> Any:
@@ -484,13 +477,11 @@ def subcadena_antes(texto: str, separador: str, por_defecto: Any = _SIN_VALOR) -
 
 
 @overload
-def subcadena_despues(texto: str, separador: str) -> str:
-    ...
+def subcadena_despues(texto: str, separador: str) -> str: ...
 
 
 @overload
-def subcadena_despues(texto: str, separador: str, por_defecto: _T) -> str | _T:
-    ...
+def subcadena_despues(texto: str, separador: str, por_defecto: _T) -> str | _T: ...
 
 
 def subcadena_despues(texto: str, separador: str, por_defecto: Any = _SIN_VALOR) -> Any:
@@ -509,15 +500,11 @@ def subcadena_despues(texto: str, separador: str, por_defecto: Any = _SIN_VALOR)
 
 
 @overload
-def subcadena_antes_ultima(texto: str, separador: str) -> str:
-    ...
+def subcadena_antes_ultima(texto: str, separador: str) -> str: ...
 
 
 @overload
-def subcadena_antes_ultima(
-    texto: str, separador: str, por_defecto: _T
-) -> str | _T:
-    ...
+def subcadena_antes_ultima(texto: str, separador: str, por_defecto: _T) -> str | _T: ...
 
 
 def subcadena_antes_ultima(
@@ -537,15 +524,13 @@ def subcadena_antes_ultima(
 
 
 @overload
-def subcadena_despues_ultima(texto: str, separador: str) -> str:
-    ...
+def subcadena_despues_ultima(texto: str, separador: str) -> str: ...
 
 
 @overload
 def subcadena_despues_ultima(
     texto: str, separador: str, por_defecto: _T
-) -> str | _T:
-    ...
+) -> str | _T: ...
 
 
 def subcadena_despues_ultima(
@@ -588,7 +573,9 @@ def formatear_mapa(formato: str, valores: Mapping[str, Any]) -> str:
     return formato.format_map(valores)
 
 
-def _normalizar_tabla_maketrans(tabla: dict[int, int | str | None]) -> dict[int, str | None]:
+def _normalizar_tabla_maketrans(
+    tabla: dict[int, int | str | None],
+) -> dict[int, str | None]:
     resultado: dict[int, str | None] = {}
     for clave, valor in tabla.items():
         if isinstance(valor, int):
@@ -1051,7 +1038,6 @@ def es_digito(texto: str) -> bool:
     return texto.isdigit()
 
 
-
 def lineas_no_vacias(texto: str) -> list[str]:
     """Devuelve líneas no vacías tras recortar espacios extremos."""
 
@@ -1098,11 +1084,15 @@ def es_palindromo(texto: str) -> bool:
 def es_anagrama(a: str, b: str) -> bool:
     """Indica si dos textos contienen los mismos caracteres ignorando espacios/caso."""
 
-    normalizar = lambda valor: sorted(re.sub(r"\W+", "", quitar_acentos(valor).casefold(), flags=re.UNICODE))
+    normalizar = lambda valor: sorted(
+        re.sub(r"\W+", "", quitar_acentos(valor).casefold(), flags=re.UNICODE)
+    )
     return normalizar(a) == normalizar(b)
 
 
-def separar(texto: str, separador: str | None = None, maximo: int | None = None) -> list[str]:
+def separar(
+    texto: str, separador: str | None = None, maximo: int | None = None
+) -> list[str]:
     """Alias canónico de :func:`dividir`."""
 
     return dividir(texto, separador, maximo)
@@ -1119,67 +1109,68 @@ def longitud(texto: str) -> int:
 
     return len(texto)
 
+
 __all__ = [
-    'quitar_acentos',
-    'normalizar_espacios',
-    'es_palindromo',
-    'es_anagrama',
-    'codificar',
-    'decodificar',
-    'es_alfabetico',
-    'es_alfa_numerico',
-    'es_decimal',
-    'es_numerico',
-    'es_identificador',
-    'es_imprimible',
-    'es_ascii',
-    'es_mayusculas',
-    'es_minusculas',
-    'es_titulo',
-    'es_digito',
-    'es_espacio',
-    'quitar_prefijo',
-    'quitar_sufijo',
-    'a_snake',
-    'a_camel',
-    'quitar_envoltura',
-    'prefijo_comun',
-    'sufijo_comun',
-    'dividir_lineas',
-    'dividir_derecha',
-    'encontrar',
-    'encontrar_derecha',
-    'subcadena_antes',
-    'subcadena_despues',
-    'subcadena_antes_ultima',
-    'subcadena_despues_ultima',
-    'indice',
-    'indice_derecha',
-    'contar_subcadena',
-    'centrar_texto',
-    'rellenar_ceros',
-    'minusculas',
-    'mayusculas',
-    'minusculas_casefold',
-    'intercambiar_mayusculas',
-    'expandir_tabulaciones',
-    'particionar',
-    'particionar_derecha',
-    'indentar_texto',
-    'desindentar_texto',
-    'envolver_texto',
-    'acortar_texto',
-    'formatear',
-    'formatear_mapa',
-    'tabla_traduccion',
-    'traducir',
-    'recortar',
-    'reemplazar',
-    'separar',
-    'unir',
-    'contiene',
-    'longitud',
-    'repetir',
+    "quitar_acentos",
+    "normalizar_espacios",
+    "es_palindromo",
+    "es_anagrama",
+    "codificar",
+    "decodificar",
+    "es_alfabetico",
+    "es_alfa_numerico",
+    "es_decimal",
+    "es_numerico",
+    "es_identificador",
+    "es_imprimible",
+    "es_ascii",
+    "es_mayusculas",
+    "es_minusculas",
+    "es_titulo",
+    "es_digito",
+    "es_espacio",
+    "quitar_prefijo",
+    "quitar_sufijo",
+    "a_snake",
+    "a_camel",
+    "quitar_envoltura",
+    "prefijo_comun",
+    "sufijo_comun",
+    "dividir_lineas",
+    "dividir_derecha",
+    "encontrar",
+    "encontrar_derecha",
+    "subcadena_antes",
+    "subcadena_despues",
+    "subcadena_antes_ultima",
+    "subcadena_despues_ultima",
+    "indice",
+    "indice_derecha",
+    "contar_subcadena",
+    "centrar_texto",
+    "rellenar_ceros",
+    "minusculas",
+    "mayusculas",
+    "minusculas_casefold",
+    "intercambiar_mayusculas",
+    "expandir_tabulaciones",
+    "particionar",
+    "particionar_derecha",
+    "indentar_texto",
+    "desindentar_texto",
+    "envolver_texto",
+    "acortar_texto",
+    "formatear",
+    "formatear_mapa",
+    "tabla_traduccion",
+    "traducir",
+    "recortar",
+    "reemplazar",
+    "separar",
+    "unir",
+    "contiene",
+    "longitud",
+    "repetir",
 ]
 
 PUBLIC_API_TEXTO: tuple[str, ...] = tuple(__all__)

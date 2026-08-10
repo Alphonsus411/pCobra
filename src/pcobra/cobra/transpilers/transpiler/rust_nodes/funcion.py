@@ -39,6 +39,8 @@ def visit_funcion(self, nodo):
 
     for decorador in reversed(getattr(nodo, "decoradores", [])):
         decorador_expr = self.obtener_valor(getattr(decorador, "expresion", decorador))
-        self.agregar_linea(f"// decorador aplicado: {nodo.nombre} = {decorador_expr}({nodo.nombre})")
+        self.agregar_linea(
+            f"// decorador aplicado: {nodo.nombre} = {decorador_expr}({nodo.nombre})"
+        )
 
     self.current_function = prev

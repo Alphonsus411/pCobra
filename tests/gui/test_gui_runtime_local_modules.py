@@ -14,11 +14,7 @@ def _crear_proyecto(
     raiz.mkdir(parents=True)
 
     (raiz / "utilidades.cobra").write_text(
-        (
-            "func duplicar(valor):\n"
-            f"    retorno valor * {factor}\n"
-            "fin\n"
-        ),
+        ("func duplicar(valor):\n" f"    retorno valor * {factor}\n" "fin\n"),
         encoding="utf-8",
     )
 
@@ -45,9 +41,7 @@ def test_handler_gui_resuelve_modulo_local_desde_archivo_activo(
     selector = SimpleNamespace(value="python")
     activar = SimpleNamespace(value=False)
     actualizaciones: list[bool] = []
-    page = SimpleNamespace(
-        update=lambda: actualizaciones.append(True)
-    )
+    page = SimpleNamespace(update=lambda: actualizaciones.append(True))
 
     handler = runtime.crear_handler_ejecucion(
         leer_codigo=lambda: codigo,

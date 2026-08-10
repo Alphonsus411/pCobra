@@ -24,8 +24,7 @@ def test_cobra_toml_mapping_no_usa_estructura_antigua_en_raiz(tmp_path, monkeypa
     mod = "biblioteca.co"
     toml_file = tmp_path / "cobra.toml"
     toml_file.write_text(
-        "['biblioteca.co']\n"
-        "python = 'biblioteca.py'\n",
+        "['biblioteca.co']\n" "python = 'biblioteca.py'\n",
         encoding="utf-8",
     )
 

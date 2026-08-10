@@ -129,7 +129,11 @@ def main() -> int:
         ("auditoría de repo", validate_final_backend_repo_audit()),
         (
             "policy drift en rutas públicas",
-            [] if lint_policy_drift_main() == 0 else ["scripts/lint_policy_drift.py reportó drift"],
+            (
+                []
+                if lint_policy_drift_main() == 0
+                else ["scripts/lint_policy_drift.py reportó drift"]
+            ),
         ),
     )
     for stage_name, errors in stages:

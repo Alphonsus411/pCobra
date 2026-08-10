@@ -15,7 +15,7 @@ class SpinnerColumn:  # pragma: no cover - comportamiento trivial
 
 class BarColumn:  # pragma: no cover - comportamiento trivial
     def __init__(self, *args: Any, **kwargs: Any) -> None:
-        self.bar_width = kwargs.get('bar_width')
+        self.bar_width = kwargs.get("bar_width")
 
 
 class TextColumn:
@@ -41,7 +41,9 @@ class _Task:
 
 
 class Progress:
-    def __init__(self, *columnas: Any, console: Any | None = None, transient: bool = True) -> None:
+    def __init__(
+        self, *columnas: Any, console: Any | None = None, transient: bool = True
+    ) -> None:
         self.columns = columnas
         self.console = console
         self.transient = transient
@@ -50,17 +52,27 @@ class Progress:
 
     def add_task(self, descripcion: str, *, total: float | None = None) -> TaskID:
         self._contador += 1
-        self._tasks[self._contador] = _Task(descripcion=descripcion, total=total, completed=0.0)
+        self._tasks[self._contador] = _Task(
+            descripcion=descripcion, total=total, completed=0.0
+        )
         return self._contador
 
-    def update(self, task_id: TaskID, *, advance: float | None = None, completed: float | None = None) -> None:
+    def update(
+        self,
+        task_id: TaskID,
+        *,
+        advance: float | None = None,
+        completed: float | None = None,
+    ) -> None:
         tarea = self._tasks[task_id]
         if advance is not None:
             tarea.completed += advance
         if completed is not None:
             tarea.completed = completed
 
-    def advance(self, task_id: TaskID, amount: float = 1.0) -> None:  # pragma: no cover - trivial
+    def advance(
+        self, task_id: TaskID, amount: float = 1.0
+    ) -> None:  # pragma: no cover - trivial
         self.update(task_id, advance=amount)
 
     def __enter__(self) -> "Progress":  # pragma: no cover - trivial

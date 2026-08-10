@@ -21,4 +21,3 @@ def test_import_cobra_transpilers_without_tree_sitter(monkeypatch):
 
     assert hasattr(tr, "BaseTranspiler")
     assert tr.BaseReverseTranspiler.__name__ == "BaseReverseTranspiler"
-

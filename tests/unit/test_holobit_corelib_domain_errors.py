@@ -14,16 +14,24 @@ def holobit_module():
     return modulo
 
 
-def test_deserializar_holobit_retorna_error_dominio_en_json_invalido(holobit_module) -> None:
+def test_deserializar_holobit_retorna_error_dominio_en_json_invalido(
+    holobit_module,
+) -> None:
     with pytest.raises(holobit_module.ErrorHolobit, match="JSON válido"):
         holobit_module.deserializar_holobit("{json_invalido")
 
 
-def test_adaptador_traduce_error_runtime_sdk_a_error_dominio(monkeypatch: pytest.MonkeyPatch, holobit_module) -> None:
+def test_adaptador_traduce_error_runtime_sdk_a_error_dominio(
+    monkeypatch: pytest.MonkeyPatch, holobit_module
+) -> None:
     class _Boom(Exception):
         pass
 
-    monkeypatch.setattr(holobit_module, "_SDKHolobit", lambda *_args, **_kwargs: (_ for _ in ()).throw(_Boom("sdk raw")))
+    monkeypatch.setattr(
+        holobit_module,
+        "_SDKHolobit",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(_Boom("sdk raw")),
+    )
 
     with pytest.raises(holobit_module.ErrorHolobit, match="runtime de Cobra"):
         holobit_module.serializar_holobit({"tipo": "holobit", "valores": [1, 2, 3]})
@@ -40,7 +48,9 @@ def test_adaptador_traduce_error_runtime_sdk_a_error_dominio(monkeypatch: pytest
         [1, True, 3],
     ],
 )
-def test_crear_holobit_rechaza_entradas_invalidas_y_tipos_mixtos(holobit_module, entrada) -> None:
+def test_crear_holobit_rechaza_entradas_invalidas_y_tipos_mixtos(
+    holobit_module, entrada
+) -> None:
     with pytest.raises(TypeError):
         holobit_module.crear_holobit(entrada)
 
@@ -50,13 +60,15 @@ def test_crear_holobit_rechaza_entradas_invalidas_y_tipos_mixtos(holobit_module,
     [
         "",
         "{",
-        "{\"tipo\":\"holobit\"",
-        "{\"tipo\":\"holobit\",\"valores\":[1],}",
-        "{\"tipo\":\"otro\",\"valores\":[1]}",
-        "{\"tipo\":\"holobit\",\"valores\":\"1,2\"}",
+        '{"tipo":"holobit"',
+        '{"tipo":"holobit","valores":[1],}',
+        '{"tipo":"otro","valores":[1]}',
+        '{"tipo":"holobit","valores":"1,2"}',
     ],
 )
-def test_deserializar_holobit_rechaza_payloads_corruptos_o_invalidos(holobit_module, payload) -> None:
+def test_deserializar_holobit_rechaza_payloads_corruptos_o_invalidos(
+    holobit_module, payload
+) -> None:
     with pytest.raises((TypeError, holobit_module.ErrorHolobit)):
         holobit_module.deserializar_holobit(payload)
 

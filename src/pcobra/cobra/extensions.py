@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-
 COBRA_SOURCE_EXTENSION = ".cobra"
 COBRA_PACKAGE_EXTENSION = ".co"
 

@@ -80,7 +80,12 @@ def test_policy_rechaza_holobit_sdk_en_usar():
 
 def test_internals_no_se_exportan_en_public_api():
     exports = set(holobit.__all__)
-    for bloqueado in ("Holobit", "_SDKHolobit", "_validar_estructura_holobit", "holobit_sdk"):
+    for bloqueado in (
+        "Holobit",
+        "_SDKHolobit",
+        "_validar_estructura_holobit",
+        "holobit_sdk",
+    ):
         assert bloqueado not in exports
 
 
@@ -94,7 +99,9 @@ def test_internals_no_se_exportan_en_public_api():
         {"tipo": "holobit", "valores": [1, "Holobit"]},
     ],
 )
-def test_validar_holobit_rechaza_payloads_fuera_del_contrato_serializable(estructura_invalida):
+def test_validar_holobit_rechaza_payloads_fuera_del_contrato_serializable(
+    estructura_invalida,
+):
     assert holobit.validar_holobit(estructura_invalida) is False
 
 

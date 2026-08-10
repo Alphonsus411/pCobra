@@ -113,6 +113,7 @@ def test_transpilador_holobit():
     resultado = t.generate_code(ast)
     assert resultado == "let miHolobit = holobit(vec![0.8, -0.5, 1.2]);"
 
+
 def test_transpilador_clase():
     metodo = NodoMetodo("saludar", ["self"], [NodoAsignacion("x", 1)])
     ast = [NodoClase("Persona", [metodo])]
@@ -165,15 +166,20 @@ def test_transpilador_switch():
     )
     assert resultado == esperado
 
+
 def test_transpilador_switch_patron_guardia():
-    patron_interno = NodoPattern([
-        NodoPattern(NodoIdentificador("y")),
-        NodoPattern("_"),
-    ])
-    patron_principal = NodoPattern([
-        NodoPattern(NodoIdentificador("x")),
-        patron_interno,
-    ])
+    patron_interno = NodoPattern(
+        [
+            NodoPattern(NodoIdentificador("y")),
+            NodoPattern("_"),
+        ]
+    )
+    patron_principal = NodoPattern(
+        [
+            NodoPattern(NodoIdentificador("x")),
+            patron_interno,
+        ]
+    )
     caso = NodoCase(
         NodoGuard(patron_principal, NodoValor("x > y")),
         [NodoAsignacion("z", NodoValor(1))],
@@ -198,6 +204,7 @@ def test_transpilador_switch_patron_guardia():
         + "}"
     )
     assert resultado == esperado
+
 
 def test_try_catch_result():
     nodo = NodoTryCatch(
@@ -296,8 +303,7 @@ def test_obtener_valor_listas_diccionarios():
     t = TranspiladorRust()
     resultado = t.generate_code(ast)
     esperado = (
-        "let a = vec![1, 2];\n"
-        + "let b = std::collections::HashMap::from([(x, 1)]);"
+        "let a = vec![1, 2];\n" + "let b = std::collections::HashMap::from([(x, 1)]);"
     )
     assert resultado == esperado
 
@@ -337,4 +343,3 @@ def test_transpilador_clase_generica_rust():
         + "}"
     )
     assert resultado == esperado
-

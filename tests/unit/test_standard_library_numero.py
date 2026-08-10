@@ -8,7 +8,6 @@ from types import ModuleType
 import numpy as np
 import pytest
 
-
 sys.modules.setdefault("httpx", ModuleType("httpx"))
 
 

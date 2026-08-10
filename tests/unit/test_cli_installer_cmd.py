@@ -156,9 +156,7 @@ def test_installer_build_mensajes_claros(
     monkeypatch.setattr(cobra_installer, "build_project", fake_build_project)
     command = InstallerCommandV2()
     parser = _registered_parser(command)
-    args = parser.parse_args(
-        ["installer", "build", str(tmp_path), "--target", "linux"]
-    )
+    args = parser.parse_args(["installer", "build", str(tmp_path), "--target", "linux"])
 
     assert command.run(args) == int(exit_code)
     assert expected in capsys.readouterr().out
@@ -189,9 +187,7 @@ def test_installer_build_muestra_conflicto_transitivo_con_cadena(
     monkeypatch.setattr(cobra_installer, "build_project", fake_build_project)
     command = InstallerCommandV2()
     parser = _registered_parser(command)
-    args = parser.parse_args(
-        ["installer", "build", str(tmp_path), "--target", "linux"]
-    )
+    args = parser.parse_args(["installer", "build", str(tmp_path), "--target", "linux"])
 
     assert command.run(args) == int(CobraExitCode.VERSION_CONFLICT)
     output = capsys.readouterr().out

@@ -25,30 +25,37 @@ def test_kernel_reports_generic_error(monkeypatch):
 
     ts_mod = types.ModuleType("tree_sitter_languages")
     ts_mod.get_parser = lambda lang: types.SimpleNamespace(
-        parse=lambda b: types.SimpleNamespace(root_node=types.SimpleNamespace(children=[], is_named=False))
+        parse=lambda b: types.SimpleNamespace(
+            root_node=types.SimpleNamespace(children=[], is_named=False)
+        )
     )
     sys.modules.setdefault("tree_sitter_languages", ts_mod)
 
     transp_mod = types.ModuleType("cobra.transpilers.transpiler.to_python")
+
     class FakeTranspilador:
         def generate_code(self, ast):
             return "print('hola')"
+
     transp_mod.TranspiladorPython = FakeTranspilador
-    sys.modules.setdefault(
-        "cobra.transpilers.transpiler.to_python", transp_mod
-    )
+    sys.modules.setdefault("cobra.transpilers.transpiler.to_python", transp_mod)
 
     core_mod = types.ModuleType("cobra.core")
+
     class DummyLexer:
         def __init__(self, code):
             pass
+
         def tokenizar(self):
             return []
+
     class DummyParser:
         def __init__(self, tokens):
             pass
+
         def parsear(self):
             return []
+
     core_mod.Lexer = DummyLexer
     core_mod.Parser = DummyParser
     core_mod.utils = types.SimpleNamespace(PALABRAS_RESERVADAS=[])
@@ -59,11 +66,14 @@ def test_kernel_reports_generic_error(monkeypatch):
     sys.modules["cobra.core.utils"] = core_mod.utils
 
     interp_mod = types.ModuleType("core.interpreter")
+
     class FakeInterpreter:
         def __init__(self):
             self.variables = {}
+
         def ejecutar_ast(self, ast):
             return None
+
     interp_mod.InterpretadorCobra = FakeInterpreter
     qualia_mod = types.ModuleType("core.qualia_bridge")
     qualia_mod.get_suggestions = lambda: []
@@ -104,4 +114,3 @@ def test_kernel_reports_generic_error(monkeypatch):
         and "Error al ejecutar código Python" in content.get("text", "")
         for msg_type, content in outputs
     )
-

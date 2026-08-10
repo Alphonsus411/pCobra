@@ -22,8 +22,7 @@ def test_transpilar_try_catch_throw():
     )
     codigo = TranspiladorPython().generate_code([nodo])
     esperado = (
-        IMPORTS
-        + "try:\n    raise Exception(1)\nexcept Exception as e:\n    print(e)\n"
+        IMPORTS + "try:\n    raise Exception(1)\nexcept Exception as e:\n    print(e)\n"
     )
     assert codigo == esperado
 
@@ -46,9 +45,7 @@ def test_transpilar_import(tmp_path):
     ],
     ids=("default-seguro", "seguro-explicito", "inseguro-explicito"),
 )
-def test_transpilar_usar_respeta_contrato_safe_mode(
-    transpilador, safe_mode_esperado
-):
+def test_transpilar_usar_respeta_contrato_safe_mode(transpilador, safe_mode_esperado):
     nodo = NodoUsar("math")
     codigo = transpilador.generate_code([nodo])
     esperado = (

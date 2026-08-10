@@ -9,7 +9,6 @@ from pathlib import Path
 
 from packaging.requirements import Requirement
 
-
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -42,8 +41,7 @@ def test_wheel_preserva_dependencias_obligatorias_de_pyproject(tmp_path: Path) -
             name for name in wheel.namelist() if name.endswith(".dist-info/METADATA")
         ]
         assert len(metadata_paths) == 1, (
-            "El wheel debe contener un único *.dist-info/METADATA: "
-            f"{metadata_paths}"
+            "El wheel debe contener un único *.dist-info/METADATA: " f"{metadata_paths}"
         )
         metadata = BytesParser().parsebytes(wheel.read(metadata_paths[0]))
 

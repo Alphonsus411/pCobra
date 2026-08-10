@@ -92,7 +92,9 @@ def visit_funcion(self, nodo):
         self.usa_typing = True
         for tp in nodo.type_params:
             self.codigo += f"{self.obtener_indentacion()}{tp} = TypeVar('{tp}')\n"
-    self.codigo += f"{self.obtener_indentacion()}{prefijo} {nodo.nombre}({parametros}):\n"
+    self.codigo += (
+        f"{self.obtener_indentacion()}{prefijo} {nodo.nombre}({parametros}):\n"
+    )
     self.nivel_indentacion += 1
     if asincrona:
         self._async_function_depth += 1
@@ -108,9 +110,7 @@ def visit_funcion(self, nodo):
         self._defer_stack.append(nombre_pila)
         try:
             self.usa_contextlib = True
-            self.codigo += (
-                f"{self.obtener_indentacion()}with contextlib.ExitStack() as {nombre_pila}:\n"
-            )
+            self.codigo += f"{self.obtener_indentacion()}with contextlib.ExitStack() as {nombre_pila}:\n"
             self.nivel_indentacion += 1
             try:
                 _emitir_cuerpo_funcion(self, nodo.cuerpo)

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+
 def visit_enum(self, nodo):
     """Genera la definición de un ``enum`` sencillo."""
     self.codigo += f"{self.obtener_indentacion()}class {nodo.nombre}:\n"

@@ -43,9 +43,7 @@ def test_validate_file_ok(tmp_path):
 
 
 @pytest.mark.parametrize("extension", [".co", ".txt", ".py"])
-def test_validate_file_rechaza_archivos_que_no_son_fuente_cobra(
-    tmp_path, extension
-):
+def test_validate_file_rechaza_archivos_que_no_son_fuente_cobra(tmp_path, extension):
     archivo = tmp_path / f"programa{extension}"
     archivo.write_text("imprimir('no ejecutar')\n", encoding="utf-8")
 

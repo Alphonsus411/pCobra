@@ -26,7 +26,9 @@ def _spawn(args, extra_env=None):
     )
 
 
-@pytest.mark.skipif(sys.platform == "win32", reason="pexpect no es compatible con Windows")
+@pytest.mark.skipif(
+    sys.platform == "win32", reason="pexpect no es compatible con Windows"
+)
 def test_ejecutar_modo_normal():
     child = _spawn("ejecutar tests/data/ejemplo.cobra")
     child.expect("hola")
@@ -91,7 +93,9 @@ def test_jupyter_command(monkeypatch):
     assert comando.run(argumentos) == 1
 
 
-@pytest.mark.skipif(sys.platform == "win32", reason="pexpect no es compatible con Windows")
+@pytest.mark.skipif(
+    sys.platform == "win32", reason="pexpect no es compatible con Windows"
+)
 def test_docs_command():
     if not shutil.which("sphinx-build") or not shutil.which("sphinx-apidoc"):
         pytest.skip("Sphinx no disponible")
@@ -102,9 +106,13 @@ def test_docs_command():
     assert child.exitstatus == 0
 
 
-@pytest.mark.skipif(sys.platform == "win32", reason="pexpect no es compatible con Windows")
+@pytest.mark.skipif(
+    sys.platform == "win32", reason="pexpect no es compatible con Windows"
+)
 def test_ejecutar_sandbox():
-    child = _spawn("ejecutar tests/data/ejemplo.cobra --sandbox", {"PEXPECT_TESTING": "1"})
+    child = _spawn(
+        "ejecutar tests/data/ejemplo.cobra --sandbox", {"PEXPECT_TESTING": "1"}
+    )
     child.expect("hola")
     child.expect(pexpect.EOF)
     child.wait()

@@ -40,7 +40,9 @@ class LegacyImportVisitor(ast.NodeVisitor):
             if target in LEGACY_ROOT_MODULES or target.startswith(
                 tuple(f"{legacy}." for legacy in LEGACY_ROOT_MODULES)
             ):
-                self.violations.append((node.lineno, f"import legacy no permitido: {target}"))
+                self.violations.append(
+                    (node.lineno, f"import legacy no permitido: {target}")
+                )
         self.generic_visit(node)
 
     def visit_ImportFrom(self, node: ast.ImportFrom) -> None:  # noqa: N802
@@ -52,7 +54,9 @@ class LegacyImportVisitor(ast.NodeVisitor):
         if module in LEGACY_ROOT_MODULES or module.startswith(
             tuple(f"{legacy}." for legacy in LEGACY_ROOT_MODULES)
         ):
-            self.violations.append((node.lineno, f"import legacy no permitido: from {module}"))
+            self.violations.append(
+                (node.lineno, f"import legacy no permitido: from {module}")
+            )
         self.generic_visit(node)
 
 
@@ -93,7 +97,11 @@ def find_violations(root: Path = ROOT) -> list[str]:
             if path_is_allowed:
                 # Para tests mantenemos imports legacy sin bloqueo durante transición.
                 # Para shims runtime exigimos marcador explícito de compatibilidad.
-                if rel.parts[:2] in (("src", "cobra"), ("src", "core"), ("src", "bindings")):
+                if rel.parts[:2] in (
+                    ("src", "cobra"),
+                    ("src", "core"),
+                    ("src", "bindings"),
+                ):
                     if not has_compat_marker:
                         failures.append(
                             f"{rel}: shim permitido sin marcador `{COMPAT_MARKER}` en cabecera"
@@ -113,7 +121,9 @@ def find_violations(root: Path = ROOT) -> list[str]:
 
 def main() -> int:
     if not any((ROOT / item).exists() for item in SCAN_ROOTS):
-        print("⚠️ Lint import-resolution-contract: no existen src/tests/scripts, se omite.")
+        print(
+            "⚠️ Lint import-resolution-contract: no existen src/tests/scripts, se omite."
+        )
         return 0
 
     failures = find_violations(ROOT)

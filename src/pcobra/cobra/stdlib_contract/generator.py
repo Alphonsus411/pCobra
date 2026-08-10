@@ -10,7 +10,7 @@ from pcobra.cobra.stdlib_contract.base import ContractDescriptor
 
 
 def _toml_array(values: tuple[str, ...]) -> str:
-    return "[" + ", ".join(f'\"{value}\"' for value in values) + "]"
+    return "[" + ", ".join(f'"{value}"' for value in values) + "]"
 
 
 def render_manifest(contract: ContractDescriptor) -> str:
@@ -91,7 +91,9 @@ def render_contract_markdown() -> str:
         for coverage in descriptor.coverage:
             for backend, level in coverage.backend_levels.items():
                 if level == "partial":
-                    partial_rows.append(f"{coverage.function.rsplit('.', 1)[-1]}:{backend}")
+                    partial_rows.append(
+                        f"{coverage.function.rsplit('.', 1)[-1]}:{backend}"
+                    )
         limits = ", ".join(partial_rows) if partial_rows else "-"
         summary_rows.append(
             "| "
@@ -145,7 +147,15 @@ def render_contract_markdown() -> str:
         )
         for export in descriptor.public_exports:
             lines.append(f"| `{export.alias}` | `{export.source_path}` |")
-        lines.extend(("", "### Cobertura por función", "", "| Función | Backend | Nivel |", "|---|---|---|"))
+        lines.extend(
+            (
+                "",
+                "### Cobertura por función",
+                "",
+                "| Función | Backend | Nivel |",
+                "|---|---|---|",
+            )
+        )
         for coverage in descriptor.coverage:
             for backend, level in coverage.backend_levels.items():
                 lines.append(f"| `{coverage.function}` | `{backend}` | `{level}` |")
@@ -162,7 +172,9 @@ def sync_contract_artifacts(
     """Sincroniza manifiestos TOML y matriz única (Markdown + JSON)."""
     contract_dir.mkdir(parents=True, exist_ok=True)
     for descriptor in CONTRACTS:
-        (contract_dir / descriptor.module).write_text(render_manifest(descriptor), encoding="utf-8")
+        (contract_dir / descriptor.module).write_text(
+            render_manifest(descriptor), encoding="utf-8"
+        )
 
     markdown = render_contract_markdown()
     matrix = build_contract_matrix()

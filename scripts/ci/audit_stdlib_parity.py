@@ -27,7 +27,6 @@ if str(SRC) not in sys.path:
 from pcobra.cobra.stdlib_contract import CONTRACTS  # noqa: E402
 
 
-
 @dataclass(frozen=True)
 class CoverageRow:
     module: str
@@ -42,11 +41,15 @@ class CoverageRow:
 def _build_rows() -> list[CoverageRow]:
     rows: list[CoverageRow] = []
     for contract in CONTRACTS:
-        coverage_by_function = {item.function: item.backend_levels for item in contract.coverage}
+        coverage_by_function = {
+            item.function: item.backend_levels for item in contract.coverage
+        }
         for function in contract.public_api:
             levels = coverage_by_function.get(function)
             if levels is None:
-                raise RuntimeError(f"{contract.module}: cobertura faltante para {function}")
+                raise RuntimeError(
+                    f"{contract.module}: cobertura faltante para {function}"
+                )
 
             row = CoverageRow(
                 module=contract.module,
@@ -71,7 +74,9 @@ def _build_web_notes(rows: list[CoverageRow]) -> dict[str, str]:
     fallback_full = [
         row.function
         for row in web_rows
-        if row.primary_backend == "javascript" and row.javascript == "partial" and row.python == "full"
+        if row.primary_backend == "javascript"
+        and row.javascript == "partial"
+        and row.python == "full"
     ]
 
     notes: dict[str, str] = {}
@@ -92,7 +97,9 @@ def _render_table(rows: list[CoverageRow]) -> list[str]:
         "|---|---|---|---|---|---|---|",
     ]
     for row in rows:
-        notes = web_notes.get(row.function, row.notes) if row.module == "cobra.web" else "-"
+        notes = (
+            web_notes.get(row.function, row.notes) if row.module == "cobra.web" else "-"
+        )
         lines.append(
             "| "
             + " | ".join(
@@ -116,7 +123,9 @@ def _render_web_summary(rows: list[CoverageRow]) -> list[str]:
     fallback_full = [
         row.function
         for row in web_rows
-        if row.primary_backend == "javascript" and row.javascript == "partial" and row.python == "full"
+        if row.primary_backend == "javascript"
+        and row.javascript == "partial"
+        and row.python == "full"
     ]
     fallback_list = ", ".join(f"`{fn}`" for fn in fallback_full)
     return [

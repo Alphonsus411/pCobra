@@ -16,7 +16,6 @@ from __future__ import annotations
 from importlib import import_module
 from typing import Any
 
-
 _TOKEN_CLASS: type | None = None
 _TOKEN_TYPE_ENUM: type | None = None
 

@@ -65,9 +65,7 @@ def test_parser_mientras():
 
 @pytest.mark.timeout(5)
 def test_parser_intentar_capturar():
-    codigo = (
-        "intentar:\n    lanzar 'err'\ncapturar e:\n    imprimir(e)\nfin"
-    )
+    codigo = "intentar:\n    lanzar 'err'\ncapturar e:\n    imprimir(e)\nfin"
     tokens = Lexer(codigo).analizar_token()
     ast = Parser(tokens).parsear()
     assert repr(ast) == repr(crear_ast_try_catch())

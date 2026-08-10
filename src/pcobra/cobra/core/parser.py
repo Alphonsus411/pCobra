@@ -74,7 +74,6 @@ from pcobra.cobra.core.ast_nodes import (
     NodoBloque,
 )
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -83,9 +82,7 @@ ALIAS_DECLARACION_CLASE = (
     TipoToken.ESTRUCTURA,
     TipoToken.REGISTRO,
 )
-ALIAS_DECLARACION_ENUM = (
-    TipoToken.ENUMERACION,
-)
+ALIAS_DECLARACION_ENUM = (TipoToken.ENUMERACION,)
 
 TOKEN_A_LEXEMA = {
     TipoToken.CLASE: "clase",
@@ -233,12 +230,8 @@ class ClassicParser:
         token = self.token_actual()
         if token.tipo not in tipos_validos:
             alias_permitidos = [TOKEN_A_LEXEMA[t] for t in tipos_validos]
-            esperado = self._formatear_lista_palabras(
-                alias_permitidos, conjuncion="o"
-            )
-            raise ParserError(
-                f"Se esperaba {esperado} para declarar {descripcion}"
-            )
+            esperado = self._formatear_lista_palabras(alias_permitidos, conjuncion="o")
+            raise ParserError(f"Se esperaba {esperado} para declarar {descripcion}")
 
         self.avanzar()
 
@@ -914,14 +907,21 @@ class ClassicParser:
         # Si no es una cadena, debe ser una ruta de módulo con identificadores separados por puntos.
         # Un solo identificador sin comillas no es válido.
         if self.token_actual().tipo != TipoToken.IDENTIFICADOR:
-            raise ParserError("Se esperaba una ruta de módulo entre comillas o identificadores separados por puntos")
+            raise ParserError(
+                "Se esperaba una ruta de módulo entre comillas o identificadores separados por puntos"
+            )
 
         # Verificar si es un identificador simple sin puntos (que ahora es un error)
         # o el inicio de una ruta con puntos.
         # Para verificar si es un identificador simple, necesitamos mirar el siguiente token.
         # Si el siguiente token no es un punto, entonces es un identificador simple.
-        if self.token_siguiente() is None or self.token_siguiente().tipo != TipoToken.PUNTO:
-            raise ParserError("Se esperaba una ruta de módulo entre comillas (ej. 'usar \"modulo\"') o identificadores separados por puntos (ej. 'usar modulo.submodulo'). Un solo identificador sin comillas no es válido.")
+        if (
+            self.token_siguiente() is None
+            or self.token_siguiente().tipo != TipoToken.PUNTO
+        ):
+            raise ParserError(
+                "Se esperaba una ruta de módulo entre comillas (ej. 'usar \"modulo\"') o identificadores separados por puntos (ej. 'usar modulo.submodulo'). Un solo identificador sin comillas no es válido."
+            )
 
         partes = [self.token_actual().valor]
         self.comer(TipoToken.IDENTIFICADOR)
@@ -1240,10 +1240,9 @@ class ClassicParser:
                 raise ParserError("Se esperaba un identificador luego de 'como'")
             alias = self.token_actual().valor
             self.comer(TipoToken.IDENTIFICADOR)
-        if (
-            alias_token is not None
-            and (False
-                 or (token_con.tipo == TipoToken.CON and alias_token.tipo == TipoToken.COMO))
+        if alias_token is not None and (
+            False
+            or (token_con.tipo == TipoToken.CON and alias_token.tipo == TipoToken.COMO)
         ):
             expresion_entrada = f"{token_con.valor} ... {alias_token.valor}"
             self.registrar_advertencia(

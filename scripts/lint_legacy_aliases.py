@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Auditoría de mantenimiento: detecta aliases legacy y extras retirados fuera de CI canónico."""
+
 from __future__ import annotations
 
 import argparse
@@ -50,13 +51,15 @@ IGNORED_PATH_PREFIXES = (
     "docs/frontend/api/",
 )
 
-LEGACY_ALIAS_TERMS = tuple(sorted(alias for alias, _ in FORBIDDEN_PUBLIC_TARGET_ALIASES))
+LEGACY_ALIAS_TERMS = tuple(
+    sorted(alias for alias, _ in FORBIDDEN_PUBLIC_TARGET_ALIASES)
+)
 LEGACY_ALIAS_GROUP = "|".join(re.escape(term) for term in LEGACY_ALIAS_TERMS)
 LEGACY_OPTION_GROUP = r"--a"
 
 CONFIG_ALIAS_PATTERNS = [
     re.compile(rf"(?m)^\s*(?:{LEGACY_ALIAS_GROUP})\s*="),
-    re.compile(rf'''(?m)["'](?:{LEGACY_ALIAS_GROUP})["']\s*:'''),
+    re.compile(rf"""(?m)["'](?:{LEGACY_ALIAS_GROUP})["']\s*:"""),
 ]
 
 PUBLIC_ALIAS_PATTERNS = [
@@ -73,7 +76,9 @@ CLI_HELP_OR_SNIPPET_PATTERNS = [
     re.compile(
         rf"(?i)(?:aliases?\s+legacy|alias(?:es)?\s+retirad[oa]s?|abreviaturas?\s+hist[oó]ricas?)[^\n]*\b({LEGACY_ALIAS_GROUP})\b"
     ),
-    re.compile(rf"(?i)(?:cobra\s+(?:compilar|transpilar-inverso)|--(?:tipo|tipos|backend|destino|origen))([^\n]*\s{LEGACY_OPTION_GROUP})(?![\w-])"),
+    re.compile(
+        rf"(?i)(?:cobra\s+(?:compilar|transpilar-inverso)|--(?:tipo|tipos|backend|destino|origen))([^\n]*\s{LEGACY_OPTION_GROUP})(?![\w-])"
+    ),
 ]
 
 GENERAL_PUBLIC_ALIAS_TOKEN_PATTERNS = [
@@ -193,7 +198,10 @@ def main(argv: list[str] | None = None) -> int:
                             )
                             break
                         else:
-                            if any(fragment in rel for fragment in NARRATIVE_EXCEPTION_PATH_FRAGMENTS):
+                            if any(
+                                fragment in rel
+                                for fragment in NARRATIVE_EXCEPTION_PATH_FRAGMENTS
+                            ):
                                 continue
                             for pattern in FORBIDDEN_PUBLIC_NARRATIVE_PATTERNS:
                                 match = pattern.search(line_for_check)
@@ -205,12 +213,16 @@ def main(argv: list[str] | None = None) -> int:
                                 break
 
     if errors:
-        print("Se detectaron aliases legacy o extras retirados (auditoría de mantenimiento):")
+        print(
+            "Se detectaron aliases legacy o extras retirados (auditoría de mantenimiento):"
+        )
         for error in errors:
             print(f"- {error}")
         if args.fail_on_findings:
             return 1
-        print("INFO: modo maintenance sin bloqueo (use --fail-on-findings para modo estricto).")
+        print(
+            "INFO: modo maintenance sin bloqueo (use --fail-on-findings para modo estricto)."
+        )
         return 0
 
     print("OK: no se detectaron aliases legacy ni extras retirados en rutas vigiladas.")

@@ -6,10 +6,16 @@ from types import SimpleNamespace
 import pytest
 
 from pcobra.cobra_installer import idle_bridge
-from pcobra.cobra_installer.project import BuildOptions, BuildResult, CobraInstallerError
+from pcobra.cobra_installer.project import (
+    BuildOptions,
+    BuildResult,
+    CobraInstallerError,
+)
 
 
-def test_package_current_project_convierte_opciones_idle_e_invoca_builder(monkeypatch, tmp_path: Path) -> None:
+def test_package_current_project_convierte_opciones_idle_e_invoca_builder(
+    monkeypatch, tmp_path: Path
+) -> None:
     calls = []
     progress = []
     dist_dir = tmp_path / "dist"
@@ -65,12 +71,16 @@ def test_package_current_project_convierte_opciones_idle_e_invoca_builder(monkey
     ]
 
 
-def test_package_current_project_acepta_objeto_simple_de_opciones(monkeypatch, tmp_path: Path) -> None:
+def test_package_current_project_acepta_objeto_simple_de_opciones(
+    monkeypatch, tmp_path: Path
+) -> None:
     captured = []
 
     def fake_build_project(_project_path, options):
         captured.append(options)
-        return BuildResult(success=True, executable_name="app", dist_dir=tmp_path / "dist")
+        return BuildResult(
+            success=True, executable_name="app", dist_dir=tmp_path / "dist"
+        )
 
     monkeypatch.setattr(idle_bridge, "build_project", fake_build_project)
 
@@ -86,7 +96,9 @@ def test_package_current_project_acepta_objeto_simple_de_opciones(monkeypatch, t
     assert captured[0].install_pyinstaller is True
 
 
-def test_package_current_project_traduce_error_controlado(monkeypatch, tmp_path: Path) -> None:
+def test_package_current_project_traduce_error_controlado(
+    monkeypatch, tmp_path: Path
+) -> None:
     errors = []
 
     def fake_build_project(_project_path, _options):
@@ -95,30 +107,34 @@ def test_package_current_project_traduce_error_controlado(monkeypatch, tmp_path:
     monkeypatch.setattr(idle_bridge, "build_project", fake_build_project)
 
     with pytest.raises(RuntimeError, match="No se pudo empaquetar"):
-        idle_bridge.package_current_project(
-            tmp_path, {}, error_callback=errors.append
-        )
+        idle_bridge.package_current_project(tmp_path, {}, error_callback=errors.append)
 
-    assert errors == [
-        "No se pudo empaquetar el proyecto Cobra: no existe main.cobra"
-    ]
+    assert errors == ["No se pudo empaquetar el proyecto Cobra: no existe main.cobra"]
 
 
-def test_package_from_idle_es_alias_compatible_con_kwargs(monkeypatch, tmp_path: Path) -> None:
+def test_package_from_idle_es_alias_compatible_con_kwargs(
+    monkeypatch, tmp_path: Path
+) -> None:
     captured = []
 
-    def fake_package_current_project(project_root, ui_options, progress_callback, error_callback):
+    def fake_package_current_project(
+        project_root, ui_options, progress_callback, error_callback
+    ):
         captured.append((project_root, ui_options, progress_callback, error_callback))
-        return idle_bridge.IdlePackageResult(tmp_path / "dist" / "demo", tmp_path / "dist")
+        return idle_bridge.IdlePackageResult(
+            tmp_path / "dist" / "demo", tmp_path / "dist"
+        )
 
-    monkeypatch.setattr(idle_bridge, "package_current_project", fake_package_current_project)
+    monkeypatch.setattr(
+        idle_bridge, "package_current_project", fake_package_current_project
+    )
 
-    result = idle_bridge.package_from_idle(tmp_path, {"nombre": "demo"}, objetivo="linux")
+    result = idle_bridge.package_from_idle(
+        tmp_path, {"nombre": "demo"}, objetivo="linux"
+    )
 
     assert result.dist_dir == tmp_path / "dist"
-    assert captured == [
-        (tmp_path, {"nombre": "demo", "objetivo": "linux"}, None, None)
-    ]
+    assert captured == [(tmp_path, {"nombre": "demo", "objetivo": "linux"}, None, None)]
 
 
 def test_package_current_project_muestra_conflicto_transitivo_comprensible(
@@ -137,9 +153,7 @@ def test_package_current_project_muestra_conflicto_transitivo_comprensible(
     monkeypatch.setattr(idle_bridge, "build_project", fake_build_project)
 
     with pytest.raises(RuntimeError) as exc_info:
-        idle_bridge.package_current_project(
-            tmp_path, {}, error_callback=errors.append
-        )
+        idle_bridge.package_current_project(tmp_path, {}, error_callback=errors.append)
 
     message = str(exc_info.value)
     assert "No se pudo empaquetar el proyecto Cobra" in message

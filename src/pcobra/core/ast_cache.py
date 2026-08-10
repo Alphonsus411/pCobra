@@ -100,7 +100,9 @@ def _get_node_classes() -> dict[str, type]:
     if _NODE_CLASSES is None:
         from . import ast_nodes as _ast_nodes
 
-        _NODE_CLASSES = {name: getattr(_ast_nodes, name) for name in AST_NODE_CLASS_NAMES}
+        _NODE_CLASSES = {
+            name: getattr(_ast_nodes, name) for name in AST_NODE_CLASS_NAMES
+        }
     return _NODE_CLASSES
 
 
@@ -276,7 +278,9 @@ def _load_fragment(hash_key: str, fragment_name: str) -> Any | None:
     return _decode_payload(serialized)
 
 
-def _store_fragment(hash_key: str, source: str, fragment_name: str, payload_obj: Any) -> None:
+def _store_fragment(
+    hash_key: str, source: str, fragment_name: str, payload_obj: Any
+) -> None:
     payload = _encode_payload(payload_obj)
 
     def _insert(conn):
@@ -303,9 +307,7 @@ def _store_fragment(hash_key: str, source: str, fragment_name: str, payload_obj:
 
     _with_connection(_insert)
     if logger.isEnabledFor(logging.DEBUG):
-        logger.debug(
-            "Fragmento '%s' almacenado para hash %s", fragment_name, hash_key
-        )
+        logger.debug("Fragmento '%s' almacenado para hash %s", fragment_name, hash_key)
 
 
 def obtener_tokens(codigo: str):

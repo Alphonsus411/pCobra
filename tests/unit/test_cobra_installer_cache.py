@@ -35,7 +35,9 @@ def test_put_escribe_en_cache_propia_y_clear_no_borra_cobrahub(tmp_path):
     _write(hub_cache / "dep-1.2.3.co", b"hub")
     cache = CobraInstallerCache(hub_cache_dir=hub_cache)
 
-    entry = cache.put("dep", "1.2.3", tmp_path / "source.co", expected_sha256=source_hash)
+    entry = cache.put(
+        "dep", "1.2.3", tmp_path / "source.co", expected_sha256=source_hash
+    )
     deleted = cache.clear("dep", "1.2.3")
 
     assert entry.path == hub_cache / "cobra-installer" / "dep-1.2.3.co"

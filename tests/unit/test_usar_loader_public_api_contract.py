@@ -6,7 +6,6 @@ import pytest
 from cobra import usar_loader
 from pcobra.core.usar_symbol_policy import sanear_simbolo_para_usar
 
-
 PROHIBIDOS = {"self", "append", "map", "filter", "unwrap", "expect"}
 
 
@@ -27,7 +26,10 @@ def test_usar_numero_expone_solo_callables_en_espanol() -> None:
     assert simbolos
     assert all("__" not in nombre for nombre in simbolos)
     assert not (simbolos & PROHIBIDOS)
-    assert all(hasattr(modulo, nombre) and callable(getattr(modulo, nombre)) for nombre in simbolos)
+    assert all(
+        hasattr(modulo, nombre) and callable(getattr(modulo, nombre))
+        for nombre in simbolos
+    )
     assert all("_" in nombre or nombre.isalpha() for nombre in simbolos)
 
 
@@ -38,7 +40,10 @@ def test_usar_texto_expone_solo_callables_en_espanol() -> None:
     assert simbolos
     assert all("__" not in nombre for nombre in simbolos)
     assert not (simbolos & PROHIBIDOS)
-    assert all(hasattr(modulo, nombre) and callable(getattr(modulo, nombre)) for nombre in simbolos)
+    assert all(
+        hasattr(modulo, nombre) and callable(getattr(modulo, nombre))
+        for nombre in simbolos
+    )
     assert all("_" in nombre or nombre.isalpha() for nombre in simbolos)
 
 
@@ -94,7 +99,9 @@ def test_stdlib_holobit_exporta_exactamente_api_permitida() -> None:
         "combinar",
         "medir",
     }
-    assert all(callable(getattr(stdlib_holobit, nombre)) for nombre in stdlib_holobit.__all__)
+    assert all(
+        callable(getattr(stdlib_holobit, nombre)) for nombre in stdlib_holobit.__all__
+    )
 
 
 def test_internals_holobit_sdk_no_importables_directo_desde_usar_loader() -> None:
@@ -107,11 +114,19 @@ def test_internals_holobit_sdk_no_importables_directo_desde_usar_loader() -> Non
 
 
 @pytest.mark.parametrize("nombre", ["numpy", "holobit_sdk"])
-def test_blocklist_se_aplica_antes_de_cualquier_import_dinamico(monkeypatch, nombre: str) -> None:
+def test_blocklist_se_aplica_antes_de_cualquier_import_dinamico(
+    monkeypatch, nombre: str
+) -> None:
     def _import_dinamico_no_permitido(*_args, **_kwargs):
-        raise AssertionError("No debe intentarse import dinámico para módulos bloqueados en `usar`.")
+        raise AssertionError(
+            "No debe intentarse import dinámico para módulos bloqueados en `usar`."
+        )
 
-    monkeypatch.setattr(usar_loader.importlib.util, "spec_from_file_location", _import_dinamico_no_permitido)
+    monkeypatch.setattr(
+        usar_loader.importlib.util,
+        "spec_from_file_location",
+        _import_dinamico_no_permitido,
+    )
 
     with pytest.raises(PermissionError) as excinfo:
         usar_loader.obtener_modulo(nombre)
@@ -120,7 +135,9 @@ def test_blocklist_se_aplica_antes_de_cualquier_import_dinamico(monkeypatch, nom
 
 
 @pytest.mark.parametrize("simbolo", sorted(PROHIBIDOS))
-def test_politica_de_simbolos_prohibidos_devuelve_codigo_y_mensaje(simbolo: str) -> None:
+def test_politica_de_simbolos_prohibidos_devuelve_codigo_y_mensaje(
+    simbolo: str,
+) -> None:
     resultado = sanear_simbolo_para_usar(simbolo, lambda: None)
     assert resultado.rechazado is True
     assert resultado.codigo == "cobra_public_equivalent"
@@ -135,7 +152,13 @@ def test_politica_bloquea_simbolos_sdk_holobit_en_superficie_usar(simbolo: str) 
     assert resultado.codigo in {"private_prefix", "cobra_public_equivalent"}
 
 
-@pytest.mark.parametrize("payload", ['{"tipo":"holobit","valores":[1,"Holobit"]}', '{"tipo":"holobit_sdk","valores":[1,2]}'])
+@pytest.mark.parametrize(
+    "payload",
+    [
+        '{"tipo":"holobit","valores":[1,"Holobit"]}',
+        '{"tipo":"holobit_sdk","valores":[1,2]}',
+    ],
+)
 def test_holobit_deserializar_bloquea_referencias_sdk(payload: str) -> None:
     modulo = usar_loader.obtener_modulo("holobit")
     with pytest.raises(TypeError):
@@ -157,8 +180,6 @@ def test_backends_legacy_no_se_cargan_en_startup_normal() -> None:
     assert not (legacy & set(sys.modules))
 
 
-
-
 def test_superficie_usar_no_expone_aliases_ni_internals_prohibidos() -> None:
     modulos = ("numero", "texto", "datos", "archivo")
     prohibidos_exactos = {"self", "append", "map", "filter", "unwrap", "expect"}
@@ -169,13 +190,15 @@ def test_superficie_usar_no_expone_aliases_ni_internals_prohibidos() -> None:
         simbolos = _simbolos_publicos(modulo)
 
         for simbolo in simbolos:
-            assert "__" not in simbolo, f"{nombre_modulo} exporta símbolo dunder: {simbolo}"
-            assert simbolo not in prohibidos_exactos, (
-                f"{nombre_modulo} exporta símbolo no permitido: {simbolo}"
-            )
-            assert simbolo not in prohibidos_internals, (
-                f"{nombre_modulo} exporta internals no permitidos: {simbolo}"
-            )
+            assert (
+                "__" not in simbolo
+            ), f"{nombre_modulo} exporta símbolo dunder: {simbolo}"
+            assert (
+                simbolo not in prohibidos_exactos
+            ), f"{nombre_modulo} exporta símbolo no permitido: {simbolo}"
+            assert (
+                simbolo not in prohibidos_internals
+            ), f"{nombre_modulo} exporta internals no permitidos: {simbolo}"
 
 
 def test_apertura_allowlist_archivo_existe_no_afecta_resolucion_publica() -> None:
@@ -217,12 +240,21 @@ def test_contrato_publico_backends_y_configuracion_publica_sin_extras() -> None:
     assert PUBLIC_BACKENDS == ("python", "javascript", "rust")
 
     contenido_pcobra_toml = Path("pcobra.toml").read_text(encoding="utf-8")
-    requeridos = re.search(r'required_targets\s*=\s*\[(.*?)\]', contenido_pcobra_toml, re.DOTALL)
+    requeridos = re.search(
+        r"required_targets\s*=\s*\[(.*?)\]", contenido_pcobra_toml, re.DOTALL
+    )
     assert requeridos is not None
-    assert requeridos.group(1).replace('"', "").replace(" ", "") == "python,javascript,rust"
+    assert (
+        requeridos.group(1).replace('"', "").replace(" ", "")
+        == "python,javascript,rust"
+    )
 
     contenido_readme = Path("README.md").read_text(encoding="utf-8")
-    assert "Backends oficiales públicos para `cobra build`: `python`, `javascript`, `rust`." in contenido_readme
+    assert (
+        "Backends oficiales públicos para `cobra build`: `python`, `javascript`, `rust`."
+        in contenido_readme
+    )
+
 
 def test_politica_publica_permanece_exactamente_python_javascript_rust() -> None:
     from pcobra.cobra.architecture.backend_policy import PUBLIC_BACKENDS

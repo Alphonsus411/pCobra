@@ -83,9 +83,7 @@ def test_resuelve_dependencia_cacheada_sin_cliente_remoto_y_lock_indica_cache(tm
     (tmp_path / "cobra.toml").write_text(
         '[dependencies]\ndep-cache = "1.2.3"\n', encoding="utf-8"
     )
-    (tmp_path / "main.cobra").write_text(
-        "usar dep-cache.modulo\n", encoding="utf-8"
-    )
+    (tmp_path / "main.cobra").write_text("usar dep-cache.modulo\n", encoding="utf-8")
 
     result = resolve_project_dependencies(
         tmp_path, resolver=CobraHubResolver(repository=repo, cache_dir=cache)
@@ -423,12 +421,6 @@ def test_detecta_conflicto_entre_dependencias_transitivas_y_explica_cadenas(tmp_
     message = str(exc_info.value)
     assert "Conflicto de versiones para compartida" in message
     assert "versiones incompatibles 1.0.0 y 2.0.0" in message
-    assert (
-        "Cadena existente: proyecto -> dep-a==1.0.0 -> compartida==1.0.0"
-        in message
-    )
-    assert (
-        "Cadena nueva: proyecto -> dep-b==1.0.0 -> compartida==2.0.0"
-        in message
-    )
+    assert "Cadena existente: proyecto -> dep-a==1.0.0 -> compartida==1.0.0" in message
+    assert "Cadena nueva: proyecto -> dep-b==1.0.0 -> compartida==2.0.0" in message
     assert not (tmp_path / "cobra.lock").exists()

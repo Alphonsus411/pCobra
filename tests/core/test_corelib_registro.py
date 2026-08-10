@@ -26,7 +26,9 @@ def test_configurar_registro_en_archivo_temporal(tmp_path) -> None:
         handler.flush()
 
     assert logger.level == logging.INFO
-    assert "INFO:pcobra.registro:mensaje portable" in destino.read_text(encoding="utf-8")
+    assert "INFO:pcobra.registro:mensaje portable" in destino.read_text(
+        encoding="utf-8"
+    )
 
 
 def test_configurar_nivel_invalido_lanza_value_error() -> None:

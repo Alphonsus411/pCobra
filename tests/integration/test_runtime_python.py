@@ -47,5 +47,7 @@ def test_holobit_operaciones_publicas_semantica_documentada():
     except TypeError:
         # Runtime parcial/fallback: la API puede rechazar graficado sin backend disponible.
         pass
-    assert holobit.combinar(hb, {"tipo": "holobit", "valores": [1, 2]})["valores"][-2:] == [1.0, 2.0]
+    assert holobit.combinar(hb, {"tipo": "holobit", "valores": [1, 2]})["valores"][
+        -2:
+    ] == [1.0, 2.0]
     assert holobit.medir(hb)["dimension"] == 3

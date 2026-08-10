@@ -10,11 +10,16 @@ from pcobra.cobra.packaging import MANIFEST_NAME
 
 def test_resolvedor_local_solo_declara_candidatos_cobra(tmp_path: Path) -> None:
     (tmp_path / "modulo.co").write_text("imprimir(13)", encoding="utf-8")
-    assert CobraImportResolver(project_root=tmp_path)._resolve_local_file_module("modulo") is None
+    assert (
+        CobraImportResolver(project_root=tmp_path)._resolve_local_file_module("modulo")
+        is None
+    )
 
     fuente = tmp_path / "modulo.cobra"
     fuente.write_text("imprimir(42)", encoding="utf-8")
-    resultado = CobraImportResolver(project_root=tmp_path)._resolve_local_file_module("modulo")
+    resultado = CobraImportResolver(project_root=tmp_path)._resolve_local_file_module(
+        "modulo"
+    )
     assert resultado is not None
     assert resultado.file_path == str(fuente.resolve())
 

@@ -24,8 +24,12 @@ def main() -> int:
         transpilers=build_official_transpilers(),
     )
 
-    print(f" - Python: {execution.report.python.status} ({execution.report.python.message})")
-    print(f" - Cobra: {execution.report.cobra.status} ({execution.report.cobra.message})")
+    print(
+        f" - Python: {execution.report.python.status} ({execution.report.python.message})"
+    )
+    print(
+        f" - Cobra: {execution.report.cobra.status} ({execution.report.cobra.message})"
+    )
 
     if execution.has_failures:
         print("🚨 Smoke de sintaxis con errores.")

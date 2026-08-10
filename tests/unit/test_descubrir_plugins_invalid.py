@@ -6,13 +6,18 @@ import importlib.metadata
 import cobra.cli as cobra_cli
 import cobra.cli.commands as cobra_cmds
 import cobra.cli.plugin_registry as cobra_reg
+
 sys.modules.setdefault("cli", cobra_cli)
 sys.modules.setdefault("cli.commands", cobra_cmds)
 sys.modules.setdefault("cli.plugin_registry", cobra_reg)
 
 import pytest
 
-from pcobra.cobra.cli.plugin import descubrir_plugins, configure_plugin_policy, PluginPolicyError
+from pcobra.cobra.cli.plugin import (
+    descubrir_plugins,
+    configure_plugin_policy,
+    PluginPolicyError,
+)
 from pcobra.cobra.cli.plugin_registry import obtener_registro, limpiar_registro
 from tests.fake_plugins import GoodPlugin, NotPlugin, BadInitPlugin
 

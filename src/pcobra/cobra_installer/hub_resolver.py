@@ -15,4 +15,5 @@ class CobraHubResolver(_HubResolver):
         except CobraHubError as exc:
             raise CobraInstallerError(str(exc)) from exc
 
+
 __all__ = ["CobraInstallerError", "CobraHubResolution", "CobraHubResolver"]

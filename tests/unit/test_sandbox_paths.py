@@ -34,7 +34,9 @@ def test_rechaza_rutas_absolutas_de_ambas_plataformas(monkeypatch, tmp_path, rut
         _sandbox_paths.resolver_ruta_existente(ruta)
 
 
-@pytest.mark.parametrize("ruta", ["../dato", "carpeta/../../dato", r"carpeta\..\..\dato"])
+@pytest.mark.parametrize(
+    "ruta", ["../dato", "carpeta/../../dato", r"carpeta\..\..\dato"]
+)
 def test_rechaza_componentes_de_traversal(monkeypatch, tmp_path, ruta):
     monkeypatch.setenv("COBRA_IO_BASE_DIR", str(tmp_path))
 
@@ -88,4 +90,7 @@ def test_modos_distinguen_existencia_del_objetivo(monkeypatch, tmp_path):
 
 
 def test_modulo_no_se_exporta_desde_corelibs():
-    assert "_sandbox_paths" not in __import__("pcobra.corelibs", fromlist=["__all__"]).__all__
+    assert (
+        "_sandbox_paths"
+        not in __import__("pcobra.corelibs", fromlist=["__all__"]).__all__
+    )

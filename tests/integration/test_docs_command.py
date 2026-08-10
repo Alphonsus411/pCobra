@@ -20,7 +20,9 @@ def fake_import(monkeypatch):
     monkeypatch.setattr(builtins, "__import__", _fake_import)
 
 
-def test_docs_command_sin_sphinx_no_falla_por_rutas(tmp_path, monkeypatch, capsys, fake_import):
+def test_docs_command_sin_sphinx_no_falla_por_rutas(
+    tmp_path, monkeypatch, capsys, fake_import
+):
     """Comprueba que la validación de rutas no falla si Sphinx falta."""
 
     docs_dir = tmp_path / "docs"

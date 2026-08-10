@@ -3,7 +3,10 @@ from types import SimpleNamespace
 
 import pytest
 
-from pcobra.cobra.cli.execution_pipeline import PipelineInput, ejecutar_pipeline_explicito
+from pcobra.cobra.cli.execution_pipeline import (
+    PipelineInput,
+    ejecutar_pipeline_explicito,
+)
 from pcobra.cobra.usar_loader import (
     descubrir_raiz_proyecto,
     obtener_cache_ast_import_cobra,
@@ -54,10 +57,10 @@ def test_formatear_ciclo_modulos_usa_rutas_relativas_en_subcarpetas(tmp_path):
     )
 
     assert (
-        cadena
-        == "utilidades/internas/a.cobra -> utilidades/internas/b.cobra -> "
+        cadena == "utilidades/internas/a.cobra -> utilidades/internas/b.cobra -> "
         "utilidades/internas/a.cobra"
     )
+
 
 def test_formatear_ciclo_modulos_fallback_canonico_fuera_de_project_root(tmp_path):
     proyecto = tmp_path / "app"
@@ -72,6 +75,7 @@ def test_formatear_ciclo_modulos_fallback_canonico_fuera_de_project_root(tmp_pat
     )
 
     assert cadena == f"{modulo.resolve()} -> {modulo.resolve()}"
+
 
 def test_descubrir_raiz_proyecto_prefiere_cobra_toml_desde_archivo_principal(tmp_path):
     proyecto = tmp_path / "app"
@@ -91,9 +95,7 @@ def test_descubrir_raiz_proyecto_usa_directorio_principal_sin_cobra_toml(tmp_pat
     assert descubrir_raiz_proyecto(None, principal) == tmp_path.resolve()
 
 
-def test_ejecucion_desde_cwd_externo_resuelve_usar_con_main_file(
-    monkeypatch, tmp_path
-):
+def test_ejecucion_desde_cwd_externo_resuelve_usar_con_main_file(monkeypatch, tmp_path):
     from pcobra.core.ast_nodes import NodoAsignacion, NodoValor
 
     proyecto = tmp_path / "app"
@@ -148,9 +150,7 @@ def test_usar_proyecto_respeta_superficie_controlada_de_import_utils(
         cargas.append(Path(ruta))
         return [NodoAsignacion("valor", NodoValor(7), declaracion=True)]
 
-    superficie_controlada = SimpleNamespace(
-        cargar_ast_modulo=fake_cargar_ast_modulo
-    )
+    superficie_controlada = SimpleNamespace(cargar_ast_modulo=fake_cargar_ast_modulo)
     monkeypatch.setattr(core_package, "import_utils", superficie_controlada)
 
     exports = usar_modulo(
@@ -271,7 +271,9 @@ def test_interpretador_usar_proyecto_cachea_por_ruta_canonica(monkeypatch, tmp_p
     assert list(interp._usar_module_cache) == [modulo.resolve()]
 
 
-def test_interpretador_usar_proyecto_detecta_ciclos_con_rutas_canonicas(monkeypatch, tmp_path):
+def test_interpretador_usar_proyecto_detecta_ciclos_con_rutas_canonicas(
+    monkeypatch, tmp_path
+):
     from pcobra.core.ast_nodes import NodoUsar
 
     proyecto = tmp_path / "app"
@@ -308,7 +310,9 @@ def test_interpretador_usar_proyecto_detecta_ciclos_con_rutas_canonicas(monkeypa
     assert interp._usar_loading_stack == []
 
 
-def test_interpretador_usar_proyecto_respeta_export_y_detecta_conflicto(monkeypatch, tmp_path):
+def test_interpretador_usar_proyecto_respeta_export_y_detecta_conflicto(
+    monkeypatch, tmp_path
+):
     import pytest
     from pcobra.core.ast_nodes import NodoAsignacion, NodoExport, NodoValor
 
@@ -352,7 +356,10 @@ def test_resolver_modulo_cobra_proyecto_resuelve_modulo_misma_carpeta(tmp_path):
     modulo = proyecto / "saludos.cobra"
     modulo.write_text("", encoding="utf-8")
 
-    assert resolver_modulo_cobra_proyecto("saludos", project_root=proyecto) == modulo.resolve()
+    assert (
+        resolver_modulo_cobra_proyecto("saludos", project_root=proyecto)
+        == modulo.resolve()
+    )
 
 
 def test_resolver_modulo_cobra_proyecto_resuelve_subcarpeta_con_puntos(tmp_path):
@@ -361,7 +368,10 @@ def test_resolver_modulo_cobra_proyecto_resuelve_subcarpeta_con_puntos(tmp_path)
     modulo.parent.mkdir(parents=True)
     modulo.write_text("", encoding="utf-8")
 
-    assert resolver_modulo_cobra_proyecto("utilidades.fechas", project_root=proyecto) == modulo.resolve()
+    assert (
+        resolver_modulo_cobra_proyecto("utilidades.fechas", project_root=proyecto)
+        == modulo.resolve()
+    )
 
 
 def test_resolver_modulo_cobra_proyecto_resuelve_modulo_anidado(tmp_path):
@@ -371,7 +381,8 @@ def test_resolver_modulo_cobra_proyecto_resuelve_modulo_anidado(tmp_path):
     modulo.write_text("", encoding="utf-8")
 
     assert (
-        resolver_modulo_cobra_proyecto("a.b.c", project_root=proyecto) == modulo.resolve()
+        resolver_modulo_cobra_proyecto("a.b.c", project_root=proyecto)
+        == modulo.resolve()
     )
 
 
@@ -494,7 +505,9 @@ def test_usar_modulo_repl_estricto_no_resuelve_nombre_simple_como_proyecto(
     )
 
 
-def test_interpretador_usar_proyecto_misma_carpeta_con_nombre_simple(monkeypatch, tmp_path):
+def test_interpretador_usar_proyecto_misma_carpeta_con_nombre_simple(
+    monkeypatch, tmp_path
+):
     proyecto = tmp_path / "app"
     proyecto.mkdir()
     (proyecto / "cobra.toml").write_text("[proyecto]\n", encoding="utf-8")
@@ -571,7 +584,10 @@ def test_interpretador_usar_proyecto_utilidades_fechas(monkeypatch, tmp_path):
     assert interp.variables["hoy"] == "2026-06-13"
     assert rutas_cargadas == [(modulo.resolve(), str(proyecto.resolve()))]
 
-def test_interpretador_usar_proyecto_mantiene_raiz_al_cambiar_cwd(monkeypatch, tmp_path):
+
+def test_interpretador_usar_proyecto_mantiene_raiz_al_cambiar_cwd(
+    monkeypatch, tmp_path
+):
     proyecto = tmp_path / "app"
     externo = tmp_path / "otro-cwd"
     externo.mkdir()
@@ -599,7 +615,9 @@ def test_interpretador_usar_proyecto_mantiene_raiz_al_cambiar_cwd(monkeypatch, t
     assert interp._project_root == proyecto.resolve()
 
 
-def test_interpretador_usar_proyecto_cachea_referencias_equivalentes(monkeypatch, tmp_path):
+def test_interpretador_usar_proyecto_cachea_referencias_equivalentes(
+    monkeypatch, tmp_path
+):
     from pcobra.core.ast_nodes import NodoAsignacion, NodoValor
 
     proyecto = tmp_path / "app"
@@ -627,8 +645,9 @@ def test_interpretador_usar_proyecto_cachea_referencias_equivalentes(monkeypatch
     assert interp.variables["valor"] == 1
 
 
-
-def test_resolver_ruta_canonica_modulo_cobra_proyecto_normaliza_project_root_equivalente(tmp_path):
+def test_resolver_ruta_canonica_modulo_cobra_proyecto_normaliza_project_root_equivalente(
+    tmp_path,
+):
     proyecto = tmp_path / "app"
     subdir = proyecto / "subdir"
     modulo = proyecto / "utilidades" / "fechas.cobra"
@@ -682,7 +701,10 @@ def test_usar_modulo_cachea_referencias_equivalentes_al_mismo_co(monkeypatch, tm
     assert cargas == [(modulo.resolve(), str(proyecto.resolve()))]
     assert list(obtener_cache_modulos_cobra_proyecto()) == [modulo.resolve()]
 
-def test_api_e_interpretador_aislan_cache_por_ejecucion_independiente(monkeypatch, tmp_path):
+
+def test_api_e_interpretador_aislan_cache_por_ejecucion_independiente(
+    monkeypatch, tmp_path
+):
     from pcobra.core.ast_nodes import NodoAsignacion, NodoValor
 
     proyecto = tmp_path / "app"
@@ -803,8 +825,6 @@ def test_interpretador_usar_proyecto_detecta_ciclo_indirecto(monkeypatch, tmp_pa
         interp.ejecutar_usar(SimpleNamespace(modulo="utilidades.internas.a"))
 
 
-
-
 def test_interpretador_usar_proyecto_detecta_ciclo_directo_en_root_con_mensaje_exacto(
     monkeypatch, tmp_path
 ):
@@ -827,7 +847,9 @@ def test_interpretador_usar_proyecto_detecta_ciclo_directo_en_root_con_mensaje_e
     with pytest.raises(ImportError) as excinfo:
         interp.ejecutar_usar(SimpleNamespace(modulo="a"))
 
-    assert str(excinfo.value) == "Ciclo de módulos detectado en usar: a.cobra -> a.cobra"
+    assert (
+        str(excinfo.value) == "Ciclo de módulos detectado en usar: a.cobra -> a.cobra"
+    )
     assert obtener_pila_carga_modulos_cobra_proyecto() == []
 
 
@@ -887,6 +909,7 @@ def test_usar_proyecto_limpia_pila_si_falla_cargar_ast_modulo(monkeypatch, tmp_p
         usar_modulo("a", project_root=proyecto, current_file=principal)
 
     assert obtener_pila_carga_modulos_cobra_proyecto() == []
+
 
 def test_interpretador_usar_proyecto_modulo_inexistente_muestra_nombre_y_ruta(tmp_path):
     import pytest
@@ -968,10 +991,9 @@ def test_resolver_modulo_cobra_proyecto_fallback_devuelve_ruta_canonica(
     ruta_modulo.unlink()
     monkeypatch.setattr(usar_loader, "CobraImportResolver", FakeResolver)
 
-    assert (
-        resolver_modulo_cobra_proyecto("utilidades.fechas", project_root=proyecto)
-        == ruta_modulo.resolve(strict=False)
-    )
+    assert resolver_modulo_cobra_proyecto(
+        "utilidades.fechas", project_root=proyecto
+    ) == ruta_modulo.resolve(strict=False)
 
 
 def test_import_archivo_co_mantiene_ejecutar_import(monkeypatch, tmp_path):
@@ -1223,8 +1245,12 @@ def test_import_archivo_co_y_usar_utilidades_fechas_conviven_sin_semantica_publi
         (fechas.resolve(), str(proyecto.resolve()), {proyecto.resolve()}),
     ]
 
+
 def test_validacion_modulo_proyecto_acepta_puntos():
-    assert validar_nombre_modulo_cobra_proyecto("utilidades.fechas") == ("utilidades", "fechas")
+    assert validar_nombre_modulo_cobra_proyecto("utilidades.fechas") == (
+        "utilidades",
+        "fechas",
+    )
 
 
 @pytest.mark.parametrize(
@@ -1255,7 +1281,9 @@ def test_validacion_modulo_proyecto_acepta_puntos():
         "externo privado",
     ],
 )
-def test_validacion_modulo_proyecto_rechaza_traversal_rutas_y_caracteres_prohibidos(nombre):
+def test_validacion_modulo_proyecto_rechaza_traversal_rutas_y_caracteres_prohibidos(
+    nombre,
+):
     with pytest.raises(ValueError):
         validar_nombre_modulo_cobra_proyecto(nombre)
 
@@ -1270,7 +1298,9 @@ def test_validacion_modulo_proyecto_rechaza_traversal_rutas_y_caracteres_prohibi
         "utilidades..fechas",
     ],
 )
-def test_resolver_modulo_cobra_proyecto_rechaza_intentos_posix_de_escape(tmp_path, nombre):
+def test_resolver_modulo_cobra_proyecto_rechaza_intentos_posix_de_escape(
+    tmp_path, nombre
+):
     proyecto = tmp_path / "app"
     proyecto.mkdir()
     externo = tmp_path / "externo.cobra"
@@ -1288,7 +1318,9 @@ def test_resolver_modulo_cobra_proyecto_rechaza_intentos_posix_de_escape(tmp_pat
         "a\\b",
     ],
 )
-def test_resolver_modulo_cobra_proyecto_rechaza_rutas_windows_sin_depender_de_windows(tmp_path, nombre):
+def test_resolver_modulo_cobra_proyecto_rechaza_rutas_windows_sin_depender_de_windows(
+    tmp_path, nombre
+):
     proyecto = tmp_path / "app"
     proyecto.mkdir()
 
@@ -1296,7 +1328,9 @@ def test_resolver_modulo_cobra_proyecto_rechaza_rutas_windows_sin_depender_de_wi
         resolver_modulo_cobra_proyecto(nombre, project_root=proyecto)
 
 
-def test_resolver_modulo_cobra_proyecto_no_devuelve_symlink_fuera_de_project_root(tmp_path):
+def test_resolver_modulo_cobra_proyecto_no_devuelve_symlink_fuera_de_project_root(
+    tmp_path,
+):
     proyecto = tmp_path / "app"
     proyecto.mkdir()
     externo = tmp_path / "externo.cobra"

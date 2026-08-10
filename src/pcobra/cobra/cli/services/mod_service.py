@@ -52,10 +52,18 @@ def ensure_modules_dir() -> bool:
         return True
     except PermissionError as exc:
         logger.error("Sin permisos para crear directorio de módulos: %s", exc)
-        mostrar_error(_("No se pudo preparar el directorio de módulos en {ruta}: {err}").format(ruta=modules_dir, err=str(exc)))
+        mostrar_error(
+            _("No se pudo preparar el directorio de módulos en {ruta}: {err}").format(
+                ruta=modules_dir, err=str(exc)
+            )
+        )
     except OSError as exc:
         logger.error("Error al preparar directorio de módulos: %s", exc)
-        mostrar_error(_("Error al preparar el directorio de módulos en {ruta}: {err}").format(ruta=modules_dir, err=str(exc)))
+        mostrar_error(
+            _("Error al preparar el directorio de módulos en {ruta}: {err}").format(
+                ruta=modules_dir, err=str(exc)
+            )
+        )
     return False
 
 
@@ -66,10 +74,18 @@ def ensure_lock_parent() -> bool:
         return True
     except PermissionError as exc:
         logger.error("Sin permisos para preparar lock de módulos: %s", exc)
-        mostrar_error(_("No se pudo preparar el archivo de lock en {ruta}: {err}").format(ruta=lock_parent, err=str(exc)))
+        mostrar_error(
+            _("No se pudo preparar el archivo de lock en {ruta}: {err}").format(
+                ruta=lock_parent, err=str(exc)
+            )
+        )
     except OSError as exc:
         logger.error("Error al preparar lock de módulos: %s", exc)
-        mostrar_error(_("Error al preparar el archivo de lock en {ruta}: {err}").format(ruta=lock_parent, err=str(exc)))
+        mostrar_error(
+            _("Error al preparar el archivo de lock en {ruta}: {err}").format(
+                ruta=lock_parent, err=str(exc)
+            )
+        )
     return False
 
 
@@ -88,7 +104,9 @@ def validar_ruta(ruta: str) -> bool:
 def cargar_lock() -> Dict:
     data: Dict = {}
     if yaml is None:
-        mostrar_error(_("La gestión del archivo lock requiere la dependencia 'PyYAML'."))
+        mostrar_error(
+            _("La gestión del archivo lock requiere la dependencia 'PyYAML'.")
+        )
         return {LOCK_KEY: {}}
 
     try:
@@ -113,7 +131,9 @@ def obtener_version_lock(nombre: str) -> Optional[str]:
 
 def actualizar_lock(nombre: str, version: Optional[str]) -> None:
     if yaml is None:
-        mostrar_error(_("Actualizar el lock de módulos requiere la dependencia 'PyYAML'."))
+        mostrar_error(
+            _("Actualizar el lock de módulos requiere la dependencia 'PyYAML'.")
+        )
         return
 
     if not nombre or not validar_nombre_modulo(nombre):
@@ -135,7 +155,9 @@ def actualizar_lock(nombre: str, version: Optional[str]) -> None:
 
 def obtener_version(ruta: str) -> Optional[str]:
     if yaml is None:
-        mostrar_error(_("La lectura de versiones de módulos requiere la dependencia 'PyYAML'."))
+        mostrar_error(
+            _("La lectura de versiones de módulos requiere la dependencia 'PyYAML'.")
+        )
         return None
 
     try:
@@ -164,7 +186,11 @@ class ModService:
         accion = request.accion
 
         if yaml is None and accion in {"publicar", "buscar"}:
-            mostrar_error(_("El comando de módulos requiere la dependencia opcional 'PyYAML' para la acción solicitada."))
+            mostrar_error(
+                _(
+                    "El comando de módulos requiere la dependencia opcional 'PyYAML' para la acción solicitada."
+                )
+            )
             return 1
 
         acciones = {
@@ -193,7 +219,11 @@ def listar_modulos() -> int:
             mostrar_info(_("No hay módulos instalados"))
             return 0
 
-        mods = [f.name for f in modules_dir.iterdir() if f.is_file() and f.name.endswith(MODULE_EXTENSION)]
+        mods = [
+            f.name
+            for f in modules_dir.iterdir()
+            if f.is_file() and f.name.endswith(MODULE_EXTENSION)
+        ]
         if not mods:
             mostrar_info(_("No hay módulos instalados"))
         else:
@@ -218,7 +248,11 @@ def instalar_modulo(ruta: str) -> int:
         if not os.path.exists(ruta_abs):
             raise ValueError(_("No se encontró el módulo {path}").format(path=ruta))
 
-        if os.path.islink(ruta_abs) or not os.path.isfile(ruta_abs) or not ruta.endswith(MODULE_EXTENSION):
+        if (
+            os.path.islink(ruta_abs)
+            or not os.path.isfile(ruta_abs)
+            or not ruta.endswith(MODULE_EXTENSION)
+        ):
             raise ValueError(_("Ruta de módulo inválida"))
 
         nombre = os.path.basename(ruta_abs)
@@ -231,14 +265,24 @@ def instalar_modulo(ruta: str) -> int:
         modules_dir = Path(MODULES_PATH)
         destino = modules_dir / nombre
         if destino.exists() and destino.is_symlink():
-            raise ValueError(_("El destino {dest} es un enlace simbólico").format(dest=destino))
+            raise ValueError(
+                _("El destino {dest} es un enlace simbólico").format(dest=destino)
+            )
 
         try:
             shutil.copy2(ruta_abs, destino)
         except PermissionError as exc:
-            raise ValueError(_("Sin permisos para copiar a {dest}: {err}").format(dest=destino, err=str(exc))) from exc
+            raise ValueError(
+                _("Sin permisos para copiar a {dest}: {err}").format(
+                    dest=destino, err=str(exc)
+                )
+            ) from exc
         except OSError as exc:
-            raise ValueError(_("No se pudo copiar el módulo a {dest}: {err}").format(dest=destino, err=str(exc))) from exc
+            raise ValueError(
+                _("No se pudo copiar el módulo a {dest}: {err}").format(
+                    dest=destino, err=str(exc)
+                )
+            ) from exc
         mostrar_info(_("Módulo instalado en {dest}").format(dest=destino))
 
         version = None
@@ -249,7 +293,11 @@ def instalar_modulo(ruta: str) -> int:
 
             actual = obtener_version_lock(nombre)
             if actual and version and not es_nueva_version(version, actual):
-                raise ValueError(_("La nueva versión {v} no supera a {a}").format(v=version, a=actual))
+                raise ValueError(
+                    _("La nueva versión {v} no supera a {a}").format(
+                        v=version, a=actual
+                    )
+                )
 
             actualizar_lock(nombre, version)
         return 0
@@ -311,7 +359,9 @@ def buscar_modulo(nombre: str) -> int:
 
         modules_dir = Path(MODULES_PATH).resolve()
         destino = str((modules_dir / nombre).resolve(strict=False))
-        ok = get_client().descargar_modulo(nombre, destino, base_permitida=str(modules_dir))
+        ok = get_client().descargar_modulo(
+            nombre, destino, base_permitida=str(modules_dir)
+        )
         if ok:
             actualizar_lock(nombre, None)
         return 0 if ok else 1

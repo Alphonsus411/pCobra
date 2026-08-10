@@ -20,7 +20,6 @@ WRAPPER_FILES = (
 )
 
 
-
 def _instalar_stubs_cli(monkeypatch: pytest.MonkeyPatch):
     llamadas_main: list[list[str] | None] = []
     llamadas_legacy: list[str] = []
@@ -63,7 +62,9 @@ def test_cli_init_creates_project(tmp_path):
 
 
 @pytest.mark.parametrize(("wrapper_path", "legacy_route"), WRAPPER_FILES)
-def test_wrappers_delegan_al_entrypoint_canonico(wrapper_path, legacy_route, monkeypatch):
+def test_wrappers_delegan_al_entrypoint_canonico(
+    wrapper_path, legacy_route, monkeypatch
+):
     llamadas_main, llamadas_legacy = _instalar_stubs_cli(monkeypatch)
     modulo = _cargar_modulo_desde_archivo(
         f"test_wrapper_{wrapper_path.replace('/', '_').replace('.', '_')}",
@@ -85,4 +86,3 @@ def test_wrappers_ejecutan_como_script(wrapper_path, legacy_route, monkeypatch):
     assert exc_info.value.code == 37
     assert llamadas_main == [None]
     assert llamadas_legacy == [legacy_route]
-

@@ -187,9 +187,7 @@ async def test_descarga_rechaza_host_inicial_y_redireccion_no_permitidos(
 
 
 @pytest.mark.asyncio
-async def test_descarga_rechaza_esquema_inicial_y_en_redireccion(
-    monkeypatch, tmp_path
-):
+async def test_descarga_rechaza_esquema_inicial_y_en_redireccion(monkeypatch, tmp_path):
     cliente = _preparar(monkeypatch, tmp_path, [])
     with pytest.raises(ValueError, match="Esquema de URL no soportado"):
         await red.descargar_archivo("http://permitido.test/archivo", "inicial.bin")

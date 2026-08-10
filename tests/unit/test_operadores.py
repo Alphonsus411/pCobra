@@ -16,13 +16,25 @@ def test_lexer_nuevos_operadores():
     tokens = lexer.tokenizar()
     tipos = [t.tipo for t in tokens[:-1]]
     assert tipos == [
-        TipoToken.VAR, TipoToken.IDENTIFICADOR, TipoToken.ASIGNAR,
-        TipoToken.ENTERO, TipoToken.IGUAL, TipoToken.ENTERO,
-        TipoToken.Y, TipoToken.ENTERO, TipoToken.DIFERENTE, TipoToken.ENTERO,
-        TipoToken.O, TipoToken.NO, TipoToken.ENTERO,
-        TipoToken.MAYORIGUAL, TipoToken.ENTERO,
-        TipoToken.MENORIGUAL, TipoToken.ENTERO,
-        TipoToken.MOD, TipoToken.ENTERO,
+        TipoToken.VAR,
+        TipoToken.IDENTIFICADOR,
+        TipoToken.ASIGNAR,
+        TipoToken.ENTERO,
+        TipoToken.IGUAL,
+        TipoToken.ENTERO,
+        TipoToken.Y,
+        TipoToken.ENTERO,
+        TipoToken.DIFERENTE,
+        TipoToken.ENTERO,
+        TipoToken.O,
+        TipoToken.NO,
+        TipoToken.ENTERO,
+        TipoToken.MAYORIGUAL,
+        TipoToken.ENTERO,
+        TipoToken.MENORIGUAL,
+        TipoToken.ENTERO,
+        TipoToken.MOD,
+        TipoToken.ENTERO,
     ]
 
 
@@ -41,14 +53,14 @@ def test_menorque_operador():
 def test_parser_precedencia_operadores():
     tokens = [
         Token(TipoToken.ENTERO, 1),
-        Token(TipoToken.SUMA, '+'),
+        Token(TipoToken.SUMA, "+"),
         Token(TipoToken.ENTERO, 2),
-        Token(TipoToken.MULT, '*'),
+        Token(TipoToken.MULT, "*"),
         Token(TipoToken.ENTERO, 3),
-        Token(TipoToken.IGUAL, '=='),
+        Token(TipoToken.IGUAL, "=="),
         Token(TipoToken.ENTERO, 7),
-        Token(TipoToken.Y, '&&'),
-        Token(TipoToken.NO, '!'),
+        Token(TipoToken.Y, "&&"),
+        Token(TipoToken.NO, "!"),
         Token(TipoToken.BOOLEANO, False),
         Token(TipoToken.EOF, None),
     ]
@@ -65,14 +77,14 @@ def test_parser_precedencia_operadores():
 def test_interpreter_operaciones():
     tokens = [
         Token(TipoToken.ENTERO, 1),
-        Token(TipoToken.SUMA, '+'),
+        Token(TipoToken.SUMA, "+"),
         Token(TipoToken.ENTERO, 2),
-        Token(TipoToken.MULT, '*'),
+        Token(TipoToken.MULT, "*"),
         Token(TipoToken.ENTERO, 3),
-        Token(TipoToken.IGUAL, '=='),
+        Token(TipoToken.IGUAL, "=="),
         Token(TipoToken.ENTERO, 7),
-        Token(TipoToken.Y, '&&'),
-        Token(TipoToken.NO, '!'),
+        Token(TipoToken.Y, "&&"),
+        Token(TipoToken.NO, "!"),
         Token(TipoToken.BOOLEANO, False),
         Token(TipoToken.EOF, None),
     ]
@@ -86,14 +98,14 @@ def test_interpreter_operaciones():
 def test_transpiladores_operaciones():
     tokens = [
         Token(TipoToken.ENTERO, 1),
-        Token(TipoToken.SUMA, '+'),
+        Token(TipoToken.SUMA, "+"),
         Token(TipoToken.ENTERO, 2),
-        Token(TipoToken.MULT, '*'),
+        Token(TipoToken.MULT, "*"),
         Token(TipoToken.ENTERO, 3),
-        Token(TipoToken.IGUAL, '=='),
+        Token(TipoToken.IGUAL, "=="),
         Token(TipoToken.ENTERO, 7),
-        Token(TipoToken.Y, '&&'),
-        Token(TipoToken.NO, '!'),
+        Token(TipoToken.Y, "&&"),
+        Token(TipoToken.NO, "!"),
         Token(TipoToken.ENTERO, 0),
         Token(TipoToken.EOF, None),
     ]

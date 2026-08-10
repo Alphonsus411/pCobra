@@ -12,11 +12,10 @@ from pcobra.gui import runtime as gui_runtime
 
 class FletCommand(BaseCommand):
     """Inicia el entorno IDLE basado en Flet."""
+
     name = "gui"
     requires_sqlite_key: bool = False
-    _CRITICAL_GUI_MODULES = (
-        "pcobra.cobra.gui.deps",
-    )
+    _CRITICAL_GUI_MODULES = ("pcobra.cobra.gui.deps",)
     _CRITICAL_GUI_SYMBOLS = {
         "pcobra.cobra.gui.deps": (
             "Lexer",
@@ -34,10 +33,10 @@ class FletCommand(BaseCommand):
 
     def register_subparser(self, subparsers: Any) -> CustomArgumentParser:
         """Registra los argumentos del subcomando.
-        
+
         Args:
             subparsers: Objeto para registrar subcomandos
-            
+
         Returns:
             El parser configurado para este subcomando
         """
@@ -53,13 +52,13 @@ class FletCommand(BaseCommand):
 
     def run(self, args: Any) -> int:
         """Ejecuta la lógica del comando.
-        
+
         Args:
             args: Argumentos parseados del comando
-            
+
         Returns:
             int: 0 si la ejecución fue exitosa, 1 en caso de error
-            
+
         Raises:
             ModuleNotFoundError: Si Flet no está instalado o falta un módulo GUI
         """
@@ -87,7 +86,9 @@ class FletCommand(BaseCommand):
             gui_runtime.flet_app(main, ft=flet_runtime)
             return 0
         except Exception as e:
-            mostrar_error(_("Error inesperado al ejecutar la aplicación: {0}").format(str(e)))
+            mostrar_error(
+                _("Error inesperado al ejecutar la aplicación: {0}").format(str(e))
+            )
             return 1
 
     def _preflight_gui(self, gui_module: str) -> Callable[..., Any]:
@@ -112,7 +113,9 @@ class FletCommand(BaseCommand):
             raise ImportError(f"missing symbol 'main' in module '{gui.__name__}'")
         main = getattr(gui, "main")
         if not callable(main):
-            raise ImportError(f"symbol 'main' in module '{gui.__name__}' is not callable")
+            raise ImportError(
+                f"symbol 'main' in module '{gui.__name__}' is not callable"
+            )
         return main
 
     def _report_import_error(self, exc: ImportError, context: str) -> None:
@@ -131,7 +134,9 @@ class FletCommand(BaseCommand):
             missing_module = self._extract_module_from_exception(exc, detail)
             return missing_module, self._dependency_action(missing_module)
 
-        custom_symbol_match = re.search(r"missing symbol '([^']+)' in module '([^']+)'", detail)
+        custom_symbol_match = re.search(
+            r"missing symbol '([^']+)' in module '([^']+)'", detail
+        )
         if custom_symbol_match:
             symbol_name, module_name = custom_symbol_match.groups()
             target = f"{module_name}.{symbol_name}"
@@ -143,9 +148,13 @@ class FletCommand(BaseCommand):
         if not_callable_match:
             symbol_name, module_name = not_callable_match.groups()
             target = f"{module_name}.{symbol_name}"
-            return target, self._local_import_action(module_name, symbol_name, callable_required=True)
+            return target, self._local_import_action(
+                module_name, symbol_name, callable_required=True
+            )
 
-        cannot_import_match = re.search(r"cannot import name '([^']+)' from '([^']+)'", detail)
+        cannot_import_match = re.search(
+            r"cannot import name '([^']+)' from '([^']+)'", detail
+        )
         if cannot_import_match:
             symbol_name, module_name = cannot_import_match.groups()
             target = f"{module_name}.{symbol_name}"
@@ -187,7 +196,5 @@ class FletCommand(BaseCommand):
         callable_required: bool = False,
     ) -> str:
         if callable_required:
-            return (
-                f"corrige el import local para que '{module_name}.{symbol_name}' sea invocable."
-            )
+            return f"corrige el import local para que '{module_name}.{symbol_name}' sea invocable."
         return f"corrige el import local de '{module_name}.{symbol_name}' o actualiza la dependencia que lo expone."

@@ -24,11 +24,16 @@ from pcobra.cobra.config.transpile_targets import OFFICIAL_TARGETS
 
 TRANSPILER_CLASS_PATHS: Final[dict[str, tuple[str, str]]] = {
     "python": ("pcobra.cobra.transpilers.transpiler.to_python", "TranspiladorPython"),
-    "javascript": ("pcobra.cobra.transpilers.transpiler.to_javascript", "TranspiladorJavaScript"),
+    "javascript": (
+        "pcobra.cobra.transpilers.transpiler.to_javascript",
+        "TranspiladorJavaScript",
+    ),
     "rust": ("pcobra.cobra.transpilers.transpiler.to_rust", "TranspiladorRust"),
 }
 
-PUBLIC_TRANSPILER_CLASS_PATHS: Final[dict[str, tuple[str, str]]] = TRANSPILER_CLASS_PATHS
+PUBLIC_TRANSPILER_CLASS_PATHS: Final[dict[str, tuple[str, str]]] = (
+    TRANSPILER_CLASS_PATHS
+)
 
 
 def _validate_public_registry_contract() -> tuple[str, ...]:
@@ -39,8 +44,12 @@ def _validate_public_registry_contract() -> tuple[str, ...]:
     )
 
     configured_keys = tuple(PUBLIC_TRANSPILER_CLASS_PATHS)
-    missing = tuple(target for target in PUBLIC_BACKENDS if target not in configured_keys)
-    extras = tuple(target for target in configured_keys if target not in PUBLIC_BACKENDS)
+    missing = tuple(
+        target for target in PUBLIC_BACKENDS if target not in configured_keys
+    )
+    extras = tuple(
+        target for target in configured_keys if target not in PUBLIC_BACKENDS
+    )
 
     if missing or extras:
         raise RuntimeError(
@@ -62,11 +71,10 @@ def _validate_complete_registry_contract() -> tuple[str, ...]:
     return _validate_public_registry_contract()
 
 
-_ORDERED_OFFICIAL_TARGETS: Final[tuple[str, ...]] = _validate_complete_registry_contract()
+_ORDERED_OFFICIAL_TARGETS: Final[tuple[str, ...]] = (
+    _validate_complete_registry_contract()
+)
 _OFFICIAL_TARGETS_SET: Final[frozenset[str]] = frozenset(_ORDERED_OFFICIAL_TARGETS)
-
-
-
 
 
 _PLUGIN_TRANSPILERS: dict[str, type] = {}
@@ -91,7 +99,9 @@ def build_official_transpilers() -> dict[str, type]:
     return registry
 
 
-def _canonical_target_or_raise(backend: str, *, context: str, require_exact: bool = False) -> str:
+def _canonical_target_or_raise(
+    backend: str, *, context: str, require_exact: bool = False
+) -> str:
     candidate = backend.strip().lower()
     if candidate not in _OFFICIAL_TARGETS_SET:
         raise ValueError(
@@ -114,7 +124,9 @@ def _canonical_target_or_raise(backend: str, *, context: str, require_exact: boo
     return candidate
 
 
-def _validate_transpiler_class_or_raise(transpiler_cls, *, backend: str, context: str) -> None:
+def _validate_transpiler_class_or_raise(
+    transpiler_cls, *, backend: str, context: str
+) -> None:
     if not isinstance(transpiler_cls, type):
         raise ValueError(
             "Contrato inválido para backend '{backend}' en {context}: "
@@ -239,7 +251,9 @@ def load_entrypoint_transpilers() -> tuple[int, int, int]:
                 )
                 skipped_existing += 1
                 continue
-            register_transpiler_backend(canonical_name, cls, context="plugins(entry_points)")
+            register_transpiler_backend(
+                canonical_name, cls, context="plugins(entry_points)"
+            )
             loaded += 1
         except ValueError as exc:
             rejected += 1
@@ -287,7 +301,6 @@ def get_transpilers(
     return registry
 
 
-
 def official_transpiler_targets() -> tuple[str, ...]:
     """Devuelve los targets del registro público en el orden contractual."""
     return _ORDERED_OFFICIAL_TARGETS
@@ -304,6 +317,3 @@ def official_transpiler_module_filenames() -> tuple[str, ...]:
 def official_transpiler_registry_literal() -> dict[str, tuple[str, str]]:
     """Devuelve el literal esperado del registro canónico para auditorías."""
     return {target: value for target, value in ordered_official_transpiler_paths()}
-
-
-

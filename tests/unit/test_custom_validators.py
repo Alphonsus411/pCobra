@@ -4,12 +4,14 @@ from pcobra.core.ast_nodes import NodoValor
 from pcobra.core.interpreter import IMPORT_WHITELIST, InterpretadorCobra
 from pcobra.core.semantic_validators.base import ValidadorBase
 
+
 class DummyError(Exception):
     pass
 
+
 class DummyValidator(ValidadorBase):
     def visit_valor(self, nodo):
-        raise DummyError('validado')
+        raise DummyError("validado")
 
 
 def _nombres_cadena(validador):
@@ -26,10 +28,9 @@ def test_interpreter_extra_validators_list():
 
 
 def test_interpreter_extra_validators_file(tmp_path):
-    mod = tmp_path / 'vals.py'
+    mod = tmp_path / "vals.py"
     mod.write_text(
-        "VALIDADORES_EXTRA = "
-        "[{'nombre': 'reflexion_segura', 'parametros': {}}]\n"
+        "VALIDADORES_EXTRA = " "[{'nombre': 'reflexion_segura', 'parametros': {}}]\n"
     )
     IMPORT_WHITELIST.add(str(tmp_path))
     try:
@@ -40,8 +41,8 @@ def test_interpreter_extra_validators_file(tmp_path):
 
 
 def test_interpreter_rejects_unwhitelisted_validators(tmp_path):
-    mod = tmp_path / 'vals.py'
-    mod.write_text('VALIDADORES_EXTRA = []')
+    mod = tmp_path / "vals.py"
+    mod.write_text("VALIDADORES_EXTRA = []")
     with pytest.raises(ImportError):
         InterpretadorCobra(extra_validators=str(mod))
 
@@ -71,8 +72,7 @@ def test_validator_import_blocked(tmp_path):
 def test_validator_getattr_introspeccion_blocked(tmp_path):
     mod = tmp_path / "vals.py"
     mod.write_text(
-        "x = getattr(__builtins__, '__subclasses__', None)\n"
-        "VALIDADORES_EXTRA = []\n"
+        "x = getattr(__builtins__, '__subclasses__', None)\n" "VALIDADORES_EXTRA = []\n"
     )
     IMPORT_WHITELIST.add(str(tmp_path))
     try:
@@ -115,6 +115,7 @@ def test_validator_malicioso_timeout_controlado(tmp_path, monkeypatch):
     mod = tmp_path / "vals_loop.py"
     mod.write_text("while True:\n    pass\n")
     IMPORT_WHITELIST.add(str(tmp_path))
+
     def _compile_timeout(*_args, **_kwargs):
         raise TimeoutError("timeout interno sensible")
 
@@ -126,10 +127,13 @@ def test_validator_malicioso_timeout_controlado(tmp_path, monkeypatch):
         IMPORT_WHITELIST.discard(str(tmp_path))
 
 
-def test_validator_malicioso_estructura_enorme_rechazo_controlado(tmp_path, monkeypatch):
+def test_validator_malicioso_estructura_enorme_rechazo_controlado(
+    tmp_path, monkeypatch
+):
     mod = tmp_path / "vals_big.py"
     mod.write_text("VALIDADORES_EXTRA = [0] * 10_000_000\n")
     IMPORT_WHITELIST.add(str(tmp_path))
+
     def _compile_mem(*_args, **_kwargs):
         raise MemoryError("detalle sensible de memoria")
 

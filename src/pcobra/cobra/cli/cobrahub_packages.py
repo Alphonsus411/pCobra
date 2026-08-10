@@ -24,6 +24,7 @@ from pcobra.cobra.hub.repository import (
     package_cache_dir,
 )
 
+
 def listar_cache() -> list[Path]:
     """Lista los paquetes ``.co`` presentes en la caché local de CobraHub."""
     return CobraHubService().listar_cache()

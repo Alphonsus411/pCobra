@@ -18,7 +18,10 @@ import pcobra
 from pcobra.cobra.backends.python_adapter import PythonAdapter
 from pcobra.cobra.cli.execution_pipeline import prevalidar_y_parsear_codigo
 
-from .dependency_resolver import DependencyResolutionResult, resolve_project_dependencies
+from .dependency_resolver import (
+    DependencyResolutionResult,
+    resolve_project_dependencies,
+)
 from .project import BuildOptions, CobraInstallerError, CobraProject
 
 __all__ = ["TranspileResult", "transpile_project"]
@@ -61,7 +64,9 @@ def transpile_project(
     normalized_options = options.normalized()
     root = Path(normalized_project.project_root)
     entrypoint = Path(
-        normalized_project.entrypoint or normalized_options.entrypoint or root / "main.cobra"
+        normalized_project.entrypoint
+        or normalized_options.entrypoint
+        or root / "main.cobra"
     )
     if not entrypoint.is_file():
         raise CobraInstallerError(f"El entrypoint Cobra no existe: {entrypoint}")

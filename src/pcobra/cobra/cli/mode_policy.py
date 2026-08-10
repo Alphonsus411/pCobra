@@ -40,14 +40,20 @@ CAPABILIDAD_POR_COMANDO: dict[str, CommandCapability] = {
 def obtener_modo_desde_args(args: Namespace | Mapping[str, object]) -> str:
     """Obtiene y normaliza el modo CLI desde ``args``."""
 
-    raw_modo = args.get("modo", MODO_POR_DEFECTO) if isinstance(args, Mapping) else getattr(args, "modo", MODO_POR_DEFECTO)
+    raw_modo = (
+        args.get("modo", MODO_POR_DEFECTO)
+        if isinstance(args, Mapping)
+        else getattr(args, "modo", MODO_POR_DEFECTO)
+    )
     modo = str(raw_modo or MODO_POR_DEFECTO).strip().lower()
     if modo not in CLI_MODOS_PERMITIDOS:
         return MODO_POR_DEFECTO
     return modo
 
 
-def _resolver_capacidad(command_name: str, capability: CommandCapability | None) -> CommandCapability:
+def _resolver_capacidad(
+    command_name: str, capability: CommandCapability | None
+) -> CommandCapability:
     if capability is not None:
         return capability
     return CAPABILIDAD_POR_COMANDO.get(command_name.strip().lower(), "mixed")

@@ -21,10 +21,35 @@ def _exports_publicos(nombre: str) -> dict[str, object]:
 @pytest.mark.parametrize(
     ("modulo", "funciones", "casos", "ausentes"),
     [
-        ("numero", ("es_finito", "signo"), ((("es_finito", (10,), True), ("signo", (-5,), -1))), ("isfinite", "sign")),
-        ("texto", ("mayusculas", "recortar"), ((("mayusculas", ("cobra",), "COBRA"), ("recortar", ("  cobra  ",), "cobra"))), ("upper", "strip")),
-        ("datos", ("longitud", "elemento"), ((("longitud", ([1, 2, 3],), 3), ("elemento", ([1, 2, 3], 0), 1))), ("len", "getitem")),
-        ("logica", ("conjuncion", "negacion"), ((("conjuncion", (True, False), False), ("negacion", (True,), False))), ("and", "not")),
+        (
+            "numero",
+            ("es_finito", "signo"),
+            ((("es_finito", (10,), True), ("signo", (-5,), -1))),
+            ("isfinite", "sign"),
+        ),
+        (
+            "texto",
+            ("mayusculas", "recortar"),
+            (
+                (
+                    ("mayusculas", ("cobra",), "COBRA"),
+                    ("recortar", ("  cobra  ",), "cobra"),
+                )
+            ),
+            ("upper", "strip"),
+        ),
+        (
+            "datos",
+            ("longitud", "elemento"),
+            ((("longitud", ([1, 2, 3],), 3), ("elemento", ([1, 2, 3], 0), 1))),
+            ("len", "getitem"),
+        ),
+        (
+            "logica",
+            ("conjuncion", "negacion"),
+            ((("conjuncion", (True, False), False), ("negacion", (True,), False))),
+            ("and", "not"),
+        ),
     ],
 )
 def test_usar_modulos_publicos_basicos(modulo, funciones, casos, ausentes):
@@ -51,7 +76,9 @@ def test_usar_asincrono_proteger_tarea(monkeypatch):
         "pcobra.corelibs.asincrono._asegurar_tarea",
         lambda _awaitable: mock_task,
     )
-    monkeypatch.setattr("asyncio.shield", lambda tarea: shield_result if tarea is mock_task else None)
+    monkeypatch.setattr(
+        "asyncio.shield", lambda tarea: shield_result if tarea is mock_task else None
+    )
 
     assert "proteger_tarea" in exports
     assert exports["proteger_tarea"](object()) is shield_result
@@ -62,18 +89,31 @@ def test_usar_sistema_obtener_os_y_ejecutar(monkeypatch):
 
     monkeypatch.setattr(
         "pcobra.corelibs.sistema._resolver_ejecutable",
-        lambda comando, permitidos: ([r"C:\cobra\mock.exe", *comando[1:]], r"C:\cobra\mock.exe", 10, 1, 2),
+        lambda comando, permitidos: (
+            [r"C:\cobra\mock.exe", *comando[1:]],
+            r"C:\cobra\mock.exe",
+            10,
+            1,
+            2,
+        ),
     )
-    monkeypatch.setattr("pcobra.corelibs.sistema._verificar_descriptor", lambda *args: None)
+    monkeypatch.setattr(
+        "pcobra.corelibs.sistema._verificar_descriptor", lambda *args: None
+    )
     monkeypatch.setattr("pcobra.corelibs.sistema._verificar_ruta", lambda *args: None)
     monkeypatch.setattr("os.close", lambda _fd: None)
     monkeypatch.setattr(
         "subprocess.run",
-        lambda *args, **kwargs: SimpleNamespace(stdout="mocked output", stderr="", returncode=0),
+        lambda *args, **kwargs: SimpleNamespace(
+            stdout="mocked output", stderr="", returncode=0
+        ),
     )
 
     assert exports["obtener_os"]() == system()
-    assert exports["ejecutar"](["cobra"], permitidos=[r"C:\cobra\mock.exe"]) == "mocked output"
+    assert (
+        exports["ejecutar"](["cobra"], permitidos=[r"C:\cobra\mock.exe"])
+        == "mocked output"
+    )
 
 
 def test_usar_archivo_existe(tmp_path, monkeypatch):

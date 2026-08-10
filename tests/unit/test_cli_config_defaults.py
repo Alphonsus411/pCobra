@@ -6,8 +6,11 @@ import types
 
 def stub_cli_dependencies() -> None:
     """Crea módulos y clases mínimos para evitar dependencias pesadas al importar la CLI."""
+
     def create_command(name: str):
-        return type(name, (), {"name": name, "register_subparser": lambda self, sp: None})
+        return type(
+            name, (), {"name": name, "register_subparser": lambda self, sp: None}
+        )
 
     command_modules = {
         "cobra.cli.commands.base": "BaseCommand",

@@ -16,13 +16,19 @@ def test_aserciones_fallidas_usan_mensajes_deterministas():
     with pytest.raises(AssertionError, match="Se esperaba 2, pero se obtuvo 1"):
         pruebas.igual(1, 2)
 
-    with pytest.raises(AssertionError, match="Se esperaba un valor verdadero, pero se obtuvo 0"):
+    with pytest.raises(
+        AssertionError, match="Se esperaba un valor verdadero, pero se obtuvo 0"
+    ):
         pruebas.verdadero(0)
 
-    with pytest.raises(AssertionError, match="Se esperaba un valor falso, pero se obtuvo 'texto'"):
+    with pytest.raises(
+        AssertionError, match="Se esperaba un valor falso, pero se obtuvo 'texto'"
+    ):
         pruebas.falso("texto")
 
-    with pytest.raises(AssertionError, match=r"Se esperaba que 4 estuviera en \[1, 2, 3\]"):
+    with pytest.raises(
+        AssertionError, match=r"Se esperaba que 4 estuviera en \[1, 2, 3\]"
+    ):
         pruebas.contiene([1, 2, 3], 4)
 
 
@@ -47,11 +53,17 @@ def test_lanza_error_devuelve_error_capturado():
 
 
 def test_lanza_error_falla_si_no_hay_error_o_tipo_distinto():
-    with pytest.raises(AssertionError, match="Se esperaba error ValueError, pero no se lanzó ninguno"):
+    with pytest.raises(
+        AssertionError, match="Se esperaba error ValueError, pero no se lanzó ninguno"
+    ):
         pruebas.lanza_error(lambda: None, ValueError)
 
-    with pytest.raises(AssertionError, match="Se esperaba error ValueError, pero se lanzó TypeError"):
-        pruebas.lanza_error(lambda: (_ for _ in ()).throw(TypeError("boom")), ValueError)
+    with pytest.raises(
+        AssertionError, match="Se esperaba error ValueError, pero se lanzó TypeError"
+    ):
+        pruebas.lanza_error(
+            lambda: (_ for _ in ()).throw(TypeError("boom")), ValueError
+        )
 
 
 def test_lanza_error_valida_callable_y_tipo_error():

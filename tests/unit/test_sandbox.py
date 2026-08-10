@@ -65,7 +65,9 @@ def test_run_in_subprocess_timeout():
         _run_in_subprocess(codigo, timeout=0.2)
 
 
-@pytest.mark.skipif(os.name == "nt", reason="Control de memoria no soportado en Windows")
+@pytest.mark.skipif(
+    os.name == "nt", reason="Control de memoria no soportado en Windows"
+)
 @pytest.mark.timeout(5)
 def test_run_in_subprocess_memory_limit():
     codigo = "datos = bytearray(200 * 1024 * 1024)"

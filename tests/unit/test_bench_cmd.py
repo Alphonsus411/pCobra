@@ -19,10 +19,12 @@ def test_bench_profile_creates_json(tmp_path, monkeypatch):
     monkeypatch.setattr(bc.shutil, "which", lambda x: x)
     monkeypatch.setattr(bc, "BACKENDS", {})
     created = []
+
     def fake_tmp(*args, **kwargs):
         tmp = orig_ntf(*args, **kwargs)
         created.append(Path(tmp.name))
         return tmp
+
     monkeypatch.setattr(bc.tempfile, "NamedTemporaryFile", fake_tmp)
 
     bc.BenchCommand().run(SimpleNamespace(profile=True, binary=False))

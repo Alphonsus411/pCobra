@@ -22,7 +22,9 @@ def test_registrar_plugin_acepta_versiones_pep440(version):
     assert obtener_registro()["plugin-valido"] == version
 
 
-@pytest.mark.parametrize("version", ["", "1..0", "1.0-beta?", "1.0.0.0.0-", "no-es-version"])
+@pytest.mark.parametrize(
+    "version", ["", "1..0", "1.0-beta?", "1.0.0.0.0-", "no-es-version"]
+)
 def test_registrar_plugin_rechaza_version_invalida(version):
     if version == "":
         with pytest.raises(PluginRegistryError):

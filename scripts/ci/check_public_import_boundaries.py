@@ -66,7 +66,9 @@ def main() -> int:
             print(f" - {rel}:{lineno}: {target}")
         return 1
 
-    print("✅ Import boundary guard: sin imports de internal_compat ni inventario legacy.")
+    print(
+        "✅ Import boundary guard: sin imports de internal_compat ni inventario legacy."
+    )
     return 0
 
 

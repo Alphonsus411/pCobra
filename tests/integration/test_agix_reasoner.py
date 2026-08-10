@@ -11,7 +11,6 @@ import pytest
 pytest.importorskip("agix")
 from agix.reasoning.basic import Reasoner
 
-
 ROOT = Path(__file__).resolve().parents[2]
 
 
@@ -31,8 +30,7 @@ def _ejecutar_python(codigo: str) -> subprocess.CompletedProcess[str]:
 
 
 def test_analizador_importa_distribucion_real_sin_aliases_ficticios():
-    resultado = _ejecutar_python(
-        """
+    resultado = _ejecutar_python("""
         import sys
 
         assert "src.agix" not in sys.modules
@@ -41,15 +39,13 @@ def test_analizador_importa_distribucion_real_sin_aliases_ficticios():
         assert analizador_agix.Reasoner.__module__ == "agix.reasoning.basic"
         assert analizador_agix.PADState.__module__ == "agix.emotion.emotion_simulator"
         assert "src.agix" not in sys.modules
-        """
-    )
+        """)
 
     assert resultado.returncode == 0, resultado.stderr
 
 
 def test_analizador_sin_paquete_agix_mantiene_mensaje_estable():
-    resultado = _ejecutar_python(
-        """
+    resultado = _ejecutar_python("""
         import importlib.abc
         import sys
 
@@ -73,8 +69,7 @@ def test_analizador_sin_paquete_agix_mantiene_mensaje_estable():
             assert str(exc) == MENSAJE_DEPENDENCIA_AGIX
         else:
             raise AssertionError("Se esperaba ImportError sin la distribución agix")
-        """
-    )
+        """)
 
     assert resultado.returncode == 0, resultado.stderr
 

@@ -83,9 +83,13 @@ def normalize_test_request(raw: TestRequest | Mapping[str, Any] | Any) -> TestRe
         if not archivo:
             raise ValueError("El campo 'archivo' es obligatorio")
         if isinstance(raw.lenguajes, str):
-            lenguajes = [lang.strip() for lang in raw.lenguajes.split(",") if lang.strip()]
+            lenguajes = [
+                lang.strip() for lang in raw.lenguajes.split(",") if lang.strip()
+            ]
         else:
-            lenguajes = [str(lang).strip() for lang in raw.lenguajes if str(lang).strip()]
+            lenguajes = [
+                str(lang).strip() for lang in raw.lenguajes if str(lang).strip()
+            ]
         if not lenguajes:
             raise ValueError("El campo 'lenguajes' es obligatorio")
         return TestRequest(
@@ -106,7 +110,9 @@ def normalize_test_request(raw: TestRequest | Mapping[str, Any] | Any) -> TestRe
     if isinstance(raw_langs, str):
         lenguajes = [lang.strip() for lang in raw_langs.split(",") if lang.strip()]
     else:
-        lenguajes = [str(lang).strip() for lang in (raw_langs or []) if str(lang).strip()]
+        lenguajes = [
+            str(lang).strip() for lang in (raw_langs or []) if str(lang).strip()
+        ]
 
     if not lenguajes:
         raise ValueError("El campo 'lenguajes' es obligatorio")

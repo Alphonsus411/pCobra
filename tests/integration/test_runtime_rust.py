@@ -25,20 +25,16 @@ def test_runtime_rust_ejecucion(request, codigo_cobra_fixture):
     ast = parser.parsear()
     snippet_rust = TranspiladorRust().generate_code(ast)
 
-    codigo_rust = (
-        "fn main() {\n"
-        f"{snippet_rust}\n"
-        "}\n"
-    )
+    codigo_rust = "fn main() {\n" f"{snippet_rust}\n" "}\n"
 
     salida = run_code("rust", codigo_rust)
 
     assert "1" in salida
 
 
-
 def test_runtime_rust_holobit_public_ops_contract():
     from pcobra.cobra.transpilers.common.utils import get_runtime_hooks
+
     hooks = "\n".join(get_runtime_hooks("rust"))
     assert "cobra_holobit" in hooks
     assert "cobra_proyectar" in hooks

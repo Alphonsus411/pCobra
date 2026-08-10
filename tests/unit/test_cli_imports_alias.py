@@ -24,8 +24,12 @@ sys.modules.setdefault("RestrictedPython.PrintCollector", _print)
 
 fake_jsonschema = ModuleType("jsonschema")
 fake_jsonschema.validate = lambda *a, **k: None
+
+
 class FakeValidationError(Exception):
     pass
+
+
 fake_jsonschema.ValidationError = FakeValidationError
 sys.modules.setdefault("jsonschema", fake_jsonschema)
 
@@ -54,6 +58,7 @@ def test_cli_alias_module():
 
     assert callable(modulo_cli.main)
     assert sys.modules["pcobra.cli"] is modulo_pcobra_cli
+
 
 def test_cli_alias_function():
     assert main_cli is main_pcobra
