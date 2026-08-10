@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import subprocess
 import sys
+import zipfile
 from pathlib import Path
 
 import pytest
@@ -13,6 +14,23 @@ pytest.importorskip("build")
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
+def _paquetes_importables_top_level(wheel: Path) -> set[str]:
+    """Separa paquetes importables de metadatos y datos internos del wheel."""
+
+    extensiones_importables = (".py", ".pyc", ".so", ".pyd")
+    with zipfile.ZipFile(wheel) as archivo:
+        nombres = [Path(nombre) for nombre in archivo.namelist()]
+
+    paquetes = set()
+    for ruta in nombres:
+        top_level = ruta.parts[0]
+        if top_level.endswith((".dist-info", ".data")):
+            continue
+        if ruta.as_posix().endswith(extensiones_importables):
+            paquetes.add(top_level if len(ruta.parts) > 1 else ruta.stem)
+    return paquetes
+
+
 @pytest.mark.integration
 def test_wheel_instalado_resuelve_usar_sin_checkout(tmp_path: Path) -> None:
     """Ejecuta intérprete y corelibs usando exclusivamente el wheel instalado."""
@@ -21,7 +39,15 @@ def test_wheel_instalado_resuelve_usar_sin_checkout(tmp_path: Path) -> None:
     dist_dir.mkdir(parents=True, exist_ok=True)
 
     build_result = subprocess.run(
-        [sys.executable, "-m", "build", "--wheel", "--outdir", str(dist_dir)],
+        [
+            sys.executable,
+            "-m",
+            "build",
+            "--wheel",
+            "--sdist",
+            "--outdir",
+            str(dist_dir),
+        ],
         cwd=REPO_ROOT,
         check=False,
         capture_output=True,
@@ -34,6 +60,11 @@ def test_wheel_instalado_resuelve_usar_sin_checkout(tmp_path: Path) -> None:
 
     wheels = sorted(dist_dir.glob("*.whl"))
     assert wheels, "No se generó wheel durante el smoke test de packaging."
+    assert list(dist_dir.glob("*.tar.gz")), "No se generó sdist durante el smoke test."
+    assert _paquetes_importables_top_level(wheels[0]) == {"pcobra"}, (
+        "El wheel debe publicar exclusivamente el namespace top-level pcobra; "
+        "los directorios .dist-info y .data se clasifican como metadatos/datos."
+    )
 
     venv_dir = tmp_path / "venv"
     subprocess.run(
@@ -51,7 +82,12 @@ def test_wheel_instalado_resuelve_usar_sin_checkout(tmp_path: Path) -> None:
         venv_pip = venv_dir / "bin" / "pip"
 
     subprocess.run(
-        [str(venv_pip), "install", "--force-reinstall", str(wheels[0])],
+        [
+            str(venv_pip),
+            "install",
+            "--force-reinstall",
+            str(wheels[0]),
+        ],
         check=True,
         capture_output=True,
         text=True,
@@ -71,7 +107,14 @@ def test_wheel_instalado_resuelve_usar_sin_checkout(tmp_path: Path) -> None:
         "    raise SystemExit(f'una carpeta src está presente en sys.path: {sys.path!r}')\n"
         "ast_nodes = importlib.import_module('pcobra.core.ast_nodes')\n"
         "assert ast_nodes.NodoAST.__module__ == 'pcobra.core.ast_nodes'\n"
-        "assert importlib.util.find_spec('core') is None, 'el wheel instaló el namespace top-level core'\n"
+        "for legacy in ('core', 'cobra'):\n"
+        "    assert importlib.util.find_spec(legacy) is None, f'el wheel instaló el namespace top-level {legacy}'\n"
+        "    try:\n"
+        "        importlib.import_module(legacy)\n"
+        "    except ModuleNotFoundError:\n"
+        "        pass\n"
+        "    else:\n"
+        "        raise AssertionError(f'import {legacy} se resolvió desde el wheel')\n"
         "consultas_src = []\n"
         "def auditar(evento, args):\n"
         "    if evento == 'open' and args and isinstance(args[0], (str, bytes)):\n"
@@ -80,6 +123,7 @@ def test_wheel_instalado_resuelve_usar_sin_checkout(tmp_path: Path) -> None:
         "            consultas_src.append(str(ruta))\n"
         "sys.addaudithook(auditar)\n"
         "import pcobra\n"
+        "assert {'cobra', 'core', 'cli', 'gui', 'lsp'} <= set(pcobra.__all__)\n"
         "from pcobra.cobra.core.lexer import Lexer\n"
         "from pcobra.cobra.core.parser import Parser\n"
         "from pcobra.cobra.core.runtime import InterpretadorCobra\n"
