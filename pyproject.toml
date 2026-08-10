@@ -159,6 +159,8 @@ target-version = ["py311"]
 extend-exclude = '''(?x)(
   ^docs/frontend/
   | ^docs/build/
+  # Snapshots byte-a-byte del transpilador; Black no debe reescribirlos.
+  | ^/tests/data/expected_examples/[^/]+\.py$
   | ^venv/
   | ^\.venv/
   | ^\.venv-release-test/
