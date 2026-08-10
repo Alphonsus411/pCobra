@@ -7,7 +7,6 @@ import pcobra
 from pcobra.core.ast_nodes import NodoImprimir, NodoValor
 from pcobra.cobra.transpilers.transpiler.to_python import TranspiladorPython
 
-
 ROOT = Path(__file__).resolve().parents[2]
 
 
