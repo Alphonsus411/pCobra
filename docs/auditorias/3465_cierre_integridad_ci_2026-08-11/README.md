@@ -241,3 +241,79 @@ logs de Tests (incluido comprobar que alcanzó pytest), Lint, CodeQL y demás
 required checks, así como la confirmación `OPEN`/sin auto-merge/base distinta
 de `master`, quedan bloqueados por infraestructura. No se ejecutó merge,
 squash, rebase, cierre ni operación sobre ramas protegidas.
+
+## Continuación: evidencia final local y remota (2026-08-11 UTC)
+
+Esta sección continúa el informe sin sustituir las validaciones anteriores.
+Se separan los resultados obtenidos en el checkout de los publicados por
+GitHub Actions y no se equipara inspección local con un gate remoto.
+
+### Validación local
+
+- El guard focal de integridad de Lexer y Parser terminó con `1 passed`:
+  `python -m pytest -q tests/integration/test_usar_runtime_contract.py::test_integridad_estatica_lexer_y_parser_sin_diff_inesperado`.
+- Git confirma mediante `merge-base --is-ancestor` que el snapshot
+  `f92f5f5863ef51d9722cdaea7a1c42619135e9a8` y la restauración
+  `c84741ff8c9db12d4ccf70113a8d0ce88168d279` pertenecen a esta rama.
+- `python scripts/validate_runtime_contract.py` permanece **fallido**:
+  `RuntimeError: Contrato usar canónico desalineado`; la matriz actual contiene
+  módulos posteriores a los diez que fija la expectativa del script.
+- `black --check .` permanece **fallido**: reformatearía
+  `tests/test_codeql_config.py` y dejaría 1158 archivos sin cambios.
+- Los conteos diferenciales completos conservados en este informe son:
+  baseline 4936 collected, 4372 passed, 507 failed, 54 skipped y 3 errors;
+  current 4941 collected, 4377 passed, 507 failed, 54 skipped y 3 errors.
+  La diferencia es +5 collected y +5 passed, con 0 de diferencia en failed,
+  skipped y errors; esto no convierte la suite completa en verde.
+
+### Validación GitHub Actions
+
+La evidencia remota final disponible corresponde exactamente al merge
+`b727004c24bf8b68f4462a398bc6ea307ab5fcf8`. Todos los estados siguientes
+son conclusiones publicadas por GitHub, no inferencias locales.
+
+| Área solicitada | Run/job concreto | SHA probado | Conclusión literal |
+|---|---|---|---|
+| Tests | [run 31513615493, job 93853209936](https://github.com/Alphonsus411/pCobra/actions/runs/31513615493/job/93853209936) | `b727004c24bf8b68f4462a398bc6ea307ab5fcf8` | **failure**; `tier1-required (ubuntu-latest)` falló en `Validate runtime contract matrix`. |
+| Lint | [run 31513615437, job 93853209610](https://github.com/Alphonsus411/pCobra/actions/runs/31513615437/job/93853209610) | `b727004c24bf8b68f4462a398bc6ea307ab5fcf8` | **failure** en `black --check .`; los pasos posteriores fueron `skipped`. |
+| Black | [run 31513615437, job 93853209610](https://github.com/Alphonsus411/pCobra/actions/runs/31513615437/job/93853209610) | `b727004c24bf8b68f4462a398bc6ea307ab5fcf8` | **failure**. |
+| CodeQL | [run 31513615454, job 93853209792](https://github.com/Alphonsus411/pCobra/actions/runs/31513615454/job/93853209792) | `b727004c24bf8b68f4462a398bc6ea307ab5fcf8` | **failure**. |
+| Compatibility Regression Gate | [run 31513615493, job 93853210065](https://github.com/Alphonsus411/pCobra/actions/runs/31513615493/job/93853210065) | `b727004c24bf8b68f4462a398bc6ea307ab5fcf8` | No existe un check remoto con ese nombre exacto. El job real `Contractual compatibility gate` concluyó **success**; solo se atribuye el verde a ese job existente. |
+| pytest remoto | [run 31513615493, job 93853209936](https://github.com/Alphonsus411/pCobra/actions/runs/31513615493/job/93853209936) | `b727004c24bf8b68f4462a398bc6ea307ab5fcf8` | **no ejecutado / skipped**: `Run tests` no se alcanzó tras el fallo previo. No hay conteo pytest remoto para este SHA. |
+
+#### Lint: diagnóstico, corrección y resultado
+
+El run original [31500087322](https://github.com/Alphonsus411/pCobra/actions/runs/31500087322),
+sobre `30789f584d348b3891c0df8edd12e57b475bda54`, ejecutaba únicamente
+`pip install "$(grep -E '^black==' requirements-dev.txt)"` antes de lanzar
+`python scripts/validate_runtime_contract.py`. El traceback reproducido en ese
+mismo árbol termina en:
+
+```text
+scripts/validate_runtime_contract.py
+  -> pcobra.cobra.cli.target_policies
+  -> pcobra.cobra.transpilers.runtime_api_matrix
+  -> pcobra.standard_library.archivo
+  -> pcobra.corelibs.red
+ModuleNotFoundError: No module named 'requests'
+```
+
+La causa raíz fue que el workflow instalaba Black, pero no las dependencias de
+runtime que el propio gate importaba. El commit
+`6fc9b1dee310c562d1bc6b6b0de832ba2956d2fd` cambió ese paso por la action
+compartida `./.github/actions/install`. El resultado remoto final no es verde:
+el run 31513615437 se detuvo antes, en Black, y dejó el gate de runtime en
+`skipped`. Localmente el import de `requests` ya no falla, pero el comando
+alcanza y revela el `RuntimeError` contractual indicado arriba.
+
+#### CodeQL: las tres evidencias del run
+
+En el run [31513615454](https://github.com/Alphonsus411/pCobra/actions/runs/31513615454)
+para el mismo SHA quedan registradas por separado las tres fases relevantes:
+
+1. `Initialize CodeQL`: **success**.
+2. `Test custom CodeQL queries`: **failure**.
+3. `Perform CodeQL Analysis`: **skipped**.
+
+Por ello CodeQL conserva conclusión global **failure**. Una inicialización
+correcta no demuestra que las queries ni el análisis hayan pasado.
