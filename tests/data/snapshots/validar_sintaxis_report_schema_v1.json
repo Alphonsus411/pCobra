@@ -1,0 +1,32 @@
+{
+  "cobra": {
+    "result": {
+      "message": "Parse básico Cobra correcto",
+      "status": "ok"
+    },
+    "version": "dev"
+  },
+  "errors_by_target": {},
+  "profile": "completo",
+  "python": {
+    "result": {
+      "message": "Sintaxis Python correcta en src/ y tests/",
+      "status": "ok"
+    },
+    "version": "3.11.0"
+  },
+  "python_runtime": "3.11.0",
+  "schema_version": "1.0.0",
+  "strict": false,
+  "targets": {
+    "python": {
+      "fail": 0,
+      "ok": 1,
+      "skipped": 0
+    }
+  },
+  "targets_requested": [
+    "python"
+  ],
+  "timestamp": "2026-01-01T00:00:00+00:00"
+}

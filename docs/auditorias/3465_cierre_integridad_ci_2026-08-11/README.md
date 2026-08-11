@@ -170,3 +170,74 @@ Respecto de `7b866ab9`, no cambiaron archivos de grammar, definiciones de
 tokens, ningún Lexer o Parser, `src/pcobra/core/optimizations/constant_folder.py`
 ni `src/pcobra/core/ast_nodes.py`. Esta confirmación se limita al commit de
 cierre y no reescribe la historia del diferencial auditado.
+
+## Actualización de cierre de rama (2026-08-11 UTC)
+
+### Identidad e inventario del diferencial de cierre
+
+Para el cierre solicitado se toma como **SHA inicial causal**
+`fdff35754e6903a171ea1990eeca951bf004e161`, padre de la serie que comienza
+con la restauración canónica. La punta funcional antes de esta actualización
+documental es `585d7bc9b2f2499c906d12fa844986543517e968`; el baseline histórico de las
+ejecuciones completas continúa siendo
+`96d70b1ba00f07608b0fc2a780fca0e7d6b09257`.
+
+El diferencial `fdff3575..585d7bc9` contiene:
+
+| Archivo | Clasificación y causa |
+|---|---|
+| `src/pcobra/cobra/core/lexer.py` | Restauración byte a byte desde el snapshot canónico `f92f5f58`; no introduce sintaxis. |
+| `src/pcobra/cobra/core/parser.py` | Restauración byte a byte desde el mismo snapshot canónico; no introduce gramática. |
+| `tests/data/snapshots/validar_sintaxis_report_schema_v1.json` | Snapshot v1 mínimo que ya exigía el gate de syntax report. |
+| `.github/codeql/custom/unsafe-eval-exec.ql` | Compatibilidad de la query con la API AST Python disponible, sin ampliar el alcance semántico. |
+| `tests/test_codeql_config.py` | Contratos focales de selección, alcance `src/` y exclusión exacta del sandbox. |
+| `tests/unit/codeql_fixtures/unsafe_eval_exec/src/violation.py` | Fixture positivo focal de CodeQL. |
+| `tests/unit/codeql_fixtures/unsafe_eval_exec/src/core/sandbox.py` | Fixture negativo para la única exclusión permitida. |
+| `pyproject.toml` | Exclusión mínima de fixtures no-Python del barrido Black; pertenece al commit causal de lint `ec93f793`, no a runtime ni sintaxis. |
+| `docs/auditorias/3450_runtime_security/README.md` | Evidencia histórica focal de seguridad runtime. |
+| `docs/auditorias/3462_lint_diferencial/README.md` | Evidencia del diferencial Black/Pylint y su limitación de entorno. |
+| `docs/auditorias/3464_pytest_tres_arboles/README.md` | Comparación por nodeid entre current, baseline y snapshot canónico. |
+| `docs/auditorias/3465_cierre_integridad_ci_2026-08-11/README.md` | Informe nuevo y actualización de cierre. |
+
+La presencia de `pyproject.toml` y de los tres informes antecedentes hace que
+el diferencial acumulado sea algo más amplio que la lista ideal enunciada,
+aunque son cambios de lint/evidencia causales ya separados y no afectan al
+lenguaje. No se reescribe la historia para ocultarlos.
+
+### Verificaciones locales finales
+
+- `git diff --check`: código 0.
+- `python -m compileall src`: código 0.
+- `python scripts/ci/validate_syntax_report_contract.py`: código 0,
+  `Contrato JSON de validar-sintaxis OK`.
+- `python -m pytest -q tests/test_codeql_config.py`: 4 passed.
+- `python -m pytest -q tests/test_lexer_parser_contract.py tests/test_lexer.py tests/test_parser.py`:
+  13 passed.
+- La suite focal combinada de syntax report obtuvo 4 passed y 1 fallo
+  preexistente en
+  `tests/unit/test_syntax_fixture_guard.py::test_existing_syntax_fixtures_were_not_modified`:
+  `AssertionError: assert 18 == 9`; no se reduce esa aserción.
+- `python -m pytest -q tests/cli/test_packaging_smoke.py`: 1 skipped y código
+  5 porque `build` no está instalado; el wheel sigue sin resultado verde.
+- El diferencial desde `fdff3575` no contiene cambios en rutas de grammar,
+  tokens, `constant_folder.py` ni `src/pcobra/core/ast_nodes.py`.
+- Los `.log` versionados bajo `docs/auditorias/3430_3431_repl/` son
+  preexistentes y no aparecen en este diferencial. No se añadieron caches,
+  `dist`, entornos virtuales, worktrees, dumps ni nuevos logs.
+
+### Historia causal
+
+Los cambios permanecen separados en `c84741ff` (core), `fe9a633c` (CodeQL),
+`585d7bc9` (syntax report) y commits `docs(audit)` independientes. El cambio
+de lint está aislado en `ec93f793`. Lexer y Parser proceden de
+`f92f5f5863ef51d9722cdaea7a1c42619135e9a8`.
+
+### Estado remoto
+
+No se inventan resultados remotos: este checkout no tiene ningún remote
+configurado y `gh auth status` informa que no hay autenticación para GitHub.
+Por ello el push, la creación/actualización real de la PR, la inspección de
+logs de Tests (incluido comprobar que alcanzó pytest), Lint, CodeQL y demás
+required checks, así como la confirmación `OPEN`/sin auto-merge/base distinta
+de `master`, quedan bloqueados por infraestructura. No se ejecutó merge,
+squash, rebase, cierre ni operación sobre ramas protegidas.
