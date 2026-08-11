@@ -5,11 +5,11 @@ import python
  */
 from Call c, File f
 where
-  (
-    c.getTarget().hasQualifiedName("builtins", "eval") or
-    c.getTarget().hasQualifiedName("builtins", "exec")
+  exists(GlobalVariable builtin |
+    builtin = c.getFunc().(Name).getVariable() and
+    builtin.getId() in ["eval", "exec"]
   ) and
-  f = c.getFile() and
-  f.getRelativePath().regexp("^src/") and
-  not f.getRelativePath().regexp("^src/core/sandbox.py$")
+  f = c.getLocation().getFile() and
+  f.getRelativePath().regexpMatch("^src/.*") and
+  not f.getRelativePath().regexpMatch("^src/core/sandbox.py$")
 select c, "Uso potencialmente inseguro de eval/exec"
