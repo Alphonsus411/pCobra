@@ -9,6 +9,9 @@ CODEQL_CONFIG = ROOT / ".github" / "codeql" / "custom" / "codeql-config.yml"
 MISSING_CODEGEN_EXCEPTION_QUERY = (
     ROOT / ".github" / "codeql" / "custom" / "missing-codegen-exception.ql"
 )
+UNSAFE_EVAL_EXEC_QUERY = (
+    ROOT / ".github" / "codeql" / "custom" / "unsafe-eval-exec.ql"
+)
 
 
 def _codeql_config_text() -> str:
@@ -50,3 +53,21 @@ def test_missing_codegen_exception_uses_supported_try_api() -> None:
     assert "from Method" not in query
     assert "TryStmt" not in query
     assert "getEnclosingCallable" not in query
+
+
+def test_unsafe_eval_exec_preserves_positive_and_negative_fixtures() -> None:
+    """La query conserva una violación y excluye únicamente el sandbox."""
+    query = UNSAFE_EVAL_EXEC_QUERY.read_text(encoding="utf-8")
+    fixtures = ROOT / "tests" / "unit" / "codeql_fixtures" / "unsafe_eval_exec"
+
+    assert 'regexpMatch("^src/.*")' in query
+    assert 'not f.getRelativePath().regexpMatch("^src/core/sandbox.py$")' in query
+    assert 'builtin.getId() in ["eval", "exec"]' in query
+    assert "f = c.getLocation().getFile()" in query
+    assert 'select c, "Uso potencialmente inseguro de eval/exec"' in query
+    assert "eval(expression)" in (fixtures / "src" / "violation.py").read_text(
+        encoding="utf-8"
+    )
+    assert "eval(expression)" in (
+        fixtures / "src" / "core" / "sandbox.py"
+    ).read_text(encoding="utf-8")
