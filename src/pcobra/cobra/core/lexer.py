@@ -14,7 +14,6 @@ from pcobra.cobra.core.errors import InvalidTokenError, LexerError, UnclosedStri
 
 logger = logging.getLogger(__name__)
 
-
 class TipoToken(Enum):
     """Enumeración de todos los tipos de tokens soportados."""
 
@@ -453,7 +452,9 @@ class Lexer:
 
             matched = False
             for tipo, regex in self.especificacion_tokens:
-                coincidencia = regex.match(self.codigo_fuente[self.posicion_codigo :])
+                coincidencia = regex.match(
+                    self.codigo_fuente[self.posicion_codigo :]
+                )
                 if coincidencia:
                     valor_original = coincidencia.group(0)
                     if tipo:
