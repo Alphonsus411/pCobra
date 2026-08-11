@@ -13,6 +13,10 @@ compatible formatting validation`), que tocó Lexer y Parser.
 
 ## Estado
 
+**Estado: RESUELTA.**
+
+### Diagnóstico histórico (conservado íntegro)
+
 **Bloqueada a la espera de autorización explícita y específica.** `AGENTS.md`
 prohíbe modificar Lexer o Parser. No se debe cambiar la prueba, rebajar su
 aserción ni actualizar el hash para aceptar el estado actual. Esta tarea debe
@@ -29,3 +33,22 @@ integridad autorizada sin introducir tokens, reglas, aliases ni sintaxis.
    `96d70b1ba00f07608b0fc2a780fca0e7d6b09257`.
 5. Confirmar con el diff final que no hay cambios sintácticos o semánticos no
    autorizados.
+
+
+## Resolución verificada
+
+- El Lexer se restauró byte a byte desde la fuente canónica.
+- El Parser se restauró byte a byte desde la fuente canónica.
+- Git confirma como snapshot canónico
+  `f92f5f5863ef51d9722cdaea7a1c42619135e9a8`, que pertenece a la historia de
+  la rama actual.
+- Git confirma como commit independiente de restauración
+  `c84741ff8c9db12d4ccf70113a8d0ce88168d279`
+  (`fix(core): restore canonical lexer and parser snapshots`), también presente
+  en la historia real de la rama.
+- La restauración no introdujo cambios semánticos: recuperó exactamente los
+  blobs canónicos, sin añadir tokens, palabras reservadas, reglas gramaticales,
+  aliases ni sintaxis Cobra.
+- El guard focal de integridad
+  `python -m pytest -q tests/integration/test_usar_runtime_contract.py::test_integridad_estatica_lexer_y_parser_sin_diff_inesperado`
+  finalizó correctamente: `1 passed`.
