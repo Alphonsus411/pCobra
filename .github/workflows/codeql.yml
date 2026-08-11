@@ -32,5 +32,7 @@ jobs:
           config-file: ./.github/codeql/custom/codeql-config.yml
       - name: Autobuild
         uses: github/codeql-action/autobuild@ad2a4837011b42f6947b78d6417e7c253b1c504b # v3
+      - name: Test custom CodeQL queries
+        run: codeql test run .github/codeql/custom/test/ast_no_export_validation
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@ad2a4837011b42f6947b78d6417e7c253b1c504b # v3
