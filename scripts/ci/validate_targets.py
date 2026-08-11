@@ -153,6 +153,9 @@ REPO_AUDIT_PUBLIC_TEXT_PREFIXES: tuple[str, ...] = (
     "pcobra.toml",
     "cobra.toml",
 )
+HISTORICAL_TARGET_REFERENCE_PATTERN = re.compile(
+    r"<!-- target-policy: historical-reference -->.*?<!-- /target-policy -->"
+)
 DOC_TABLE_PATHS = (
     "docs/targets_policy.md",
     "docs/matriz_transpiladores.md",
@@ -1135,16 +1138,17 @@ def validate_final_backend_repo_audit() -> list[str]:
             content = path.read_text(encoding="utf-8")
         except UnicodeDecodeError:
             continue
+        auditable_content = HISTORICAL_TARGET_REFERENCE_PATTERN.sub("", content)
         for pattern, description in REPO_AUDIT_FORBIDDEN_TERMS:
-            for match in pattern.finditer(content):
-                line_no = content.count("\n", 0, match.start()) + 1
+            for match in pattern.finditer(auditable_content):
+                line_no = auditable_content.count("\n", 0, match.start()) + 1
                 errors.append(
                     f"{rel}:{line_no}: referencia fuera del conjunto final -> {description}"
                 )
         if rel.startswith(REPO_AUDIT_PUBLIC_TEXT_PREFIXES):
             for pattern, alias in REPO_AUDIT_FORBIDDEN_ALIAS_LITERALS:
-                for match in pattern.finditer(content):
-                    line_no = content.count("\n", 0, match.start()) + 1
+                for match in pattern.finditer(auditable_content):
+                    line_no = auditable_content.count("\n", 0, match.start()) + 1
                     errors.append(
                         f"{rel}:{line_no}: alias legacy literal fuera del conjunto final -> {alias}"
                     )

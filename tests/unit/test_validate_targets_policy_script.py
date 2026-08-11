@@ -128,6 +128,43 @@ def test_ci_validate_targets_fija_ocho_transpilers_y_goldens_exactos():
     assert errors == []
 
 
+def test_auditoria_sintaxis_rechaza_target_publico_invalido(monkeypatch, tmp_path):
+    from scripts.ci import validate_targets as ci_validator
+
+    audit_doc = tmp_path / "docs" / "AUDITORIA_SINTAXIS.md"
+    audit_doc.parent.mkdir()
+    audit_doc.write_text("Target público vigente: llvm\n", encoding="utf-8")
+    monkeypatch.setattr(ci_validator, "ROOT", tmp_path)
+    monkeypatch.setattr(ci_validator, "REPO_AUDIT_SCAN_ROOTS", ("docs",))
+    monkeypatch.setattr(ci_validator, "REPO_AUDIT_ALLOWED_PATH_PREFIXES", tuple())
+    monkeypatch.setattr(ci_validator, "REPO_AUDIT_ALLOWED_FILE_PATHS", frozenset())
+
+    errors = ci_validator.validate_final_backend_repo_audit()
+
+    assert any("docs/AUDITORIA_SINTAXIS.md:1" in error for error in errors)
+    assert any("llvm" in error for error in errors)
+
+
+def test_auditoria_sintaxis_ignora_solo_referencia_historica_marcada(
+    monkeypatch, tmp_path
+):
+    from scripts.ci import validate_targets as ci_validator
+
+    audit_doc = tmp_path / "docs" / "AUDITORIA_SINTAXIS.md"
+    audit_doc.parent.mkdir()
+    audit_doc.write_text(
+        "Referencia retirada: <!-- target-policy: historical-reference -->"
+        "LLVM<!-- /target-policy -->\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(ci_validator, "ROOT", tmp_path)
+    monkeypatch.setattr(ci_validator, "REPO_AUDIT_SCAN_ROOTS", ("docs",))
+    monkeypatch.setattr(ci_validator, "REPO_AUDIT_ALLOWED_PATH_PREFIXES", tuple())
+    monkeypatch.setattr(ci_validator, "REPO_AUDIT_ALLOWED_FILE_PATHS", frozenset())
+
+    assert ci_validator.validate_final_backend_repo_audit() == []
+
+
 def test_ci_validate_targets_detecta_documentacion_sdk_divergente(
     monkeypatch, tmp_path
 ):
