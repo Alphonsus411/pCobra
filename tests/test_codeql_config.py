@@ -10,6 +10,9 @@ MISSING_CODEGEN_EXCEPTION_QUERY = (
     ROOT / ".github" / "codeql" / "custom" / "missing-codegen-exception.ql"
 )
 UNSAFE_EVAL_EXEC_QUERY = ROOT / ".github" / "codeql" / "custom" / "unsafe-eval-exec.ql"
+AST_NO_EXPORT_VALIDATION_QUERY = (
+    ROOT / ".github" / "codeql" / "custom" / "ast-no-export-validation.ql"
+)
 
 
 def _codeql_config_text() -> str:
@@ -17,18 +20,19 @@ def _codeql_config_text() -> str:
 
 
 def test_codeql_paths_exist_in_repository() -> None:
-    """Evita inicializar CodeQL con rutas inexistentes."""
+    """Evita limitar el análisis de producción a un subárbol."""
     config = _codeql_config_text()
 
-    for path in ("src",):
-        assert f"  - {path}" in config
-        assert (ROOT / path).exists(), path
+    assert "paths:" not in config
+    assert "  - 'tests/**'" not in config
+    assert "  - 'src/**'" not in config
 
 
 def test_codeql_custom_queries_resolve_from_repository_root() -> None:
     """Evita referencias locales que no resuelven durante CodeQL init."""
     config = _codeql_config_text()
     query_paths = (
+        "./.github/codeql/custom/ast-no-export-validation.ql",
         "./.github/codeql/custom/ast-no-type-validation.ql",
         "./.github/codeql/custom/missing-codegen-exception.ql",
         "./.github/codeql/custom/unsafe-eval-exec.ql",
@@ -37,6 +41,35 @@ def test_codeql_custom_queries_resolve_from_repository_root() -> None:
     for query_path in query_paths:
         assert f"  - uses: {query_path}" in config
         assert (ROOT / query_path).is_file(), query_path
+
+
+def test_ast_export_query_uses_formal_isolated_fixtures() -> None:
+    """Mantiene los casos deliberados fuera del árbol analizado en producción."""
+    config = _codeql_config_text()
+    fixture_dir = (
+        ROOT
+        / ".github"
+        / "codeql"
+        / "custom"
+        / "test"
+        / "ast_no_export_validation"
+    )
+
+    assert (
+        "  - '.github/codeql/custom/test/ast_no_export_validation/**'" in config
+    )
+    assert "  - 'tests/**'" not in config
+    assert "  - 'src/**'" not in config
+    assert (fixture_dir / "insecure" / "ast-no-export-validation.qlref").read_text(
+        encoding="utf-8"
+    ).strip() == "ast-no-export-validation.ql"
+    assert "return parse_source(source)" in (
+        fixture_dir / "insecure" / "insecure_alias_indirection.py"
+    ).read_text(encoding="utf-8")
+    assert "validate_ast(tree)" in (
+        fixture_dir / "safe" / "safe_validated_export.py"
+    ).read_text(encoding="utf-8")
+    assert AST_NO_EXPORT_VALIDATION_QUERY.is_file()
 
 
 def test_missing_codegen_exception_uses_supported_try_api() -> None:
