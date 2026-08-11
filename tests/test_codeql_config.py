@@ -9,9 +9,7 @@ CODEQL_CONFIG = ROOT / ".github" / "codeql" / "custom" / "codeql-config.yml"
 MISSING_CODEGEN_EXCEPTION_QUERY = (
     ROOT / ".github" / "codeql" / "custom" / "missing-codegen-exception.ql"
 )
-UNSAFE_EVAL_EXEC_QUERY = (
-    ROOT / ".github" / "codeql" / "custom" / "unsafe-eval-exec.ql"
-)
+UNSAFE_EVAL_EXEC_QUERY = ROOT / ".github" / "codeql" / "custom" / "unsafe-eval-exec.ql"
 
 
 def _codeql_config_text() -> str:
@@ -68,6 +66,6 @@ def test_unsafe_eval_exec_preserves_positive_and_negative_fixtures() -> None:
     assert "eval(expression)" in (fixtures / "src" / "violation.py").read_text(
         encoding="utf-8"
     )
-    assert "eval(expression)" in (
-        fixtures / "src" / "core" / "sandbox.py"
-    ).read_text(encoding="utf-8")
+    assert "eval(expression)" in (fixtures / "src" / "core" / "sandbox.py").read_text(
+        encoding="utf-8"
+    )

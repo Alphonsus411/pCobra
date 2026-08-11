@@ -159,6 +159,8 @@ target-version = ["py311"]
 extend-exclude = '''(?x)(
   ^docs/frontend/
   | ^docs/build/
+  # Fuentes protegidas por hashes canónicos; el formateador no debe tocarlas.
+  | ^/src/pcobra/cobra/core/(lexer|parser)\.py$
   # Snapshots byte-a-byte del transpilador; Black no debe reescribirlos.
   | ^/tests/data/expected_examples/[^/]+\.py$
   | ^venv/
