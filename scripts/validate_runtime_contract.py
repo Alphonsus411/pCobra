@@ -47,6 +47,17 @@ USAR_COBRA_PUBLIC_MODULES_EXPECTED: tuple[str, ...] = (
     "tiempo",
     "red",
     "holobit",
+    "ruta",
+    "serializacion",
+    "proceso",
+    "registro",
+    "argumentos",
+    "pruebas",
+    "temporal",
+    "cripto",
+    "regex",
+    "compresion",
+    "configuracion",
 )
 
 
