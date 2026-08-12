@@ -47,17 +47,10 @@ def test_ast_export_query_uses_formal_isolated_fixtures() -> None:
     """Mantiene los casos deliberados fuera del árbol analizado en producción."""
     config = _codeql_config_text()
     fixture_dir = (
-        ROOT
-        / ".github"
-        / "codeql"
-        / "custom"
-        / "test"
-        / "ast_no_export_validation"
+        ROOT / ".github" / "codeql" / "custom" / "test" / "ast_no_export_validation"
     )
 
-    assert (
-        "  - '.github/codeql/custom/test/ast_no_export_validation/**'" in config
-    )
+    assert "  - '.github/codeql/custom/test/ast_no_export_validation/**'" in config
     assert "  - 'tests/**'" not in config
     assert "  - 'src/**'" not in config
     assert (fixture_dir / "insecure" / "ast-no-export-validation.qlref").read_text(
