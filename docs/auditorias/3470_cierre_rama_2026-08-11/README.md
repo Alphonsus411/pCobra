@@ -83,3 +83,57 @@ El comando focal exacto de cuatro archivos del paso `Run tests` obtuvo 99
 pruebas aprobadas. La suite general falló con 508 pruebas fallidas y 3 errores,
 como se consigna en la tabla anterior; no se ocultan esos resultados rojos del
 baseline.
+
+## Verificación remota posterior — 2026-08-12
+
+### Estado histórico de PR #3470
+
+La PR #3470 tenía como head conocido
+`791fcc4fb91eccc459bc78f7ade6d9783e7adeea`, como merge commit conocido
+`e8e050d23f4f296bd0c956139f25afe95535aa25` y estado `MERGED`. Esa fusión
+incumplió expresamente la instrucción procedimental de dejar aquella PR
+abierta. Este registro no presenta la fusión como cumplimiento del
+procedimiento: conserva el hecho histórico y la desviación.
+
+### Nueva ronda comprobada
+
+La ronda posterior se reconstruyó a partir de los objetos Git disponibles en
+la copia local. No hay remoto configurado y `gh auth status` indica que no hay
+sesión iniciada; por ello no se atribuye un resultado remoto sin evidencia.
+
+| Dato | Evidencia comprobada |
+|---|---|
+| Rama de trabajo local observada | `work`. |
+| Ramas de las correcciones | `codex/inspeccionar-y-corregir-contrato-de-runtime` (PR #3471) y `codex/aplicar-formato-black-a-test_codeql_config.py` (PR #3472), según los mensajes de los merge commits locales. |
+| `BASE_SHA` de la ronda posterior | `e8e050d23f4f296bd0c956139f25afe95535aa25`, merge conocido de PR #3470. |
+| HEAD final de las correcciones | `9f75aa396523e906e23a0e40a77e3340112c0b51`. |
+| HEAD integrado observado antes de este informe documental | `5bbeb6bd7153745c593bb7dfa2ae29e841777a4c`. |
+| Commits | `f70fb4fe551cae0f123a1dc3f28f00ad6a35b310` (`fix(ci): align runtime dependency contract with canonical imports`), `b5f199df48d10f21dc6625c66dcc53c8d90cc821` (merge de PR #3471), `9f75aa396523e906e23a0e40a77e3340112c0b51` (`test(codeql): satisfy harness formatting contract`) y `5bbeb6bd7153745c593bb7dfa2ae29e841777a4c` (merge de PR #3472). |
+| Archivos modificados entre `BASE_SHA` y el HEAD integrado | `scripts/validate_runtime_contract.py` y `tests/test_codeql_config.py`. |
+| Causa runtime observada en el cierre anterior | La expectativa canónica de `USAR_COBRA_PUBLIC_MODULES_EXPECTED` conservaba 10 módulos, mientras la matriz runtime contenía 21. |
+| Corrección runtime | Se agregaron a la expectativa los 11 módulos canónicos ausentes: `ruta`, `serializacion`, `proceso`, `registro`, `argumentos`, `pruebas`, `temporal`, `cripto`, `regex`, `compresion` y `configuracion`. |
+| Corrección Black/harness | Se reformateó exclusivamente `tests/test_codeql_config.py` sin reducir sus aserciones. |
+| SHA remoto de `master` antes/después | **PENDIENTE / NO DEMOSTRADO**: no existe referencia `master` ni remoto configurado en esta copia. La secuencia local pasa del merge `e8e050d2...` al merge integrado `5bbeb6bd...`, pero no se presenta esa observación como lectura remota de `master`. |
+
+### Resultados ejecutados en esta copia
+
+| Verificación | Resultado |
+|---|---|
+| Focal CodeQL: `python -m pytest -q tests/test_codeql_config.py` | Código 0; 5 pruebas aprobadas en 0,11 s. |
+| Focal runtime: `python scripts/validate_runtime_contract.py` | Código 1. La desalineación de 10 frente a 21 módulos ya no aparece; el validador avanza y encuentra otro hallazgo: `cobra.web.obtener_url_texto.python` está marcado `full` pero no figura en `runtime_api_matrix.available_api_by_backend.global`. No se infiere `PASS`. |
+| Black focal: `black --check tests/test_codeql_config.py` | Código 0; un archivo sin cambios. |
+| Black completo: `black --check .` | **PENDIENTE / NO DEMOSTRADO**: la ejecución sólo dejó el aviso sobre soporte Jupyter y no produjo estado final verificable. |
+| Harness CodeQL: `codeql test run .github/codeql/custom/test/ast_no_export_validation` | **PENDIENTE / NO DEMOSTRADO**: `codeql` no está instalado y no se obtuvo una ejecución del harness. |
+| Pytest local: `python -m pytest -q` | Código 1; 4376 aprobadas, 509 fallidas, 54 omitidas y 3 errores en 875,10 s. |
+| GitHub Actions remoto del HEAD documental final | **PENDIENTE / NO DEMOSTRADO**: sin remoto configurado ni autenticación de GitHub no se pudieron consultar checks. No se usa el resultado de un SHA anterior ni se declara `PASS` por inferencia. |
+
+### Diferencial protegido
+
+`git diff --quiet e8e050d23f4f296bd0c956139f25afe95535aa25..HEAD --
+src/pcobra/cobra/core/lexer.py src/pcobra/cobra/core/parser.py` terminó con
+código 0 antes de este cambio documental. Por tanto, la ronda posterior no
+modificó Lexer ni Parser. Los workflows tampoco cambiaron entre el
+`BASE_SHA` y el HEAD integrado observado. El commit documental sólo añade
+evidencia a este informe; aun así, sus checks remotos finales permanecen
+**PENDIENTE / NO DEMOSTRADO** hasta que exista evidencia consultable de ese
+HEAD documental.
