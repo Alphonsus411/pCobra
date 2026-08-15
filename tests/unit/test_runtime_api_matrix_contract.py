@@ -8,6 +8,26 @@ from pcobra.cobra.transpilers.runtime_api_matrix import (
 from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
 
 
+PUBLIC_CORELIB_EXTENSION_EXPORTS = {
+    "contiene",
+    "falso",
+    "igual",
+    "lanza_error",
+    "leer_configuracion",
+    "leer_ini",
+    "leer_toml",
+    "toml_disponible",
+    "verdadero",
+}
+
+MODULE_ONLY_CORELIB_ALIASES = {
+    "ejecutar_proceso",
+    "info_registro",
+    "leer_json_serializacion",
+    "unir_ruta",
+}
+
+
 def test_runtime_api_snapshot_contract_is_up_to_date() -> None:
     validate_runtime_api_parity_snapshot()
 
@@ -37,6 +57,14 @@ def test_python_global_api_includes_ejecutar_comando_async() -> None:
         "ejecutar_comando_async"
         in matrix["available_api_by_backend"]["python"]["global"]
     )
+
+
+def test_python_runtime_preserves_documented_extension_exports_only() -> None:
+    matrix = build_runtime_api_matrix()
+
+    python_corelibs = set(matrix["available_api_by_backend"]["python"]["corelibs"])
+    assert PUBLIC_CORELIB_EXTENSION_EXPORTS <= python_corelibs
+    assert MODULE_ONLY_CORELIB_ALIASES.isdisjoint(matrix["global_api"]["corelibs"])
 
 
 def test_runtime_public_backend_policy_is_exact() -> None:
