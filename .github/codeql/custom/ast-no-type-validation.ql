@@ -20,7 +20,7 @@ where
       ) or
       // Búsqueda de sentencia assert
       exists(Assert ast |
-        ast.getEnclosingCallable() = m
+        ast.getScope() = m
       )
     )
   )
