@@ -6,6 +6,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 CODEQL_CONFIG = ROOT / ".github" / "codeql" / "custom" / "codeql-config.yml"
+CODEQL_WORKFLOW = ROOT / ".github" / "workflows" / "codeql.yml"
 MISSING_CODEGEN_EXCEPTION_QUERY = (
     ROOT / ".github" / "codeql" / "custom" / "missing-codegen-exception.ql"
 )
@@ -20,6 +21,24 @@ AST_NO_TYPE_VALIDATION_QUERY = (
 
 def _codeql_config_text() -> str:
     return CODEQL_CONFIG.read_text(encoding="utf-8")
+
+
+def test_codeql_workflow_runs_both_custom_query_harnesses() -> None:
+    """Ejecuta ambos harnesses con el binario publicado por CodeQL init."""
+    workflow = CODEQL_WORKFLOW.read_text(encoding="utf-8")
+
+    assert '"${{ steps.codeql-init.outputs.codeql-path }}" test run' in workflow
+    assert ".github/codeql/custom/test/ast_no_export_validation" in workflow
+    assert ".github/codeql/custom/test/ast_no_type_validation" in workflow
+
+
+def test_codeql_production_config_keeps_fixtures_isolated() -> None:
+    """Excluye ambos árboles de fixtures sin retirar la consulta productiva."""
+    config = _codeql_config_text()
+
+    assert "  - '.github/codeql/custom/test/ast_no_export_validation/**'" in config
+    assert "  - '.github/codeql/custom/test/ast_no_type_validation/**'" in config
+    assert "  - uses: ./.github/codeql/custom/ast-no-type-validation.ql" in config
 
 
 def test_codeql_paths_exist_in_repository() -> None:
@@ -71,18 +90,15 @@ def test_ast_export_query_uses_formal_isolated_fixtures() -> None:
 def test_ast_type_query_uses_supported_api_and_isolated_fixtures() -> None:
     """Valida la API de llamadas y aísla los casos inseguros deliberados."""
     config = _codeql_config_text()
-    workflow = (ROOT / ".github" / "workflows" / "codeql.yml").read_text(
-        encoding="utf-8"
-    )
     fixture_dir = (
         ROOT / ".github" / "codeql" / "custom" / "test" / "ast_no_type_validation"
     )
     query = AST_NO_TYPE_VALIDATION_QUERY.read_text(encoding="utf-8")
 
     assert "  - '.github/codeql/custom/test/ast_no_type_validation/**'" in config
-    assert ".github/codeql/custom/test/ast_no_type_validation" in workflow
-    assert "exists(Call call |" in query
-    assert 'call.getFunc().(Name).getId() = "isinstance"' in query
+    assert "exists(Call call, Name callee |" in query
+    assert "call.getFunc() = callee" in query
+    assert 'callee.getId() = "isinstance"' in query
     assert "FunctionCall" not in query
     assert "not exists(Function m |" in query
     assert 'c.getName().regexpMatch("^Nodo.*")' in query
