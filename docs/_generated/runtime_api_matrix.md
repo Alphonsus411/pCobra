@@ -10,7 +10,7 @@
 
 | Backend | Disponibles (global) | Disponibles corelibs | Disponibles standard_library |
 |---|---:|---:|---:|
-| `python` | 247 | 178 | 123 |
+| `python` | 248 | 179 | 123 |
 | `javascript` | 2 | 1 | 1 |
 | `rust` | 2 | 1 | 1 |
 
