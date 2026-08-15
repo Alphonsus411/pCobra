@@ -18,9 +18,10 @@ where
     m.getName() = "__post_init__" and
     (
       // Búsqueda de llamada a builtin isinstance
-      exists(Call call |
+      exists(Call call, Name callee |
         call.getScope() = m and
-        call.getFunc().(Name).getId() = "isinstance"
+        call.getFunc() = callee and
+        callee.getId() = "isinstance"
       ) or
       // Búsqueda de sentencia assert
       exists(Assert ast |
