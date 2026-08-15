@@ -7,7 +7,7 @@
   Runtime continúa bloqueado por el hallazgo independiente
   `obtener_url_texto`, que esta ronda prohíbe corregir.
 - `BASE_SHA`: `f3bec17bab295c760fcdedf4d74703e21d512e39`.
-- `HEAD` funcional auditado: `888661ff646cdd9883e4e1583e27ed1af91bf038`.
+- `HEAD` funcional auditado inicialmente: `888661ff646cdd9883e4e1583e27ed1af91bf038`; la revalidación final y su SHA se documentan al final.
 - Rama: `fix/contrato-extensiones-cobra`.
 - El commit documental posterior que contiene este informe no puede
   autorreferenciar su propio SHA; se comunica junto con el PR.
@@ -175,3 +175,42 @@ procesos seguros ni `validator_worker`. La aparición de `ast` en dos rutas del
 diff corresponde exclusivamente a la query CodeQL autorizada y a su resultado
 esperado, no al AST del Core. No se cambió comportamiento del Core ni sintaxis
 Cobra y no se tocó `master`.
+
+## Revalidación final de la rama (2026-08-15 UTC)
+
+El SHA funcional final revisado antes del commit exclusivamente documental es
+`d3b10012633b8ba3e409682671cd69d27759eb64`. Esta precisión evita afirmar que
+un commit contiene su propio identificador: el SHA del commit del informe se
+registra en el historial Git y en la PR.
+
+La revalidación se ejecutó en el orden solicitado y se detuvo al aparecer el
+fallo independiente del validador, de acuerdo con el criterio de parada. No se
+hicieron correcciones Runtime ni se modificaron red, sandbox o semántica:
+
+```console
+$ python -m pytest -q tests/unit/test_runtime_api_matrix_contract.py tests/unit/test_corelibs_configuracion.py tests/unit/test_corelibs_pruebas.py tests/unit/test_corelibs_sistema.py tests/unit/test_usar_core_all_exports.py tests/test_usar_public_exports_snapshot.py tests/cli/test_runtime_imports_contract.py tests/integration/test_usar_runtime_contract.py
+1 failed, 59 passed, 1 skipped in 2.50s
+RuntimeError: Snapshot inválido para python.corelibs: símbolos desconocidos ['obtener_url_texto']
+[exit 1; PENDIENTE]
+
+$ python scripts/generar_matriz_api_runtime.py
+RuntimeError: Snapshot inválido para python.corelibs: símbolos desconocidos ['obtener_url_texto']
+[exit 1; PENDIENTE]
+
+$ python scripts/validate_runtime_contract.py
+pcobra.cobra.stdlib_contract.validator.ContractValidationError: cobra.system.ejecutar_comando_async.python: marcado full pero no aparece en runtime_api_matrix.available_api_by_backend.global
+[exit 1; FAIL]
+```
+
+La evidencia literal del bloqueo exigido es:
+
+```text
+RuntimeError: Snapshot inválido para python.corelibs: símbolos desconocidos ['obtener_url_texto']
+```
+
+Por la parada obligatoria ante el segundo fallo independiente, en esta
+revalidación quedaron **PENDIENTE** los tests de configuración CodeQL, ambos
+`codeql test run`, la comprobación ejecutable de los cuatro imports y
+`black --check`. Sus ejecuciones reales anteriores, incluidos el
+`codeql-path` real `/tmp/codeql-bundle-3482/codeql/codeql`, permanecen
+registradas arriba sin presentarlas falsamente como una nueva ejecución.
