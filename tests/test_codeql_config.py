@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -63,6 +64,21 @@ def test_codeql_custom_queries_resolve_from_repository_root() -> None:
     for query_path in query_paths:
         assert f"  - uses: {query_path}" in config
         assert (ROOT / query_path).is_file(), query_path
+
+
+def test_configured_validation_queries_declare_a_non_empty_kind() -> None:
+    """Exige que las tres queries de validación declaren su tipo de resultado."""
+    queries = (
+        AST_NO_EXPORT_VALIDATION_QUERY,
+        AST_NO_TYPE_VALIDATION_QUERY,
+        MISSING_CODEGEN_EXCEPTION_QUERY,
+    )
+
+    for query_path in queries:
+        query = query_path.read_text(encoding="utf-8")
+        header = query.split("*/", maxsplit=1)[0]
+
+        assert re.search(r"^\s*\*\s+@kind\s+\S+\s*$", header, re.MULTILINE), query_path
 
 
 def test_ast_export_query_uses_formal_isolated_fixtures() -> None:
