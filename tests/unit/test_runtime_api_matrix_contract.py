@@ -30,5 +30,13 @@ def test_runtime_api_matrix_has_all_official_backends_and_python_full() -> None:
         assert isinstance(missing[backend]["global"], list)
 
 
+def test_python_global_api_includes_ejecutar_comando_async() -> None:
+    matrix = build_runtime_api_matrix()
+
+    assert "ejecutar_comando_async" in matrix["available_api_by_backend"]["python"][
+        "global"
+    ]
+
+
 def test_runtime_public_backend_policy_is_exact() -> None:
     assert PUBLIC_BACKENDS == ("python", "javascript", "rust")
