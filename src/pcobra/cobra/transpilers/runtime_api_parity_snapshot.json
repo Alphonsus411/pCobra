@@ -373,6 +373,7 @@
         "obtener_os",
         "obtener_url",
         "obtener_url_async",
+        "obtener_url_texto",
         "ordenar",
         "pares_consecutivos",
         "paridad",
