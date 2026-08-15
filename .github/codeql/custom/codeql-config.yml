@@ -6,6 +6,7 @@ paths-ignore:
   - 'venv-testpypi/**'
   - '**/__pycache__/**'
   - '.github/codeql/custom/test/ast_no_export_validation/**'
+  - '.github/codeql/custom/test/ast_no_type_validation/**'
 queries:
   - uses: ./.github/codeql/custom/ast-no-export-validation.ql
   - uses: ./.github/codeql/custom/ast-no-type-validation.ql

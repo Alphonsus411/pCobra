@@ -13,6 +13,9 @@ UNSAFE_EVAL_EXEC_QUERY = ROOT / ".github" / "codeql" / "custom" / "unsafe-eval-e
 AST_NO_EXPORT_VALIDATION_QUERY = (
     ROOT / ".github" / "codeql" / "custom" / "ast-no-export-validation.ql"
 )
+AST_NO_TYPE_VALIDATION_QUERY = (
+    ROOT / ".github" / "codeql" / "custom" / "ast-no-type-validation.ql"
+)
 
 
 def _codeql_config_text() -> str:
@@ -63,6 +66,28 @@ def test_ast_export_query_uses_formal_isolated_fixtures() -> None:
         fixture_dir / "safe" / "safe_validated_export.py"
     ).read_text(encoding="utf-8")
     assert AST_NO_EXPORT_VALIDATION_QUERY.is_file()
+
+
+def test_ast_type_query_uses_supported_api_and_isolated_fixtures() -> None:
+    """Valida la API de llamadas y aísla los casos inseguros deliberados."""
+    config = _codeql_config_text()
+    workflow = (ROOT / ".github" / "workflows" / "codeql.yml").read_text(
+        encoding="utf-8"
+    )
+    fixture_dir = (
+        ROOT / ".github" / "codeql" / "custom" / "test" / "ast_no_type_validation"
+    )
+    query = AST_NO_TYPE_VALIDATION_QUERY.read_text(encoding="utf-8")
+
+    assert "  - '.github/codeql/custom/test/ast_no_type_validation/**'" in config
+    assert ".github/codeql/custom/test/ast_no_type_validation" in workflow
+    assert "exists(Call call |" in query
+    assert 'call.getFunc().(Name).getId() = "isinstance"' in query
+    assert "FunctionCall" not in query
+    assert "not exists(Function m |" in query
+    assert 'c.getName().regexpMatch("^Nodo.*")' in query
+    assert (fixture_dir / "insecure" / "ast-no-type-validation.qlref").is_file()
+    assert (fixture_dir / "safe" / "ast-no-type-validation.qlref").is_file()
 
 
 def test_missing_codegen_exception_uses_supported_try_api() -> None:

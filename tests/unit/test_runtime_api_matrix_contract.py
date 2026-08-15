@@ -19,7 +19,7 @@ PUBLIC_CORELIB_EXTENSION_EXPORTS = {
     "verdadero",
 }
 
-MODULE_ONLY_CORELIB_ALIASES = {
+PUBLIC_CORELIB_ALIASES = {
     "ejecutar_proceso",
     "info_registro",
     "leer_json_serializacion",
@@ -58,12 +58,13 @@ def test_python_global_api_includes_ejecutar_comando_async() -> None:
     )
 
 
-def test_python_runtime_preserves_documented_extension_exports_only() -> None:
+def test_python_runtime_preserves_public_extension_exports() -> None:
     matrix = build_runtime_api_matrix()
 
     python_corelibs = set(matrix["available_api_by_backend"]["python"]["corelibs"])
     assert PUBLIC_CORELIB_EXTENSION_EXPORTS <= python_corelibs
-    assert MODULE_ONLY_CORELIB_ALIASES.isdisjoint(matrix["global_api"]["corelibs"])
+    assert PUBLIC_CORELIB_ALIASES <= python_corelibs
+    assert PUBLIC_CORELIB_ALIASES <= set(matrix["global_api"]["corelibs"])
 
 
 def test_runtime_public_backend_policy_is_exact() -> None:
