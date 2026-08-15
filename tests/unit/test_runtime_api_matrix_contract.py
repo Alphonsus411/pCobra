@@ -7,7 +7,6 @@ from pcobra.cobra.transpilers.runtime_api_matrix import (
 )
 from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
 
-
 PUBLIC_CORELIB_EXTENSION_EXPORTS = {
     "contiene",
     "falso",
