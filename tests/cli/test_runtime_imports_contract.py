@@ -30,3 +30,11 @@ def test_politica_publica_targets_falla_si_hay_targets_extra():
         "assert tuple(PUBLIC_BACKENDS + ('go',)) != ('python','javascript','rust')"
     )
     assert result.returncode == 0, result.stderr
+
+
+def test_obtener_url_texto_se_puede_importar_desde_corelibs():
+    result = _run_python_isolated(
+        "from pcobra.corelibs import obtener_url_texto; "
+        "assert callable(obtener_url_texto)"
+    )
+    assert result.returncode == 0, result.stderr

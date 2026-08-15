@@ -185,6 +185,7 @@ from .coleccion import (
 from .seguridad import hash_sha256, generar_uuid
 from .red import (
     obtener_url,
+    obtener_url_texto,
     obtener_url_async,
     enviar_post,
     enviar_post_async,
@@ -407,6 +408,7 @@ __all__ = [
     "hash_sha256",
     "generar_uuid",
     "obtener_url",
+    "obtener_url_texto",
     "obtener_url_async",
     "enviar_post",
     "enviar_post_async",

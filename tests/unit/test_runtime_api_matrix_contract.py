@@ -58,6 +58,14 @@ def test_python_global_api_includes_ejecutar_comando_async() -> None:
     )
 
 
+def test_python_runtime_includes_obtener_url_texto() -> None:
+    matrix = build_runtime_api_matrix()
+
+    python_api = matrix["available_api_by_backend"]["python"]
+    assert "obtener_url_texto" in python_api["global"]
+    assert "obtener_url_texto" in python_api["corelibs"]
+
+
 def test_python_runtime_preserves_public_extension_exports() -> None:
     matrix = build_runtime_api_matrix()
 
