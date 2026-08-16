@@ -1,3 +1,11 @@
+/**
+ * @name Uso inseguro de eval o exec
+ * @description Detecta llamadas a eval o exec fuera del sandbox.
+ * @kind problem
+ * @problem.severity error
+ * @id py/unsafe-eval-exec
+ */
+
 import python
 
 /**
