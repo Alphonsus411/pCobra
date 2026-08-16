@@ -182,6 +182,7 @@
     "obtener_os",
     "obtener_url",
     "obtener_url_async",
+    "obtener_url_texto",
     "orden_total",
     "ordenar",
     "pares_consecutivos",
