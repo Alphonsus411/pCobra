@@ -67,18 +67,46 @@ def test_codeql_custom_queries_resolve_from_repository_root() -> None:
 
 
 def test_configured_validation_queries_declare_a_non_empty_kind() -> None:
-    """Exige que las tres queries de validación declaren su tipo de resultado."""
-    queries = (
-        AST_NO_EXPORT_VALIDATION_QUERY,
-        AST_NO_TYPE_VALIDATION_QUERY,
-        MISSING_CODEGEN_EXCEPTION_QUERY,
+    """Valida el QLDoc de todas las queries productivas configuradas."""
+    query_paths = re.findall(
+        r"^\s*-\s+uses:\s+['\"]?(\./[^'\"\s]+)['\"]?\s*$",
+        _codeql_config_text(),
+        re.MULTILINE,
     )
+    required_metadata = ("name", "description", "kind", "id")
 
-    for query_path in queries:
+    assert query_paths
+
+    for configured_path in query_paths:
+        query_path = ROOT / configured_path
+        assert query_path.is_file(), configured_path
+
         query = query_path.read_text(encoding="utf-8")
-        header = query.split("*/", maxsplit=1)[0]
+        before_python_import, separator, _ = query.partition("import python")
+        assert separator, query_path
 
-        assert re.search(r"^\s*\*\s+@kind\s+\S+\s*$", header, re.MULTILINE), query_path
+        qldoc_match = re.search(r"/\*\*(.*?)\*/\s*$", before_python_import, re.DOTALL)
+        assert qldoc_match, query_path
+        qldoc = qldoc_match.group(1)
+
+        metadata = {}
+        for field in required_metadata:
+            values = re.findall(
+                rf"^\s*\*\s+@{re.escape(field)}\s+(\S(?:.*\S)?)\s*$",
+                qldoc,
+                re.MULTILINE,
+            )
+            assert len(values) == 1, (query_path, field)
+            metadata[field] = values[0]
+
+        if metadata["kind"] == "problem":
+            severities = re.findall(
+                r"^\s*\*\s+@problem\.severity\s+(\S(?:.*\S)?)\s*$",
+                qldoc,
+                re.MULTILINE,
+            )
+            assert len(severities) == 1, query_path
+            assert severities[0] in {"error", "warning", "recommendation"}, query_path
 
 
 def test_ast_export_query_uses_formal_isolated_fixtures() -> None:
