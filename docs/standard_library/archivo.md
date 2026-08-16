@@ -24,9 +24,12 @@ Documentación sincronizada automáticamente desde `src/pcobra/standard_library/
 | Función |
 |---|
 | `adjuntar` |
+| `anexar` |
+| `eliminar` |
 | `escribir` |
 | `existe` |
 | `leer` |
+| `leer_lineas` |
 <!-- END: AUTO-STDLIB-FUNCTIONS -->
 
 

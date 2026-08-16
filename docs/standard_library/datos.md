@@ -152,17 +152,13 @@ En el objetivo JavaScript se ofrece una implementación parcial que mantiene las
 
 | Función |
 |---|
-| `a_listas` |
 | `agregar` |
-| `claves` |
-| `valores` |
-| `longitud` |
 | `agrupar_y_resumir` |
 | `calcular_percentiles` |
+| `claves` |
 | `combinar_tablas` |
 | `correlacion_pearson` |
 | `correlacion_spearman` |
-| `de_listas` |
 | `describir` |
 | `desplegar_tabla` |
 | `elemento` |
@@ -172,25 +168,29 @@ En el objetivo JavaScript se ofrece una implementación parcial que mantiene las
 | `escribir_json` |
 | `escribir_parquet` |
 | `filtrar` |
-| `mapear` |
-| `reducir` |
+| `invertir_tabla` |
 | `leer_csv` |
 | `leer_excel` |
 | `leer_feather` |
 | `leer_json` |
 | `leer_parquet` |
+| `longitud` |
+| `mapear` |
 | `matriz_covarianza` |
 | `mutar_columna` |
 | `ordenar_tabla` |
 | `pivotar_ancho` |
 | `pivotar_largo` |
 | `pivotar_tabla` |
+| `reducir` |
 | `rellenar_nulos` |
 | `resumen_rapido` |
 | `seleccionar_columnas` |
 | `separar_columna` |
 | `tabla_cruzada` |
+| `tomar` |
 | `unir_columnas` |
+| `valores` |
 <!-- END: AUTO-STDLIB-FUNCTIONS -->
 
 

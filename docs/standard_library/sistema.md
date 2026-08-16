@@ -32,3 +32,18 @@ usar "sistema"
 ```
 
 Nombres públicos en español (fuente: `__all__`).
+
+<!-- BEGIN: AUTO-STDLIB-FUNCTIONS -->
+## API pública sincronizada (`standard_library.sistema`)
+
+| Función |
+|---|
+| `directorio_actual` |
+| `ejecutar` |
+| `ejecutar_async` |
+| `ejecutar_comando_async` |
+| `ejecutar_stream` |
+| `listar_dir` |
+| `obtener_env` |
+| `obtener_os` |
+<!-- END: AUTO-STDLIB-FUNCTIONS -->

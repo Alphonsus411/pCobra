@@ -50,7 +50,7 @@ para facilitar la depuración.
 | Función |
 |---|
 | `alguna` |
-| `coalesce` |
+| `coalescer` |
 | `condicional` |
 | `conjuncion` |
 | `conteo_verdaderos` |
