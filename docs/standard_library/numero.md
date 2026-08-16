@@ -59,26 +59,46 @@ explícitos tanto en Python como en los demás backends soportados.
 
 | Función |
 |---|
+| `absoluto` |
 | `coeficiente_variacion` |
 | `combinaciones` |
 | `copiar_signo` |
 | `cuartiles` |
 | `distancia_euclidiana` |
 | `envolver_modular` |
+| `es_cercano` |
 | `es_finito` |
 | `es_infinito` |
 | `es_nan` |
+| `es_par` |
+| `es_primo` |
+| `factorial` |
 | `hipotenusa` |
 | `interpolar` |
 | `limitar` |
+| `maximo` |
+| `mcd` |
+| `mcm` |
 | `media_armonica` |
 | `media_geometrica` |
+| `mediana` |
+| `minimo` |
+| `moda` |
 | `percentil` |
 | `permutaciones` |
+| `piso` |
+| `potencia` |
+| `producto` |
+| `promedio` |
+| `raiz` |
 | `raiz_entera` |
 | `rango_intercuartil` |
+| `redondear` |
 | `signo` |
 | `suma_precisa` |
+| `sumatoria` |
+| `techo` |
+| `truncar` |
 | `varianza` |
 | `varianza_muestral` |
 <!-- END: AUTO-STDLIB-FUNCTIONS -->

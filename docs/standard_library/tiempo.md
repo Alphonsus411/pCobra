@@ -31,3 +31,15 @@ usar "tiempo"
 ```
 
 Nombres públicos en español (fuente: `__all__`).
+
+<!-- BEGIN: AUTO-STDLIB-FUNCTIONS -->
+## API pública sincronizada (`standard_library.tiempo`)
+
+| Función |
+|---|
+| `ahora` |
+| `desde_epoch` |
+| `dormir` |
+| `epoch` |
+| `formatear` |
+<!-- END: AUTO-STDLIB-FUNCTIONS -->
