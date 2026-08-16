@@ -1,6 +1,8 @@
 /**
  * Reporta métodos "generate_code" en los transpiladores que no contienen
  * sentencias try/except para manejar excepciones durante la generación de código.
+ * @name Falta manejo de excepciones en generación de código
+ * @description Detecta métodos generate_code sin sentencias try/except.
  * @kind problem
  * @problem.severity warning
  * @id py/missing-codegen-exception
