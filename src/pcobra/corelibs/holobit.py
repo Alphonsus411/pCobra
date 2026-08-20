@@ -247,9 +247,7 @@ def graficar(hb: dict[str, Any]) -> dict[str, str]:
     try:
         _AdaptadorInternoHolobit.graficar(_desde_estructura_cobra(hb))
     except Exception as exc:  # pragma: no cover - defensivo frente al SDK
-        raise _error_dominio(
-            "No se pudo graficar el holobit en el runtime de Cobra", causa=exc
-        ) from None
+        raise _traducir_error_interno("graficar", exc) from None
     resultado = {"estado": "ok"}
     _garantizar_json_estable(resultado)
     return resultado

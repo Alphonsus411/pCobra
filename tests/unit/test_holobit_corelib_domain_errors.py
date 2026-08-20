@@ -37,6 +37,34 @@ def test_adaptador_traduce_error_runtime_sdk_a_error_dominio(
         holobit_module.serializar_holobit({"tipo": "holobit", "valores": [1, 2, 3]})
 
 
+@pytest.mark.parametrize("fase", ["adaptacion", "proyeccion"])
+def test_graficar_oculta_errores_internos_en_toda_la_operacion(
+    monkeypatch: pytest.MonkeyPatch, holobit_module, fase: str
+) -> None:
+    class _FalloSdkSecreto(Exception):
+        pass
+
+    def fallar(*_args, **_kwargs):
+        raise _FalloSdkSecreto("mensaje privado de holobit_sdk")
+
+    if fase == "adaptacion":
+        monkeypatch.setattr(holobit_module, "_SDKHolobit", fallar)
+    else:
+        monkeypatch.setattr(holobit_module, "_runtime_graficar", fallar)
+
+    with pytest.raises(holobit_module.ErrorHolobit) as captura:
+        holobit_module.graficar({"tipo": "holobit", "valores": [1, 2, 3]})
+
+    error = captura.value
+    assert str(error) == (
+        "No se pudo ejecutar la operación 'graficar' de holobit en runtime Cobra"
+    )
+    assert error.__cause__ is None
+    assert error.__suppress_context__ is True
+    assert "ErrorHolobit" not in holobit_module.PUBLIC_API_HOLOBIT
+    assert "ErrorHolobit" not in holobit_module.__all__
+
+
 @pytest.mark.parametrize(
     "entrada",
     [
