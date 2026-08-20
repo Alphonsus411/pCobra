@@ -33,17 +33,41 @@ El cambio mínimo realizado en esta tarea de documentación modifica únicamente
 No se realizaron cambios adicionales al runtime, a pruebas ni a otros
 documentos durante esta tarea.
 
-## Tests ejecutados
+## Verificaciones ejecutadas
 
-Se ejecutaron realmente los siguientes comandos desde la raíz del repositorio:
+Los comandos se ejecutaron desde la raíz del repositorio, en el orden solicitado:
 
-1. `pytest -q tests/unit/test_holobit_graficar_contract.py tests/unit/test_corelibs_holobit_adapter.py`
-   - Resultado: **21 passed in 2.42s** (código de salida 0).
-2. `pytest -q tests/integration/test_runtime_python.py`
-   - Resultado: **3 passed, 5 warnings in 2.52s** (código de salida 0).
-   - Las cinco advertencias son `DeprecationWarning` por el uso compatible de
-     `ast.Str` en `src/pcobra/core/sandbox.py`; no representan fallos de estas
-     pruebas.
+1. Prueba dirigida del retorno público de `graficar`:
+
+   ```console
+   $ pytest -q tests/unit/test_holobit_graficar_contract.py
+   3 passed in 2.57s
+   ```
+
+   Resultado: **correcto** (código de salida 0). Cubre el retorno fijo JSON-safe,
+   el descarte del objeto interno del SDK y el saneamiento de sus excepciones.
+
+2. Suites de Holobit y contratos relacionados de `usar`:
+
+   ```console
+   $ pytest -q tests/integration/test_holobit_tiers.py tests/integration/transpilers/test_holobit_hooks_golden.py tests/unit/test_corelibs_holobit_adapter.py tests/unit/test_holobit_backend_contract_matrix.py tests/unit/test_holobit_corelib_domain_errors.py tests/unit/test_holobit_generation.py tests/unit/test_holobit_graficar_contract.py tests/unit/test_holobit_no_fuga_exports.py tests/unit/test_holobit_runtime_backends.py tests/unit/test_holobit_sdk_compatibility_report.py tests/unit/test_holobit_sdk_fallback_contract.py tests/unit/test_holobit_sdk_integration.py tests/unit/test_holobit_transformacion_extra.py tests/unit/test_parser_holobit.py tests/unit/test_to_js_holobit_runtime_snapshot.py tests/integration/test_repl_usar_entrypoints_contract.py tests/integration/test_usar_canonical_surface_contract.py tests/integration/test_usar_core_contract_full.py tests/integration/test_usar_export_sanitation.py tests/integration/test_usar_public_contract_regression.py tests/integration/test_usar_runtime_contract.py tests/unit/test_usar_loader_public_api_contract.py tests/unit/test_usar_loader_validation.py tests/unit/test_usar_numpy_error_contract.py tests/unit/test_usar_policy_contract.py tests/unit/test_usar_public_contract.py
+   15 failed, 492 passed, 5 skipped, 2 warnings in 14.22s
+   ```
+
+   Resultado: **con fallos preexistentes fuera del hallazgo dirigido** (código de
+   salida 1). Los 15 fallos corresponden a contratos históricos inconsistentes
+   en exportaciones de `pcobra.core.holobits`, la matriz de compatibilidad de
+   backends y validaciones generales de `usar`. No se modificaron runtime,
+   pruebas, lexer, parser, AST ni transpiladores para ocultarlos o mezclarlos con
+   la estabilización ya implementada de `graficar`.
+
+3. Comprobaciones del parche final:
+
+   - `git diff --check`: sin errores.
+   - `git diff --name-only`: únicamente
+     `docs/auditoria_holobit_contract_fix.md`; no aparecen rutas de lexer,
+     parser, AST ni transpiladores.
+   - Revisión de `git diff`: no amplía `PUBLIC_API_HOLOBIT` ni `__all__`.
 
 ## Riesgos pendientes
 
