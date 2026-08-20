@@ -127,14 +127,30 @@ def test_usar_modulo_inexistente_falla_con_diagnostico_publico(monkeypatch):
     )
 
     cmd = InteractiveCommand(InterpretadorCobra())
-    estado_pre = dict(cmd.interpretador.contextos[-1].values)
+    contexto_pre = cmd.interpretador.contextos[-1].values
+    estado_pre = dict(contexto_pre)
 
     with pytest.raises(PermissionError, match=USAR_RECHAZO_EXTERNO_MATCH) as excinfo:
         cmd.ejecutar_codigo('usar "modulo_inexistente"')
 
     mensaje = str(excinfo.value).lower()
-    assert "modulo_fuera_catalogo_publico" in mensaje or "usar_error[" in mensaje
-    assert "traceback" not in mensaje
+    assert (
+        mensaje.split(":", 1)[0]
+        == "usar_error[modulo_fuera_catalogo_publico]"
+    )
+    assert not any(
+        detalle in mensaje
+        for detalle in (
+            "/workspace/",
+            "src/pcobra",
+            "ruta buscada",
+            "project_root",
+            "current_file",
+            "corelibs",
+            "traceback",
+        )
+    )
+    assert cmd.interpretador.contextos[-1].values is contexto_pre
     assert cmd.interpretador.contextos[-1].values == estado_pre
     assert "modulo_inexistente" not in cmd.interpretador.contextos[-1].values
 
@@ -230,17 +246,50 @@ def test_public_backends_inmutable_tipo_tuple():
     assert PUBLIC_BACKENDS == tuple(PUBLIC_BACKENDS)
 
 
-def test_rechaza_usar_ruta_backend_no_canonica_con_error_consistente():
+def test_rechaza_usar_ruta_backend_no_canonica_con_error_consistente(monkeypatch):
+    from pcobra.cobra import usar_loader as cobra_usar_loader
+
     interp = InterpretadorCobra()
+    contexto_pre = interp.contextos[-1].values
+    estado_pre = dict(contexto_pre)
+    nombres_resueltos = []
+
+    def _resolver_espia(nombre):
+        nombres_resueltos.append(nombre)
+        return _modulo_numero_stub()
+
+    monkeypatch.setattr(cobra_usar_loader, "obtener_modulo", _resolver_espia)
 
     class _NodoUsar:
         modulo = "pcobra.corelibs.numero"
 
-    with pytest.raises(
-        (PermissionError, FileNotFoundError),
-        match=r"backend_import_directo|Módulo de proyecto no encontrado",
-    ):
+    with pytest.raises(PermissionError) as excinfo:
         interp.ejecutar_usar(_NodoUsar())
+
+    mensaje = str(excinfo.value).lower()
+    assert mensaje.split(":", 1)[0] == "usar_error[backend_import_directo]"
+    assert not isinstance(excinfo.value, ValueError)
+    assert not any(
+        detalle in mensaje
+        for detalle in (
+            "/workspace/",
+            "src/pcobra",
+            "ruta buscada",
+            "project_root",
+            "current_file",
+            "corelibs",
+            "traceback",
+        )
+    )
+    assert interp.contextos[-1].values is contexto_pre
+    assert interp.contextos[-1].values == estado_pre
+    assert nombres_resueltos == []
+
+    _NodoUsar.modulo = "numero"
+    interp.ejecutar_usar(_NodoUsar())
+
+    assert nombres_resueltos == ["numero"]
+    assert "es_finito" in interp.contextos[-1].values
 
 
 def test_usar_rechaza_modulo_fuera_allowlist_aun_si_alias_map_lo_declara():
