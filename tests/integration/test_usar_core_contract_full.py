@@ -127,6 +127,7 @@ def test_04_rechaza_numpy_y_no_inyecta(monkeypatch):
 
 def test_05_rechaza_holobit_sdk(monkeypatch):
     mod_holobit = _modulo_holobit_publico_stub()
+    assert "holobit_sdk" not in REPL_COBRA_MODULE_MAP
     monkeypatch.setattr(
         core_usar_loader,
         "obtener_modulo_cobra_oficial",
@@ -140,10 +141,16 @@ def test_05_rechaza_holobit_sdk(monkeypatch):
     cmd.interpretador.configurar_restriccion_usar_repl(
         {**REPL_COBRA_MODULE_MAP, "holobit": "holobit"}
     )
+    estado_pre = dict(cmd.interpretador.contextos[-1].values)
     with pytest.raises(
         PermissionError, match=r"módulo externo no permitido en REPL estricto"
     ):
         cmd.ejecutar_codigo('usar "holobit_sdk"')
+
+    simbolos = cmd.interpretador.contextos[-1].values
+    assert simbolos == estado_pre
+    assert "holobit_sdk" not in simbolos
+    assert all(nombre not in simbolos for nombre in mod_holobit.__all__)
 
 
 def test_06_saneamiento_excluye_nombres_prohibidos_y_doble_guion_bajo():
