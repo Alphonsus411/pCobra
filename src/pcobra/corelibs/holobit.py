@@ -93,7 +93,10 @@ def _normalizar_valores(valores: Iterable[Any]) -> list[float]:
     for item in valores:
         if not _es_numero(item):
             raise TypeError("Todos los valores del holobit deben ser numéricos")
-        salida.append(float(item))
+        valor_normalizado = float(item)
+        if not math.isfinite(valor_normalizado):
+            raise ValueError("Todos los valores del holobit deben ser finitos")
+        salida.append(valor_normalizado)
     return salida
 
 
