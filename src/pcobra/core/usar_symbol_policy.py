@@ -186,10 +186,15 @@ def sanear_simbolo_para_usar(
         )
 
     if nombre in NOMBRES_BLOQUEADOS_USAR:
+        codigo = (
+            "cobra_public_equivalent"
+            if nombre in EQUIVALENCIAS_PROHIBIDAS_A_CANONICAS
+            else "explicit_forbidden_name"
+        )
         return _rechazar(
             nombre,
             simbolo,
-            "explicit_forbidden_name",
+            codigo,
             _mensaje_nombre_prohibido(nombre),
             metadata,
         )

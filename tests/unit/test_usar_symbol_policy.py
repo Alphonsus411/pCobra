@@ -22,6 +22,28 @@ def test_rechaza_nombres_prohibidos_explicitos():
         assert "Usa el nombre Cobra canónico" in (resultado.mensaje or "")
 
 
+def test_nombres_bloqueados_con_equivalencia_declaran_codigo_y_canonico():
+    equivalencias = {
+        "append": "agregar",
+        "expect": "obtener_o_error",
+        "filter": "filtrar",
+        "map": "mapear",
+        "unwrap": "obtener_o_error",
+    }
+
+    for nombre, canonico in equivalencias.items():
+        resultado = sanear_simbolo_para_usar(nombre, lambda: None)
+        assert resultado.nombre == nombre
+        assert resultado.rechazado is True
+        assert resultado.codigo == "cobra_public_equivalent"
+        assert canonico in (resultado.mensaje or "")
+
+    sin_equivalencia = sanear_simbolo_para_usar("__self__", lambda: None)
+    assert sin_equivalencia.nombre == "__self__"
+    assert sin_equivalencia.rechazado is True
+    assert sin_equivalencia.codigo == "explicit_forbidden_name"
+
+
 def test_rechaza_doble_guion_bajo_y_modulo_backend():
     r_privado = sanear_simbolo_para_usar("__danger__", lambda: None)
     assert r_privado.rechazado is True
