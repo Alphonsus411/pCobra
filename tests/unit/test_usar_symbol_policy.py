@@ -1,5 +1,7 @@
 from types import ModuleType
 
+import pytest
+
 from pcobra.core.usar_symbol_policy import (
     CANONICAL_USAR_METADATA_SCHEMA,
     PoliticaSaneamientoUsar,
@@ -11,37 +13,47 @@ from pcobra.core.usar_symbol_policy import (
 )
 
 
-def test_rechaza_nombres_prohibidos_explicitos():
-    for nombre in ("self", "append", "map", "filter", "unwrap", "expect"):
-        resultado = sanear_simbolo_para_usar(nombre, lambda: None)
-        assert resultado.rechazado is True
-        assert resultado.codigo in {
-            "explicit_forbidden_name",
-            "cobra_public_equivalent",
-        }
-        assert "Usa el nombre Cobra canónico" in (resultado.mensaje or "")
+@pytest.mark.parametrize(
+    ("nombre", "equivalente_cobra"),
+    [
+        ("append", "agregar"),
+        ("expect", "obtener_o_error"),
+        ("filter", "filtrar"),
+        ("map", "mapear"),
+        ("unwrap", "obtener_o_error"),
+    ],
+)
+def test_nombres_bloqueados_con_equivalencia_declaran_codigo_y_canonico(
+    nombre, equivalente_cobra
+):
+    resultado = sanear_simbolo_para_usar(nombre, lambda: None)
+
+    assert resultado.rechazado is True
+    assert resultado.codigo == "cobra_public_equivalent"
+    assert resultado.nombre == nombre
+    assert equivalente_cobra in (resultado.mensaje or "")
+
+    permitidos, rechazos, _ = sanear_exportables_para_usar(
+        [(nombre, lambda: None)]
+    )
+    assert nombre not in {nombre_exportado for nombre_exportado, _ in permitidos}
+    assert [rechazo.nombre for rechazo in rechazos.rechazos_duros] == [nombre]
 
 
-def test_nombres_bloqueados_con_equivalencia_declaran_codigo_y_canonico():
-    equivalencias = {
-        "append": "agregar",
-        "expect": "obtener_o_error",
-        "filter": "filtrar",
-        "map": "mapear",
-        "unwrap": "obtener_o_error",
-    }
+def test_nombre_bloqueado_sin_equivalencia_conserva_rechazo_explicito():
+    resultado = sanear_simbolo_para_usar("__self__", lambda: None)
 
-    for nombre, canonico in equivalencias.items():
-        resultado = sanear_simbolo_para_usar(nombre, lambda: None)
-        assert resultado.nombre == nombre
-        assert resultado.rechazado is True
-        assert resultado.codigo == "cobra_public_equivalent"
-        assert canonico in (resultado.mensaje or "")
+    assert resultado.nombre == "__self__"
+    assert resultado.rechazado is True
+    assert resultado.codigo == "explicit_forbidden_name"
 
-    sin_equivalencia = sanear_simbolo_para_usar("__self__", lambda: None)
-    assert sin_equivalencia.nombre == "__self__"
-    assert sin_equivalencia.rechazado is True
-    assert sin_equivalencia.codigo == "explicit_forbidden_name"
+
+def test_rechaza_self_con_su_equivalente_canonico():
+    resultado = sanear_simbolo_para_usar("self", lambda: None)
+
+    assert resultado.rechazado is True
+    assert resultado.codigo == "cobra_public_equivalent"
+    assert "instancia" in (resultado.mensaje or "")
 
 
 def test_rechaza_doble_guion_bajo_y_modulo_backend():
@@ -75,10 +87,7 @@ def test_reglas_de_saneamiento_por_caso_especifico():
 
     r_backend_ingles = sanear_simbolo_para_usar("append", lambda: None)
     assert r_backend_ingles.rechazado is True
-    assert r_backend_ingles.codigo in {
-        "explicit_forbidden_name",
-        "cobra_public_equivalent",
-    }
+    assert r_backend_ingles.codigo == "cobra_public_equivalent"
 
 
 def test_saneamiento_centralizado_aplica_todas_las_reglas():
