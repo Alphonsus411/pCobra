@@ -301,10 +301,8 @@ def test_interpretador_usar_proyecto_detecta_ciclos_con_rutas_canonicas(
     try:
         interp.ejecutar_usar(SimpleNamespace(modulo="utilidades.a"))
     except ImportError as exc:
-        assert str(exc) == (
-            "Ciclo de módulos detectado en usar: "
-            "utilidades/a.cobra -> utilidades/b.cobra -> utilidades/a.cobra"
-        )
+        assert str(exc).startswith("usar_error[carga_modulo_error]")
+        assert "utilidades/a.cobra" not in str(exc)
     else:
         raise AssertionError("Se esperaba un ImportError por ciclo de módulos")
     assert interp._usar_loading_stack == []
@@ -815,13 +813,7 @@ def test_interpretador_usar_proyecto_detecta_ciclo_indirecto(monkeypatch, tmp_pa
     )
 
     interp = InterpretadorCobra(safe_mode=False, main_file=principal)
-    with pytest.raises(
-        ImportError,
-        match=(
-            r"utilidades/internas/a\.cobra -> utilidades/internas/b\.cobra -> "
-            r"utilidades/internas/c\.cobra -> utilidades/internas/a\.cobra"
-        ),
-    ):
+    with pytest.raises(ImportError, match=r"usar_error\[carga_modulo_error\]"):
         interp.ejecutar_usar(SimpleNamespace(modulo="utilidades.internas.a"))
 
 
@@ -847,9 +839,8 @@ def test_interpretador_usar_proyecto_detecta_ciclo_directo_en_root_con_mensaje_e
     with pytest.raises(ImportError) as excinfo:
         interp.ejecutar_usar(SimpleNamespace(modulo="a"))
 
-    assert (
-        str(excinfo.value) == "Ciclo de módulos detectado en usar: a.cobra -> a.cobra"
-    )
+    assert str(excinfo.value).startswith("usar_error[carga_modulo_error]")
+    assert "a.cobra" not in str(excinfo.value)
     assert obtener_pila_carga_modulos_cobra_proyecto() == []
 
 
@@ -882,9 +873,8 @@ def test_interpretador_usar_proyecto_detecta_ciclo_indirecto_en_root_con_cadena_
     with pytest.raises(ImportError) as excinfo:
         interp.ejecutar_usar(SimpleNamespace(modulo="a"))
 
-    assert str(excinfo.value) == (
-        "Ciclo de módulos detectado en usar: a.cobra -> b.cobra -> c.cobra -> a.cobra"
-    )
+    assert str(excinfo.value).startswith("usar_error[carga_modulo_error]")
+    assert "a.cobra" not in str(excinfo.value)
     assert obtener_pila_carga_modulos_cobra_proyecto() == []
 
 
@@ -911,7 +901,7 @@ def test_usar_proyecto_limpia_pila_si_falla_cargar_ast_modulo(monkeypatch, tmp_p
     assert obtener_pila_carga_modulos_cobra_proyecto() == []
 
 
-def test_interpretador_usar_proyecto_modulo_inexistente_muestra_nombre_y_ruta(tmp_path):
+def test_interpretador_usar_proyecto_modulo_inexistente_oculta_ruta(tmp_path):
     import pytest
 
     proyecto = tmp_path / "app"
@@ -926,8 +916,9 @@ def test_interpretador_usar_proyecto_modulo_inexistente_muestra_nombre_y_ruta(tm
         interp.ejecutar_usar(SimpleNamespace(modulo="utilidades.faltante"))
 
     mensaje = str(excinfo.value)
+    assert "usar_error[modulo_no_encontrado]" in mensaje
     assert "utilidades.faltante" in mensaje
-    assert str(ruta_buscada) in mensaje
+    assert str(ruta_buscada) not in mensaje
 
 
 def test_resolver_modulo_cobra_proyecto_rechaza_resultado_manipulado_fuera_de_root(

@@ -143,6 +143,8 @@ USAR_NON_PUBLIC_MODULE_ERROR = "usar_error[modulo_fuera_catalogo_publico]: el m�
 USAR_NON_FACING_MODULE_ERROR = "usar_error[modulo_no_cobra_facing]: el módulo solicitado no está marcado como Cobra-facing"
 USAR_INVALID_EXPORT_ERROR = "usar_error[export_invalido]"
 USAR_SYMBOL_CONFLICT_ERROR = "usar_error[conflicto_simbolo]"
+USAR_MODULE_NOT_FOUND_ERROR = "usar_error[modulo_no_encontrado]"
+USAR_MODULE_LOAD_ERROR = "usar_error[carga_modulo_error]"
 USAR_COLLISION_STRICT_ERROR = "strict_error"
 USAR_COLLISION_WARN_ALIAS_REQUIRED = "warn_alias_required"
 _USAR_COLLISION_POLICIES = frozenset(
@@ -154,13 +156,23 @@ def formatear_error_usar_usuario(
     codigo: str, modulo: str, contexto_minimo: str | None = None
 ) -> str:
     """Devuelve errores cortos y legibles para la salida de usuario en `usar`."""
+    codigos = {
+        "modulo_fuera_catalogo": USAR_NON_PUBLIC_MODULE_ERROR,
+        "conflicto_simbolo": USAR_SYMBOL_CONFLICT_ERROR,
+        "export_invalido": USAR_INVALID_EXPORT_ERROR,
+        "modulo_no_encontrado": USAR_MODULE_NOT_FOUND_ERROR,
+        "carga_modulo_error": USAR_MODULE_LOAD_ERROR,
+    }
     mensajes = {
         "modulo_fuera_catalogo": f"No se puede usar '{modulo}': módulo fuera del catálogo público.",
         "conflicto_simbolo": f"No se puede usar '{modulo}': hay conflicto de símbolos en el contexto actual.",
         "export_invalido": f"No se puede usar '{modulo}': no hay símbolos exportables válidos.",
+        "modulo_no_encontrado": f"No se puede usar '{modulo}': módulo no encontrado.",
         "carga_modulo_error": f"No se puede usar '{modulo}': error al cargar el módulo.",
     }
     base = mensajes.get(codigo, f"No se puede usar '{modulo}'.")
+    codigo_publico = codigos.get(codigo, USAR_MODULE_LOAD_ERROR).split(":", 1)[0]
+    base = f"{codigo_publico}: {base}"
     if contexto_minimo:
         return f"{base} {contexto_minimo}"
     return base
@@ -197,21 +209,10 @@ def _error_usuario_modulo_fuera_catalogo(
 ) -> PermissionError:
     """Crea un PermissionError corto y conserva el detalle técnico como nota."""
 
-    if repl_estricto:
-        mensaje = (
-            f"Importación no permitida en 'usar': '{modulo}'. "
-            "Es un módulo backend/no canónico y no forma parte de la API pública. "
-            f"Módulos permitidos: {_resumir_modulos_permitidos_usar()}."
-        )
-    else:
-        mensaje = formatear_error_usar_usuario("modulo_fuera_catalogo", modulo)
-
-    if incluir_detalle:
-        mensaje = f"{mensaje} {USAR_NON_PUBLIC_MODULE_ERROR}. Detalle: {detalle}"
-
+    del repl_estricto, incluir_detalle
+    mensaje = formatear_error_usar_usuario("modulo_fuera_catalogo", modulo)
     error = PermissionError(mensaje)
-    if not incluir_detalle:
-        error.add_note(str(detalle))
+    error.add_note(str(detalle))
     return error
 
 
@@ -2832,7 +2833,7 @@ class InterpretadorCobra:
             self._inyectar_exports_modulo_proyecto(exports)
         except Exception as exc:
             detalle_usar_habilitado = _usar_detalle_habilitado()
-            exc_usuario = exc
+            exc_usuario: Exception
             if isinstance(exc, ModuloFueraCatalogoPublicoError):
                 exc_usuario = _error_usuario_modulo_fuera_catalogo(
                     nombre_modulo_limpio,
@@ -2840,6 +2841,43 @@ class InterpretadorCobra:
                     repl_estricto=self._repl_usar_alias_map is not None,
                     incluir_detalle=detalle_usar_habilitado,
                 )
+            elif isinstance(exc, ValueError):
+                # Los validadores del loader conservan el diagnóstico preciso;
+                # la frontera pública sólo revela el rechazo de política.
+                exc_usuario = PermissionError(USAR_DIRECT_BACKEND_IMPORT_ERROR)
+                exc_usuario.add_note(str(exc))
+            elif isinstance(exc, FileNotFoundError):
+                exc_usuario = FileNotFoundError(
+                    formatear_error_usar_usuario(
+                        "modulo_no_encontrado", nombre_modulo_limpio
+                    )
+                )
+                exc_usuario.add_note(str(exc))
+            elif isinstance(exc, NameError):
+                exc_usuario = NameError(
+                    formatear_error_usar_usuario(
+                        "conflicto_simbolo", nombre_modulo_limpio
+                    )
+                )
+                exc_usuario.add_note(str(exc))
+            elif isinstance(exc, (ImportError, PermissionError)):
+                mensaje = str(exc)
+                if "usar_error[" in mensaje:
+                    exc_usuario = type(exc)(mensaje)
+                else:
+                    exc_usuario = type(exc)(
+                        formatear_error_usar_usuario(
+                            "carga_modulo_error", nombre_modulo_limpio
+                        )
+                    )
+                exc_usuario.add_note(str(exc))
+            else:
+                exc_usuario = ImportError(
+                    formatear_error_usar_usuario(
+                        "carga_modulo_error", nombre_modulo_limpio
+                    )
+                )
+                exc_usuario.add_note(str(exc))
             if detalle_usar_habilitado:
                 logging.exception(
                     "Error al usar el módulo '%s': %s", nodo.modulo, exc_usuario
@@ -2850,22 +2888,7 @@ class InterpretadorCobra:
                     nodo.modulo,
                     exc_usuario,
                 )
-            if isinstance(
-                exc,
-                (
-                    ImportError,
-                    PermissionError,
-                    ValueError,
-                    NameError,
-                    FileNotFoundError,
-                ),
-            ):
-                if exc_usuario is not exc:
-                    raise exc_usuario from exc
-                raise
-            raise ImportError(
-                formatear_error_usar_usuario("carga_modulo_error", nodo.modulo)
-            ) from exc
+            raise exc_usuario from exc
 
     def _detectar_conflictos_usar_en_contexto(
         self,

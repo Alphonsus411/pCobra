@@ -1,8 +1,8 @@
 {
-  "modulo_fuera_catalogo": "No se puede usar 'datos': módulo fuera del catálogo público.",
-  "conflicto_simbolo": "No se puede usar 'datos': hay conflicto de símbolos en el contexto actual.",
-  "export_invalido": "No se puede usar 'datos': no hay símbolos exportables válidos.",
-  "carga_modulo_error": "No se puede usar 'datos': error al cargar el módulo.",
-  "fallback": "No se puede usar 'datos'.",
-  "contexto_minimo": "No se puede usar 'datos': hay conflicto de símbolos en el contexto actual. Requiere alias explícito."
+  "modulo_fuera_catalogo": "usar_error[modulo_fuera_catalogo_publico]: No se puede usar 'datos': módulo fuera del catálogo público.",
+  "conflicto_simbolo": "usar_error[conflicto_simbolo]: No se puede usar 'datos': hay conflicto de símbolos en el contexto actual.",
+  "export_invalido": "usar_error[export_invalido]: No se puede usar 'datos': no hay símbolos exportables válidos.",
+  "carga_modulo_error": "usar_error[carga_modulo_error]: No se puede usar 'datos': error al cargar el módulo.",
+  "fallback": "usar_error[carga_modulo_error]: No se puede usar 'datos'.",
+  "contexto_minimo": "usar_error[conflicto_simbolo]: No se puede usar 'datos': hay conflicto de símbolos en el contexto actual. Requiere alias explícito."
 }
