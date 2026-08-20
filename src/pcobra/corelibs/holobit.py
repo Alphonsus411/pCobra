@@ -58,8 +58,8 @@ class _AdaptadorInternoHolobit:
         return [float(v) for v in hb.valores]
 
     @staticmethod
-    def graficar(hb: Any) -> str:
-        return _runtime_graficar(hb)
+    def graficar(hb: Any) -> None:
+        _runtime_graficar(hb)
 
 
 def _es_json_primitivo(valor: Any) -> bool:
@@ -243,16 +243,16 @@ def transformar(hb: dict[str, Any], operacion: str, *parametros: Any) -> dict[st
     raise ValueError(f"Operacion no soportada: {operacion}")
 
 
-def graficar(hb: dict[str, Any]) -> str:
+def graficar(hb: dict[str, Any]) -> dict[str, str]:
     try:
-        vista = _AdaptadorInternoHolobit.graficar(_desde_estructura_cobra(hb))
+        _AdaptadorInternoHolobit.graficar(_desde_estructura_cobra(hb))
     except Exception as exc:  # pragma: no cover - defensivo frente al SDK
         raise _error_dominio(
             "No se pudo graficar el holobit en el runtime de Cobra", causa=exc
         ) from None
-    if not isinstance(vista, str):
-        raise TypeError("La salida de graficar debe ser texto")
-    return vista
+    resultado = {"estado": "ok"}
+    _garantizar_json_estable(resultado)
+    return resultado
 
 
 def combinar(a: dict[str, Any], b: dict[str, Any]) -> dict[str, Any]:

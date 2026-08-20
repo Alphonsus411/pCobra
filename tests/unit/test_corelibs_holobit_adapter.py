@@ -67,6 +67,25 @@ def test_holobit_adapter_normaliza_tipos_cobra_facing():
     assert isinstance(metricas["magnitud"], float)
 
 
+def test_graficar_devuelve_estado_json_e_ignora_retorno_interno(monkeypatch):
+    hb = holobit.crear_holobit([1, 2, 3])
+    proyectados = []
+    retorno_sdk = object()
+
+    def proyectar(interno):
+        proyectados.append(interno)
+        return retorno_sdk
+
+    monkeypatch.setattr(holobit, "_runtime_graficar", proyectar)
+
+    resultado = holobit.graficar(hb)
+
+    assert resultado == {"estado": "ok"}
+    assert len(proyectados) == 1
+    assert proyectados[0].valores == [1.0, 2.0, 3.0]
+    holobit._garantizar_json_estable(resultado)
+
+
 @pytest.mark.parametrize("valor_invalido", [True, False])
 def test_crear_holobit_rechaza_booleanos(valor_invalido):
     with pytest.raises(TypeError):

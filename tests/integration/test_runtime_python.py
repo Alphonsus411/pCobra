@@ -42,8 +42,8 @@ def test_holobit_operaciones_publicas_semantica_documentada():
     assert holobit.proyectar(hb, "2d")["valores"] == [3.0, 4.0]
     assert holobit.transformar(hb, "rotar", "z", 90)["tipo"] == "holobit"
     try:
-        vista = holobit.graficar(hb)
-        assert isinstance(vista, str)
+        resultado = holobit.graficar(hb)
+        assert resultado == {"estado": "ok"}
     except TypeError:
         # Runtime parcial/fallback: la API puede rechazar graficado sin backend disponible.
         pass
