@@ -406,12 +406,13 @@ def test_conflicto_no_overwrite_silencioso_reporta_error_estructurado(monkeypatc
     class _NodoUsar:
         modulo = "datos"
 
-    with pytest.raises(NameError, match=r"colisión estructurada=") as excinfo:
+    with pytest.raises(NameError, match=r"usar_error\[conflicto_simbolo\]") as excinfo:
         interp.ejecutar_usar(_NodoUsar())
 
     mensaje = str(excinfo.value)
-    assert "'code': 'symbol_collision'" in mensaje
-    assert "'symbol': 'filtrar'" in mensaje
+    assert "symbol_collision" not in mensaje
+    assert "'code': 'symbol_collision'" in str(excinfo.value.__cause__)
+    assert "'symbol': 'filtrar'" in str(excinfo.value.__cause__)
     assert interp.contextos[-1].get("filtrar")() == "ocupado"
     assert "mapear" not in interp.contextos[-1].values
     assert "reducir" not in interp.contextos[-1].values
@@ -431,12 +432,13 @@ def test_conflictos_abortan_inyeccion_sin_overwrite_silencioso(monkeypatch):
     class _NodoUsar:
         modulo = "datos"
 
-    with pytest.raises(NameError, match=r"colisión estructurada=") as excinfo:
+    with pytest.raises(NameError, match=r"usar_error\[conflicto_simbolo\]") as excinfo:
         interp.ejecutar_usar(_NodoUsar())
 
     mensaje = str(excinfo.value)
-    assert "'code': 'symbol_collision'" in mensaje
-    assert "'symbol': 'filtrar'" in mensaje
+    assert "symbol_collision" not in mensaje
+    assert "'code': 'symbol_collision'" in str(excinfo.value.__cause__)
+    assert "'symbol': 'filtrar'" in str(excinfo.value.__cause__)
 
     assert interp.contextos[-1].get("filtrar")() == "ocupado"
     assert interp.contextos[-1].get("mapear")() == "ocupado"

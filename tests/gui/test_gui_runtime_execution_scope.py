@@ -185,8 +185,10 @@ def test_ejecutar_codigo_modulo_inexistente_falla_controladamente(tmp_path):
 
     mensaje = str(excinfo.value)
 
-    assert "Módulo no encontrado: modulo_inexistente" in mensaje
-    assert "modulo_inexistente.cobra" in mensaje
+    assert "usar_error[modulo_no_encontrado]" in mensaje
+    assert "modulo_inexistente" in mensaje
+    assert "Ruta buscada" not in mensaje
+    assert "modulo_inexistente.cobra" not in mensaje
     assert "modulo_fuera_catalogo_publico" not in mensaje
 
 
