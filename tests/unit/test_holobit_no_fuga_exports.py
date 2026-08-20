@@ -64,5 +64,23 @@ def test_no_fuga_en_corelibs_por_getattr():
 
 def test_corelibs_no_exporta_clases_internas_de_adaptador():
     mod = _load_corelib_module()
-    for symbol in ("_AdaptadorInternoHolobit", "_SDKHolobit", "ErrorHolobit"):
-        assert symbol not in set(mod.__all__)
+    assert mod.__all__ == list(mod.PUBLIC_API_HOLOBIT)
+    assert mod.__all__ == [
+        "crear_holobit",
+        "validar_holobit",
+        "serializar_holobit",
+        "deserializar_holobit",
+        "proyectar",
+        "transformar",
+        "graficar",
+        "combinar",
+        "medir",
+    ]
+    for symbol in (
+        "ErrorHolobit",
+        "Holobit",
+        "_SDKHolobit",
+        "_AdaptadorInternoHolobit",
+        "holobit_sdk",
+    ):
+        assert symbol not in mod.__all__
