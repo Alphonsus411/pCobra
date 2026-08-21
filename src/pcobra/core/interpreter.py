@@ -157,7 +157,6 @@ def formatear_error_usar_usuario(
 ) -> str:
     """Devuelve errores cortos y legibles para la salida de usuario en `usar`."""
     codigos = {
-        "modulo_fuera_catalogo": USAR_NON_PUBLIC_MODULE_ERROR,
         "conflicto_simbolo": USAR_SYMBOL_CONFLICT_ERROR,
         "export_invalido": USAR_INVALID_EXPORT_ERROR,
         "modulo_no_encontrado": USAR_MODULE_NOT_FOUND_ERROR,
@@ -171,8 +170,9 @@ def formatear_error_usar_usuario(
         "carga_modulo_error": f"No se puede usar '{modulo}': error al cargar el módulo.",
     }
     base = mensajes.get(codigo, f"No se puede usar '{modulo}'.")
-    codigo_publico = codigos.get(codigo, USAR_MODULE_LOAD_ERROR).split(":", 1)[0]
-    base = f"{codigo_publico}: {base}"
+    if codigo in codigos:
+        codigo_publico = codigos[codigo].split(":", 1)[0]
+        base = f"{codigo_publico}: {base}"
     if contexto_minimo:
         return f"{base} {contexto_minimo}"
     return base
@@ -207,13 +207,20 @@ def _error_usuario_modulo_fuera_catalogo(
     repl_estricto: bool,
     incluir_detalle: bool,
 ) -> PermissionError:
-    """Crea un PermissionError corto y conserva el detalle técnico como nota."""
+    """Crea el error público según el contrato directo o del REPL."""
 
-    del repl_estricto, incluir_detalle
-    mensaje = formatear_error_usar_usuario("modulo_fuera_catalogo", modulo)
-    error = PermissionError(mensaje)
-    error.add_note(str(detalle))
-    return error
+    if repl_estricto:
+        mensaje = (
+            f"Importación no permitida en 'usar': '{modulo}'. Es un módulo "
+            "backend/no canónico y no forma parte de la API pública. "
+            f"Módulos permitidos: {_resumir_modulos_permitidos_usar()}."
+        )
+    else:
+        mensaje = formatear_error_usar_usuario("modulo_fuera_catalogo", modulo)
+
+    if incluir_detalle:
+        mensaje = f"{mensaje} {USAR_NON_PUBLIC_MODULE_ERROR}. {detalle}"
+    return PermissionError(mensaje)
 
 
 def _runtime_debug_enabled() -> bool:
