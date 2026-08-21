@@ -4,6 +4,7 @@ from types import ModuleType
 
 import pytest
 
+import pcobra.core.interpreter as core_interpreter
 from pcobra.cobra.architecture.backend_policy import PUBLIC_BACKENDS
 from pcobra.cobra.cli.commands.interactive_cmd import InteractiveCommand
 from pcobra.cobra.core.runtime import InterpretadorCobra
@@ -25,6 +26,52 @@ from tests.unit.test_backend_bootstrap_contract import _run_python_isolated
 USAR_RECHAZO_EXTERNO_MATCH = (
     r"usar_error|no permitid[ao]|externo|fuera|no can[oó]nico|cat[aá]logo|m[oó]dulo"
 )
+
+
+@pytest.mark.parametrize(
+    ("error_interno", "tipo_publico", "mensaje_publico"),
+    [
+        (
+            PermissionError("usar_error[diagnostico_seguro]: detalle público"),
+            PermissionError,
+            "usar_error[diagnostico_seguro]: detalle público",
+        ),
+        (
+            PermissionError("fallo conocido sin código público"),
+            PermissionError,
+            "usar_error[carga_modulo_error]",
+        ),
+        (
+            RuntimeError("detalle interno inesperado"),
+            ImportError,
+            "usar_error[carga_modulo_error]",
+        ),
+    ],
+)
+def test_usar_prioriza_diagnostico_estructurado_normalizacion_y_fallback(
+    monkeypatch, error_interno, tipo_publico, mensaje_publico
+):
+    def _fallar_resolucion(*_args, **_kwargs):
+        raise error_interno
+
+    monkeypatch.setattr(
+        core_interpreter, "_usar_modulo_con_estado_aislado", _fallar_resolucion
+    )
+
+    interp = InterpretadorCobra()
+
+    class _NodoUsar:
+        modulo = "numero"
+
+    with pytest.raises(tipo_publico) as excinfo:
+        interp.ejecutar_usar(_NodoUsar())
+
+    mensaje = str(excinfo.value)
+    if "diagnostico_seguro" in mensaje_publico:
+        assert mensaje == mensaje_publico
+    else:
+        assert mensaje.startswith(mensaje_publico)
+    assert "detalle interno inesperado" not in mensaje
 
 
 def _modulo_datos_publico_stub() -> ModuleType:
@@ -134,10 +181,7 @@ def test_usar_modulo_inexistente_falla_con_diagnostico_publico(monkeypatch):
         cmd.ejecutar_codigo('usar "modulo_inexistente"')
 
     mensaje = str(excinfo.value).lower()
-    assert (
-        mensaje.split(":", 1)[0]
-        == "usar_error[modulo_fuera_catalogo_publico]"
-    )
+    assert mensaje.count("usar_error[modulo_fuera_catalogo_publico]") == 1
     assert not any(
         detalle in mensaje
         for detalle in (

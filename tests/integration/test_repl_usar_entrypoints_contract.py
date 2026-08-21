@@ -2105,7 +2105,8 @@ def test_repl_usar_numpy_error_explicito_corto_sin_traceback_en_modo_normal(caps
     mensaje = str(excinfo.value)
     assert "Traceback" not in mensaje
     assert "detalle=" not in mensaje
-    assert len(mensaje) < 220
+    # El límite incluye el código público estable, además de la guía de módulos.
+    assert len(mensaje) < 280
     assert (
         "Importación no permitida en 'usar': 'numpy'. Es un módulo backend/no canónico y no forma parte de la API pública. Módulos permitidos: numero, texto, datos, logica, asincrono, sistema, archivo, tiempo, red, holobit."
         in mensaje

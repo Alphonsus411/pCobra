@@ -105,11 +105,19 @@ def test_saneamiento_centralizado_aplica_todas_las_reglas():
     assert [w.nombre for w in warnings] == ["PI"]
 
 
-def test_acepta_equivalentes_canonicos_en_espanol():
-    for nombre in ("agregar", "mapear", "filtrar", "obtener_o_error", "esperar_valor"):
+def test_acepta_unicamente_equivalentes_canonicos_acordados():
+    canonicos = {"agregar", "obtener_o_error", "filtrar", "mapear"}
+    prohibidos = {"append", "expect", "filter", "map", "unwrap"}
+
+    for nombre in canonicos:
         resultado = sanear_simbolo_para_usar(nombre, lambda: None)
         assert resultado.rechazado is False
         assert resultado.codigo == "ok"
+
+    for nombre in prohibidos:
+        resultado = sanear_simbolo_para_usar(nombre, lambda: None)
+        assert resultado.rechazado is True
+        assert resultado.codigo == "cobra_public_equivalent"
 
 
 def test_rechaza_no_callable_que_no_es_constante_publica_canonica():
