@@ -218,8 +218,11 @@ def _error_usuario_modulo_fuera_catalogo(
     else:
         mensaje = formatear_error_usar_usuario("modulo_fuera_catalogo", modulo)
 
+    codigo_publico = USAR_NON_PUBLIC_MODULE_ERROR.split(":", 1)[0]
+    mensaje = f"{mensaje} {codigo_publico}"
     if incluir_detalle:
-        mensaje = f"{mensaje} {USAR_NON_PUBLIC_MODULE_ERROR}. {detalle}"
+        detalle_publico = USAR_NON_PUBLIC_MODULE_ERROR.split(":", 1)[1].strip()
+        mensaje = f"{mensaje}: {detalle_publico}. {detalle}"
     return PermissionError(mensaje)
 
 
