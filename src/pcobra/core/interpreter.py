@@ -2861,12 +2861,32 @@ class InterpretadorCobra:
                 )
                 exc_usuario.add_note(str(exc))
             elif isinstance(exc, NameError):
-                exc_usuario = NameError(
-                    formatear_error_usar_usuario(
-                        "conflicto_simbolo", nombre_modulo_limpio
+                mensaje = str(exc)
+                marcador_colision = "colisión estructurada="
+                colision_estructurada = False
+                if marcador_colision in mensaje:
+                    payload = mensaje.split(marcador_colision, 1)[1].strip()
+                    try:
+                        detalle_colision = ast.literal_eval(payload)
+                    except (ValueError, SyntaxError):
+                        detalle_colision = None
+                    colision_estructurada = isinstance(
+                        detalle_colision, dict
+                    ) and detalle_colision.get("code") in {
+                        "symbol_collision",
+                        "symbol_collision_runtime_recheck",
+                    }
+
+                if colision_estructurada:
+                    # El mensaje ya pertenece al contrato público de `usar`:
+                    # conservar literalmente el payload para sus consumidores.
+                    exc_usuario = NameError(mensaje)
+                else:
+                    exc_usuario = NameError(
+                        formatear_error_usar_usuario(
+                            "conflicto_simbolo", nombre_modulo_limpio
+                        )
                     )
-                )
-                exc_usuario.add_note(str(exc))
             elif isinstance(exc, (ImportError, PermissionError)):
                 mensaje = str(exc)
                 if "usar_error[" in mensaje:
