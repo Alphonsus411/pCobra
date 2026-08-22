@@ -70,7 +70,7 @@ from .semantic_validators import (
     PrimitivaPeligrosaError,
 )
 from .semantico import AnalizadorSemantico
-from .cobra_config import limite_nodos
+from .cobra_config import limite_cpu_segundos, limite_memoria_mb, limite_nodos
 from .import_utils import (
     MODULES_PATH as _DEFAULT_MODULES_PATH,
     IMPORT_WHITELIST,
@@ -497,6 +497,11 @@ class InterpretadorCobra:
             extra = self._cargar_validadores(extra)
 
         self.safe_mode = safe_mode
+        # Keep the configured limits as execution metadata.  They are consumed
+        # by sandbox callers, which apply them in the isolated child instead of
+        # mutating the process that hosts the interpreter.
+        self.limite_memoria_mb = limite_memoria_mb()
+        self.limite_cpu_segundos = limite_cpu_segundos()
         # Regla de fases: analysis = sin efectos, execution = con efectos.
         # Por defecto iniciamos en ejecución para preservar compatibilidad fuera del REPL.
         self.mode = "execution"

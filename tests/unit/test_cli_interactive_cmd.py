@@ -636,6 +636,8 @@ def test_ejecutar_en_sandbox_invoca_pipeline_explicito_solo_para_setup():
     )
     mock_sandbox.assert_called_once_with(
         "SCRIPT",
+        memoria_mb=cmd.MEMORY_LIMIT_MB,
+        cpu_segundos=None,
         allow_insecure_fallback=False,
     )
     assert cmd.interpretador is setup.interpretador
@@ -692,6 +694,8 @@ def test_ejecutar_en_sandbox_usa_estado_repl_y_contrato_de_run_service():
     )
     mock_ejecutar.assert_called_once_with(
         "SCRIPT",
+        memoria_mb=cmd.MEMORY_LIMIT_MB,
+        cpu_segundos=None,
         allow_insecure_fallback=False,
     )
 

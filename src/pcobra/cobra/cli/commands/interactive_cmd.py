@@ -294,6 +294,7 @@ class InteractiveCommand(BaseCommand):
         if callable(asegurar_estado_runtime):
             asegurar_estado_runtime()
         self._allow_insecure_fallback = False
+        self._memory_limit_mb = self.MEMORY_LIMIT_MB
         # Contrato de logging: no agregar handlers por comando; la emisión se
         # centraliza en root configurado desde ``pcobra.cli.configure_logging``.
         self.logger = logging.getLogger(__name__)
@@ -894,6 +895,8 @@ class InteractiveCommand(BaseCommand):
                 mostrar_error(_("El límite de memoria debe ser positivo"))
                 return 1
 
+            self._memory_limit_mb = memory_limit
+
             # El límite de memoria se valida aquí, pero no se aplica al proceso
             # anfitrión del REPL. Los límites efectivos deben configurarse sólo
             # dentro de procesos hijos aislados (sandbox/subprocesos).
@@ -1326,8 +1329,14 @@ class InteractiveCommand(BaseCommand):
             imprimir_resultado=True,
         )
 
+        cpu_segundos = getattr(self.interpretador, "limite_cpu_segundos", None)
+        if not isinstance(cpu_segundos, int) or isinstance(cpu_segundos, bool):
+            cpu_segundos = None
+
         salida = ejecutar_en_sandbox(
             script,
+            memoria_mb=self._memory_limit_mb,
+            cpu_segundos=cpu_segundos,
             allow_insecure_fallback=self._allow_insecure_fallback,
         )
         if salida:

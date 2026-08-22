@@ -97,7 +97,7 @@ class RunService:
 
         def ejecutar() -> int:
             if sandbox:
-                return sandbox_module.ejecutar_en_sandbox(
+                return self.ejecutar_en_sandbox(
                     codigo,
                     seguro,
                     extra_validators,
@@ -179,7 +179,8 @@ class RunService:
             salida = sandbox_module.ejecutar_en_sandbox(
                 script,
                 timeout=self.execution_timeout,
-                cpu_segundos=self.execution_timeout,
+                memoria_mb=getattr(setup.interpretador, "limite_memoria_mb", None),
+                cpu_segundos=getattr(setup.interpretador, "limite_cpu_segundos", None),
                 allow_insecure_fallback=allow_insecure_fallback,
             )
             if salida:
