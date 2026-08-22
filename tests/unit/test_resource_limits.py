@@ -4,6 +4,7 @@ import pytest
 resource = pytest.importorskip("resource")
 
 from pcobra.cobra.cli.execution_pipeline import construir_script_sandbox_canonico
+from pcobra.core.interpreter import InterpretadorCobra
 from pcobra.core.sandbox import _run_in_subprocess, ejecutar_en_sandbox
 
 
@@ -50,3 +51,17 @@ def test_programa_cobra_con_limites_no_contamina_proceso_anfitrion():
 def test_limite_cpu_invalido_rechaza_antes_de_crear_subproceso():
     with pytest.raises(ValueError, match="cpu_segundos"):
         _run_in_subprocess("print('no debe ejecutarse')", cpu_segundos=0)
+
+
+def test_interprete_conserva_limites_configurados_para_el_sandbox(monkeypatch):
+    monkeypatch.setitem(
+        InterpretadorCobra.__init__.__globals__, "limite_memoria_mb", lambda: 96
+    )
+    monkeypatch.setitem(
+        InterpretadorCobra.__init__.__globals__, "limite_cpu_segundos", lambda: 7
+    )
+
+    interpretador = InterpretadorCobra()
+
+    assert interpretador.limite_memoria_mb == 96
+    assert interpretador.limite_cpu_segundos == 7
