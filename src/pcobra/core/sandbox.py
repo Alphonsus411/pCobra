@@ -605,7 +605,7 @@ def _worker(
 ) -> None:
     """Ejecuta ``code_bytes`` en un proceso aislado y comunica el resultado."""
     try:
-        if memoria_mb is not None or cpu_segundos is not None:
+        if (memoria_mb is not None or cpu_segundos is not None) and os.name != "nt":
             _aplicar_limites_proceso_hijo(
                 memoria_mb=memoria_mb, cpu_segundos=cpu_segundos
             )

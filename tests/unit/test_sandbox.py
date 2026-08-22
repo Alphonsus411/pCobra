@@ -1,6 +1,9 @@
+import marshal
 import os
 
 import pytest
+
+import core.sandbox as sandbox
 from core.sandbox import _run_in_subprocess, ejecutar_en_sandbox
 
 
@@ -71,3 +74,28 @@ def test_run_in_subprocess_memory_limit():
     codigo = "datos = bytearray(200 * 1024 * 1024)"
     with pytest.raises(MemoryError):
         _run_in_subprocess(codigo, memoria_mb=64)
+
+
+def test_worker_omite_limites_no_soportados_en_windows(monkeypatch):
+    resultados = []
+
+    class QueueStub:
+        def put(self, resultado):
+            resultados.append(resultado)
+
+    def limites_no_soportados(**_kwargs):
+        raise AssertionError("Windows no debe intentar aplicar límites POSIX")
+
+    monkeypatch.setattr(sandbox.os, "name", "nt")
+    monkeypatch.setattr(
+        sandbox, "_aplicar_limites_proceso_hijo", limites_no_soportados
+    )
+
+    sandbox._worker(
+        marshal.dumps(compile("print('ok')", "<test>", "exec")),
+        QueueStub(),
+        memoria_mb=64,
+        cpu_segundos=5,
+    )
+
+    assert resultados == ["ok\n"]
