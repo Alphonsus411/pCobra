@@ -2,7 +2,7 @@
 """Calculate grammar rule coverage for sample files.
 
 This script loads ``docs/gramatica.ebnf`` using ``lark.Lark`` and parses
-all ``.co`` files found in the ``examples/`` and ``tests/``
+all ``.cobra`` files found in the ``examples/`` and ``tests/``
 directories. It records which grammar rules are used when parsing and
 computes the percentage of rules that were exercised. If the coverage is
 below a configurable threshold the script exits with a non-zero status.
@@ -45,7 +45,7 @@ def iter_sample_files(dirs: Iterable[Path]) -> Iterable[Path]:
     for base in dirs:
         if not base.exists():
             continue
-        for path in base.rglob("*.co"):
+        for path in base.rglob("*.cobra"):
             if path.is_file():
                 yield path
 

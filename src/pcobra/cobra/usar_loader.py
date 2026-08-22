@@ -357,9 +357,14 @@ def obtener_pila_carga_modulos_cobra_proyecto() -> list[Path]:
     return _USAR_PROJECT_LOADING_STACK
 
 
-def obtener_cache_ast_import_co() -> dict[Path, list[Any]]:
+def obtener_cache_ast_import_cobra() -> dict[Path, list[Any]]:
     """Expone la caché compartida de ASTs de fuentes .cobra para el transpilador."""
     return _IMPORT_COBRA_AST_CACHE
+
+
+def obtener_cache_ast_import_co() -> dict[Path, list[Any]]:
+    """Alias obsoleto de :func:`obtener_cache_ast_import_cobra`."""
+    return obtener_cache_ast_import_cobra()
 
 
 def _formatear_ruta_ciclo_modulo(ruta: Path, project_root: Path | None) -> str:
