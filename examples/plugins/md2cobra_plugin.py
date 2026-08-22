@@ -14,7 +14,7 @@ class MarkdownToCobraCommand(PluginCommand):
     def register_subparser(self, subparsers):
         parser = subparsers.add_parser(self.name, help=self.description)
         parser.add_argument("--input", required=True, help="Archivo Markdown (.md)")
-        parser.add_argument("--output", required=True, help="Archivo Cobra (.co) de salida")
+        parser.add_argument("--output", required=True, help="Archivo Cobra (.cobra) de salida")
         parser.set_defaults(cmd=self)
 
     def run(self, args) -> None:
@@ -26,8 +26,8 @@ class MarkdownToCobraCommand(PluginCommand):
             raise FileNotFoundError(f"El archivo {input_path} no existe")
         if not input_path.suffix.lower() == '.md':
             raise ValueError("El archivo de entrada debe ser .md")
-        if not output_path.suffix.lower() == '.co':
-            raise ValueError("El archivo de salida debe ser .co")
+        if output_path.suffix.lower() != ".cobra":
+            raise ValueError("El archivo de salida debe ser .cobra")
 
         try:
             texto = input_path.read_text(encoding="utf-8")
