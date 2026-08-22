@@ -148,7 +148,7 @@ def audit_feature_id(feature_id: str) -> dict[str, list[str]]:
     matrix_hits = [p for p in MATRIX_HINTS if (ROOT / p).exists() and feature in (ROOT / p).read_text(encoding="utf-8", errors="ignore").lower()]
     test_hits = _files_containing_token((ROOT / "tests",), feature)
     docs_hits = _files_containing_token((ROOT / "docs", ROOT / "CONTRIBUTING.md"), feature)
-    example_path = EXAMPLES_FEATURES_DIR / feature / "minimal.co"
+    example_path = EXAMPLES_FEATURES_DIR / feature / "minimal.cobra"
     example_hits = [example_path.relative_to(ROOT).as_posix()] if example_path.exists() else []
 
     return {
