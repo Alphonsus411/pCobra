@@ -45,7 +45,7 @@ def iter_sample_files(dirs: Iterable[Path]) -> Iterable[Path]:
     for base in dirs:
         if not base.exists():
             continue
-        for path in base.rglob("*.co"):
+        for path in base.rglob("*.cobra"):
             if path.is_file():
                 yield path
 

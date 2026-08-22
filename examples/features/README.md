@@ -2,7 +2,7 @@
 
 Cada feature nueva del lenguaje debe añadir un fixture mínimo en:
 
-- `examples/features/<feature_id>/minimal.co`
+- `examples/features/<feature_id>/minimal.cobra`
 
 El comando `cobra validar-sintaxis` descubre automáticamente estos fixtures y
 los usa para regresión sintáctica de transpiladores oficiales.
