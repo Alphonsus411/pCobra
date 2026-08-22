@@ -137,8 +137,8 @@ def main() -> None:
 
     results = []
     with tempfile.TemporaryDirectory() as tmpdir:
-        co_file = Path(tmpdir) / "program.co"
-        co_file.write_text(CODE)
+        cobra_file = Path(tmpdir) / "program.cobra"
+        cobra_file.write_text(CODE)
 
         # Ejecutar directamente con el intérprete Cobra
         cobra_cmd = [
@@ -146,7 +146,7 @@ def main() -> None:
             "-m",
             "cobra.cli.cli",
             "ejecutar",
-            str(co_file),
+            str(cobra_file),
         ]
         elapsed, mem = run_and_measure(cobra_cmd, env)
         results.append({"backend": "cobra", "time": round(elapsed, 4), "memory_kb": mem})
@@ -163,7 +163,7 @@ def main() -> None:
                 "-m",
                 "cobra.cli.cli",
                 "compilar",
-                str(co_file),
+                str(cobra_file),
                 "--tipo",
                 backend,
             ]

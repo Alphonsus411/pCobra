@@ -134,8 +134,8 @@ def main() -> None:
 
     results = []
     with tempfile.TemporaryDirectory() as tmpdir:
-        co_file = Path(tmpdir) / "program.co"
-        co_file.write_text(CODE)
+        cobra_file = Path(tmpdir) / "program.cobra"
+        cobra_file.write_text(CODE)
         selected_backends = list(
             executable_benchmark_backends(
                 BACKEND_METADATA,
@@ -154,7 +154,7 @@ def main() -> None:
                 "-m",
                 "cobra.cli.cli",
                 "compilar",
-                str(co_file),
+                str(cobra_file),
                 "--tipo",
                 backend,
             ]
