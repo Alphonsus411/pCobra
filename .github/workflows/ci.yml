@@ -36,6 +36,7 @@ jobs:
         run: python scripts/validate_targets_policy.py
 
       - name: Guard protected lexer/parser files unchanged in `usar` fix scope (blocking)
+        if: github.event_name == 'pull_request'
         shell: bash
         run: |
           git diff --name-only origin/${{ github.base_ref }}...HEAD | tee /tmp/changed_files.txt
