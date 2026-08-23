@@ -1,7 +1,7 @@
 import pytest
 
-from pcobra.core.interpreter import InterpretadorCobra
-from pcobra.core.ast_nodes import (
+from core.interpreter import InterpretadorCobra
+from core.ast_nodes import (
     NodoAsignacion,
     NodoBloque,
     NodoCondicional,
@@ -9,7 +9,7 @@ from pcobra.core.ast_nodes import (
     NodoOperacionBinaria,
     NodoValor,
 )
-from pcobra.core.lexer import TipoToken, Token
+from cobra.core import TipoToken, Token
 
 
 def test_referencia_circular_variable():
