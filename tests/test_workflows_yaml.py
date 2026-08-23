@@ -68,3 +68,17 @@ def test_workflow_branch_triggers_target_default_branch(workflow_filename: str) 
     assert "branches: [ work ]" not in content
     assert "      - work" not in content
     assert "branches: [ master ]" in content or "      - master" in content
+
+
+def test_protected_file_guard_only_runs_for_pull_requests() -> None:
+    """Evita construir un rango git con ``base_ref`` vacío durante un push."""
+    workflow_path = WORKFLOWS_DIR / "ci.yml"
+    content = workflow_path.read_text(encoding="utf-8")
+    guard_name = (
+        "      - name: Guard protected lexer/parser files unchanged in `usar` "
+        "fix scope (blocking)\n"
+    )
+    guard_start = content.index(guard_name) + len(guard_name)
+    guard_header = content[guard_start : content.index("        run:", guard_start)]
+
+    assert "        if: github.event_name == 'pull_request'\n" in guard_header
