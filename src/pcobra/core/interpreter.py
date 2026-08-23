@@ -614,10 +614,6 @@ class InterpretadorCobra:
         self._eval_stack = set()
         self._call_depth = 0
         self._with_return_depth = 0
-        import threading
-
-        self._thread_execution_lock = threading.RLock()
-        self._thread_isolation_depth = 0
         # Funciones Cobra declaradas en el AST fuente. Se mantiene separada del
         # entorno de variables para que los optimizadores puedan eliminar nodos
         # ``NodoFuncion`` sin impedir que sus nombres sigan siendo resolubles
@@ -1816,8 +1812,11 @@ class InterpretadorCobra:
             else:
                 indice_contexto = self._indice_entorno_variable(nombre)
                 if indice_contexto is None:
-                    # La primera asignación introduce el nombre en el entorno
-                    # activo; las lecturas siguen exigiendo que ya exista.
+                    if self._call_depth == 0:
+                        raise NameError(f"Variable no declarada: {nombre}")
+                    # Una asignación simple dentro de una función introduce un
+                    # nombre local cuando no existe en su cadena léxica. Este
+                    # contexto permanece activo durante todo el cuerpo.
                     indice_contexto = len(self.mem_contextos) - 1
                     indice = self.solicitar_memoria(1)
                     self.mem_contextos[indice_contexto][nombre] = (indice, 1)
@@ -2267,11 +2266,6 @@ class InterpretadorCobra:
         entorno_capturado = funcion.get(
             "scope_lexico", funcion.get("entorno", self.contextos[-1])
         )
-        if self._thread_isolation_depth:
-            entorno_capturado = Environment(
-                values=dict(entorno_capturado.values),
-                parent=entorno_capturado.parent,
-            )
         self.contextos.append(Environment(parent=entorno_capturado))
         self.mem_contextos.append({})
         try:
@@ -2374,11 +2368,6 @@ class InterpretadorCobra:
                 entorno_capturado = funcion.get(
                     "scope_lexico", funcion.get("entorno", self.contextos[-1])
                 )
-                if self._thread_isolation_depth:
-                    entorno_capturado = Environment(
-                        values=dict(entorno_capturado.values),
-                        parent=entorno_capturado.parent,
-                    )
                 self.contextos.append(Environment(parent=entorno_capturado))
                 self.mem_contextos.append({})
                 for nombre_param, valor in zip(parametros, argumentos_resueltos):
@@ -2811,19 +2800,46 @@ class InterpretadorCobra:
 
     def ejecutar_hilo(self, nodo):
         """Ejecuta una función en un hilo separado."""
+        import copy
         import threading
 
+        # Cada worker recibe sus propias pilas y su propia cadena de entornos.
+        # Los valores ajenos al runtime Cobra (por ejemplo, primitivas Python
+        # que esperan sobre I/O) se conservan por referencia.
+        entornos_clonados = {}
+
+        def clonar_entorno(entorno):
+            if entorno is None:
+                return None
+            clave = id(entorno)
+            if clave in entornos_clonados:
+                return entornos_clonados[clave]
+            clon = Environment(parent=clonar_entorno(entorno.parent))
+            entornos_clonados[clave] = clon
+            clon.values = dict(entorno.values)
+            return clon
+
+        contexto_hilo = clonar_entorno(self.contextos[-1])
+        for clon in list(entornos_clonados.values()):
+            for nombre, valor in tuple(clon.values.items()):
+                if self._es_descriptor_funcion_cobra(valor):
+                    descriptor = dict(valor)
+                    scope = valor.get("scope_lexico", valor.get("entorno"))
+                    descriptor["scope_lexico"] = clonar_entorno(scope)
+                    clon.values[nombre] = descriptor
+
+        interprete_hilo = copy.copy(self)
+        interprete_hilo.contextos = [contexto_hilo]
+        interprete_hilo.mem_contextos = [{}]
+        interprete_hilo.gestor_memoria = GestorMemoriaGenetico()
+        interprete_hilo.estrategia = interprete_hilo.gestor_memoria.poblacion[0]
+        interprete_hilo.op_memoria = 0
+        interprete_hilo._eval_stack = set()
+        interprete_hilo._call_depth = 0
+        interprete_hilo._with_return_depth = 0
+
         def destino():
-            # Las llamadas concurrentes comparten el intérprete, pero cada
-            # hilo ejecuta la función sobre una vista aislada de su entorno
-            # capturado. El bloqueo protege las pilas internas de contextos y
-            # memoria, que son estructuras compartidas y no thread-local.
-            with self._thread_execution_lock:
-                self._thread_isolation_depth += 1
-                try:
-                    self.ejecutar_llamada_funcion(nodo.llamada)
-                finally:
-                    self._thread_isolation_depth -= 1
+            interprete_hilo.ejecutar_llamada_funcion(nodo.llamada)
 
         # El hilo se marca como daemon para evitar que bloquee el cierre del
         # intérprete si queda en ejecución al finalizar el programa.
