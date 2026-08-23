@@ -5,9 +5,9 @@ permissions:
 
 on:
   push:
-    branches: [ master ]
+    branches: [ main, work ]
   pull_request:
-    branches: [ master ]
+    branches: [ main, work ]
   schedule:
     - cron: '0 3 * * *'
   workflow_dispatch:
