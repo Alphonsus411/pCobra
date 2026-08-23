@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from importlib import import_module
 from pathlib import Path
 import sys
 
@@ -14,12 +15,53 @@ import inspect
 from typing import Any
 
 
+def _restore_cobra_alias() -> None:
+    """Mantiene ``cobra`` enlazado al paquete canónico durante las pruebas."""
+
+    module_name = "pcobra.cobra"
+    alias = "cobra"
+    module = import_module(module_name)
+    sys.modules[alias] = module
+    prefix = f"{module_name}."
+    alias_prefix = f"{alias}."
+    for name, loaded_module in list(sys.modules.items()):
+        if name.startswith(prefix):
+            sys.modules[alias_prefix + name[len(prefix) :]] = loaded_module
+
+
+def _prepare_core_submodule_aliases() -> None:
+    """Evita duplicar submódulos de ``pcobra.core`` sin cargar el shim ``core``."""
+
+    module_name = "pcobra.core"
+    alias = "core"
+    import_module(module_name)
+    sys.modules.pop(alias, None)
+    prefix = f"{module_name}."
+    alias_prefix = f"{alias}."
+    for name, loaded_module in list(sys.modules.items()):
+        if name.startswith(prefix):
+            sys.modules[alias_prefix + name[len(prefix) :]] = loaded_module
+
+
+# Se registra antes de que ``tests/conftest.py`` añada ``src/pcobra`` al path;
+# así nunca se crea un segundo árbol de módulos bajo el nombre histórico.
+_restore_cobra_alias()
+_prepare_core_submodule_aliases()
+
+
 def pytest_runtest_setup(item):  # noqa: ARG001
     """Aísla los módulos de transpiladores cargados por cada prueba."""
 
     for prefix in ("cobra.transpilers", "pcobra.cobra.transpilers"):
         for name in [mod for mod in sys.modules if mod.startswith(prefix)]:
             sys.modules.pop(name, None)
+    _restore_cobra_alias()
+
+
+def pytest_collectstart(collector):  # noqa: ARG001
+    """Restaura el alias canónico antes de importar cada módulo de pruebas."""
+
+    _restore_cobra_alias()
 
 
 def _ejecutar_corutina(funcion, **kwargs: Any) -> None:
