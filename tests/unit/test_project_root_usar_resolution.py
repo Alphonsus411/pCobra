@@ -6,7 +6,6 @@ import pytest
 from pcobra.cobra.cli.execution_pipeline import PipelineInput, ejecutar_pipeline_explicito
 from pcobra.cobra.usar_loader import (
     descubrir_raiz_proyecto,
-    obtener_cache_ast_import_co,
     obtener_cache_ast_import_cobra,
     formatear_ciclo_modulos_cobra_proyecto,
     obtener_cache_modulos_cobra_proyecto,
@@ -24,10 +23,6 @@ from pcobra.core.ast_nodes import (
     NodoUsar,
     NodoValor,
 )
-
-
-def test_accessor_legacy_comparte_cache_ast_import_cobra():
-    assert obtener_cache_ast_import_co() is obtener_cache_ast_import_cobra()
 
 
 @pytest.fixture(autouse=True)
