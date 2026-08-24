@@ -362,12 +362,6 @@ def obtener_cache_ast_import_cobra() -> dict[Path, list[Any]]:
     return _IMPORT_COBRA_AST_CACHE
 
 
-def obtener_cache_ast_import_co() -> dict[Path, list[Any]]:
-    """Alias compatible del antiguo accessor de la caché de ASTs."""
-
-    return obtener_cache_ast_import_cobra()
-
-
 def _formatear_ruta_ciclo_modulo(ruta: Path, project_root: Path | None) -> str:
     """Formatea una ruta de ciclo de forma estable y legible."""
 
