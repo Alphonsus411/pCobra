@@ -921,6 +921,25 @@ def test_interpretador_usar_proyecto_modulo_inexistente_oculta_ruta(tmp_path):
     assert str(ruta_buscada) not in mensaje
 
 
+def test_interpretador_usar_preserva_nameerror_del_runtime_del_modulo(monkeypatch):
+    error_runtime = NameError("Variable no declarada: faltante")
+
+    def cargar_modulo_con_nombre_no_declarado(*_args, **_kwargs):
+        raise error_runtime
+
+    monkeypatch.setattr(
+        "pcobra.core.interpreter._usar_modulo_con_estado_aislado",
+        cargar_modulo_con_nombre_no_declarado,
+    )
+
+    interp = InterpretadorCobra()
+    with pytest.raises(NameError, match=r"^Variable no declarada: faltante$") as excinfo:
+        interp.ejecutar_usar(SimpleNamespace(modulo="modulo_roto"))
+
+    assert excinfo.value is error_runtime
+    assert "usar_error[conflicto_simbolo]" not in str(excinfo.value)
+
+
 def test_resolver_modulo_cobra_proyecto_rechaza_resultado_manipulado_fuera_de_root(
     monkeypatch, tmp_path
 ):

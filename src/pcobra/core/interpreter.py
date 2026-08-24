@@ -152,6 +152,10 @@ _USAR_COLLISION_POLICIES = frozenset(
 )
 
 
+class _UsarSymbolConflictError(NameError):
+    """Identifica exclusivamente los ``NameError`` por colisiones de ``usar``."""
+
+
 def formatear_error_usar_usuario(
     codigo: str, modulo: str, contexto_minimo: str | None = None
 ) -> str:
@@ -2793,7 +2797,7 @@ class InterpretadorCobra:
                     stacklevel=2,
                 )
 
-            raise NameError(
+            raise _UsarSymbolConflictError(
                 f"No se puede usar '{modulo}': "
                 "hay conflicto de símbolos en el contexto actual. "
                 f"Símbolo conflictivo: {simbolo}. "
@@ -2853,13 +2857,17 @@ class InterpretadorCobra:
                     )
                 )
                 exc_usuario.add_note(str(exc))
-            elif isinstance(exc, NameError):
+            elif isinstance(exc, _UsarSymbolConflictError):
                 exc_usuario = NameError(
                     formatear_error_usar_usuario(
                         "conflicto_simbolo", nombre_modulo_limpio
                     )
                 )
                 exc_usuario.add_note(str(exc))
+            elif isinstance(exc, NameError):
+                # Los errores de resolución al ejecutar el módulo pertenecen a
+                # su runtime y no representan una colisión durante la inyección.
+                raise
             elif isinstance(exc, (ImportError, PermissionError)):
                 mensaje = str(exc)
                 if "usar_error[" in mensaje:
@@ -2948,7 +2956,7 @@ class InterpretadorCobra:
                     "[USAR_COLLISION][ERROR] "
                     f"módulo={modulo} símbolo={nombre} code=symbol_collision_runtime_recheck"
                 )
-                raise NameError(
+                raise _UsarSymbolConflictError(
                     "No se puede usar el módulo "
                     f"'{metadata_actual.get('module')}': {USAR_SYMBOL_CONFLICT_ERROR} colisión estructurada={detalle}"
                 )
