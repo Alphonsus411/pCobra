@@ -1,7 +1,7 @@
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-ACTIVE_BRANCH = "work"
+ACTIVE_BRANCHES = ("main", "work")
 WORKFLOWS_WITH_BRANCH_FILTERS = (
     ".github/workflows/ci.yml",
     ".github/workflows/runtime-stabilization-contract.yml",
@@ -11,10 +11,11 @@ WORKFLOWS_WITH_BRANCH_FILTERS = (
 )
 
 
-def test_workflows_with_branch_filters_target_active_branch_only():
+def test_workflows_with_branch_filters_target_active_branches():
     for workflow in WORKFLOWS_WITH_BRANCH_FILTERS:
         contenido = (ROOT / workflow).read_text(encoding="utf-8")
 
         assert "branches:" in contenido, workflow
-        assert "main" not in contenido, workflow
-        assert ACTIVE_BRANCH in contenido, workflow
+        assert "master" not in contenido, workflow
+        for branch in ACTIVE_BRANCHES:
+            assert branch in contenido, workflow

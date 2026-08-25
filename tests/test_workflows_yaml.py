@@ -69,3 +69,15 @@ def test_workflow_branch_triggers_target_default_branch(workflow_filename: str) 
     assert "branches: [ main, work ]" in content or (
         "      - main" in content and "      - work" in content
     )
+
+
+def test_ci_protected_file_guard_uses_event_appropriate_comparison() -> None:
+    """Evita construir una referencia vacía con ``base_ref`` en eventos push."""
+    content = (WORKFLOWS_DIR / "ci.yml").read_text(encoding="utf-8")
+
+    assert 'EVENT_NAME: ${{ github.event_name }}' in content
+    assert 'BEFORE_SHA: ${{ github.event.before }}' in content
+    assert '[[ "$EVENT_NAME" == "pull_request" ]]' in content
+    assert '[[ "$EVENT_NAME" == "push" ]]' in content
+    assert 'comparison_args=("${BEFORE_SHA}...HEAD")' in content
+    assert 'comparison_args=("HEAD^...HEAD")' in content
