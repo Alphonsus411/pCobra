@@ -65,3 +65,34 @@ def test_configuracion_global_preserva_identidad_de_submodulos_legacy() -> None:
         probe.unlink(missing_ok=True)
 
     assert result.returncode == 0, result.stdout + result.stderr
+
+
+def test_configuracion_global_reinicializa_alias_legacy_eliminado() -> None:
+    repo_root = Path(__file__).resolve().parents[2]
+    probe = repo_root / "test_pytest_alias_reload_probe.py"
+    probe.write_text(
+        "import importlib\n"
+        "import sys\n\n"
+        "def test_alias_eliminado_reejecuta_modulo_canonico():\n"
+        "    legacy = importlib.import_module('cobra.cli.plugin')\n"
+        "    previous_class = legacy.PluginCommand\n"
+        "    sys.modules.pop('cobra.cli.plugin')\n"
+        "    reloaded = importlib.import_module('cobra.cli.plugin')\n"
+        "    assert reloaded is legacy\n"
+        "    assert reloaded is sys.modules['pcobra.cobra.cli.plugin']\n"
+        "    assert reloaded.PluginCommand is not previous_class\n",
+        encoding="utf-8",
+    )
+
+    try:
+        result = subprocess.run(
+            [sys.executable, "-m", "pytest", "-q", str(probe)],
+            cwd=repo_root,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+    finally:
+        probe.unlink(missing_ok=True)
+
+    assert result.returncode == 0, result.stdout + result.stderr

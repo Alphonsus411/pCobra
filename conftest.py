@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from importlib import import_module
+from importlib import import_module, reload
 from importlib.abc import Loader, MetaPathFinder
 from importlib.machinery import ModuleSpec
 from pathlib import Path
@@ -21,12 +21,22 @@ from typing import Any
 class _CanonicalAliasLoader(Loader):
     """Carga un nombre histórico reutilizando el módulo canónico."""
 
-    def __init__(self, canonical_name: str) -> None:
+    def __init__(self, legacy_name: str, canonical_name: str) -> None:
+        self.legacy_name = legacy_name
         self.canonical_name = canonical_name
         self._metadata: tuple[object, object, object] | None = None
 
     def create_module(self, spec: ModuleSpec) -> ModuleType:  # noqa: ARG002
+        should_reload = (
+            self.legacy_name in _CanonicalAliasFinder._loaded_aliases
+            and self.canonical_name in sys.modules
+        )
         module = import_module(self.canonical_name)
+        if should_reload:
+            # Si sólo se eliminó el nombre legacy, su siguiente importación
+            # debe conservar la identidad del módulo y repetir a la vez la
+            # inicialización que antes provocaba esa eliminación.
+            reload(module)
         self._metadata = (module.__spec__, module.__loader__, module.__package__)
         return module
 
@@ -36,12 +46,14 @@ class _CanonicalAliasLoader(Loader):
         # canónica para introspección e importaciones relativas posteriores.
         if self._metadata is not None:
             module.__spec__, module.__loader__, module.__package__ = self._metadata
+        _CanonicalAliasFinder._loaded_aliases.add(self.legacy_name)
 
 
 class _CanonicalAliasFinder(MetaPathFinder):
     """Redirige submódulos legacy antes de que ``PathFinder`` los duplique."""
 
     _prefixes = {"cobra.": "pcobra.cobra.", "core.": "pcobra.core."}
+    _loaded_aliases: set[str] = set()
 
     def find_spec(
         self,
@@ -54,7 +66,7 @@ class _CanonicalAliasFinder(MetaPathFinder):
                 canonical_name = canonical_prefix + fullname[len(legacy_prefix) :]
                 return ModuleSpec(
                     fullname,
-                    _CanonicalAliasLoader(canonical_name),
+                    _CanonicalAliasLoader(fullname, canonical_name),
                     is_package=False,
                 )
         return None
