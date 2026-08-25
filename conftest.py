@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 from importlib import import_module
+from importlib.abc import Loader, MetaPathFinder
+from importlib.machinery import ModuleSpec
 from pathlib import Path
 import sys
 
@@ -12,7 +14,55 @@ if str(SRC_PATH) not in sys.path:
 
 import asyncio
 import inspect
+from types import ModuleType
 from typing import Any
+
+
+class _CanonicalAliasLoader(Loader):
+    """Carga un nombre histórico reutilizando el módulo canónico."""
+
+    def __init__(self, canonical_name: str) -> None:
+        self.canonical_name = canonical_name
+        self._metadata: tuple[object, object, object] | None = None
+
+    def create_module(self, spec: ModuleSpec) -> ModuleType:  # noqa: ARG002
+        module = import_module(self.canonical_name)
+        self._metadata = (module.__spec__, module.__loader__, module.__package__)
+        return module
+
+    def exec_module(self, module: ModuleType) -> None:
+        # El mecanismo de importación escribe los metadatos del alias sobre el
+        # objeto retornado por ``create_module``; se conserva su identidad
+        # canónica para introspección e importaciones relativas posteriores.
+        if self._metadata is not None:
+            module.__spec__, module.__loader__, module.__package__ = self._metadata
+
+
+class _CanonicalAliasFinder(MetaPathFinder):
+    """Redirige submódulos legacy antes de que ``PathFinder`` los duplique."""
+
+    _prefixes = {"cobra.": "pcobra.cobra.", "core.": "pcobra.core."}
+
+    def find_spec(
+        self,
+        fullname: str,
+        path: object = None,  # noqa: ARG002
+        target: ModuleType | None = None,  # noqa: ARG002
+    ) -> ModuleSpec | None:
+        for legacy_prefix, canonical_prefix in self._prefixes.items():
+            if fullname.startswith(legacy_prefix):
+                canonical_name = canonical_prefix + fullname[len(legacy_prefix) :]
+                return ModuleSpec(
+                    fullname,
+                    _CanonicalAliasLoader(canonical_name),
+                    is_package=False,
+                )
+        return None
+
+
+_ALIAS_FINDER = _CanonicalAliasFinder()
+if not any(isinstance(finder, _CanonicalAliasFinder) for finder in sys.meta_path):
+    sys.meta_path.insert(0, _ALIAS_FINDER)
 
 
 def _restore_cobra_alias() -> None:
