@@ -1812,11 +1812,8 @@ class InterpretadorCobra:
             else:
                 indice_contexto = self._indice_entorno_variable(nombre)
                 if indice_contexto is None:
-                    if self._call_depth == 0:
-                        raise NameError(f"Variable no declarada: {nombre}")
-                    # Una asignación simple dentro de una función introduce un
-                    # nombre local cuando no existe en su cadena léxica. Este
-                    # contexto permanece activo durante todo el cuerpo.
+                    # La asignación Cobra ``nombre = valor`` también declara
+                    # el nombre cuando todavía no existe en la cadena léxica.
                     indice_contexto = len(self.mem_contextos) - 1
                     indice = self.solicitar_memoria(1)
                     self.mem_contextos[indice_contexto][nombre] = (indice, 1)
@@ -2837,6 +2834,12 @@ class InterpretadorCobra:
         interprete_hilo._eval_stack = set()
         interprete_hilo._call_depth = 0
         interprete_hilo._with_return_depth = 0
+        # Estas pilas son estado transitorio de una ejecución. ``copy.copy``
+        # conservaría las mismas listas y permitiría que imports simultáneos
+        # alterasen la resolución relativa o la detección de ciclos del otro.
+        interprete_hilo._current_module_stack = list(self._current_module_stack)
+        interprete_hilo._import_execution_stack = list(self._import_execution_stack)
+        interprete_hilo._usar_loading_stack = list(self._usar_loading_stack)
 
         def destino():
             interprete_hilo.ejecutar_llamada_funcion(nodo.llamada)
