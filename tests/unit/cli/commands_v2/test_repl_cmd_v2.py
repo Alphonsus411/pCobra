@@ -117,6 +117,30 @@ def test_repl_v2_sandbox_docker_no_usa_camino_normal(monkeypatch):
     assert normal_calls == []
 
 
+def test_repl_v2_propaga_memory_limit_al_delegate_sandbox(monkeypatch):
+    command = repl_module.ReplCommandV2()
+    entradas = iter(["imprimir(1)", "exit"])
+    limites_observados: list[int] = []
+
+    monkeypatch.setattr("builtins.input", lambda _prompt: next(entradas))
+    monkeypatch.setattr(
+        repl_module, "prevalidar_y_parsear_codigo", lambda _codigo: [object()]
+    )
+    monkeypatch.setattr(
+        command._delegate,
+        "_ejecutar_en_sandbox",
+        lambda _codigo: limites_observados.append(
+            command._delegate._memory_limit_mb
+        ),
+    )
+
+    args = _args_repl()
+    args.sandbox = True
+
+    assert command.run(args) == 0
+    assert limites_observados == [128]
+
+
 def test_repl_v2_persistencia_estado_var_x_e_imprimir_x(monkeypatch, capsys):
     command = repl_module.ReplCommandV2()
     command._interpretador_persistente = {}

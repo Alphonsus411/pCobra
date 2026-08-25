@@ -15,7 +15,7 @@ from pcobra.cobra.cli.utils.parser_error_classifier import (
     _extraer_token_desde_error as extraer_token_desde_error_parser,
     es_parser_error_de_bloque_incompleto,
 )
-from pcobra.cobra.cli.utils.messages import mostrar_info
+from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
 from pcobra.cobra.core import LexerError, ParserError
 from pcobra.cobra.core.runtime import InterpretadorCobra
 from pcobra.cobra.core.semantic_validators import PrimitivaPeligrosaError
@@ -154,6 +154,15 @@ class ReplCommandV2(BaseCommand):
         self._delegate._estado_repl = self._delegate._crear_estado_repl()
 
     def run(self, args: Any) -> int:
+        memory_limit = getattr(args, "memory_limit", self._delegate.MEMORY_LIMIT_MB)
+        if memory_limit <= 0:
+            mostrar_error(_("El límite de memoria debe ser positivo"))
+            return 1
+        # Este entrypoint no llama a InteractiveCommand.run(), por lo que debe
+        # propagar explícitamente la opción pública al delegado que crea el
+        # proceso sandbox.
+        self._delegate._memory_limit_mb = memory_limit
+
         buffer: list[str] = []
         self._delegate._estado_repl = self._delegate._crear_estado_repl()
         self._seguro_repl = bool(getattr(args, "seguro", True))
