@@ -79,5 +79,7 @@ def test_ci_protected_file_guard_uses_event_appropriate_comparison() -> None:
     assert 'BEFORE_SHA: ${{ github.event.before }}' in content
     assert '[[ "$EVENT_NAME" == "pull_request" ]]' in content
     assert '[[ "$EVENT_NAME" == "push" ]]' in content
-    assert 'comparison_args=("${BEFORE_SHA}...HEAD")' in content
+    assert 'comparison_args=("${BEFORE_SHA}" HEAD)' in content
+    assert 'elif [[ "$EVENT_NAME" == "push" ]]; then' in content
+    assert "se bloquea por seguridad" in content
     assert 'comparison_args=("HEAD^...HEAD")' in content
