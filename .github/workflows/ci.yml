@@ -37,8 +37,22 @@ jobs:
 
       - name: Guard protected lexer/parser files unchanged in `usar` fix scope (blocking)
         shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_REF: ${{ github.base_ref }}
+          BEFORE_SHA: ${{ github.event.before }}
         run: |
-          git diff --name-only origin/${{ github.base_ref }}...HEAD | tee /tmp/changed_files.txt
+          if [[ "$EVENT_NAME" == "pull_request" ]]; then
+            comparison_args=("origin/${BASE_REF}...HEAD")
+          elif [[ "$EVENT_NAME" == "push" ]] && git cat-file -e "${BEFORE_SHA}^{commit}" 2>/dev/null; then
+            comparison_args=("${BEFORE_SHA}...HEAD")
+          elif git rev-parse --verify HEAD^ >/dev/null 2>&1; then
+            comparison_args=("HEAD^...HEAD")
+          else
+            comparison_args=("$(git hash-object -t tree /dev/null)" HEAD)
+          fi
+
+          git diff --name-only "${comparison_args[@]}" | tee /tmp/changed_files.txt
           protected_files=(
             "src/pcobra/core/lexer.py"
             "src/pcobra/core/parser.py"
