@@ -191,11 +191,16 @@ def test_09_colision_reporta_error_estructurado(monkeypatch):
         modulo = "datos"
 
     with pytest.raises(
-        NameError, match=r"No se puede usar el módulo 'datos': colisión estructurada="
+        NameError, match=r"usar_error\[conflicto_simbolo\]"
     ) as excinfo:
         interp.ejecutar_usar(_NodoUsar())
 
-    detalle = _extraer_error_estructurado_desde_colision(str(excinfo.value))
+    mensaje = str(excinfo.value)
+    assert "symbol_collision" not in mensaje
+
+    detalle = _extraer_error_estructurado_desde_colision(
+        str(excinfo.value.__cause__)
+    )
     assert detalle["code"] == "symbol_collision"
     assert detalle["message"] == "símbolo ya existe en contexto actual"
     assert detalle["symbol"] == "filtrar"

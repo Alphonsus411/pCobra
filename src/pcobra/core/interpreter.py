@@ -213,6 +213,7 @@ def _error_usuario_modulo_fuera_catalogo(
         mensaje = (
             f"Importación no permitida en 'usar': '{modulo}'. Es un módulo "
             "backend/no canónico y no forma parte de la API pública. "
+            f"{REPL_USAR_EXTERNAL_MODULE_ERROR}. "
             f"Módulos permitidos: {_resumir_modulos_permitidos_usar()}."
         )
     else:
@@ -2881,9 +2882,14 @@ class InterpretadorCobra:
                     }
 
                 if colision_estructurada:
-                    # El mensaje ya pertenece al contrato público de `usar`:
-                    # conservar literalmente el payload para sus consumidores.
-                    exc_usuario = NameError(mensaje)
+                    # El detalle estructurado permanece en la causa interna;
+                    # la frontera pública expone el diagnóstico estable de `usar`.
+                    exc_usuario = NameError(
+                        formatear_error_usar_usuario(
+                            "conflicto_simbolo", nombre_modulo_limpio
+                        )
+                    )
+
                 else:
                     exc_usuario = NameError(
                         formatear_error_usar_usuario(
