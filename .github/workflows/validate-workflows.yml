@@ -36,6 +36,9 @@ jobs:
         with:
           python-version: '3.11'
 
+      - name: Instalar dependencias del proyecto
+        run: python -m pip install --no-cache-dir -r requirements.txt
+
       - name: Validar política de targets en workflows
         run: python scripts/ci/validate_workflow_target_matrix.py
 
