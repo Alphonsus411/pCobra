@@ -30,7 +30,7 @@ SCAN_ROOTS = (
     ROOT / "cobra.toml",
 )
 TEXT_EXTS = {".md", ".rst", ".toml", ".yml", ".yaml", ".txt", ".py", ".sh"}
-SKIP_PREFIXES = ("docs/historico/", "docs/experimental/", "docs/frontend/api/")
+SKIP_PREFIXES = ("docs/historico/", "docs/experimental/", "docs/frontend/api/", "docs/auditorias/")
 SKIP_FILES = {
     "scripts/ci/validate_targets.py",
     "scripts/lint_legacy_aliases.py",

@@ -57,3 +57,29 @@ def test_sigue_detectando_target_prohibido_en_literal_python(
 
     assert len(errors) == 1
     assert "target fuera de policy pública detectado -> node" in errors[0]
+
+
+def test_excluye_auditorias_historicas_del_escaneo(tmp_path, monkeypatch) -> None:
+    public_doc = tmp_path / "docs" / "guia.md"
+    audit_doc = tmp_path / "docs" / "auditorias" / "README.md"
+
+    public_doc.parent.mkdir(parents=True)
+    audit_doc.parent.mkdir(parents=True)
+
+    public_doc.write_text("documentación pública válida\n", encoding="utf-8")
+    audit_doc.write_text("target histórico: nodejs\n", encoding="utf-8")
+
+    monkeypatch.setattr(lint_policy_drift, "ROOT", tmp_path)
+    monkeypatch.setattr(
+        lint_policy_drift,
+        "SCAN_ROOTS",
+        (tmp_path / "docs",),
+    )
+
+    scanned = {
+        path.relative_to(tmp_path).as_posix()
+        for path in lint_policy_drift._iter_files()
+    }
+
+    assert "docs/guia.md" in scanned
+    assert "docs/auditorias/README.md" not in scanned
