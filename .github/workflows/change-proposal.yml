@@ -61,7 +61,7 @@ jobs:
             --cov-report=term-missing | tee reports/pytest-output.log
           status=${PIPESTATUS[0]}
           echo "exit_code=$status" >> "$GITHUB_OUTPUT"
-          exit $status
+          exit "$status"
 
       - name: Generar informe de resultados
         if: always()
@@ -109,7 +109,7 @@ jobs:
             cat <<EOF > pr_body.md
           ## Resumen
           - Ejecutar pytest con cobertura para validar la base de código.
-          - Generar un informe actualizado en `docs/ci/reporte-propuesta.md`.
+          - Generar un informe actualizado en \`docs/ci/reporte-propuesta.md\`.
 
           ## Resultados
           - Fecha de ejecución: $fecha
@@ -121,13 +121,13 @@ jobs:
             cat <<EOF > pr_body.md
           ## Resumen
           - Ejecutar pytest con cobertura para validar la base de código.
-          - Generar un informe actualizado en `docs/ci/reporte-propuesta.md`.
+          - Generar un informe actualizado en \`docs/ci/reporte-propuesta.md\`.
 
           ## Resultados
           - Fecha de ejecución: $fecha
           - Estado de la suite: ❌ fallos detectados (código de salida $TEST_EXIT_CODE).
 
-          Consulta el artefacto `informes-pruebas` para revisar el log completo de pytest y los detalles de cobertura antes de aplicar cambios definitivos.
+          Consulta el artefacto \`informes-pruebas\` para revisar el log completo de pytest y los detalles de cobertura antes de aplicar cambios definitivos.
           EOF
           fi
 
