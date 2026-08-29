@@ -2853,10 +2853,14 @@ class InterpretadorCobra:
                     incluir_detalle=detalle_usar_habilitado,
                 )
             elif isinstance(exc, ValueError):
-                # Los validadores del loader conservan el diagnóstico preciso;
-                # la frontera pública sólo revela el rechazo de política.
-                exc_usuario = PermissionError(USAR_DIRECT_BACKEND_IMPORT_ERROR)
-                exc_usuario.add_note(str(exc))
+                mensaje = str(exc)
+                if "Nombre de módulo inválido en 'usar':" in mensaje:
+                    exc_usuario = ValueError(mensaje)
+                else:
+                    # Los rechazos de política continúan exponiendo el contrato
+                    # público estable, sin filtrar detalles internos.
+                    exc_usuario = PermissionError(USAR_DIRECT_BACKEND_IMPORT_ERROR)
+                    exc_usuario.add_note(mensaje)
             elif isinstance(exc, FileNotFoundError):
                 exc_usuario = FileNotFoundError(
                     formatear_error_usar_usuario(
@@ -2898,7 +2902,13 @@ class InterpretadorCobra:
                     )
             elif isinstance(exc, (ImportError, PermissionError)):
                 mensaje = str(exc)
-                if "usar_error[" in mensaje:
+
+                if (
+                    isinstance(exc, ImportError)
+                    and "Ciclo de módulos detectado en usar:" in mensaje
+                ):
+                    exc_usuario = ImportError(mensaje)
+                elif "usar_error[" in mensaje:
                     exc_usuario = type(exc)(mensaje)
                 else:
                     exc_usuario = type(exc)(
@@ -2906,7 +2916,7 @@ class InterpretadorCobra:
                             "carga_modulo_error", nombre_modulo_limpio
                         )
                     )
-                exc_usuario.add_note(str(exc))
+                    exc_usuario.add_note(mensaje)
             else:
                 exc_usuario = ImportError(
                     formatear_error_usar_usuario(
