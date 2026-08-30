@@ -30,5 +30,7 @@ def test_internal_migration_scope_permite_solo_backends_internos_controlados():
 
     assert_backend_allowed_for_scope(backend="go", scope="internal_migration")
 
-    with pytest.raises(ValueError, match="Backend no reconocido para migración interna"):
+    with pytest.raises(
+        ValueError, match="Backend no reconocido para migración interna"
+    ):
         assert_backend_allowed_for_scope(backend="ruby", scope="internal_migration")

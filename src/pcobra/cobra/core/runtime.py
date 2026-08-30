@@ -15,7 +15,10 @@ from pcobra.cobra.core.sandbox import (
     ejecutar_en_sandbox,
     validar_dependencias,
 )
-from pcobra.cobra.core.semantic_validators import PrimitivaPeligrosaError, construir_cadena
+from pcobra.cobra.core.semantic_validators import (
+    PrimitivaPeligrosaError,
+    construir_cadena,
+)
 from pcobra.cobra.core.semantic_validators.base import ValidadorBase
 
 __all__ = [

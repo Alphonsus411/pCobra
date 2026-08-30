@@ -16,7 +16,6 @@ from pcobra.core.ast_nodes import (
 from pcobra.core.lexer import TipoToken
 
 
-
 def test_parser_asignacion_simple() -> None:
     codigo = "var x = 5"
     tokens = Lexer(codigo).tokenizar()
@@ -32,9 +31,9 @@ def test_parser_error_sintaxis() -> None:
     codigo = "mientras 1"
     tokens = Lexer(codigo).tokenizar()
     parser = ClassicParser(tokens)
-    with pytest.raises(ParserError):
+    with pytest.raises(ParserError) as exc_info:
         parser.parsear()
-    assert parser.errores
+    assert str(exc_info.value)
 
 
 def test_parser_garantia_con_escape_terminador() -> None:

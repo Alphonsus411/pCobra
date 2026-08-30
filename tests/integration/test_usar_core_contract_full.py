@@ -25,7 +25,9 @@ def _modulo_datos_publico_stub() -> ModuleType:
     mod.__all__ = ["filtrar", "mapear", "reducir"]
     mod.filtrar = lambda valores, predicado=None: valores
     mod.mapear = lambda valores, fn=None: valores
-    mod.reducir = lambda valores, fn=None, inicial=None: inicial if inicial is not None else valores[0]
+    mod.reducir = lambda valores, fn=None, inicial=None: (
+        inicial if inicial is not None else valores[0]
+    )
     mod.__file__ = "/workspace/pCobra/src/pcobra/corelibs/datos.py"
     return mod
 
@@ -40,12 +42,24 @@ def _extraer_error_estructurado_desde_colision(mensaje: str) -> dict[str, str]:
 @pytest.mark.parametrize(
     ("factory", "executor", "get_interp"),
     [
-        (lambda: InteractiveCommand(InterpretadorCobra()), lambda cmd, code: cmd.ejecutar_codigo(code), lambda cmd: cmd.interpretador),
-        (ReplCommandV2, lambda cmd, code: cmd._ejecutar_en_modo_normal(code), lambda cmd: cmd._delegate.interpretador),
+        (
+            lambda: InteractiveCommand(InterpretadorCobra()),
+            lambda cmd, code: cmd.ejecutar_codigo(code),
+            lambda cmd: cmd.interpretador,
+        ),
+        (
+            ReplCommandV2,
+            lambda cmd, code: cmd._ejecutar_en_modo_normal(code),
+            lambda cmd: cmd._delegate.interpretador,
+        ),
     ],
 )
 def test_01_numero_exporta_solo_espanol(factory, executor, get_interp, monkeypatch):
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: _modulo_numero_stub())
+    monkeypatch.setattr(
+        core_usar_loader,
+        "obtener_modulo_cobra_oficial",
+        lambda _nombre: _modulo_numero_stub(),
+    )
     cmd = factory()
     interp = get_interp(cmd)
     executor(cmd, 'usar "numero"')
@@ -57,12 +71,24 @@ def test_01_numero_exporta_solo_espanol(factory, executor, get_interp, monkeypat
 @pytest.mark.parametrize(
     ("factory", "executor", "get_interp"),
     [
-        (lambda: InteractiveCommand(InterpretadorCobra()), lambda cmd, code: cmd.ejecutar_codigo(code), lambda cmd: cmd.interpretador),
-        (ReplCommandV2, lambda cmd, code: cmd._ejecutar_en_modo_normal(code), lambda cmd: cmd._delegate.interpretador),
+        (
+            lambda: InteractiveCommand(InterpretadorCobra()),
+            lambda cmd, code: cmd.ejecutar_codigo(code),
+            lambda cmd: cmd.interpretador,
+        ),
+        (
+            ReplCommandV2,
+            lambda cmd, code: cmd._ejecutar_en_modo_normal(code),
+            lambda cmd: cmd._delegate.interpretador,
+        ),
     ],
 )
 def test_02_texto_exporta_solo_espanol(factory, executor, get_interp, monkeypatch):
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: _modulo_texto_stub())
+    monkeypatch.setattr(
+        core_usar_loader,
+        "obtener_modulo_cobra_oficial",
+        lambda _nombre: _modulo_texto_stub(),
+    )
     cmd = factory()
     interp = get_interp(cmd)
     executor(cmd, 'usar "texto"')
@@ -72,7 +98,11 @@ def test_02_texto_exporta_solo_espanol(factory, executor, get_interp, monkeypatc
 
 
 def test_03_datos_contiene_filtrar_mapear_reducir(monkeypatch):
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: _modulo_datos_publico_stub())
+    monkeypatch.setattr(
+        core_usar_loader,
+        "obtener_modulo_cobra_oficial",
+        lambda _nombre: _modulo_datos_publico_stub(),
+    )
     cmd = InteractiveCommand(InterpretadorCobra())
     cmd.ejecutar_codigo('usar "datos"')
     simbolos = cmd.interpretador.contextos[-1].values
@@ -81,21 +111,46 @@ def test_03_datos_contiene_filtrar_mapear_reducir(monkeypatch):
 
 
 def test_04_rechaza_numpy_y_no_inyecta(monkeypatch):
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: (_ for _ in ()).throw(ModuleNotFoundError(nombre)))
+    monkeypatch.setattr(
+        core_usar_loader,
+        "obtener_modulo_cobra_oficial",
+        lambda nombre: (_ for _ in ()).throw(ModuleNotFoundError(nombre)),
+    )
     cmd = InteractiveCommand(InterpretadorCobra())
     estado_pre = dict(cmd.interpretador.contextos[-1].values)
-    with pytest.raises(PermissionError, match=r"módulo externo no permitido en REPL estricto"):
+    with pytest.raises(
+        PermissionError, match=r"módulo externo no permitido en REPL estricto"
+    ):
         cmd.ejecutar_codigo('usar "numpy"')
     assert estado_pre == cmd.interpretador.contextos[-1].values
 
 
 def test_05_rechaza_holobit_sdk(monkeypatch):
     mod_holobit = _modulo_holobit_publico_stub()
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: mod_holobit if nombre == "holobit" else (_ for _ in ()).throw(ModuleNotFoundError(nombre)))
+    assert "holobit_sdk" not in REPL_COBRA_MODULE_MAP
+    monkeypatch.setattr(
+        core_usar_loader,
+        "obtener_modulo_cobra_oficial",
+        lambda nombre: (
+            mod_holobit
+            if nombre == "holobit"
+            else (_ for _ in ()).throw(ModuleNotFoundError(nombre))
+        ),
+    )
     cmd = InteractiveCommand(InterpretadorCobra())
-    cmd.interpretador.configurar_restriccion_usar_repl({**REPL_COBRA_MODULE_MAP, "holobit": "holobit"})
-    with pytest.raises(PermissionError, match=r"módulo externo no permitido en REPL estricto"):
+    cmd.interpretador.configurar_restriccion_usar_repl(
+        {**REPL_COBRA_MODULE_MAP, "holobit": "holobit"}
+    )
+    estado_pre = dict(cmd.interpretador.contextos[-1].values)
+    with pytest.raises(
+        PermissionError, match=r"módulo externo no permitido en REPL estricto"
+    ):
         cmd.ejecutar_codigo('usar "holobit_sdk"')
+
+    simbolos = cmd.interpretador.contextos[-1].values
+    assert simbolos == estado_pre
+    assert "holobit_sdk" not in simbolos
+    assert all(nombre not in simbolos for nombre in mod_holobit.__all__)
 
 
 def test_06_saneamiento_excluye_nombres_prohibidos_y_doble_guion_bajo():
@@ -123,7 +178,11 @@ def test_08_politica_publica_backends_exacta():
 
 
 def test_09_colision_reporta_error_estructurado(monkeypatch):
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: _modulo_datos_publico_stub())
+    monkeypatch.setattr(
+        core_usar_loader,
+        "obtener_modulo_cobra_oficial",
+        lambda _nombre: _modulo_datos_publico_stub(),
+    )
     interp = InterpretadorCobra()
     interp.configurar_restriccion_usar_repl(REPL_COBRA_MODULE_MAP)
     interp.contextos[-1].define("filtrar", lambda *_args, **_kwargs: "ocupado")
@@ -131,10 +190,17 @@ def test_09_colision_reporta_error_estructurado(monkeypatch):
     class _NodoUsar:
         modulo = "datos"
 
-    with pytest.raises(NameError, match=r"No se puede usar el módulo 'datos': colisión estructurada=") as excinfo:
+    with pytest.raises(
+        NameError, match=r"usar_error\[conflicto_simbolo\]"
+    ) as excinfo:
         interp.ejecutar_usar(_NodoUsar())
 
-    detalle = _extraer_error_estructurado_desde_colision(str(excinfo.value))
+    mensaje = str(excinfo.value)
+    assert "symbol_collision" not in mensaje
+
+    detalle = _extraer_error_estructurado_desde_colision(
+        str(excinfo.value.__cause__)
+    )
     assert detalle["code"] == "symbol_collision"
     assert detalle["message"] == "símbolo ya existe en contexto actual"
     assert detalle["symbol"] == "filtrar"
@@ -151,7 +217,9 @@ def test_10_modulo_simulado_solo_inyecta_export_publico_valido(monkeypatch):
     for nombre in bloqueados:
         setattr(mod, nombre, lambda *_args, **_kwargs: None)
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: mod)
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: mod
+    )
     interp = InterpretadorCobra()
     interp.configurar_restriccion_usar_repl({"datos": "datos"})
 

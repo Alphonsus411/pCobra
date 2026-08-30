@@ -125,7 +125,7 @@ class CobraKernel(Kernel):
     language_info = {
         "name": "cobra",
         "mimetype": "text/plain",
-        "file_extension": ".co",
+        "file_extension": ".cobra",
     }
     banner = "Cobra kernel"
 
@@ -199,15 +199,11 @@ class CobraKernel(Kernel):
                             result = None
                         except TimeoutError:
                             output = ""
-                            error = (
-                                "Error: la ejecución de Python excedió el tiempo límite de 5 segundos"
-                            )
+                            error = "Error: la ejecución de Python excedió el tiempo límite de 5 segundos"
                             result = None
                         except MemoryError:
                             output = ""
-                            error = (
-                                "Error: la ejecución de Python excedió el límite de memoria"
-                            )
+                            error = "Error: la ejecución de Python excedió el límite de memoria"
                             result = None
                         except Exception as exc:
                             if isinstance(exc, ModuleNotFoundError):

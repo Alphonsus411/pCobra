@@ -15,12 +15,15 @@ if not hasattr(importlib, "ModuleType"):
     importlib.ModuleType = types.ModuleType
 
 import pcobra  # noqa: F401
-from core.interpreter import InterpretadorCobra
-from cobra.core import Lexer
-from cobra.core import Parser
+from pcobra.core.interpreter import InterpretadorCobra
+from pcobra.core.lexer import Lexer
+from pcobra.core.parser import Parser
 from pcobra.cobra.transpilers.registry import get_transpilers
 from tests.utils.runtime import execute_transpiled_code
-from tests.utils.targets import BEST_EFFORT_INTERNAL_RUNTIME_TARGETS, OFFICIAL_RUNTIME_TARGETS
+from tests.utils.targets import (
+    BEST_EFFORT_INTERNAL_RUNTIME_TARGETS,
+    OFFICIAL_RUNTIME_TARGETS,
+)
 
 TRANSPILERS = get_transpilers()
 
@@ -36,7 +39,7 @@ def obtener_salida_interprete(archivo: Path) -> str:
 
 @pytest.mark.parametrize("lang", OFFICIAL_RUNTIME_TARGETS)
 def test_transpile_semantics(tmp_path, lang):
-    src = Path("tests/data/ejemplo.co")
+    src = Path("tests/data/ejemplo.cobra")
     esperado = obtener_salida_interprete(src)
 
     tokens = Lexer(src.read_text()).analizar_token()
@@ -56,7 +59,7 @@ def test_transpile_semantics(tmp_path, lang):
 @pytest.mark.parametrize("lang", BEST_EFFORT_INTERNAL_RUNTIME_TARGETS)
 def test_transpile_semantics_experimental_runtime(tmp_path, lang):
     """Cobertura best-effort para runtimes no oficiales conservados manualmente."""
-    src = Path("tests/data/ejemplo.co")
+    src = Path("tests/data/ejemplo.cobra")
     esperado = obtener_salida_interprete(src)
 
     tokens = Lexer(src.read_text()).analizar_token()

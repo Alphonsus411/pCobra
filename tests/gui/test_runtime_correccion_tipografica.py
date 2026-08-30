@@ -42,13 +42,11 @@ def test_correccion_codigo_invalido_bloquea_motor_por_parser(monkeypatch):
 
     monkeypatch.setattr(runtime, "generar_sugerencias", fallar_si_invoca_motor)
 
-    reporte = runtime.generar_reporte_correccion_tipografica(
-        """
+    reporte = runtime.generar_reporte_correccion_tipografica("""
 funcion calcular_total(subtotal, impuesto):
     retorno subtotal + impuesto
 fin
-"""
-    )
+""")
 
     assert "Errores léxicos/sintácticos:" in reporte
     assert "Corrige primero los errores anteriores" in reporte
@@ -82,7 +80,7 @@ def test_correccion_formato_de_salida_agrupado(monkeypatch):
         "generar_sugerencias",
         lambda _codigo: [
             "Usar `retorno` como sentencia de salida en funciones [regla: LP-3.3-RETORNO-CANONICO; §3.3 Sentencias]",
-            "Usar módulos con `usar \"modulo\"` y llamadas planas [regla: LP-3.6-USAR-SIN-ALIAS; §3.6 Módulos]",
+            'Usar módulos con `usar "modulo"` y llamadas planas [regla: LP-3.6-USAR-SIN-ALIAS; §3.6 Módulos]',
         ],
     )
 

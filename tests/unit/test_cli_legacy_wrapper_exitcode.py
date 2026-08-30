@@ -8,7 +8,6 @@ from pathlib import Path
 
 import pytest
 
-
 REPO_ROOT = Path(__file__).resolve().parents[2]
 LEGACY_WRAPPER_PATH = REPO_ROOT / "cobra" / "cli" / "cli.py"
 
@@ -45,8 +44,10 @@ def _run_legacy_wrapper_file(*args: str) -> subprocess.CompletedProcess[str]:
 
 
 @pytest.mark.timeout(20)
-def test_wrapper_legacy_y_entrypoints_canonicos_comparten_exitcode_en_error_controlado() -> None:
-    args = ("compilar", "archivo_que_no_existe.co")
+def test_wrapper_legacy_y_entrypoints_canonicos_comparten_exitcode_en_error_controlado() -> (
+    None
+):
+    args = ("--opcion-inexistente",)
 
     canonical = _run_module("pcobra.cli", *args)
     legacy_wrapper = _run_legacy_wrapper_file(*args)
@@ -58,10 +59,12 @@ def test_wrapper_legacy_y_entrypoints_canonicos_comparten_exitcode_en_error_cont
 
 
 def test_main_del_wrapper_legacy_devuelve_int() -> None:
-    spec = importlib.util.spec_from_file_location("legacy_cli_wrapper", LEGACY_WRAPPER_PATH)
+    spec = importlib.util.spec_from_file_location(
+        "legacy_cli_wrapper", LEGACY_WRAPPER_PATH
+    )
     assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
 
-    resultado = module.main(["compilar", "archivo_que_no_existe.co"])
+    resultado = module.main(["compilar", "archivo_que_no_existe.cobra"])
     assert isinstance(resultado, int)

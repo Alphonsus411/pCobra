@@ -8,7 +8,10 @@ import sys as _sys
 import warnings as _warnings
 from typing import Dict, Tuple
 
-from pcobra.cobra.architecture.backend_policy import PUBLIC_BACKENDS, assert_public_targets_contract
+from pcobra.cobra.architecture.backend_policy import (
+    PUBLIC_BACKENDS,
+    assert_public_targets_contract,
+)
 
 assert_public_targets_contract(tuple(PUBLIC_BACKENDS), source="import pcobra")
 
@@ -40,13 +43,18 @@ _LAZY_SUBMODULES = {
     "compiler",
 }
 
-__all__ = sorted(_LAZY_SUBMODULES) + ["activar_aliases_legacy", "LEGACY_IMPORT_ALIAS_INVENTORY"]
+__all__ = sorted(_LAZY_SUBMODULES) + [
+    "activar_aliases_legacy",
+    "LEGACY_IMPORT_ALIAS_INVENTORY",
+]
 
 
 def _resolve_legacy_import_policy() -> Tuple[int, bool]:
     """Resuelve fase de deprecación de imports legacy y si están habilitados."""
 
-    raw_phase = _os.environ.get(_LEGACY_IMPORT_PHASE_ENV, str(_LEGACY_IMPORT_PHASE_DEFAULT))
+    raw_phase = _os.environ.get(
+        _LEGACY_IMPORT_PHASE_ENV, str(_LEGACY_IMPORT_PHASE_DEFAULT)
+    )
     try:
         phase = int(raw_phase)
     except ValueError:

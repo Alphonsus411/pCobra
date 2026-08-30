@@ -42,7 +42,9 @@ def test_backend_pipeline_build_lee_archivo_antes_de_obtener_ast(monkeypatch, tm
             {},
         ),
     )
-    monkeypatch.setattr(backend_pipeline, "_official_transpilers", lambda: {"python": _DummyTranspiler})
+    monkeypatch.setattr(
+        backend_pipeline, "_official_transpilers", lambda: {"python": _DummyTranspiler}
+    )
 
     result = backend_pipeline.build(str(source), hints={"preferred_backend": "python"})
 

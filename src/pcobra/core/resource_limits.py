@@ -2,6 +2,7 @@
 
 Todos los comandos deben emplear estas funciones en lugar de
 implementaciones manuales para gestionar los límites de recursos."""
+
 from __future__ import annotations
 
 import importlib
@@ -9,7 +10,6 @@ import logging
 import os
 import sys
 from pcobra.core.cli.i18n import _
-
 
 logger = logging.getLogger(__name__)
 IS_WINDOWS = os.name == "nt" or sys.platform.startswith("win")
@@ -96,7 +96,6 @@ def limitar_memoria_mb(mb: int) -> None:
         _log_windows_skip_once()
 
 
-
 def _limitar_memoria_psutil(bytes_: int) -> bool:
     try:
         psutil = _cargar_psutil()  # type: ignore
@@ -147,7 +146,6 @@ def limitar_cpu_segundos(segundos: int) -> None:
         raise ValueError("segundos debe ser un entero positivo")
     if IS_WINDOWS:  # psutil.Process.rlimit no está soportado en Windows.
         _log_windows_skip_once()
-
 
 
 def _limitar_cpu_psutil(segundos: int) -> bool:

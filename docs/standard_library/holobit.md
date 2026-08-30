@@ -78,3 +78,19 @@ usar "holobit"
 ```
 
 Nombres públicos en español (fuente: `__all__`).
+
+<!-- BEGIN: AUTO-STDLIB-FUNCTIONS -->
+## API pública sincronizada (`standard_library.holobit`)
+
+| Función |
+|---|
+| `combinar` |
+| `crear_holobit` |
+| `deserializar_holobit` |
+| `graficar` |
+| `medir` |
+| `proyectar` |
+| `serializar_holobit` |
+| `transformar` |
+| `validar_holobit` |
+<!-- END: AUTO-STDLIB-FUNCTIONS -->

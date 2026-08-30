@@ -1,0 +1,17 @@
+clase Volador:
+    metodo volar(self):
+        imprimir "Estoy volando"
+    fin
+fin
+
+clase Nadador:
+    metodo nadar(self):
+        imprimir "Estoy nadando"
+    fin
+fin
+
+clase Pato(Volador, Nadador):
+    metodo desplazar(self):
+        imprimir "El pato puede volar y nadar"
+    fin
+fin

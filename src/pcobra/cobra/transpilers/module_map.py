@@ -15,8 +15,6 @@ from pcobra.cobra.stdlib_contract import get_contract_manifests
 logger = logging.getLogger(__name__)
 
 
-
-
 def _build_policy_error(
     *,
     category: str,
@@ -47,23 +45,23 @@ if OFFICIAL_TARGETS != PUBLIC_BACKENDS:
     )
 
 MODULE_MAP_PATH = os.environ.get(
-    'COBRA_MODULE_MAP',
+    "COBRA_MODULE_MAP",
     os.path.abspath(
-        os.path.join(os.path.dirname(__file__), '..', '..', '..', '..', 'cobra.mod')
+        os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", "cobra.mod")
     ),
 )
 
 COBRA_TOML_PATH = os.environ.get(
-    'COBRA_TOML',
+    "COBRA_TOML",
     os.path.abspath(
-        os.path.join(os.path.dirname(__file__), '..', '..', '..', '..', 'cobra.toml')
+        os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", "cobra.toml")
     ),
 )
 
 _toml_cache = None
 
 STDLIB_CONTRACTS_DIR = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), '..', 'stdlib_contract')
+    os.path.join(os.path.dirname(__file__), "..", "stdlib_contract")
 )
 
 _stdlib_contract_cache: dict[str, Dict[str, Any]] | None = None
@@ -87,10 +85,10 @@ def _load_stdlib_contracts() -> dict[str, Dict[str, Any]]:
         if not os.path.isfile(contract_path):
             continue
         try:
-            with open(contract_path, 'rb') as handle:
+            with open(contract_path, "rb") as handle:
                 parsed = tomllib.load(handle)
         except (OSError, tomllib.TOMLDecodeError):
-            logger.warning('No se pudo cargar manifest contractual: %s', contract_path)
+            logger.warning("No se pudo cargar manifest contractual: %s", contract_path)
             continue
         if isinstance(parsed, dict) and entry not in loaded:
             loaded[entry] = parsed
@@ -126,18 +124,16 @@ def resolve_backend_for_module(module: str, backend: str) -> str:
     if not contract:
         return canonical_backend
 
-    preferred_backend = contract.get('backend_preferido')
+    preferred_backend = contract.get("backend_preferido")
     if not isinstance(preferred_backend, str):
         return canonical_backend
     preferred = normalize_target_name(preferred_backend)
 
-    fallback = contract.get('fallback_permitido', [])
+    fallback = contract.get("fallback_permitido", [])
     if not isinstance(fallback, list):
         fallback = []
     allowed_fallbacks = {
-        normalize_target_name(item)
-        for item in fallback
-        if isinstance(item, str)
+        normalize_target_name(item) for item in fallback if isinstance(item, str)
     }
 
     if preferred not in OFFICIAL_TARGETS:
@@ -146,7 +142,9 @@ def resolve_backend_for_module(module: str, backend: str) -> str:
             f"{module!r}: {preferred!r}. Permitidos: {', '.join(OFFICIAL_TARGETS)}"
         )
 
-    invalid_fallbacks = sorted(item for item in allowed_fallbacks if item not in OFFICIAL_TARGETS)
+    invalid_fallbacks = sorted(
+        item for item in allowed_fallbacks if item not in OFFICIAL_TARGETS
+    )
     if invalid_fallbacks:
         raise ValueError(
             "CONTRACT_ERROR: fallback_permitido contiene backends no oficiales en módulo "
@@ -161,6 +159,7 @@ def resolve_backend_for_module(module: str, backend: str) -> str:
         f"{module!r} para target {canonical_backend!r}; preferido={preferred!r}; "
         f"fallback_permitido={sorted(allowed_fallbacks)!r}"
     )
+
 
 _RUNTIME_PATH_FORBIDDEN_SEGMENTS = (
     "core/nativos",
@@ -182,8 +181,6 @@ def _is_runtime_path_forbidden(mapped_path: str) -> bool:
     if not canonical:
         return False
     return any(segment in canonical for segment in _RUNTIME_PATH_FORBIDDEN_SEGMENTS)
-
-
 
 
 def _validate_public_backend_policy(data: Dict[str, Any]) -> None:
@@ -266,7 +263,7 @@ def get_toml_map() -> Dict[str, Any]:
     if _toml_cache is None:
         try:
             if os.path.exists(COBRA_TOML_PATH):
-                with open(COBRA_TOML_PATH, 'rb') as f:
+                with open(COBRA_TOML_PATH, "rb") as f:
                     data = tomllib.load(f) or {}
             else:
                 data = {}

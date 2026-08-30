@@ -186,4 +186,3 @@ __all__ = [
     "scanear",
     "pares_consecutivos",
 ]
-

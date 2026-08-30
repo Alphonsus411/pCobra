@@ -25,7 +25,13 @@ DATA_PATH = ROOT / "data" / "language_equivalence.yml"
 BASELINE_PATH = ROOT / "data" / "language_equivalence_baseline.yml"
 DOWNGRADES_PATH = ROOT / "data" / "language_equivalence_downgrades.yml"
 DOC_PATH = ROOT / "docs" / "language_equivalence_matrix.md"
-CONTRACT_TEST_PATH = ROOT / "tests" / "integration" / "transpilers" / "test_language_equivalence_contract.py"
+CONTRACT_TEST_PATH = (
+    ROOT
+    / "tests"
+    / "integration"
+    / "transpilers"
+    / "test_language_equivalence_contract.py"
+)
 VALID_STATUSES = {"full", "partial", "none"}
 STATUS_SOURCES = {
     "AST_FEATURE_MINIMUM_CONTRACT": AST_FEATURE_MINIMUM_CONTRACT,
@@ -77,7 +83,11 @@ def _validate_downgrades_against_baseline(contract: dict) -> None:
     downgrades: list[str] = []
     for key, previous in baseline_table.items():
         current = current_table.get(key)
-        if previous == "full" and current in {"partial", "none"} and key not in approved:
+        if (
+            previous == "full"
+            and current in {"partial", "none"}
+            and key not in approved
+        ):
             feature, backend = key
             downgrades.append(
                 f"feature={feature}, backend={backend}, baseline={previous}, actual={current}"
@@ -123,7 +133,9 @@ def main() -> int:
         matrix_key = source_meta.get("key")
 
         if matrix_name not in STATUS_SOURCES:
-            raise SystemExit(f"Feature `{feature_id}` referencia matriz desconocida: {matrix_name}")
+            raise SystemExit(
+                f"Feature `{feature_id}` referencia matriz desconocida: {matrix_name}"
+            )
 
         matrix = STATUS_SOURCES[matrix_name]
         backend_equivalents = feature.get("backend_equivalents", {})
@@ -135,10 +147,16 @@ def main() -> int:
             )
 
         if "python_equivalent" not in feature or "cobra_syntax" not in feature:
-            raise SystemExit(f"Feature `{feature_id}` debe incluir `cobra_syntax` y `python_equivalent`.")
+            raise SystemExit(
+                f"Feature `{feature_id}` debe incluir `cobra_syntax` y `python_equivalent`."
+            )
 
         for backend in OFFICIAL_TARGETS:
-            contract_status = "full" if backend == "python" else backend_equivalents[backend]["status"]
+            contract_status = (
+                "full"
+                if backend == "python"
+                else backend_equivalents[backend]["status"]
+            )
             if contract_status not in VALID_STATUSES:
                 raise SystemExit(
                     f"Status inválido en feature={feature_id}, backend={backend}: {contract_status}"
@@ -152,7 +170,11 @@ def main() -> int:
                     f"matriz={matrix_status}, fuente={matrix_name}.{matrix_key}"
                 )
 
-            limitations = [] if backend == "python" else backend_equivalents[backend].get("limitations", [])
+            limitations = (
+                []
+                if backend == "python"
+                else backend_equivalents[backend].get("limitations", [])
+            )
             if contract_status != "full" and not limitations:
                 raise SystemExit(
                     f"Feature `{feature_id}` backend `{backend}` requiere limitaciones cuando status != full."
@@ -161,7 +183,9 @@ def main() -> int:
     _validate_downgrades_against_baseline(payload)
     _run_contract_test_suite()
 
-    print("Contrato de equivalencia validado correctamente + suite contractual en verde.")
+    print(
+        "Contrato de equivalencia validado correctamente + suite contractual en verde."
+    )
     return 0
 
 

@@ -10,7 +10,9 @@ def _write(path: Path, content: str) -> None:
     path.write_text(content, encoding="utf-8")
 
 
-def test_detecta_uso_directo_internal_backends_en_comando_publico(tmp_path: Path) -> None:
+def test_detecta_uso_directo_internal_backends_en_comando_publico(
+    tmp_path: Path,
+) -> None:
     _write(
         tmp_path / "src" / "pcobra" / "cobra" / "cli" / "commands" / "foo.py",
         "from pcobra.cobra.architecture.backend_policy import INTERNAL_BACKENDS\n",

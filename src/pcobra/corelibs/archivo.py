@@ -14,6 +14,7 @@ EQUIVALENCIAS_SEMANTICAS_ARCHIVO: dict[str, str] = {
     "readlines": "leer_lineas",
 }
 
+
 def _es_ruta_absoluta_o_sensible_windows(ruta: PathLike) -> bool:
     texto = str(ruta).strip()
     if not texto:
@@ -39,19 +40,43 @@ def _resolver_ruta(
     resuelven dentro del mismo sandbox.
     """
 
-    base = Path(os.environ.get("COBRA_IO_BASE_DIR") or Path.cwd()).resolve()
+    base_sin_resolver = Path(
+        os.environ.get("COBRA_IO_BASE_DIR") or Path.cwd()
+    ).expanduser()
+    base_sin_resolver.mkdir(parents=True, exist_ok=True)
+    base = base_sin_resolver.resolve(strict=True)
     objetivo = Path(ruta).expanduser()
     es_absoluta = objetivo.is_absolute() or _es_ruta_absoluta_o_sensible_windows(ruta)
     if es_absoluta and not permitir_absoluta_dentro_base:
         raise ValueError("Las rutas absolutas no están permitidas")
     if ".." in objetivo.parts:
         raise ValueError("La ruta no puede contener '..'")
-    destino = objetivo.resolve() if es_absoluta else (base / objetivo).resolve()
+    candidato = objetivo if es_absoluta else base / objetivo
+    destino = candidato.resolve(strict=False)
     try:
         destino.relative_to(base)
     except ValueError as exc:
         raise ValueError("La ruta queda fuera del directorio permitido") from exc
+    relativo = candidato.relative_to(base)
+    actual = base
+    for parte in relativo.parts:
+        actual /= parte
+        if actual.is_symlink():
+            raise ValueError("La ruta no puede contener enlaces simbólicos")
     return destino
+
+
+def _resolver_ruta_filesystem_confinado(
+    ruta: PathLike, capacidad: str = "filesystem.read"
+) -> Path:
+    """Resuelve rutas de corelibs confinadas cuando existe una raíz explícita."""
+
+    if not os.environ.get("COBRA_IO_BASE_DIR"):
+        return Path(ruta).expanduser()
+    try:
+        return _resolver_ruta(ruta, permitir_absoluta_dentro_base=True)
+    except ValueError as exc:
+        raise PermissionError(f"capacidad {capacidad} denegada: {exc}") from exc
 
 
 def leer(ruta: PathLike) -> str:
@@ -115,7 +140,6 @@ def eliminar(ruta: PathLike) -> None:
             ruta_segura.unlink()
 
 
-
 def anexar(ruta: PathLike, datos: str) -> None:
     """Agrega ``datos`` al final del archivo respetando el sandbox de rutas."""
 
@@ -129,6 +153,7 @@ def leer_lineas(ruta: PathLike, *, mantener_saltos: bool = False) -> list[str]:
 
     contenido = leer(ruta)
     return contenido.splitlines(keepends=mantener_saltos)
+
 
 __all__ = [
     "leer",

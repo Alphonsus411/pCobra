@@ -27,18 +27,27 @@ class BuildService:
 
         if debug and build_result.get("reason"):
             mostrar_info(
-                _("Resolución de backend (debug): {reason}").format(reason=build_result["reason"]),
+                _("Resolución de backend (debug): {reason}").format(
+                    reason=build_result["reason"]
+                ),
                 registrar_log=False,
             )
-        runtime_language = str(build_result.get("runtime", {}).get("language", "python"))
+        runtime_language = str(
+            build_result.get("runtime", {}).get("language", "python")
+        )
         assert_backend_allowed_for_scope(backend=runtime_language, scope="public")
         try:
-            self._runtime_manager.validate_command_runtime(runtime_language, command="build")
+            self._runtime_manager.validate_command_runtime(
+                runtime_language, command="build"
+            )
         except ValueError as exc:
             mostrar_error(str(exc), registrar_log=False)
             return 1
         artifact_path = str(build_result.get("artifact_path") or "<stdout>")
         mostrar_info(_("Artefacto Cobra generado."), registrar_log=False)
-        mostrar_info(_("Ruta de artefacto: {path}").format(path=artifact_path), registrar_log=False)
+        mostrar_info(
+            _("Ruta de artefacto: {path}").format(path=artifact_path),
+            registrar_log=False,
+        )
         print(build_result["code"])
         return 0

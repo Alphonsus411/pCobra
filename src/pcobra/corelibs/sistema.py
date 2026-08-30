@@ -8,8 +8,9 @@ import sys
 import platform
 import shutil
 import subprocess
+from collections import deque
 from collections.abc import Iterable
-from typing import AsyncIterator
+from typing import Any, AsyncIterator, cast
 
 # Variable de entorno que permite definir una lista blanca mínima
 WHITELIST_ENV = "COBRA_EJECUTAR_PERMITIDOS"
@@ -87,9 +88,7 @@ def _verificar_descriptor(fd: int, st_dev: int, st_ino: int) -> None:
     try:
         actual = os.fstat(fd)
     except OSError as exc:
-        raise RuntimeError(
-            "No se pudo verificar el ejecutable autorizado"
-        ) from exc
+        raise RuntimeError("No se pudo verificar el ejecutable autorizado") from exc
 
     if actual.st_dev != st_dev or actual.st_ino != st_ino:
         raise RuntimeError("El ejecutable cambió durante la ejecución")
@@ -99,9 +98,7 @@ def _verificar_ruta(exe_real: str, st_dev: int, st_ino: int) -> None:
     try:
         actual = os.stat(exe_real)
     except OSError as exc:
-        raise RuntimeError(
-            "El ejecutable cambió durante la ejecución"
-        ) from exc
+        raise RuntimeError("El ejecutable cambió durante la ejecución") from exc
 
     if actual.st_dev != st_dev or actual.st_ino != st_ino:
         raise RuntimeError("El ejecutable cambió durante la ejecución")
@@ -155,8 +152,13 @@ def ejecutar(
     try:
         _verificar_descriptor(fd, st_dev, st_ino)
         _verificar_ruta(exe_real, st_dev, st_ino)
+        opciones_descriptor: dict[str, Any] = {}
         if os.name == "posix" and sys.platform.startswith("linux"):
+            if not os.path.exists("/proc/self/fd"):
+                raise RuntimeError("No está disponible /proc/self/fd")
             args_exec[0] = f"/proc/self/fd/{fd}"
+            # pass_fds hace heredable el fd abierto con O_CLOEXEC solo en el hijo.
+            opciones_descriptor = {"pass_fds": (fd,), "close_fds": True}
 
         resultado = subprocess.run(
             args_exec,
@@ -165,10 +167,11 @@ def ejecutar(
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             timeout=timeout,
+            **opciones_descriptor,
         )
         _verificar_descriptor(fd, st_dev, st_ino)
         _verificar_ruta(exe_real, st_dev, st_ino)
-        return resultado.stdout
+        return cast(str, resultado.stdout)
     except subprocess.TimeoutExpired as exc:
         if exc.stderr:
             return exc.stderr
@@ -177,7 +180,7 @@ def ejecutar(
         ) from exc
     except subprocess.CalledProcessError as exc:
         if exc.stderr:
-            return exc.stderr
+            return cast(str, exc.stderr)
         raise RuntimeError(f"Error al ejecutar '{' '.join(args)}': {exc}") from exc
     finally:
         try:
@@ -203,13 +206,19 @@ async def ejecutar_async(
     try:
         _verificar_descriptor(fd, st_dev, st_ino)
         _verificar_ruta(exe_real, st_dev, st_ino)
+        opciones_descriptor: dict[str, Any] = {}
         if os.name == "posix" and sys.platform.startswith("linux"):
+            if not os.path.exists("/proc/self/fd"):
+                raise RuntimeError("No está disponible /proc/self/fd")
             args_exec[0] = f"/proc/self/fd/{fd}"
+            # pass_fds hace heredable el fd abierto con O_CLOEXEC solo en el hijo.
+            opciones_descriptor = {"pass_fds": (fd,), "close_fds": True}
 
         proc = await asyncio.create_subprocess_exec(
             *args_exec,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
+            **opciones_descriptor,
         )
         try:
             stdout_bytes, stderr_bytes = await asyncio.wait_for(
@@ -250,78 +259,109 @@ async def ejecutar_stream(
     args, exe_real, fd, st_dev, st_ino = _resolver_ejecutable(comando, permitidos)
     args_exec = list(args)
     proc: asyncio.subprocess.Process | None = None
-    stderr_bytes = b""
+    tareas_lectura: list[asyncio.Task[None]] = []
+    stderr_chunks: deque[bytes] = deque()
+    stderr_tamano = 0
+    limite_stderr = 64 * 1024
+    bucle = asyncio.get_running_loop()
+    deadline = None if timeout is None else bucle.time() + timeout
+
+    async def esperar(esperable: Any) -> Any:
+        if deadline is None:
+            return await esperable
+        restante = deadline - bucle.time()
+        if restante <= 0:
+            if hasattr(esperable, "close"):
+                esperable.close()
+            raise asyncio.TimeoutError
+        return await asyncio.wait_for(esperable, restante)
+
+    async def drenar_stdout(cola: asyncio.Queue[bytes | None]) -> None:
+        assert proc is not None and proc.stdout is not None
+        try:
+            while chunk := await proc.stdout.readline():
+                await cola.put(chunk)
+        finally:
+            await cola.put(None)
+
+    async def drenar_stderr() -> None:
+        nonlocal stderr_tamano
+        assert proc is not None and proc.stderr is not None
+        while chunk := await proc.stderr.read(8192):
+            stderr_chunks.append(chunk)
+            stderr_tamano += len(chunk)
+            while stderr_tamano > limite_stderr and stderr_chunks:
+                exceso = stderr_tamano - limite_stderr
+                primero = stderr_chunks[0]
+                if len(primero) <= exceso:
+                    stderr_tamano -= len(stderr_chunks.popleft())
+                else:
+                    stderr_chunks[0] = primero[exceso:]
+                    stderr_tamano -= exceso
+
+    timeout_error: asyncio.TimeoutError | None = None
     try:
         _verificar_descriptor(fd, st_dev, st_ino)
         _verificar_ruta(exe_real, st_dev, st_ino)
+        opciones_descriptor: dict[str, Any] = {}
         if os.name == "posix" and sys.platform.startswith("linux"):
+            if not os.path.exists("/proc/self/fd"):
+                raise RuntimeError("No está disponible /proc/self/fd")
             args_exec[0] = f"/proc/self/fd/{fd}"
-        proc = await asyncio.create_subprocess_exec(
-            *args_exec,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-        )
-        loop = asyncio.get_running_loop()
-        inicio = loop.time()
-        assert proc.stdout is not None
-        while True:
-            restante = None
-            if timeout is not None:
-                restante = timeout - (loop.time() - inicio)
-                if restante <= 0:
-                    raise asyncio.TimeoutError
-            try:
-                if restante is None:
-                    chunk = await proc.stdout.readline()
-                else:
-                    chunk = await asyncio.wait_for(proc.stdout.readline(), restante)
-            except asyncio.TimeoutError as exc:
-                proc.kill()
-                _, stderr_bytes = await proc.communicate()
-                if stderr_bytes:
-                    raise RuntimeError(_decodificar(stderr_bytes)) from exc
-                raise RuntimeError(
-                    f"Tiempo de espera agotado al ejecutar '{' '.join(args)}'"
-                ) from exc
-            if not chunk:
-                break
-            yield chunk.decode("utf-8", errors="replace")
-
-        restante = None
-        if timeout is not None:
-            restante = timeout - (loop.time() - inicio)
-            if restante <= 0:
-                raise asyncio.TimeoutError
+            # pass_fds hace heredable el fd abierto con O_CLOEXEC solo en el hijo.
+            opciones_descriptor = {"pass_fds": (fd,), "close_fds": True}
         try:
-            if restante is None:
-                await proc.wait()
-            else:
-                await asyncio.wait_for(proc.wait(), restante)
+            proc = await esperar(
+                asyncio.create_subprocess_exec(
+                    *args_exec,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE,
+                    **opciones_descriptor,
+                )
+            )
+            cola_stdout: asyncio.Queue[bytes | None] = asyncio.Queue(maxsize=1)
+            tareas_lectura = [
+                asyncio.create_task(drenar_stdout(cola_stdout)),
+                asyncio.create_task(drenar_stderr()),
+            ]
+            while (chunk := await esperar(cola_stdout.get())) is not None:
+                yield chunk.decode("utf-8", errors="replace")
+            await esperar(tareas_lectura[0])
+            await esperar(proc.wait())
         except asyncio.TimeoutError as exc:
-            proc.kill()
-            _, stderr_bytes = await proc.communicate()
-            if stderr_bytes:
-                raise RuntimeError(_decodificar(stderr_bytes)) from exc
-            raise RuntimeError(
-                f"Tiempo de espera agotado al ejecutar '{' '.join(args)}'"
-            ) from exc
-
-        if proc.stderr is not None:
-            stderr_bytes = await proc.stderr.read()
+            timeout_error = exc
     finally:
-        _verificar_descriptor(fd, st_dev, st_ino)
-        _verificar_ruta(exe_real, st_dev, st_ino)
         try:
-            os.close(fd)
-        except OSError:
-            pass
+            if proc is not None and proc.returncode is None:
+                proc.kill()
+            if proc is not None:
+                await proc.wait()
+            for tarea in tareas_lectura:
+                if not tarea.done():
+                    tarea.cancel()
+            if tareas_lectura:
+                await asyncio.gather(*tareas_lectura, return_exceptions=True)
+            _verificar_descriptor(fd, st_dev, st_ino)
+            _verificar_ruta(exe_real, st_dev, st_ino)
+        finally:
+            try:
+                os.close(fd)
+            except OSError:
+                pass
+
+    stderr_bytes = b"".join(stderr_chunks)
+    if timeout_error is not None:
+        detalle = _decodificar(stderr_bytes).strip()
+        mensaje = f"Tiempo de espera agotado al ejecutar '{' '.join(args)}'"
+        if detalle:
+            mensaje = f"{mensaje}: {detalle}"
+        raise RuntimeError(mensaje) from timeout_error
 
     if proc is not None and proc.returncode:
+        mensaje = f"Error al ejecutar '{' '.join(args)}': código {proc.returncode}"
         if stderr_bytes:
-            raise RuntimeError(_decodificar(stderr_bytes))
-        raise RuntimeError(
-            f"Error al ejecutar '{' '.join(args)}': código {proc.returncode}"
-        )
+            mensaje = f"{mensaje}: {_decodificar(stderr_bytes)}"
+        raise RuntimeError(mensaje)
 
 
 def obtener_env(nombre: str) -> str | None:
@@ -331,7 +371,10 @@ def obtener_env(nombre: str) -> str | None:
 
 def listar_dir(ruta: str) -> list[str]:
     """Lista los archivos de un directorio."""
-    return os.listdir(ruta)
+    from pcobra.corelibs.archivo import _resolver_ruta_filesystem_confinado
+
+    objetivo = _resolver_ruta_filesystem_confinado(ruta)
+    return os.listdir(objetivo)
 
 
 def _error_sistema(operacion: str, exc: Exception) -> RuntimeError:
@@ -350,11 +393,11 @@ async def ejecutar_comando_async(
         raise _error_sistema("ejecutar_comando_async", exc) from None
 
 
-
 def directorio_actual() -> str:
     """Devuelve la ruta del directorio de trabajo actual."""
 
     return os.getcwd()
+
 
 __all__ = [
     "obtener_os",

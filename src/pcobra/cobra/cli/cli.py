@@ -74,7 +74,6 @@ from pcobra.cobra.cli.utils.autocomplete import (
     files_completer,
 )
 
-
 assert_public_targets_contract(tuple(PUBLIC_BACKENDS), source="cobra cli bootstrap")
 LANG_CHOICES = tuple(PUBLIC_BACKENDS)
 
@@ -840,9 +839,9 @@ class CliApplication:
             ),
             epilog=_(
                 "Ejemplos públicos:\n"
-                "  cobra run <archivo.co>\n"
-                "  cobra build <archivo.co>\n"
-                "  cobra test <archivo.co>\n"
+                "  cobra run <archivo.cobra>\n"
+                "  cobra build <archivo.cobra>\n"
+                "  cobra test <archivo.cobra>\n"
                 "  cobra mod <list|install|remove|publish|search>\n"
                 "  cobra repl"
             ),

@@ -2,15 +2,15 @@
 
 ## API disponible global
 
-- Total global: **247** símbolos.
-- corelibs: **178** símbolos.
+- Total global: **262** símbolos.
+- corelibs: **193** símbolos.
 - standard_library: **123** símbolos.
 
 ## API parcial por backend
 
 | Backend | Disponibles (global) | Disponibles corelibs | Disponibles standard_library |
 |---|---:|---:|---:|
-| `python` | 247 | 178 | 123 |
+| `python` | 262 | 193 | 123 |
 | `javascript` | 2 | 1 | 1 |
 | `rust` | 2 | 1 | 1 |
 
@@ -19,5 +19,5 @@
 | Backend | Faltantes (global) | Faltantes corelibs | Faltantes standard_library |
 |---|---:|---:|---:|
 | `python` | 0 | 0 | 0 |
-| `javascript` | 245 | 177 | 122 |
-| `rust` | 245 | 177 | 122 |
+| `javascript` | 260 | 192 | 122 |
+| `rust` | 260 | 192 | 122 |

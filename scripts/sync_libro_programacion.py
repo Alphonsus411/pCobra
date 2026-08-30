@@ -24,7 +24,10 @@ SECTION_MARKERS = {
     "cli": ("<!-- BEGIN: AUTO-CLI-TABLE -->", "<!-- END: AUTO-CLI-TABLE -->"),
     "stdlib": ("<!-- BEGIN: AUTO-STDLIB-INDEX -->", "<!-- END: AUTO-STDLIB-INDEX -->"),
 }
-STDLIB_DOC_MARKERS = ("<!-- BEGIN: AUTO-STDLIB-FUNCTIONS -->", "<!-- END: AUTO-STDLIB-FUNCTIONS -->")
+STDLIB_DOC_MARKERS = (
+    "<!-- BEGIN: AUTO-STDLIB-FUNCTIONS -->",
+    "<!-- END: AUTO-STDLIB-FUNCTIONS -->",
+)
 
 
 @dataclass(frozen=True)
@@ -44,7 +47,9 @@ def _write(path: Path, content: str) -> None:
 
 
 def _parse_quoted_literals(text: str) -> list[str]:
-    return sorted({m.group(1) for m in re.finditer(r'"([^"\n]+)"', text) if m.group(1).strip()})
+    return sorted(
+        {m.group(1) for m in re.finditer(r'"([^"\n]+)"', text) if m.group(1).strip()}
+    )
 
 
 def _parse_grammar_structure(grammar: str) -> dict[str, list[str]]:
@@ -73,13 +78,19 @@ def _parse_grammar_structure(grammar: str) -> dict[str, list[str]]:
         rules[current] = " ".join(rhs_lines).strip()
 
     statement_rhs = rules.get("statement", "")
-    statements = [part.strip() for part in re.split(r"\s*\|\s*", statement_rhs) if part.strip()]
+    statements = [
+        part.strip() for part in re.split(r"\s*\|\s*", statement_rhs) if part.strip()
+    ]
 
     expr_rhs = rules.get("expr", "")
-    expr_parts = [part.strip() for part in re.split(r"\s*\|\s*", expr_rhs) if part.strip()]
+    expr_parts = [
+        part.strip() for part in re.split(r"\s*\|\s*", expr_rhs) if part.strip()
+    ]
 
     valor_rhs = rules.get("valor", "")
-    valor_parts = [part.strip() for part in re.split(r"\s*\|\s*", valor_rhs) if part.strip()]
+    valor_parts = [
+        part.strip() for part in re.split(r"\s*\|\s*", valor_rhs) if part.strip()
+    ]
 
     structures = [
         "funcion",
@@ -127,10 +138,16 @@ def build_syntax_index() -> str:
     grammar_text = _read(GRAMMAR_PATH)
     spec_text = _read(SPEC_PATH)
 
-    grammar_literals = [tok for tok in _parse_quoted_literals(grammar_text) if re.fullmatch(r"[A-Za-z_][\\w ]*|[^\\w\\s]", tok)]
+    grammar_literals = [
+        tok
+        for tok in _parse_quoted_literals(grammar_text)
+        if re.fullmatch(r"[A-Za-z_][\\w ]*|[^\\w\\s]", tok)
+    ]
     grammar_structure = _parse_grammar_structure(grammar_text)
     spec_tokens = _extract_tokens_from_spec(spec_text)
-    lexical_tokens = sorted(set(re.findall(r"^([A-Z][A-Z_]+):", grammar_text, flags=re.MULTILINE)))
+    lexical_tokens = sorted(
+        set(re.findall(r"^([A-Z][A-Z_]+):", grammar_text, flags=re.MULTILINE))
+    )
 
     parts: list[str] = []
     parts.append("### Índice de sintaxis (autogenerado)\n")
@@ -205,7 +222,12 @@ def _extract_cli_commands() -> list[CliCommand]:
 
 def build_cli_table() -> str:
     commands = _extract_cli_commands()
-    lines = ["### Tabla CLI actualizada (autogenerado)", "", "| Comando | Capacidad | Clase | Archivo |", "|---|---|---|---|"]
+    lines = [
+        "### Tabla CLI actualizada (autogenerado)",
+        "",
+        "| Comando | Capacidad | Clase | Archivo |",
+        "|---|---|---|---|",
+    ]
     for cmd in commands:
         lines.append(
             f"| `{cmd.name}` | `{cmd.capability}` | `{cmd.class_name}` | `{cmd.path.as_posix()}` |"
@@ -219,7 +241,11 @@ def _extract_public_functions_from_module(path: Path) -> list[str]:
     for node in tree.body:
         if isinstance(node, ast.Assign):
             for target in node.targets:
-                if isinstance(target, ast.Name) and target.id == "__all__" and isinstance(node.value, (ast.List, ast.Tuple)):
+                if (
+                    isinstance(target, ast.Name)
+                    and target.id == "__all__"
+                    and isinstance(node.value, (ast.List, ast.Tuple))
+                ):
                     for elt in node.value.elts:
                         text = _literal_str(elt)
                         if text:
@@ -227,11 +253,17 @@ def _extract_public_functions_from_module(path: Path) -> list[str]:
     if exported:
         return sorted(dict.fromkeys(exported))
 
-    funcs = [node.name for node in tree.body if isinstance(node, ast.FunctionDef) and not node.name.startswith("_")]
+    funcs = [
+        node.name
+        for node in tree.body
+        if isinstance(node, ast.FunctionDef) and not node.name.startswith("_")
+    ]
     return sorted(dict.fromkeys(funcs))
 
 
-def _replace_or_append_block(text: str, begin: str, end: str, body: str, heading_hint: str | None = None) -> str:
+def _replace_or_append_block(
+    text: str, begin: str, end: str, body: str, heading_hint: str | None = None
+) -> str:
     block = f"{begin}\n{body.rstrip()}\n{end}"
     pattern = re.compile(re.escape(begin) + r".*?" + re.escape(end), flags=re.DOTALL)
     if pattern.search(text):
@@ -265,7 +297,9 @@ def sync_stdlib_docs() -> list[Path]:
                 *[f"| `{f}` |" for f in funcs],
             ]
         )
-        updated = _replace_or_append_block(content, STDLIB_DOC_MARKERS[0], STDLIB_DOC_MARKERS[1], body)
+        updated = _replace_or_append_block(
+            content, STDLIB_DOC_MARKERS[0], STDLIB_DOC_MARKERS[1], body
+        )
         if updated != content:
             _write(doc_path, updated)
             touched.append(doc_path)
@@ -274,7 +308,10 @@ def sync_stdlib_docs() -> list[Path]:
 
 def build_stdlib_index() -> str:
     modules = sorted(p for p in STDLIB_SRC_DIR.glob("*.py") if p.stem != "__init__")
-    lines = ["### Índice de módulos y funciones de `standard_library` (autogenerado)", ""]
+    lines = [
+        "### Índice de módulos y funciones de `standard_library` (autogenerado)",
+        "",
+    ]
     for module_path in modules:
         module = module_path.stem
         funcs = _extract_public_functions_from_module(module_path)
@@ -317,8 +354,12 @@ def sync_libro() -> bool:
 
 
 def main(argv: Iterable[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Sincroniza secciones autogeneradas del libro Cobra.")
-    parser.add_argument("--check", action="store_true", help="Solo verifica drift sin escribir cambios.")
+    parser = argparse.ArgumentParser(
+        description="Sincroniza secciones autogeneradas del libro Cobra."
+    )
+    parser.add_argument(
+        "--check", action="store_true", help="Solo verifica drift sin escribir cambios."
+    )
     args = parser.parse_args(list(argv) if argv is not None else None)
 
     before_libro = _read(LIBRO_PATH)
@@ -346,7 +387,9 @@ def main(argv: Iterable[str] | None = None) -> int:
                 drift = True
 
         if drift:
-            print("Drift detectado: ejecuta `python scripts/sync_libro_programacion.py`.")
+            print(
+                "Drift detectado: ejecuta `python scripts/sync_libro_programacion.py`."
+            )
             return 1
         print("Sin drift documental.")
         return 0

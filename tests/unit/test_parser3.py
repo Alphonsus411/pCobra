@@ -1,6 +1,14 @@
 import pytest
 from cobra.core import Parser
-from core.ast_nodes import NodoAsignacion, NodoHolobit, NodoCondicional, NodoBucleMientras, NodoFuncion, NodoLlamadaFuncion, NodoValor
+from core.ast_nodes import (
+    NodoAsignacion,
+    NodoHolobit,
+    NodoCondicional,
+    NodoBucleMientras,
+    NodoFuncion,
+    NodoLlamadaFuncion,
+    NodoValor,
+)
 from cobra.core import TipoToken, Token
 
 
@@ -17,7 +25,7 @@ def test_asignacion_variable():
         (TipoToken.IDENTIFICADOR, "x"),
         (TipoToken.ASIGNAR, "="),
         (TipoToken.ENTERO, 10),
-        (TipoToken.EOF, None)
+        (TipoToken.EOF, None),
     )
     parser = Parser(tokens)
     ast = parser.parsear()
@@ -41,7 +49,7 @@ def test_asignacion_holobit():
         (TipoToken.ENTERO, 2),
         (TipoToken.RBRACKET, "]"),
         (TipoToken.RPAREN, ")"),
-        (TipoToken.EOF, None)
+        (TipoToken.EOF, None),
     )
     parser = Parser(tokens)
     ast = parser.parsear()
@@ -62,7 +70,7 @@ def test_condicional():
         (TipoToken.LPAREN, "("),
         (TipoToken.RPAREN, ")"),
         (TipoToken.FIN, "fin"),
-        (TipoToken.EOF, None)
+        (TipoToken.EOF, None),
     )
     parser = Parser(tokens)
     ast = parser.parsear()
@@ -85,7 +93,7 @@ def test_bucle_mientras():
         (TipoToken.LPAREN, "("),
         (TipoToken.RPAREN, ")"),
         (TipoToken.FIN, "fin"),
-        (TipoToken.EOF, None)
+        (TipoToken.EOF, None),
     )
     parser = Parser(tokens)
     ast = parser.parsear()
@@ -111,7 +119,7 @@ def test_funcion():
         (TipoToken.LPAREN, "("),
         (TipoToken.RPAREN, ")"),
         (TipoToken.FIN, "fin"),
-        (TipoToken.EOF, None)
+        (TipoToken.EOF, None),
     )
     parser = Parser(tokens)
     ast = parser.parsear()
@@ -131,7 +139,7 @@ def test_llamada_funcion():
         (TipoToken.COMA, ","),
         (TipoToken.ENTERO, 10),
         (TipoToken.RPAREN, ")"),
-        (TipoToken.EOF, None)
+        (TipoToken.EOF, None),
     )
     parser = Parser(tokens)
     ast = parser.parsear()

@@ -25,7 +25,10 @@ def _is_allowed_shim_statement(node: ast.stmt) -> bool:
     if isinstance(node, (ast.Import, ast.ImportFrom)):
         return True
     if isinstance(node, ast.Assign):
-        return any(isinstance(target, ast.Name) and target.id == "__all__" for target in node.targets)
+        return any(
+            isinstance(target, ast.Name) and target.id == "__all__"
+            for target in node.targets
+        )
     if isinstance(node, ast.AnnAssign):
         target = node.target
         return isinstance(target, ast.Name) and target.id == "__all__"
@@ -73,7 +76,11 @@ def find_violations(root: Path = ROOT) -> list[str]:
                     f"{rel}:{node.lineno}: solo se permiten shims (imports y __all__)."
                 )
                 continue
-            if isinstance(node, ast.ImportFrom) and node.module and node.module.startswith("pcobra.cobra"):
+            if (
+                isinstance(node, ast.ImportFrom)
+                and node.module
+                and node.module.startswith("pcobra.cobra")
+            ):
                 has_canonical_import = True
             if isinstance(node, ast.Import):
                 if any(alias.name.startswith("pcobra.cobra") for alias in node.names):

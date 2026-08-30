@@ -7,6 +7,7 @@ almacenar y recuperar ASTs, limpiar la caché y persistir el estado de
 "qualia" manteniendo compatibilidad con la configuración existente basada en
 variables de entorno.
 """
+
 from __future__ import annotations
 
 import base64
@@ -25,7 +26,7 @@ from dataclasses import is_dataclass, asdict
 from importlib import util as importlib_util
 from importlib.metadata import PackageNotFoundError, distribution
 from pathlib import Path
-from typing import Any, Iterable, Mapping
+from typing import Any, Iterable, Mapping, cast
 
 __all__ = [
     "DatabaseDependencyError",
@@ -64,6 +65,7 @@ _SQLITEPLUS_AVAILABILITY: bool | None = None
 
 _PATH_PREFIXES = ("path:", "file:")
 LOGGER = logging.getLogger(__name__)
+_MODULO_AUSENTE = object()
 
 
 def _build_sqliteplus_fallback():
@@ -104,8 +106,12 @@ def _looks_like_base64_token(value: str) -> bool:
     candidate = value.strip()
     if len(candidate) < 16:
         return False
-    std_alphabet = set("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=")
-    url_alphabet = set("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_=")
+    std_alphabet = set(
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/="
+    )
+    url_alphabet = set(
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_="
+    )
     if all(ch in std_alphabet for ch in candidate):
         normalized = candidate
     elif all(ch in url_alphabet for ch in candidate):
@@ -189,7 +195,17 @@ def _load_sqliteplus_class(*, silent_optional: bool = False):
                 "se utilizará SQLite simplificado."
             )
         constants_module = importlib_util.module_from_spec(constants_spec)
-        constants_spec.loader.exec_module(constants_module)
+        constants_module_previo = sys.modules.get(constants_name, _MODULO_AUSENTE)
+        sys.modules[constants_name] = constants_module
+        try:
+            constants_spec.loader.exec_module(constants_module)
+        finally:
+            if constants_module_previo is _MODULO_AUSENTE:
+                sys.modules.pop(constants_name, None)
+            else:
+                sys.modules[constants_name] = cast(
+                    types.ModuleType, constants_module_previo
+                )
         utils_module = sys.modules.setdefault(
             "sqliteplus.utils", types.ModuleType("sqliteplus.utils")
         )
@@ -199,11 +215,8 @@ def _load_sqliteplus_class(*, silent_optional: bool = False):
             "sqliteplus", types.ModuleType("sqliteplus")
         )
         setattr(package_module, "utils", utils_module)
-        sys.modules[constants_name] = constants_module
 
-    spec = importlib_util.spec_from_file_location(
-        "sqliteplus_utils_sync", module_path
-    )
+    spec = importlib_util.spec_from_file_location("sqliteplus_utils_sync", module_path)
     if spec is None or spec.loader is None:  # pragma: no cover - casos extremos
         return _use_optional_fallback(
             "Instalación incompleta de 'sqliteplus-enhanced' "
@@ -212,7 +225,16 @@ def _load_sqliteplus_class(*, silent_optional: bool = False):
         )
 
     module = importlib_util.module_from_spec(spec)
-    spec.loader.exec_module(module)
+    module_name = spec.name
+    module_previo = sys.modules.get(module_name, _MODULO_AUSENTE)
+    sys.modules[module_name] = module
+    try:
+        spec.loader.exec_module(module)
+    finally:
+        if module_previo is _MODULO_AUSENTE:
+            sys.modules.pop(module_name, None)
+        else:
+            sys.modules[module_name] = cast(types.ModuleType, module_previo)
     sqliteplus_class = getattr(module, "SQLitePlus", None)
     if sqliteplus_class is None:  # pragma: no cover - instalación dañada
         return _use_optional_fallback(
@@ -343,8 +365,7 @@ def _ensure_tables(connection: sqlite3.Connection) -> None:
         if _TABLES_READY:
             return
         cursor = connection.cursor()
-        cursor.execute(
-            """
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS ast_cache (
                 hash TEXT PRIMARY KEY,
                 source TEXT NOT NULL,
@@ -352,10 +373,8 @@ def _ensure_tables(connection: sqlite3.Connection) -> None:
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
             )
-            """
-        )
-        cursor.execute(
-            """
+            """)
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS ast_fragments (
                 hash TEXT NOT NULL,
                 fragment_name TEXT NOT NULL,
@@ -364,35 +383,28 @@ def _ensure_tables(connection: sqlite3.Connection) -> None:
                 PRIMARY KEY (hash, fragment_name),
                 FOREIGN KEY (hash) REFERENCES ast_cache(hash) ON DELETE CASCADE
             )
-            """
-        )
-        cursor.execute(
-            """
+            """)
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS qualia_state (
                 id INTEGER PRIMARY KEY CHECK (id = 1),
                 payload BLOB,
                 updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
             )
-            """
-        )
-        cursor.execute(
-            """
+            """)
+        cursor.execute("""
             CREATE TRIGGER IF NOT EXISTS trg_ast_cache_timestamp
             AFTER UPDATE ON ast_cache
             BEGIN
                 UPDATE ast_cache SET updated_at = CURRENT_TIMESTAMP WHERE hash = NEW.hash;
             END
-            """
-        )
-        cursor.execute(
-            """
+            """)
+        cursor.execute("""
             CREATE TRIGGER IF NOT EXISTS trg_qualia_state_timestamp
             AFTER UPDATE ON qualia_state
             BEGIN
                 UPDATE qualia_state SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
             END
-            """
-        )
+            """)
         connection.commit()
         _TABLES_READY = True
 
@@ -513,7 +525,9 @@ def save_qualia_state(state: Any) -> None:
     """Persiste el estado de "qualia" como JSON o BLOB genérico."""
 
     if isinstance(state, (dict, list, tuple, set)) or is_dataclass(state):
-        payload: bytes | str = json.dumps(state, ensure_ascii=False, default=_json_default)
+        payload: bytes | str = json.dumps(
+            state, ensure_ascii=False, default=_json_default
+        )
     elif isinstance(state, (bytes, bytearray)):
         payload = bytes(state)
     else:

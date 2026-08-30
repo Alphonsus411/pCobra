@@ -31,7 +31,9 @@ def _obtener_console(console: "Console" | None) -> "Console":
 def _es_secuencia(objeto: FilaTabla) -> bool:
     """Determina si ``objeto`` es una secuencia apta (excluyendo cadenas)."""
 
-    return isinstance(objeto, Sequence) and not isinstance(objeto, (str, bytes, bytearray))
+    return isinstance(objeto, Sequence) and not isinstance(
+        objeto, (str, bytes, bytearray)
+    )
 
 
 def mostrar_codigo(
@@ -275,8 +277,7 @@ def preguntar_opciones_multiple(
         texto.lower(): opcion for texto, opcion in zip(opciones_texto, opciones_lista)
     }
     mapa_indices: dict[str, Any] = {
-        str(indice): opcion
-        for indice, opcion in enumerate(opciones_lista, start=1)
+        str(indice): opcion for indice, opcion in enumerate(opciones_lista, start=1)
     }
 
     console_obj = _obtener_console(console)
@@ -306,7 +307,9 @@ def preguntar_opciones_multiple(
             valores_iterables = [por_defecto]
         else:
             valores_iterables = list(por_defecto)
-        valores_defecto_normalizados = [_normalizar_default(valor) for valor in valores_iterables]
+        valores_defecto_normalizados = [
+            _normalizar_default(valor) for valor in valores_iterables
+        ]
         if maximo is not None and len(valores_defecto_normalizados) > maximo:
             raise ValueError("El valor por defecto supera el máximo permitido.")
         if len(valores_defecto_normalizados) < minimo:
@@ -326,7 +329,11 @@ def preguntar_opciones_multiple(
             show_default=default_prompt is not None,
         )
         seleccionados: list[Any] = []
-        tokens = [fragmento.strip() for fragmento in respuesta.split(separador) if fragmento.strip()]
+        tokens = [
+            fragmento.strip()
+            for fragmento in respuesta.split(separador)
+            if fragmento.strip()
+        ]
 
         errores: list[str] = []
         for token in tokens:
@@ -587,9 +594,7 @@ def mostrar_columnas(
             for indice, renderizable in enumerate(renderizables):
                 columnas_virtuales[indice % limite].append(renderizable)
             renderizables = [
-                Group(*columna)
-                if len(columna) > 1
-                else columna[0]
+                Group(*columna) if len(columna) > 1 else columna[0]
                 for columna in columnas_virtuales
             ]
         else:
@@ -733,11 +738,17 @@ def barra_progreso(
 
     BarColumn = import_optional_attr("rich.progress", "BarColumn", safe_stub=True)
     Progress = import_optional_attr("rich.progress", "Progress", safe_stub=True)
-    SpinnerColumn = import_optional_attr("rich.progress", "SpinnerColumn", safe_stub=True)
+    SpinnerColumn = import_optional_attr(
+        "rich.progress", "SpinnerColumn", safe_stub=True
+    )
     TaskID = import_optional_attr("rich.progress", "TaskID", safe_stub=True)
     TextColumn = import_optional_attr("rich.progress", "TextColumn", safe_stub=True)
-    TimeElapsedColumn = import_optional_attr("rich.progress", "TimeElapsedColumn", safe_stub=True)
-    TimeRemainingColumn = import_optional_attr("rich.progress", "TimeRemainingColumn", safe_stub=True)
+    TimeElapsedColumn = import_optional_attr(
+        "rich.progress", "TimeElapsedColumn", safe_stub=True
+    )
+    TimeRemainingColumn = import_optional_attr(
+        "rich.progress", "TimeRemainingColumn", safe_stub=True
+    )
 
     console_obj = _obtener_console(console)
 

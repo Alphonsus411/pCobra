@@ -24,7 +24,9 @@ def test_usar_export_policy_rechaza_simbolos_privados(interp_cls, monkeypatch):
     ).resolve()
     mod.__file__ = str(ruta_oficial)
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: mod)
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: mod
+    )
 
     from pcobra.core.lexer import Lexer
     from pcobra.core.parser import Parser

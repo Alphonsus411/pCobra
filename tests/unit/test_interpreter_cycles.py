@@ -1,7 +1,7 @@
 import pytest
 
-from core.interpreter import InterpretadorCobra
-from core.ast_nodes import (
+from pcobra.core.interpreter import InterpretadorCobra
+from pcobra.core.ast_nodes import (
     NodoAsignacion,
     NodoBloque,
     NodoCondicional,
@@ -9,7 +9,7 @@ from core.ast_nodes import (
     NodoOperacionBinaria,
     NodoValor,
 )
-from cobra.core import TipoToken, Token
+from pcobra.core.lexer import TipoToken, Token
 
 
 def test_referencia_circular_variable():
@@ -100,7 +100,9 @@ def test_evaluar_identificador_delega_unicamente_en_resolver(monkeypatch):
     assert llamadas[0][0] == "alias"
 
 
-def test_resolver_identificador_lanza_error_si_materializacion_devuelve_ast(monkeypatch):
+def test_resolver_identificador_lanza_error_si_materializacion_devuelve_ast(
+    monkeypatch,
+):
     inter = InterpretadorCobra()
     inter.variables["a"] = NodoIdentificador("b")
 

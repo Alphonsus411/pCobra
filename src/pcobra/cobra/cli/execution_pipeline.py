@@ -122,7 +122,9 @@ def prevalidar_y_parsear_codigo(codigo: str) -> Any:
 def ejecutar_ast(ast: Any, interpreter: Any) -> Any:
     """Ejecuta un AST usando una instancia explícita de intérprete."""
 
-    asegurar_estado_runtime = getattr(interpreter, "asegurar_estado_runtime_inicial", None)
+    asegurar_estado_runtime = getattr(
+        interpreter, "asegurar_estado_runtime_inicial", None
+    )
     if callable(asegurar_estado_runtime):
         asegurar_estado_runtime()
     return interpreter.ejecutar_ast(ast)
@@ -148,7 +150,9 @@ def resolver_validadores_seguridad(
                 acumulado.extend(interpretador_cls._cargar_validadores(ruta))
             except Exception as exc:
                 raise ValueError(
-                    _("No se pudieron cargar los validadores extra desde '{path}': {error}").format(
+                    _(
+                        "No se pudieron cargar los validadores extra desde '{path}': {error}"
+                    ).format(
                         path=ruta,
                         error=exc,
                     )
@@ -163,12 +167,14 @@ def validar_ast_seguro(
     validadores_extra: Any,
     interpretador: Any | None = None,
     validar_metadata_usar: bool = True,
-    construir_cadena_fn: Callable[[Any], Any] = construir_cadena,
+    construir_cadena_fn: Callable[..., Any] = construir_cadena,
 ) -> None:
     """Aplica la cadena de validadores de seguridad sobre el AST."""
 
     if interpretador is not None:
-        asegurar_estado_runtime = getattr(interpretador, "asegurar_estado_runtime_inicial", None)
+        asegurar_estado_runtime = getattr(
+            interpretador, "asegurar_estado_runtime_inicial", None
+        )
         if callable(asegurar_estado_runtime):
             asegurar_estado_runtime()
 
@@ -177,9 +183,33 @@ def validar_ast_seguro(
             isinstance(validador, ValidadorBase) for validador in validadores_extra
         ):
             raise TypeError(
-                _("Los validadores extra deben ser una lista de instancias de validadores")
+                _(
+                    "Los validadores extra deben ser una lista de instancias de validadores"
+                )
             )
-    validador = construir_cadena_fn(validadores_extra)
+    if validadores_extra is not None:
+        contexto = {}
+        if interpretador is not None:
+            contexto = {
+                "main_file": getattr(interpretador, "_main_file", None),
+                "project_root": getattr(interpretador, "_project_root", None),
+            }
+            contexto = {
+                clave: valor for clave, valor in contexto.items() if valor is not None
+            }
+
+        validador = construir_cadena_fn(
+            validadores_extra,
+            **contexto,
+        )
+    else:
+        validador = (
+            getattr(interpretador, "_validador", None)
+            if interpretador is not None
+            else None
+        )
+        if validador is None:
+            validador = construir_cadena_fn(None)
     if interpretador is not None:
         metadata_usar = getattr(interpretador, "_usar_symbol_metadata", {}) or {}
         validadores_registrables = []
@@ -243,7 +273,9 @@ def construir_interprete_seguro_canonico(
         extra_validators=extra_validators,
         main_file=main_file,
     )
-    asegurar_estado_runtime = getattr(interpretador, "asegurar_estado_runtime_inicial", None)
+    asegurar_estado_runtime = getattr(
+        interpretador, "asegurar_estado_runtime_inicial", None
+    )
     if callable(asegurar_estado_runtime):
         asegurar_estado_runtime()
 
@@ -269,7 +301,9 @@ def construir_interprete_seguro_canonico(
 
     # Ruta única de resolución segura para `usar` en CLI (run/repl):
     # solo alias/módulos canónicos del catálogo público.
-    configurar_restriccion = getattr(interpretador, "configurar_restriccion_usar_repl", None)
+    configurar_restriccion = getattr(
+        interpretador, "configurar_restriccion_usar_repl", None
+    )
     if callable(configurar_restriccion):
         configurar_restriccion(REPL_COBRA_MODULE_MAP)
     return interpretador
@@ -349,7 +383,9 @@ def ejecutar_codigo_canonico(
     ast = analizar_codigo_fn(codigo)
     if seguro:
         nodos_usar = [
-            nodo for nodo in ast if getattr(nodo, "__class__", type("", (), {})).__name__ == "NodoUsar"
+            nodo
+            for nodo in ast
+            if getattr(nodo, "__class__", type("", (), {})).__name__ == "NodoUsar"
         ]
         if nodos_usar:
             ejecutar_ast(nodos_usar, interpretador)

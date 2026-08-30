@@ -14,11 +14,15 @@ class DummyNodo:
 
 
 def _preparar_parser_lexer(monkeypatch, execute_module):
-    monkeypatch.setattr(execute_module, "analizar_codigo", lambda _codigo: [DummyNodo()])
+    monkeypatch.setattr(
+        execute_module, "analizar_codigo", lambda _codigo: [DummyNodo()]
+    )
 
 
 def _preparar_construir_cadena(monkeypatch, execute_module):
-    monkeypatch.setattr(execute_module, "construir_cadena", lambda _extra: SimpleNamespace())
+    monkeypatch.setattr(
+        execute_module, "construir_cadena", lambda _extra: SimpleNamespace()
+    )
 
 
 def test_ejecutar_normal_carga_validadores_desde_una_ruta(monkeypatch):
@@ -30,9 +34,11 @@ def test_ejecutar_normal_carga_validadores_desde_una_ruta(monkeypatch):
     cargado = [DummyValidator()]
 
     class DummyInterp:
-        def __init__(self, safe_mode=True, extra_validators=None):
+        def __init__(self, safe_mode=True, extra_validators=None, main_file=None):
             self.safe_mode = safe_mode
             self.extra_validators = extra_validators
+            self._usar_symbol_metadata = {}
+            self._validador = SimpleNamespace(_metadata_simbolos_usar={})
 
         def ejecutar_ast(self, _ast):
             return None
@@ -62,8 +68,10 @@ def test_ejecutar_normal_carga_y_acumula_multiples_rutas(monkeypatch):
     class DummyInterp:
         init_extra = None
 
-        def __init__(self, safe_mode=True, extra_validators=None):
+        def __init__(self, safe_mode=True, extra_validators=None, main_file=None):
             DummyInterp.init_extra = extra_validators
+            self._usar_symbol_metadata = {}
+            self._validador = SimpleNamespace(_metadata_simbolos_usar={})
 
         def ejecutar_ast(self, _ast):
             return None
@@ -75,7 +83,9 @@ def test_ejecutar_normal_carga_y_acumula_multiples_rutas(monkeypatch):
 
     monkeypatch.setattr(execute_module, "InterpretadorCobra", DummyInterp)
 
-    resultado = ExecuteCommand()._ejecutar_normal("imprimir(1)", True, ["uno.py", "dos.py"])
+    resultado = ExecuteCommand()._ejecutar_normal(
+        "imprimir(1)", True, ["uno.py", "dos.py"]
+    )
 
     assert resultado == 0
     assert rutas_cargadas == ["uno.py", "dos.py"]
@@ -91,8 +101,10 @@ def test_ejecutar_normal_acepta_lista_vacia_y_none(monkeypatch):
     class DummyInterp:
         llamadas = []
 
-        def __init__(self, safe_mode=True, extra_validators=None):
+        def __init__(self, safe_mode=True, extra_validators=None, main_file=None):
             DummyInterp.llamadas.append(extra_validators)
+            self._usar_symbol_metadata = {}
+            self._validador = SimpleNamespace(_metadata_simbolos_usar={})
 
         def ejecutar_ast(self, _ast):
             return None
@@ -118,9 +130,11 @@ def test_ejecutar_normal_muestra_error_claro_si_falla_una_ruta(monkeypatch):
     errores = []
 
     class DummyInterp:
-        def __init__(self, safe_mode=True, extra_validators=None):
+        def __init__(self, safe_mode=True, extra_validators=None, main_file=None):
             self.safe_mode = safe_mode
             self.extra_validators = extra_validators
+            self._usar_symbol_metadata = {}
+            self._validador = SimpleNamespace(_metadata_simbolos_usar={})
 
         def ejecutar_ast(self, _ast):
             return None
@@ -132,9 +146,13 @@ def test_ejecutar_normal_muestra_error_claro_si_falla_una_ruta(monkeypatch):
             return [DummyValidator()]
 
     monkeypatch.setattr(execute_module, "InterpretadorCobra", DummyInterp)
-    monkeypatch.setattr(execute_module, "mostrar_error", lambda msg, **_kwargs: errores.append(msg))
+    monkeypatch.setattr(
+        execute_module, "mostrar_error", lambda msg, **_kwargs: errores.append(msg)
+    )
 
-    resultado = ExecuteCommand()._ejecutar_normal("imprimir(1)", True, ["buena.py", "mala.py"])
+    resultado = ExecuteCommand()._ejecutar_normal(
+        "imprimir(1)", True, ["buena.py", "mala.py"]
+    )
 
     assert resultado == 1
     assert errores

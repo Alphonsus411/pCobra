@@ -7,6 +7,25 @@ from pcobra.cobra.transpilers.runtime_api_matrix import (
 )
 from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
 
+PUBLIC_CORELIB_EXTENSION_EXPORTS = {
+    "contiene",
+    "falso",
+    "igual",
+    "lanza_error",
+    "leer_configuracion",
+    "leer_ini",
+    "leer_toml",
+    "toml_disponible",
+    "verdadero",
+}
+
+PUBLIC_CORELIB_ALIASES = {
+    "ejecutar_proceso",
+    "info_registro",
+    "leer_json_serializacion",
+    "unir_ruta",
+}
+
 
 def test_runtime_api_snapshot_contract_is_up_to_date() -> None:
     validate_runtime_api_parity_snapshot()
@@ -28,6 +47,32 @@ def test_runtime_api_matrix_has_all_official_backends_and_python_full() -> None:
     for backend in OFFICIAL_TARGETS:
         assert isinstance(available[backend]["global"], list)
         assert isinstance(missing[backend]["global"], list)
+
+
+def test_python_global_api_includes_ejecutar_comando_async() -> None:
+    matrix = build_runtime_api_matrix()
+
+    assert (
+        "ejecutar_comando_async"
+        in matrix["available_api_by_backend"]["python"]["global"]
+    )
+
+
+def test_python_runtime_includes_obtener_url_texto() -> None:
+    matrix = build_runtime_api_matrix()
+
+    python_api = matrix["available_api_by_backend"]["python"]
+    assert "obtener_url_texto" in python_api["global"]
+    assert "obtener_url_texto" in python_api["corelibs"]
+
+
+def test_python_runtime_preserves_public_extension_exports() -> None:
+    matrix = build_runtime_api_matrix()
+
+    python_corelibs = set(matrix["available_api_by_backend"]["python"]["corelibs"])
+    assert PUBLIC_CORELIB_EXTENSION_EXPORTS <= python_corelibs
+    assert PUBLIC_CORELIB_ALIASES <= python_corelibs
+    assert PUBLIC_CORELIB_ALIASES <= set(matrix["global_api"]["corelibs"])
 
 
 def test_runtime_public_backend_policy_is_exact() -> None:

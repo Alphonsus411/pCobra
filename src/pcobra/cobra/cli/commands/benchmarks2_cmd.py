@@ -114,7 +114,9 @@ class BenchmarksV2Command(BaseCommand):
             "--perfil",
             choices=("publico", "avanzado"),
             default="publico",
-            help=_("Perfil de exposición: use 'avanzado' para comparativas multi-backend."),
+            help=_(
+                "Perfil de exposición: use 'avanzado' para comparativas multi-backend."
+            ),
         )
         parser.set_defaults(cmd=self)
         return parser
@@ -125,7 +127,7 @@ class BenchmarksV2Command(BaseCommand):
         base = "imprimir('hola')\n"
         archivos_creados: list[Path] = []
 
-        co_path = _escritura_programa_temporal(base, ".co")
+        co_path = _escritura_programa_temporal(base, ".cobra")
         archivos_creados.append(co_path)
 
         py_path = _escritura_programa_temporal("print('hola')\n", ".py")
@@ -182,10 +184,14 @@ class BenchmarksV2Command(BaseCommand):
             mostrar_info(_("Benchmarks completados"))
             return 0
         except FileNotFoundError as exc:
-            mostrar_error(_("Dependencia externa no encontrada: {error}").format(error=exc))
+            mostrar_error(
+                _("Dependencia externa no encontrada: {error}").format(error=exc)
+            )
             return 1
         except subprocess.CalledProcessError as exc:
-            mostrar_error(_("El comando falló con código {code}").format(code=exc.returncode))
+            mostrar_error(
+                _("El comando falló con código {code}").format(code=exc.returncode)
+            )
             return 1
         except Exception as exc:  # pragma: no cover - errores inesperados
             mostrar_error(_("Error durante los benchmarks: {error}").format(error=exc))

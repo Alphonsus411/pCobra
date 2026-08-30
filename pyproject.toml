@@ -155,10 +155,14 @@ cobra = "pcobra.cli:main"
 
 [tool.black]
 line-length = 88
-target-version = ["py311", "py312", "py313"]
+target-version = ["py311"]
 extend-exclude = '''(?x)(
   ^docs/frontend/
   | ^docs/build/
+  # Fuentes protegidas por hashes canónicos; el formateador no debe tocarlas.
+  | ^/src/pcobra/cobra/core/(lexer|parser)\.py$
+  # Snapshots byte-a-byte del transpilador; Black no debe reescribirlos.
+  | ^/tests/data/expected_examples/[^/]+\.py$
   | ^venv/
   | ^\.venv/
   | ^\.venv-release-test/
@@ -244,7 +248,6 @@ addopts = [
     "--capture=fd",
     "--show-capture=all",
     "--durations=10",
-    "--maxfail=5",
 ]
 
 norecursedirs = [

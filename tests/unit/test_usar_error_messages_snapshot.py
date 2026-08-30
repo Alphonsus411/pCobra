@@ -12,10 +12,14 @@ SNAPSHOT_PATH = REPO_ROOT / "tests" / "data" / "usar_error_messages_snapshot.jso
 def _snapshot_actual() -> dict[str, str]:
     modulo = "datos"
     return {
-        "modulo_fuera_catalogo": formatear_error_usar_usuario("modulo_fuera_catalogo", modulo),
+        "modulo_fuera_catalogo": formatear_error_usar_usuario(
+            "modulo_fuera_catalogo", modulo
+        ),
         "conflicto_simbolo": formatear_error_usar_usuario("conflicto_simbolo", modulo),
         "export_invalido": formatear_error_usar_usuario("export_invalido", modulo),
-        "carga_modulo_error": formatear_error_usar_usuario("carga_modulo_error", modulo),
+        "carga_modulo_error": formatear_error_usar_usuario(
+            "carga_modulo_error", modulo
+        ),
         "fallback": formatear_error_usar_usuario("desconocido", modulo),
         "contexto_minimo": formatear_error_usar_usuario(
             "conflicto_simbolo", modulo, "Requiere alias explícito."

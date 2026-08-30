@@ -20,4 +20,3 @@ def test_audit_retired_targets_detecta_alias_y_legacy(tmp_path: Path):
     recommendations = {item.recommendation for item in findings}
     assert "cpp" in recommendations
     assert "javascript" in recommendations
-

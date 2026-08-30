@@ -14,9 +14,7 @@ def database_module(tmp_path, monkeypatch):
 
 def test_tables_created_on_first_connection(database_module):
     with database_module.get_connection() as conn:
-        cursor = conn.execute(
-            "SELECT name FROM sqlite_master WHERE type='table'"
-        )
+        cursor = conn.execute("SELECT name FROM sqlite_master WHERE type='table'")
         names = {row[0] for row in cursor.fetchall()}
     assert {"ast_cache", "ast_fragments", "qualia_state"}.issubset(names)
 

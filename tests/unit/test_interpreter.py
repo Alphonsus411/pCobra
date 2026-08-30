@@ -2,10 +2,10 @@ import pytest
 from io import StringIO
 from unittest.mock import patch
 
-from core.interpreter import InterpretadorCobra
-from core.environment import Environment
-from cobra.core import Token, TipoToken
-from core.ast_nodes import (
+from pcobra.core.interpreter import InterpretadorCobra
+from pcobra.core.environment import Environment
+from pcobra.core.lexer import Token, TipoToken
+from pcobra.core.ast_nodes import (
     NodoAsignacion,
     NodoDel,
     NodoFuncion,
@@ -19,6 +19,8 @@ from core.ast_nodes import (
     NodoValor,
     NodoWith,
 )
+
+
 def test_interpretador_asignacion_y_llamada_funcion():
 
     # Crea una instancia del intérprete
@@ -108,7 +110,9 @@ def test_funcion_actualiza_scope_lexico_capturado():
 def test_definicion_funcion_no_ejecuta_cuerpo_ni_evalua_parametros(monkeypatch):
     """Regresión: definir una función no debe ejecutar su cuerpo."""
     inter = InterpretadorCobra()
-    inter.ejecutar_asignacion(NodoAsignacion("contador", NodoValor(0), declaracion=True))
+    inter.ejecutar_asignacion(
+        NodoAsignacion("contador", NodoValor(0), declaracion=True)
+    )
 
     llamadas = []
     evaluaciones_x = []
@@ -153,7 +157,9 @@ def test_definicion_funcion_no_ejecuta_cuerpo_ni_evalua_parametros(monkeypatch):
 def test_regresion_llamada_funcion_no_yield_limpia_contexto_una_sola_vez():
     """Evita doble limpieza de contexto y underflow de pilas internas."""
     inter = InterpretadorCobra()
-    inter.ejecutar_asignacion(NodoAsignacion("global_previa", NodoValor(99), declaracion=True))
+    inter.ejecutar_asignacion(
+        NodoAsignacion("global_previa", NodoValor(99), declaracion=True)
+    )
     contextos_iniciales = len(inter.contextos)
     mem_contextos_iniciales = len(inter.mem_contextos)
 
@@ -290,49 +296,105 @@ def test_del_libera_memoria_del_scope_ancestro():
 def test_del_objetivo_no_identificador_lanza_typeerror():
     inter = InterpretadorCobra()
 
-    with pytest.raises(TypeError, match=r"^del requiere un identificador como objetivo"):
+    with pytest.raises(
+        TypeError, match=r"^del requiere un identificador como objetivo"
+    ):
         inter.ejecutar_nodo(NodoDel(NodoValor(1)))
 
 
-def test_with_limpia_contexto_y_memoria_en_retorno_temprano():
+def test_retorno_fuera_de_funcion_es_rechazado():
+    inter = InterpretadorCobra()
+
+    with pytest.raises(RuntimeError, match=r"^retorno fuera de función$"):
+        inter.ejecutar_nodo(NodoRetorno(NodoValor(7)))
+
+
+def test_with_no_transforma_retorno_fuera_de_funcion_en_valor():
+    inter = InterpretadorCobra()
+    contextos_iniciales = len(inter.contextos)
+    mem_contextos_iniciales = len(inter.mem_contextos)
+
+    with pytest.raises(RuntimeError, match=r"^retorno fuera de función$"):
+        inter.ejecutar_nodo(
+            NodoWith(
+                NodoValor("ctx"),
+                None,
+                [NodoRetorno(NodoValor(7))],
+            )
+        )
+
+    assert len(inter.contextos) == contextos_iniciales
+    assert len(inter.mem_contextos) == mem_contextos_iniciales
+
+
+def test_with_limpia_contexto_y_memoria_en_retorno_temprano_de_funcion():
     inter = InterpretadorCobra()
     inter.ejecutar_nodo(NodoAsignacion("x", NodoValor(0), declaracion=True))
     contextos_iniciales = len(inter.contextos)
     mem_contextos_iniciales = len(inter.mem_contextos)
+    liberaciones = []
+    liberar_memoria = inter.liberar_memoria
 
-    resultado = inter.ejecutar_nodo(
-        NodoWith(
-            NodoValor("ctx"),
-            None,
+    def registrar_liberacion(indice, tamano):
+        liberaciones.append((indice, tamano))
+        liberar_memoria(indice, tamano)
+
+    inter.liberar_memoria = registrar_liberacion
+
+    inter.ejecutar_nodo(
+        NodoFuncion(
+            "actualizar",
+            [],
             [
-                NodoAsignacion("x", NodoValor(7)),
-                NodoRetorno(NodoIdentificador("x")),
+                NodoWith(
+                    NodoValor("ctx"),
+                    None,
+                    [
+                        NodoAsignacion("temporal", NodoValor(1), declaracion=True),
+                        NodoAsignacion("x", NodoValor(7)),
+                        NodoRetorno(NodoIdentificador("x")),
+                    ],
+                )
             ],
         )
     )
+    resultado = inter.ejecutar_nodo(NodoLlamadaFuncion("actualizar", []))
 
     assert resultado == 7
     assert inter.obtener_variable("x") == 7
     assert len(inter.contextos) == contextos_iniciales
     assert len(inter.mem_contextos) == mem_contextos_iniciales
+    assert liberaciones
 
 
 def test_with_limpia_contexto_y_memoria_si_hay_excepcion():
     inter = InterpretadorCobra()
     contextos_iniciales = len(inter.contextos)
     mem_contextos_iniciales = len(inter.mem_contextos)
+    liberaciones = []
+    liberar_memoria = inter.liberar_memoria
+
+    def registrar_liberacion(indice, tamano):
+        liberaciones.append((indice, tamano))
+        liberar_memoria(indice, tamano)
+
+    inter.liberar_memoria = registrar_liberacion
 
     with pytest.raises(NameError, match=r"^Variable no declarada: no_definida$"):
         inter.ejecutar_nodo(
             NodoWith(
                 NodoValor("ctx"),
                 None,
-                [NodoImprimir(NodoIdentificador("no_definida"))],
+                [
+                    NodoAsignacion("temporal", NodoValor(1), declaracion=True),
+                    NodoImprimir(NodoIdentificador("no_definida")),
+                ],
             )
         )
 
     assert len(inter.contextos) == contextos_iniciales
     assert len(inter.mem_contextos) == mem_contextos_iniciales
+    assert liberaciones
 
 
 def test_with_declara_local_y_no_contamina_scope_vecino():
@@ -373,9 +435,7 @@ def test_ejecutar_funcion_solo_registra_en_entorno_sin_recorrer_cuerpo():
     triple = NodoFuncion(
         "triple",
         ["x"],
-        [
-            NodoRetorno(NodoLlamadaFuncion("doble", [NodoValor(3)]))
-        ],
+        [NodoRetorno(NodoLlamadaFuncion("doble", [NodoValor(3)]))],
     )
 
     with patch("sys.stdout", new_callable=StringIO) as out:
@@ -460,7 +520,9 @@ def test_definicion_triple_no_emite_warning_ni_error_variable_x(monkeypatch):
     assert warnings_emitidos == []
 
 
-def test_validacion_llamada_funcion_no_duplica_warning_en_invocacion_simple(monkeypatch):
+def test_validacion_llamada_funcion_no_duplica_warning_en_invocacion_simple(
+    monkeypatch,
+):
     inter = InterpretadorCobra()
     warnings_emitidos = []
 
@@ -546,8 +608,14 @@ def test_llamada_funcion_ejecuta_cuerpo_una_sola_vez_por_invocacion(monkeypatch)
 
     monkeypatch.setattr(inter, "ejecutar_nodo", _spy)
 
-    assert inter.ejecutar_llamada_funcion(NodoLlamadaFuncion("identidad", [NodoValor(10)])) == 10
-    assert inter.ejecutar_llamada_funcion(NodoLlamadaFuncion("identidad", [NodoValor(20)])) == 20
+    assert (
+        inter.ejecutar_llamada_funcion(NodoLlamadaFuncion("identidad", [NodoValor(10)]))
+        == 10
+    )
+    assert (
+        inter.ejecutar_llamada_funcion(NodoLlamadaFuncion("identidad", [NodoValor(20)]))
+        == 20
+    )
     assert len(ejecuciones_retorno) == 2
 
 
@@ -611,7 +679,9 @@ def test_mode_se_restaura_en_import_si_falla_validacion(monkeypatch):
     inter = InterpretadorCobra()
     modo_inicial = inter.mode
 
-    monkeypatch.setattr("core.interpreter.cargar_ast_modulo", lambda *a, **k: [NodoValor(1)])
+    monkeypatch.setattr(
+        "pcobra.core.interpreter.cargar_ast_modulo", lambda *a, **k: [NodoValor(1)]
+    )
 
     def _falla_validacion(_nodo):
         raise RuntimeError("validacion import")
@@ -630,7 +700,9 @@ def test_mode_se_restaura_en_import_si_falla_ejecucion(monkeypatch):
     inter = InterpretadorCobra()
     modo_inicial = inter.mode
 
-    monkeypatch.setattr("core.interpreter.cargar_ast_modulo", lambda *a, **k: [NodoValor(3)])
+    monkeypatch.setattr(
+        "pcobra.core.interpreter.cargar_ast_modulo", lambda *a, **k: [NodoValor(3)]
+    )
     monkeypatch.setattr(inter, "_validar", lambda _nodo: None)
 
     def _falla_ejecucion(_nodo):
@@ -663,7 +735,9 @@ def test_longitud_recibe_lista_literal_como_argumento():
     inter = InterpretadorCobra()
 
     resultado = inter.ejecutar_llamada_funcion(
-        NodoLlamadaFuncion("longitud", [NodoLista([NodoValor(1), NodoValor(2), NodoValor(3)])])
+        NodoLlamadaFuncion(
+            "longitud", [NodoLista([NodoValor(1), NodoValor(2), NodoValor(3)])]
+        )
     )
 
     assert resultado == 3
@@ -692,19 +766,25 @@ def test_lista_literal_evalua_elementos_recursivos():
     )
 
     assert inter.obtener_variable("xs") == [10, 11, 3]
-    assert inter.ejecutar_llamada_funcion(
-        NodoLlamadaFuncion("longitud", [NodoIdentificador("xs")])
-    ) == 3
+    assert (
+        inter.ejecutar_llamada_funcion(
+            NodoLlamadaFuncion("longitud", [NodoIdentificador("xs")])
+        )
+        == 3
+    )
+
 
 def test_lista_literal_propaga_error_semantico_en_elemento_invalido():
     inter = InterpretadorCobra()
 
     with pytest.raises(NameError, match="Variable no declarada: no_existe"):
         inter.evaluar_expresion(
-            NodoLista([
-                NodoValor(1),
-                NodoIdentificador("no_existe"),
-            ])
+            NodoLista(
+                [
+                    NodoValor(1),
+                    NodoIdentificador("no_existe"),
+                ]
+            )
         )
 
 
@@ -743,7 +823,9 @@ def test_lista_literal_cubre_escenarios_solicitados():
 
     # longitud([1, 2, 3]) como argumento inline
     inline = inter.ejecutar_llamada_funcion(
-        NodoLlamadaFuncion("longitud", [NodoLista([NodoValor(1), NodoValor(2), NodoValor(3)])])
+        NodoLlamadaFuncion(
+            "longitud", [NodoLista([NodoValor(1), NodoValor(2), NodoValor(3)])]
+        )
     )
 
     assert inter.obtener_variable("base") == [1, 2, 3]

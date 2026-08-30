@@ -21,7 +21,9 @@ def test_contracts_declaran_campos_minimos_para_module_map():
 def test_markdown_generado_incluye_tabla_cobertura_por_funcion():
     markdown = render_contract_markdown()
     assert "Tabla de garantías por módulo" in markdown
-    assert "| Módulo | API pública | Backend primario | Fallback | Límites |" in markdown
+    assert (
+        "| Módulo | API pública | Backend primario | Fallback | Límites |" in markdown
+    )
     assert "Exportaciones públicas (alias Cobra estables)" in markdown
     assert "| Alias Cobra | Módulo runtime trazable |" in markdown
     assert "Cobertura por función" in markdown

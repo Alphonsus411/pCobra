@@ -129,6 +129,7 @@ def coalesce(*valores: T, predicado: Callable[[T], bool] | None = None) -> T | N
         raise ValueError("Se necesita al menos un valor para coalesce")
 
     if predicado is None:
+
         def _predicado_por_defecto(valor: T) -> bool:
             return valor is not None and bool(valor)
 
@@ -139,7 +140,8 @@ def coalesce(*valores: T, predicado: Callable[[T], bool] | None = None) -> T | N
 
         firma = inspect.signature(predicado)
         acepta_posicional = any(
-            parametro.kind in (
+            parametro.kind
+            in (
                 inspect.Parameter.POSITIONAL_ONLY,
                 inspect.Parameter.POSITIONAL_OR_KEYWORD,
             )
@@ -244,7 +246,9 @@ def xor_multiple(*valores: bool) -> bool:
     """
 
     if len(valores) < 2:
-        raise ValueError("Se necesitan al menos dos valores booleanos para xor_multiple")
+        raise ValueError(
+            "Se necesitan al menos dos valores booleanos para xor_multiple"
+        )
 
     resultado = False
     for indice, valor in enumerate(valores):
@@ -368,10 +372,15 @@ def _resolver_aridad(funcion: Callable[..., bool], aridad: int | None) -> int:
     try:
         firma = inspect.signature(funcion)
     except (TypeError, ValueError) as error:
-        raise ValueError("No se pudo inferir la aridad de la función proporcionada") from error
+        raise ValueError(
+            "No se pudo inferir la aridad de la función proporcionada"
+        ) from error
 
     for parametro in firma.parameters.values():
-        if parametro.kind in (inspect.Parameter.VAR_POSITIONAL, inspect.Parameter.VAR_KEYWORD):
+        if parametro.kind in (
+            inspect.Parameter.VAR_POSITIONAL,
+            inspect.Parameter.VAR_KEYWORD,
+        ):
             raise ValueError("tabla_verdad requiere una función con aridad fija")
         if parametro.kind is inspect.Parameter.KEYWORD_ONLY:
             raise ValueError(
@@ -501,11 +510,12 @@ __all__ = [
 ]
 
 
-
 def si_condicional(condicion: bool, cuando_verdadero: T, cuando_falso: T) -> T:
     """Retorna ``cuando_verdadero`` o ``cuando_falso`` según ``condicion``."""
 
-    return cuando_verdadero if _asegurar_booleano(condicion, "condicion") else cuando_falso
+    return (
+        cuando_verdadero if _asegurar_booleano(condicion, "condicion") else cuando_falso
+    )
 
 
 PUBLIC_API_LOGICA: tuple[str, ...] = tuple(__all__)

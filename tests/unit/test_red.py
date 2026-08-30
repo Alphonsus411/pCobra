@@ -87,9 +87,7 @@ def test_obtener_url_redireccion_permitida(monkeypatch):
         "pcobra.corelibs.red.requests.get",
         side_effect=[primer_resp, segunda_resp],
     ) as mock_get:
-        resultado = core.obtener_url(
-            "https://example.com", permitir_redirecciones=True
-        )
+        resultado = core.obtener_url("https://example.com", permitir_redirecciones=True)
         assert resultado == "contenido"
         assert mock_get.call_args_list == [
             call(

@@ -23,10 +23,19 @@ Documentación sincronizada automáticamente desde `src/pcobra/standard_library/
 
 | Función |
 |---|
+| `carrera` |
+| `crear_tarea` |
+| `dormir_async` |
 | `ejecutar_en_hilo` |
+| `esperar_timeout` |
 | `grupo_tareas` |
+| `iterar_completadas` |
 | `limitar_tiempo` |
+| `mapear_concurrencia` |
+| `primero_exitoso` |
 | `proteger_tarea` |
+| `recolectar` |
+| `recolectar_resultados` |
 | `reintentar_async` |
 <!-- END: AUTO-STDLIB-FUNCTIONS -->
 

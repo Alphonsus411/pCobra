@@ -1,5 +1,0 @@
-a = 10
-b = 32
-resultado = a + b
-
-imprimir resultado

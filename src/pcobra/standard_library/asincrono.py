@@ -15,7 +15,6 @@ from typing import (
     TypeVar,
 )
 
-
 T = TypeVar("T")
 
 __all__ = [
@@ -87,16 +86,11 @@ async def reintentar_async(
     funcion: Callable[[], Awaitable[T] | Coroutine[Any, Any, T]],
     *,
     intentos: int = 3,
-    excepciones: type[BaseException]
-    | Sequence[type[BaseException]] = (Exception,),
+    excepciones: type[BaseException] | Sequence[type[BaseException]] = (Exception,),
     retardo_inicial: float = 0.1,
     factor_backoff: float = 2.0,
     max_retardo: float | None = None,
-    jitter: Callable[[float], float]
-    | tuple[float, float]
-    | float
-    | bool
-    | None = None,
+    jitter: Callable[[float], float] | tuple[float, float] | float | bool | None = None,
 ) -> T:
     """Reintenta ``funcion`` aplicando un *backoff* exponencial con *jitter* opcional.
 

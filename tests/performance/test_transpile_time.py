@@ -8,16 +8,19 @@ import types
 
 import cobra.core.ast_nodes as ast_nodes
 
+
 # Stubs dinámicos para cualquier nodo AST que se solicite y no exista.
 def _missing_node(name):  # pragma: no cover - utilidad de pruebas
     cls = type(name, (), {})
     setattr(ast_nodes, name, cls)
     return cls
 
+
 def __getattr__(name):  # pragma: no cover - se usa solo en tests
     if name.startswith("Nodo"):
         return _missing_node(name)
     raise AttributeError(name)
+
 
 ast_nodes.__getattr__ = __getattr__
 
@@ -36,7 +39,11 @@ for target, class_name in dummy_transpilers.items():
     mod_name = f"cobra.transpilers.transpiler.to_{module_suffix}"
     if mod_name not in sys.modules:
         module = types.ModuleType(mod_name)
-        setattr(module, class_name, type(class_name, (), {"generate_code": lambda self, ast: ""}))
+        setattr(
+            module,
+            class_name,
+            type(class_name, (), {"generate_code": lambda self, ast: ""}),
+        )
         sys.modules[mod_name] = module
 
 from cobra.cli.commands import compile_cmd
@@ -45,7 +52,6 @@ from core.cobra_config import tiempo_max_transpilacion
 
 
 @pytest.mark.performance
-
 def test_transpile_time(tmp_path, monkeypatch):
     """Verifica que la transpilación de múltiples archivos se realiza rápidamente."""
     # Evita cargas de dependencias externas en la transpilación
@@ -54,7 +60,7 @@ def test_transpile_time(tmp_path, monkeypatch):
     num_archivos = 5
     archivos = []
     for i in range(num_archivos):
-        archivo = tmp_path / f"archivo_{i}.co"
+        archivo = tmp_path / f"archivo_{i}.cobra"
         archivo.write_text("imprimir('hola')\n", encoding="utf-8")
         archivos.append(archivo)
 
@@ -62,7 +68,9 @@ def test_transpile_time(tmp_path, monkeypatch):
 
     inicio = time.perf_counter()
     for archivo in archivos:
-        cmd.run(Namespace(archivo=str(archivo), tipo="python", backend=None, tipos=None))
+        cmd.run(
+            Namespace(archivo=str(archivo), tipo="python", backend=None, tipos=None)
+        )
     total = time.perf_counter() - inicio
 
     umbral = tiempo_max_transpilacion()

@@ -19,7 +19,10 @@ from scripts.targets_policy_common import read_target_policy
 WORKFLOWS_DIR = ROOT / ".github" / "workflows"
 
 RETIRED_REFERENCE_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = (
-    (re.compile(r"(?<![\w/-])hololang(?![\w/-])", re.IGNORECASE), "backend retirado 'hololang'"),
+    (
+        re.compile(r"(?<![\w/-])hololang(?![\w/-])", re.IGNORECASE),
+        "backend retirado 'hololang'",
+    ),
     (
         re.compile(r"(?<![\w/-])reverse[ -]wasm(?![\w/-])", re.IGNORECASE),
         "pipeline retirado 'reverse wasm'",
@@ -38,8 +41,16 @@ RETIRED_REFERENCE_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = (
     ),
 )
 
-TARGET_KEY_PATTERN = re.compile(r"^\s*(?:target|targets|backend|backends)\s*:\s*(.+?)\s*$", re.IGNORECASE)
+LEGACY_COBRA_SOURCE_COMMAND_PATTERN = re.compile(
+    r"(?im)\b(?:cobra\s+)?(?:run|build|test|ejecutar|compilar|verificar)"
+    r"\s+[^\n]*?\.co\b"
+)
+
+TARGET_KEY_PATTERN = re.compile(
+    r"^\s*(?:target|targets|backend|backends)\s*:\s*(.+?)\s*$", re.IGNORECASE
+)
 LIST_ITEM_PATTERN = re.compile(r"^\s*-\s*([a-zA-Z0-9_+\- ]+)\s*$")
+RUN_KEY_PATTERN = re.compile(r"^(\s*)(?:-\s*)?run:\s*(.*?)\s*$")
 
 
 def _normalize_target(value: str) -> str:
@@ -52,8 +63,44 @@ def _extract_inline_items(raw_value: str) -> tuple[str, ...]:
         inner = value[1:-1]
         if not inner.strip():
             return tuple()
-        return tuple(_normalize_target(item) for item in inner.split(",") if item.strip())
+        return tuple(
+            _normalize_target(item) for item in inner.split(",") if item.strip()
+        )
     return tuple()
+
+
+def _iter_run_commands(lines: list[str]):
+    """Entrega únicamente valores YAML ``run`` con su línea de origen."""
+
+    index = 0
+    while index < len(lines):
+        match = RUN_KEY_PATTERN.match(lines[index])
+        if not match:
+            index += 1
+            continue
+
+        line_no = index + 1
+        base_indent = len(match.group(1))
+        raw_value = match.group(2).strip()
+        if raw_value not in {"", "|", ">", "|-", ">-", "|+", ">+"}:
+            yield line_no, raw_value
+            index += 1
+            continue
+
+        block: list[str] = []
+        index += 1
+        while index < len(lines):
+            candidate = lines[index]
+            if not candidate.strip():
+                block.append("")
+                index += 1
+                continue
+            indent = len(candidate) - len(candidate.lstrip())
+            if indent <= base_indent:
+                break
+            block.append(candidate.strip())
+            index += 1
+        yield line_no, "\n".join(block)
 
 
 def validate_workflow(path: Path, allowed_targets: set[str]) -> list[str]:
@@ -61,12 +108,17 @@ def validate_workflow(path: Path, allowed_targets: set[str]) -> list[str]:
     lines = path.read_text(encoding="utf-8").splitlines()
 
     full_text = "\n".join(lines)
+    for match in LEGACY_COBRA_SOURCE_COMMAND_PATTERN.finditer(full_text):
+        line_no = full_text.count("\n", 0, match.start()) + 1
+        errors.append(
+            f"{path.relative_to(ROOT).as_posix()}:{line_no}: "
+            "comando de fuente Cobra usa .co; debe usar .cobra"
+        )
+
     for pattern, label in RETIRED_REFERENCE_PATTERNS:
         for match in pattern.finditer(full_text):
             line_no = full_text.count("\n", 0, match.start()) + 1
-            errors.append(
-                f"{path.relative_to(ROOT).as_posix()}:{line_no}: {label}"
-            )
+            errors.append(f"{path.relative_to(ROOT).as_posix()}:{line_no}: {label}")
 
     for idx, line in enumerate(lines, start=1):
         match = TARGET_KEY_PATTERN.match(line)
@@ -106,7 +158,9 @@ def main() -> int:
         errors.extend(validate_workflow(workflow, allowed_targets))
 
     if errors:
-        print("❌ Validación de política de targets en workflows: FALLÓ", file=sys.stderr)
+        print(
+            "❌ Validación de política de targets en workflows: FALLÓ", file=sys.stderr
+        )
         for error in errors:
             print(f" - {error}", file=sys.stderr)
         return 1

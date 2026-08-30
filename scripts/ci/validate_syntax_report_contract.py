@@ -67,7 +67,11 @@ def main() -> int:
         )
 
     marker = f"schema_version={SYNTAX_REPORT_SCHEMA_VERSION}"
-    missing = [str(path) for path in DOCS_PATHS if marker not in path.read_text(encoding="utf-8")]
+    missing = [
+        str(path)
+        for path in DOCS_PATHS
+        if marker not in path.read_text(encoding="utf-8")
+    ]
     if missing:
         raise SystemExit(
             "Falta documentar la versión del contrato JSON en: " + ", ".join(missing)

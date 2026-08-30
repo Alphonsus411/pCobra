@@ -94,7 +94,9 @@ class ClasificacionSaneamientoUsar:
 
 def _contiene_rastro_sdk_en_texto(texto: str) -> bool:
     normalizado = texto.strip().lower()
-    return "holobit_sdk" in normalizado or "sdk" in normalizado or "wrapped" in normalizado
+    return (
+        "holobit_sdk" in normalizado or "sdk" in normalizado or "wrapped" in normalizado
+    )
 
 
 def _es_objeto_backend_no_exportable(simbolo: Any) -> bool:
@@ -106,11 +108,15 @@ def _es_objeto_backend_no_exportable(simbolo: Any) -> bool:
 
     modulo_origen = getattr(simbolo, "__module__", "")
     if isinstance(modulo_origen, str):
-        if modulo_origen.startswith(PREFIJOS_MODULOS_BACKEND_INTERNOS) or _contiene_rastro_sdk_en_texto(modulo_origen):
+        if modulo_origen.startswith(
+            PREFIJOS_MODULOS_BACKEND_INTERNOS
+        ) or _contiene_rastro_sdk_en_texto(modulo_origen):
             return True
 
     referencia_envuelta = getattr(simbolo, "__wrapped__", None)
-    if referencia_envuelta is not None and _contiene_rastro_sdk_en_texto(type(referencia_envuelta).__module__):
+    if referencia_envuelta is not None and _contiene_rastro_sdk_en_texto(
+        type(referencia_envuelta).__module__
+    ):
         return True
     if referencia_envuelta is not None and isinstance(referencia_envuelta, ModuleType):
         return True
@@ -122,8 +128,12 @@ def _es_objeto_backend_no_exportable(simbolo: Any) -> bool:
     return False
 
 
-def _rechazar(nombre: str, simbolo: object, codigo: str, mensaje: str, metadata: dict[str, object]) -> ResultadoSaneamientoSimboloUsar:
-    return ResultadoSaneamientoSimboloUsar(nombre, simbolo, True, codigo, mensaje, metadata=metadata)
+def _rechazar(
+    nombre: str, simbolo: object, codigo: str, mensaje: str, metadata: dict[str, object]
+) -> ResultadoSaneamientoSimboloUsar:
+    return ResultadoSaneamientoSimboloUsar(
+        nombre, simbolo, True, codigo, mensaje, metadata=metadata
+    )
 
 
 def _mensaje_nombre_prohibido(nombre: str) -> str:
@@ -161,43 +171,103 @@ def sanear_simbolo_para_usar(
 ) -> ResultadoSaneamientoSimboloUsar:
     """Aplica la política de exportación de símbolos para ``usar``."""
     politica_efectiva = politica or PoliticaSaneamientoUsar()
-    metadata = {"modulo_origen": modulo_origen, "modulo_cobra_facing": modulo_cobra_facing}
+    metadata = {
+        "modulo_origen": modulo_origen,
+        "modulo_cobra_facing": modulo_cobra_facing,
+    }
 
     if nombre == "holobit_sdk":
-        return _rechazar(nombre, simbolo, "cobra_public_equivalent", _mensaje_nombre_prohibido(nombre), metadata)
-
-    if nombre in NOMBRES_BLOQUEADOS_USAR:
         return _rechazar(
             nombre,
             simbolo,
-            "explicit_forbidden_name",
+            "cobra_public_equivalent",
+            _mensaje_nombre_prohibido(nombre),
+            metadata,
+        )
+
+    if nombre in NOMBRES_BLOQUEADOS_USAR:
+        codigo = (
+            "cobra_public_equivalent"
+            if nombre in EQUIVALENCIAS_PROHIBIDAS_A_CANONICAS
+            else "explicit_forbidden_name"
+        )
+        return _rechazar(
+            nombre,
+            simbolo,
+            codigo,
             _mensaje_nombre_prohibido(nombre),
             metadata,
         )
 
     if nombre in DUNDERS_BLOQUEADOS:
-        return _rechazar(nombre, simbolo, "dunder_name", "dunders Python conocidos no se permiten en usar", metadata)
+        return _rechazar(
+            nombre,
+            simbolo,
+            "dunder_name",
+            "dunders Python conocidos no se permiten en usar",
+            metadata,
+        )
 
     if nombre.startswith("_"):
-        return _rechazar(nombre, simbolo, "private_prefix", "símbolos que inicien con '_' no son exportables", metadata)
+        return _rechazar(
+            nombre,
+            simbolo,
+            "private_prefix",
+            "símbolos que inicien con '_' no son exportables",
+            metadata,
+        )
 
     if "__" in nombre:
-        return _rechazar(nombre, simbolo, "dunder_pattern", "nombres con '__' no se permiten en usar", metadata)
+        return _rechazar(
+            nombre,
+            simbolo,
+            "dunder_pattern",
+            "nombres con '__' no se permiten en usar",
+            metadata,
+        )
 
     if _es_objeto_backend_no_exportable(simbolo):
-        return _rechazar(nombre, simbolo, "backend_module_object", "objetos módulo/backend (incluye wrappers SDK e indirectos) no son exportables", metadata)
+        return _rechazar(
+            nombre,
+            simbolo,
+            "backend_module_object",
+            "objetos módulo/backend (incluye wrappers SDK e indirectos) no son exportables",
+            metadata,
+        )
 
     if nombre in NOMBRES_BACKEND_INTERNOS:
-        return _rechazar(nombre, simbolo, "backend_internal_name", "nombre interno del backend bloqueado", metadata)
+        return _rechazar(
+            nombre,
+            simbolo,
+            "backend_internal_name",
+            "nombre interno del backend bloqueado",
+            metadata,
+        )
 
     if nombre in NOMBRES_PROHIBIDOS_EXPLICITOS:
-        codigo = "cobra_public_equivalent" if nombre in EQUIVALENCIAS_PROHIBIDAS_A_CANONICAS else "explicit_forbidden_name"
-        return _rechazar(nombre, simbolo, codigo, _mensaje_nombre_prohibido(nombre), metadata)
+        codigo = (
+            "cobra_public_equivalent"
+            if nombre in EQUIVALENCIAS_PROHIBIDAS_A_CANONICAS
+            else "explicit_forbidden_name"
+        )
+        return _rechazar(
+            nombre, simbolo, codigo, _mensaje_nombre_prohibido(nombre), metadata
+        )
 
     if not callable(simbolo) and nombre not in NOMBRES_CONSTANTES_PUBLICAS_CANONICAS:
-        return _rechazar(nombre, simbolo, "non_callable_not_canonical_public_constant", "solo se permiten no-callables para constantes públicas explícitas y canónicas", metadata)
+        return _rechazar(
+            nombre,
+            simbolo,
+            "non_callable_not_canonical_public_constant",
+            "solo se permiten no-callables para constantes públicas explícitas y canónicas",
+            metadata,
+        )
 
-    if politica_efectiva.validar_nombre_canonico_espanol_en_cobra_facing and modulo_cobra_facing and not _parece_nombre_canonico_espanol(nombre):
+    if (
+        politica_efectiva.validar_nombre_canonico_espanol_en_cobra_facing
+        and modulo_cobra_facing
+        and not _parece_nombre_canonico_espanol(nombre)
+    ):
         return _rechazar(
             nombre,
             simbolo,
@@ -217,7 +287,9 @@ def sanear_simbolo_para_usar(
             metadata=metadata,
         )
 
-    return ResultadoSaneamientoSimboloUsar(nombre, simbolo, False, "ok", "símbolo exportable", metadata=metadata)
+    return ResultadoSaneamientoSimboloUsar(
+        nombre, simbolo, False, "ok", "símbolo exportable", metadata=metadata
+    )
 
 
 def sanear_exportables_para_usar(
@@ -226,7 +298,11 @@ def sanear_exportables_para_usar(
     politica: PoliticaSaneamientoUsar | None = None,
     modulo_origen: str | None = None,
     modulo_cobra_facing: bool = False,
-) -> tuple[list[tuple[str, object]], ClasificacionSaneamientoUsar, list[ResultadoSaneamientoSimboloUsar]]:
+) -> tuple[
+    list[tuple[str, object]],
+    ClasificacionSaneamientoUsar,
+    list[ResultadoSaneamientoSimboloUsar],
+]:
     """Sanea una lista de símbolos candidatos para ``usar`` de forma uniforme."""
 
     permitidos: list[tuple[str, object]] = []
@@ -247,7 +323,9 @@ def sanear_exportables_para_usar(
             warnings_transicion.append(resultado)
         permitidos.append((nombre, simbolo))
 
-    clasificacion = ClasificacionSaneamientoUsar(rechazos_duros=rechazos_duros, warnings_transicion=warnings_transicion)
+    clasificacion = ClasificacionSaneamientoUsar(
+        rechazos_duros=rechazos_duros, warnings_transicion=warnings_transicion
+    )
     return permitidos, clasificacion, warnings_transicion
 
 
@@ -462,7 +540,9 @@ def build_and_validate_usar_symbol_metadata(
     return dict(metadata_validada)
 
 
-def normalizar_metadata_simbolo_usar(raw_metadata: object, module_name: str, symbol_name: str) -> dict[str, object]:
+def normalizar_metadata_simbolo_usar(
+    raw_metadata: object, module_name: str, symbol_name: str
+) -> dict[str, object]:
     """Normaliza metadata de `usar` y aplica compatibilidad legacy segura.
 
     - Clona/sanitiza el input (`dict` obligatorio).
@@ -490,7 +570,9 @@ def normalizar_metadata_simbolo_usar(raw_metadata: object, module_name: str, sym
     exige igualdad estructural estricta y rechaza mutaciones inesperadas.
     """
     if not isinstance(raw_metadata, dict):
-        raise ValueError(f"Metadata inválida para símbolo usar '{symbol_name}': tipo no permitido")
+        raise ValueError(
+            f"Metadata inválida para símbolo usar '{symbol_name}': tipo no permitido"
+        )
 
     metadata_dict = dict(raw_metadata)
 
@@ -544,16 +626,19 @@ def normalizar_metadata_simbolo_usar(raw_metadata: object, module_name: str, sym
             )
         metadata_dict.setdefault("symbol", symbol_name)
     # 2) Aplicar defaults seguros solo cuando faltan claves canónicas.
-    metadata_dict.setdefault("origin_kind", USAR_SCHEMA_VALUE_CONSTRAINTS["origin_kind"])
+    metadata_dict.setdefault(
+        "origin_kind", USAR_SCHEMA_VALUE_CONSTRAINTS["origin_kind"]
+    )
     for key, default in USAR_METADATA_SECURE_BOOL_DEFAULTS.items():
         metadata_dict.setdefault(key, default)
 
     for legacy_key in aliases_normalizados:
         if legacy_key != USAR_SCHEMA_LEGACY_ALIASES[legacy_key]:
             metadata_dict.pop(legacy_key, None)
-    for optional_legacy_key in set(USAR_METADATA_LEGACY_CONSISTENCY) | set(USAR_METADATA_LEGACY_BOOL_TRUE):
+    for optional_legacy_key in set(USAR_METADATA_LEGACY_CONSISTENCY) | set(
+        USAR_METADATA_LEGACY_BOOL_TRUE
+    ):
         metadata_dict.pop(optional_legacy_key, None)
-
 
     if aliases_normalizados:
         logging.info(
@@ -574,11 +659,12 @@ def normalizar_metadata_simbolo_usar(raw_metadata: object, module_name: str, sym
 
     faltantes = USAR_SCHEMA_REQUIRED_KEYS - set(metadata_dict.keys())
     if faltantes:
-        raise ValueError(f"Metadata inválida para símbolo usar '{symbol_name}': faltan claves {sorted(faltantes)}")
+        raise ValueError(
+            f"Metadata inválida para símbolo usar '{symbol_name}': faltan claves {sorted(faltantes)}"
+        )
 
     claves_canonicas_y_opcionales = (
-        USAR_SCHEMA_REQUIRED_KEYS
-        | USAR_SYMBOL_METADATA_OPTIONAL_KEYS
+        USAR_SCHEMA_REQUIRED_KEYS | USAR_SYMBOL_METADATA_OPTIONAL_KEYS
     )
     metadata_final = {
         clave: metadata_dict[clave]
@@ -598,12 +684,18 @@ def validate_usar_symbol_metadata(nombre: str, metadata: object) -> dict[str, ob
     # Este validador es fail-closed y centraliza todo control de integridad
     # antes de sincronizar metadata con intérprete/validadores semánticos.
     """
-    module_name = str(metadata.get("module")) if isinstance(metadata, dict) and metadata.get("module") is not None else ""
+    module_name = (
+        str(metadata.get("module"))
+        if isinstance(metadata, dict) and metadata.get("module") is not None
+        else ""
+    )
     try:
         metadata_dict = normalizar_metadata_simbolo_usar(metadata, module_name, nombre)
     except ValueError as exc:
         mensaje = str(exc)
-        detalle = "legacy normalizable" if "legacy" in mensaje else "violación de seguridad"
+        detalle = (
+            "legacy normalizable" if "legacy" in mensaje else "violación de seguridad"
+        )
         logging.error(
             "USAR rechazo tras normalizar (%s) module=%s symbol=%s error=%s",
             detalle,
@@ -636,11 +728,17 @@ def validate_usar_symbol_metadata(nombre: str, metadata: object) -> dict[str, ob
             f"Metadata inválida para símbolo usar '{nombre}': module/symbol no coinciden con el contexto [troubleshooting: violación de seguridad]"
         )
 
-    if metadata_dict.get("public_api") is not USAR_SCHEMA_VALUE_CONSTRAINTS["public_api"]:
+    if (
+        metadata_dict.get("public_api")
+        is not USAR_SCHEMA_VALUE_CONSTRAINTS["public_api"]
+    ):
         raise ValueError(
             f"Metadata inválida para símbolo usar '{nombre}': public_api debe ser True [troubleshooting: violación de seguridad]"
         )
-    if metadata_dict.get("backend_exposed") is not USAR_SCHEMA_VALUE_CONSTRAINTS["backend_exposed"]:
+    if (
+        metadata_dict.get("backend_exposed")
+        is not USAR_SCHEMA_VALUE_CONSTRAINTS["backend_exposed"]
+    ):
         raise ValueError(
             f"Metadata inválida para símbolo usar '{nombre}': backend_exposed debe ser False [troubleshooting: violación de seguridad]"
         )
@@ -648,7 +746,9 @@ def validate_usar_symbol_metadata(nombre: str, metadata: object) -> dict[str, ob
         raise ValueError(
             f"Metadata inválida para símbolo usar '{nombre}': safe_wrapper contradice sanitized [troubleshooting: violación de seguridad]"
         )
-    if not isinstance(metadata_dict.get("callable"), USAR_SCHEMA_VALUE_CONSTRAINTS["callable"]):
+    if not isinstance(
+        metadata_dict.get("callable"), USAR_SCHEMA_VALUE_CONSTRAINTS["callable"]
+    ):
         raise ValueError(
             f"Metadata inválida para símbolo usar '{nombre}': callable debe ser booleano [troubleshooting: violación de seguridad]"
         )
@@ -656,7 +756,9 @@ def validate_usar_symbol_metadata(nombre: str, metadata: object) -> dict[str, ob
     return metadata_dict
 
 
-def validate_usar_symbol_metadata_normalized(nombre: str, metadata: object) -> dict[str, object]:
+def validate_usar_symbol_metadata_normalized(
+    nombre: str, metadata: object
+) -> dict[str, object]:
     """Valida metadata `usar` exigiendo payload ya normalizado (sin claves legacy)."""
     if not isinstance(metadata, dict):
         raise ValueError(

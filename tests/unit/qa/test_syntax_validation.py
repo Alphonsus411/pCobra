@@ -277,7 +277,7 @@ def test_run_transpiler_syntax_validation_resumen_ok_y_fail(monkeypatch):
     }
 
     report, events, has_failures = sv.run_transpiler_syntax_validation(
-        fixtures=[Path("fixture.co")],
+        fixtures=[Path("fixture.cobra")],
         targets=["python", "javascript", "rust"],
         transpilers=transpilers,
         strict=False,
@@ -305,7 +305,7 @@ def test_run_transpiler_syntax_validation_strict_con_skipped(monkeypatch):
             return "code"
 
     report, _, has_failures = sv.run_transpiler_syntax_validation(
-        fixtures=[Path("fixture.co")],
+        fixtures=[Path("fixture.cobra")],
         targets=["custom"],
         transpilers={"custom": CustomTranspiler},
         strict=True,

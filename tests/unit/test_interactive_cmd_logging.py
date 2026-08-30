@@ -40,11 +40,14 @@ def test_run_repl_loop_runtime_error_no_debug_no_imprime_traceback():
     def _leer_linea(_prompt):
         return next(entradas)
 
-    with patch.object(
-        cmd,
-        "ejecutar_codigo",
-        side_effect=CondicionNoBooleanaError(),
-    ), patch.object(cmd, "_log_error") as mock_log_error:
+    with (
+        patch.object(
+            cmd,
+            "ejecutar_codigo",
+            side_effect=CondicionNoBooleanaError(),
+        ),
+        patch.object(cmd, "_log_error") as mock_log_error,
+    ):
         cmd._run_repl_loop(
             args=types.SimpleNamespace(),
             validador=None,
@@ -66,11 +69,14 @@ def test_run_repl_loop_runtime_error_debug_si_imprime_traceback():
     def _leer_linea(_prompt):
         return next(entradas)
 
-    with patch.object(
-        cmd,
-        "ejecutar_codigo",
-        side_effect=CondicionNoBooleanaError(),
-    ), patch.object(cmd, "_log_error") as mock_log_error:
+    with (
+        patch.object(
+            cmd,
+            "ejecutar_codigo",
+            side_effect=CondicionNoBooleanaError(),
+        ),
+        patch.object(cmd, "_log_error") as mock_log_error,
+    ):
         cmd._run_repl_loop(
             args=types.SimpleNamespace(),
             validador=None,
@@ -88,7 +94,10 @@ def test_format_user_error_elimina_prefijos_duplicados():
 
 def test_format_user_error_preserva_mensaje_usar_corto_sin_prefijo_extra():
     mensaje = "No se puede usar 'numpy': módulo fuera del catálogo público."
-    assert format_user_error(PermissionError(f"Error general: Error: {mensaje}")) == mensaje
+    assert (
+        format_user_error(PermissionError(f"Error general: Error: {mensaje}"))
+        == mensaje
+    )
 
 
 def test_log_error_usar_no_antepone_categoria_repl():

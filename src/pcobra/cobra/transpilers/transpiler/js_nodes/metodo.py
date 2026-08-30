@@ -20,11 +20,11 @@ def visit_metodo(self, nodo):
         self.agregar_linea(";")
     else:
         for instruccion in cuerpo:
-            if hasattr(instruccion, 'aceptar'):
+            if hasattr(instruccion, "aceptar"):
                 instruccion.aceptar(self)
             else:
                 nombre = instruccion.__class__.__name__
-                if nombre.startswith('Nodo'):
+                if nombre.startswith("Nodo"):
                     nombre = nombre[4:]
                 visit = getattr(self, f"visit_{nombre.lower()}", None)
                 if visit:

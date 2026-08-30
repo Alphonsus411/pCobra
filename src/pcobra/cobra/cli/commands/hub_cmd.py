@@ -62,9 +62,7 @@ class HubCommand(BaseCommand):
 
     def run(self, args: Namespace) -> int:
         service = (
-            CobraHubService()
-            if args.accion == "cache"
-            else crear_servicio_cobrahub()
+            CobraHubService() if args.accion == "cache" else crear_servicio_cobrahub()
         )
         if args.accion == "publicar":
             return 0 if service.publicar_paquete(str(args.paquete)) else 1
@@ -77,9 +75,7 @@ class HubCommand(BaseCommand):
         if args.accion == "instalar":
             destino = str(args.destino) if args.destino else None
             return (
-                0
-                if service.instalar_paquete(args.nombre, destino, args.version)
-                else 1
+                0 if service.instalar_paquete(args.nombre, destino, args.version) else 1
             )
         if args.accion == "cache":
             return self._run_cache(args, service)

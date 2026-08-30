@@ -35,9 +35,7 @@ def _prepare_cache(monkeypatch, tmp_path):
     monkeypatch.setattr(
         database_module, "_SQLITEPLUS_CLASS", SQLitePlusStub, raising=False
     )
-    monkeypatch.setattr(
-        database_module, "_SQLITEPLUS_INSTANCE", None, raising=False
-    )
+    monkeypatch.setattr(database_module, "_SQLITEPLUS_INSTANCE", None, raising=False)
     sys.modules.pop("core.ast_cache", None)
     module = importlib.import_module("core.ast_cache")
     return module, cache_dir
@@ -52,6 +50,7 @@ def test_carga_ast_malicioso(monkeypatch, tmp_path):
 
     codigo = "var x = 1"
     from pcobra.cobra.core import Parser
+
     monkeypatch.setattr(Parser, "parsear", lambda self: [])
     ast_cache.obtener_ast(codigo)
 
@@ -72,6 +71,7 @@ def test_carga_tokens_maliciosos(monkeypatch, tmp_path):
 
     codigo = "var x = 1"
     from pcobra.cobra.core import Parser
+
     monkeypatch.setattr(Parser, "parsear", lambda self: [])
     ast_cache.obtener_tokens(codigo)
 

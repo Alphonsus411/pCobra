@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Verifica que CHANGELOG.md contenga la entrada de version actual."""
+
 from __future__ import annotations
 
 import re

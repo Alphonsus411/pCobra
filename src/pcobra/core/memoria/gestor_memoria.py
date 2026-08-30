@@ -7,6 +7,7 @@ from .estrategia_memoria import EstrategiaMemoria
 
 class GestorMemoriaGenetico:
     """Evoluciona estrategias de memoria mediante algoritmos genéticos."""
+
     def __init__(self, poblacion_tam=10):
         """
         Inicializa el gestor de memoria con una población de estrategias de memoria.

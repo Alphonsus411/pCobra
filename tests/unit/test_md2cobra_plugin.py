@@ -28,13 +28,15 @@ var y = 2
 """,
         encoding="utf-8",
     )
-    salida = tmp_path / "salida.co"
+    salida = tmp_path / "salida.cobra"
     ep = importlib.metadata.EntryPoint(
         name="md2cobra",
         value="md2cobra_plugin:MarkdownToCobraCommand",
         group="cobra.plugins",
     )
-    with patch("cli.plugin.entry_points", return_value=importlib.metadata.EntryPoints((ep,))):
+    with patch(
+        "cli.plugin.entry_points", return_value=importlib.metadata.EntryPoints((ep,))
+    ):
         main(["md2cobra", "--input", str(md), "--output", str(salida)])
 
     assert salida.exists()

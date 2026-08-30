@@ -19,17 +19,13 @@ import pytest
 sys.modules.setdefault("yaml", ModuleType("yaml"))
 sys.modules.setdefault("httpx", ModuleType("httpx"))
 
-import core.ast_nodes as core_ast_nodes
-
-sys.modules.setdefault("cobra.core.ast_nodes", core_ast_nodes)
-
 import pcobra.corelibs as core
 import pcobra.corelibs.sistema as core_sistema
 import pcobra.corelibs.tiempo as core_tiempo
-from cobra.transpilers.import_helper import get_standard_imports
-from cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
-from cobra.transpilers.transpiler.to_python import TranspiladorPython
-from core.ast_nodes import NodoLlamadaFuncion, NodoValor
+from pcobra.cobra.transpilers.import_helper import get_standard_imports
+from pcobra.cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
+from pcobra.cobra.transpilers.transpiler.to_python import TranspiladorPython
+from pcobra.core.ast_nodes import NodoLlamadaFuncion, NodoValor
 
 IMPORTS_PY = get_standard_imports("python")
 IMPORTS_JS = "".join(f"{line}\n" for line in get_standard_imports("javascript"))
@@ -115,20 +111,26 @@ def test_texto_funcs():
     assert core.quitar_sufijo("archivo.tmp", ".tmp") == "archivo"
     assert core.quitar_sufijo("archivo.tmp", ".tm") == "archivo.tmp"
     assert core.prefijo_comun("mañana", "Mañanita", ignorar_mayusculas=True) == "mañan"
-    assert core.prefijo_comun(
-        "Canción",
-        "cancio\u0301n",
-        ignorar_mayusculas=True,
-        normalizar="NFC",
-    ) == "Canción"
+    assert (
+        core.prefijo_comun(
+            "Canción",
+            "cancio\u0301n",
+            ignorar_mayusculas=True,
+            normalizar="NFC",
+        )
+        == "Canción"
+    )
     assert core.prefijo_comun("東京タワー", "東京ドーム") == "東京"
     assert core.sufijo_comun("astronomía", "economía") == "onomía"
-    assert core.sufijo_comun(
-        "Αθηναϊκό",
-        "Λαϊκό",
-        ignorar_mayusculas=True,
-        normalizar="NFC",
-    ) == "αϊκό"
+    assert (
+        core.sufijo_comun(
+            "Αθηναϊκό",
+            "Λαϊκό",
+            ignorar_mayusculas=True,
+            normalizar="NFC",
+        )
+        == "αϊκό"
+    )
     assert core.sufijo_comun("hola", "mundo") == ""
     assert core.dividir_lineas("uno\r\ndos\n") == ["uno", "dos"]
     assert core.dividir_lineas("uno\r\ndos\n", conservar_delimitadores=True) == [
@@ -169,7 +171,9 @@ def test_texto_funcs():
     assert core.formatear_texto("{}-{}", "hola", "cobra") == "hola-cobra"
     with pytest.raises(TypeError):
         core.formatear_texto(123, "hola")  # type: ignore[arg-type]
-    assert core.formatear_texto_mapa("Hola {nombre}", {"nombre": "Cobra"}) == "Hola Cobra"
+    assert (
+        core.formatear_texto_mapa("Hola {nombre}", {"nombre": "Cobra"}) == "Hola Cobra"
+    )
     with pytest.raises(TypeError):
         core.formatear_texto_mapa("Hola {nombre}", ["Cobra"])  # type: ignore[arg-type]
     tabla = core.tabla_traduccion_texto("áé", "ae", "í")
@@ -281,7 +285,6 @@ def test_numero_funcs():
     assert core.envolver_modular(7, 5) == 2
     assert core.envolver_modular(-2, 5) == 3
 
-
     assert core.envolver_modular(7.5, -5.0) == pytest.approx(-2.5)
     with pytest.raises(ZeroDivisionError):
         core.envolver_modular(1, 0)
@@ -330,9 +333,7 @@ def test_numero_funcs():
         core.entero_desde_bytes(b"\x00", byteorder="medio")
     datos = [2, 4, 4, 4, 5, 5, 7, 9]
     assert core.desviacion_estandar(datos) == pytest.approx(2.0)
-    assert core.desviacion_estandar(datos, muestral=True) == pytest.approx(
-        2.1380899353
-    )
+    assert core.desviacion_estandar(datos, muestral=True) == pytest.approx(2.1380899353)
     assert core.varianza(datos) == pytest.approx(stats.pvariance(datos))
     assert core.varianza_muestral(datos) == pytest.approx(stats.variance(datos))
 
@@ -341,9 +342,7 @@ def test_numero_funcs():
         stats.geometric_mean(geometrica)
     )
     armonica = [1.5, 2.5, 4.0]
-    assert core.media_armonica(armonica) == pytest.approx(
-        stats.harmonic_mean(armonica)
-    )
+    assert core.media_armonica(armonica) == pytest.approx(stats.harmonic_mean(armonica))
     assert core.media_armonica([1.0, 0.0, 3.0]) == pytest.approx(
         stats.harmonic_mean([1.0, 0.0, 3.0])
     )
@@ -505,7 +504,13 @@ def test_logica_entonces_si_no_perezoso():
         ([True, True, False], False, False, 2, True),
         ([True, True, True], False, False, 3, False),
     ]
-    for valores, ninguna_esperado, solo_uno_esperado, conteo_esperado, paridad_esperada in casos_coleccion:
+    for (
+        valores,
+        ninguna_esperado,
+        solo_uno_esperado,
+        conteo_esperado,
+        paridad_esperada,
+    ) in casos_coleccion:
         assert core.ninguna(valores) is ninguna_esperado
         assert core.solo_uno(*valores) is solo_uno_esperado
         assert core.conteo_verdaderos(valores) == conteo_esperado
@@ -780,9 +785,11 @@ def test_coleccion_funcs():
     assert core.reducir([1, 2, 3], operator.add) == 6
     assert core.reducir([1, 2, 3], operator.add, 10) == 16
     assert core.encontrar(datos, lambda x: x > 2) == 3
-    assert core.encontrar(datos, lambda x: x > 10, predeterminado="ninguno") == "ninguno"
+    assert (
+        core.encontrar(datos, lambda x: x > 10, predeterminado="ninguno") == "ninguno"
+    )
     assert core.aplanar([[1, 2], (3, 4)]) == [1, 2, 3, 4]
-    
+
     class Caja:
         def __init__(self, valor):
             self.valor = valor
@@ -903,11 +910,14 @@ def test_red_funcs(monkeypatch):
     mock_resp_post = MagicMock(url="https://x", encoding="utf-8")
     mock_resp_post.iter_content.return_value = [b"ok"]
     mock_resp_post.raise_for_status.return_value = None
-    with patch(
-        "pcobra.corelibs.red.requests.get", return_value=mock_resp_get
-    ) as mock_get, patch(
-        "pcobra.corelibs.red.requests.post", return_value=mock_resp_post
-    ) as mock_post:
+    with (
+        patch(
+            "pcobra.corelibs.red.requests.get", return_value=mock_resp_get
+        ) as mock_get,
+        patch(
+            "pcobra.corelibs.red.requests.post", return_value=mock_resp_post
+        ) as mock_post,
+    ):
         assert core.obtener_url("https://x") == "ok"
         assert core.enviar_post("https://x", {"a": 1}) == "ok"
         mock_get.assert_called_once_with(
@@ -1036,8 +1046,7 @@ def test_sistema_funcs(tmp_path, monkeypatch):
     monkeypatch.setattr(core_sistema.os, "close", lambda _fd: None)
     permitido = "echo"
     assert (
-        core.ejecutar(["echo", "hola"], permitidos=[permitido], timeout=1)
-        == "hola\n"
+        core.ejecutar(["echo", "hola"], permitidos=[permitido], timeout=1) == "hola\n"
     )
     os.environ["PRUEBA"] = "1"
     assert core.obtener_env("PRUEBA") == "1"
@@ -1093,7 +1102,7 @@ def test_transpile_texto():
         + "concatenar('a', 'b')\n"
         + "quitar_espacios('  hola  ')\n"
         + "dividir('a b c')\n"
-        + "unir('-', [\"a\",\"b\"])\n"
+        + 'unir(\'-\', ["a","b"])\n'
         + "reemplazar('banana', 'na', 'NA', 1)\n"
         + "empieza_con('cobra', 'co')\n"
         + "termina_con('cobra', 'bra')\n"
@@ -1112,7 +1121,7 @@ def test_transpile_texto():
         + "concatenar('a', 'b');\n"
         + "quitar_espacios('  hola  ');\n"
         + "dividir('a b c');\n"
-        + "unir('-', [\"a\",\"b\"]);\n"
+        + 'unir(\'-\', ["a","b"]);\n'
         + "reemplazar('banana', 'na', 'NA', 1);\n"
         + "empieza_con('cobra', 'co');\n"
         + "termina_con('cobra', 'bra');\n"
@@ -1143,13 +1152,15 @@ def test_transpile_texto():
     ):
         assert fragmento in py
         assert fragmento in js
-    assert "'NFD'" in py or '"\'NFD\'"' in py
-    assert "'NFD'" in js or '"\'NFD\'"' in js
+    assert "'NFD'" in py or "\"'NFD'\"" in py
+    assert "'NFD'" in js or "\"'NFD'\"" in js
 
 
 def test_transpile_texto_busquedas():
     ast = [
-        NodoLlamadaFuncion("encontrar_texto", [NodoValor("'banana'"), NodoValor("'na'")]),
+        NodoLlamadaFuncion(
+            "encontrar_texto", [NodoValor("'banana'"), NodoValor("'na'")]
+        ),
         NodoLlamadaFuncion("indice_texto", [NodoValor("'banana'"), NodoValor("'na'")]),
         NodoLlamadaFuncion(
             "formatear_texto",

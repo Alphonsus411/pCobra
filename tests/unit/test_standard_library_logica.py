@@ -10,7 +10,13 @@ sys.modules.setdefault("httpx", ModuleType("httpx"))
 
 
 def _cargar_logica():
-    ruta = Path(__file__).resolve().parents[2] / "src" / "pcobra" / "standard_library" / "logica.py"
+    ruta = (
+        Path(__file__).resolve().parents[2]
+        / "src"
+        / "pcobra"
+        / "standard_library"
+        / "logica.py"
+    )
     spec = util.spec_from_file_location("standard_library.logica", ruta)
     modulo = util.module_from_spec(spec)
     if "standard_library" not in sys.modules:

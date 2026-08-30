@@ -23,11 +23,17 @@ def _modulo_stub(nombre: str, exports: dict[str, object]) -> ModuleType:
 
 
 def test_usar_numero_y_texto_solo_exponen_nombres_canonicos_espanol(monkeypatch):
-    numero = _modulo_stub("numero", {"es_finito": lambda n: n == n, "isfinite": lambda n: n == n})
+    numero = _modulo_stub(
+        "numero", {"es_finito": lambda n: n == n, "isfinite": lambda n: n == n}
+    )
     texto = _modulo_stub("texto", {"a_snake": lambda s: s, "to_snake": lambda s: s})
     stubs = {"numero": numero, "texto": texto}
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: stubs[nombre])
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre: stubs[nombre])
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: stubs[nombre]
+    )
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo", lambda nombre: stubs[nombre]
+    )
 
     interp = InterpretadorCobra()
     interp.ejecutar_usar(_NodoUsar("numero"))
@@ -40,7 +46,9 @@ def test_usar_numero_y_texto_solo_exponen_nombres_canonicos_espanol(monkeypatch)
     assert "to_snake" not in simbolos
 
 
-def test_usar_datos_expone_filtrar_mapear_reducir_no_equivalentes_en_ingles(monkeypatch):
+def test_usar_datos_expone_filtrar_mapear_reducir_no_equivalentes_en_ingles(
+    monkeypatch,
+):
     datos = _modulo_stub(
         "datos",
         {
@@ -51,7 +59,9 @@ def test_usar_datos_expone_filtrar_mapear_reducir_no_equivalentes_en_ingles(monk
             "map": lambda xs, fn: [fn(x) for x in xs],
         },
     )
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: datos)
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: datos
+    )
     monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _nombre: datos)
 
     interp = InterpretadorCobra()
@@ -63,7 +73,9 @@ def test_usar_datos_expone_filtrar_mapear_reducir_no_equivalentes_en_ingles(monk
     assert "map" not in simbolos
 
 
-@pytest.mark.parametrize("modulo_externo", ["numpy", "node-fetch", "serde", "holobit_sdk"])
+@pytest.mark.parametrize(
+    "modulo_externo", ["numpy", "node-fetch", "serde", "holobit_sdk"]
+)
 def test_rechaza_usar_modulos_externos_no_permitidos(modulo_externo):
     interp = InterpretadorCobra()
 
@@ -86,7 +98,9 @@ def test_rechaza_simbolos_prohibidos_en_exports(monkeypatch):
             "expect": object(),
         },
     )
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: modulo)
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: modulo
+    )
     monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _nombre: modulo)
 
     interp = InterpretadorCobra()
@@ -94,13 +108,24 @@ def test_rechaza_simbolos_prohibidos_en_exports(monkeypatch):
     simbolos = set(interp.contextos[-1].values)
 
     assert "filtrar" in simbolos
-    for prohibido in ("__oculto__", "_interno", "self", "append", "map", "filter", "unwrap", "expect"):
+    for prohibido in (
+        "__oculto__",
+        "_interno",
+        "self",
+        "append",
+        "map",
+        "filter",
+        "unwrap",
+        "expect",
+    ):
         assert prohibido not in simbolos
 
 
 def test_colision_en_usar_emite_advertencia_y_no_sobrescribe(monkeypatch):
     numero = _modulo_stub("numero", {"es_finito": lambda _n: "desde_usar"})
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: numero)
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: numero
+    )
     monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _nombre: numero)
 
     interp = InterpretadorCobra()
@@ -125,7 +150,9 @@ def test_usar_datos_respeta_all_y_no_inyecta_objeto_modulo(monkeypatch):
     )
     # Existe en el módulo, pero no está en __all__: no debe exportarse por fallback.
     datos.filtrar = lambda xs, fn: [x for x in xs if fn(x)]
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: datos)
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: datos
+    )
     monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _nombre: datos)
 
     interp = InterpretadorCobra()
@@ -166,7 +193,8 @@ def test_sanitizar_datos_reporta_filtrar_missing_export_attr(caplog):
 
     assert "filtrar" not in dict(mapa)
     assert any(
-        conflicto.get("symbol") == "filtrar" and conflicto.get("code") == "missing_export_attr"
+        conflicto.get("symbol") == "filtrar"
+        and conflicto.get("code") == "missing_export_attr"
         for conflicto in conflictos
     )
     assert any(

@@ -123,6 +123,7 @@ altura = 1.68
 - `desde`
 - `eliminar`
 - `elseif`
+- `enum`
 - `enumeracion`
 - `esperar`
 - `estructura`
@@ -157,11 +158,14 @@ altura = 1.68
 - `sino`
 - `sino si`
 - `switch`
+- `throw`
 - `transformar`
+- `try`
 - `usar`
 - `var`
 - `variable`
 - `y`
+- `yield`
 - `{`
 - `||`
 - `}`
@@ -799,6 +803,43 @@ Cobra incluye módulos de soporte para flujos asíncronos y coordinación.
 
 ## 10) CLI de Cobra para desarrollo diario
 
+<!-- BEGIN: AUTO-CLI-TABLE -->
+### Tabla CLI actualizada (autogenerado)
+
+| Comando | Capacidad | Clase | Archivo |
+|---|---|---|---|
+| `agix` | `-` | `AgixCommand` | `src/pcobra/cobra/cli/commands/agix_cmd.py` |
+| `bench` | `-` | `BenchCommand` | `src/pcobra/cobra/cli/commands/bench_cmd.py` |
+| `benchmarks` | `-` | `BenchmarksCommand` | `src/pcobra/cobra/cli/commands/benchmarks_cmd.py` |
+| `benchmarks2` | `-` | `BenchmarksV2Command` | `src/pcobra/cobra/cli/commands/benchmarks2_cmd.py` |
+| `benchthreads` | `-` | `BenchThreadsCommand` | `src/pcobra/cobra/cli/commands/benchthreads_cmd.py` |
+| `benchtranspilers` | `-` | `BenchTranspilersCommand` | `src/pcobra/cobra/cli/commands/bench_transpilers_cmd.py` |
+| `build` | `codegen` | `BuildCommandV2` | `src/pcobra/cobra/cli/commands_v2/build_cmd.py` |
+| `compilar` | `codegen` | `CompileCommand` | `src/pcobra/cobra/cli/commands/compile_cmd.py` |
+| `contenedor` | `-` | `ContainerCommand` | `src/pcobra/cobra/cli/commands/container_cmd.py` |
+| `crear` | `-` | `CrearCommand` | `src/pcobra/cobra/cli/commands/crear_cmd.py` |
+| `dependencias` | `-` | `DependenciasCommand` | `src/pcobra/cobra/cli/commands/dependencias_cmd.py` |
+| `docs` | `-` | `DocsCommand` | `src/pcobra/cobra/cli/commands/docs_cmd.py` |
+| `ejecutar` | `execute` | `ExecuteCommand` | `src/pcobra/cobra/cli/commands/execute_cmd.py` |
+| `empaquetar` | `-` | `EmpaquetarCommand` | `src/pcobra/cobra/cli/commands/empaquetar_cmd.py` |
+| `gui` | `-` | `FletCommand` | `src/pcobra/cobra/cli/commands/flet_cmd.py` |
+| `hub` | `-` | `HubCommand` | `src/pcobra/cobra/cli/commands/hub_cmd.py` |
+| `init` | `-` | `InitCommand` | `src/pcobra/cobra/cli/commands/init_cmd.py` |
+| `installer` | `codegen` | `InstallerCommandV2` | `src/pcobra/cobra/cli/commands_v2/installer_cmd.py` |
+| `interactive` | `-` | `InteractiveCommand` | `src/pcobra/cobra/cli/commands/interactive_cmd.py` |
+| `jupyter` | `-` | `JupyterCommand` | `src/pcobra/cobra/cli/commands/jupyter_cmd.py` |
+| `mod` | `-` | `ModCommandV2` | `src/pcobra/cobra/cli/commands_v2/mod_cmd.py` |
+| `modulos` | `-` | `ModulesCommand` | `src/pcobra/cobra/cli/commands/modules_cmd.py` |
+| `paquete` | `-` | `PaqueteCommand` | `src/pcobra/cobra/cli/commands/package_cmd.py` |
+| `qa-validar` | `codegen` | `QaValidarCommand` | `src/pcobra/cobra/cli/commands/qa_validar_cmd.py` |
+| `qualia` | `-` | `QualiaCommand` | `src/pcobra/cobra/cli/commands/qualia_cmd.py` |
+| `repl` | `execute` | `ReplCommandV2` | `src/pcobra/cobra/cli/commands_v2/repl_cmd.py` |
+| `run` | `execute` | `RunCommandV2` | `src/pcobra/cobra/cli/commands_v2/run_cmd.py` |
+| `test` | `codegen` | `TestCommandV2` | `src/pcobra/cobra/cli/commands_v2/test_cmd.py` |
+| `validar-sintaxis` | `codegen` | `ValidarSintaxisCommand` | `src/pcobra/cobra/cli/commands/validar_sintaxis_cmd.py` |
+| `verificar` | `codegen` | `VerifyCommand` | `src/pcobra/cobra/cli/commands/verify_cmd.py` |
+<!-- END: AUTO-CLI-TABLE -->
+
 La CLI de Cobra es la herramienta principal para interactuar con el lenguaje. Ofrece comandos para ejecutar, construir, probar y gestionar módulos.
 
 Los comandos públicos disponibles son:
@@ -893,26 +934,34 @@ El BackEnd oficial público está compuesto solo por `python`, `javascript` y `r
 <!-- BEGIN: AUTO-STDLIB-INDEX -->
 ### Índice de módulos y funciones de `standard_library` (autogenerado)
 
-- **`archivo`** (4 funciones) → `docs/standard_library/archivo.md`
-  - API: `adjuntar`, `escribir`, `existe`, `leer`
-- **`asincrono`** (5 funciones) → `docs/standard_library/asincrono.md`
-  - API: `ejecutar_en_hilo`, `grupo_tareas`, `limitar_tiempo`, `proteger_tarea`, `reintentar_async`
-- **`datos`** (32 funciones) → `docs/standard_library/datos.md`
-  - API: `a_listas`, `agrupar_y_resumir`, `calcular_percentiles`, `combinar_tablas`, `correlacion_pearson`, `correlacion_spearman`, `de_listas`, `describir`, ...
+- **`archivo`** (7 funciones) → `docs/standard_library/archivo.md`
+  - API: `adjuntar`, `anexar`, `eliminar`, `escribir`, `existe`, `leer`, `leer_lineas`
+- **`asincrono`** (14 funciones) → `docs/standard_library/asincrono.md`
+  - API: `carrera`, `crear_tarea`, `dormir_async`, `ejecutar_en_hilo`, `esperar_timeout`, `grupo_tareas`, `iterar_completadas`, `limitar_tiempo`, ...
+- **`datos`** (39 funciones) → `docs/standard_library/datos.md`
+  - API: `agregar`, `agrupar_y_resumir`, `calcular_percentiles`, `claves`, `combinar_tablas`, `correlacion_pearson`, `correlacion_spearman`, `describir`, ...
 - **`decoradores`** (9 funciones) → `docs/standard_library/decoradores.md`
   - API: `dataclase`, `depreciado`, `despachar_por_tipo`, `memoizar`, `orden_total`, `reintentar`, `reintentar_async`, `sincronizar`, ...
 - **`fecha`** (3 funciones) → `docs/standard_library/fecha.md`
   - API: `formatear`, `hoy`, `sumar_dias`
+- **`holobit`** (9 funciones) → `docs/standard_library/holobit.md`
+  - API: `combinar`, `crear_holobit`, `deserializar_holobit`, `graficar`, `medir`, `proyectar`, `serializar_holobit`, `transformar`, ...
 - **`interfaz`** (18 funciones) → `docs/standard_library/interfaz.md`
   - API: `barra_progreso`, `estado_temporal`, `grupo_consola`, `imprimir_aviso`, `iniciar_gui`, `iniciar_gui_idle`, `limpiar_consola`, `mostrar_arbol`, ...
 - **`lista`** (12 funciones) → `docs/standard_library/lista.md`
   - API: `cabeza`, `chunk`, `cola`, `combinar`, `descartar_mientras`, `longitud`, `mapear_aplanado`, `mapear_seguro`, ...
 - **`logica`** (25 funciones) → `docs/standard_library/logica.md`
-  - API: `alguna`, `coalesce`, `condicional`, `conjuncion`, `conteo_verdaderos`, `diferencia_simetrica`, `disyuncion`, `entonces`, ...
-- **`numero`** (22 funciones) → `docs/standard_library/numero.md`
-  - API: `coeficiente_variacion`, `combinaciones`, `copiar_signo`, `cuartiles`, `distancia_euclidiana`, `envolver_modular`, `es_finito`, `es_infinito`, ...
-- **`texto`** (51 funciones) → `docs/standard_library/texto.md`
-  - API: `a_camel`, `a_snake`, `acortar_texto`, `centrar_texto`, `codificar`, `contar_subcadena`, `decodificar`, `desindentar_texto`, ...
+  - API: `alguna`, `coalescer`, `condicional`, `conjuncion`, `conteo_verdaderos`, `diferencia_simetrica`, `disyuncion`, `entonces`, ...
+- **`numero`** (42 funciones) → `docs/standard_library/numero.md`
+  - API: `absoluto`, `coeficiente_variacion`, `combinaciones`, `copiar_signo`, `cuartiles`, `distancia_euclidiana`, `envolver_modular`, `es_cercano`, ...
+- **`red`** (7 funciones) → `docs/standard_library/red.md`
+  - API: `descargar_archivo`, `enviar_post`, `enviar_post_async`, `obtener_json`, `obtener_url`, `obtener_url_async`, `obtener_url_texto`
+- **`sistema`** (8 funciones) → `docs/standard_library/sistema.md`
+  - API: `directorio_actual`, `ejecutar`, `ejecutar_async`, `ejecutar_comando_async`, `ejecutar_stream`, `listar_dir`, `obtener_env`, `obtener_os`
+- **`texto`** (10 funciones) → `docs/standard_library/texto.md`
+  - API: `a_snake`, `dividir`, `mayusculas`, `minusculas`, `prefijo_comun`, `quitar_acentos`, `recortar`, `reemplazar`, ...
+- **`tiempo`** (5 funciones) → `docs/standard_library/tiempo.md`
+  - API: `ahora`, `desde_epoch`, `dormir`, `epoch`, `formatear`
 - **`util`** (4 funciones) → `docs/standard_library/util.md`
   - API: `es_nulo`, `es_vacio`, `rel`, `repetir`
 <!-- END: AUTO-STDLIB-INDEX -->
@@ -1018,7 +1067,7 @@ Ruta práctica (ejecuta cada bloque antes de pasar al siguiente):
 
 ### 17.1 Cero → base sintáctica
 
-1. `examples/tutorial_basico/hola_mundo.co`
+1. `examples/tutorial_basico/hola_mundo.cobra`
 2. `examples/tutorial_basico/README.md`
 3. `examples/tutorial_basico/compile_manual.py`
 
@@ -1026,17 +1075,17 @@ Objetivo: dominar ejecución mínima, literales, impresión y ciclo editar-ejecu
 
 ### 17.2 Base → features del lenguaje
 
-1. `examples/features/feature_base/minimal.co`
+1. `examples/features/feature_base/minimal.cobra`
 2. `examples/features/README.md`
 
 Objetivo: practicar estructuras canónicas que luego aparecen en proyectos reales.
 
 ### 17.3 Features → avanzado por dominio
 
-1. `examples/avanzados/funciones/factorial_recursivo.co`
-2. `examples/avanzados/funciones/utilidades.co`
-3. `examples/avanzados/clases/persona.co`
-4. `examples/avanzados/clases/herencia_multiple.co`
+1. `examples/avanzados/funciones/factorial_recursivo.cobra`
+2. `examples/avanzados/funciones/utilidades.cobra`
+3. `examples/avanzados/clases/persona.cobra`
+4. `examples/avanzados/clases/herencia_multiple.cobra`
 5. `examples/avanzados/control_flujo/README.md`
 
 Objetivo: integrar funciones, clases, reutilización y control de flujo no trivial.

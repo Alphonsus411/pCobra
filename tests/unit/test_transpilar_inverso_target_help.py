@@ -21,7 +21,9 @@ def test_transpilar_inverso_destino_choices_usa_targets_oficiales():
 
     _, reverse_parser = _build_parser()
     action = next(
-        a for a in reverse_parser._actions if isinstance(a, _StoreAction) and a.dest == "destino"
+        a
+        for a in reverse_parser._actions
+        if isinstance(a, _StoreAction) and a.dest == "destino"
     )
     assert tuple(action.choices) == OFFICIAL_TARGETS
 

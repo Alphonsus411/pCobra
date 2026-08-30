@@ -20,14 +20,23 @@ from pcobra.cobra.cli.target_policies import (
     OFFICIAL_RUNTIME_TARGETS,
 )
 from pcobra.cobra.transpilers.registry import official_transpiler_targets
-from pcobra.cobra.transpilers.target_utils import normalize_target_name, target_cli_choices
+from pcobra.cobra.transpilers.target_utils import (
+    normalize_target_name,
+    target_cli_choices,
+)
 
-BEST_EFFORT_BENCHMARK_RUNTIME_TARGETS: Final[tuple[str, ...]] = BEST_EFFORT_RUNTIME_TARGETS
+BEST_EFFORT_BENCHMARK_RUNTIME_TARGETS: Final[tuple[str, ...]] = (
+    BEST_EFFORT_RUNTIME_TARGETS
+)
 NO_RUNTIME_BENCHMARK_TARGETS: Final[tuple[str, ...]] = NO_RUNTIME_TARGETS
 
 BENCHMARK_BACKEND_METADATA: Final[dict[str, dict[str, object]]] = {
     "python": {"ext": "py", "run": ["python", "{file}"], "runtime_policy": "official"},
-    "javascript": {"ext": "js", "run": ["node", "{file}"], "runtime_policy": "official"},
+    "javascript": {
+        "ext": "js",
+        "run": ["node", "{file}"],
+        "runtime_policy": "official",
+    },
     "rust": {
         "ext": "rs",
         "compile": ["rustc", "{file}", "-O", "-o", "{tmp}/prog_rs"],
@@ -55,7 +64,9 @@ def validate_local_targets_policy(repo_root: Path) -> None:
 
     config = tomllib.loads(config_path.read_text(encoding="utf-8"))
     project_cfg = config.get("project", {})
-    raw_targets = project_cfg.get("required_targets", project_cfg.get("targets_requeridos"))
+    raw_targets = project_cfg.get(
+        "required_targets", project_cfg.get("targets_requeridos")
+    )
     if not raw_targets:
         return
 
@@ -76,7 +87,6 @@ def validate_local_targets_policy(repo_root: Path) -> None:
         )
 
 
-
 def validate_backend_metadata(backends: Mapping[str, object], *, context: str) -> None:
     """Falla rápido si falta metadata para backends conocidos o sobran claves."""
     configured = tuple(backends.keys())
@@ -95,12 +105,13 @@ def validate_backend_metadata(backends: Mapping[str, object], *, context: str) -
         )
 
 
-
 def benchmark_backends(backends: Mapping[str, object] | None = None) -> tuple[str, ...]:
     """Devuelve backends benchmark públicos en orden canónico."""
     canonical = official_transpiler_targets()
-    available_targets = canonical if backends is None else tuple(
-        target for target in canonical if target in backends
+    available_targets = (
+        canonical
+        if backends is None
+        else tuple(target for target in canonical if target in backends)
     )
     return target_cli_choices(available_targets)
 
@@ -118,12 +129,14 @@ def executable_benchmark_backends(
     automatizado en esta capa.
     """
     canonical = official_transpiler_targets()
-    available_targets = canonical if backends is None else tuple(
-        target for target in canonical if target in backends
+    available_targets = (
+        canonical
+        if backends is None
+        else tuple(target for target in canonical if target in backends)
     )
     allowed = list(OFFICIAL_RUNTIME_TARGETS)
     if include_experimental:
         allowed.extend(BEST_EFFORT_BENCHMARK_RUNTIME_TARGETS)
-    return target_cli_choices(tuple(target for target in available_targets if target in allowed))
-
-
+    return target_cli_choices(
+        tuple(target for target in available_targets if target in allowed)
+    )

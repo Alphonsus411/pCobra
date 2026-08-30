@@ -46,7 +46,7 @@ for _mod_name, _mod in list(sys.modules.items()):
     if _mod_name.startswith(f"{_target_name}."):
         if _mod_name.startswith(f"{_target_name}.cli"):
             continue
-        alias = __name__ + _mod_name[len(_target_name):]
+        alias = __name__ + _mod_name[len(_target_name) :]
         sys.modules.setdefault(alias, _mod)
 
 sys.modules.setdefault("core", import_module("pcobra.core"))

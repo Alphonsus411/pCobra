@@ -11,21 +11,33 @@ def test_cli_jupyter_installs_kernel():
     with (
         patch.dict("sys.modules", {"jupyter": object()}),
         patch("subprocess.run") as mock_run,
-        patch.object(JupyterCommand, "_resolver_ejecutable", return_value="/usr/bin/python3"),
+        patch.object(
+            JupyterCommand, "_resolver_ejecutable", return_value="/usr/bin/python3"
+        ),
     ):
         mock_run.return_value.returncode = 0
         mock_run.return_value.stderr = ""
         cmd.run(Namespace(notebook=None))
-        mock_run.assert_has_calls([
-            call([sys.executable, "-m", "pcobra.jupyter_kernel", "install"], check=True, capture_output=True, text=True),
-            call([
-                "/usr/bin/python3",
-                "-m",
-                "jupyter",
-                "notebook",
-                "--KernelManager.default_kernel_name=cobra",
-            ], check=True),
-        ])
+        mock_run.assert_has_calls(
+            [
+                call(
+                    [sys.executable, "-m", "pcobra.jupyter_kernel", "install"],
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                ),
+                call(
+                    [
+                        "/usr/bin/python3",
+                        "-m",
+                        "jupyter",
+                        "notebook",
+                        "--KernelManager.default_kernel_name=cobra",
+                    ],
+                    check=True,
+                ),
+            ]
+        )
 
 
 def test_cli_jupyter_opens_specific_notebook(tmp_path):
@@ -35,22 +47,34 @@ def test_cli_jupyter_opens_specific_notebook(tmp_path):
     with (
         patch.dict("sys.modules", {"jupyter": object()}),
         patch("subprocess.run") as mock_run,
-        patch.object(JupyterCommand, "_resolver_ejecutable", return_value="/usr/bin/python3"),
+        patch.object(
+            JupyterCommand, "_resolver_ejecutable", return_value="/usr/bin/python3"
+        ),
     ):
         mock_run.return_value.returncode = 0
         mock_run.return_value.stderr = ""
         cmd.run(Namespace(notebook=nb))
-        mock_run.assert_has_calls([
-            call([sys.executable, "-m", "pcobra.jupyter_kernel", "install"], check=True, capture_output=True, text=True),
-            call([
-                "/usr/bin/python3",
-                "-m",
-                "jupyter",
-                "notebook",
-                "--KernelManager.default_kernel_name=cobra",
-                str(nb),
-            ], check=True),
-        ])
+        mock_run.assert_has_calls(
+            [
+                call(
+                    [sys.executable, "-m", "pcobra.jupyter_kernel", "install"],
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                ),
+                call(
+                    [
+                        "/usr/bin/python3",
+                        "-m",
+                        "jupyter",
+                        "notebook",
+                        "--KernelManager.default_kernel_name=cobra",
+                        str(nb),
+                    ],
+                    check=True,
+                ),
+            ]
+        )
 
 
 def test_cli_jupyter_uses_canonical_kernel_module_only():
@@ -58,7 +82,9 @@ def test_cli_jupyter_uses_canonical_kernel_module_only():
     with (
         patch.dict("sys.modules", {"jupyter": object()}),
         patch("subprocess.run") as mock_run,
-        patch.object(JupyterCommand, "_resolver_ejecutable", return_value="/usr/bin/python3"),
+        patch.object(
+            JupyterCommand, "_resolver_ejecutable", return_value="/usr/bin/python3"
+        ),
     ):
         mock_run.return_value.returncode = 0
         mock_run.return_value.stderr = ""
@@ -67,7 +93,12 @@ def test_cli_jupyter_uses_canonical_kernel_module_only():
 
         first_call_args = mock_run.call_args_list[0].args[0]
         second_call_args = mock_run.call_args_list[1].args[0]
-        assert first_call_args == [sys.executable, "-m", "pcobra.jupyter_kernel", "install"]
+        assert first_call_args == [
+            sys.executable,
+            "-m",
+            "pcobra.jupyter_kernel",
+            "install",
+        ]
         assert "cobra.jupyter_kernel" not in first_call_args
         assert second_call_args[0] != "jupyter"
 
@@ -76,7 +107,11 @@ def test_cli_jupyter_no_usa_literal_jupyter_como_primer_argumento():
     cmd = JupyterCommand()
     with (
         patch.dict("sys.modules", {"jupyter": object()}),
-        patch.object(JupyterCommand, "_resolver_ejecutable", return_value="/opt/python/bin/python3"),
+        patch.object(
+            JupyterCommand,
+            "_resolver_ejecutable",
+            return_value="/opt/python/bin/python3",
+        ),
         patch("subprocess.run") as mock_run,
     ):
         mock_run.return_value.returncode = 0
@@ -104,9 +139,10 @@ def test_cli_jupyter_error_modulo_no_instalado():
             raise ImportError
         return original_import(name, *args, **kwargs)
 
-    with patch("builtins.__import__", side_effect=import_fallido), patch(
-        "cobra.cli.commands.jupyter_cmd.mostrar_error"
-    ) as mock_mostrar_error:
+    with (
+        patch("builtins.__import__", side_effect=import_fallido),
+        patch("cobra.cli.commands.jupyter_cmd.mostrar_error") as mock_mostrar_error,
+    ):
         code = cmd.run(Namespace(notebook=None))
 
     assert code == 1

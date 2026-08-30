@@ -1,0 +1,7 @@
+func saludar(nombre):
+    imprimir "Hola, " + nombre
+fin
+
+imprimir "0 es par"
+imprimir "1 es impar"
+imprimir "2 es par"

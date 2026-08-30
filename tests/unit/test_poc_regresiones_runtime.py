@@ -25,7 +25,9 @@ def test_poc_exitos_numero_logica_tiempo_y_llamada_anidada() -> None:
     inter.contextos[-1].define("doble", lambda x: x * 2)
     assert inter.variables["es_finito"](inter.variables["doble"](21)) is True
     assert inter.variables["signo"](-7) == -1
-    assert inter.variables["conjuncion"](True, inter.variables["negacion"](False)) is True
+    assert (
+        inter.variables["conjuncion"](True, inter.variables["negacion"](False)) is True
+    )
     assert isinstance(inter.variables["epoch"](), (int, float))
 
 
@@ -36,7 +38,9 @@ def test_poc_texto_api_completa_sin_ciclo(monkeypatch) -> None:
     modulo.mayusculas = str.upper
     modulo.a_snake = lambda txt: txt.replace(" ", "_")
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _n: modulo)
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo_cobra_oficial", lambda _n: modulo
+    )
     inter = _interp({"texto": "texto"})
     inter.ejecutar_nodo(NodoUsar("texto"))
 
@@ -49,7 +53,9 @@ def test_poc_datos_longitud_disponible(monkeypatch) -> None:
     modulo_datos.__all__ = ["longitud"]
     modulo_datos.longitud = len
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _n: modulo_datos)
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo_cobra_oficial", lambda _n: modulo_datos
+    )
     inter = _interp({"datos": "datos"})
     inter.ejecutar_nodo(NodoUsar("datos"))
 
@@ -74,16 +80,25 @@ def test_poc_seguridad_rechaza_numpy_con_error_corto() -> None:
     assert "traceback" not in mensaje
 
 
-@pytest.mark.parametrize("modulo", ["holobit_sdk", "pcobra.core.interpreter", "os", "json"])
+@pytest.mark.parametrize(
+    "modulo", ["holobit_sdk", "pcobra.core.interpreter", "os", "json"]
+)
 def test_poc_seguridad_bloquea_modulos_backend_sdk_externos(modulo: str) -> None:
     inter = _interp({"numero": "numero"})
     with pytest.raises(PermissionError):
         inter.ejecutar_nodo(NodoUsar(modulo))
 
 
-
 def test_poc_minimo_alias_oficiales_y_no_publicos() -> None:
-    inter = _interp({"numero": "numero", "texto": "texto", "logica": "logica", "tiempo": "tiempo", "datos": "datos"})
+    inter = _interp(
+        {
+            "numero": "numero",
+            "texto": "texto",
+            "logica": "logica",
+            "tiempo": "tiempo",
+            "datos": "datos",
+        }
+    )
     for modulo in ("numero", "texto", "logica", "tiempo", "datos"):
         inter.ejecutar_nodo(NodoUsar(modulo))
 
@@ -100,8 +115,11 @@ def test_poc_minimo_alias_oficiales_y_no_publicos() -> None:
     assert "_impl" not in simbolos
     assert "__all__" not in simbolos
 
+
 def test_poc_verifica_rutas_lexer_parser_no_modificables() -> None:
-    contenido = Path("scripts/ci/gate_no_parser_lexer_changes.py").read_text(encoding="utf-8")
+    contenido = Path("scripts/ci/gate_no_parser_lexer_changes.py").read_text(
+        encoding="utf-8"
+    )
     for ruta in (
         "src/pcobra/core/lexer.py",
         "src/pcobra/core/parser.py",

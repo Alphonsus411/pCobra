@@ -10,6 +10,7 @@ from pcobra.cobra.usar_policy import (
     USAR_COBRA_ALLOWLIST,
     USAR_COBRA_FACING_MODULE_FLAGS,
 )
+
 core_usar_loader = usar_loader
 
 
@@ -19,10 +20,14 @@ def _interp_con_alias(alias_map: dict[str, str]) -> InterpretadorCobra:
     return interp
 
 
-def test_no_regresion_ajuste_texto_usar_runtime_numero_expone_solo_api_espanola(monkeypatch):
+def test_no_regresion_ajuste_texto_usar_runtime_numero_expone_solo_api_espanola(
+    monkeypatch,
+):
     import pcobra.corelibs.numero as modulo_numero
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _n, **_k: modulo_numero)
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo", lambda _n, **_k: modulo_numero
+    )
     interp = _interp_con_alias({"numero": "numero"})
     interp.ejecutar_nodo(NodoUsar("numero"))
 
@@ -34,7 +39,9 @@ def test_no_regresion_ajuste_texto_usar_runtime_numero_expone_solo_api_espanola(
 def test_usar_runtime_texto_expone_solo_api_espanola(monkeypatch):
     import pcobra.corelibs.texto as modulo_texto
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _n, **_k: modulo_texto)
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo", lambda _n, **_k: modulo_texto
+    )
     interp = _interp_con_alias({"texto": "texto"})
     interp.ejecutar_nodo(NodoUsar("texto"))
 
@@ -45,7 +52,9 @@ def test_usar_runtime_texto_expone_solo_api_espanola(monkeypatch):
 def test_usar_runtime_datos_expone_filtrar_mapear_reducir(monkeypatch):
     import pcobra.standard_library.datos as modulo_datos
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _n, **_k: modulo_datos)
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo", lambda _n, **_k: modulo_datos
+    )
     interp = _interp_con_alias({"datos": "datos"})
     interp.ejecutar_nodo(NodoUsar("datos"))
 
@@ -65,7 +74,9 @@ def test_usar_runtime_rechaza_numpy_y_similares(nombre):
 def test_usar_runtime_holobit_expone_solo_api_cobra_facing(monkeypatch):
     import pcobra.corelibs.holobit as modulo_holobit
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _n, **_k: modulo_holobit)
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo", lambda _n, **_k: modulo_holobit
+    )
     interp = _interp_con_alias({"holobit": "holobit"})
     interp.ejecutar_nodo(NodoUsar("holobit"))
 
@@ -79,7 +90,9 @@ def test_usar_runtime_holobit_expone_solo_api_cobra_facing(monkeypatch):
 def test_usar_runtime_no_exporta_simbolos_con_doble_guion_bajo(monkeypatch):
     import pcobra.corelibs.numero as modulo_numero
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _n, **_k: modulo_numero)
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo", lambda _n, **_k: modulo_numero
+    )
     interp = _interp_con_alias({"numero": "numero"})
     interp.ejecutar_nodo(NodoUsar("numero"))
 
@@ -89,7 +102,9 @@ def test_usar_runtime_no_exporta_simbolos_con_doble_guion_bajo(monkeypatch):
 def test_usar_runtime_no_exporta_simbolos_bloqueados(monkeypatch):
     import pcobra.standard_library.datos as modulo_datos
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _n, **_k: modulo_datos)
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo", lambda _n, **_k: modulo_datos
+    )
     interp = _interp_con_alias({"datos": "datos"})
     interp.ejecutar_nodo(NodoUsar("datos"))
 
@@ -107,8 +122,7 @@ def test_usar_runtime_numero_expone_e_inyecta_desviacion_estandar(monkeypatch):
 
     assert "desviacion_estandar" in mapa_limpio
     assert not any(
-        conflicto.get("symbol") == "desviacion_estandar"
-        for conflicto in conflictos
+        conflicto.get("symbol") == "desviacion_estandar" for conflicto in conflictos
     )
 
     monkeypatch.setattr(
@@ -154,7 +168,9 @@ def test_usar_runtime_colision_warn_diagnostico_y_sin_overwrite(monkeypatch):
 def test_usar_runtime_reimport_idempotente_logica_no_falla(monkeypatch):
     import pcobra.corelibs.logica as modulo_logica
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _n, **_k: modulo_logica)
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo", lambda _n, **_k: modulo_logica
+    )
     interp = _interp_con_alias({"logica": "logica"})
 
     interp.ejecutar_nodo(NodoUsar("logica"))
@@ -166,7 +182,9 @@ def test_usar_runtime_reimport_idempotente_logica_no_falla(monkeypatch):
 def test_usar_runtime_reimport_idempotente_numero_no_falla(monkeypatch):
     import pcobra.corelibs.numero as modulo_numero
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _n, **_k: modulo_numero)
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo", lambda _n, **_k: modulo_numero
+    )
     interp = _interp_con_alias({"numero": "numero"})
 
     interp.ejecutar_nodo(NodoUsar("numero"))
@@ -178,7 +196,9 @@ def test_usar_runtime_reimport_idempotente_numero_no_falla(monkeypatch):
 def test_usar_runtime_colision_variable_usuario_sigue_fallando(monkeypatch):
     import pcobra.corelibs.numero as modulo_numero
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _n, **_k: modulo_numero)
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo", lambda _n, **_k: modulo_numero
+    )
     interp = _interp_con_alias({"numero": "numero"})
     interp.contextos[-1].define("es_finito", "soy_usuario")
 
@@ -189,7 +209,9 @@ def test_usar_runtime_colision_variable_usuario_sigue_fallando(monkeypatch):
 def test_usar_runtime_holobit_no_expone_objetos_sdk_internos(monkeypatch):
     import pcobra.corelibs.holobit as modulo_holobit
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _n, **_k: modulo_holobit)
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo", lambda _n, **_k: modulo_holobit
+    )
     interp = _interp_con_alias({"holobit": "holobit"})
     interp.ejecutar_nodo(NodoUsar("holobit"))
 
@@ -197,10 +219,14 @@ def test_usar_runtime_holobit_no_expone_objetos_sdk_internos(monkeypatch):
         assert interno not in interp.variables
 
 
-def test_usar_holobit_regresion_no_expone_simbolos_internos_por_introspeccion(monkeypatch):
+def test_usar_holobit_regresion_no_expone_simbolos_internos_por_introspeccion(
+    monkeypatch,
+):
     import pcobra.corelibs.holobit as modulo_holobit
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _n, **_k: modulo_holobit)
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo", lambda _n, **_k: modulo_holobit
+    )
     interp = _interp_con_alias({"holobit": "holobit"})
     interp.ejecutar_nodo(NodoUsar("holobit"))
 
@@ -216,7 +242,11 @@ def test_usar_holobit_regresion_no_expone_simbolos_internos_por_introspeccion(mo
         "combinar",
         "medir",
     }
-    for interno in ("_SDKHolobit", "_AdaptadorInternoHolobit", "EQUIVALENCIAS_SEMANTICAS_HOLOBIT"):
+    for interno in (
+        "_SDKHolobit",
+        "_AdaptadorInternoHolobit",
+        "EQUIVALENCIAS_SEMANTICAS_HOLOBIT",
+    ):
         assert interno not in namespace
 
 
@@ -297,8 +327,7 @@ def test_sanitizar_exports_publicos_descarta_simbolos_fuera_del_contrato_canonic
     assert set(mapa_limpio) == {"es_par"}
 
     rechazados = {
-        (conflicto.get("symbol"), conflicto.get("code"))
-        for conflicto in conflictos
+        (conflicto.get("symbol"), conflicto.get("code")) for conflicto in conflictos
     }
 
     assert ("pathlib", "outside_public_api") in rechazados

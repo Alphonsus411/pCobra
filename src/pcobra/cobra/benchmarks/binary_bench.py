@@ -46,7 +46,9 @@ imprimir(x)
 SUBPROCESS_TIMEOUT = tiempo_max_transpilacion()
 
 
-def run_and_measure(cmd: list[str], env: dict[str, str] | None = None) -> tuple[float, int]:
+def run_and_measure(
+    cmd: list[str], env: dict[str, str] | None = None
+) -> tuple[float, int]:
     """Ejecuta *cmd* y devuelve ``(tiempo_en_segundos, memoria_en_kb)``."""
     start_time = time.perf_counter()
     if resource is not None:
@@ -114,7 +116,7 @@ def run_binary_benchmarks(
     results: list[dict[str, int | float | str]] = []
     try:
         with tempfile.TemporaryDirectory() as tmpdir:
-            co_file = Path(tmpdir) / "program.co"
+            co_file = Path(tmpdir) / "program.cobra"
             co_file.write_text(CODE, encoding="utf-8")
             selected_backends = list(
                 executable_benchmark_backends(
@@ -124,7 +126,9 @@ def run_binary_benchmarks(
             )
             if include_transpilation_only:
                 selected_backends.extend(
-                    target for target in ("wasm", "asm") if target in BINARY_BENCHMARK_METADATA
+                    target
+                    for target in ("wasm", "asm")
+                    if target in BINARY_BENCHMARK_METADATA
                 )
 
             for backend in selected_backends:
@@ -140,7 +144,9 @@ def run_binary_benchmarks(
                     backend,
                 ]
                 try:
-                    out = subprocess.check_output(transp_cmd, env=env, text=True, timeout=SUBPROCESS_TIMEOUT)
+                    out = subprocess.check_output(
+                        transp_cmd, env=env, text=True, timeout=SUBPROCESS_TIMEOUT
+                    )
                 except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
                     continue
                 out = re.sub(r"\x1b\[[0-9;]*m", "", out)
@@ -153,7 +159,9 @@ def run_binary_benchmarks(
                     lines = lines[1:]
                 src_file.write_text("\n".join(lines), encoding="utf-8")
 
-                compile_cmd = [arg.format(file=src_file, tmp=tmpdir) for arg in cfg["compile"]]
+                compile_cmd = [
+                    arg.format(file=src_file, tmp=tmpdir) for arg in cfg["compile"]
+                ]
                 try:
                     subprocess.check_call(compile_cmd, timeout=SUBPROCESS_TIMEOUT)
                 except Exception:

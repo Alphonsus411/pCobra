@@ -1,0 +1,2 @@
+| insecure_type_validation.py:1:1:1:24 | Class NodoSinValidacion | El nodo del AST carece de validaci\u00f3n de tipos |
+| insecure_type_validation.py:6:1:6:22 | Class NodoAssertAjeno | El nodo del AST carece de validaci\u00f3n de tipos |

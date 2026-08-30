@@ -13,7 +13,11 @@ def _extraer_all(modulo: ast.Module) -> set[str]:
             for target in nodo.targets:
                 if isinstance(target, ast.Name) and target.id == "__all__":
                     if isinstance(nodo.value, (ast.List, ast.Tuple)):
-                        return {elt.value for elt in nodo.value.elts if isinstance(elt, ast.Constant)}
+                        return {
+                            elt.value
+                            for elt in nodo.value.elts
+                            if isinstance(elt, ast.Constant)
+                        }
     return set()
 
 

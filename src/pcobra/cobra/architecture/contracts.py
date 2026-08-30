@@ -74,8 +74,12 @@ def validate_capabilities_contract() -> None:
             f"configured={configured_public}; expected={PUBLIC_BACKENDS}"
         )
 
-    missing = tuple(backend for backend in PUBLIC_BACKENDS if backend not in PUBLIC_FALLBACK_POLICY)
-    extras = tuple(backend for backend in PUBLIC_FALLBACK_POLICY if backend not in PUBLIC_BACKENDS)
+    missing = tuple(
+        backend for backend in PUBLIC_BACKENDS if backend not in PUBLIC_FALLBACK_POLICY
+    )
+    extras = tuple(
+        backend for backend in PUBLIC_FALLBACK_POLICY if backend not in PUBLIC_BACKENDS
+    )
     if missing or extras:
         raise RuntimeError(
             "PUBLIC_FALLBACK_POLICY debe cubrir exactamente PUBLIC_BACKENDS. "
@@ -83,7 +87,9 @@ def validate_capabilities_contract() -> None:
         )
 
     for project_type, candidates in PROJECT_TYPE_PUBLIC_POLICY.items():
-        invalid = tuple(backend for backend in candidates if backend not in PUBLIC_BACKENDS)
+        invalid = tuple(
+            backend for backend in candidates if backend not in PUBLIC_BACKENDS
+        )
         if invalid:
             raise RuntimeError(
                 "PROJECT_TYPE_PUBLIC_POLICY contiene backends fuera del contrato público. "

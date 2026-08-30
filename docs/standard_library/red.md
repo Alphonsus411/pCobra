@@ -27,3 +27,17 @@ usar "red"
 ```
 
 Nombres públicos en español (fuente: `__all__`).
+
+<!-- BEGIN: AUTO-STDLIB-FUNCTIONS -->
+## API pública sincronizada (`standard_library.red`)
+
+| Función |
+|---|
+| `descargar_archivo` |
+| `enviar_post` |
+| `enviar_post_async` |
+| `obtener_json` |
+| `obtener_url` |
+| `obtener_url_async` |
+| `obtener_url_texto` |
+<!-- END: AUTO-STDLIB-FUNCTIONS -->

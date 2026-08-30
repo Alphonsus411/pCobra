@@ -10,6 +10,7 @@ from typing import Iterable, FrozenSet, Tuple, List
 
 from pcobra.core.lexer import Lexer
 from pcobra.core.parser import Parser
+from pcobra.cobra.extensions import es_fuente_cobra
 from pcobra.cobra.usar_loader import formatear_ciclo_modulos_cobra_proyecto
 from .ast_nodes import NodoAsignacion, NodoClase, NodoFuncion, NodoExport
 
@@ -100,12 +101,17 @@ def cargar_ast_modulo(
     modules_path: str | None = None,
     whitelist: Iterable[str] | None = None,
     expected_fingerprint: FingerprintArchivo | None = None,
-    loading_stack: List[Path] | None = None, # Nuevo parámetro
+    loading_stack: List[Path] | None = None,  # Nuevo parámetro
 ):
     """Parsa un módulo Cobra y devuelve su AST."""
 
+    if not es_fuente_cobra(ruta):
+        raise ValueError(
+            "El módulo fuente Cobra debe usar la extensión .cobra: " f"{ruta}"
+        )
+
     codigo, ruta_real = _leer_codigo_modulo(ruta, modules_path, whitelist)
-    ruta_real_path = Path(ruta_real) # Convertir a Path para comparación
+    ruta_real_path = Path(ruta_real)  # Convertir a Path para comparación
 
     if loading_stack is not None:
         if ruta_real_path in loading_stack:
@@ -135,9 +141,7 @@ def cargar_ast_modulo(
 def _extraer_simbolos(ast_modulo: Iterable) -> FrozenSet[Tuple[str, str]]:
     """Obtiene los símbolos exportables presentes en un AST de módulo."""
 
-    exportados = {
-        nodo.nombre for nodo in ast_modulo if isinstance(nodo, NodoExport)
-    }
+    exportados = {nodo.nombre for nodo in ast_modulo if isinstance(nodo, NodoExport)}
 
     simbolos: set[Tuple[str, str]] = set()
 
@@ -165,9 +169,7 @@ def _simbolos_modulo_cache(
 ) -> FrozenSet[Tuple[str, str]]:
     """Versión cacheada de :func:`_extraer_simbolos` por ruta+fingerprint."""
 
-    ast_modulo = cargar_ast_modulo(
-        ruta_real, expected_fingerprint=fingerprint
-    )
+    ast_modulo = cargar_ast_modulo(ruta_real, expected_fingerprint=fingerprint)
     return _extraer_simbolos(ast_modulo)
 
 

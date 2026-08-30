@@ -58,10 +58,8 @@ class _AdaptadorInternoHolobit:
         return [float(v) for v in hb.valores]
 
     @staticmethod
-    def graficar(hb: Any) -> str:
-        return _runtime_graficar(hb)
-
-
+    def graficar(hb: Any) -> None:
+        _runtime_graficar(hb)
 
 
 def _es_json_primitivo(valor: Any) -> bool:
@@ -83,6 +81,7 @@ def _garantizar_json_estable(valor: Any) -> None:
         return
     raise TypeError("La API pública de holobit solo permite estructuras JSON estables")
 
+
 def _es_numero(valor: Any) -> bool:
     return isinstance(valor, (int, float)) and not isinstance(valor, bool)
 
@@ -94,12 +93,18 @@ def _normalizar_valores(valores: Iterable[Any]) -> list[float]:
     for item in valores:
         if not _es_numero(item):
             raise TypeError("Todos los valores del holobit deben ser numéricos")
-        salida.append(float(item))
+        valor_normalizado = float(item)
+        if not math.isfinite(valor_normalizado):
+            raise ValueError("Todos los valores del holobit deben ser finitos")
+        salida.append(valor_normalizado)
     return salida
 
 
 def _a_estructura_cobra(hb: Any) -> dict[str, Any]:
-    estructura = {"tipo": "holobit", "valores": _AdaptadorInternoHolobit.obtener_valores(hb)}
+    estructura = {
+        "tipo": "holobit",
+        "valores": _AdaptadorInternoHolobit.obtener_valores(hb),
+    }
     _garantizar_json_estable(estructura)
     return estructura
 
@@ -107,7 +112,9 @@ def _a_estructura_cobra(hb: Any) -> dict[str, Any]:
 def _rechazar_simbolos_sdk_en_estructura(valor: Any) -> None:
     if isinstance(valor, str):
         if valor in _SIMBOLOS_SDK_BLOQUEADOS:
-            raise TypeError("Estructura de holobit contiene símbolos internos no permitidos")
+            raise TypeError(
+                "Estructura de holobit contiene símbolos internos no permitidos"
+            )
         return
     if isinstance(valor, dict):
         for clave, contenido in valor.items():
@@ -126,7 +133,9 @@ def _validar_estructura_holobit(hb: Any) -> dict[str, Any]:
         raise TypeError("El holobit debe ser un objeto tipo dict")
     claves = set(hb.keys())
     if claves != {"tipo", "valores"}:
-        raise TypeError("Las claves permitidas del holobit son exactamente: tipo, valores")
+        raise TypeError(
+            "Las claves permitidas del holobit son exactamente: tipo, valores"
+        )
     if hb["tipo"] != "holobit":
         raise TypeError("La clave 'tipo' debe ser la cadena 'holobit'")
     valores = hb["valores"]
@@ -138,16 +147,22 @@ def _validar_estructura_holobit(hb: Any) -> dict[str, Any]:
 def _desde_estructura_cobra(hb: dict[str, Any]) -> Any:
     estructura = _validar_estructura_holobit(hb)
     try:
-        return _AdaptadorInternoHolobit.crear_desde_valores(_normalizar_valores(estructura["valores"]))
+        return _AdaptadorInternoHolobit.crear_desde_valores(
+            _normalizar_valores(estructura["valores"])
+        )
     except Exception as exc:  # pragma: no cover - defensivo frente al SDK
-        raise _error_dominio("No se pudo adaptar el holobit al runtime de Cobra", causa=exc) from None
+        raise _error_dominio(
+            "No se pudo adaptar el holobit al runtime de Cobra", causa=exc
+        ) from None
 
 
 def crear_holobit(valores: Iterable[Any]) -> dict[str, Any]:
     if valores is None:
         raise TypeError("'valores' no puede ser None")
     try:
-        interno = _AdaptadorInternoHolobit.crear_desde_valores(_normalizar_valores(valores))
+        interno = _AdaptadorInternoHolobit.crear_desde_valores(
+            _normalizar_valores(valores)
+        )
     except (TypeError, ValueError):
         raise
     except Exception as exc:  # pragma: no cover - defensivo frente al runtime interno
@@ -231,14 +246,14 @@ def transformar(hb: dict[str, Any], operacion: str, *parametros: Any) -> dict[st
     raise ValueError(f"Operacion no soportada: {operacion}")
 
 
-def graficar(hb: dict[str, Any]) -> str:
+def graficar(hb: dict[str, Any]) -> dict[str, str]:
     try:
-        vista = _AdaptadorInternoHolobit.graficar(_desde_estructura_cobra(hb))
+        _AdaptadorInternoHolobit.graficar(_desde_estructura_cobra(hb))
     except Exception as exc:  # pragma: no cover - defensivo frente al SDK
-        raise _error_dominio("No se pudo graficar el holobit en el runtime de Cobra", causa=exc) from None
-    if not isinstance(vista, str):
-        raise TypeError("La salida de graficar debe ser texto")
-    return vista
+        raise _traducir_error_interno("graficar", exc) from None
+    resultado = {"estado": "ok"}
+    _garantizar_json_estable(resultado)
+    return resultado
 
 
 def combinar(a: dict[str, Any], b: dict[str, Any]) -> dict[str, Any]:

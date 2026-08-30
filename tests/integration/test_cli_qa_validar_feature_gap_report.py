@@ -6,7 +6,12 @@ from argparse import Namespace
 from cobra.cli.commands import qa_validar_cmd as cmd_module
 from pcobra.cobra.cli.commands import qa_validar_cmd as pcobra_cmd_module
 from pcobra.cobra.cli.commands.qa_validar_cmd import QaValidarCommand
-from pcobra.cobra.qa.syntax_validation import SyntaxReport, SyntaxValidationExecution, TargetSummary, ValidationResult
+from pcobra.cobra.qa.syntax_validation import (
+    SyntaxReport,
+    SyntaxValidationExecution,
+    TargetSummary,
+    ValidationResult,
+)
 
 
 def _execution() -> SyntaxValidationExecution:
@@ -27,8 +32,12 @@ def _execution() -> SyntaxValidationExecution:
 def test_cli_qa_validar_exporta_feature_gap_report_json_estable(monkeypatch, tmp_path):
     output = tmp_path / "feature_gaps.json"
 
-    monkeypatch.setattr(cmd_module, "execute_syntax_validation", lambda **_: _execution())
-    monkeypatch.setattr(pcobra_cmd_module, "execute_syntax_validation", lambda **_: _execution())
+    monkeypatch.setattr(
+        cmd_module, "execute_syntax_validation", lambda **_: _execution()
+    )
+    monkeypatch.setattr(
+        pcobra_cmd_module, "execute_syntax_validation", lambda **_: _execution()
+    )
     monkeypatch.setattr(cmd_module, "execute_runtime_verification", lambda *_: 0)
     monkeypatch.setattr(pcobra_cmd_module, "execute_runtime_verification", lambda *_: 0)
 
@@ -44,12 +53,14 @@ def test_cli_qa_validar_exporta_feature_gap_report_json_estable(monkeypatch, tmp
         ],
     }
     monkeypatch.setattr(cmd_module, "build_feature_gap_report", lambda: fake_report)
-    monkeypatch.setattr(pcobra_cmd_module, "build_feature_gap_report", lambda: fake_report)
+    monkeypatch.setattr(
+        pcobra_cmd_module, "build_feature_gap_report", lambda: fake_report
+    )
 
     rc = QaValidarCommand().run(
         Namespace(
             modo="mixto",
-            archivo="programa.co",
+            archivo="programa.cobra",
             strict=False,
             solo_cobra=False,
             targets="python",

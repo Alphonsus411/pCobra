@@ -83,24 +83,15 @@ def test_transpilador_condicional():
     ]
     transpilador = TranspiladorPython()
     resultado = transpilador.generate_code(ast)
-    esperado = (
-        IMPORTS
-        + "if x > 5:\n    y = 2\nelse:\n    y = 3\n"
-    )
+    esperado = IMPORTS + "if x > 5:\n    y = 2\nelse:\n    y = 3\n"
     assert resultado == esperado
 
 
 def test_transpilador_mientras():
-    ast = [
-        NodoBucleMientras(
-            "x > 0", [NodoAsignacion("x", NodoValor("x - 1"))]
-        )
-    ]
+    ast = [NodoBucleMientras("x > 0", [NodoAsignacion("x", NodoValor("x - 1"))])]
     transpilador = TranspiladorPython()
     resultado = transpilador.generate_code(ast)
-    esperado = (
-        IMPORTS + "while x > 0:\n    x = x - 1\n"
-    )
+    esperado = IMPORTS + "while x > 0:\n    x = x - 1\n"
     assert resultado == esperado
 
 
@@ -325,9 +316,7 @@ def test_transpilador_holobit():
     ast = [NodoHolobit("miHolobit", [0.8, -0.5, 1.2])]
     transpilador = TranspiladorPython()
     resultado = transpilador.generate_code(ast)
-    esperado = (
-        IMPORTS + "miHolobit = holobit([0.8, -0.5, 1.2])\n"
-    )
+    esperado = IMPORTS + "miHolobit = holobit([0.8, -0.5, 1.2])\n"
     assert resultado == esperado
 
 
@@ -368,11 +357,7 @@ def test_transpilador_decoradores_anidados():
     )
     codigo = TranspiladorPython().generate_code([func])
     esperado = (
-        IMPORTS
-        + "@d1\n"
-        + "@d2\n"
-        + "def saluda():\n"
-        + "    print(\"'hola'\")\n"
+        IMPORTS + "@d1\n" + "@d2\n" + "def saluda():\n" + "    print(\"'hola'\")\n"
     )
     assert codigo == esperado
 
@@ -449,14 +434,18 @@ def test_transpilador_with_asincronico():
 
 
 def test_transpilador_switch_patron_guardia():
-    patron_interno = NodoPattern([
-        NodoPattern(NodoIdentificador("y")),
-        NodoPattern("_"),
-    ])
-    patron_principal = NodoPattern([
-        NodoPattern(NodoIdentificador("x")),
-        patron_interno,
-    ])
+    patron_interno = NodoPattern(
+        [
+            NodoPattern(NodoIdentificador("y")),
+            NodoPattern("_"),
+        ]
+    )
+    patron_principal = NodoPattern(
+        [
+            NodoPattern(NodoIdentificador("x")),
+            patron_interno,
+        ]
+    )
     caso = NodoCase(
         NodoGuard(patron_principal, NodoValor("x > y")),
         [NodoAsignacion("z", NodoValor(1))],
@@ -500,6 +489,7 @@ def test_transpilador_clase_compleja():
         + "            await tarea()\n"
     )
     assert codigo == esperado
+
 
 def test_decoradores_en_clase_y_metodo():
     decor = NodoDecorador(NodoIdentificador("dec"))

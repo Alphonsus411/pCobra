@@ -23,7 +23,10 @@ import pcobra.core.usar_symbol_policy as usar_symbol_policy_module
 def _modulo_numero_stub() -> ModuleType:
     mod = ModuleType("numero")
     mod.__all__ = ["es_finito", "signo"]
-    mod.es_finito = lambda valor: valor == valor and valor not in (float("inf"), float("-inf"))
+    mod.es_finito = lambda valor: valor == valor and valor not in (
+        float("inf"),
+        float("-inf"),
+    )
     mod.signo = lambda valor: -1 if valor < 0 else (1 if valor > 0 else 0)
     mod.__file__ = "/workspace/pCobra/src/pcobra/corelibs/numero.py"
     return mod
@@ -43,27 +46,45 @@ def _modulo_texto_stub() -> ModuleType:
     mod.mayusculas = lambda texto: str(texto).upper()
     mod.recortar = lambda texto: str(texto).strip()
     mod.repetir = lambda texto, veces=2: str(texto) * int(veces)
-    mod.quitar_acentos = lambda texto: str(texto).translate(str.maketrans("áéíóú", "aeiou"))
+    mod.quitar_acentos = lambda texto: str(texto).translate(
+        str.maketrans("áéíóú", "aeiou")
+    )
     mod.longitud = len
     mod.__file__ = "/workspace/pCobra/src/pcobra/corelibs/texto.py"
     return mod
 
 
-@pytest.mark.parametrize("factory", [lambda: InteractiveCommand(InterpretadorCobra()), ReplCommandV2])
+@pytest.mark.parametrize(
+    "factory", [lambda: InteractiveCommand(InterpretadorCobra()), ReplCommandV2]
+)
 def test_entrypoints_repl_configuran_restriccion_estricta(factory):
     cmd = factory()
-    interp = cmd.interpretador if isinstance(cmd, InteractiveCommand) else cmd._delegate.interpretador
+    interp = (
+        cmd.interpretador
+        if isinstance(cmd, InteractiveCommand)
+        else cmd._delegate.interpretador
+    )
     assert interp._repl_usar_alias_map == REPL_COBRA_MODULE_MAP
 
 
 @pytest.mark.parametrize(
     ("factory", "executor", "get_interp"),
     [
-        (lambda: InteractiveCommand(InterpretadorCobra()), lambda cmd, code: cmd.ejecutar_codigo(code), lambda cmd: cmd.interpretador),
-        (ReplCommandV2, lambda cmd, code: cmd._ejecutar_en_modo_normal(code), lambda cmd: cmd._delegate.interpretador),
+        (
+            lambda: InteractiveCommand(InterpretadorCobra()),
+            lambda cmd, code: cmd.ejecutar_codigo(code),
+            lambda cmd: cmd.interpretador,
+        ),
+        (
+            ReplCommandV2,
+            lambda cmd, code: cmd._ejecutar_en_modo_normal(code),
+            lambda cmd: cmd._delegate.interpretador,
+        ),
     ],
 )
-def test_repl_contract_sintaxis_usar_compat_parser_semantica_plana_numero_sin_prefijo(factory, executor, get_interp, monkeypatch):
+def test_repl_contract_sintaxis_usar_compat_parser_semantica_plana_numero_sin_prefijo(
+    factory, executor, get_interp, monkeypatch
+):
     mod_numero = _modulo_numero_stub()
 
     def _resolver_modulo(nombre: str, **_kwargs):
@@ -71,15 +92,41 @@ def test_repl_contract_sintaxis_usar_compat_parser_semantica_plana_numero_sin_pr
             return mod_numero
         raise ModuleNotFoundError(nombre)
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre: _resolver_modulo(nombre))
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre: _resolver_modulo(nombre))
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre: _resolver_modulo(nombre))
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: _resolver_modulo(nombre))
-    monkeypatch.setattr(cli_usar_loader, "obtener_modulo", lambda nombre: _resolver_modulo(nombre))
-    monkeypatch.setattr(cli_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: _resolver_modulo(nombre))
-    monkeypatch.setattr(cli_usar_loader, "obtener_modulo", lambda nombre: _resolver_modulo(nombre))
-    monkeypatch.setattr(cli_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: _resolver_modulo(nombre))
-    monkeypatch.setattr(cli_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: _resolver_modulo(nombre))
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo", lambda nombre: _resolver_modulo(nombre)
+    )
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo", lambda nombre: _resolver_modulo(nombre)
+    )
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo", lambda nombre: _resolver_modulo(nombre)
+    )
+    monkeypatch.setattr(
+        core_usar_loader,
+        "obtener_modulo_cobra_oficial",
+        lambda nombre: _resolver_modulo(nombre),
+    )
+    monkeypatch.setattr(
+        cli_usar_loader, "obtener_modulo", lambda nombre: _resolver_modulo(nombre)
+    )
+    monkeypatch.setattr(
+        cli_usar_loader,
+        "obtener_modulo_cobra_oficial",
+        lambda nombre: _resolver_modulo(nombre),
+    )
+    monkeypatch.setattr(
+        cli_usar_loader, "obtener_modulo", lambda nombre: _resolver_modulo(nombre)
+    )
+    monkeypatch.setattr(
+        cli_usar_loader,
+        "obtener_modulo_cobra_oficial",
+        lambda nombre: _resolver_modulo(nombre),
+    )
+    monkeypatch.setattr(
+        cli_usar_loader,
+        "obtener_modulo_cobra_oficial",
+        lambda nombre: _resolver_modulo(nombre),
+    )
 
     # monkeypatch.setattr(
     #     core_interpreter_module,
@@ -106,11 +153,21 @@ def test_repl_contract_sintaxis_usar_compat_parser_semantica_plana_numero_sin_pr
 @pytest.mark.parametrize(
     ("factory", "executor", "get_interp"),
     [
-        (lambda: InteractiveCommand(InterpretadorCobra()), lambda cmd, code: cmd.ejecutar_codigo(code), lambda cmd: cmd.interpretador),
-        (ReplCommandV2, lambda cmd, code: cmd._ejecutar_en_modo_normal(code), lambda cmd: cmd._delegate.interpretador),
+        (
+            lambda: InteractiveCommand(InterpretadorCobra()),
+            lambda cmd, code: cmd.ejecutar_codigo(code),
+            lambda cmd: cmd.interpretador,
+        ),
+        (
+            ReplCommandV2,
+            lambda cmd, code: cmd._ejecutar_en_modo_normal(code),
+            lambda cmd: cmd._delegate.interpretador,
+        ),
     ],
 )
-def test_repl_contract_sintaxis_usar_compat_parser_semantica_plana_texto_sin_prefijo(factory, executor, get_interp, monkeypatch):
+def test_repl_contract_sintaxis_usar_compat_parser_semantica_plana_texto_sin_prefijo(
+    factory, executor, get_interp, monkeypatch
+):
     mod_texto = _modulo_texto_stub()
 
     def _resolver_modulo(nombre: str, **_kwargs):
@@ -118,9 +175,19 @@ def test_repl_contract_sintaxis_usar_compat_parser_semantica_plana_texto_sin_pre
             return mod_texto
         raise ModuleNotFoundError(nombre)
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre: _resolver_modulo(nombre))
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: _resolver_modulo(nombre))
-    monkeypatch.setattr(cli_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: _resolver_modulo(nombre))
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo", lambda nombre: _resolver_modulo(nombre)
+    )
+    monkeypatch.setattr(
+        core_usar_loader,
+        "obtener_modulo_cobra_oficial",
+        lambda nombre: _resolver_modulo(nombre),
+    )
+    monkeypatch.setattr(
+        cli_usar_loader,
+        "obtener_modulo_cobra_oficial",
+        lambda nombre: _resolver_modulo(nombre),
+    )
     # monkeypatch.setattr(
     #     core_interpreter_module,
     #     "build_and_validate_usar_symbol_metadata",
@@ -142,11 +209,21 @@ def test_repl_contract_sintaxis_usar_compat_parser_semantica_plana_texto_sin_pre
 @pytest.mark.parametrize(
     ("factory", "executor", "get_interp"),
     [
-        (lambda: InteractiveCommand(InterpretadorCobra()), lambda cmd, code: cmd.ejecutar_codigo(code), lambda cmd: cmd.interpretador),
-        (ReplCommandV2, lambda cmd, code: cmd._ejecutar_en_modo_normal(code), lambda cmd: cmd._delegate.interpretador),
+        (
+            lambda: InteractiveCommand(InterpretadorCobra()),
+            lambda cmd, code: cmd.ejecutar_codigo(code),
+            lambda cmd: cmd.interpretador,
+        ),
+        (
+            ReplCommandV2,
+            lambda cmd, code: cmd._ejecutar_en_modo_normal(code),
+            lambda cmd: cmd._delegate.interpretador,
+        ),
     ],
 )
-def test_repl_usar_texto_end_to_end_superficie_publica_callables(factory, executor, get_interp):
+def test_repl_usar_texto_end_to_end_superficie_publica_callables(
+    factory, executor, get_interp
+):
     cmd = factory()
     interp = get_interp(cmd)
 
@@ -164,28 +241,28 @@ def test_repl_entrypoint_numero_es_finito_imprime_verdadero(capsys):
     cmd._ejecutar_en_modo_normal('usar "numero"')
     cmd._ejecutar_en_modo_normal("imprimir(es_finito(10))")
 
-    salida = [linea.strip() for linea in capsys.readouterr().out.splitlines() if linea.strip()]
+    salida = [
+        linea.strip() for linea in capsys.readouterr().out.splitlines() if linea.strip()
+    ]
     assert "verdadero" in salida
 
 
-def test_repl_entrypoint_texto_conserva_interprete_e_imprime_cuatro(capsys, monkeypatch):
+def test_repl_entrypoint_texto_conserva_interprete_e_imprime_cuatro(
+    capsys, monkeypatch
+):
     mod_texto = _modulo_texto_stub()
     monkeypatch.setitem(
         cli_usar_loader.USAR_RUNTIME_EXPORT_OVERRIDES,
         "texto",
         (*cli_usar_loader.USAR_RUNTIME_EXPORT_OVERRIDES["texto"], "longitud"),
     )
-    monkeypatch.setattr(
-        core_usar_loader, "obtener_modulo", lambda _nombre: mod_texto
-    )
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _nombre: mod_texto)
     monkeypatch.setattr(
         core_usar_loader,
         "obtener_modulo_cobra_oficial",
         lambda _nombre: mod_texto,
     )
-    monkeypatch.setattr(
-        cli_usar_loader, "obtener_modulo", lambda _nombre: mod_texto
-    )
+    monkeypatch.setattr(cli_usar_loader, "obtener_modulo", lambda _nombre: mod_texto)
     monkeypatch.setattr(
         cli_usar_loader,
         "obtener_modulo_cobra_oficial",
@@ -227,18 +304,31 @@ def test_repl_entrypoint_archivo_existe_booleano_sin_error_metadata(capsys):
 
 def test_repl_entrypoint_usar_archivo_sin_comillas_falla_por_sintaxis():
     cmd = ReplCommandV2()
-    with pytest.raises(ParserError, match=r"Token inesperado|Token no reconocido|sintaxis|SyntaxError|ruta de módulo entre comillas"):
+    with pytest.raises(
+        ParserError,
+        match=r"Token inesperado|Token no reconocido|sintaxis|SyntaxError|ruta de módulo entre comillas",
+    ):
         cmd._ejecutar_en_modo_normal("usar archivo")
 
 
 @pytest.mark.parametrize(
     ("factory", "executor", "get_interp"),
     [
-        (lambda: InteractiveCommand(InterpretadorCobra()), lambda cmd, code: cmd.ejecutar_codigo(code), lambda cmd: cmd.interpretador),
-        (ReplCommandV2, lambda cmd, code: cmd._ejecutar_en_modo_normal(code), lambda cmd: cmd._delegate.interpretador),
+        (
+            lambda: InteractiveCommand(InterpretadorCobra()),
+            lambda cmd, code: cmd.ejecutar_codigo(code),
+            lambda cmd: cmd.interpretador,
+        ),
+        (
+            ReplCommandV2,
+            lambda cmd, code: cmd._ejecutar_en_modo_normal(code),
+            lambda cmd: cmd._delegate.interpretador,
+        ),
     ],
 )
-def test_repl_contract_sintaxis_usar_compat_parser_semantica_plana_numpy_restringido_atomico(factory, executor, get_interp, monkeypatch):
+def test_repl_contract_sintaxis_usar_compat_parser_semantica_plana_numpy_restringido_atomico(
+    factory, executor, get_interp, monkeypatch
+):
     mod_numero = _modulo_numero_stub()
 
     def _resolver_modulo(nombre: str, **_kwargs):
@@ -246,9 +336,19 @@ def test_repl_contract_sintaxis_usar_compat_parser_semantica_plana_numpy_restrin
             return mod_numero
         raise ModuleNotFoundError(nombre)
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre: _resolver_modulo(nombre))
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: _resolver_modulo(nombre))
-    monkeypatch.setattr(cli_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: _resolver_modulo(nombre))
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo", lambda nombre: _resolver_modulo(nombre)
+    )
+    monkeypatch.setattr(
+        core_usar_loader,
+        "obtener_modulo_cobra_oficial",
+        lambda nombre: _resolver_modulo(nombre),
+    )
+    monkeypatch.setattr(
+        cli_usar_loader,
+        "obtener_modulo_cobra_oficial",
+        lambda nombre: _resolver_modulo(nombre),
+    )
     # monkeypatch.setattr(
     #     core_interpreter_module,
     #     "build_and_validate_usar_symbol_metadata",
@@ -261,7 +361,10 @@ def test_repl_contract_sintaxis_usar_compat_parser_semantica_plana_numpy_restrin
     estado_pre_numpy = dict(interp.contextos[-1].values)
     simbolos_pre = set(interp.contextos[-1].values.keys())
 
-    with pytest.raises(PermissionError, match=r"Importación no permitida en 'usar': 'numpy'.*usar_error\[modulo_fuera_catalogo_publico\]"):
+    with pytest.raises(
+        PermissionError,
+        match=r"Importación no permitida en 'usar': 'numpy'.*usar_error\[modulo_fuera_catalogo_publico\]",
+    ):
         executor(cmd, 'usar "numpy"')
 
     # Contrato de Cobra: `usar` es plano (sin `.`), no se expone namespace tipo `numero.*`.
@@ -272,9 +375,6 @@ def test_repl_contract_sintaxis_usar_compat_parser_semantica_plana_numpy_restrin
 
     # Después de usar "numero", es_finito debe estar disponible directamente
     assert interp.obtener_variable("es_finito")(10) is True
-
-
-
 
 
 def _modulo_tiempo_stub() -> ModuleType:
@@ -295,10 +395,14 @@ def _modulo_datos_stub() -> ModuleType:
     mod.__file__ = "/workspace/pCobra/src/pcobra/corelibs/datos.py"
     return mod
 
+
 def _modulo_numero_multi_export_stub() -> ModuleType:
     mod = ModuleType("numero")
     mod.__all__ = ["es_finito", "es_par"]
-    mod.es_finito = lambda valor: valor == valor and valor not in (float("inf"), float("-inf"))
+    mod.es_finito = lambda valor: valor == valor and valor not in (
+        float("inf"),
+        float("-inf"),
+    )
     mod.es_par = lambda valor: isinstance(valor, int) and valor % 2 == 0
     mod.__file__ = "/workspace/pCobra/src/pcobra/corelibs/numero.py"
     return mod
@@ -326,7 +430,15 @@ def _modulo_holobit_publico_stub() -> ModuleType:
         "medir",
     ]
     for nombre in mod.__all__:
-        setattr(mod, nombre, lambda *args, _nombre=nombre, **kwargs: {"ok": _nombre, "args": args, "kwargs": kwargs})
+        setattr(
+            mod,
+            nombre,
+            lambda *args, _nombre=nombre, **kwargs: {
+                "ok": _nombre,
+                "args": args,
+                "kwargs": kwargs,
+            },
+        )
     mod.Holobit = object
     mod._to_sdk_holobit = lambda *_args, **_kwargs: None
     mod.holobit_sdk = object()
@@ -337,11 +449,21 @@ def _modulo_holobit_publico_stub() -> ModuleType:
 @pytest.mark.parametrize(
     ("factory", "executor", "get_interp"),
     [
-        (lambda: InteractiveCommand(InterpretadorCobra()), lambda cmd, code: cmd.ejecutar_codigo(code), lambda cmd: cmd.interpretador),
-        (ReplCommandV2, lambda cmd, code: cmd._ejecutar_en_modo_normal(code), lambda cmd: cmd._delegate.interpretador),
+        (
+            lambda: InteractiveCommand(InterpretadorCobra()),
+            lambda cmd, code: cmd.ejecutar_codigo(code),
+            lambda cmd: cmd.interpretador,
+        ),
+        (
+            ReplCommandV2,
+            lambda cmd, code: cmd._ejecutar_en_modo_normal(code),
+            lambda cmd: cmd._delegate.interpretador,
+        ),
     ],
 )
-def test_repl_contract_sintaxis_usar_compat_parser_semantica_plana_colision_no_sobrescribe_usuario(factory, executor, get_interp, monkeypatch):
+def test_repl_contract_sintaxis_usar_compat_parser_semantica_plana_colision_no_sobrescribe_usuario(
+    factory, executor, get_interp, monkeypatch
+):
     mod_numero = _modulo_numero_multi_export_stub()
     mod_texto = _modulo_texto_stub()
 
@@ -352,9 +474,19 @@ def test_repl_contract_sintaxis_usar_compat_parser_semantica_plana_colision_no_s
             return mod_texto
         raise ModuleNotFoundError(nombre)
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre: _resolver_modulo(nombre))
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: _resolver_modulo(nombre))
-    monkeypatch.setattr(cli_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: _resolver_modulo(nombre))
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo", lambda nombre: _resolver_modulo(nombre)
+    )
+    monkeypatch.setattr(
+        core_usar_loader,
+        "obtener_modulo_cobra_oficial",
+        lambda nombre: _resolver_modulo(nombre),
+    )
+    monkeypatch.setattr(
+        cli_usar_loader,
+        "obtener_modulo_cobra_oficial",
+        lambda nombre: _resolver_modulo(nombre),
+    )
     # monkeypatch.setattr(
     #     core_interpreter_module,
     #     "build_and_validate_usar_symbol_metadata",
@@ -375,11 +507,21 @@ def test_repl_contract_sintaxis_usar_compat_parser_semantica_plana_colision_no_s
 @pytest.mark.parametrize(
     ("factory", "executor", "get_interp"),
     [
-        (lambda: InteractiveCommand(InterpretadorCobra()), lambda cmd, code: cmd.ejecutar_codigo(code), lambda cmd: cmd.interpretador),
-        (ReplCommandV2, lambda cmd, code: cmd._ejecutar_en_modo_normal(code), lambda cmd: cmd._delegate.interpretador),
+        (
+            lambda: InteractiveCommand(InterpretadorCobra()),
+            lambda cmd, code: cmd.ejecutar_codigo(code),
+            lambda cmd: cmd.interpretador,
+        ),
+        (
+            ReplCommandV2,
+            lambda cmd, code: cmd._ejecutar_en_modo_normal(code),
+            lambda cmd: cmd._delegate.interpretador,
+        ),
     ],
 )
-def test_repl_rechazo_externo_no_inyecta_simbolos(factory, executor, get_interp, monkeypatch):
+def test_repl_rechazo_externo_no_inyecta_simbolos(
+    factory, executor, get_interp, monkeypatch
+):
     mod_numero = _modulo_numero_stub()
 
     def _resolver_modulo(nombre: str, **_kwargs):
@@ -387,16 +529,28 @@ def test_repl_rechazo_externo_no_inyecta_simbolos(factory, executor, get_interp,
             return mod_numero
         raise ModuleNotFoundError(nombre)
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre: _resolver_modulo(nombre))
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: _resolver_modulo(nombre))
-    monkeypatch.setattr(cli_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: _resolver_modulo(nombre))
-
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo", lambda nombre: _resolver_modulo(nombre)
+    )
+    monkeypatch.setattr(
+        core_usar_loader,
+        "obtener_modulo_cobra_oficial",
+        lambda nombre: _resolver_modulo(nombre),
+    )
+    monkeypatch.setattr(
+        cli_usar_loader,
+        "obtener_modulo_cobra_oficial",
+        lambda nombre: _resolver_modulo(nombre),
+    )
 
     cmd = factory()
     interp = get_interp(cmd)
     estado_pre = dict(interp.contextos[-1].values)
 
-    with pytest.raises(PermissionError, match=r"(módulo fuera del catálogo público|modulo_fuera_catalogo_publico)"):
+    with pytest.raises(
+        PermissionError,
+        match=r"(módulo fuera del catálogo público|modulo_fuera_catalogo_publico)",
+    ):
         executor(cmd, 'usar "requests"')
 
     assert estado_pre == interp.contextos[-1].values
@@ -428,7 +582,9 @@ def test_interprete_corelibs_superficie_minima_requerida():
     assert interp.obtener_variable("longitud")("cobra") == 5
 
 
-def test_seguridad_usar_numpy_error_corto_sin_traceback_modo_normal(caplog, monkeypatch):
+def test_seguridad_usar_numpy_error_corto_sin_traceback_modo_normal(
+    caplog, monkeypatch
+):
     monkeypatch.delenv("PCOBRA_DEBUG_RUNTIME", raising=False)
     monkeypatch.delenv("PCOBRA_DEBUG_TRACES", raising=False)
     interp = InterpretadorCobra()
@@ -439,20 +595,31 @@ def test_seguridad_usar_numpy_error_corto_sin_traceback_modo_normal(caplog, monk
 
     mensaje = str(excinfo.value)
     assert "Traceback" not in mensaje
-    assert "Importación no permitida en 'usar': 'numpy'. Es un módulo backend/no canónico y no forma parte de la API pública." in mensaje
+    assert (
+        "Importación no permitida en 'usar': 'numpy'. Es un módulo backend/no canónico y no forma parte de la API pública."
+        in mensaje
+    )
     assert "Traceback" not in caplog.text
-
-
 
 
 @pytest.mark.parametrize(
     ("factory", "executor", "get_interp"),
     [
-        (lambda: InteractiveCommand(InterpretadorCobra()), lambda cmd, code: cmd.ejecutar_codigo(code), lambda cmd: cmd.interpretador),
-        (ReplCommandV2, lambda cmd, code: cmd._ejecutar_en_modo_normal(code), lambda cmd: cmd._delegate.interpretador),
+        (
+            lambda: InteractiveCommand(InterpretadorCobra()),
+            lambda cmd, code: cmd.ejecutar_codigo(code),
+            lambda cmd: cmd.interpretador,
+        ),
+        (
+            ReplCommandV2,
+            lambda cmd, code: cmd._ejecutar_en_modo_normal(code),
+            lambda cmd: cmd._delegate.interpretador,
+        ),
     ],
 )
-def test_repl_integracion_usar_modulos_publicos_end_to_end(factory, executor, get_interp):
+def test_repl_integracion_usar_modulos_publicos_end_to_end(
+    factory, executor, get_interp
+):
     cmd = factory()
     interp = get_interp(cmd)
 
@@ -492,11 +659,16 @@ def test_repl_integracion_usar_modulos_publicos_end_to_end(factory, executor, ge
 @pytest.mark.parametrize(
     ("factory", "executor"),
     [
-        (lambda: InteractiveCommand(InterpretadorCobra()), lambda cmd, code: cmd.ejecutar_codigo(code)),
+        (
+            lambda: InteractiveCommand(InterpretadorCobra()),
+            lambda cmd, code: cmd.ejecutar_codigo(code),
+        ),
         (ReplCommandV2, lambda cmd, code: cmd._ejecutar_en_modo_normal(code)),
     ],
 )
-def test_repl_seguridad_numpy_rechazado_mensaje_corto_sin_traceback(factory, executor, monkeypatch):
+def test_repl_seguridad_numpy_rechazado_mensaje_corto_sin_traceback(
+    factory, executor, monkeypatch
+):
     monkeypatch.delenv("PCOBRA_DEBUG_RUNTIME", raising=False)
     monkeypatch.delenv("PCOBRA_DEBUG_TRACES", raising=False)
 
@@ -505,14 +677,20 @@ def test_repl_seguridad_numpy_rechazado_mensaje_corto_sin_traceback(factory, exe
         executor(cmd, 'usar "numpy"')
 
     mensaje = str(excinfo.value)
-    assert "Importación no permitida en 'usar': 'numpy'. Es un módulo backend/no canónico y no forma parte de la API pública." in mensaje
+    assert (
+        "Importación no permitida en 'usar': 'numpy'. Es un módulo backend/no canónico y no forma parte de la API pública."
+        in mensaje
+    )
     assert "Traceback" not in mensaje
 
 
 @pytest.mark.parametrize(
     ("factory", "executor"),
     [
-        (lambda: InteractiveCommand(InterpretadorCobra()), lambda cmd, code: cmd.ejecutar_codigo(code)),
+        (
+            lambda: InteractiveCommand(InterpretadorCobra()),
+            lambda cmd, code: cmd.ejecutar_codigo(code),
+        ),
         (ReplCommandV2, lambda cmd, code: cmd._ejecutar_en_modo_normal(code)),
     ],
 )
@@ -522,17 +700,30 @@ def test_repl_rechazo_numpy_es_persistente(factory, executor):
         with pytest.raises(PermissionError) as excinfo:
             executor(cmd, 'usar "numpy"')
         mensaje = str(excinfo.value)
-        assert "Importación no permitida en 'usar': 'numpy'. Es un módulo backend/no canónico y no forma parte de la API pública." in mensaje
+        assert (
+            "Importación no permitida en 'usar': 'numpy'. Es un módulo backend/no canónico y no forma parte de la API pública."
+            in mensaje
+        )
 
 
 @pytest.mark.parametrize(
     ("factory", "executor", "get_interp"),
     [
-        (lambda: InteractiveCommand(InterpretadorCobra()), lambda cmd, code: cmd.ejecutar_codigo(code), lambda cmd: cmd.interpretador),
-        (ReplCommandV2, lambda cmd, code: cmd._ejecutar_en_modo_normal(code), lambda cmd: cmd._delegate.interpretador),
+        (
+            lambda: InteractiveCommand(InterpretadorCobra()),
+            lambda cmd, code: cmd.ejecutar_codigo(code),
+            lambda cmd: cmd.interpretador,
+        ),
+        (
+            ReplCommandV2,
+            lambda cmd, code: cmd._ejecutar_en_modo_normal(code),
+            lambda cmd: cmd._delegate.interpretador,
+        ),
     ],
 )
-def test_repl_usar_datos_longitud_imprimir_lista_y_variable(factory, executor, get_interp, capsys):
+def test_repl_usar_datos_longitud_imprimir_lista_y_variable(
+    factory, executor, get_interp, capsys
+):
     cmd = factory()
     interp = get_interp(cmd)
 
@@ -557,11 +748,21 @@ def test_repl_usar_datos_longitud_imprimir_lista_y_variable(factory, executor, g
 @pytest.mark.parametrize(
     ("factory", "executor", "get_interp"),
     [
-        (lambda: InteractiveCommand(InterpretadorCobra()), lambda cmd, code: cmd.ejecutar_codigo(code), lambda cmd: cmd.interpretador),
-        (ReplCommandV2, lambda cmd, code: cmd._ejecutar_en_modo_normal(code), lambda cmd: cmd._delegate.interpretador),
+        (
+            lambda: InteractiveCommand(InterpretadorCobra()),
+            lambda cmd, code: cmd.ejecutar_codigo(code),
+            lambda cmd: cmd.interpretador,
+        ),
+        (
+            ReplCommandV2,
+            lambda cmd, code: cmd._ejecutar_en_modo_normal(code),
+            lambda cmd: cmd._delegate.interpretador,
+        ),
     ],
 )
-def test_repl_aceptacion_positiva_usar_archivo_existe_readme(factory, executor, get_interp, capsys):
+def test_repl_aceptacion_positiva_usar_archivo_existe_readme(
+    factory, executor, get_interp, capsys
+):
     cmd = factory()
     _ = get_interp(cmd)
 
@@ -577,8 +778,16 @@ def test_repl_aceptacion_positiva_usar_archivo_existe_readme(factory, executor, 
 @pytest.mark.parametrize(
     ("factory", "executor", "get_interp"),
     [
-        (lambda: InteractiveCommand(InterpretadorCobra()), lambda cmd, code: cmd.ejecutar_codigo(code), lambda cmd: cmd.interpretador),
-        (ReplCommandV2, lambda cmd, code: cmd._ejecutar_en_modo_normal(code), lambda cmd: cmd._delegate.interpretador),
+        (
+            lambda: InteractiveCommand(InterpretadorCobra()),
+            lambda cmd, code: cmd.ejecutar_codigo(code),
+            lambda cmd: cmd.interpretador,
+        ),
+        (
+            ReplCommandV2,
+            lambda cmd, code: cmd._ejecutar_en_modo_normal(code),
+            lambda cmd: cmd._delegate.interpretador,
+        ),
     ],
 )
 def test_repl_numpy_rechazo_no_deja_estado_parcial(factory, executor, get_interp):
@@ -586,7 +795,10 @@ def test_repl_numpy_rechazo_no_deja_estado_parcial(factory, executor, get_interp
     interp = get_interp(cmd)
     estado_pre = dict(interp.contextos[-1].values)
 
-    with pytest.raises(PermissionError, match=r"Importación no permitida en 'usar': 'numpy'.*usar_error\[modulo_fuera_catalogo_publico\]"):
+    with pytest.raises(
+        PermissionError,
+        match=r"Importación no permitida en 'usar': 'numpy'.*usar_error\[modulo_fuera_catalogo_publico\]",
+    ):
         executor(cmd, 'usar "numpy"')
 
     assert dict(interp.contextos[-1].values) == estado_pre
@@ -597,8 +809,16 @@ def test_repl_numpy_rechazo_no_deja_estado_parcial(factory, executor, get_interp
 @pytest.mark.parametrize(
     ("factory", "executor", "get_interp"),
     [
-        (lambda: InteractiveCommand(InterpretadorCobra()), lambda cmd, code: cmd.ejecutar_codigo(code), lambda cmd: cmd.interpretador),
-        (ReplCommandV2, lambda cmd, code: cmd._ejecutar_en_modo_normal(code), lambda cmd: cmd._delegate.interpretador),
+        (
+            lambda: InteractiveCommand(InterpretadorCobra()),
+            lambda cmd, code: cmd.ejecutar_codigo(code),
+            lambda cmd: cmd.interpretador,
+        ),
+        (
+            ReplCommandV2,
+            lambda cmd, code: cmd._ejecutar_en_modo_normal(code),
+            lambda cmd: cmd._delegate.interpretador,
+        ),
     ],
 )
 def test_repl_usar_no_expone_simbolos_no_publicos(factory, executor, get_interp):
@@ -611,16 +831,23 @@ def test_repl_usar_no_expone_simbolos_no_publicos(factory, executor, get_interp)
     with pytest.raises(NameError, match=r"^Variable no declarada: normalizar_unicode$"):
         interp.contextos[-1].get("normalizar_unicode")
 
-def test_logs_usar_conflictos_formato_resumido_sin_diccionario_gigante(caplog, monkeypatch):
+
+def test_logs_usar_conflictos_formato_resumido_sin_diccionario_gigante(
+    caplog, monkeypatch
+):
     modulo = ModuleType("texto")
     modulo.__all__ = ["A_snake", "a_snake"]
     modulo.A_snake = lambda texto: texto
     modulo.a_snake = lambda texto: texto
     modulo.__file__ = "/workspace/pCobra/src/pcobra/corelibs/texto.py"
     monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _nombre: modulo)
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: modulo)
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: modulo
+    )
     monkeypatch.setattr(cli_usar_loader, "obtener_modulo", lambda _nombre: modulo)
-    monkeypatch.setattr(cli_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: modulo)
+    monkeypatch.setattr(
+        cli_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: modulo
+    )
     monkeypatch.delenv("PCOBRA_DEBUG_RUNTIME", raising=False)
     monkeypatch.delenv("PCOBRA_DEBUG_TRACES", raising=False)
     caplog.set_level(logging.INFO)
@@ -634,7 +861,11 @@ def test_logs_usar_conflictos_formato_resumido_sin_diccionario_gigante(caplog, m
     with pytest.raises(NameError):
         interp.obtener_variable("A_snake")
 
-    eventos = [rec.message for rec in caplog.records if "USAR_SANITIZE_REJECTION_METRICS" in rec.message]
+    eventos = [
+        rec.message
+        for rec in caplog.records
+        if "USAR_SANITIZE_REJECTION_METRICS" in rec.message
+    ]
     assert eventos
     ultimo = eventos[-1]
     assert "rejection_metrics_by_codigo" in ultimo
@@ -645,11 +876,21 @@ def test_logs_usar_conflictos_formato_resumido_sin_diccionario_gigante(caplog, m
 @pytest.mark.parametrize(
     ("factory", "executor", "get_interp"),
     [
-        (lambda: InteractiveCommand(InterpretadorCobra()), lambda cmd, code: cmd.ejecutar_codigo(code), lambda cmd: cmd.interpretador),
-        (ReplCommandV2, lambda cmd, code: cmd._ejecutar_en_modo_normal(code), lambda cmd: cmd._delegate.interpretador),
+        (
+            lambda: InteractiveCommand(InterpretadorCobra()),
+            lambda cmd, code: cmd.ejecutar_codigo(code),
+            lambda cmd: cmd.interpretador,
+        ),
+        (
+            ReplCommandV2,
+            lambda cmd, code: cmd._ejecutar_en_modo_normal(code),
+            lambda cmd: cmd._delegate.interpretador,
+        ),
     ],
 )
-def test_repl_contract_resuelve_usar_datos_y_tiempo(factory, executor, get_interp, monkeypatch):
+def test_repl_contract_resuelve_usar_datos_y_tiempo(
+    factory, executor, get_interp, monkeypatch
+):
     mod_datos = _modulo_datos_stub()
     mod_tiempo = _modulo_tiempo_stub()
 
@@ -660,12 +901,30 @@ def test_repl_contract_resuelve_usar_datos_y_tiempo(factory, executor, get_inter
             return mod_tiempo
         raise ModuleNotFoundError(nombre)
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre: _resolver_modulo(nombre))
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre: _resolver_modulo(nombre))
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: _resolver_modulo(nombre))
-    monkeypatch.setattr(cli_usar_loader, "obtener_modulo", lambda nombre: _resolver_modulo(nombre))
-    monkeypatch.setattr(cli_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: _resolver_modulo(nombre))
-    monkeypatch.setattr(cli_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: _resolver_modulo(nombre))
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo", lambda nombre: _resolver_modulo(nombre)
+    )
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo", lambda nombre: _resolver_modulo(nombre)
+    )
+    monkeypatch.setattr(
+        core_usar_loader,
+        "obtener_modulo_cobra_oficial",
+        lambda nombre: _resolver_modulo(nombre),
+    )
+    monkeypatch.setattr(
+        cli_usar_loader, "obtener_modulo", lambda nombre: _resolver_modulo(nombre)
+    )
+    monkeypatch.setattr(
+        cli_usar_loader,
+        "obtener_modulo_cobra_oficial",
+        lambda nombre: _resolver_modulo(nombre),
+    )
+    monkeypatch.setattr(
+        cli_usar_loader,
+        "obtener_modulo_cobra_oficial",
+        lambda nombre: _resolver_modulo(nombre),
+    )
     # monkeypatch.setattr(
     #     core_interpreter_module,
     #     "build_and_validate_usar_symbol_metadata",
@@ -682,13 +941,14 @@ def test_repl_contract_resuelve_usar_datos_y_tiempo(factory, executor, get_inter
     assert interp.obtener_variable("ahora")() == "2026-05-03T00:00:00"
 
 
-def test_repl_contract_seguridad_usar_holobit_restringe_internals_y_saneamiento(monkeypatch):
+def test_repl_contract_seguridad_usar_holobit_restringe_internals_y_saneamiento(
+    monkeypatch,
+):
     mod_holobit = _modulo_holobit_publico_stub()
     rel_path_holobit = cli_usar_loader.REPL_COBRA_MODULE_INTERNAL_PATH_MAP["holobit"]
     mod_holobit.__file__ = str(
         (
-            Path(cli_usar_loader.__file__).resolve().parents[3]
-            / rel_path_holobit
+            Path(cli_usar_loader.__file__).resolve().parents[3] / rel_path_holobit
         ).resolve()
     )
 
@@ -699,7 +959,11 @@ def test_repl_contract_seguridad_usar_holobit_restringe_internals_y_saneamiento(
             return mod_holobit
         raise ModuleNotFoundError(nombre)
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: _resolver_modulo(nombre))
+    monkeypatch.setattr(
+        core_usar_loader,
+        "obtener_modulo_cobra_oficial",
+        lambda nombre: _resolver_modulo(nombre),
+    )
 
     interp = InterpretadorCobra()
     interp.configurar_restriccion_usar_repl(alias_map)
@@ -715,7 +979,17 @@ def test_repl_contract_seguridad_usar_holobit_restringe_internals_y_saneamiento(
         assert simbolo in interp.contextos[-1].values
 
     _assert_contrato_simbolos_saneados(simbolos_holobit)
-    assert simbolos_holobit == {"crear_holobit", "validar_holobit", "serializar_holobit", "deserializar_holobit", "proyectar", "transformar", "graficar", "combinar", "medir"}
+    assert simbolos_holobit == {
+        "crear_holobit",
+        "validar_holobit",
+        "serializar_holobit",
+        "deserializar_holobit",
+        "proyectar",
+        "transformar",
+        "graficar",
+        "combinar",
+        "medir",
+    }
 
     assert "Holobit" not in interp.contextos[-1].values
     assert "crear_holobit" in interp.contextos[-1].values
@@ -734,23 +1008,21 @@ def test_repl_contract_seguridad_usar_holobit_restringe_internals_y_saneamiento(
     assert estado_pre == cmd.interpretador.contextos[-1].values
 
 
-def test_repl_contract_seguridad_usar_atomico_holobit_y_datos_sin_overwrite(monkeypatch):
+def test_repl_contract_seguridad_usar_atomico_holobit_y_datos_sin_overwrite(
+    monkeypatch,
+):
     mod_holobit = _modulo_holobit_publico_stub()
     rel_path_holobit = cli_usar_loader.REPL_COBRA_MODULE_INTERNAL_PATH_MAP["holobit"]
     mod_holobit.__file__ = str(
         (
-            Path(cli_usar_loader.__file__).resolve().parents[3]
-            / rel_path_holobit
+            Path(cli_usar_loader.__file__).resolve().parents[3] / rel_path_holobit
         ).resolve()
     )
 
     mod_datos = _modulo_datos_stub()
     rel_path_datos = cli_usar_loader.REPL_COBRA_MODULE_INTERNAL_PATH_MAP["datos"]
     mod_datos.__file__ = str(
-        (
-            Path(cli_usar_loader.__file__).resolve().parents[3]
-            / rel_path_datos
-        ).resolve()
+        (Path(cli_usar_loader.__file__).resolve().parents[3] / rel_path_datos).resolve()
     )
     alias_map = {**REPL_COBRA_MODULE_MAP, "holobit": "holobit"}
 
@@ -761,7 +1033,11 @@ def test_repl_contract_seguridad_usar_atomico_holobit_y_datos_sin_overwrite(monk
             return mod_datos
         raise ModuleNotFoundError(nombre)
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: _resolver_modulo(nombre))
+    monkeypatch.setattr(
+        core_usar_loader,
+        "obtener_modulo_cobra_oficial",
+        lambda nombre: _resolver_modulo(nombre),
+    )
 
     interp = InterpretadorCobra()
     interp.configurar_restriccion_usar_repl(alias_map)
@@ -770,6 +1046,7 @@ def test_repl_contract_seguridad_usar_atomico_holobit_y_datos_sin_overwrite(monk
     interp.contextos[-1].define("graficar", lambda _hb: "ocupado")
     estado_pre_holobit = dict(interp.contextos[-1].values)
     with pytest.raises(NameError) as exc_holobit:
+
         class _NodoUsarHolobit:
             modulo = "holobit"
 
@@ -787,6 +1064,7 @@ def test_repl_contract_seguridad_usar_atomico_holobit_y_datos_sin_overwrite(monk
     interp.contextos[-1].define("longitud", lambda _v: -1)
     estado_pre_datos = dict(interp.contextos[-1].values)
     with pytest.raises(NameError) as exc_datos:
+
         class _NodoUsarDatos:
             modulo = "datos"
 
@@ -826,14 +1104,20 @@ def test_holobit_corelib_exporta_solo_simbolos_canonicos_publicos():
     for simbolo in holobit_corelib.__all__:
         assert callable(getattr(holobit_corelib, simbolo))
 
-    assert not hasattr(holobit_corelib, "__all__") or "Holobit" not in holobit_corelib.__all__
+    assert (
+        not hasattr(holobit_corelib, "__all__")
+        or "Holobit" not in holobit_corelib.__all__
+    )
     assert "holobit_sdk" not in holobit_corelib.__all__
     assert "_to_sdk_holobit" not in holobit_corelib.__all__
     assert all("__" not in simbolo for simbolo in holobit_corelib.__all__)
 
 
 @pytest.mark.parametrize("modulo", sorted(REPL_COBRA_MODULE_MAP.keys()))
-def test_repl_contract_pipeline_completo_por_modulo_canonico(monkeypatch, tmp_path, modulo):
+def test_repl_contract_pipeline_completo_por_modulo_canonico(
+    monkeypatch, tmp_path, modulo
+):
+    monkeypatch.setenv("COBRA_IO_BASE_DIR", str(tmp_path))
     mod = ModuleType(modulo)
     expected_symbols = []
 
@@ -850,18 +1134,39 @@ def test_repl_contract_pipeline_completo_por_modulo_canonico(monkeypatch, tmp_pa
             "medir",
         ]
         for nombre in expected_symbols:
-            setattr(mod, nombre, lambda *args, _mod=modulo, _nombre=nombre, **kwargs: {"modulo": _mod, "simbolo": _nombre, "args": args, "kwargs": kwargs})
-        monkeypatch.setattr("pcobra.corelibs.holobit._runtime_graficar", lambda _hb: "holobit-render")
+            setattr(
+                mod,
+                nombre,
+                lambda *args, _mod=modulo, _nombre=nombre, **kwargs: {
+                    "modulo": _mod,
+                    "simbolo": _nombre,
+                    "args": args,
+                    "kwargs": kwargs,
+                },
+            )
+        monkeypatch.setattr(
+            "pcobra.corelibs.holobit._runtime_graficar", lambda _hb: "holobit-render"
+        )
     elif modulo == "numero":
         expected_symbols = ["es_finito", "signo"]
-        setattr(mod, "es_finito", lambda valor: valor == valor and valor not in (float("inf"), float("-inf")))
-        setattr(mod, "signo", lambda valor: -1 if valor < 0 else (1 if valor > 0 else 0))
+        setattr(
+            mod,
+            "es_finito",
+            lambda valor: valor == valor and valor not in (float("inf"), float("-inf")),
+        )
+        setattr(
+            mod, "signo", lambda valor: -1 if valor < 0 else (1 if valor > 0 else 0)
+        )
     elif modulo == "texto":
         expected_symbols = ["mayusculas", "recortar", "repetir", "quitar_acentos"]
         setattr(mod, "mayusculas", lambda texto: str(texto).upper())
         setattr(mod, "recortar", lambda texto: str(texto).strip())
         setattr(mod, "repetir", lambda texto, veces=2: str(texto) * int(veces))
-        setattr(mod, "quitar_acentos", lambda texto: str(texto).translate(str.maketrans("áéíóú", "aeiou")))
+        setattr(
+            mod,
+            "quitar_acentos",
+            lambda texto: str(texto).translate(str.maketrans("áéíóú", "aeiou")),
+        )
     elif modulo == "datos":
         expected_symbols = ["longitud", "elemento"]
         setattr(mod, "longitud", lambda valores: len(valores))
@@ -877,38 +1182,92 @@ def test_repl_contract_pipeline_completo_por_modulo_canonico(monkeypatch, tmp_pa
         expected_symbols = ["existe"]
         setattr(mod, "existe", lambda ruta: True)
     elif modulo == "sistema":
-        expected_symbols = ["obtener_os", "ejecutar", "ejecutar_async", "ejecutar_stream", "obtener_env", "listar_dir", "directorio_actual"]
+        expected_symbols = [
+            "obtener_os",
+            "ejecutar",
+            "ejecutar_async",
+            "ejecutar_stream",
+            "obtener_env",
+            "listar_dir",
+            "directorio_actual",
+        ]
         setattr(mod, "obtener_os", lambda: "windows")
-        setattr(mod, "ejecutar", lambda comando, permitidos=None: {"salida": "", "error": "", "codigo": 0})
-        setattr(mod, "ejecutar_async", lambda comando, permitidos=None: asyncio.Future())
+        setattr(
+            mod,
+            "ejecutar",
+            lambda comando, permitidos=None: {"salida": "", "error": "", "codigo": 0},
+        )
+        setattr(
+            mod, "ejecutar_async", lambda comando, permitidos=None: asyncio.Future()
+        )
         setattr(mod, "ejecutar_stream", lambda comando, permitidos=None: [])
         setattr(mod, "obtener_env", lambda nombre: "valor")
         setattr(mod, "listar_dir", lambda ruta: [])
         setattr(mod, "directorio_actual", lambda: Path("."))
-        monkeypatch.setattr("pcobra.corelibs.sistema._verificar_ruta", lambda exe_real, st_dev, st_ino: None)
-        monkeypatch.setattr("pcobra.corelibs.sistema._resolver_ejecutable", lambda comando, permitidos: ([r"C:\\cobra\\mock.exe", *list(comando)[1:]], r"C:\\cobra\\mock.exe", 10, 1, 2))
-        monkeypatch.setattr("pcobra.corelibs.sistema._verificar_descriptor", lambda *args: None)
+        monkeypatch.setattr(
+            "pcobra.corelibs.sistema._verificar_ruta",
+            lambda exe_real, st_dev, st_ino: None,
+        )
+        monkeypatch.setattr(
+            "pcobra.corelibs.sistema._resolver_ejecutable",
+            lambda comando, permitidos: (
+                [r"C:\\cobra\\mock.exe", *list(comando)[1:]],
+                r"C:\\cobra\\mock.exe",
+                10,
+                1,
+                2,
+            ),
+        )
+        monkeypatch.setattr(
+            "pcobra.corelibs.sistema._verificar_descriptor", lambda *args: None
+        )
         monkeypatch.setattr("os.close", lambda _fd: None)
-        monkeypatch.setattr("subprocess.run", lambda *args, **kwargs: type("Result", (object,), {"stdout": "", "stderr": "", "returncode": 0})())
+        monkeypatch.setattr(
+            "subprocess.run",
+            lambda *args, **kwargs: type(
+                "Result", (object,), {"stdout": "", "stderr": "", "returncode": 0}
+            )(),
+        )
     elif modulo == "red":
-        expected_symbols = ["obtener_url", "enviar_post", "obtener_url_async", "enviar_post_async", "descargar_archivo", "obtener_json", "obtener_url_texto"]
+        expected_symbols = [
+            "obtener_url",
+            "enviar_post",
+            "obtener_url_async",
+            "enviar_post_async",
+            "descargar_archivo",
+            "obtener_json",
+            "obtener_url_texto",
+        ]
         for nombre in expected_symbols:
             if nombre == "obtener_url":
                 setattr(mod, nombre, lambda url, permitir_redirecciones=False: "")
             elif nombre == "enviar_post":
-                setattr(mod, nombre, lambda url, datos, permitir_redirecciones=False: "")
+                setattr(
+                    mod, nombre, lambda url, datos, permitir_redirecciones=False: ""
+                )
             elif nombre == "obtener_url_async":
                 setattr(mod, nombre, lambda url, permitir_redirecciones=False: "")
             elif nombre == "enviar_post_async":
-                setattr(mod, nombre, lambda url, datos, permitir_redirecciones=False: "")
+                setattr(
+                    mod, nombre, lambda url, datos, permitir_redirecciones=False: ""
+                )
             elif nombre == "descargar_archivo":
-                setattr(mod, nombre, lambda url, destino, permitir_redirecciones=False, crear_padres=True: Path(destino))
+                setattr(
+                    mod,
+                    nombre,
+                    lambda url, destino, permitir_redirecciones=False, crear_padres=True: Path(
+                        destino
+                    ),
+                )
             elif nombre == "obtener_url_texto":
                 setattr(mod, nombre, lambda url, permitir_redirecciones=False: "")
             elif nombre == "obtener_json":
                 setattr(mod, nombre, lambda url, permitir_redirecciones=False: {})
         monkeypatch.setattr("pcobra.corelibs.red._validar_esquema", lambda url: None)
-        monkeypatch.setattr("pcobra.corelibs.red._obtener_hosts_permitidos", lambda: {"example.com"})
+        monkeypatch.setattr(
+            "pcobra.corelibs.red._obtener_hosts_permitidos", lambda: {"example.com"}
+        )
+
         class _Response:
             status_code = 200
             url = "https://example.com"
@@ -927,10 +1286,47 @@ def test_repl_contract_pipeline_completo_por_modulo_canonico(monkeypatch, tmp_pa
 
         monkeypatch.setattr("requests.get", lambda *args, **kwargs: _Response())
         monkeypatch.setattr("requests.post", lambda *args, **kwargs: _Response())
-        monkeypatch.setattr(httpx, "get", lambda *args, **kwargs: type("Response", (object,), {"status_code": 200, "raise_for_status": lambda: None, "url": "http://example.com", "headers": {}, "iter_content": lambda chunk_size: [b""]})(), raising=False)
-        monkeypatch.setattr(httpx, "post", lambda *args, **kwargs: type("Response", (object,), {"status_code": 200, "raise_for_status": lambda: None, "url": "http://example.com", "headers": {}, "iter_content": lambda chunk_size: [b""]})(), raising=False)
+        monkeypatch.setattr(
+            httpx,
+            "get",
+            lambda *args, **kwargs: type(
+                "Response",
+                (object,),
+                {
+                    "status_code": 200,
+                    "raise_for_status": lambda: None,
+                    "url": "http://example.com",
+                    "headers": {},
+                    "iter_content": lambda chunk_size: [b""],
+                },
+            )(),
+            raising=False,
+        )
+        monkeypatch.setattr(
+            httpx,
+            "post",
+            lambda *args, **kwargs: type(
+                "Response",
+                (object,),
+                {
+                    "status_code": 200,
+                    "raise_for_status": lambda: None,
+                    "url": "http://example.com",
+                    "headers": {},
+                    "iter_content": lambda chunk_size: [b""],
+                },
+            )(),
+            raising=False,
+        )
     elif modulo == "asincrono":
-        expected_symbols = ["grupo_tareas", "limitar_tiempo", "proteger_tarea", "ejecutar_en_hilo", "reintentar_async", "recolectar"]
+        expected_symbols = [
+            "grupo_tareas",
+            "limitar_tiempo",
+            "proteger_tarea",
+            "ejecutar_en_hilo",
+            "reintentar_async",
+            "recolectar",
+        ]
         for nombre in expected_symbols:
             if nombre == "proteger_tarea":
                 setattr(mod, nombre, lambda awaitable: asyncio.Future())
@@ -941,7 +1337,13 @@ def test_repl_contract_pipeline_completo_por_modulo_canonico(monkeypatch, tmp_pa
             elif nombre == "recolectar":
                 setattr(mod, nombre, lambda *corutinas, return_exceptions=False: [])
             elif nombre == "reintentar_async":
-                setattr(mod, nombre, lambda funcion, intentos=3, excepciones=(Exception,), retardo_inicial=0.1, factor_backoff=2.0, max_retardo=None, jitter=None: asyncio.Future())
+                setattr(
+                    mod,
+                    nombre,
+                    lambda funcion, intentos=3, excepciones=(
+                        Exception,
+                    ), retardo_inicial=0.1, factor_backoff=2.0, max_retardo=None, jitter=None: asyncio.Future(),
+                )
             elif nombre == "grupo_tareas":
                 setattr(mod, nombre, lambda: None)
     else:
@@ -961,10 +1363,7 @@ def test_repl_contract_pipeline_completo_por_modulo_canonico(monkeypatch, tmp_pa
     mod.__all__ = expected_symbols
     rel_path = cli_usar_loader.REPL_COBRA_MODULE_INTERNAL_PATH_MAP[modulo]
     mod.__file__ = str(
-        (
-            Path(cli_usar_loader.__file__).resolve().parents[3]
-            / rel_path
-        ).resolve()
+        (Path(cli_usar_loader.__file__).resolve().parents[3] / rel_path).resolve()
     )
 
     def _resolver_modulo(nombre: str, **_kwargs):
@@ -972,7 +1371,11 @@ def test_repl_contract_pipeline_completo_por_modulo_canonico(monkeypatch, tmp_pa
             return mod
         raise ModuleNotFoundError(nombre)
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: _resolver_modulo(nombre))
+    monkeypatch.setattr(
+        core_usar_loader,
+        "obtener_modulo_cobra_oficial",
+        lambda nombre: _resolver_modulo(nombre),
+    )
 
     interp = InterpretadorCobra()
     interp.configurar_restriccion_usar_repl(REPL_COBRA_MODULE_MAP)
@@ -994,19 +1397,32 @@ def test_repl_contract_pipeline_completo_por_modulo_canonico(monkeypatch, tmp_pa
         elif modulo == "holobit" and symbol == "validar_holobit":
             interp.contextos[-1].values[symbol]({})
         elif modulo == "holobit" and symbol == "serializar_holobit":
-            interp.contextos[-1].values[symbol]({"tipo": "holobit", "valores": [1, 2, 3]})
+            interp.contextos[-1].values[symbol](
+                {"tipo": "holobit", "valores": [1, 2, 3]}
+            )
         elif modulo == "holobit" and symbol == "deserializar_holobit":
             interp.contextos[-1].values[symbol]('{"tipo":"holobit","valores":[1,2,3]}')
         elif modulo == "holobit" and symbol == "proyectar":
-            interp.contextos[-1].values[symbol]({"tipo": "holobit", "valores": [1, 2, 3]}, "2d")
+            interp.contextos[-1].values[symbol](
+                {"tipo": "holobit", "valores": [1, 2, 3]}, "2d"
+            )
         elif modulo == "holobit" and symbol == "transformar":
-            interp.contextos[-1].values[symbol]({"tipo": "holobit", "valores": [1, 2, 3]}, "rotar", "x", 90)
+            interp.contextos[-1].values[symbol](
+                {"tipo": "holobit", "valores": [1, 2, 3]}, "rotar", "x", 90
+            )
         elif modulo == "holobit" and symbol == "graficar":
-            interp.contextos[-1].values[symbol]({"tipo": "holobit", "valores": [1, 2, 3]})
+            interp.contextos[-1].values[symbol](
+                {"tipo": "holobit", "valores": [1, 2, 3]}
+            )
         elif modulo == "holobit" and symbol == "combinar":
-            interp.contextos[-1].values[symbol]({"tipo": "holobit", "valores": [1, 2]}, {"tipo": "holobit", "valores": [3, 4]})
+            interp.contextos[-1].values[symbol](
+                {"tipo": "holobit", "valores": [1, 2]},
+                {"tipo": "holobit", "valores": [3, 4]},
+            )
         elif modulo == "holobit" and symbol == "medir":
-            interp.contextos[-1].values[symbol]({"tipo": "holobit", "valores": [1, 2, 3]})
+            interp.contextos[-1].values[symbol](
+                {"tipo": "holobit", "valores": [1, 2, 3]}
+            )
         elif modulo == "logica" and symbol == "conjuncion":
             interp.contextos[-1].values[symbol](True, False)
         elif modulo == "logica" and symbol == "negacion":
@@ -1024,29 +1440,45 @@ def test_repl_contract_pipeline_completo_por_modulo_canonico(monkeypatch, tmp_pa
         elif modulo == "texto" and symbol == "quitar_acentos":
             interp.contextos[-1].values[symbol]("canción")
         elif modulo == "sistema" and symbol == "ejecutar":
-            interp.contextos[-1].values[symbol](["cobra"], permitidos=[r"C:\\cobra\\mock.exe"])
+            with pytest.raises(PermissionError, match="process.spawn"):
+                interp.contextos[-1].values[symbol](
+                    ["cobra"], permitidos=[r"C:\\cobra\\mock.exe"]
+                )
         elif modulo == "sistema" and symbol == "ejecutar_async":
-            interp.contextos[-1].values[symbol](["cobra"], permitidos=[r"C:\\cobra\\mock.exe"])
+            with pytest.raises(PermissionError, match="process.spawn"):
+                interp.contextos[-1].values[symbol](
+                    ["cobra"], permitidos=[r"C:\\cobra\\mock.exe"]
+                )
         elif modulo == "sistema" and symbol == "ejecutar_stream":
-            interp.contextos[-1].values[symbol](["cobra"], permitidos=[r"C:\\cobra\\mock.exe"])
+            with pytest.raises(PermissionError, match="process.spawn"):
+                interp.contextos[-1].values[symbol](
+                    ["cobra"], permitidos=[r"C:\\cobra\\mock.exe"]
+                )
         elif modulo == "sistema" and symbol == "obtener_env":
             interp.contextos[-1].values[symbol]("PATH")
         elif modulo == "sistema" and symbol == "listar_dir":
             interp.contextos[-1].values[symbol](".")
         elif modulo == "red" and symbol == "obtener_url":
-            interp.contextos[-1].values[symbol]("https://example.com")
+            with pytest.raises(PermissionError, match="network.get"):
+                interp.contextos[-1].values[symbol]("https://example.com")
         elif modulo == "red" and symbol == "enviar_post":
-            interp.contextos[-1].values[symbol]("https://example.com", {})
+            with pytest.raises(PermissionError, match="network.post"):
+                interp.contextos[-1].values[symbol]("https://example.com", {})
         elif modulo == "red" and symbol == "obtener_url_async":
-            interp.contextos[-1].values[symbol]("http://example.com")
+            with pytest.raises(PermissionError, match="network.get"):
+                interp.contextos[-1].values[symbol]("https://example.com")
         elif modulo == "red" and symbol == "enviar_post_async":
-            interp.contextos[-1].values[symbol]("http://example.com", {})
+            with pytest.raises(PermissionError, match="network.post"):
+                interp.contextos[-1].values[symbol]("https://example.com", {})
         elif modulo == "red" and symbol == "descargar_archivo":
-            interp.contextos[-1].values[symbol]("http://example.com", "dummy_path")
+            with pytest.raises(PermissionError, match="network.download"):
+                interp.contextos[-1].values[symbol]("https://example.com", "dummy_path")
         elif modulo == "red" and symbol == "obtener_url_texto":
-            interp.contextos[-1].values[symbol]("http://example.com")
+            with pytest.raises(PermissionError, match="network.get"):
+                interp.contextos[-1].values[symbol]("https://example.com")
         elif modulo == "red" and symbol == "obtener_json":
-            interp.contextos[-1].values[symbol]("http://example.com")
+            with pytest.raises(PermissionError, match="network.get"):
+                interp.contextos[-1].values[symbol]("https://example.com")
         elif modulo == "asincrono" and symbol == "proteger_tarea":
             interp.contextos[-1].values[symbol](asyncio.Future())
         elif modulo == "asincrono" and symbol == "limitar_tiempo":
@@ -1103,8 +1535,14 @@ def test_repl_contract_pipeline_completo_por_modulo_canonico(monkeypatch, tmp_pa
             interp.contextos[-1].values[symbol]("cobra")
         elif modulo == "cripto" and symbol == "comparar_seguro":
             interp.contextos[-1].values[symbol]("cobra", "cobra")
-        elif modulo == "proceso" and symbol in {"ejecutar", "capturar"}:
-            interp.contextos[-1].values[symbol](["python", "--version"])
+        elif modulo == "proceso" and symbol in {
+            "ejecutar",
+            "capturar",
+            "ejecutar_async",
+            "ejecutar_stream",
+        }:
+            with pytest.raises(PermissionError, match="process.spawn"):
+                interp.contextos[-1].values[symbol](["python", "--version"])
         elif modulo == "proceso" and symbol == "codigo_salida":
             interp.contextos[-1].values[symbol]({"codigo": 0})
         elif modulo == "proceso" and symbol == "salida":
@@ -1120,8 +1558,15 @@ def test_repl_contract_pipeline_completo_por_modulo_canonico(monkeypatch, tmp_pa
         elif modulo == "pruebas" and symbol == "contiene":
             interp.contextos[-1].values[symbol]([1], 1)
         elif modulo == "pruebas" and symbol == "lanza_error":
-            interp.contextos[-1].values[symbol](lambda: (_ for _ in ()).throw(ValueError()), ValueError)
-        elif modulo == "regex" and symbol in {"buscar", "coincidir", "dividir", "encontrar_todos"}:
+            interp.contextos[-1].values[symbol](
+                lambda: (_ for _ in ()).throw(ValueError()), ValueError
+            )
+        elif modulo == "regex" and symbol in {
+            "buscar",
+            "coincidir",
+            "dividir",
+            "encontrar_todos",
+        }:
             interp.contextos[-1].values[symbol]("co", "cobra")
         elif modulo == "regex" and symbol == "reemplazar":
             interp.contextos[-1].values[symbol]("co", "Co", "cobra")
@@ -1129,7 +1574,16 @@ def test_repl_contract_pipeline_completo_por_modulo_canonico(monkeypatch, tmp_pa
             interp.contextos[-1].values[symbol]("mensaje")
         elif modulo == "ruta" and symbol == "unir":
             interp.contextos[-1].values[symbol]("cobra", "mod")
-        elif modulo == "ruta" and symbol in {"normalizar", "nombre", "extension", "padre", "existe", "es_absoluta", "absoluta", "relativa"}:
+        elif modulo == "ruta" and symbol in {
+            "normalizar",
+            "nombre",
+            "extension",
+            "padre",
+            "existe",
+            "es_absoluta",
+            "absoluta",
+            "relativa",
+        }:
             interp.contextos[-1].values[symbol]("cobra/mod.co")
         elif modulo == "serializacion" and symbol == "codificar_json":
             interp.contextos[-1].values[symbol]({"cobra": True})
@@ -1140,13 +1594,17 @@ def test_repl_contract_pipeline_completo_por_modulo_canonico(monkeypatch, tmp_pa
             ruta_json.write_text('{"cobra": true}', encoding="utf-8")
             interp.contextos[-1].values[symbol](ruta_json)
         elif modulo == "serializacion" and symbol == "escribir_json":
-            interp.contextos[-1].values[symbol](tmp_path / "datos.json", {"cobra": True})
+            interp.contextos[-1].values[symbol](
+                tmp_path / "datos.json", {"cobra": True}
+            )
         elif modulo == "serializacion" and symbol == "leer_csv":
             ruta_csv = tmp_path / "datos.csv"
             ruta_csv.write_text("nombre\ncobra\n", encoding="utf-8")
             interp.contextos[-1].values[symbol](ruta_csv)
         elif modulo == "serializacion" and symbol == "escribir_csv":
-            interp.contextos[-1].values[symbol](tmp_path / "datos.csv", [{"nombre": "cobra"}])
+            interp.contextos[-1].values[symbol](
+                tmp_path / "datos.csv", [{"nombre": "cobra"}]
+            )
         elif modulo == "temporal" and symbol == "limpiar":
             temporal = tmp_path / "temporal.txt"
             temporal.write_text("cobra", encoding="utf-8")
@@ -1159,7 +1617,9 @@ def test_repl_contract_pipeline_completo_por_modulo_canonico(monkeypatch, tmp_pa
 def test_repl_contract_colision_warn_alias_required_estructurada(monkeypatch):
     mod_numero = _modulo_numero_multi_export_stub()
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: mod_numero)
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: mod_numero
+    )
 
     interp = InterpretadorCobra()
     interp.configurar_restriccion_usar_repl(REPL_COBRA_MODULE_MAP)
@@ -1169,20 +1629,34 @@ def test_repl_contract_colision_warn_alias_required_estructurada(monkeypatch):
     class _NodoUsar:
         modulo = "numero"
 
-    with pytest.raises(NameError, match=r"No se puede usar 'numero': hay conflicto de símbolos en el contexto actual\. Símbolo conflictivo: es_finito\."):
+    with pytest.raises(
+        NameError,
+        match=r"No se puede usar 'numero': hay conflicto de símbolos en el contexto actual\. Símbolo conflictivo: es_finito\.",
+    ):
         interp.ejecutar_usar(_NodoUsar())
-
 
 
 @pytest.mark.parametrize(
     "nombre",
-    ["", "   ", "../numero", "..\\numero", "corelibs/numero", "standard_library/texto", "pcobra", "holobit_sdk"],
+    [
+        "",
+        "   ",
+        "../numero",
+        "..\\numero",
+        "corelibs/numero",
+        "standard_library/texto",
+        "pcobra",
+        "holobit_sdk",
+    ],
 )
 def test_repl_rechaza_nombres_invalidos_o_maliciosos(nombre):
     cmd = InteractiveCommand(InterpretadorCobra())
     estado_pre = dict(cmd.interpretador.contextos[-1].values)
 
-    with pytest.raises((ValueError, PermissionError), match=r"(inválido|no permitid|externo|modulo_fuera_catalogo_publico|Nombre de módulo vacío en 'usar')"):
+    with pytest.raises(
+        (ValueError, PermissionError),
+        match=r"(inválido|no permitid|externo|modulo_fuera_catalogo_publico|Nombre de módulo vacío en 'usar')",
+    ):
         cmd.ejecutar_codigo(f'usar "{nombre}"')
 
     assert estado_pre == cmd.interpretador.contextos[-1].values
@@ -1192,7 +1666,10 @@ def test_repl_rechaza_alias_legacy_fuera_contrato():
     cmd = InteractiveCommand(InterpretadorCobra())
     estado_pre = dict(cmd.interpretador.contextos[-1].values)
 
-    with pytest.raises(PermissionError, match=r"solo alias oficiales Cobra|nombres canónicos exactos|no permitid|modulo_fuera_catalogo_publico"):
+    with pytest.raises(
+        PermissionError,
+        match=r"solo alias oficiales Cobra|nombres canónicos exactos|no permitid|modulo_fuera_catalogo_publico",
+    ):
         cmd.ejecutar_codigo('usar "node-fetch"')
 
     assert estado_pre == cmd.interpretador.contextos[-1].values
@@ -1212,19 +1689,41 @@ def test_repl_usar_datos_longitud_salida_exacta(factory, executor, monkeypatch, 
             return mod_datos
         raise ModuleNotFoundError(nombre)
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre: _resolver_modulo(nombre))
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: _resolver_modulo(nombre))
-    monkeypatch.setattr(cli_usar_loader, "obtener_modulo", lambda nombre: _resolver_modulo(nombre))
-    monkeypatch.setattr(cli_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: _resolver_modulo(nombre))
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo", lambda nombre: _resolver_modulo(nombre)
+    )
+    monkeypatch.setattr(
+        core_usar_loader,
+        "obtener_modulo_cobra_oficial",
+        lambda nombre: _resolver_modulo(nombre),
+    )
+    monkeypatch.setattr(
+        cli_usar_loader, "obtener_modulo", lambda nombre: _resolver_modulo(nombre)
+    )
+    monkeypatch.setattr(
+        cli_usar_loader,
+        "obtener_modulo_cobra_oficial",
+        lambda nombre: _resolver_modulo(nombre),
+    )
 
     cmd = factory()
     executor(cmd, 'usar "datos"')
     executor(cmd, "imprimir(longitud([1,2,3]))")
 
-    lineas = [linea.strip() for linea in capsys.readouterr().out.splitlines() if linea.strip()]
+    lineas = [
+        linea.strip() for linea in capsys.readouterr().out.splitlines() if linea.strip()
+    ]
     assert lineas == ["3"]
 
-    simbolos = set((cmd.interpretador if isinstance(cmd, InteractiveCommand) else cmd._delegate.interpretador).contextos[-1].values.keys())
+    simbolos = set(
+        (
+            cmd.interpretador
+            if isinstance(cmd, InteractiveCommand)
+            else cmd._delegate.interpretador
+        )
+        .contextos[-1]
+        .values.keys()
+    )
     assert "longitud" in simbolos
     assert "_backend" not in simbolos
     assert "module_object" not in simbolos
@@ -1232,38 +1731,77 @@ def test_repl_usar_datos_longitud_salida_exacta(factory, executor, monkeypatch, 
 
 def test_repl_usar_texto_expone_funciones_objetivo_y_mantiene_comunes(monkeypatch):
     mod_texto = ModuleType("texto")
-    mod_texto.__all__ = ["recortar", "repetir", "quitar_acentos", "prefijo_comun", "sufijo_comun"]
+    mod_texto.__all__ = [
+        "recortar",
+        "repetir",
+        "quitar_acentos",
+        "prefijo_comun",
+        "sufijo_comun",
+    ]
     mod_texto.recortar = lambda texto: str(texto).strip()
     mod_texto.repetir = lambda texto, veces: str(texto) * int(veces)
-    mod_texto.quitar_acentos = lambda texto: str(texto).translate(str.maketrans("áéíóú", "aeiou"))
-    mod_texto.prefijo_comun = lambda a, b: next((str(a)[:i] for i in range(min(len(str(a)), len(str(b))), -1, -1) if str(a)[:i] == str(b)[:i]), "")
-    mod_texto.sufijo_comun = lambda a, b: next((str(a)[len(str(a))-i:] for i in range(min(len(str(a)), len(str(b))), -1, -1) if str(a)[len(str(a))-i:] == str(b)[len(str(b))-i:]), "")
+    mod_texto.quitar_acentos = lambda texto: str(texto).translate(
+        str.maketrans("áéíóú", "aeiou")
+    )
+    mod_texto.prefijo_comun = lambda a, b: next(
+        (
+            str(a)[:i]
+            for i in range(min(len(str(a)), len(str(b))), -1, -1)
+            if str(a)[:i] == str(b)[:i]
+        ),
+        "",
+    )
+    mod_texto.sufijo_comun = lambda a, b: next(
+        (
+            str(a)[len(str(a)) - i :]
+            for i in range(min(len(str(a)), len(str(b))), -1, -1)
+            if str(a)[len(str(a)) - i :] == str(b)[len(str(b)) - i :]
+        ),
+        "",
+    )
     mod_texto.__file__ = "/workspace/pCobra/src/pcobra/corelibs/texto.py"
 
     monkeypatch.setattr(
         core_usar_loader,
         "obtener_modulo_cobra_oficial",
-        lambda nombre: mod_texto if nombre == "texto" else (_ for _ in ()).throw(ModuleNotFoundError(nombre)),
+        lambda nombre: (
+            mod_texto
+            if nombre == "texto"
+            else (_ for _ in ()).throw(ModuleNotFoundError(nombre))
+        ),
     )
 
     cmd = ReplCommandV2()
     cmd._ejecutar_en_modo_normal('usar "texto"')
 
-    for simbolo in ("recortar", "repetir", "quitar_acentos", "prefijo_comun", "sufijo_comun"):
+    for simbolo in (
+        "recortar",
+        "repetir",
+        "quitar_acentos",
+        "prefijo_comun",
+        "sufijo_comun",
+    ):
         assert callable(cmd._delegate.interpretador.obtener_variable(simbolo))
 
 
 def test_repl_usar_numero_es_finito_y_signo_siguen_operativos(monkeypatch, capsys):
     mod_numero = ModuleType("numero")
     mod_numero.__all__ = ["es_finito", "signo"]
-    mod_numero.es_finito = lambda valor: valor == valor and valor not in (float("inf"), float("-inf"))
+    mod_numero.es_finito = lambda valor: valor == valor and valor not in (
+        float("inf"),
+        float("-inf"),
+    )
     mod_numero.signo = lambda valor: -1 if valor < 0 else (1 if valor > 0 else 0)
     mod_numero.__file__ = "/workspace/pCobra/src/pcobra/corelibs/numero.py"
 
     monkeypatch.setattr(
         core_usar_loader,
         "obtener_modulo_cobra_oficial",
-        lambda nombre: mod_numero if nombre == "numero" else (_ for _ in ()).throw(ModuleNotFoundError(nombre)),
+        lambda nombre: (
+            mod_numero
+            if nombre == "numero"
+            else (_ for _ in ()).throw(ModuleNotFoundError(nombre))
+        ),
     )
 
     cmd = ReplCommandV2()
@@ -1271,9 +1809,12 @@ def test_repl_usar_numero_es_finito_y_signo_siguen_operativos(monkeypatch, capsy
     cmd._ejecutar_en_modo_normal("imprimir(es_finito(10))")
     cmd._ejecutar_en_modo_normal("imprimir(signo(0 - 5))")
 
-    lineas = [linea.strip() for linea in capsys.readouterr().out.splitlines() if linea.strip() and not linea.startswith("WARNING:")]
+    lineas = [
+        linea.strip()
+        for linea in capsys.readouterr().out.splitlines()
+        if linea.strip() and not linea.startswith("WARNING:")
+    ]
     assert lineas == ["verdadero", "-1"]
-
 
 
 def test_repl_usar_modulos_numero_logica_tiempo_y_datos_con_epoch_rango(capsys):
@@ -1283,26 +1824,28 @@ def test_repl_usar_modulos_numero_logica_tiempo_y_datos_con_epoch_rango(capsys):
     cmd._ejecutar_en_modo_normal('usar "tiempo"')
     cmd._ejecutar_en_modo_normal("func doble(n):\n    retorno n * 2\nfin")
 
-    cmd._ejecutar_en_modo_normal('imprimir(es_finito(5))')
-    cmd._ejecutar_en_modo_normal('imprimir(signo(0-5))')
-    cmd._ejecutar_en_modo_normal('imprimir(conjuncion(verdadero, negacion(falso)))')
-    cmd._ejecutar_en_modo_normal('imprimir(epoch())')
+    cmd._ejecutar_en_modo_normal("imprimir(es_finito(5))")
+    cmd._ejecutar_en_modo_normal("imprimir(signo(0-5))")
+    cmd._ejecutar_en_modo_normal("imprimir(conjuncion(verdadero, negacion(falso)))")
+    cmd._ejecutar_en_modo_normal("imprimir(epoch())")
     cmd._ejecutar_en_modo_normal('usar "datos"')
     cmd._ejecutar_en_modo_normal('imprimir(longitud("cobra"))')
-    cmd._ejecutar_en_modo_normal('imprimir(doble(signo(0-3)))')
+    cmd._ejecutar_en_modo_normal("imprimir(doble(signo(0-3)))")
 
-    lineas = [linea.strip() for linea in capsys.readouterr().out.splitlines() if linea.strip()]
-    assert 'verdadero' in lineas
-    assert '-1' in lineas
-    assert any(l in ('true', 'verdadero') for l in lineas)
+    lineas = [
+        linea.strip() for linea in capsys.readouterr().out.splitlines() if linea.strip()
+    ]
+    assert "verdadero" in lineas
+    assert "-1" in lineas
+    assert any(l in ("true", "verdadero") for l in lineas)
     epoch_value = next(
         float(l)
         for l in lineas
-        if l.replace('.', '', 1).lstrip('-').isdigit() and abs(float(l)) > 10**8
+        if l.replace(".", "", 1).lstrip("-").isdigit() and abs(float(l)) > 10**8
     )
     assert 946684800 <= epoch_value <= 4102444800
-    assert '5' in lineas
-    assert '-2' in lineas
+    assert "5" in lineas
+    assert "-2" in lineas
 
 
 def test_repl_contrato_cli_superficie_publica_y_error_corto_numpy(capsys):
@@ -1328,7 +1871,9 @@ def test_repl_contrato_cli_superficie_publica_y_error_corto_numpy(capsys):
     cmd._ejecutar_en_modo_normal('usar "datos"')
     cmd._ejecutar_en_modo_normal('imprimir(longitud("cobra"))')
 
-    lineas = [linea.strip() for linea in capsys.readouterr().out.splitlines() if linea.strip()]
+    lineas = [
+        linea.strip() for linea in capsys.readouterr().out.splitlines() if linea.strip()
+    ]
     assert "verdadero" in lineas
     assert "-1" in lineas
     assert "COBRA" in lineas
@@ -1338,7 +1883,11 @@ def test_repl_contrato_cli_superficie_publica_y_error_corto_numpy(capsys):
     assert "falso" in lineas
     assert lineas[-1] == "5"
 
-    epoch_value = next(float(v) for v in lineas if v.replace(".", "", 1).isdigit() and float(v) >= 946684800)
+    epoch_value = next(
+        float(v)
+        for v in lineas
+        if v.replace(".", "", 1).isdigit() and float(v) >= 946684800
+    )
     assert 946684800 <= epoch_value <= 4102444800
 
     simbolos = set(cmd._delegate.interpretador.contextos[-1].values)
@@ -1346,7 +1895,10 @@ def test_repl_contrato_cli_superficie_publica_y_error_corto_numpy(capsys):
     assert "_backend" not in simbolos
     assert "__all__" not in simbolos
 
-    with pytest.raises(PermissionError, match=r"Importación no permitida en 'usar': 'numpy'.*usar_error\[modulo_fuera_catalogo_publico\]"):
+    with pytest.raises(
+        PermissionError,
+        match=r"Importación no permitida en 'usar': 'numpy'.*usar_error\[modulo_fuera_catalogo_publico\]",
+    ):
         cmd._ejecutar_en_modo_normal('usar "numpy"')
     salida_error = capsys.readouterr().out
     assert "Traceback" not in salida_error
@@ -1357,71 +1909,69 @@ def test_repl_texto_aceptacion_mayusculas_recortar_repetir_quitar_acentos(capsys
     cmd._ejecutar_en_modo_normal('usar "texto"')
     interp = cmd._delegate.interpretador
 
-    assert interp.obtener_variable('mayusculas')('cobra') == 'COBRA'
-    assert interp.obtener_variable('recortar')('  Cobra  ') == 'Cobra'
-    assert interp.obtener_variable('repetir')('ja', 3) == 'jajaja'
-    assert interp.obtener_variable('quitar_acentos')('canción') == 'cancion'
-    assert interp.obtener_variable('prefijo_comun')('cobra', 'cobre') == 'cobr'
-    assert interp.obtener_variable('sufijo_comun')('programacion', 'nacion') == 'acion'
-    assert interp.obtener_variable('reemplazar')('cobra', 'co', 'CO') == 'CObra'
-    assert interp.obtener_variable('quitar_acentos')('pingüino') == 'pinguino'
+    assert interp.obtener_variable("mayusculas")("cobra") == "COBRA"
+    assert interp.obtener_variable("recortar")("  Cobra  ") == "Cobra"
+    assert interp.obtener_variable("repetir")("ja", 3) == "jajaja"
+    assert interp.obtener_variable("quitar_acentos")("canción") == "cancion"
+    assert interp.obtener_variable("prefijo_comun")("cobra", "cobre") == "cobr"
+    assert interp.obtener_variable("sufijo_comun")("programacion", "nacion") == "acion"
+    assert interp.obtener_variable("reemplazar")("cobra", "co", "CO") == "CObra"
+    assert interp.obtener_variable("quitar_acentos")("pingüino") == "pinguino"
+
 
 def test_repl_datos_longitud_y_agregar_si_disponible():
     cmd = ReplCommandV2()
     cmd._ejecutar_en_modo_normal('usar "datos"')
     interp = cmd._delegate.interpretador
 
-    assert interp.obtener_variable('longitud')('ab') == 2
-    if 'agregar' in interp.contextos[-1].values:
-        resultado = interp.obtener_variable('agregar')([], {'id': 3})
+    assert interp.obtener_variable("longitud")("ab") == 2
+    if "agregar" in interp.contextos[-1].values:
+        resultado = interp.obtener_variable("agregar")([], {"id": 3})
         assert resultado is not None
-
 
 
 def test_repl_archivo_existe_emitir_booleano_sin_primitiva_peligrosa():
     cmd = ReplCommandV2()
 
     cmd._ejecutar_en_modo_normal('usar "archivo"')
-    existe = cmd._delegate.interpretador.obtener_variable('existe')
+    existe = cmd._delegate.interpretador.obtener_variable("existe")
 
-    assert isinstance(existe('README.md'), bool)
+    assert isinstance(existe("README.md"), bool)
 
 
 def test_repl_archivo_existe_bloquea_traversal_relativo_con_error_controlado():
     cmd = ReplCommandV2()
 
     cmd._ejecutar_en_modo_normal('usar "archivo"')
-    existe = cmd._delegate.interpretador.obtener_variable('existe')
+    existe = cmd._delegate.interpretador.obtener_variable("existe")
 
-    assert existe('../archivo_fuera_del_proyecto') is False
+    assert existe("../archivo_fuera_del_proyecto") is False
 
 
 def test_repl_archivo_existe_bloquea_ruta_absoluta_con_error_controlado():
     cmd = ReplCommandV2()
 
     cmd._ejecutar_en_modo_normal('usar "archivo"')
-    existe = cmd._delegate.interpretador.obtener_variable('existe')
+    existe = cmd._delegate.interpretador.obtener_variable("existe")
 
-    assert existe('/ruta/absoluta/sensible') is False
+    assert existe("/ruta/absoluta/sensible") is False
 
 
 def test_repl_archivo_existe_bloquea_ruta_absoluta_windows_con_error_controlado():
     cmd = ReplCommandV2()
 
     cmd._ejecutar_en_modo_normal('usar "archivo"')
-    existe = cmd._delegate.interpretador.obtener_variable('existe')
+    existe = cmd._delegate.interpretador.obtener_variable("existe")
 
-    assert existe(r'C:\\ruta\\absoluta\\sensible') is False
-
-
-
+    assert existe(r"C:\\ruta\\absoluta\\sensible") is False
 
 
 def test_repl_archivo_invocacion_cruda_sin_usar_permanece_bloqueada():
     cmd = ReplCommandV2()
 
-    with pytest.raises(Exception, match='Uso de primitiva peligrosa'):
+    with pytest.raises(Exception, match="Uso de primitiva peligrosa"):
         cmd._ejecutar_en_modo_normal('imprimir(existe("README.md"))')
+
 
 def test_repl_archivo_invocacion_directa_permitida_tras_usar_sin_traceback(capsys):
     cmd = ReplCommandV2()
@@ -1431,8 +1981,8 @@ def test_repl_archivo_invocacion_directa_permitida_tras_usar_sin_traceback(capsy
 
     salida = capsys.readouterr().out.strip()
     lineas = [linea.strip() for linea in salida.splitlines() if linea.strip()]
-    assert 'Traceback' not in salida
-    assert lineas[-1] in {'verdadero', 'falso'}
+    assert "Traceback" not in salida
+    assert lineas[-1] in {"verdadero", "falso"}
     assert len(lineas) <= 2
 
 
@@ -1441,37 +1991,54 @@ def test_repl_archivo_hardening_no_expone_backend_crudo():
     cmd._ejecutar_en_modo_normal('usar "archivo"')
 
     with pytest.raises(NameError):
-        cmd._delegate.interpretador.obtener_variable('_backend')
+        cmd._delegate.interpretador.obtener_variable("_backend")
 
 
 def test_repl_usar_archivo_requiere_cadena_entre_comillas():
     cmd = ReplCommandV2()
-    with pytest.raises(Exception, match=r"Se esperaba una ruta de módulo entre comillas"):
+    with pytest.raises(
+        Exception, match=r"Se esperaba una ruta de módulo entre comillas"
+    ):
         cmd._ejecutar_en_modo_normal("usar archivo")
-
 
 
 def test_repl_usar_idempotente_y_conflicto_real(monkeypatch):
     mod_numero = _modulo_numero_stub()
     monkeypatch.setattr(
         core_usar_loader,
-        'obtener_modulo',
-        lambda nombre: mod_numero if nombre == 'numero' else (_ for _ in ()).throw(ModuleNotFoundError(nombre)),
+        "obtener_modulo",
+        lambda nombre: (
+            mod_numero
+            if nombre == "numero"
+            else (_ for _ in ()).throw(ModuleNotFoundError(nombre))
+        ),
     )
     monkeypatch.setattr(
         core_usar_loader,
-        'obtener_modulo_cobra_oficial',
-        lambda nombre: mod_numero if nombre == 'numero' else (_ for _ in ()).throw(ModuleNotFoundError(nombre)),
+        "obtener_modulo_cobra_oficial",
+        lambda nombre: (
+            mod_numero
+            if nombre == "numero"
+            else (_ for _ in ()).throw(ModuleNotFoundError(nombre))
+        ),
     )
     monkeypatch.setattr(
         cli_usar_loader,
-        'obtener_modulo',
-        lambda nombre: mod_numero if nombre == 'numero' else (_ for _ in ()).throw(ModuleNotFoundError(nombre)),
+        "obtener_modulo",
+        lambda nombre: (
+            mod_numero
+            if nombre == "numero"
+            else (_ for _ in ()).throw(ModuleNotFoundError(nombre))
+        ),
     )
     monkeypatch.setattr(
         cli_usar_loader,
-        'obtener_modulo_cobra_oficial',
-        lambda nombre: mod_numero if nombre == 'numero' else (_ for _ in ()).throw(ModuleNotFoundError(nombre)),
+        "obtener_modulo_cobra_oficial",
+        lambda nombre: (
+            mod_numero
+            if nombre == "numero"
+            else (_ for _ in ()).throw(ModuleNotFoundError(nombre))
+        ),
     )
 
     cmd = ReplCommandV2()
@@ -1480,29 +2047,34 @@ def test_repl_usar_idempotente_y_conflicto_real(monkeypatch):
     cmd._ejecutar_en_modo_normal('usar "numero"')
     assert estado_1 == cmd._delegate.interpretador.contextos[-1].values
 
+
 def test_repl_ux_error_salida_corta_vs_debug(capsys, caplog):
     cmd = ReplCommandV2()
     with pytest.raises(Exception):
-        cmd._ejecutar_en_modo_normal('imprimir(variable_inexistente)')
+        cmd._ejecutar_en_modo_normal("imprimir(variable_inexistente)")
     salida_normal = capsys.readouterr().out
-    assert 'Traceback' not in salida_normal
+    assert "Traceback" not in salida_normal
 
     cmd_debug = ReplCommandV2()
     cmd_debug._delegate._debug_mode = True
     with pytest.raises(Exception):
-        cmd_debug._ejecutar_en_modo_normal('imprimir(variable_inexistente)')
+        cmd_debug._ejecutar_en_modo_normal("imprimir(variable_inexistente)")
     _ = capsys.readouterr().out
-    assert all('Traceback' not in r.message for r in caplog.records if r.levelname != 'DEBUG')
-
+    assert all(
+        "Traceback" not in r.message for r in caplog.records if r.levelname != "DEBUG"
+    )
 
 
 def test_no_regresion_seguridad_usar_numpy_error_corto_sin_traceback(capsys):
     cmd = ReplCommandV2()
-    with pytest.raises(PermissionError, match=r"Importación no permitida en 'usar': 'numpy'.*usar_error\[modulo_fuera_catalogo_publico\]"):
+    with pytest.raises(
+        PermissionError,
+        match=r"Importación no permitida en 'usar': 'numpy'.*usar_error\[modulo_fuera_catalogo_publico\]",
+    ):
         cmd._ejecutar_en_modo_normal('usar "numpy"')
 
     salida = capsys.readouterr().out
-    assert 'Traceback' not in salida
+    assert "Traceback" not in salida
 
 
 def test_repl_no_expone_simbolos_no_publicos_modulos_estandar():
@@ -1511,13 +2083,17 @@ def test_repl_no_expone_simbolos_no_publicos_modulos_estandar():
     cmd._ejecutar_en_modo_normal('usar "numero"')
 
     simbolos = set(cmd._delegate.interpretador.contextos[-1].values)
-    assert '_backend' not in simbolos
-    assert '_impl' not in simbolos
-    assert '__all__' not in simbolos
+    assert "_backend" not in simbolos
+    assert "_impl" not in simbolos
+    assert "__all__" not in simbolos
+
 
 def test_no_regresion_seguridad_usar_numpy_fuera_catalogo_publico():
     cmd = ReplCommandV2()
-    with pytest.raises(PermissionError, match=r"Importación no permitida en 'usar': 'numpy'.*usar_error\[modulo_fuera_catalogo_publico\]"):
+    with pytest.raises(
+        PermissionError,
+        match=r"Importación no permitida en 'usar': 'numpy'.*usar_error\[modulo_fuera_catalogo_publico\]",
+    ):
         cmd._ejecutar_en_modo_normal('usar "numpy"')
 
 
@@ -1529,8 +2105,12 @@ def test_repl_usar_numpy_error_explicito_corto_sin_traceback_en_modo_normal(caps
     mensaje = str(excinfo.value)
     assert "Traceback" not in mensaje
     assert "detalle=" not in mensaje
-    assert len(mensaje) < 220
-    assert "Importación no permitida en 'usar': 'numpy'. Es un módulo backend/no canónico y no forma parte de la API pública. Módulos permitidos: numero, texto, datos, logica, asincrono, sistema, archivo, tiempo, red, holobit." in mensaje
+    # El límite incluye el código público estable, además de la guía de módulos.
+    assert len(mensaje) < 280
+    assert (
+        "Importación no permitida en 'usar': 'numpy'. Es un módulo backend/no canónico y no forma parte de la API pública. Módulos permitidos: numero, texto, datos, logica, asincrono, sistema, archivo, tiempo, red, holobit."
+        in mensaje
+    )
 
     salida = capsys.readouterr().out
     assert "Traceback" not in salida
@@ -1539,11 +2119,21 @@ def test_repl_usar_numpy_error_explicito_corto_sin_traceback_en_modo_normal(caps
 @pytest.mark.parametrize(
     ("factory", "executor", "get_interp"),
     [
-        (lambda: InteractiveCommand(InterpretadorCobra()), lambda cmd, code: cmd.ejecutar_codigo(code), lambda cmd: cmd.interpretador),
-        (ReplCommandV2, lambda cmd, code: cmd._ejecutar_en_modo_normal(code), lambda cmd: cmd._delegate.interpretador),
+        (
+            lambda: InteractiveCommand(InterpretadorCobra()),
+            lambda cmd, code: cmd.ejecutar_codigo(code),
+            lambda cmd: cmd.interpretador,
+        ),
+        (
+            ReplCommandV2,
+            lambda cmd, code: cmd._ejecutar_en_modo_normal(code),
+            lambda cmd: cmd._delegate.interpretador,
+        ),
     ],
 )
-def test_regresion_metadata_usar_none_pre_auditoria(factory, executor, get_interp, capsys, monkeypatch):
+def test_regresion_metadata_usar_none_pre_auditoria(
+    factory, executor, get_interp, capsys, monkeypatch
+):
     """regresion_metadata_usar_none_pre_auditoria"""
     mod_datos = _modulo_datos_stub()
     mod_numero = _modulo_numero_stub()
@@ -1561,10 +2151,22 @@ def test_regresion_metadata_usar_none_pre_auditoria(factory, executor, get_inter
             return mod_archivo
         raise ModuleNotFoundError(nombre)
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre: _resolver_modulo(nombre))
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: _resolver_modulo(nombre))
-    monkeypatch.setattr(cli_usar_loader, "obtener_modulo", lambda nombre: _resolver_modulo(nombre))
-    monkeypatch.setattr(cli_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: _resolver_modulo(nombre))
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo", lambda nombre: _resolver_modulo(nombre)
+    )
+    monkeypatch.setattr(
+        core_usar_loader,
+        "obtener_modulo_cobra_oficial",
+        lambda nombre: _resolver_modulo(nombre),
+    )
+    monkeypatch.setattr(
+        cli_usar_loader, "obtener_modulo", lambda nombre: _resolver_modulo(nombre)
+    )
+    monkeypatch.setattr(
+        cli_usar_loader,
+        "obtener_modulo_cobra_oficial",
+        lambda nombre: _resolver_modulo(nombre),
+    )
 
     cmd = factory()
     interp = get_interp(cmd)
@@ -1594,7 +2196,9 @@ def test_regresion_metadata_usar_none_pre_auditoria(factory, executor, get_inter
     assert "NoneType" not in salida_datos.out
     assert "invalid_container" not in salida_datos.err
     assert "NoneType" not in salida_datos.err
-    lineas_datos = [linea.strip() for linea in salida_datos.out.splitlines() if linea.strip()]
+    lineas_datos = [
+        linea.strip() for linea in salida_datos.out.splitlines() if linea.strip()
+    ]
     assert lineas_datos.count("3") >= 2
 
     executor(cmd, 'usar "numero"')
@@ -1604,7 +2208,9 @@ def test_regresion_metadata_usar_none_pre_auditoria(factory, executor, get_inter
     combinado_numero = f"{salida_numero.out}\n{salida_numero.err}"
     assert "invalid_container" not in combinado_numero
     assert "NoneType" not in combinado_numero
-    lineas_numero = [linea.strip() for linea in salida_numero.out.splitlines() if linea.strip()]
+    lineas_numero = [
+        linea.strip() for linea in salida_numero.out.splitlines() if linea.strip()
+    ]
     assert lineas_numero and lineas_numero[-1] == "verdadero"
 
     executor(cmd, 'usar "archivo"')
@@ -1615,14 +2221,19 @@ def test_regresion_metadata_usar_none_pre_auditoria(factory, executor, get_inter
     assert "_metadata_simbolos_usar" not in combinado_archivo
     assert "NoneType" not in combinado_archivo
 
-    lineas_archivo = [linea.strip() for linea in salida_archivo.out.splitlines() if linea.strip()]
+    lineas_archivo = [
+        linea.strip() for linea in salida_archivo.out.splitlines() if linea.strip()
+    ]
     ultimo = lineas_archivo[-1] if lineas_archivo else ""
     assert (
         ultimo in {"verdadero", "falso"}
         or "Uso de primitiva peligrosa" in combinado_archivo
     )
 
-    with pytest.raises(PermissionError, match=r"Importación no permitida en 'usar': 'numpy'.*usar_error\[modulo_fuera_catalogo_publico\]"):
+    with pytest.raises(
+        PermissionError,
+        match=r"Importación no permitida en 'usar': 'numpy'.*usar_error\[modulo_fuera_catalogo_publico\]",
+    ):
         executor(cmd, 'usar "numpy"')
 
 
@@ -1630,17 +2241,17 @@ def test_repl_usar_datos_numero_archivo_contrato_basico_sin_errores_metadata(cap
     cmd = ReplCommandV2()
 
     cmd._ejecutar_en_modo_normal('usar "datos"')
-    cmd._ejecutar_en_modo_normal('var xs = [1, 2, 3]')
-    cmd._ejecutar_en_modo_normal('imprimir(longitud(xs))')
+    cmd._ejecutar_en_modo_normal("var xs = [1, 2, 3]")
+    cmd._ejecutar_en_modo_normal("imprimir(longitud(xs))")
 
     cmd._ejecutar_en_modo_normal('usar "numero"')
-    cmd._ejecutar_en_modo_normal('imprimir(es_finito(10))')
+    cmd._ejecutar_en_modo_normal("imprimir(es_finito(10))")
 
     cmd._ejecutar_en_modo_normal('usar "archivo"')
     cmd._ejecutar_en_modo_normal('imprimir(existe("README.md"))')
 
     salida = capsys.readouterr().out
-    assert 'Traceback' not in salida
-    assert 'metadata' not in salida.lower()
-    assert '3' in salida
-    assert 'verdadero' in salida or 'falso' in salida
+    assert "Traceback" not in salida
+    assert "metadata" not in salida.lower()
+    assert "3" in salida
+    assert "verdadero" in salida or "falso" in salida

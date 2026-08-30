@@ -29,7 +29,9 @@ def _interpreter_stub(
 def test_lint_detecta_env_copy_en_mientras(tmp_path: Path) -> None:
     _write(
         tmp_path / "src" / "pcobra" / "core" / "interpreter.py",
-        _interpreter_stub(mientras_body="        cache = env.copy()\n        return cache\n"),
+        _interpreter_stub(
+            mientras_body="        cache = env.copy()\n        return cache\n"
+        ),
     )
 
     violations = find_violations(tmp_path)

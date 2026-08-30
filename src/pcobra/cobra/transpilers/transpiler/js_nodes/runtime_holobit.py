@@ -45,7 +45,6 @@ def build_standard_runtime_lines() -> list[str]:
     ]
 
 
-
 def build_holobit_runtime_lines() -> list[str]:
     return [
         "const COBRA_HOLOBIT_PARTIAL_CONTRACT_NOTE = 'contrato partial: adaptador oficial mantenido por el proyecto; no equivale a holobit_sdk ni a la semántica completa de Python';",

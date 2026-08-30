@@ -6,7 +6,15 @@ from pathlib import Path
 import pytest
 
 from pcobra.cobra.transpilers.compatibility_matrix import BACKEND_COMPATIBILITY
-from pcobra.core.ast_nodes import NodoLlamadaFuncion, NodoValor, NodoHolobit, NodoProyectar, NodoTransformar, NodoGraficar, NodoIdentificador
+from pcobra.core.ast_nodes import (
+    NodoLlamadaFuncion,
+    NodoValor,
+    NodoHolobit,
+    NodoProyectar,
+    NodoTransformar,
+    NodoGraficar,
+    NodoIdentificador,
+)
 from tests.integration.transpilers.backend_contracts import TRANSPILERS
 
 GOLDEN_DIR = Path(__file__).parent / "golden"
@@ -31,7 +39,9 @@ def _parse_markers(path: Path) -> dict[str, tuple[str, ...]]:
             sections[current] = []
             continue
         if current is None:
-            raise ValueError(f"Formato inválido en {path}: línea fuera de sección: {raw!r}")
+            raise ValueError(
+                f"Formato inválido en {path}: línea fuera de sección: {raw!r}"
+            )
         sections[current].append(raw)
     return {backend: tuple(markers) for backend, markers in sections.items()}
 
@@ -48,7 +58,11 @@ def _exercise_nodes() -> list[object]:
 
 
 def _tier_backends(tier: str) -> tuple[str, ...]:
-    return tuple(backend for backend, contract in BACKEND_COMPATIBILITY.items() if contract["tier"] == tier)
+    return tuple(
+        backend
+        for backend, contract in BACKEND_COMPATIBILITY.items()
+        if contract["tier"] == tier
+    )
 
 
 @pytest.mark.parametrize(
@@ -58,7 +72,9 @@ def _tier_backends(tier: str) -> tuple[str, ...]:
         ("tier2", GOLDEN_DIR / "corelibs_standard_library_tier2.golden"),
     ],
 )
-def test_corelibs_standard_library_markers_por_tier_en_goldens(tier: str, golden_file: Path):
+def test_corelibs_standard_library_markers_por_tier_en_goldens(
+    tier: str, golden_file: Path
+):
     expected_by_backend = _parse_markers(golden_file)
     tier_backends = _tier_backends(tier)
 
@@ -67,4 +83,6 @@ def test_corelibs_standard_library_markers_por_tier_en_goldens(tier: str, golden
     for backend in tier_backends:
         generated = _generate(backend, _exercise_nodes())
         for marker in expected_by_backend[backend]:
-            assert marker in generated, f"{backend} ({tier}) no incluyó marcador esperado: {marker!r}"
+            assert (
+                marker in generated
+            ), f"{backend} ({tier}) no incluyó marcador esperado: {marker!r}"

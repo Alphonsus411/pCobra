@@ -32,7 +32,7 @@ from io import StringIO
 from types import SimpleNamespace
 
 from cobra.cli.commands.interactive_cmd import InteractiveCommand
-from core.interpreter import InterpretadorCobra
+from pcobra.core.interpreter import InterpretadorCobra
 
 
 def _args() -> SimpleNamespace:
@@ -65,30 +65,50 @@ def test_repl_sandbox_setup_si_usa_pipeline_explicito() -> None:
     setup_stub.safe_mode = False
     setup_stub.validadores_extra = None
 
-    with patch(
-        "pcobra.cobra.cli.execution_pipeline.ejecutar_pipeline_explicito",
-        return_value=(setup_stub, None),
-    ) as pipeline_mock, patch(
-        "cobra.cli.commands.interactive_cmd.ejecutar_en_sandbox",
-        return_value="",
+    with (
+        patch(
+            "pcobra.cobra.cli.execution_pipeline.ejecutar_pipeline_explicito",
+            return_value=(setup_stub, None),
+        ) as pipeline_mock,
+        patch(
+            "cobra.cli.commands.interactive_cmd.ejecutar_en_sandbox",
+            return_value="",
+        ),
     ):
         cmd._ejecutar_en_sandbox("var x = 1")
 
     pipeline_mock.assert_called_once()
 
 
-def test_run_repl_normal_incremental_no_invoca_pipeline_batch_y_comparte_entorno() -> None:
+def test_run_repl_normal_incremental_no_invoca_pipeline_batch_y_comparte_entorno() -> (
+    None
+):
     cmd = InteractiveCommand(InterpretadorCobra())
-    entradas = ["var x = 10", "var y = x * 2", "si verdadero:", "var z = y", "fin", "z", "salir"]
+    entradas = [
+        "var x = 10",
+        "var y = x * 2",
+        "si verdadero:",
+        "var z = y",
+        "fin",
+        "z",
+        "salir",
+    ]
 
-    with patch("cobra.cli.commands.interactive_cmd.validar_dependencias"), patch(
-        "prompt_toolkit.PromptSession.prompt", side_effect=entradas
-    ), patch(
-        "cobra.cli.commands.interactive_cmd.InteractiveCommand.validar_entrada", return_value=True
-    ), patch(
-        "pcobra.cobra.cli.execution_pipeline.ejecutar_pipeline_explicito",
-        side_effect=AssertionError("No debe usarse pipeline explícito en flujo REPL normal"),
-    ), patch("sys.stdout", new_callable=StringIO) as salida:
+    with (
+        patch("cobra.cli.commands.interactive_cmd.validar_dependencias"),
+        patch("prompt_toolkit.PromptSession.prompt", side_effect=entradas),
+        patch(
+            "cobra.cli.commands.interactive_cmd.InteractiveCommand.validar_entrada",
+            return_value=True,
+        ),
+        patch(
+            "pcobra.cobra.cli.execution_pipeline.ejecutar_pipeline_explicito",
+            side_effect=AssertionError(
+                "No debe usarse pipeline explícito en flujo REPL normal"
+            ),
+        ),
+        patch("sys.stdout", new_callable=StringIO) as salida,
+    ):
         ret = cmd.run(_args())
 
     evidencia = salida.getvalue()

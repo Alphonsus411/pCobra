@@ -2,8 +2,8 @@ import pytest
 import os
 from unittest.mock import patch
 
-from cobra.cli.cli import CliApplication
-from cobra.cli.commands.cache_cmd import CacheCommand
+from pcobra.cli.cli import CliApplication
+from pcobra.cli.commands.cache_cmd import CacheCommand
 
 
 def test_cli_falla_si_no_hay_sqlite_db_key(monkeypatch):
@@ -34,7 +34,9 @@ def test_cli_genera_clave_efimera_solo_con_triple_confirmacion(monkeypatch):
     app = CliApplication()
     args = type("Args", (), {"dev_ephemeral_key": True})()
 
-    with patch("pcobra.cli.secrets.token_urlsafe", return_value="ephemeral-key") as token_mock:
+    with patch(
+        "pcobra.cli.secrets.token_urlsafe", return_value="ephemeral-key"
+    ) as token_mock:
         app._ensure_sqlite_db_key(args=args)
 
     assert token_mock.call_count == 1

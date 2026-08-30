@@ -2,23 +2,26 @@ from __future__ import annotations
 
 import pytest
 
-from cobra.core import Lexer, Parser
-from core.ast_nodes import (
+from pcobra.core.ast_nodes import (
     NodoBloque,
     NodoBucleMientras,
     NodoCondicional,
     NodoPara,
     NodoValor,
 )
-from core.interpreter import InterpretadorCobra
-from core.utils import ErrorEstructuraAST, validar_ast_estructural
+from pcobra.core.interpreter import InterpretadorCobra
+from pcobra.core.lexer import Lexer
+from pcobra.core.parser import Parser
+from pcobra.core.utils import ErrorEstructuraAST, validar_ast_estructural
 
 
 def test_ast_falla_si_hay_lista_donde_se_espera_nodo_bloque() -> None:
     nodo = NodoCondicional(NodoValor(True), [NodoValor(1)], [NodoValor(0)])
     nodo.bloque_si = [NodoValor(1)]  # inyección inválida deliberada
 
-    with pytest.raises(ErrorEstructuraAST, match="Se encontró lista donde se esperaba NodoBloque"):
+    with pytest.raises(
+        ErrorEstructuraAST, match="Se encontró lista donde se esperaba NodoBloque"
+    ):
         validar_ast_estructural([nodo])
 
 
@@ -43,7 +46,9 @@ def test_validacion_falla_si_nodo_mientras_recibe_lista_cruda() -> None:
     nodo = NodoBucleMientras(NodoValor(True), [NodoValor(1)])
     nodo.cuerpo = [NodoValor(1)]  # inyección inválida deliberada
 
-    with pytest.raises(ErrorEstructuraAST, match="Se encontró lista donde se esperaba NodoBloque"):
+    with pytest.raises(
+        ErrorEstructuraAST, match="Se encontró lista donde se esperaba NodoBloque"
+    ):
         validar_ast_estructural([nodo])
 
 
@@ -51,7 +56,9 @@ def test_validacion_falla_si_nodo_para_recibe_lista_cruda() -> None:
     nodo = NodoPara("i", NodoValor([1]), [NodoValor(1)])
     nodo.cuerpo = [NodoValor(1)]  # inyección inválida deliberada
 
-    with pytest.raises(ErrorEstructuraAST, match="Se encontró lista donde se esperaba NodoBloque"):
+    with pytest.raises(
+        ErrorEstructuraAST, match="Se encontró lista donde se esperaba NodoBloque"
+    ):
         validar_ast_estructural([nodo])
 
 
@@ -60,7 +67,9 @@ def test_regresion_ejecutar_ast_no_revive_error_de_dict_en_listas() -> None:
     nodo = NodoCondicional(NodoValor(True), NodoBloque([NodoValor(1)]), NodoBloque())
     nodo.bloque_si = [NodoValor(1)]  # inyección inválida deliberada
 
-    with pytest.raises(RuntimeError, match=r"^Estructura AST inválida en fase 'parseo':"):
+    with pytest.raises(
+        RuntimeError, match=r"^Estructura AST inválida en fase 'parseo':"
+    ):
         inter.ejecutar_ast([nodo])
 
 

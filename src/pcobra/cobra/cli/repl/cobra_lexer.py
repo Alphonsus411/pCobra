@@ -123,14 +123,18 @@ class CobraLexer(RegexLexer):
     filenames = ["*.cobra"]
 
     # Construimos la lista de reglas para el estado raíz a partir del mapa
-    _root_rules = [
-        (r"/\*", Comment.Multiline, "comment"),
-        (r"//.*?$", Comment.Single),
-        (r"#.*?$", Comment.Single),
-        (r"\s+", Whitespace),
-    ] + [(regex, token) for _, regex, token in TOKEN_REGEX_MAP] + [
-        (r".", Text),
-    ]
+    _root_rules = (
+        [
+            (r"/\*", Comment.Multiline, "comment"),
+            (r"//.*?$", Comment.Single),
+            (r"#.*?$", Comment.Single),
+            (r"\s+", Whitespace),
+        ]
+        + [(regex, token) for _, regex, token in TOKEN_REGEX_MAP]
+        + [
+            (r".", Text),
+        ]
+    )
 
     tokens = {
         "root": _root_rules,

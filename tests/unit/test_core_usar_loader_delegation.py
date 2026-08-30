@@ -15,7 +15,7 @@ def test_core_usar_loader_delega_en_cobra_usar_loader(monkeypatch):
 
 
 def test_core_usar_loader_expone_resolver_modulo_cobra_proyecto(monkeypatch, tmp_path):
-    token = tmp_path / "utilidades" / "fechas.co"
+    token = tmp_path / "utilidades" / "fechas.cobra"
 
     def _fake_resolver(nombre, *, project_root, current_file=None):
         assert nombre == "utilidades.fechas"
@@ -23,7 +23,9 @@ def test_core_usar_loader_expone_resolver_modulo_cobra_proyecto(monkeypatch, tmp
         assert current_file is None
         return token
 
-    monkeypatch.setattr(cobra_usar_loader, "resolver_modulo_cobra_proyecto", _fake_resolver)
+    monkeypatch.setattr(
+        cobra_usar_loader, "resolver_modulo_cobra_proyecto", _fake_resolver
+    )
 
     assert (
         core_usar_loader.resolver_modulo_cobra_proyecto(

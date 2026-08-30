@@ -8,7 +8,6 @@ from types import ModuleType
 
 import pytest
 
-
 ROOT = Path(__file__).resolve().parents[2]
 
 
@@ -23,9 +22,9 @@ def test_entrypoints_publicos_apuntan_al_namespace_pcobra() -> None:
 
 
 def test_run_service_declara_solo_namespace_canonico_para_sandbox() -> None:
-    source = (ROOT / "src" / "pcobra" / "cobra" / "cli" / "services" / "run_service.py").read_text(
-        encoding="utf-8"
-    )
+    source = (
+        ROOT / "src" / "pcobra" / "cobra" / "cli" / "services" / "run_service.py"
+    ).read_text(encoding="utf-8")
 
     assert "from pcobra.core import sandbox as sandbox_module" in source
     assert 'import_module("core.sandbox")' not in source

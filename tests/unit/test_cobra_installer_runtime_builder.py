@@ -13,7 +13,9 @@ from pcobra.cobra_installer.dependency_resolver import DependencyResolutionResul
 from pcobra.cobra_installer.hub_resolver import CobraHubResolution
 
 
-def test_prepare_runtime_copia_runtime_recursos_y_entrypoint_filtrados(tmp_path: Path) -> None:
+def test_prepare_runtime_copia_runtime_recursos_y_entrypoint_filtrados(
+    tmp_path: Path,
+) -> None:
     project_root = tmp_path / "app"
     project_root.mkdir()
     entrypoint = project_root / "main.cobra"
@@ -71,7 +73,9 @@ def test_prepare_runtime_copia_runtime_recursos_y_entrypoint_filtrados(tmp_path:
     assert not any(result.runtime_dir.rglob("__pycache__"))
     assert (result.packages_dir / "remoto-1.0.0.co").read_bytes() == b"paquete-remoto"
     assert (result.packages_dir / "vendor.co").read_bytes() == b"paquete-local"
-    assert (result.assets_dir / "assets" / "logo.txt").read_text(encoding="utf-8") == "asset"
+    assert (result.assets_dir / "assets" / "logo.txt").read_text(
+        encoding="utf-8"
+    ) == "asset"
     assert (result.config_dir / "config" / "settings.json").is_file()
     assert (result.documentation_dir / "README.md").is_file()
     assert (result.auxiliary_dir / "cobra.toml").is_file()
@@ -80,7 +84,9 @@ def test_prepare_runtime_copia_runtime_recursos_y_entrypoint_filtrados(tmp_path:
     assert result.dependency_resolution is resolution
 
 
-def test_prepare_runtime_acepta_dependencias_como_rutas_y_no_resuelve_si_se_omiten(tmp_path: Path) -> None:
+def test_prepare_runtime_acepta_dependencias_como_rutas_y_no_resuelve_si_se_omiten(
+    tmp_path: Path,
+) -> None:
     project_root = tmp_path / "app"
     project_root.mkdir()
     entrypoint = project_root / "main.cobra"

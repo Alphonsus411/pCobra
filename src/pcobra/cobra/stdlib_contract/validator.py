@@ -10,11 +10,16 @@ from typing import Final
 
 from pcobra.cobra.stdlib_contract import CONTRACTS, get_blueprint_contract_manifests
 from pcobra.cobra.stdlib_contract.base import ContractDescriptor, PublicApiExport
-from pcobra.cobra.stdlib_contract.generator import build_contract_matrix, render_contract_markdown
+from pcobra.cobra.stdlib_contract.generator import (
+    build_contract_matrix,
+    render_contract_markdown,
+)
 
 REPO_ROOT: Final[Path] = Path(__file__).resolve().parents[4]
 VALID_LEVELS: Final[set[str]] = {"full", "partial"}
-RUNTIME_API_MATRIX_PATH: Final[Path] = REPO_ROOT / "docs" / "_generated" / "runtime_api_matrix.json"
+RUNTIME_API_MATRIX_PATH: Final[Path] = (
+    REPO_ROOT / "docs" / "_generated" / "runtime_api_matrix.json"
+)
 STDLIB_CONTRACT_MATRIX_JSON_PATH: Final[Path] = (
     REPO_ROOT / "docs" / "_generated" / "stdlib_contract_matrix.json"
 )
@@ -39,13 +44,16 @@ def _extract_py_functions(path: Path) -> set[str]:
     return {
         node.name
         for node in module.body
-        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and not node.name.startswith("_")
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+        and not node.name.startswith("_")
     }
 
 
 def _extract_js_exports(path: Path) -> set[str]:
     source = path.read_text(encoding="utf-8")
-    return set(re.findall(r"export\s+(?:async\s+)?function\s+([A-Za-z_][A-Za-z0-9_]*)", source))
+    return set(
+        re.findall(r"export\s+(?:async\s+)?function\s+([A-Za-z_][A-Za-z0-9_]*)", source)
+    )
 
 
 def _extract_symbols(path: Path) -> set[str]:
@@ -83,7 +91,9 @@ def _validate_mapping_paths(contract: ContractDescriptor) -> None:
 
 def _validate_public_api(contract: ContractDescriptor) -> None:
     expected_prefix = f"{contract.module}."
-    invalid_api = [api for api in contract.public_api if not api.startswith(expected_prefix)]
+    invalid_api = [
+        api for api in contract.public_api if not api.startswith(expected_prefix)
+    ]
     if invalid_api:
         raise ContractValidationError(
             f"{contract.module}: API pública fuera del namespace del módulo: {invalid_api}"
@@ -188,7 +198,9 @@ def _load_runtime_api_matrix() -> dict[str, object]:
             f"No existe runtime_api_matrix requerido para validación: {RUNTIME_API_MATRIX_PATH}"
         ) from exc
     if not isinstance(payload, dict):
-        raise ContractValidationError("runtime_api_matrix inválido: estructura raíz no es objeto")
+        raise ContractValidationError(
+            "runtime_api_matrix inválido: estructura raíz no es objeto"
+        )
     return payload
 
 
@@ -197,7 +209,9 @@ def validate_coverage_against_runtime_matrix(contract: ContractDescriptor) -> No
     matrix = _load_runtime_api_matrix()
     available_by_backend = matrix.get("available_api_by_backend")
     if not isinstance(available_by_backend, dict):
-        raise ContractValidationError("runtime_api_matrix inválido: falta `available_api_by_backend`")
+        raise ContractValidationError(
+            "runtime_api_matrix inválido: falta `available_api_by_backend`"
+        )
 
     for function_coverage in contract.coverage:
         symbol = function_coverage.function.rsplit(".", 1)[-1]
@@ -273,7 +287,9 @@ def validate_contracts() -> None:
     modules_seen: set[str] = set()
     for contract in CONTRACTS:
         if contract.module in modules_seen:
-            raise ContractValidationError(f"Módulo duplicado en contrato: {contract.module}")
+            raise ContractValidationError(
+                f"Módulo duplicado en contrato: {contract.module}"
+            )
         modules_seen.add(contract.module)
         validate_contract_descriptor(contract)
     validate_contracts_against_blueprints()
@@ -289,7 +305,9 @@ def validate_generated_stdlib_contract_matrix() -> None:
     """Valida consistencia entre contrato vivo y docs generadas de stdlib."""
     expected_json = build_contract_matrix()
     try:
-        rendered_json = json.loads(STDLIB_CONTRACT_MATRIX_JSON_PATH.read_text(encoding="utf-8"))
+        rendered_json = json.loads(
+            STDLIB_CONTRACT_MATRIX_JSON_PATH.read_text(encoding="utf-8")
+        )
     except FileNotFoundError as exc:
         raise ContractValidationError(
             "No existe stdlib_contract_matrix.json generado en docs/_generated"

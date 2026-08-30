@@ -62,9 +62,7 @@ class _FunctionInliner(NodeVisitor):
                 if any(self._tiene_efectos_secundarios(v) for v in value):
                     return True
             elif isinstance(value, NodoBloque):
-                if any(
-                    self._tiene_efectos_secundarios(v) for v in value.instrucciones
-                ):
+                if any(self._tiene_efectos_secundarios(v) for v in value.instrucciones):
                     return True
             elif isinstance(value, NodoAST):
                 if self._tiene_efectos_secundarios(value):

@@ -95,7 +95,9 @@ def test_validador_reporta_targets_faltantes_con_mensaje_claro(tmp_path, monkeyp
         lambda: {"project": {"required_targets": ["python", "javascript"]}},
     )
 
-    with pytest.raises(ValueError, match="Faltan rutas para targets requeridos por política"):
+    with pytest.raises(
+        ValueError, match="Faltan rutas para targets requeridos por política"
+    ):
         validar_mod(str(tmp_path / "cobra.mod"))
 
 
@@ -148,7 +150,6 @@ def test_validador_permite_targets_tier2_opcionales_en_mapeo(tmp_path, monkeypat
     )
 
     validar_mod(str(tmp_path / "cobra.mod"))
-
 
 
 def test_validador_rechaza_backend_fuera_de_los_8_oficiales(tmp_path, monkeypatch):
@@ -245,5 +246,7 @@ def test_validador_falla_si_manifest_stdlib_contract_invalido(tmp_path, monkeypa
         },
     )
 
-    with pytest.raises(ValueError, match="fallback_permitido contiene backend no oficial"):
+    with pytest.raises(
+        ValueError, match="fallback_permitido contiene backend no oficial"
+    ):
         validar_mod(str(tmp_path / "cobra.mod"))

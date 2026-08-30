@@ -18,9 +18,10 @@ def test_resolver_ruta_en_project_root_acepta_ruta_relativa_normal(
 ):
     _workspace_root, project_root = idle_roots
 
-    assert idle.resolver_ruta_en_project_root("src/programa.co", project_root) == (
-        project_root / "src" / "programa.co"
-    ).resolve()
+    assert (
+        idle.resolver_ruta_en_project_root("src/programa.co", project_root)
+        == (project_root / "src" / "programa.co").resolve()
+    )
 
 
 def test_resolver_ruta_en_project_root_bloquea_parent_directory(

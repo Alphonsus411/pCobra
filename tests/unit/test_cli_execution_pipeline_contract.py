@@ -108,7 +108,7 @@ def _run_execute_via_script(
             if linea
         ]
     )
-    archivo = tmp_path / "matriz_paridad.co"
+    archivo = tmp_path / "matriz_paridad.cobra"
     archivo.write_text(codigo, encoding="utf-8")
     out, err = StringIO(), StringIO()
     with redirect_stdout(out), redirect_stderr(err):
@@ -341,7 +341,7 @@ def _snapshot_context_values(values: dict[str, object] | None) -> dict[str, str]
         (
             "define_local_en_funcion",
             ("func localiza():\n" "    var persistente = 33\n" "fin\n" "localiza()"),
-            ),
+        ),
         (
             "funcion",
             "func incrementar(v):\n    retorno v + 3\nfin\nvar persistente = incrementar(10)",
@@ -604,8 +604,8 @@ def test_repl_ejecuta_bloque_completo_sin_parseo_parcial_por_linea(
         patch.object(modulos_comando_canonicos.interactive, "validar_dependencias"),
         patch("prompt_toolkit.PromptSession.prompt", side_effect=inputs),
         patch.object(
-        cmd,
-        "ejecutar_codigo",
+            cmd,
+            "ejecutar_codigo",
         ) as mock_ejecutar_codigo,
     ):
         ret = cmd.run(_args_interactive())

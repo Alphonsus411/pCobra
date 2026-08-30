@@ -5,8 +5,9 @@ from unittest.mock import patch
 
 import pytest
 
-from cobra.core import Lexer, Parser
-from core.interpreter import InterpretadorCobra
+from pcobra.core.interpreter import InterpretadorCobra
+from pcobra.core.lexer import Lexer
+from pcobra.core.parser import Parser
 
 
 def _parsear_y_ejecutar(codigo: str) -> str:

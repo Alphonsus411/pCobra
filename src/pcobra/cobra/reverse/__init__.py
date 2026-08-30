@@ -4,6 +4,7 @@ Este paquete reexporta únicamente la API pública soportada por
 ``pcobra.cobra.transpilers.reverse``. Componentes experimentales o legados no
 deben exponerse desde aquí.
 """
+
 from __future__ import annotations
 
 import pcobra.cobra.transpilers.reverse as _legacy_reverse

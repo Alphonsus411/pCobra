@@ -13,7 +13,11 @@ from pcobra.cobra.cli.target_policies import (
     parse_target,
 )
 
-from pcobra.cobra.benchmarks.targets_policy import BENCHMARK_BACKEND_METADATA, benchmark_backends, validate_backend_metadata
+from pcobra.cobra.benchmarks.targets_policy import (
+    BENCHMARK_BACKEND_METADATA,
+    benchmark_backends,
+    validate_backend_metadata,
+)
 
 BACKENDS = benchmark_backends(BENCHMARK_BACKEND_METADATA)
 
@@ -43,9 +47,7 @@ class BenchmarksCommand(BaseCommand):
         Returns:
             CustomArgumentParser: El parser configurado para el subcomando
         """
-        parser = subparsers.add_parser(
-            self.name, help=_("Ejecuta benchmarks")
-        )
+        parser = subparsers.add_parser(self.name, help=_("Ejecuta benchmarks"))
         parser.add_argument(
             "--backend",
             "-b",
@@ -67,7 +69,9 @@ class BenchmarksCommand(BaseCommand):
             "--perfil",
             choices=("publico", "avanzado"),
             default="publico",
-            help=_("Perfil de exposición: use 'avanzado' para comparativas multi-backend."),
+            help=_(
+                "Perfil de exposición: use 'avanzado' para comparativas multi-backend."
+            ),
         )
         parser.set_defaults(cmd=self)
         return parser
@@ -96,7 +100,9 @@ class BenchmarksCommand(BaseCommand):
                     return 1
                 if backend_filtro not in available_backends:
                     mostrar_error(
-                        _("Backend no permitido: {backend}. Permitidos: {allowed}").format(
+                        _(
+                            "Backend no permitido: {backend}. Permitidos: {allowed}"
+                        ).format(
                             backend=getattr(args, "backend", backend_filtro),
                             allowed=", ".join(available_backends),
                         )
@@ -109,7 +115,9 @@ class BenchmarksCommand(BaseCommand):
                 )
 
             for _iteration in range(iteraciones):
-                data = run_benchmarks(benchmark_backends_config(set(available_backends)))
+                data = run_benchmarks(
+                    benchmark_backends_config(set(available_backends))
+                )
                 if backend_filtro:
                     data = [d for d in data if d.get("backend") == backend_filtro]
                 results.extend(data)
@@ -136,10 +144,9 @@ class BenchmarksCommand(BaseCommand):
             mostrar_error(_("No se encontraron herramientas de benchmark requeridas"))
             return 2
         except Exception as e:  # pragma: no cover - errores inesperados
-            mostrar_error(
-                _("Error durante la ejecución: {error}").format(error=str(e))
-            )
+            mostrar_error(_("Error durante la ejecución: {error}").format(error=str(e)))
             return 1
+
 
 validate_backend_metadata(
     BENCHMARK_BACKEND_METADATA,

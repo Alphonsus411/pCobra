@@ -5,8 +5,8 @@ import sys
 
 def main():
     root = pathlib.Path(__file__).parent
-    sys.exit(pytest.main([str(root), '-k', 'not cli']))
+    sys.exit(pytest.main([str(root), "-k", "not cli"]))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

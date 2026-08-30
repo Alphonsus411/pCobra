@@ -41,9 +41,15 @@ INTERNAL_ALLOWED_PREFIXES = (
 )
 
 SYMBOL_PATTERNS: dict[str, re.Pattern[str]] = {
-    "target_token": re.compile(r"(?<![\w.+/-])(?:go|cpp|java|wasm|asm)(?![\w.+/-])", re.IGNORECASE),
-    "backend_flag": re.compile(r"--(?:backend|tipo)\s+(?:go|cpp|java|wasm|asm)(?![A-Za-z0-9_])", re.IGNORECASE),
-    "registry_key": re.compile(r"[\"'](?:go|cpp|java|wasm|asm)[\"']\s*:", re.IGNORECASE),
+    "target_token": re.compile(
+        r"(?<![\w.+/-])(?:go|cpp|java|wasm|asm)(?![\w.+/-])", re.IGNORECASE
+    ),
+    "backend_flag": re.compile(
+        r"--(?:backend|tipo)\s+(?:go|cpp|java|wasm|asm)(?![A-Za-z0-9_])", re.IGNORECASE
+    ),
+    "registry_key": re.compile(
+        r"[\"'](?:go|cpp|java|wasm|asm)[\"']\s*:", re.IGNORECASE
+    ),
 }
 
 
@@ -97,7 +103,9 @@ def _render(findings: list[Finding]) -> str:
         grouped_by_path[f.rel_path] += 1
         grouped_by_symbol[f.symbol] += 1
 
-    top_paths = sorted(grouped_by_path.items(), key=lambda item: (-item[1], item[0]))[:25]
+    top_paths = sorted(grouped_by_path.items(), key=lambda item: (-item[1], item[0]))[
+        :25
+    ]
     sample = sorted(findings, key=lambda item: (item.rel_path, item.line_number))[:80]
 
     lines = [
@@ -129,11 +137,27 @@ def _render(findings: list[Finding]) -> str:
     for symbol in sorted(SYMBOL_PATTERNS):
         lines.append(f"- `{symbol}`: {grouped_by_symbol.get(symbol, 0)}")
 
-    lines.extend(["", "### Top paths con más hallazgos", "", "| path | hallazgos |", "|---|---:|"])
+    lines.extend(
+        [
+            "",
+            "### Top paths con más hallazgos",
+            "",
+            "| path | hallazgos |",
+            "|---|---:|",
+        ]
+    )
     for rel, count in top_paths:
         lines.append(f"| `{rel}` | {count} |")
 
-    lines.extend(["", "### Muestra de hallazgos", "", "| path | línea | símbolo | extracto |", "|---|---:|---|---|"])
+    lines.extend(
+        [
+            "",
+            "### Muestra de hallazgos",
+            "",
+            "| path | línea | símbolo | extracto |",
+            "|---|---:|---|---|",
+        ]
+    )
     for finding in sample:
         excerpt = finding.line.replace("|", "\\|")
         lines.append(
@@ -156,7 +180,9 @@ def main() -> int:
     findings = _scan()
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT.write_text(_render(findings), encoding="utf-8")
-    print(f"[inventory] generado: {OUTPUT.relative_to(ROOT)} ({len(findings)} hallazgos)")
+    print(
+        f"[inventory] generado: {OUTPUT.relative_to(ROOT)} ({len(findings)} hallazgos)"
+    )
     return 0
 
 

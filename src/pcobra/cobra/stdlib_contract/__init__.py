@@ -20,7 +20,9 @@ CONTRACTS: tuple[ContractDescriptor, ...] = (
 
 def _parse_literal_tuple(node: ast.AST) -> tuple[str, ...]:
     if not isinstance(node, (ast.Tuple, ast.List)):
-        raise RuntimeError("Estructura inválida en STDLIB_BLUEPRINTS: se esperaba tupla/lista")
+        raise RuntimeError(
+            "Estructura inválida en STDLIB_BLUEPRINTS: se esperaba tupla/lista"
+        )
     values: list[str] = []
     for item in node.elts:
         if not isinstance(item, ast.Constant) or not isinstance(item.value, str):
@@ -30,7 +32,9 @@ def _parse_literal_tuple(node: ast.AST) -> tuple[str, ...]:
 
 
 def _load_stdlib_blueprints() -> tuple[dict[str, object], ...]:
-    module_path = Path(__file__).resolve().parents[1] / "architecture" / "unified_ecosystem.py"
+    module_path = (
+        Path(__file__).resolve().parents[1] / "architecture" / "unified_ecosystem.py"
+    )
     source = module_path.read_text(encoding="utf-8")
     tree = ast.parse(source, filename=str(module_path))
     blueprints: list[dict[str, object]] = []
@@ -44,7 +48,10 @@ def _load_stdlib_blueprints() -> tuple[dict[str, object], ...]:
             if has_target:
                 value_node = node.value
         elif isinstance(node, ast.AnnAssign):
-            if isinstance(node.target, ast.Name) and node.target.id == "STDLIB_BLUEPRINTS":
+            if (
+                isinstance(node.target, ast.Name)
+                and node.target.id == "STDLIB_BLUEPRINTS"
+            ):
                 value_node = node.value
 
         if not isinstance(value_node, (ast.Tuple, ast.List)):
@@ -80,7 +87,9 @@ def _load_stdlib_blueprints() -> tuple[dict[str, object], ...]:
                 }
             )
     if not blueprints:
-        raise RuntimeError("No se pudo extraer STDLIB_BLUEPRINTS de unified_ecosystem.py")
+        raise RuntimeError(
+            "No se pudo extraer STDLIB_BLUEPRINTS de unified_ecosystem.py"
+        )
     return blueprints
 
 
@@ -139,7 +148,9 @@ def get_contract_matrix() -> dict[str, object]:
         rows: list[dict[str, str]] = []
         for fn in contract.coverage:
             for backend, level in fn.backend_levels.items():
-                rows.append({"function": fn.function, "backend": backend, "level": level})
+                rows.append(
+                    {"function": fn.function, "backend": backend, "level": level}
+                )
         modules.append(
             {
                 "module": contract.module,

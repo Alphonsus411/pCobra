@@ -16,7 +16,9 @@ except ImportError:  # pragma: no cover - Windows
         import psutil  # type: ignore
     except ImportError:
         psutil = None  # type: ignore
-        logging.warning("Ni resource ni psutil están disponibles - mediciones limitadas")
+        logging.warning(
+            "Ni resource ni psutil están disponibles - mediciones limitadas"
+        )
 else:
     psutil = None  # type: ignore
 
@@ -39,15 +41,16 @@ PROCESS_TIMEOUT = tiempo_max_transpilacion()
 MAX_RETRIES = 3
 
 # Mover códigos de prueba a archivos separados
-SEQUENTIAL_CODE = Path(__file__).parent / "data" / "sequential_code.co"
-THREAD_CODE = Path(__file__).parent / "data" / "thread_code.co"
+SEQUENTIAL_CODE = Path(__file__).parent / "data" / "sequential_code.cobra"
+THREAD_CODE = Path(__file__).parent / "data" / "thread_code.cobra"
+
 
 def _measure(func) -> Tuple[float, float, int]:
     """Mide tiempo, CPU y operaciones I/O de una función.
-    
+
     Args:
         func: Función a medir
-        
+
     Returns:
         Tupla con (tiempo_transcurrido, tiempo_cpu, operaciones_io)
     """
@@ -88,6 +91,7 @@ def _measure(func) -> Tuple[float, float, int]:
         elapsed = time.perf_counter() - start
         return elapsed, 0.0, 0
 
+
 class BenchThreadsCommand(BaseCommand):
     """Compara la ejecución secuencial y en hilos."""
 
@@ -102,42 +106,48 @@ class BenchThreadsCommand(BaseCommand):
             "--output",
             "-o",
             help=_("Archivo donde guardar el JSON con resultados"),
-            type=Path
+            type=Path,
         )
         parser.set_defaults(cmd=self)
         return parser
 
     def _run_cli(self, code: str, env: Dict[str, str]) -> None:
         """Ejecuta código usando la CLI.
-        
+
         Args:
             code: Código a ejecutar
             env: Variables de entorno
-            
+
         Raises:
             subprocess.SubprocessError: Si falla la ejecución
         """
         tmp_name = None
         try:
-            with tempfile.NamedTemporaryFile("w", suffix=".co", delete=False) as tmp:
+            with tempfile.NamedTemporaryFile("w", suffix=".cobra", delete=False) as tmp:
                 tmp.write(code)
                 tmp.flush()
                 tmp_name = tmp.name
-                
+
             for _ in range(MAX_RETRIES):
                 try:
                     subprocess.run(
-                        [sys.executable, "-m", "pcobra.cobra.cli.cli", "ejecutar", tmp_name],
+                        [
+                            sys.executable,
+                            "-m",
+                            "pcobra.cobra.cli.cli",
+                            "ejecutar",
+                            tmp_name,
+                        ],
                         env=env,
                         stdout=subprocess.DEVNULL,
                         stderr=subprocess.DEVNULL,
                         timeout=PROCESS_TIMEOUT,
-                        check=True
+                        check=True,
                     )
                     break
                 except subprocess.TimeoutExpired:
                     continue
-                
+
         finally:
             if tmp_name and os.path.exists(tmp_name):
                 try:
@@ -169,7 +179,7 @@ class BenchThreadsCommand(BaseCommand):
 
     def run(self, args: Any) -> int:
         """Ejecuta la lógica del comando.
-        
+
         Returns:
             int: 0 si todo ok, 1 si hay error
         """
@@ -184,48 +194,60 @@ class BenchThreadsCommand(BaseCommand):
             results: List[Dict[str, Union[str, float, int]]] = []
 
             elapsed, cpu, io = _measure(self._run_sequential)
-            results.append({
-                "modo": "secuencial",
-                "time": round(elapsed, 4),
-                "cpu": round(cpu, 4),
-                "io": io,
-            })
+            results.append(
+                {
+                    "modo": "secuencial",
+                    "time": round(elapsed, 4),
+                    "cpu": round(cpu, 4),
+                    "io": io,
+                }
+            )
 
-            elapsed, cpu, io = _measure(lambda: self._run_cli(THREAD_CODE.read_text(), env))
-            results.append({
-                "modo": "cli_hilos", 
-                "time": round(elapsed, 4),
-                "cpu": round(cpu, 4),
-                "io": io,
-            })
+            elapsed, cpu, io = _measure(
+                lambda: self._run_cli(THREAD_CODE.read_text(), env)
+            )
+            results.append(
+                {
+                    "modo": "cli_hilos",
+                    "time": round(elapsed, 4),
+                    "cpu": round(cpu, 4),
+                    "io": io,
+                }
+            )
 
-            elapsed, cpu, io = _measure(lambda: self._run_kernel(THREAD_CODE.read_text()))
-            results.append({
-                "modo": "kernel_hilos",
-                "time": round(elapsed, 4),
-                "cpu": round(cpu, 4),
-                "io": io,
-            })
+            elapsed, cpu, io = _measure(
+                lambda: self._run_kernel(THREAD_CODE.read_text())
+            )
+            results.append(
+                {
+                    "modo": "kernel_hilos",
+                    "time": round(elapsed, 4),
+                    "cpu": round(cpu, 4),
+                    "io": io,
+                }
+            )
 
             data = json.dumps(results, indent=2)
-            
+
             if args.output:
                 try:
                     args.output.parent.mkdir(parents=True, exist_ok=True)
                     args.output.write_text(data)
-                    mostrar_info(_("Resultados guardados en {file}").format(
-                        file=args.output)
+                    mostrar_info(
+                        _("Resultados guardados en {file}").format(file=args.output)
                     )
                 except OSError as err:
-                    mostrar_error(_("Error al escribir {file}: {err}").format(
-                        file=args.output, err=err)
+                    mostrar_error(
+                        _("Error al escribir {file}: {err}").format(
+                            file=args.output, err=err
+                        )
                     )
                     return 1
             else:
                 print(data)
-                
+
             return 0
-            
+
         finally:
             if tmp_file and tmp_file.exists():
                 try:

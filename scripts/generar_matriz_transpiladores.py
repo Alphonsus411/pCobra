@@ -26,7 +26,10 @@ from pcobra.cobra.cli.target_policies import (  # noqa: E402
     SDK_COMPATIBLE_TARGETS,
     render_public_policy_summary,
 )
-from pcobra.cobra.transpilers.compatibility_matrix import BACKEND_COMPATIBILITY, CONTRACT_FEATURES  # noqa: E402
+from pcobra.cobra.transpilers.compatibility_matrix import (
+    BACKEND_COMPATIBILITY,
+    CONTRACT_FEATURES,
+)  # noqa: E402
 from pcobra.cobra.transpilers.target_utils import target_label  # noqa: E402
 from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS  # noqa: E402
 
@@ -44,17 +47,29 @@ EVIDENCE_MARKERS: dict[str, dict[str, tuple[str, ...]]] = {
     },
     "javascript": {
         "holobit": ("let hb = cobra_holobit([1, 2, 3]);",),
-        "proyectar": ("Runtime Holobit JavaScript: feature=${feature}; contrato partial; backend sin holobit_sdk;",),
-        "transformar": ("Runtime Holobit JavaScript: feature=${feature}; contrato partial; backend sin holobit_sdk;",),
-        "graficar": ("Runtime Holobit JavaScript: feature=${feature}; contrato partial; backend sin holobit_sdk;",),
+        "proyectar": (
+            "Runtime Holobit JavaScript: feature=${feature}; contrato partial; backend sin holobit_sdk;",
+        ),
+        "transformar": (
+            "Runtime Holobit JavaScript: feature=${feature}; contrato partial; backend sin holobit_sdk;",
+        ),
+        "graficar": (
+            "Runtime Holobit JavaScript: feature=${feature}; contrato partial; backend sin holobit_sdk;",
+        ),
         "corelibs": ("longitud('cobra');",),
         "standard_library": ("mostrar('hola');",),
     },
     "rust": {
         "holobit": ("let hb = cobra_holobit(vec![1, 2, 3]);",),
-        "proyectar": ("Runtime Holobit Rust: feature={}; contrato partial; backend sin holobit_sdk;",),
-        "transformar": ("Runtime Holobit Rust: feature={}; contrato partial; backend sin holobit_sdk;",),
-        "graficar": ("Runtime Holobit Rust: feature={}; contrato partial; backend sin holobit_sdk;",),
+        "proyectar": (
+            "Runtime Holobit Rust: feature={}; contrato partial; backend sin holobit_sdk;",
+        ),
+        "transformar": (
+            "Runtime Holobit Rust: feature={}; contrato partial; backend sin holobit_sdk;",
+        ),
+        "graficar": (
+            "Runtime Holobit Rust: feature={}; contrato partial; backend sin holobit_sdk;",
+        ),
         "corelibs": ('longitud("cobra");',),
         "standard_library": ('mostrar("hola");',),
     },
@@ -68,25 +83,43 @@ EVIDENCE_MARKERS: dict[str, dict[str, tuple[str, ...]]] = {
     },
     "go": {
         "holobit": ("hb := cobra_holobit([]float64{1, 2, 3})",),
-        "proyectar": ("Runtime Holobit Go: feature=%s; contrato partial; backend sin holobit_sdk;",),
-        "transformar": ("Runtime Holobit Go: feature=%s; contrato partial; backend sin holobit_sdk;",),
-        "graficar": ("Runtime Holobit Go: feature=%s; contrato partial; backend sin holobit_sdk;",),
+        "proyectar": (
+            "Runtime Holobit Go: feature=%s; contrato partial; backend sin holobit_sdk;",
+        ),
+        "transformar": (
+            "Runtime Holobit Go: feature=%s; contrato partial; backend sin holobit_sdk;",
+        ),
+        "graficar": (
+            "Runtime Holobit Go: feature=%s; contrato partial; backend sin holobit_sdk;",
+        ),
         "corelibs": ('longitud("cobra")',),
         "standard_library": ('mostrar("hola")',),
     },
     "cpp": {
         "holobit": ("auto hb = cobra_holobit({ 1, 2, 3 });",),
-        "proyectar": ("Runtime Holobit C++: feature=\" + feature + \"; contrato partial; backend sin holobit_sdk;",),
-        "transformar": ("Runtime Holobit C++: feature=\" + feature + \"; contrato partial; backend sin holobit_sdk;",),
-        "graficar": ("Runtime Holobit C++: feature=\" + feature + \"; contrato partial; backend sin holobit_sdk;",),
+        "proyectar": (
+            'Runtime Holobit C++: feature=" + feature + "; contrato partial; backend sin holobit_sdk;',
+        ),
+        "transformar": (
+            'Runtime Holobit C++: feature=" + feature + "; contrato partial; backend sin holobit_sdk;',
+        ),
+        "graficar": (
+            'Runtime Holobit C++: feature=" + feature + "; contrato partial; backend sin holobit_sdk;',
+        ),
         "corelibs": ('longitud("cobra");',),
         "standard_library": ('mostrar("hola");',),
     },
     "java": {
         "holobit": ("Object hb = cobra_holobit(new double[]{1, 2, 3});",),
-        "proyectar": ("Runtime Holobit Java: feature=\" + feature + \"; contrato partial; backend sin holobit_sdk;",),
-        "transformar": ("Runtime Holobit Java: feature=\" + feature + \"; contrato partial; backend sin holobit_sdk;",),
-        "graficar": ("Runtime Holobit Java: feature=\" + feature + \"; contrato partial; backend sin holobit_sdk;",),
+        "proyectar": (
+            'Runtime Holobit Java: feature=" + feature + "; contrato partial; backend sin holobit_sdk;',
+        ),
+        "transformar": (
+            'Runtime Holobit Java: feature=" + feature + "; contrato partial; backend sin holobit_sdk;',
+        ),
+        "graficar": (
+            'Runtime Holobit Java: feature=" + feature + "; contrato partial; backend sin holobit_sdk;',
+        ),
         "corelibs": ('longitud("cobra")',),
         "standard_library": ('mostrar("hola")',),
     },
@@ -153,9 +186,11 @@ def _build_markdown() -> str:
         holobit_status = (
             "SDK full solo python"
             if backend in SDK_COMPATIBLE_TARGETS
-            else "adaptador mantenido (partial)"
-            if backend in ADVANCED_HOLOBIT_RUNTIME_TARGETS
-            else "partial"
+            else (
+                "adaptador mantenido (partial)"
+                if backend in ADVANCED_HOLOBIT_RUNTIME_TARGETS
+                else "partial"
+            )
         )
         sdk_status = "full" if backend in SDK_COMPATIBLE_TARGETS else "partial"
         row = [
@@ -173,7 +208,9 @@ def _build_markdown() -> str:
             "",
             "## Matriz contractual",
             "",
-            "| Backend | Nombre | Tier | runtime_policy | " + " | ".join(CONTRACT_FEATURES) + " |",
+            "| Backend | Nombre | Tier | runtime_policy | "
+            + " | ".join(CONTRACT_FEATURES)
+            + " |",
             "|---|---|---|---|" + "---|" * len(CONTRACT_FEATURES),
         ]
     )
@@ -209,11 +246,12 @@ def _build_markdown() -> str:
     return "\n".join(lines) + "\n"
 
 
-
 def _write_csv(path: Path) -> None:
     with path.open("w", newline="", encoding="utf-8") as fh:
         writer = csv.writer(fh, lineterminator="\n")
-        writer.writerow(["backend", "label", "tier", "runtime_policy", *CONTRACT_FEATURES])
+        writer.writerow(
+            ["backend", "label", "tier", "runtime_policy", *CONTRACT_FEATURES]
+        )
         for backend in OFFICIAL_TARGETS:
             contract = BACKEND_COMPATIBILITY[backend]
             writer.writerow(
@@ -230,7 +268,9 @@ def _write_csv(path: Path) -> None:
 def main() -> None:
     docs_dir = RAIZ / "docs"
     docs_dir.mkdir(exist_ok=True)
-    (docs_dir / "matriz_transpiladores.md").write_text(_build_markdown(), encoding="utf-8")
+    (docs_dir / "matriz_transpiladores.md").write_text(
+        _build_markdown(), encoding="utf-8"
+    )
     _write_csv(docs_dir / "matriz_transpiladores.csv")
 
 

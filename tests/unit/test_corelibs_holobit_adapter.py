@@ -25,9 +25,10 @@ EXPECTED_PUBLIC_API = {
 
 
 def test_holobit_adapter_public_contract_roundtrip():
-    hb = holobit.crear_holobit([1, 2, 3])
+    hb = holobit.crear_holobit([1, 0, -2, 3.5])
     assert set(holobit.__all__) == EXPECTED_PUBLIC_API
-    assert hb == {"tipo": "holobit", "valores": [1.0, 2.0, 3.0]}
+    assert hb == {"tipo": "holobit", "valores": [1.0, 0.0, -2.0, 3.5]}
+    assert all(isinstance(valor, float) for valor in hb["valores"])
     assert holobit.validar_holobit(hb) is True
 
     payload = holobit.serializar_holobit(hb)
@@ -67,10 +68,73 @@ def test_holobit_adapter_normaliza_tipos_cobra_facing():
     assert isinstance(metricas["magnitud"], float)
 
 
+def test_graficar_devuelve_estado_json_e_ignora_retorno_interno(monkeypatch):
+    hb = holobit.crear_holobit([1, 2, 3])
+    proyectados = []
+    retorno_sdk = object()
+
+    def proyectar(interno):
+        proyectados.append(interno)
+        return retorno_sdk
+
+    monkeypatch.setattr(holobit, "_runtime_graficar", proyectar)
+
+    resultado = holobit.graficar(hb)
+
+    assert resultado == {"estado": "ok"}
+    assert len(proyectados) == 1
+    assert proyectados[0].valores == [1.0, 2.0, 3.0]
+    holobit._garantizar_json_estable(resultado)
+
+
 @pytest.mark.parametrize("valor_invalido", [True, False])
 def test_crear_holobit_rechaza_booleanos(valor_invalido):
     with pytest.raises(TypeError):
         holobit.crear_holobit([valor_invalido, 1])
+
+
+@pytest.mark.parametrize("valor_no_finito", [float("nan"), float("inf"), float("-inf")])
+def test_crear_holobit_rechaza_valores_no_finitos(valor_no_finito):
+    with pytest.raises(ValueError, match="valores del holobit deben ser finitos"):
+        holobit.crear_holobit([valor_no_finito])
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        '{"tipo":"holobit","valores":[NaN]}',
+        '{"tipo":"holobit","valores":[Infinity]}',
+        '{"tipo":"holobit","valores":[-Infinity]}',
+    ],
+)
+def test_deserializar_holobit_rechaza_valores_no_finitos(payload):
+    with pytest.raises(ValueError):
+        holobit.deserializar_holobit(payload)
+
+
+@pytest.mark.parametrize("valor_no_finito", [float("nan"), float("inf"), float("-inf")])
+def test_validar_holobit_devuelve_false_para_valores_no_finitos(valor_no_finito):
+    assert (
+        holobit.validar_holobit({"tipo": "holobit", "valores": [valor_no_finito]})
+        is False
+    )
+
+
+@pytest.mark.parametrize(
+    ("operacion", "argumentos"),
+    [
+        (holobit.serializar_holobit, ()),
+        (holobit.proyectar, ("2d",)),
+        (holobit.transformar, ("rotar", "z", 90)),
+        (holobit.combinar, ({"tipo": "holobit", "valores": [1]},)),
+        (holobit.medir, ()),
+    ],
+)
+def test_operaciones_rechazan_estructuras_con_valores_no_finitos(operacion, argumentos):
+    estructura = {"tipo": "holobit", "valores": [float("inf")]}
+
+    with pytest.raises(ValueError):
+        operacion(estructura, *argumentos)
 
 
 def test_policy_rechaza_holobit_sdk_en_usar():
@@ -80,7 +144,12 @@ def test_policy_rechaza_holobit_sdk_en_usar():
 
 def test_internals_no_se_exportan_en_public_api():
     exports = set(holobit.__all__)
-    for bloqueado in ("Holobit", "_SDKHolobit", "_validar_estructura_holobit", "holobit_sdk"):
+    for bloqueado in (
+        "Holobit",
+        "_SDKHolobit",
+        "_validar_estructura_holobit",
+        "holobit_sdk",
+    ):
         assert bloqueado not in exports
 
 
@@ -94,7 +163,9 @@ def test_internals_no_se_exportan_en_public_api():
         {"tipo": "holobit", "valores": [1, "Holobit"]},
     ],
 )
-def test_validar_holobit_rechaza_payloads_fuera_del_contrato_serializable(estructura_invalida):
+def test_validar_holobit_rechaza_payloads_fuera_del_contrato_serializable(
+    estructura_invalida,
+):
     assert holobit.validar_holobit(estructura_invalida) is False
 
 

@@ -71,22 +71,22 @@ TESTS_DIR = (
     else Path(__file__).resolve().parents[5] / "tests"
 )
 COBRA_FIXTURES = [
-    SRC_DIR.parent / "scripts" / "benchmarks" / "programs" / "small.co",
-    SRC_DIR.parent / "scripts" / "benchmarks" / "programs" / "factorial.co",
-    SRC_DIR.parent / "scripts" / "benchmarks" / "programs" / "medium.co",
+    SRC_DIR.parent / "scripts" / "benchmarks" / "programs" / "small.cobra",
+    SRC_DIR.parent / "scripts" / "benchmarks" / "programs" / "factorial.cobra",
+    SRC_DIR.parent / "scripts" / "benchmarks" / "programs" / "medium.cobra",
 ]
 TRANSPILER_FIXTURES = [
-    SRC_DIR.parent / "scripts" / "benchmarks" / "programs" / "smoke_assign.co",
-    SRC_DIR.parent / "examples" / "smoke_assign.co",
+    SRC_DIR.parent / "scripts" / "benchmarks" / "programs" / "smoke_assign.cobra",
+    SRC_DIR.parent / "examples" / "smoke_assign.cobra",
 ]
 FEATURES_FIXTURES_DIR = SRC_DIR.parent / "examples" / "features"
 
 
 def discover_feature_regression_fixtures() -> list[Path]:
-    """Descubre fixtures mínimos de features: examples/features/<id>/minimal.co."""
+    """Descubre fixtures mínimos de features: examples/features/<id>/minimal.cobra."""
     if not FEATURES_FIXTURES_DIR.is_dir():
         return []
-    return sorted(FEATURES_FIXTURES_DIR.glob("*/minimal.co"))
+    return sorted(FEATURES_FIXTURES_DIR.glob("*/minimal.cobra"))
 
 
 TRANSPILER_FIXTURES.extend(discover_feature_regression_fixtures())

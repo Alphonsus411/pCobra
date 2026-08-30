@@ -5,19 +5,19 @@ import runpy
 import sys
 from io import StringIO
 from pathlib import Path
-from types import ModuleType
+from types import ModuleType, SimpleNamespace
 from unittest.mock import patch
 
 import pytest
 
 from cobra.cli.cli import main
+from pcobra.cobra.cli.commands.init_cmd import InitCommand
 
 WRAPPER_FILES = (
     ("src/cli/cli.py", "cli.cli"),
     ("src/cobra/cli/cli.py", "cobra.cli.cli"),
     ("cobra/cli/cli.py", "cobra.cli.cli"),
 )
-
 
 
 def _instalar_stubs_cli(monkeypatch: pytest.MonkeyPatch):
@@ -56,13 +56,15 @@ def _cargar_modulo_desde_archivo(module_name: str, file_path: Path):
 def test_cli_init_creates_project(tmp_path):
     ruta = tmp_path / "proy"
     with patch("sys.stdout", new_callable=StringIO) as out:
-        main(["init", str(ruta)])
-    assert (ruta / "main.co").exists()
+        assert InitCommand().run(SimpleNamespace(ruta=str(ruta))) == 0
+    assert (ruta / "main.cobra").exists()
     assert "Proyecto Cobra inicializado" in out.getvalue()
 
 
 @pytest.mark.parametrize(("wrapper_path", "legacy_route"), WRAPPER_FILES)
-def test_wrappers_delegan_al_entrypoint_canonico(wrapper_path, legacy_route, monkeypatch):
+def test_wrappers_delegan_al_entrypoint_canonico(
+    wrapper_path, legacy_route, monkeypatch
+):
     llamadas_main, llamadas_legacy = _instalar_stubs_cli(monkeypatch)
     modulo = _cargar_modulo_desde_archivo(
         f"test_wrapper_{wrapper_path.replace('/', '_').replace('.', '_')}",
@@ -84,4 +86,3 @@ def test_wrappers_ejecutan_como_script(wrapper_path, legacy_route, monkeypatch):
     assert exc_info.value.code == 37
     assert llamadas_main == [None]
     assert llamadas_legacy == [legacy_route]
-

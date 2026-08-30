@@ -1,6 +1,5 @@
 from argparse import Namespace
 from contextlib import ExitStack
-import logging
 import sys
 from unittest.mock import Mock, patch
 
@@ -8,10 +7,8 @@ from cobra.cli.commands.execute_cmd import ExecuteCommand
 from cobra.cli.commands.profile_cmd import ProfileCommand
 
 
-def test_execute_command_with_format_invokes_formatter(tmp_path):
-    import cobra.cli.commands.execute_cmd as execute_module
-
-    archivo = tmp_path / "programa.co"
+def test_execute_command_with_format_propagates_flag_to_run_service(tmp_path):
+    archivo = tmp_path / "programa.cobra"
     archivo.write_text("imprimir('hola')\n", encoding="utf-8")
 
     args = Namespace(
@@ -19,6 +16,8 @@ def test_execute_command_with_format_invokes_formatter(tmp_path):
         sandbox=False,
         contenedor=None,
         depurar=False,
+        debug=False,
+        verbose=0,
         seguro=True,
         extra_validators=None,
         formatear=True,
@@ -26,31 +25,18 @@ def test_execute_command_with_format_invokes_formatter(tmp_path):
 
     comando = ExecuteCommand()
 
-    with ExitStack() as stack:
-        stack.enter_context(
-            patch.object(execute_module.module_map, "get_toml_map", return_value={})
-        )
-        stack.enter_context(
-            patch.object(execute_module, "validar_dependencias")
-        )
-        stack.enter_context(
-            patch.object(ExecuteCommand, "_limitar_recursos", lambda self, funcion: funcion())
-        )
-        stack.enter_context(
-            patch.object(ExecuteCommand, "_ejecutar_normal", lambda self, codigo, seguro, extra: 0)
-        )
-        mock_formatear = stack.enter_context(
-            patch.object(comando, "_formatear_codigo", return_value=True)
-        )
-
+    with patch.object(comando._service, "run", return_value=0) as mock_run:
         resultado = comando.run(args)
 
     assert resultado == 0
-    mock_formatear.assert_called_once_with(str(archivo))
+
+    request = mock_run.call_args.args[0]
+    assert request.archivo == str(archivo)
+    assert request.formatear is True
 
 
 def test_profile_command_with_format_invokes_formatter(tmp_path):
-    archivo = tmp_path / "perfilado.co"
+    archivo = tmp_path / "perfilado.cobra"
     archivo.write_text("imprimir('hola')\n", encoding="utf-8")
 
     args = Namespace(
@@ -58,7 +44,7 @@ def test_profile_command_with_format_invokes_formatter(tmp_path):
         output=str(tmp_path / "salida.prof"),
         ui=None,
         depurar=False,
-        seguro=True,
+        seguro=False,
         extra_validators=None,
         analysis=False,
         formatear=True,
@@ -76,31 +62,32 @@ def test_profile_command_with_format_invokes_formatter(tmp_path):
         def dump_stats(self, _ruta):
             return None
 
-    with ExitStack() as stack:
-        stack.enter_context(
-            patch("cobra.cli.commands.profile_cmd.normalizar_validadores_extra", return_value=None)
-        )
-        stack.enter_context(patch("cobra.cli.commands.profile_cmd.validar_archivo_existente"))
-        stack.enter_context(patch("cobra.cli.commands.profile_cmd.validar_dependencias"))
-        lexer_mock = stack.enter_context(patch("cobra.cli.commands.profile_cmd.Lexer"))
-        parser_mock = stack.enter_context(patch("cobra.cli.commands.profile_cmd.Parser"))
-        interp_mock = stack.enter_context(patch("cobra.cli.commands.profile_cmd.InterpretadorCobra"))
-        stack.enter_context(
-            patch("cobra.cli.commands.profile_cmd.construir_cadena", return_value=lambda nodo: None)
-        )
-        stack.enter_context(
-            patch("cobra.cli.commands.profile_cmd.cProfile.Profile", return_value=DummyProfiler())
-        )
-        stack.enter_context(patch("cobra.cli.commands.profile_cmd.mostrar_info"))
-        mock_formatear = stack.enter_context(
-            patch("cobra.cli.commands.execute_cmd.ExecuteCommand._formatear_codigo", return_value=True)
-        )
+    lexer_mock = Mock()
+    parser_mock = Mock()
+    interpreter_factory = Mock()
+    mock_formatear = Mock(return_value=True)
 
-        lexer_mock.return_value.tokenizar.return_value = []
-        parser_mock.return_value.parsear.return_value = []
-        interp_mock._cargar_validadores.return_value = []
-        interp_mock.return_value.ejecutar_ast.return_value = None
+    lexer_mock.return_value.tokenizar.return_value = []
+    parser_mock.return_value.parsear.return_value = []
+    interpreter_factory.return_value.ejecutar_ast.return_value = None
 
+    fake_cprofile = Mock()
+    fake_cprofile.Profile.return_value = DummyProfiler()
+
+    globals_patch = {
+        "normalizar_validadores_extra": Mock(return_value=None),
+        "validar_archivo_existente": Mock(),
+        "cli_toml_map": Mock(return_value={}),
+        "validar_dependencias": Mock(),
+        "format_code_with_black": mock_formatear,
+        "Lexer": lexer_mock,
+        "Parser": parser_mock,
+        "construir_interprete_seguro_canonico": interpreter_factory,
+        "cProfile": fake_cprofile,
+        "mostrar_info": Mock(),
+    }
+
+    with patch.dict(ProfileCommand.run.__globals__, globals_patch, clear=False):
         resultado = comando.run(args)
 
     assert resultado == 0
@@ -123,104 +110,70 @@ def _build_execute_args(archivo, **overrides):
     return Namespace(**args)
 
 
-def test_execute_command_debug_flag_sets_debug_logger(tmp_path):
-    archivo = tmp_path / "programa_debug.co"
+def test_execute_command_debug_flag_is_forwarded_to_run_service(tmp_path):
+    archivo = tmp_path / "programa_debug.cobra"
     archivo.write_text("imprimir('hola')\n", encoding="utf-8")
+
     args = _build_execute_args(archivo, debug=True)
     comando = ExecuteCommand()
 
-    with ExitStack() as stack:
-        stack.enter_context(
-            patch("cobra.cli.commands.execute_cmd.module_map.get_toml_map", return_value={})
-        )
-        stack.enter_context(
-            patch("cobra.cli.commands.execute_cmd.validar_dependencias")
-        )
-        stack.enter_context(
-            patch.object(ExecuteCommand, "_limitar_recursos", lambda self, funcion: funcion())
-        )
-        stack.enter_context(
-            patch.object(ExecuteCommand, "_ejecutar_normal", lambda self, codigo, seguro, extra: 0)
-        )
+    with patch.object(comando._service, "run", return_value=0) as mock_run:
         resultado = comando.run(args)
 
     assert resultado == 0
-    assert comando.logger.level == logging.DEBUG
+
+    request = mock_run.call_args.args[0]
+    assert request.debug is True
 
 
-def test_execute_command_verbose_flag_sets_debug_logger(tmp_path):
-    archivo = tmp_path / "programa_verbose.co"
+def test_execute_command_verbose_flag_is_forwarded_to_run_service(tmp_path):
+    archivo = tmp_path / "programa_verbose.cobra"
     archivo.write_text("imprimir('hola')\n", encoding="utf-8")
+
     args = _build_execute_args(archivo, verbose=1)
     comando = ExecuteCommand()
 
-    with ExitStack() as stack:
-        stack.enter_context(
-            patch("cobra.cli.commands.execute_cmd.module_map.get_toml_map", return_value={})
-        )
-        stack.enter_context(
-            patch("cobra.cli.commands.execute_cmd.validar_dependencias")
-        )
-        stack.enter_context(
-            patch.object(ExecuteCommand, "_limitar_recursos", lambda self, funcion: funcion())
-        )
-        stack.enter_context(
-            patch.object(ExecuteCommand, "_ejecutar_normal", lambda self, codigo, seguro, extra: 0)
-        )
+    with patch.object(comando._service, "run", return_value=0) as mock_run:
         resultado = comando.run(args)
 
     assert resultado == 0
-    assert comando.logger.level == logging.DEBUG
+
+    request = mock_run.call_args.args[0]
+    assert request.verbose == 1
 
 
-def test_execute_command_depurar_legacy_still_supported(tmp_path):
-    archivo = tmp_path / "programa_legacy.co"
+def test_execute_command_depurar_legacy_is_forwarded_to_run_service(tmp_path):
+    archivo = tmp_path / "programa_legacy.cobra"
     archivo.write_text("imprimir('hola')\n", encoding="utf-8")
+
     args = _build_execute_args(archivo, depurar=True)
     comando = ExecuteCommand()
 
-    with ExitStack() as stack:
-        stack.enter_context(
-            patch("cobra.cli.commands.execute_cmd.module_map.get_toml_map", return_value={})
-        )
-        stack.enter_context(
-            patch("cobra.cli.commands.execute_cmd.validar_dependencias")
-        )
-        stack.enter_context(
-            patch.object(ExecuteCommand, "_limitar_recursos", lambda self, funcion: funcion())
-        )
-        stack.enter_context(
-            patch.object(ExecuteCommand, "_ejecutar_normal", lambda self, codigo, seguro, extra: 0)
-        )
+    with patch.object(comando._service, "run", return_value=0) as mock_run:
         resultado = comando.run(args)
 
     assert resultado == 0
-    assert comando.logger.level == logging.DEBUG
+
+    request = mock_run.call_args.args[0]
+    assert request.depurar is True
 
 
-def test_execute_command_pasa_raiz_proyecto_a_validar_dependencias(tmp_path, monkeypatch):
+def test_execute_command_forwards_project_file_to_run_service(tmp_path):
     proyecto = tmp_path / "demo"
     proyecto.mkdir()
+
     (proyecto / "cobra.toml").write_text("", encoding="utf-8")
-    archivo = proyecto / "programa.co"
+
+    archivo = proyecto / "programa.cobra"
     archivo.write_text("imprimir('hola')\n", encoding="utf-8")
+
     args = _build_execute_args(archivo)
     comando = ExecuteCommand()
-    execute_module = sys.modules[comando.__class__.__module__]
-    mock_validar = Mock()
-    monkeypatch.setitem(ExecuteCommand.run.__globals__, "validar_dependencias", mock_validar)
 
-    with ExitStack() as stack:
-        stack.enter_context(
-            patch.object(execute_module.module_map, "get_toml_map", return_value={})
-        )
-        stack.enter_context(
-            patch.object(ExecuteCommand, "_limitar_recursos", lambda self, funcion: funcion())
-        )
-        stack.enter_context(
-            patch.object(ExecuteCommand, "_ejecutar_normal", lambda self, codigo, seguro, extra: 0)
-        )
+    with patch.object(comando._service, "run", return_value=0) as mock_run:
         resultado = comando.run(args)
 
     assert resultado == 0
-    assert mock_validar.call_args.kwargs["base_dir"] == str(proyecto)
+
+    request = mock_run.call_args.args[0]
+    assert request.archivo == str(archivo)

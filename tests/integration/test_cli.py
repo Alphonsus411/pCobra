@@ -7,15 +7,15 @@ from unittest.mock import patch
 import pytest
 
 import pcobra  # ensure package is initialized
-import cobra.cli.cli as cli_module
-from cobra.cli.cli import main
-from cobra.cli.commands import cache_cmd, modules_cmd
+import pcobra.cli.cli as cli_module
+from pcobra.cli.cli import main
+from pcobra.cobra.cli.commands import cache_cmd, modules_cmd
 from pcobra.cobra.core import Lexer, Parser
 
 
 def _reload_ast_cache(monkeypatch):
     monkeypatch.delenv("COBRA_AST_CACHE", raising=False)
-    import core.ast_cache as ast_cache_module
+    import pcobra.core.ast_cache as ast_cache_module
 
     ast_cache_module = importlib.reload(ast_cache_module)
     ast_cache_module.limpiar_cache()
@@ -25,7 +25,9 @@ def _reload_ast_cache(monkeypatch):
 
 @pytest.fixture(autouse=True)
 def _stub_gettext(monkeypatch):
-    monkeypatch.setattr(cli_module, "setup_gettext", lambda _lang=None: (lambda msg: msg))
+    monkeypatch.setattr(
+        cli_module, "setup_gettext", lambda _lang=None: (lambda msg: msg)
+    )
 
 
 def test_cli_help():
@@ -79,9 +81,9 @@ def test_modulos_instalar_enlace_simbolico(tmp_path, monkeypatch):
     monkeypatch.setattr(modules_cmd, "MODULE_MAP_PATH", str(mod_file))
     monkeypatch.setattr(modules_cmd, "LOCK_FILE", mod_file)
 
-    real_file = tmp_path / "m.co"
+    real_file = tmp_path / "m.cobra"
     real_file.write_text("var x = 1")
-    link = tmp_path / "link.co"
+    link = tmp_path / "link.cobra"
     link.symlink_to(real_file)
     with patch("sys.stdout", new_callable=StringIO) as out:
         main(["mod", "install", str(link)])

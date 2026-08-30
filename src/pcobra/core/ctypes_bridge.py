@@ -6,15 +6,14 @@ import ctypes
 import os
 from typing import Any, Iterable
 
-
 _cache: dict[str, ctypes.CDLL] = {}
 
 # Lista de prefijos permitidos para cargar bibliotecas
 _ALLOWED_PREFIXES: list[str] = [
     os.path.abspath(p)
-    for p in os.environ.get(
-        "COBRA_ALLOWED_LIB_PATHS", "/usr/lib:/usr/local/lib"
-    ).split(os.pathsep)
+    for p in os.environ.get("COBRA_ALLOWED_LIB_PATHS", "/usr/lib:/usr/local/lib").split(
+        os.pathsep
+    )
     if p
 ]
 
@@ -45,9 +44,12 @@ def cargar_biblioteca(ruta: str) -> ctypes.CDLL:
     return _cache[path]
 
 
-def obtener_funcion(lib: ctypes.CDLL, nombre: str,
-                    restype: ctypes._CData | None = ctypes.c_int,
-                    argtypes: Iterable[ctypes._CData] | None = None) -> Any:
+def obtener_funcion(
+    lib: ctypes.CDLL,
+    nombre: str,
+    restype: ctypes._CData | None = ctypes.c_int,
+    argtypes: Iterable[ctypes._CData] | None = None,
+) -> Any:
     """Devuelve una función de ``lib`` configurando tipos opcionales."""
     fn = getattr(lib, nombre)
     fn.restype = restype
@@ -56,9 +58,12 @@ def obtener_funcion(lib: ctypes.CDLL, nombre: str,
     return fn
 
 
-def cargar_funcion(ruta: str, nombre: str,
-                   restype: ctypes._CData | None = ctypes.c_int,
-                   argtypes: Iterable[ctypes._CData] | None = None) -> Any:
+def cargar_funcion(
+    ruta: str,
+    nombre: str,
+    restype: ctypes._CData | None = ctypes.c_int,
+    argtypes: Iterable[ctypes._CData] | None = None,
+) -> Any:
     """Carga ``ruta`` y devuelve la función indicada."""
     lib = cargar_biblioteca(ruta)
     return obtener_funcion(lib, nombre, restype, argtypes)

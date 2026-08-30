@@ -4,6 +4,7 @@ from unittest.mock import patch
 
 import pytest
 
+
 @pytest.mark.timeout(5)
 def test_cli_compilar_con_tipos(tmp_path, monkeypatch):
     """Ejecuta ``cobra compilar`` con ``--tipos`` sin errores de tipo."""
@@ -15,10 +16,14 @@ def test_cli_compilar_con_tipos(tmp_path, monkeypatch):
     # Evita dependencias externas de localización y banner interactivo.
     monkeypatch.setattr(cli_module, "setup_gettext", lambda lang=None: (lambda s: s))
     monkeypatch.setattr(cli_module.messages, "mostrar_logo", lambda: None)
-    monkeypatch.setattr(cli_module.messages, "disable_colors", lambda *args, **kwargs: None)
+    monkeypatch.setattr(
+        cli_module.messages, "disable_colors", lambda *args, **kwargs: None
+    )
     monkeypatch.setattr(cli_module, "resolve_command_profile", lambda: "development")
 
-    monkeypatch.setattr(cli_module.AppConfig, "BASE_COMMAND_CLASSES", [compile_module.CompileCommand])
+    monkeypatch.setattr(
+        cli_module.AppConfig, "BASE_COMMAND_CLASSES", [compile_module.CompileCommand]
+    )
 
     class DummyValidator:
         def __init__(self):
@@ -54,14 +59,24 @@ def test_cli_compilar_con_tipos(tmp_path, monkeypatch):
         def generate_code(self, _ast):
             return "js"
 
-    monkeypatch.setattr(transpiler_registry, "cli_transpilers", lambda: {"python": FakePython, "javascript": FakeJS})
-    monkeypatch.setattr(transpiler_registry, "cli_transpiler_targets", lambda: ("python", "javascript"))
+    monkeypatch.setattr(
+        transpiler_registry,
+        "cli_transpilers",
+        lambda: {"python": FakePython, "javascript": FakeJS},
+    )
+    monkeypatch.setattr(
+        transpiler_registry, "cli_transpiler_targets", lambda: ("python", "javascript")
+    )
     monkeypatch.setattr(
         transpiler_registry,
         "cli_plugin_transpilers",
         lambda: {"python": FakePython, "javascript": FakeJS},
     )
-    monkeypatch.setattr(transpiler_registry, "cli_ensure_entrypoint_transpilers_loaded_once", lambda: None)
+    monkeypatch.setattr(
+        transpiler_registry,
+        "cli_ensure_entrypoint_transpilers_loaded_once",
+        lambda: None,
+    )
     compile_module = importlib.reload(compile_module)
 
     class DummyPool:
@@ -86,11 +101,13 @@ def test_cli_compilar_con_tipos(tmp_path, monkeypatch):
 
     monkeypatch.setattr(compile_module.multiprocessing, "Pool", DummyPool)
 
-    archivo = tmp_path / "programa.co"
+    archivo = tmp_path / "programa.cobra"
     archivo.write_text("var x = 5")
 
     with patch("sys.stdout", new_callable=StringIO) as out:
-        exit_code = cli_module.main(["compilar", str(archivo), "--tipos=python,javascript"])
+        exit_code = cli_module.main(
+            ["compilar", str(archivo), "--tipos=python,javascript"]
+        )
 
     assert exit_code == 0
     salida = out.getvalue()

@@ -42,21 +42,28 @@ def array(valores: Iterable[float], dtype: type | None = float) -> ndarray:
     return ndarray(valores)
 
 
-def allclose(a: Iterable[float], b: Iterable[float], rtol: float = 1e-08, atol: float = 1e-08) -> bool:
+def allclose(
+    a: Iterable[float], b: Iterable[float], rtol: float = 1e-08, atol: float = 1e-08
+) -> bool:
     """Comprueba si dos secuencias son aproximadamente iguales."""
 
     lista_a = list(float(valor) for valor in a)
     lista_b = list(float(valor) for valor in b)
     if len(lista_a) != len(lista_b):
         return False
-    return all(math.isclose(va, vb, rel_tol=rtol, abs_tol=atol) for va, vb in zip(lista_a, lista_b))
+    return all(
+        math.isclose(va, vb, rel_tol=rtol, abs_tol=atol)
+        for va, vb in zip(lista_a, lista_b)
+    )
 
 
 def percentile(datos: Sequence[float], q: float, *, method: str = "linear") -> float:
     """Calcula el percentil ``q`` de ``datos`` usando interpolación lineal."""
 
     if method != "linear":  # pragma: no cover - solo se usa "linear" en tests
-        raise ValueError("Solo se admite el método 'linear' en la implementación reducida")
+        raise ValueError(
+            "Solo se admite el método 'linear' en la implementación reducida"
+        )
     if not datos:
         raise ValueError("La secuencia de datos no puede estar vacía")
 
@@ -84,12 +91,11 @@ def isnan(valor: float) -> bool:
         return False
 
 
-
-
 def isscalar(valor: object) -> bool:
     """Replica ``numpy.isscalar`` de forma simplificada."""
 
     return not isinstance(valor, (list, tuple, set, dict))
+
 
 __all__ = [
     "array",

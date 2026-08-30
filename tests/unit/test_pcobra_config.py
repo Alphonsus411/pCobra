@@ -3,13 +3,13 @@ import sys
 
 
 def _reload_module():
-    if 'core.pcobra_config' in sys.modules:
-        importlib.reload(sys.modules['core.pcobra_config'])
-    return sys.modules.get('core.pcobra_config')
+    if "core.pcobra_config" in sys.modules:
+        importlib.reload(sys.modules["core.pcobra_config"])
+    return sys.modules.get("core.pcobra_config")
 
 
 def test_cargar_configuracion_python_js(tmp_path, monkeypatch):
-    mod = tmp_path / "m.co"
+    mod = tmp_path / "m.cobra"
     py_out = tmp_path / "m.py"
     js_out = tmp_path / "m.js"
 
@@ -17,20 +17,20 @@ def test_cargar_configuracion_python_js(tmp_path, monkeypatch):
     cfg_file = tmp_path / "pcobra.toml"
     cfg_file.write_text(config)
 
-    monkeypatch.setenv('PCOBRA_CONFIG', str(cfg_file))
+    monkeypatch.setenv("PCOBRA_CONFIG", str(cfg_file))
     _reload_module()
     from core.pcobra_config import cargar_configuracion
 
     data = cargar_configuracion()
     ruta = str(mod)
-    assert data[ruta]['python'] == str(py_out)
-    assert data[ruta]['javascript'] == str(js_out)
+    assert data[ruta]["python"] == str(py_out)
+    assert data[ruta]["javascript"] == str(js_out)
 
 
 def test_cargar_configuracion_cache(tmp_path, monkeypatch):
-    cfg_file = tmp_path / 'pcobra.toml'
+    cfg_file = tmp_path / "pcobra.toml"
     cfg_file.write_text("")
-    monkeypatch.setenv('PCOBRA_CONFIG', str(cfg_file))
+    monkeypatch.setenv("PCOBRA_CONFIG", str(cfg_file))
     _reload_module()
     from core.pcobra_config import cargar_configuracion, _cache
 

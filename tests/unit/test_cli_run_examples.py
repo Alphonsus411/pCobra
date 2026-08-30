@@ -8,7 +8,7 @@ ROOT = Path(__file__).resolve().parents[2]
 EXAMPLES_DIR = ROOT / "examples"
 EXPECTED_DIR = ROOT / "tests" / "data" / "expected_examples"
 
-EXAMPLE_FILES = sorted(EXAMPLES_DIR.rglob("*.co"))
+EXAMPLE_FILES = sorted(EXAMPLES_DIR.rglob("*.cobra"))
 
 
 def _run_cli(args, toml_path):
@@ -29,7 +29,11 @@ def _run_cli(args, toml_path):
 
 
 @pytest.mark.timeout(5)
-@pytest.mark.parametrize("example", EXAMPLE_FILES, ids=[str(p.relative_to(EXAMPLES_DIR)) for p in EXAMPLE_FILES])
+@pytest.mark.parametrize(
+    "example",
+    EXAMPLE_FILES,
+    ids=[str(p.relative_to(EXAMPLES_DIR)) for p in EXAMPLE_FILES],
+)
 def test_examples_run(tmp_path, example):
     expected_file = EXPECTED_DIR / example.relative_to(EXAMPLES_DIR).with_suffix(".txt")
     toml = tmp_path / "empty.toml"

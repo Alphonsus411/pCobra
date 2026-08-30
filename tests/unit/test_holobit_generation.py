@@ -17,12 +17,7 @@ Holobit = holobit_module.Holobit
 
 
 def test_holobit_len_and_indexing():
-    datasets = [
-        [],
-        [1],
-        [1, 2, 3],
-        [0.1, -0.2, 3.5, 4.1, 5.0]
-    ]
+    datasets = [[], [1], [1, 2, 3], [0.1, -0.2, 3.5, 4.1, 5.0]]
     for data in datasets:
         hb = Holobit(data)
         assert len(hb) == len(data)

@@ -11,7 +11,7 @@ def _run_cli(debug: bool) -> str:
     cmd = [sys.executable, "-m", "pcobra.cli"]
     if debug:
         cmd.append("--debug")
-    cmd.extend(["ejecutar", "tests/data/ejemplo.co"])
+    cmd.extend(["ejecutar", "tests/data/ejemplo.cobra"])
 
     env = os.environ.copy()
     env["PYTHONPATH"] = os.pathsep.join(

@@ -39,12 +39,14 @@ CANONICAL_MODULE_MAP_MODULES = {
     "pcobra.cobra.imports._module_map_api",
 }
 
+
 def _find_transpilers_literal_violations(root: Path) -> list[str]:
     violations: list[str] = []
     for path in sorted(root.rglob("*.py")):
-        rel = path.relative_to(root)
-        if rel in ALLOWED_TRANSPILERS_LITERAL_MODULES:
+        rel_path = path.relative_to(root)
+        if rel_path in ALLOWED_TRANSPILERS_LITERAL_MODULES:
             continue
+        rel = rel_path.as_posix()
         tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
         for node in ast.walk(tree):
             target_name: str | None = None
@@ -66,7 +68,7 @@ def _find_transpilers_literal_violations(root: Path) -> list[str]:
 def _find_parallel_catalog_name_violations(root: Path) -> list[str]:
     violations: list[str] = []
     for path in sorted(root.rglob("*.py")):
-        rel = path.relative_to(root)
+        rel = path.relative_to(root).as_posix()
         if rel == CANONICAL_TRANSPILERS_REGISTRY:
             continue
         tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
@@ -80,9 +82,8 @@ def _find_parallel_catalog_name_violations(root: Path) -> list[str]:
             elif isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name):
                 target_name = node.target.id
                 value = node.value
-            if (
-                target_name in FORBIDDEN_PARALLEL_CATALOG_NAMES
-                and isinstance(value, ast.Dict)
+            if target_name in FORBIDDEN_PARALLEL_CATALOG_NAMES and isinstance(
+                value, ast.Dict
             ):
                 violations.append(
                     f"{rel}:{node.lineno}: catálogo paralelo prohibido `{target_name}` fuera de `{CANONICAL_TRANSPILERS_REGISTRY.as_posix()}`"
@@ -90,7 +91,9 @@ def _find_parallel_catalog_name_violations(root: Path) -> list[str]:
     return violations
 
 
-def _resolve_relative_module(path: Path, module: str | None, level: int, root: Path) -> str | None:
+def _resolve_relative_module(
+    path: Path, module: str | None, level: int, root: Path
+) -> str | None:
     if level <= 0:
         return module
     try:
@@ -128,7 +131,7 @@ def _find_cli_registry_facade_violations(root: Path) -> list[str]:
         return violations
 
     for path in sorted(cli_root.rglob("*.py")):
-        rel = path.relative_to(root)
+        rel = path.relative_to(root).as_posix()
         if rel == Path("src/pcobra/cobra/cli/transpiler_registry.py"):
             continue
         for lineno, module in _iter_import_modules(path, root):
@@ -147,7 +150,7 @@ def _find_cli_module_map_facade_violations(root: Path) -> list[str]:
         return violations
 
     for path in sorted(cli_commands_root.rglob("*.py")):
-        rel = path.relative_to(root)
+        rel = path.relative_to(root).as_posix()
         for lineno, module in _iter_import_modules(path, root):
             if module not in CANONICAL_MODULE_MAP_MODULES:
                 continue

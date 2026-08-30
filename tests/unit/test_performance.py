@@ -28,9 +28,7 @@ def test_bad_and_dangerous_directo():
             suma, args=(1, 2), kwargs={}, repeat=5, parallel=True
         )
 
-    bd.assert_called_once_with(
-        suma, args=(1, 2), kwargs={}, repeat=5, parallel=True
-    )
+    bd.assert_called_once_with(suma, args=(1, 2), kwargs={}, repeat=5, parallel=True)
     assert datos == {"mean": 2}
 
 
@@ -45,6 +43,7 @@ def test_jam_decorator_directo():
         return decorator
 
     with patch("core.performance.jam", side_effect=fake_jam) as jm:
+
         @perf.jam(loops=4)
         def foo(x):
             return x + 1
@@ -52,4 +51,3 @@ def test_jam_decorator_directo():
         assert foo(1) == 2
         jm.assert_called_once()
         assert jm.call_args.kwargs["loops"] == 4
-

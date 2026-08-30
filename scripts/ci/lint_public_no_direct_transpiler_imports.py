@@ -45,7 +45,7 @@ def find_violations(root: Path = ROOT) -> list[str]:
         if not scope.exists():
             continue
         for path, line, target in _scan_scope(scope):
-            rel = path.relative_to(root)
+            rel = path.relative_to(root).as_posix()
             failures.append(
                 f"{rel}:{line}: import no permitido a {target}; "
                 "usa pcobra.cobra.build.backend_pipeline"

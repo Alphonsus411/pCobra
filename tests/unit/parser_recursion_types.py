@@ -5,7 +5,7 @@ from core.ast_nodes import NodoFuncion, NodoAsignacion
 
 
 def test_recursion_mixed_types_ast():
-    codigo = '''
+    codigo = """
     func rec(n):
         si n <= 1:
             retorno 1
@@ -15,7 +15,7 @@ def test_recursion_mixed_types_ast():
     fin
     var numero = 5
     var texto = "hola"
-    '''
+    """
     tokens = Lexer(codigo).analizar_token()
     ast = Parser(tokens).parsear()
 
@@ -27,11 +27,11 @@ def test_recursion_mixed_types_ast():
 
 
 def test_error_lista_no_soportada():
-    codigo = '''
+    codigo = """
     func dummy():
         fin
     x = [1, 2, 3]
-    '''
+    """
     tokens = Lexer(codigo).analizar_token()
     parser = Parser(tokens)
 

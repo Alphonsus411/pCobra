@@ -61,7 +61,7 @@ jobs:
             --cov-report=term-missing | tee reports/pytest-output.log
           status=${PIPESTATUS[0]}
           echo "exit_code=$status" >> "$GITHUB_OUTPUT"
-          exit $status
+          exit "$status"
 
       - name: Generar informe de resultados
         if: always()
@@ -81,22 +81,22 @@ jobs:
           fi
 
           cat <<'MD' > docs/ci/reporte-propuesta.md
-# Informe de validación automática
+          # Informe de validación automática
 
-MD
+          MD
           cat <<MD >> docs/ci/reporte-propuesta.md
-- Fecha de ejecución: $fecha
-- Resultado de las pruebas: $estado
+          - Fecha de ejecución: $fecha
+          - Resultado de las pruebas: $estado
 
-## Detalles
+          ## Detalles
 
-$detalle
+          $detalle
 
-## Próximos pasos
+          ## Próximos pasos
 
-1. Revisa los resultados adjuntos a este flujo (artefactos y cobertura).
-2. Actualiza el código según sea necesario y vuelve a ejecutar el flujo para validar los cambios.
-MD
+          1. Revisa los resultados adjuntos a este flujo (artefactos y cobertura).
+          2. Actualiza el código según sea necesario y vuelve a ejecutar el flujo para validar los cambios.
+          MD
 
       - name: Preparar resumen del Pull Request
         if: always()
@@ -107,28 +107,28 @@ MD
           fecha=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
           if [ "$TEST_OUTCOME" = "success" ]; then
             cat <<EOF > pr_body.md
-## Resumen
-- Ejecutar pytest con cobertura para validar la base de código.
-- Generar un informe actualizado en `docs/ci/reporte-propuesta.md`.
+          ## Resumen
+          - Ejecutar pytest con cobertura para validar la base de código.
+          - Generar un informe actualizado en \`docs/ci/reporte-propuesta.md\`.
 
-## Resultados
-- Fecha de ejecución: $fecha
-- Estado de la suite: ✅ sin errores.
+          ## Resultados
+          - Fecha de ejecución: $fecha
+          - Estado de la suite: ✅ sin errores.
 
-Todo listo para revisar y fusionar los cambios.
-EOF
+          Todo listo para revisar y fusionar los cambios.
+          EOF
           else
             cat <<EOF > pr_body.md
-## Resumen
-- Ejecutar pytest con cobertura para validar la base de código.
-- Generar un informe actualizado en `docs/ci/reporte-propuesta.md`.
+          ## Resumen
+          - Ejecutar pytest con cobertura para validar la base de código.
+          - Generar un informe actualizado en \`docs/ci/reporte-propuesta.md\`.
 
-## Resultados
-- Fecha de ejecución: $fecha
-- Estado de la suite: ❌ fallos detectados (código de salida $TEST_EXIT_CODE).
+          ## Resultados
+          - Fecha de ejecución: $fecha
+          - Estado de la suite: ❌ fallos detectados (código de salida $TEST_EXIT_CODE).
 
-Consulta el artefacto `informes-pruebas` para revisar el log completo de pytest y los detalles de cobertura antes de aplicar cambios definitivos.
-EOF
+          Consulta el artefacto \`informes-pruebas\` para revisar el log completo de pytest y los detalles de cobertura antes de aplicar cambios definitivos.
+          EOF
           fi
 
       - name: Subir informes de pruebas

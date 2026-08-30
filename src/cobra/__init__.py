@@ -8,6 +8,7 @@ sin modificaciones.
 
 Ruta canónica runtime: ``src/pcobra/**``.
 """
+
 # pcobra-compat: allow-legacy-imports
 
 from __future__ import annotations
@@ -48,5 +49,5 @@ sys.modules.setdefault(f"{__name__}.core", import_module("pcobra.cobra.core"))
 sys.modules.setdefault("core", import_module("pcobra.core"))
 for _mod_name, _mod in list(sys.modules.items()):
     if _mod_name.startswith(f"{_target_name}."):
-        alias = __name__ + _mod_name[len(_target_name):]
+        alias = __name__ + _mod_name[len(_target_name) :]
         sys.modules.setdefault(alias, _mod)

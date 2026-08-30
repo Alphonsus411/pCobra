@@ -22,7 +22,9 @@ def test_import_bindings_legacy_smoke() -> None:
     assert modulo.__name__ == "bindings"
 
 
-def test_python_m_pcobra_delega_en_pcobra_cli_main(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_python_m_pcobra_delega_en_pcobra_cli_main(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     fake_cli = ModuleType("pcobra.cli")
     fake_cli.main = lambda: 0
     monkeypatch.setitem(sys.modules, "pcobra.cli", fake_cli)

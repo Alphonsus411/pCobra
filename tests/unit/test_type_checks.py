@@ -10,20 +10,22 @@ from core.ast_nodes import (
 
 def test_suma_tipos_incompatibles():
     inter = InterpretadorCobra()
-    expr = NodoOperacionBinaria(NodoValor(1), Token(TipoToken.SUMA, '+'), NodoValor('a'))
-    with pytest.raises(TypeError, match='No se puede sumar'):
+    expr = NodoOperacionBinaria(
+        NodoValor(1), Token(TipoToken.SUMA, "+"), NodoValor("a")
+    )
+    with pytest.raises(TypeError, match="No se puede sumar"):
         inter.evaluar_expresion(expr)
 
 
 def test_y_tipos_incompatibles():
     inter = InterpretadorCobra()
-    expr = NodoOperacionBinaria(NodoValor(1), Token(TipoToken.Y, '&&'), NodoValor(True))
-    with pytest.raises(TypeError, match='requiere booleanos'):
+    expr = NodoOperacionBinaria(NodoValor(1), Token(TipoToken.Y, "&&"), NodoValor(True))
+    with pytest.raises(TypeError, match="requiere booleanos"):
         inter.evaluar_expresion(expr)
 
 
 def test_not_tipo_incompatible():
     inter = InterpretadorCobra()
-    expr = NodoOperacionUnaria(Token(TipoToken.NO, '!'), NodoValor(1))
-    with pytest.raises(TypeError, match='requiere booleano'):
+    expr = NodoOperacionUnaria(Token(TipoToken.NO, "!"), NodoValor(1))
+    with pytest.raises(TypeError, match="requiere booleano"):
         inter.evaluar_expresion(expr)

@@ -63,7 +63,9 @@ def test_rechaza_argumentos_texto_plano() -> None:
         proceso.ejecutar(sys.executable, argumentos="--version")
 
 
-def test_ejecutar_usa_shell_false_por_defecto_y_shell_true_explicito(monkeypatch) -> None:
+def test_ejecutar_usa_shell_false_por_defecto_y_shell_true_explicito(
+    monkeypatch,
+) -> None:
     llamadas = []
 
     def fake_run(*args, **kwargs):

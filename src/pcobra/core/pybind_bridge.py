@@ -5,22 +5,24 @@ from __future__ import annotations
 import importlib.machinery
 import importlib.util
 import os
+import sys
 import tempfile
 import shutil
 from types import ModuleType
-from typing import Dict, Iterable, Optional
+from typing import Dict, Iterable, Optional, cast
 
 from pybind11.setup_helpers import Pybind11Extension, build_ext
 from setuptools import Distribution
 
 _cache: Dict[str, ModuleType] = {}
+_MODULO_AUSENTE = object()
 
 # Prefijos permitidos para cargar extensiones
 _ALLOWED_PREFIXES: list[str] = [
     os.path.abspath(p)
-    for p in os.environ.get(
-        "COBRA_ALLOWED_EXT_PATHS", "/usr/lib:/usr/local/lib"
-    ).split(os.pathsep)
+    for p in os.environ.get("COBRA_ALLOWED_EXT_PATHS", "/usr/lib:/usr/local/lib").split(
+        os.pathsep
+    )
     if p
 ]
 
@@ -57,9 +59,7 @@ def compilar_extension(
     with open(cpp, "w", encoding="utf-8") as fh:
         fh.write(codigo)
 
-    ext = Pybind11Extension(
-        nombre, [cpp], extra_compile_args=list(extra_cflags or [])
-    )
+    ext = Pybind11Extension(nombre, [cpp], extra_compile_args=list(extra_cflags or []))
     dist = Distribution({"name": nombre, "ext_modules": [ext]})
     cmd = build_ext(dist)
     cmd.build_lib = directorio
@@ -85,7 +85,15 @@ def cargar_extension(ruta: str) -> ModuleType:
         if spec is None:
             raise ImportError(f"No se pudo obtener un spec para {path}")
         module = importlib.util.module_from_spec(spec)
-        loader.exec_module(module)
+        modulo_previo = sys.modules.get(nombre, _MODULO_AUSENTE)
+        sys.modules[nombre] = module
+        try:
+            loader.exec_module(module)
+        finally:
+            if modulo_previo is _MODULO_AUSENTE:
+                sys.modules.pop(nombre, None)
+            else:
+                sys.modules[nombre] = cast(ModuleType, modulo_previo)
         _cache[path] = module
     return _cache[path]
 
@@ -99,9 +107,7 @@ def compilar_y_cargar(
 ) -> ModuleType:
     """Compila ``codigo`` y devuelve el módulo resultante."""
     propio = directorio is None
-    path = compilar_extension(
-        nombre, codigo, directorio, extra_cflags, conservar=True
-    )
+    path = compilar_extension(nombre, codigo, directorio, extra_cflags, conservar=True)
     mod = cargar_extension(path)
     if propio and not conservar:
         shutil.rmtree(os.path.dirname(path), ignore_errors=True)

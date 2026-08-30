@@ -10,10 +10,15 @@ from pcobra.cobra.architecture.backend_policy import PUBLIC_BACKENDS
 from pcobra.cobra.cli.commands.interactive_cmd import InteractiveCommand
 from pcobra.cobra.cli.commands_v2.repl_cmd import ReplCommandV2
 from pcobra.cobra.core.runtime import InterpretadorCobra
-from pcobra.cobra.usar_policy import REPL_COBRA_MODULE_MAP, USAR_RUNTIME_EXPORT_OVERRIDES
+from pcobra.cobra.usar_policy import (
+    REPL_COBRA_MODULE_MAP,
+    USAR_RUNTIME_EXPORT_OVERRIDES,
+)
 from pcobra.core import usar_loader as core_usar_loader
 
-USAR_RECHAZO_EXTERNO_MATCH = r"usar_error|no permitid[ao]|externo|fuera|no can[oó]nico|cat[aá]logo|m[oó]dulo"
+USAR_RECHAZO_EXTERNO_MATCH = (
+    r"usar_error|no permitid[ao]|externo|fuera|no can[oó]nico|cat[aá]logo|m[oó]dulo"
+)
 
 
 def _marcar_stub_como_oficial(modulo: ModuleType, nombre: str) -> ModuleType:
@@ -33,18 +38,29 @@ from tests.integration.test_repl_usar_entrypoints_contract import (
 )
 
 
-
 @pytest.mark.parametrize(
     ("factory", "executor", "get_interp"),
     [
-        (lambda: InteractiveCommand(InterpretadorCobra()), lambda cmd, code: cmd.ejecutar_codigo(code), lambda cmd: cmd.interpretador),
-        (ReplCommandV2, lambda cmd, code: cmd._ejecutar_en_modo_normal(code), lambda cmd: cmd._delegate.interpretador),
+        (
+            lambda: InteractiveCommand(InterpretadorCobra()),
+            lambda cmd, code: cmd.ejecutar_codigo(code),
+            lambda cmd: cmd.interpretador,
+        ),
+        (
+            ReplCommandV2,
+            lambda cmd, code: cmd._ejecutar_en_modo_normal(code),
+            lambda cmd: cmd._delegate.interpretador,
+        ),
     ],
 )
-def test_usar_numero_solo_simbolos_espanoles(factory, executor, get_interp, monkeypatch):
+def test_usar_numero_solo_simbolos_espanoles(
+    factory, executor, get_interp, monkeypatch
+):
     mod_numero = _marcar_stub_como_oficial(_modulo_numero_stub(), "numero")
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: mod_numero)
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: mod_numero
+    )
 
     cmd = factory()
     interp = get_interp(cmd)
@@ -59,15 +75,25 @@ def test_usar_numero_solo_simbolos_espanoles(factory, executor, get_interp, monk
 @pytest.mark.parametrize(
     ("factory", "executor", "get_interp"),
     [
-        (lambda: InteractiveCommand(InterpretadorCobra()), lambda cmd, code: cmd.ejecutar_codigo(code), lambda cmd: cmd.interpretador),
-        (ReplCommandV2, lambda cmd, code: cmd._ejecutar_en_modo_normal(code), lambda cmd: cmd._delegate.interpretador),
+        (
+            lambda: InteractiveCommand(InterpretadorCobra()),
+            lambda cmd, code: cmd.ejecutar_codigo(code),
+            lambda cmd: cmd.interpretador,
+        ),
+        (
+            ReplCommandV2,
+            lambda cmd, code: cmd._ejecutar_en_modo_normal(code),
+            lambda cmd: cmd._delegate.interpretador,
+        ),
     ],
 )
 def test_usar_texto_solo_simbolos_espanoles(factory, executor, get_interp, monkeypatch):
     mod_texto = _marcar_stub_como_oficial(_modulo_texto_stub(), "texto")
     mod_texto.a_snake = lambda texto: str(texto).lower().replace(" ", "_")
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: mod_texto)
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: mod_texto
+    )
 
     cmd = factory()
     interp = get_interp(cmd)
@@ -82,30 +108,66 @@ def test_usar_texto_solo_simbolos_espanoles(factory, executor, get_interp, monke
 @pytest.mark.parametrize(
     ("factory", "executor", "get_interp"),
     [
-        (lambda: InteractiveCommand(InterpretadorCobra()), lambda cmd, code: cmd.ejecutar_codigo(code), lambda cmd: cmd.interpretador),
-        (ReplCommandV2, lambda cmd, code: cmd._ejecutar_en_modo_normal(code), lambda cmd: cmd._delegate.interpretador),
+        (
+            lambda: InteractiveCommand(InterpretadorCobra()),
+            lambda cmd, code: cmd.ejecutar_codigo(code),
+            lambda cmd: cmd.interpretador,
+        ),
+        (
+            ReplCommandV2,
+            lambda cmd, code: cmd._ejecutar_en_modo_normal(code),
+            lambda cmd: cmd._delegate.interpretador,
+        ),
     ],
 )
-def test_usar_texto_contrato_runtime_overrides_y_poc_funcional(factory, executor, get_interp, monkeypatch):
+def test_usar_texto_contrato_runtime_overrides_y_poc_funcional(
+    factory, executor, get_interp, monkeypatch
+):
     mod_texto = ModuleType("texto")
     mod_texto.__all__ = [*USAR_RUNTIME_EXPORT_OVERRIDES["texto"], "snake_case"]
     mod_texto.recortar = lambda texto: str(texto).strip()
     mod_texto.repetir = lambda texto, veces=2: str(texto) * int(veces)
-    mod_texto.quitar_acentos = lambda texto: str(texto).translate(str.maketrans("áéíóú", "aeiou"))
-    mod_texto.prefijo_comun = lambda a, b: next((str(a)[:i] for i in range(min(len(str(a)), len(str(b))), -1, -1) if str(a)[:i] == str(b)[:i]), "")
-    mod_texto.sufijo_comun = lambda a, b: next((str(a)[len(str(a))-i:] for i in range(min(len(str(a)), len(str(b))), -1, -1) if str(a)[len(str(a))-i:] == str(b)[len(str(b))-i:]), "")
+    mod_texto.quitar_acentos = lambda texto: str(texto).translate(
+        str.maketrans("áéíóú", "aeiou")
+    )
+    mod_texto.prefijo_comun = lambda a, b: next(
+        (
+            str(a)[:i]
+            for i in range(min(len(str(a)), len(str(b))), -1, -1)
+            if str(a)[:i] == str(b)[:i]
+        ),
+        "",
+    )
+    mod_texto.sufijo_comun = lambda a, b: next(
+        (
+            str(a)[len(str(a)) - i :]
+            for i in range(min(len(str(a)), len(str(b))), -1, -1)
+            if str(a)[len(str(a)) - i :] == str(b)[len(str(b)) - i :]
+        ),
+        "",
+    )
     mod_texto.a_snake = lambda texto: str(texto).lower().replace(" ", "_")
     mod_texto.snake_case = mod_texto.a_snake
     _marcar_stub_como_oficial(mod_texto, "texto")
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: mod_texto)
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: mod_texto)
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: mod_texto
+    )
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: mod_texto
+    )
 
     cmd = factory()
     interp = get_interp(cmd)
     executor(cmd, 'usar "texto"')
 
     simbolos = set(interp.contextos[-1].values.keys())
-    requeridos = {"recortar", "repetir", "quitar_acentos", "prefijo_comun", "sufijo_comun"}
+    requeridos = {
+        "recortar",
+        "repetir",
+        "quitar_acentos",
+        "prefijo_comun",
+        "sufijo_comun",
+    }
     assert requeridos.issubset(set(USAR_RUNTIME_EXPORT_OVERRIDES["texto"]))
     assert requeridos.issubset(simbolos)
 
@@ -121,21 +183,35 @@ def _modulo_datos_publico_stub() -> ModuleType:
     mod.__all__ = ["filtrar", "mapear", "reducir"]
     mod.filtrar = lambda tabla, condicion: [fila for fila in tabla if condicion(fila)]
     mod.mapear = lambda valores, fn=None: valores
-    mod.reducir = lambda valores, fn=None, inicial=None: inicial if inicial is not None else valores[0]
+    mod.reducir = lambda valores, fn=None, inicial=None: (
+        inicial if inicial is not None else valores[0]
+    )
     return _marcar_stub_como_oficial(mod, "datos")
 
 
 @pytest.mark.parametrize(
     ("factory", "executor", "get_interp"),
     [
-        (lambda: InteractiveCommand(InterpretadorCobra()), lambda cmd, code: cmd.ejecutar_codigo(code), lambda cmd: cmd.interpretador),
-        (ReplCommandV2, lambda cmd, code: cmd._ejecutar_en_modo_normal(code), lambda cmd: cmd._delegate.interpretador),
+        (
+            lambda: InteractiveCommand(InterpretadorCobra()),
+            lambda cmd, code: cmd.ejecutar_codigo(code),
+            lambda cmd: cmd.interpretador,
+        ),
+        (
+            ReplCommandV2,
+            lambda cmd, code: cmd._ejecutar_en_modo_normal(code),
+            lambda cmd: cmd._delegate.interpretador,
+        ),
     ],
 )
-def test_usar_datos_incluye_filtrar_mapear_reducir(factory, executor, get_interp, monkeypatch):
+def test_usar_datos_incluye_filtrar_mapear_reducir(
+    factory, executor, get_interp, monkeypatch
+):
     mod_datos = _modulo_datos_publico_stub()
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: mod_datos)
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: mod_datos
+    )
 
     cmd = factory()
     interp = get_interp(cmd)
@@ -147,16 +223,31 @@ def test_usar_datos_incluye_filtrar_mapear_reducir(factory, executor, get_interp
         assert simbolo in interp.contextos[-1].values
         assert callable(interp.contextos[-1].get(simbolo))
 
-    assert interp.contextos[-1].get("filtrar")(tabla, lambda fila: fila["activo"]) == [{"activo": True}]
+    assert interp.contextos[-1].get("filtrar")(tabla, lambda fila: fila["activo"]) == [
+        {"activo": True}
+    ]
     assert interp.contextos[-1].get("mapear")(tabla, lambda fila: fila) == tabla
-    assert interp.contextos[-1].get("reducir")(tabla, lambda total, fila: total + int(fila["activo"]), 0) == 1
+    assert (
+        interp.contextos[-1].get("reducir")(
+            tabla, lambda total, fila: total + int(fila["activo"]), 0
+        )
+        == 1
+    )
 
 
 @pytest.mark.parametrize(
     ("factory", "executor", "get_interp"),
     [
-        (lambda: InteractiveCommand(InterpretadorCobra()), lambda cmd, code: cmd.ejecutar_codigo(code), lambda cmd: cmd.interpretador),
-        (ReplCommandV2, lambda cmd, code: cmd._ejecutar_en_modo_normal(code), lambda cmd: cmd._delegate.interpretador),
+        (
+            lambda: InteractiveCommand(InterpretadorCobra()),
+            lambda cmd, code: cmd.ejecutar_codigo(code),
+            lambda cmd: cmd.interpretador,
+        ),
+        (
+            ReplCommandV2,
+            lambda cmd, code: cmd._ejecutar_en_modo_normal(code),
+            lambda cmd: cmd._delegate.interpretador,
+        ),
     ],
 )
 def test_usar_datos_filtrar_contrato_publico_real(factory, executor, get_interp):
@@ -173,12 +264,24 @@ def test_usar_datos_filtrar_contrato_publico_real(factory, executor, get_interp)
 @pytest.mark.parametrize(
     ("factory", "executor", "get_interp"),
     [
-        (lambda: InteractiveCommand(InterpretadorCobra()), lambda cmd, code: cmd.ejecutar_codigo(code), lambda cmd: cmd.interpretador),
-        (ReplCommandV2, lambda cmd, code: cmd._ejecutar_en_modo_normal(code), lambda cmd: cmd._delegate.interpretador),
+        (
+            lambda: InteractiveCommand(InterpretadorCobra()),
+            lambda cmd, code: cmd.ejecutar_codigo(code),
+            lambda cmd: cmd.interpretador,
+        ),
+        (
+            ReplCommandV2,
+            lambda cmd, code: cmd._ejecutar_en_modo_normal(code),
+            lambda cmd: cmd._delegate.interpretador,
+        ),
     ],
 )
 def test_rechaza_usar_numpy(factory, executor, get_interp, monkeypatch):
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: (_ for _ in ()).throw(ModuleNotFoundError(nombre)))
+    monkeypatch.setattr(
+        core_usar_loader,
+        "obtener_modulo_cobra_oficial",
+        lambda nombre: (_ for _ in ()).throw(ModuleNotFoundError(nombre)),
+    )
 
     cmd = factory()
     interp = get_interp(cmd)
@@ -200,7 +303,15 @@ def test_holobit_sdk_internals_no_son_importables(monkeypatch):
     mod_holobit = _modulo_holobit_publico_stub()
     alias_map = {**REPL_COBRA_MODULE_MAP, "holobit": "holobit"}
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre, **_kwargs: mod_holobit if nombre == "holobit" else (_ for _ in ()).throw(ModuleNotFoundError(nombre)))
+    monkeypatch.setattr(
+        core_usar_loader,
+        "obtener_modulo",
+        lambda nombre, **_kwargs: (
+            mod_holobit
+            if nombre == "holobit"
+            else (_ for _ in ()).throw(ModuleNotFoundError(nombre))
+        ),
+    )
 
     cmd = InteractiveCommand(InterpretadorCobra())
     cmd.interpretador.configurar_restriccion_usar_repl(alias_map)
@@ -221,7 +332,15 @@ def test_holobit_sdk_internals_no_son_importables(monkeypatch):
 def test_usar_holobit_expone_solo_api_cobra_facing(monkeypatch):
     mod_holobit = _marcar_stub_como_oficial(_modulo_holobit_publico_stub(), "holobit")
     alias_map = {**REPL_COBRA_MODULE_MAP, "holobit": "holobit"}
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: mod_holobit if nombre == "holobit" else (_ for _ in ()).throw(ModuleNotFoundError(nombre)))
+    monkeypatch.setattr(
+        core_usar_loader,
+        "obtener_modulo_cobra_oficial",
+        lambda nombre: (
+            mod_holobit
+            if nombre == "holobit"
+            else (_ for _ in ()).throw(ModuleNotFoundError(nombre))
+        ),
+    )
 
     interp = InterpretadorCobra()
     interp.configurar_restriccion_usar_repl(alias_map)
@@ -233,10 +352,30 @@ def test_usar_holobit_expone_solo_api_cobra_facing(monkeypatch):
 
     simbolos = {
         simbolo
-        for simbolo in ("crear_holobit", "validar_holobit", "serializar_holobit", "deserializar_holobit", "proyectar", "transformar", "graficar", "combinar", "medir")
+        for simbolo in (
+            "crear_holobit",
+            "validar_holobit",
+            "serializar_holobit",
+            "deserializar_holobit",
+            "proyectar",
+            "transformar",
+            "graficar",
+            "combinar",
+            "medir",
+        )
         if simbolo in interp.contextos[-1].values
     }
-    assert simbolos == {"crear_holobit", "validar_holobit", "serializar_holobit", "deserializar_holobit", "proyectar", "transformar", "graficar", "combinar", "medir"}
+    assert simbolos == {
+        "crear_holobit",
+        "validar_holobit",
+        "serializar_holobit",
+        "deserializar_holobit",
+        "proyectar",
+        "transformar",
+        "graficar",
+        "combinar",
+        "medir",
+    }
     assert "holobit_sdk" not in interp.contextos[-1].values
     assert "_to_sdk_holobit" not in interp.contextos[-1].values
     assert callable(interp.contextos[-1].get("crear_holobit"))
@@ -249,7 +388,6 @@ def test_simbolos_exportados_sin_doble_guion_bajo_y_sin_prohibidos():
     _assert_contrato_simbolos_saneados(simbolos)
 
 
-
 def test_politica_publica_backends_exacta_python_javascript_rust():
     assert PUBLIC_BACKENDS == ("python", "javascript", "rust")
 
@@ -257,7 +395,9 @@ def test_politica_publica_backends_exacta_python_javascript_rust():
 def test_conflicto_no_overwrite_silencioso_reporta_error_estructurado(monkeypatch):
     mod_datos = _modulo_datos_publico_stub()
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: mod_datos)
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: mod_datos
+    )
 
     interp = InterpretadorCobra()
     interp.configurar_restriccion_usar_repl(REPL_COBRA_MODULE_MAP)
@@ -266,12 +406,13 @@ def test_conflicto_no_overwrite_silencioso_reporta_error_estructurado(monkeypatc
     class _NodoUsar:
         modulo = "datos"
 
-    with pytest.raises(NameError, match=r"colisión estructurada=") as excinfo:
+    with pytest.raises(NameError, match=r"usar_error\[conflicto_simbolo\]") as excinfo:
         interp.ejecutar_usar(_NodoUsar())
 
     mensaje = str(excinfo.value)
-    assert "'code': 'symbol_collision'" in mensaje
-    assert "'symbol': 'filtrar'" in mensaje
+    assert "symbol_collision" not in mensaje
+    assert "'code': 'symbol_collision'" in str(excinfo.value.__cause__)
+    assert "'symbol': 'filtrar'" in str(excinfo.value.__cause__)
     assert interp.contextos[-1].get("filtrar")() == "ocupado"
     assert "mapear" not in interp.contextos[-1].values
     assert "reducir" not in interp.contextos[-1].values
@@ -279,7 +420,9 @@ def test_conflicto_no_overwrite_silencioso_reporta_error_estructurado(monkeypatc
 
 def test_conflictos_abortan_inyeccion_sin_overwrite_silencioso(monkeypatch):
     mod_datos = _modulo_datos_publico_stub()
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: mod_datos)
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: mod_datos
+    )
 
     interp = InterpretadorCobra()
     interp.configurar_restriccion_usar_repl(REPL_COBRA_MODULE_MAP)
@@ -289,12 +432,13 @@ def test_conflictos_abortan_inyeccion_sin_overwrite_silencioso(monkeypatch):
     class _NodoUsar:
         modulo = "datos"
 
-    with pytest.raises(NameError, match=r"colisión estructurada=") as excinfo:
+    with pytest.raises(NameError, match=r"usar_error\[conflicto_simbolo\]") as excinfo:
         interp.ejecutar_usar(_NodoUsar())
 
     mensaje = str(excinfo.value)
-    assert "'code': 'symbol_collision'" in mensaje
-    assert "'symbol': 'filtrar'" in mensaje
+    assert "symbol_collision" not in mensaje
+    assert "'code': 'symbol_collision'" in str(excinfo.value.__cause__)
+    assert "'symbol': 'filtrar'" in str(excinfo.value.__cause__)
 
     assert interp.contextos[-1].get("filtrar")() == "ocupado"
     assert interp.contextos[-1].get("mapear")() == "ocupado"
@@ -303,31 +447,63 @@ def test_conflictos_abortan_inyeccion_sin_overwrite_silencioso(monkeypatch):
 
 def test_usar_no_inyecta_simbolos_prohibidos_ni_objetos_backend(monkeypatch):
     mod = ModuleType("externo")
-    mod.__all__ = ["ok", "self", "append", "map", "filter", "unwrap", "expect", "__danger__"]
+    mod.__all__ = [
+        "ok",
+        "self",
+        "append",
+        "map",
+        "filter",
+        "unwrap",
+        "expect",
+        "__danger__",
+    ]
     mod.ok = lambda: "ok"
-    mod.self = mod.append = mod.map = mod.filter = mod.unwrap = mod.expect = lambda *_args, **_kwargs: None
+    mod.self = mod.append = mod.map = mod.filter = mod.unwrap = mod.expect = (
+        lambda *_args, **_kwargs: None
+    )
     mod.__danger__ = lambda: "boom"
     ruta_mod_ext = (
-        Path(usar_loader.__file__).resolve().parents[3] / "src/pcobra/corelibs/mod_ext.py"
+        Path(usar_loader.__file__).resolve().parents[3]
+        / "src/pcobra/corelibs/mod_ext.py"
     ).resolve()
     setattr(mod, "__file__", str(ruta_mod_ext))
 
-    simbolos_saneados, conflictos = core_usar_loader.sanitizar_exports_publicos(mod, "mod_ext")
+    simbolos_saneados, conflictos = core_usar_loader.sanitizar_exports_publicos(
+        mod, "mod_ext"
+    )
 
     mapa = dict(simbolos_saneados)
     assert "ok" in mapa
     assert mapa["ok"]() == "ok"
-    for prohibido in ("self", "append", "map", "filter", "unwrap", "expect", "__danger__"):
+    for prohibido in (
+        "self",
+        "append",
+        "map",
+        "filter",
+        "unwrap",
+        "expect",
+        "__danger__",
+    ):
         assert prohibido not in mapa
     assert any(conflicto["symbol"] == "__danger__" for conflicto in conflictos)
 
 
 def test_usar_holobit_inyecta_solo_all_y_nombres_en_espanol(monkeypatch):
     mod_holobit = _marcar_stub_como_oficial(_modulo_holobit_publico_stub(), "holobit")
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: mod_holobit if nombre == "holobit" else (_ for _ in ()).throw(ModuleNotFoundError(nombre)))
+    monkeypatch.setattr(
+        core_usar_loader,
+        "obtener_modulo_cobra_oficial",
+        lambda nombre: (
+            mod_holobit
+            if nombre == "holobit"
+            else (_ for _ in ()).throw(ModuleNotFoundError(nombre))
+        ),
+    )
 
     interp = InterpretadorCobra()
-    interp.configurar_restriccion_usar_repl({**REPL_COBRA_MODULE_MAP, "holobit": "holobit"})
+    interp.configurar_restriccion_usar_repl(
+        {**REPL_COBRA_MODULE_MAP, "holobit": "holobit"}
+    )
 
     class _NodoUsar:
         modulo = "holobit"
@@ -384,7 +560,9 @@ def test_holobit_corelib_error_runtime_solo_terminos_cobra(monkeypatch):
     from pathlib import Path
 
     ruta = Path("src/pcobra/corelibs/holobit.py").resolve()
-    spec = importlib.util.spec_from_file_location("_holobit_corelib_blackbox_runtime", ruta)
+    spec = importlib.util.spec_from_file_location(
+        "_holobit_corelib_blackbox_runtime", ruta
+    )
     holobit = importlib.util.module_from_spec(spec)
     assert spec and spec.loader
     spec.loader.exec_module(holobit)
@@ -392,7 +570,9 @@ def test_holobit_corelib_error_runtime_solo_terminos_cobra(monkeypatch):
     monkeypatch.setattr(
         holobit._AdaptadorInternoHolobit,
         "graficar",
-        lambda _hb: (_ for _ in ()).throw(ModuleNotFoundError("holobit_sdk.core.holobit")),
+        lambda _hb: (_ for _ in ()).throw(
+            ModuleNotFoundError("holobit_sdk.core.holobit")
+        ),
     )
 
     hb = holobit.crear_holobit([1, 2, 3])
@@ -407,7 +587,9 @@ def test_holobit_corelib_error_runtime_solo_terminos_cobra(monkeypatch):
 
 def test_binding_usar_sin_dependencia_lexer_parser_para_datos(monkeypatch):
     mod_datos = _modulo_datos_publico_stub()
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: mod_datos)
+    monkeypatch.setattr(
+        core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: mod_datos
+    )
 
     interp = InterpretadorCobra()
     interp.configurar_restriccion_usar_repl(REPL_COBRA_MODULE_MAP)
@@ -423,10 +605,20 @@ def test_binding_usar_sin_dependencia_lexer_parser_para_datos(monkeypatch):
 
 def test_binding_usar_holobit_no_expone_internals_directos(monkeypatch):
     mod_holobit = _marcar_stub_como_oficial(_modulo_holobit_publico_stub(), "holobit")
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: mod_holobit if nombre == "holobit" else (_ for _ in ()).throw(ModuleNotFoundError(nombre)))
+    monkeypatch.setattr(
+        core_usar_loader,
+        "obtener_modulo_cobra_oficial",
+        lambda nombre: (
+            mod_holobit
+            if nombre == "holobit"
+            else (_ for _ in ()).throw(ModuleNotFoundError(nombre))
+        ),
+    )
 
     interp = InterpretadorCobra()
-    interp.configurar_restriccion_usar_repl({**REPL_COBRA_MODULE_MAP, "holobit": "holobit"})
+    interp.configurar_restriccion_usar_repl(
+        {**REPL_COBRA_MODULE_MAP, "holobit": "holobit"}
+    )
 
     class _NodoUsar:
         modulo = "holobit"
@@ -448,12 +640,18 @@ def test_sanitizar_exports_publicos_rechaza_objeto_sdk_accidental_en_holobit():
     mod_holobit.__all__ = [*mod_holobit.__all__, "SDKHolobitAccidental"]
     mod_holobit.SDKHolobitAccidental = _SDKObjetoAccidental
 
-    simbolos_saneados, conflictos = core_usar_loader.sanitizar_exports_publicos(mod_holobit, "holobit")
+    simbolos_saneados, conflictos = core_usar_loader.sanitizar_exports_publicos(
+        mod_holobit, "holobit"
+    )
     mapa = dict(simbolos_saneados)
 
     assert "SDKHolobitAccidental" not in mapa
     assert any(c["symbol"] == "SDKHolobitAccidental" for c in conflictos)
-    assert any(c["code"] in {"outside_public_api", "backend_module_object"} for c in conflictos if c["symbol"] == "SDKHolobitAccidental")
+    assert any(
+        c["code"] in {"outside_public_api", "backend_module_object"}
+        for c in conflictos
+        if c["symbol"] == "SDKHolobitAccidental"
+    )
 
 
 def test_usar_holobit_no_filtra_nombres_sdk_accidentales_en_contexto(monkeypatch):
@@ -469,7 +667,11 @@ def test_usar_holobit_no_filtra_nombres_sdk_accidentales_en_contexto(monkeypatch
     monkeypatch.setattr(
         core_usar_loader,
         "obtener_modulo_cobra_oficial",
-        lambda nombre: mod_holobit if nombre == "holobit" else (_ for _ in ()).throw(ModuleNotFoundError(nombre)),
+        lambda nombre: (
+            mod_holobit
+            if nombre == "holobit"
+            else (_ for _ in ()).throw(ModuleNotFoundError(nombre))
+        ),
     )
 
     interp = InterpretadorCobra()

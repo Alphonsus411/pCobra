@@ -2,15 +2,18 @@ import pytest
 from core.interpreter import InterpretadorCobra
 from core.ast_nodes import NodoAsignacion, NodoValor, NodoFuncion, NodoLlamadaFuncion
 
+
 def test_asignaciones_intensivas_libera_memoria():
     inter = InterpretadorCobra()
     for i in range(500):
-        inter.ejecutar_asignacion(NodoAsignacion(f"v{i}", NodoValor(i), declaracion=True))
+        inter.ejecutar_asignacion(
+            NodoAsignacion(f"v{i}", NodoValor(i), declaracion=True)
+        )
     assert len(inter.mem_contextos[0]) == 500
 
     # Reasignar algunas variables para liberar memoria
     for i in range(250):
-        inter.ejecutar_asignacion(NodoAsignacion(f"v{i}", NodoValor(i+1)))
+        inter.ejecutar_asignacion(NodoAsignacion(f"v{i}", NodoValor(i + 1)))
     assert len(inter.mem_contextos[0]) == 500  # mismo número, pero se liberó y reasignó
 
 

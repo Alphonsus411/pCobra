@@ -20,7 +20,16 @@ from functools import (
     wraps,
 )
 import importlib.util
-from typing import Any, Awaitable, Callable, Optional, ParamSpec, Sequence, TypeVar, overload
+from typing import (
+    Any,
+    Awaitable,
+    Callable,
+    Optional,
+    ParamSpec,
+    Sequence,
+    TypeVar,
+    overload,
+)
 
 from pcobra._stubs.compat import import_optional_attr
 from pcobra.corelibs.asincrono import reintentar_async as _reintentar_async
@@ -82,11 +91,7 @@ def _crear_calculadora_espera(
     retardo_inicial: float,
     factor_backoff: float,
     max_retardo: float | None,
-    jitter: Callable[[float], float]
-    | tuple[float, float]
-    | float
-    | bool
-    | None,
+    jitter: Callable[[float], float] | tuple[float, float] | float | bool | None,
 ) -> Callable[[int], float]:
     def _aplicar_jitter(valor: float) -> float:
         if jitter is None:
@@ -125,13 +130,15 @@ def _crear_calculadora_espera(
 
 
 @overload
-def memoizar(funcion: Callable[P, R], /, *, maxsize: Optional[int] = ..., typed: bool = ...) -> Callable[P, R]:
-    ...
+def memoizar(
+    funcion: Callable[P, R], /, *, maxsize: Optional[int] = ..., typed: bool = ...
+) -> Callable[P, R]: ...
 
 
 @overload
-def memoizar(*, maxsize: Optional[int] = ..., typed: bool = ...) -> Callable[[Callable[P, R]], Callable[P, R]]:
-    ...
+def memoizar(
+    *, maxsize: Optional[int] = ..., typed: bool = ...
+) -> Callable[[Callable[P, R]], Callable[P, R]]: ...
 
 
 def memoizar(
@@ -156,13 +163,11 @@ def memoizar(
 
 
 @overload
-def orden_total(_cls: type[T], /) -> type[T]:
-    ...
+def orden_total(_cls: type[T], /) -> type[T]: ...
 
 
 @overload
-def orden_total() -> Callable[[type[T]], type[T]]:
-    ...
+def orden_total() -> Callable[[type[T]], type[T]]: ...
 
 
 def orden_total(
@@ -182,13 +187,11 @@ def orden_total(
 
 
 @overload
-def despachar_por_tipo(funcion: F, /) -> F:
-    ...
+def despachar_por_tipo(funcion: F, /) -> F: ...
 
 
 @overload
-def despachar_por_tipo() -> Callable[[F], F]:
-    ...
+def despachar_por_tipo() -> Callable[[F], F]: ...
 
 
 def despachar_por_tipo(funcion: F | None = None, /) -> F | Callable[[F], F]:
@@ -236,8 +239,7 @@ def depreciado(
     categoria: type[Warning] = ...,
     consola: Console | None = ...,
     estilizar: bool = ...,
-) -> Callable[P, R]:
-    ...
+) -> Callable[P, R]: ...
 
 
 @overload
@@ -247,8 +249,7 @@ def depreciado(
     categoria: type[Warning] = ...,
     consola: Console | None = ...,
     estilizar: bool = ...,
-) -> Callable[[Callable[P, R]], Callable[P, R]]:
-    ...
+) -> Callable[[Callable[P, R]], Callable[P, R]]: ...
 
 
 def depreciado(
@@ -264,7 +265,10 @@ def depreciado(
 
     def decorador(objetivo: Callable[P, R]) -> Callable[P, R]:
         nombre = getattr(objetivo, "__qualname__", repr(objetivo))
-        texto = mensaje or f"{nombre} está en desuso y puede eliminarse en futuras versiones."
+        texto = (
+            mensaje
+            or f"{nombre} está en desuso y puede eliminarse en futuras versiones."
+        )
         console = consola
         if console is None and estilizar and Console is not None:
             console = Console()
@@ -300,16 +304,14 @@ def sincronizar(
     /,
     *,
     candado: threading.Lock | threading.RLock | None = ...,
-) -> Callable[P, R]:
-    ...
+) -> Callable[P, R]: ...
 
 
 @overload
 def sincronizar(
     *,
     candado: threading.Lock | threading.RLock | None = ...,
-) -> Callable[[Callable[P, R]], Callable[P, R]]:
-    ...
+) -> Callable[[Callable[P, R]], Callable[P, R]]: ...
 
 
 def sincronizar(
@@ -354,8 +356,7 @@ def reintentar(
     etiqueta: str | None = ...,
     consola: Console | None = ...,
     estilizar: bool = ...,
-) -> Callable[P, R]:
-    ...
+) -> Callable[P, R]: ...
 
 
 @overload
@@ -370,8 +371,7 @@ def reintentar(
     etiqueta: str | None = ...,
     consola: Console | None = ...,
     estilizar: bool = ...,
-) -> Callable[[Callable[P, R]], Callable[P, R]]:
-    ...
+) -> Callable[[Callable[P, R]], Callable[P, R]]: ...
 
 
 def reintentar(
@@ -462,8 +462,7 @@ def reintentar_async(
     etiqueta: str | None = ...,
     consola: Console | None = ...,
     estilizar: bool = ...,
-) -> Callable[P, Awaitable[R]]:
-    ...
+) -> Callable[P, Awaitable[R]]: ...
 
 
 @overload
@@ -478,8 +477,7 @@ def reintentar_async(
     etiqueta: str | None = ...,
     consola: Console | None = ...,
     estilizar: bool = ...,
-) -> Callable[[Callable[P, Awaitable[R]]], Callable[P, Awaitable[R]]]:
-    ...
+) -> Callable[[Callable[P, Awaitable[R]]], Callable[P, Awaitable[R]]]: ...
 
 
 def reintentar_async(
@@ -495,7 +493,10 @@ def reintentar_async(
     etiqueta: str | None = None,
     consola: Console | None = None,
     estilizar: bool = True,
-) -> Callable[P, Awaitable[R]] | Callable[[Callable[P, Awaitable[R]]], Callable[P, Awaitable[R]]]:
+) -> (
+    Callable[P, Awaitable[R]]
+    | Callable[[Callable[P, Awaitable[R]]], Callable[P, Awaitable[R]]]
+):
     """Equivalente asíncrono de :func:`reintentar` basado en ``corelibs``."""
 
     _validar_parametros_reintento(
@@ -550,16 +551,16 @@ def reintentar_async(
 
 
 @overload
-def dataclase(_cls: type[T], /, **opciones: Any) -> type[T]:
-    ...
+def dataclase(_cls: type[T], /, **opciones: Any) -> type[T]: ...
 
 
 @overload
-def dataclase(**opciones: Any) -> Callable[[type[T]], type[T]]:
-    ...
+def dataclase(**opciones: Any) -> Callable[[type[T]], type[T]]: ...
 
 
-def dataclase(_cls: type[T] | None = None, /, **opciones: Any) -> type[T] | Callable[[type[T]], type[T]]:
+def dataclase(
+    _cls: type[T] | None = None, /, **opciones: Any
+) -> type[T] | Callable[[type[T]], type[T]]:
     """Alias en español para :func:`dataclasses.dataclass`.
 
     Todos los argumentos originales están disponibles a través de ``opciones``.
@@ -574,13 +575,20 @@ def dataclase(_cls: type[T] | None = None, /, **opciones: Any) -> type[T] | Call
 
 
 @overload
-def temporizar(funcion: Callable[P, R], /, *, etiqueta: str | None = ..., precision: int = ..., consola: Console | None = ...) -> Callable[P, R]:
-    ...
+def temporizar(
+    funcion: Callable[P, R],
+    /,
+    *,
+    etiqueta: str | None = ...,
+    precision: int = ...,
+    consola: Console | None = ...,
+) -> Callable[P, R]: ...
 
 
 @overload
-def temporizar(*, etiqueta: str | None = ..., precision: int = ..., consola: Console | None = ...) -> Callable[[Callable[P, R]], Callable[P, R]]:
-    ...
+def temporizar(
+    *, etiqueta: str | None = ..., precision: int = ..., consola: Console | None = ...
+) -> Callable[[Callable[P, R]], Callable[P, R]]: ...
 
 
 def temporizar(

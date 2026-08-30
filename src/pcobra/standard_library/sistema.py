@@ -23,19 +23,35 @@ def obtener_os() -> str:
     return _sistema.obtener_os()
 
 
-def ejecutar(comando: list[str], permitidos: Iterable[str] | None = None, timeout: int | float | None = None) -> str:
+def ejecutar(
+    comando: list[str],
+    permitidos: Iterable[str] | None = None,
+    timeout: int | float | None = None,
+) -> str:
     """Ejecuta un comando validando lista blanca y límite de tiempo."""
     return _sistema.ejecutar(comando, permitidos=permitidos, timeout=timeout)
 
 
-async def ejecutar_async(comando: list[str], permitidos: Iterable[str] | None = None, timeout: int | float | None = None) -> str:
+async def ejecutar_async(
+    comando: list[str],
+    permitidos: Iterable[str] | None = None,
+    timeout: int | float | None = None,
+) -> str:
     """Versión asíncrona segura de ``ejecutar`` con lista blanca obligatoria."""
-    return await _sistema.ejecutar_async(comando, permitidos=permitidos, timeout=timeout)
+    return await _sistema.ejecutar_async(
+        comando, permitidos=permitidos, timeout=timeout
+    )
 
 
-async def ejecutar_stream(comando: list[str], permitidos: Iterable[str] | None = None, timeout: int | float | None = None) -> AsyncIterator[str]:
+async def ejecutar_stream(
+    comando: list[str],
+    permitidos: Iterable[str] | None = None,
+    timeout: int | float | None = None,
+) -> AsyncIterator[str]:
     """Entrega la salida estándar por líneas desde un proceso permitido."""
-    async for linea in _sistema.ejecutar_stream(comando, permitidos=permitidos, timeout=timeout):
+    async for linea in _sistema.ejecutar_stream(
+        comando, permitidos=permitidos, timeout=timeout
+    ):
         yield linea
 
 

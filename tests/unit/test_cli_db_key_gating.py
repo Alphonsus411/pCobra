@@ -2,12 +2,12 @@ from unittest.mock import patch
 
 import pytest
 
-from cobra.cli.cli import CliApplication
-from cobra.cli.commands.cache_cmd import CacheCommand
-from cobra.cli.commands.docs_cmd import DocsCommand
-from cobra.cli.commands.flet_cmd import FletCommand
-from cobra.cli.commands.plugins_cmd import PluginsCommand
-from cobra.cli.commands.verify_cmd import VerifyCommand
+from pcobra.cli.cli import CliApplication
+from pcobra.cli.commands.cache_cmd import CacheCommand
+from pcobra.cli.commands.docs_cmd import DocsCommand
+from pcobra.cli.commands.flet_cmd import FletCommand
+from pcobra.cli.commands.plugins_cmd import PluginsCommand
+from pcobra.cli.commands.verify_cmd import VerifyCommand
 
 
 def test_parse_error_no_evalua_sqlite_db_key(monkeypatch):

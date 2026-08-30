@@ -17,4 +17,3 @@ def __getattr__(name: str) -> Any:  # pragma: no cover - importación diferida
 
 
 __all__ = ["BaseTranspiler", "BaseReverseTranspiler"]
-

@@ -9,7 +9,6 @@ from pcobra.core.parser import Parser
 from . import database
 from .qualia_knowledge import QualiaKnowledge
 
-
 DEFAULT_STATE_FILE = os.path.join(
     os.path.expanduser("~"), ".cobra", "qualia_state.json"
 )
@@ -111,15 +110,13 @@ class QualiaSpirit:
         sugerencias: List[str] = []
 
         if "imprimir" not in joined:
-            sugerencias.append("Agrega \"imprimir\" para depurar.")
+            sugerencias.append('Agrega "imprimir" para depurar.')
 
         if any(len(nombre) <= 2 for nombre in self.knowledge.variable_names):
             sugerencias.append("Usa nombres descriptivos para variables.")
 
         if self.knowledge.node_counts.get("NodoAsignacion", 0) >= 5:
-            sugerencias.append(
-                "Considera agrupar asignaciones repetidas en funciones."
-            )
+            sugerencias.append("Considera agrupar asignaciones repetidas en funciones.")
 
         if (
             self.knowledge.modules_used.get("pandas", 0) >= 1
@@ -203,7 +200,9 @@ def load_state() -> QualiaSpirit:
     global _DATABASE_AVAILABLE
 
     if not _check_qualia_availability():
-        _disable_optional_database("sqliteplus no está disponible en tiempo de ejecución")
+        _disable_optional_database(
+            "sqliteplus no está disponible en tiempo de ejecución"
+        )
         return QualiaSpirit()
 
     try:
@@ -216,10 +215,15 @@ def load_state() -> QualiaSpirit:
                 data = _payload_to_dict(row[0]) if row else None
         _DATABASE_AVAILABLE = True
         return _build_spirit(data)
-    except database.DatabaseDependencyError as exc:  # pragma: no cover - dependencias opcionales
+    except (
+        database.DatabaseDependencyError
+    ) as exc:  # pragma: no cover - dependencias opcionales
         _disable_optional_database(str(exc))
         return QualiaSpirit()
-    except (ImportError, ModuleNotFoundError) as exc:  # pragma: no cover - dependencias opcionales
+    except (
+        ImportError,
+        ModuleNotFoundError,
+    ) as exc:  # pragma: no cover - dependencias opcionales
         _disable_optional_database(str(exc))
         return QualiaSpirit()
     except FileNotFoundError as exc:  # pragma: no cover - loader opcional
@@ -249,7 +253,9 @@ def save_state(spirit: QualiaSpirit) -> None:
     """Guarda el estado de ``spirit`` en la base de datos."""
 
     if not _is_persistence_enabled():
-        LOGGER.debug("Base de datos de Qualia inactiva; se omite el guardado persistente.")
+        LOGGER.debug(
+            "Base de datos de Qualia inactiva; se omite el guardado persistente."
+        )
         return
 
     payload = json.dumps(

@@ -25,7 +25,9 @@ class JSON:
         indent: int | None = None,
         sort_keys: bool = True,
     ) -> "JSON":
-        instancia = cls(_json.dumps(datos, ensure_ascii=False, indent=indent, sort_keys=sort_keys))
+        instancia = cls(
+            _json.dumps(datos, ensure_ascii=False, indent=indent, sort_keys=sort_keys)
+        )
         instancia.sort_keys = sort_keys
         instancia.indent = indent
         return instancia

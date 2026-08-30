@@ -69,7 +69,13 @@ def _check_syntax(lang: str, archivo: Path, tmp_path: Path) -> None:
         if not shutil.which("rustc"):
             pytest.skip("rustc no disponible")
         subprocess.run(
-            ["rustc", "--emit=metadata", str(archivo), "-o", str(tmp_path / "dummy.rmeta")],
+            [
+                "rustc",
+                "--emit=metadata",
+                str(archivo),
+                "-o",
+                str(tmp_path / "dummy.rmeta"),
+            ],
             check=True,
         )
     elif lang == "java":
@@ -79,7 +85,9 @@ def _check_syntax(lang: str, archivo: Path, tmp_path: Path) -> None:
     elif lang == "asm":
         if not shutil.which("gcc"):
             pytest.skip("gcc no disponible para validar asm")
-        subprocess.run(["gcc", "-x", "assembler", "-fsyntax-only", str(archivo)], check=True)
+        subprocess.run(
+            ["gcc", "-x", "assembler", "-fsyntax-only", str(archivo)], check=True
+        )
     elif lang == "wasm":
         contenido = archivo.read_text(encoding="utf-8")
         assert "(module" in contenido
@@ -92,8 +100,8 @@ VALID_SYNTAX_TARGETS = tuple(
 
 @pytest.mark.parametrize("lang", VALID_SYNTAX_TARGETS)
 def test_transpilador_syntax(tmp_path, lang, monkeypatch):
-    archivo = tmp_path / "prog.co"
-    archivo.write_text(Path("tests/data/ejemplo.co").read_text())
+    archivo = tmp_path / "prog.cobra"
+    archivo.write_text(Path("tests/data/ejemplo.cobra").read_text())
 
     monkeypatch.setattr(module_map_src, "get_toml_map", lambda: {})
     monkeypatch.setattr(module_map_backend, "get_toml_map", lambda: {})

@@ -107,7 +107,10 @@ def test_detecta_import_relativo_a_otro_comando(tmp_path: Path) -> None:
 
     assert any("import entre comandos no permitido" in item for item in violations)
     assert any("patrón *_cmd no permitido" in item for item in violations)
-    assert any("import explícito from ...commands.<otro_comando> no permitido" in item for item in violations)
+    assert any(
+        "import explícito from ...commands.<otro_comando> no permitido" in item
+        for item in violations
+    )
     assert any("src/pcobra/cobra/cli/commands/bad.py:1" in item for item in violations)
 
 
@@ -119,7 +122,10 @@ def test_detecta_acceso_compartido_transpilers_fuera_registry(tmp_path: Path) ->
 
     violations = find_violations(tmp_path)
 
-    assert any("acceso compartido de transpiladores no permitido" in item for item in violations)
+    assert any(
+        "acceso compartido de transpiladores no permitido" in item
+        for item in violations
+    )
     assert any("src/pcobra/cobra/cli/commands/a.py:1" in item for item in violations)
 
 
@@ -131,7 +137,10 @@ def test_detecta_acceso_directo_a_targets_en_transpilers(tmp_path: Path) -> None
 
     violations = find_violations(tmp_path)
 
-    assert any("acceso compartido de transpiladores no permitido" in item for item in violations)
+    assert any(
+        "acceso compartido de transpiladores no permitido" in item
+        for item in violations
+    )
     assert any("pcobra.cobra.transpilers.targets" in item for item in violations)
 
 
@@ -143,7 +152,10 @@ def test_detecta_acceso_directo_a_registry_en_transpilers(tmp_path: Path) -> Non
 
     violations = find_violations(tmp_path)
 
-    assert any("acceso compartido de transpiladores no permitido" in item for item in violations)
+    assert any(
+        "acceso compartido de transpiladores no permitido" in item
+        for item in violations
+    )
     assert any("pcobra.cobra.transpilers.registry" in item for item in violations)
 
 

@@ -5,8 +5,13 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 from unittest.mock import patch
 
+from pcobra.cobra.extensions import COBRA_SOURCE_EXTENSIONS, es_fuente_cobra
 from pcobra.cobra.core.interpreter import InterpretadorCobra
-from pcobra.cobra.core.sandbox import ejecutar_en_contenedor, ejecutar_en_sandbox, ejecutar_en_sandbox_js
+from pcobra.cobra.core.sandbox import (
+    ejecutar_en_contenedor,
+    ejecutar_en_sandbox,
+    ejecutar_en_sandbox_js,
+)
 from pcobra.cobra.build import backend_pipeline
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.execution_pipeline import construir_interprete_seguro_canonico
@@ -22,7 +27,7 @@ from pcobra.cobra.cli.utils.validators import validar_archivo_existente
 from pcobra.cobra.core import Lexer, Parser
 
 MAX_FILE_SIZE = 10 * 1024 * 1024
-VALID_EXTENSIONS = {".cobra", ".cbr", ".co"}
+VALID_EXTENSIONS = {".cobra"}
 
 
 def target_cli_choices(values: tuple[str, ...] | list[str]) -> tuple[str, ...]:
@@ -60,7 +65,8 @@ class TestService:
             diferencias: Dict[str, str] = {}
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 futuros = {
-                    executor.submit(self.verify_language, lang, ast, esperado): lang for lang in lenguajes
+                    executor.submit(self.verify_language, lang, ast, esperado): lang
+                    for lang in lenguajes
                 }
 
                 for futuro in concurrent.futures.as_completed(futuros):
@@ -92,7 +98,9 @@ class TestService:
         unsupported = set(languages) - set(self.SUPPORTED_LANGUAGES)
         if unsupported:
             raise ValueError(
-                _("Lenguajes no soportados: {unsupported}. Soportados: {supported}").format(
+                _(
+                    "Lenguajes no soportados: {unsupported}. Soportados: {supported}"
+                ).format(
                     unsupported=", ".join(sorted(unsupported)),
                     supported=", ".join(self.SUPPORTED_LANGUAGES),
                 )
@@ -100,11 +108,19 @@ class TestService:
 
     def validate_file(self, file_path: str) -> None:
         path = Path(file_path)
-        if path.suffix not in VALID_EXTENSIONS:
-            raise ValueError(_("Extensión de archivo no válida. Debe ser: {}").format(", ".join(sorted(VALID_EXTENSIONS))))
+        if not es_fuente_cobra(path):
+            raise ValueError(
+                _("Extensión de archivo no válida. Debe ser: {}").format(
+                    ", ".join(sorted(VALID_EXTENSIONS))
+                )
+            )
 
         if path.stat().st_size > MAX_FILE_SIZE:
-            raise ValueError(_("El archivo es demasiado grande (máximo {} MB)").format(MAX_FILE_SIZE // (1024 * 1024)))
+            raise ValueError(
+                _("El archivo es demasiado grande (máximo {} MB)").format(
+                    MAX_FILE_SIZE // (1024 * 1024)
+                )
+            )
 
     def read_source_file(self, file_path: str) -> str:
         validar_archivo_existente(file_path)
@@ -113,12 +129,18 @@ class TestService:
         try:
             return read_cobra_source(file_path)
         except PermissionError:
-            raise PermissionError(_("No hay permisos para leer el archivo '{}'").format(file_path))
+            raise PermissionError(
+                _("No hay permisos para leer el archivo '{}'").format(file_path)
+            )
         except UnicodeDecodeError as e:
             self._logger.error("Error decodificando archivo: %s", str(e))
-            raise ValueError(_("Error al decodificar el archivo '{}'").format(file_path))
+            raise ValueError(
+                _("Error al decodificar el archivo '{}'").format(file_path)
+            )
 
-    def compile_and_execute(self, ast: Any, lang: str) -> Tuple[Optional[str], Optional[str]]:
+    def compile_and_execute(
+        self, ast: Any, lang: str
+    ) -> Tuple[Optional[str], Optional[str]]:
         try:
             codigo_gen = backend_pipeline.transpile(ast, lang)
 
@@ -139,7 +161,9 @@ class TestService:
             self._logger.error("Error en %s: %s", lang, str(e))
             return None, str(e)
 
-    def verify_language(self, lang: str, ast: Any, esperado: str) -> Tuple[str, Optional[str]]:
+    def verify_language(
+        self, lang: str, ast: Any, esperado: str
+    ) -> Tuple[str, Optional[str]]:
         salida, error = self.compile_and_execute(ast, lang)
 
         if error:

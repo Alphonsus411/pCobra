@@ -17,7 +17,10 @@ def test_usar_numpy_rechaza_con_error_corto_sin_detalle_tecnico():
     with pytest.raises(PermissionError) as excinfo:
         interp.ejecutar_ast(generar_ast('usar "numpy"'))
 
-    assert str(excinfo.value) == "No se puede usar 'numpy': módulo fuera del catálogo público."
+    assert (
+        str(excinfo.value)
+        == "No se puede usar 'numpy': módulo fuera del catálogo público."
+    )
     assert "usar_error[" not in str(excinfo.value)
     assert "USAR_COBRA_PUBLIC_MODULES" not in str(excinfo.value)
 
@@ -41,6 +44,8 @@ def test_usar_numpy_incluye_detalle_tecnico_solo_con_debug(monkeypatch):
         interp.ejecutar_ast(generar_ast('usar "numpy"'))
 
     mensaje = str(excinfo.value)
-    assert mensaje.startswith("No se puede usar 'numpy': módulo fuera del catálogo público.")
+    assert mensaje.startswith(
+        "No se puede usar 'numpy': módulo fuera del catálogo público."
+    )
     assert "usar_error[modulo_fuera_catalogo_publico]" in mensaje
     assert "USAR_COBRA_PUBLIC_MODULES" in mensaje

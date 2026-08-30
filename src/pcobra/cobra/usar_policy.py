@@ -3,9 +3,7 @@
 from __future__ import annotations
 
 import importlib
-from dataclasses import dataclass
-from pathlib import Path
-
+from dataclasses import dataclass, field, replace
 
 # Fuente única de verdad de módulos canónicos permitidos por `usar`.
 USAR_COBRA_PUBLIC_MODULES: tuple[str, ...] = (
@@ -50,46 +48,29 @@ USAR_COBRA_FACING_MODULE_FLAGS: dict[str, bool] = {
     modulo: True for modulo in USAR_COBRA_PUBLIC_MODULES
 }
 
-_USAR_CANONICAL_INTERNAL_PATHS: dict[str, str] = {
+REPL_COBRA_MODULE_PACKAGE_MAP: dict[str, str] = {
     # `numero` expone el contrato runtime de `usar` desde corelibs.
-    "numero": "src/pcobra/corelibs/numero.py",
+    "numero": "pcobra.corelibs.numero",
     # `texto` expone su API Cobra-facing desde corelibs para evitar inicializar agregadores.
-    "texto": "src/pcobra/standard_library/texto.py",
+    "texto": "pcobra.standard_library.texto",
     # `datos` mantiene la misma estrategia que `numero`: el alias público se
     # resuelve por la ruta interna canónica declarada aquí.  En este caso el
     # contrato runtime apunta explícitamente a standard_library.
-    "datos": "src/pcobra/standard_library/datos.py",
-    "logica": "src/pcobra/corelibs/logica.py",
-    "asincrono": "src/pcobra/corelibs/asincrono.py",
-    "sistema": "src/pcobra/corelibs/sistema.py",
-    "archivo": "src/pcobra/corelibs/archivo.py",
-    "tiempo": "src/pcobra/corelibs/tiempo.py",
-    "red": "src/pcobra/corelibs/red.py",
-    "holobit": "src/pcobra/corelibs/holobit.py",
-    "ruta": "src/pcobra/corelibs/ruta.py",
-    "serializacion": "src/pcobra/corelibs/serializacion.py",
-    "proceso": "src/pcobra/corelibs/proceso.py",
-    "registro": "src/pcobra/corelibs/registro.py",
-    "argumentos": "src/pcobra/corelibs/argumentos.py",
-    "pruebas": "src/pcobra/corelibs/pruebas.py",
-    "temporal": "src/pcobra/corelibs/temporal.py",
-    "cripto": "src/pcobra/corelibs/cripto.py",
-    "regex": "src/pcobra/corelibs/regex.py",
-    "compresion": "src/pcobra/corelibs/compresion.py",
-    "configuracion": "src/pcobra/corelibs/configuracion.py",
+    "datos": "pcobra.standard_library.datos",
+    **{
+        alias: f"pcobra.corelibs.{alias}"
+        for alias in USAR_COBRA_PUBLIC_MODULES
+        if alias not in {"numero", "texto", "datos"}
+    },
 }
 
 
-def _build_repl_cobra_module_internal_path_map() -> dict[str, str]:
-    """Construye el mapeo oficial `alias usar` -> ruta interna por módulo."""
-
-    return dict(_USAR_CANONICAL_INTERNAL_PATHS)
-
-
-# Fuente única de verdad: alias canónico `usar` -> ruta interna oficial.
-REPL_COBRA_MODULE_INTERNAL_PATH_MAP: dict[str, str] = (
-    _build_repl_cobra_module_internal_path_map()
-)
+# Contrato legacy para consumidores que resuelven archivos desde la raíz del
+# checkout. Es deliberadamente distinto del mapa de nombres importables.
+REPL_COBRA_MODULE_INTERNAL_PATH_MAP: dict[str, str] = {
+    alias: "src/" + package_name.replace(".", "/") + ".py"
+    for alias, package_name in REPL_COBRA_MODULE_PACKAGE_MAP.items()
+}
 
 
 def validar_contrato_modulos_canonicos_usar() -> None:
@@ -125,20 +106,22 @@ def validar_contrato_modulos_canonicos_usar() -> None:
             f"faltantes={faltantes} sobrantes={sobrantes}."
         )
 
-    repo_root = Path(__file__).resolve().parents[3]
-    for alias, rel_path in REPL_COBRA_MODULE_INTERNAL_PATH_MAP.items():
-        if not rel_path.startswith(
-            ("src/pcobra/corelibs/", "src/pcobra/standard_library/")
+    for alias, package_name in REPL_COBRA_MODULE_PACKAGE_MAP.items():
+        if not package_name.startswith(
+            ("pcobra.corelibs.", "pcobra.standard_library.")
         ):
             raise RuntimeError(
                 "[STARTUP CONTRACT] Las rutas internas oficiales de `usar` deben "
-                f"estar en corelibs/standard_library; alias={alias} ruta={rel_path}."
+                f"estar en corelibs/standard_library; alias={alias} paquete={package_name}."
             )
-        path = repo_root / rel_path
-        if not path.exists():
+        try:
+            spec = importlib.util.find_spec(package_name)
+        except (ImportError, AttributeError, ValueError):
+            spec = None
+        if spec is None:
             raise RuntimeError(
                 "[STARTUP CONTRACT] Falta módulo canónico obligatorio de `usar`: "
-                f"alias={alias} ruta={rel_path}."
+                f"alias={alias} paquete={package_name}."
             )
 
 
@@ -150,6 +133,16 @@ class CanonicalModuleSurfaceContract:
     required_functions: tuple[str, ...]
     allowed_aliases: dict[str, str]
     forbidden_symbols: tuple[str, ...]
+    symbol_capabilities: dict[str, frozenset[str]] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class FilesystemSymbolPolicy:
+    """Decisión auditable para un símbolo que accede al filesystem."""
+
+    capabilities: frozenset[str]
+    sandbox_confined: bool
+    safe_mode_decision: str
 
 
 CANONICAL_MODULE_SURFACE_CONTRACTS: dict[str, CanonicalModuleSurfaceContract] = {
@@ -262,11 +255,13 @@ CANONICAL_MODULE_SURFACE_CONTRACTS: dict[str, CanonicalModuleSurfaceContract] = 
         required_functions=(
             "ejecutar",
             "capturar",
+            "ejecutar_async",
+            "ejecutar_stream",
             "codigo_salida",
             "salida",
             "errores",
         ),
-        allowed_aliases={},
+        allowed_aliases={"capturar": "ejecutar"},
         forbidden_symbols=("subprocess",),
     ),
     "registro": CanonicalModuleSurfaceContract(
@@ -537,6 +532,407 @@ USAR_RUNTIME_EXPORT_OVERRIDES: dict[str, tuple[str, ...]] = {
     ),
 }
 
+# Clasificación deliberadamente explícita. Un conjunto vacío significa que el
+# símbolo es puro; los demás conjuntos enumeran sus efectos observables. No se
+# infiere ninguna capacidad a partir del nombre del símbolo.
+_EFFECTFUL_PUBLIC_SYMBOLS: dict[str, dict[str, frozenset[str]]] = {
+    "numero": {
+        "aleatorio": frozenset({"random.read"}),
+        "aleatorio_entero": frozenset({"random.read"}),
+    },
+    "datos": {
+        **{
+            name: frozenset({"filesystem.read"})
+            for name in (
+                "leer_csv",
+                "leer_json",
+                "leer_excel",
+                "leer_parquet",
+                "leer_feather",
+            )
+        },
+        **{
+            name: frozenset({"filesystem.write"})
+            for name in (
+                "escribir_csv",
+                "escribir_json",
+                "escribir_excel",
+                "escribir_parquet",
+                "escribir_feather",
+            )
+        },
+    },
+    "asincrono": {
+        **{
+            name: frozenset({"async.schedule"})
+            for name in (
+                "proteger_tarea",
+                "limitar_tiempo",
+                "ejecutar_en_hilo",
+                "recolectar",
+                "carrera",
+                "primero_exitoso",
+                "esperar_timeout",
+                "reintentar_async",
+                "grupo_tareas",
+                "crear_tarea",
+                "iterar_completadas",
+                "mapear_concurrencia",
+                "recolectar_resultados",
+                "dormir_async",
+            )
+        },
+    },
+    "sistema": {
+        **{
+            name: frozenset({"process.spawn"})
+            for name in (
+                "ejecutar",
+                "ejecutar_async",
+                "ejecutar_stream",
+                "ejecutar_comando_async",
+            )
+        },
+        "obtener_env": frozenset({"environment.read"}),
+        "listar_dir": frozenset({"filesystem.read"}),
+        "directorio_actual": frozenset({"environment.read"}),
+    },
+    "archivo": {
+        **{
+            name: frozenset({"filesystem.read"})
+            for name in ("leer", "existe", "leer_lineas")
+        },
+        **{
+            name: frozenset({"filesystem.write"})
+            for name in ("escribir", "eliminar", "anexar")
+        },
+    },
+    "tiempo": {
+        "ahora": frozenset({"clock.read"}),
+        "dormir": frozenset({"clock.sleep"}),
+        "epoch": frozenset({"clock.read"}),
+    },
+    "red": {
+        **{
+            name: frozenset({"network.get"})
+            for name in (
+                "obtener_url",
+                "obtener_url_async",
+                "obtener_url_texto",
+                "obtener_json",
+            )
+        },
+        **{
+            name: frozenset({"network.post"})
+            for name in ("enviar_post", "enviar_post_async")
+        },
+        "descargar_archivo": frozenset({"network.download", "filesystem.write"}),
+    },
+    "ruta": {
+        "existe": frozenset({"filesystem.read"}),
+        "absoluta": frozenset({"environment.read"}),
+        "relativa": frozenset({"environment.read"}),
+    },
+    "serializacion": {
+        **{name: frozenset({"filesystem.read"}) for name in ("leer_json", "leer_csv")},
+        **{
+            name: frozenset({"filesystem.write"})
+            for name in ("escribir_json", "escribir_csv")
+        },
+    },
+    "proceso": {
+        **{
+            name: frozenset({"process.spawn"})
+            for name in ("ejecutar", "capturar", "ejecutar_async", "ejecutar_stream")
+        },
+    },
+    "registro": {
+        **{
+            name: frozenset({"logging.write"})
+            for name in (
+                "configurar",
+                "debug",
+                "info",
+                "aviso",
+                "error",
+                "obtener_registrador",
+            )
+        },
+    },
+    "argumentos": {"obtener_argumentos": frozenset({"environment.read"})},
+    "temporal": {
+        **{
+            name: frozenset({"filesystem.write"})
+            for name in ("archivo_temporal", "directorio_temporal", "limpiar")
+        },
+    },
+    "cripto": {
+        "token_seguro": frozenset({"random.read"}),
+        "token_hexadecimal": frozenset({"random.read"}),
+    },
+    "compresion": {
+        "crear_zip": frozenset({"filesystem.read", "filesystem.write"}),
+        "extraer_zip": frozenset({"filesystem.read", "filesystem.write"}),
+        "listar_zip": frozenset({"filesystem.read"}),
+    },
+    "configuracion": {
+        **{
+            name: frozenset({"filesystem.read"})
+            for name in ("leer_toml", "leer_ini", "leer_configuracion")
+        },
+    },
+}
+
+# Matriz canónica de confinamiento. Cada entrada corresponde a un símbolo de
+# ``_EFFECTFUL_PUBLIC_SYMBOLS`` con filesystem.read/filesystem.write. Los grupos
+# son enumeraciones declarativas de implementaciones auditadas, no heurísticas
+# basadas en el nombre. ``allow`` sólo significa que el efecto filesystem puede
+# alcanzar el runtime seguro; otras capacidades del símbolo (por ejemplo red)
+# se siguen aplicando independientemente.
+_FILESYSTEM_SANDBOX_CONFINEMENT: dict[str, dict[str, bool]] = {
+    "datos": {
+        "leer_csv": False,
+        "leer_json": False,
+        "leer_excel": False,
+        "leer_parquet": False,
+        "leer_feather": False,
+        "escribir_csv": False,
+        "escribir_json": False,
+        "escribir_excel": False,
+        "escribir_parquet": False,
+        "escribir_feather": False,
+    },
+    "sistema": {"listar_dir": True},
+    "archivo": {
+        "leer": True,
+        "existe": True,
+        "leer_lineas": True,
+        "escribir": True,
+        "eliminar": True,
+        "anexar": True,
+    },
+    "red": {"descargar_archivo": True},
+    "ruta": {"existe": True},
+    "serializacion": {
+        "leer_json": True,
+        "leer_csv": True,
+        "escribir_json": True,
+        "escribir_csv": True,
+    },
+    "temporal": {
+        "archivo_temporal": True,
+        "directorio_temporal": True,
+        "limpiar": True,
+    },
+    "compresion": {
+        "crear_zip": True,
+        "extraer_zip": True,
+        "listar_zip": True,
+    },
+    "configuracion": {
+        "leer_toml": True,
+        "leer_ini": True,
+        "leer_configuracion": True,
+    },
+}
+
+FILESYSTEM_SYMBOL_POLICIES: dict[tuple[str, str], FilesystemSymbolPolicy] = {
+    (module_name, symbol_name): FilesystemSymbolPolicy(
+        capabilities=capabilities,
+        sandbox_confined=confined,
+        safe_mode_decision="allow" if confined else "deny",
+    )
+    for module_name, symbols in _FILESYSTEM_SANDBOX_CONFINEMENT.items()
+    for symbol_name, confined in symbols.items()
+    for capabilities in (_EFFECTFUL_PUBLIC_SYMBOLS[module_name][symbol_name],)
+}
+
+
+def filesystem_policy_for(
+    module_name: str, symbol_name: str
+) -> FilesystemSymbolPolicy | None:
+    """Consulta la matriz explícita sin deducir decisiones del identificador."""
+
+    return FILESYSTEM_SYMBOL_POLICIES.get((module_name, symbol_name))
+
+
+def _validar_matriz_filesystem() -> None:
+    esperados = {
+        (module_name, symbol_name)
+        for module_name, symbols in _EFFECTFUL_PUBLIC_SYMBOLS.items()
+        for symbol_name, capabilities in symbols.items()
+        if capabilities & {"filesystem.read", "filesystem.write"}
+    }
+    declarados = set(FILESYSTEM_SYMBOL_POLICIES)
+    if esperados != declarados:
+        raise RuntimeError(
+            "[STARTUP CONTRACT] Matriz filesystem incompleta: "
+            f"faltantes={sorted(esperados - declarados)} "
+            f"sobrantes={sorted(declarados - esperados)}"
+        )
+
+
+_validar_matriz_filesystem()
+
+_PURE_PUBLIC_SYMBOLS: dict[str, tuple[str, ...]] = {
+    "numero": (
+        "absoluto",
+        "redondear",
+        "piso",
+        "techo",
+        "mcd",
+        "mcm",
+        "es_cercano",
+        "hipotenusa",
+        "distancia_euclidiana",
+        "es_finito",
+        "es_infinito",
+        "es_nan",
+        "copiar_signo",
+        "signo",
+        "producto",
+        "entero_a_base",
+        "entero_desde_base",
+        "longitud_bits",
+        "contar_bits",
+        "rotar_bits_izquierda",
+        "rotar_bits_derecha",
+        "entero_a_bytes",
+        "entero_desde_bytes",
+        "raiz",
+        "raiz_entera",
+        "potencia",
+        "limitar",
+        "interpolar",
+        "envolver_modular",
+        "mediana",
+        "moda",
+        "desviacion_estandar",
+        "es_par",
+        "es_primo",
+        "factorial",
+        "promedio",
+        "combinaciones",
+        "permutaciones",
+        "suma_precisa",
+        "varianza",
+        "varianza_muestral",
+        "media_geometrica",
+        "media_armonica",
+        "percentil",
+        "cuartiles",
+        "rango_intercuartil",
+        "coeficiente_variacion",
+    ),
+    "texto": (
+        "a_snake",
+        "mayusculas",
+        "minusculas",
+        "prefijo_comun",
+        "sufijo_comun",
+        "recortar",
+        "repetir",
+        "quitar_acentos",
+        "dividir",
+        "reemplazar",
+    ),
+    "datos": (
+        "describir",
+        "correlacion_pearson",
+        "correlacion_spearman",
+        "matriz_covarianza",
+        "calcular_percentiles",
+        "resumen_rapido",
+        "seleccionar_columnas",
+        "filtrar",
+        "mutar_columna",
+        "separar_columna",
+        "unir_columnas",
+        "agrupar_y_resumir",
+        "tabla_cruzada",
+        "pivotar_ancho",
+        "pivotar_largo",
+        "ordenar_tabla",
+        "combinar_tablas",
+        "rellenar_nulos",
+        "desplegar_tabla",
+        "pivotar_tabla",
+        "agregar",
+        "mapear",
+        "reducir",
+        "claves",
+        "valores",
+        "longitud",
+        "elemento",
+        "invertir_tabla",
+        "tomar",
+    ),
+    "logica": (
+        "es_verdadero",
+        "es_falso",
+        "conjuncion",
+        "disyuncion",
+        "negacion",
+        "xor",
+        "nand",
+        "nor",
+        "implica",
+        "equivale",
+        "xor_multiple",
+        "entonces",
+        "si_no",
+        "condicional",
+        "coalescer",
+        "todas",
+        "alguna",
+        "ninguna",
+        "solo_uno",
+        "conteo_verdaderos",
+        "paridad",
+        "mayoria",
+        "exactamente_n",
+        "tabla_verdad",
+        "diferencia_simetrica",
+        "si_condicional",
+    ),
+    "asincrono": (),
+    "sistema": ("obtener_os",),
+    "archivo": (),
+    "tiempo": ("formatear", "desde_epoch"),
+    "red": (),
+    "holobit": (
+        "crear_holobit",
+        "validar_holobit",
+        "serializar_holobit",
+        "deserializar_holobit",
+        "proyectar",
+        "transformar",
+        "graficar",
+        "combinar",
+        "medir",
+    ),
+    "ruta": ("unir", "normalizar", "nombre", "extension", "padre", "es_absoluta"),
+    "serializacion": ("codificar_json", "decodificar_json"),
+    "proceso": ("codigo_salida", "salida", "errores"),
+    "registro": (),
+    "argumentos": ("contiene_flag", "obtener_opcion", "parsear_pares"),
+    "pruebas": ("igual", "verdadero", "falso", "contiene", "lanza_error"),
+    "temporal": (),
+    "cripto": ("sha256", "sha512", "comparar_seguro"),
+    "regex": ("buscar", "coincidir", "reemplazar", "dividir", "encontrar_todos"),
+    "compresion": (),
+    "configuracion": ("toml_disponible",),
+}
+
+for _module_name, _contract in tuple(CANONICAL_MODULE_SURFACE_CONTRACTS.items()):
+    _capabilities: dict[str, frozenset[str]] = {
+        name: frozenset() for name in _PURE_PUBLIC_SYMBOLS[_module_name]
+    }
+    _capabilities.update(_EFFECTFUL_PUBLIC_SYMBOLS.get(_module_name, {}))
+    CANONICAL_MODULE_SURFACE_CONTRACTS[_module_name] = replace(
+        _contract, symbol_capabilities=_capabilities
+    )
+
 
 def validar_paridad_superficie_publica_modulos_canonicos() -> None:
     """Valida que corelibs y standard_library respeten el contrato central."""
@@ -556,6 +952,16 @@ def validar_paridad_superficie_publica_modulos_canonicos() -> None:
         if not exports:
             raise RuntimeError(
                 f"[STARTUP CONTRACT] {module_name} debe declarar __all__"
+            )
+
+        classified_exports = tuple(contract.symbol_capabilities)
+        missing_classification = sorted(set(exports) - set(classified_exports))
+        stale_classification = sorted(set(classified_exports) - set(exports))
+        if missing_classification or stale_classification:
+            raise RuntimeError(
+                f"[STARTUP CONTRACT] Clasificación de capacidades incompleta en "
+                f"{module_name}: sin_clasificar={missing_classification} "
+                f"sin_exportar={stale_classification}"
             )
 
         expected_exports = USAR_RUNTIME_EXPORT_OVERRIDES.get(module_name)
@@ -580,6 +986,17 @@ def validar_paridad_superficie_publica_modulos_canonicos() -> None:
         if missing_aliases:
             raise RuntimeError(
                 f"[STARTUP CONTRACT] {module_name} aliases inválidos: {missing_aliases}"
+            )
+        aliases_with_different_capabilities = [
+            alias
+            for alias, target in contract.allowed_aliases.items()
+            if contract.symbol_capabilities[alias]
+            != contract.symbol_capabilities[target]
+        ]
+        if aliases_with_different_capabilities:
+            raise RuntimeError(
+                f"[STARTUP CONTRACT] {module_name} aliases con capacidades "
+                f"distintas del destino: {aliases_with_different_capabilities}"
             )
 
         leaked_forbidden = [
@@ -610,13 +1027,9 @@ def validar_paridad_superficie_publica_modulos_canonicos() -> None:
                 f"[STARTUP CONTRACT] {module_name} no debe exportar clases en __all__: {leaked_class_like}"
             )
 
-        stdlib_path = (
-            Path(__file__).resolve().parents[1]
-            / "standard_library"
-            / f"{module_name}.py"
-        )
-        if stdlib_path.exists():
-            std_mod = importlib.import_module(f"pcobra.standard_library.{module_name}")
+        stdlib_name = f"pcobra.standard_library.{module_name}"
+        if importlib.util.find_spec(stdlib_name) is not None:
+            std_mod = importlib.import_module(stdlib_name)
             std_exports = tuple(getattr(std_mod, "__all__", ()))
             if std_exports:
                 combined_exports = set(exports) | set(std_exports)

@@ -64,7 +64,9 @@ class CobraInstallerCache:
         self.hub_cache_dir = (
             Path(hub_cache_dir).expanduser() if hub_cache_dir else package_cache_dir()
         )
-        self.cache_dir = installer_cache_dir(cache_dir, hub_cache_dir=self.hub_cache_dir)
+        self.cache_dir = installer_cache_dir(
+            cache_dir, hub_cache_dir=self.hub_cache_dir
+        )
         self.cache_dir.mkdir(parents=True, exist_ok=True)
 
     def get(

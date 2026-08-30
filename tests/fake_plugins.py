@@ -16,6 +16,7 @@ class GoodPlugin(PluginCommand):
 
 class NotPlugin:
     """Class that does not implement PluginInterface"""
+
     pass
 
 

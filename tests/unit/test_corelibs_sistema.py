@@ -3,13 +3,13 @@ import os
 import subprocess
 import importlib
 from types import SimpleNamespace
+from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
 
 import pcobra.corelibs as core
 import pcobra.corelibs.sistema as core_sistema
-
 
 CASE_INSENSITIVE_OS = os.path.normcase("Aa") == os.path.normcase("aa")
 
@@ -42,9 +42,7 @@ def test_ejecutar_error(monkeypatch, tmp_path):
 
     monkeypatch.setattr(core_sistema.shutil, "which", fake_which)
     permitido_real = core_sistema.os.path.realpath(str(permitido))
-    assert (
-        core.ejecutar(["bad"], permitidos=[permitido_real], timeout=1) == "fallo"
-    )
+    assert core.ejecutar(["bad"], permitidos=[permitido_real], timeout=1) == "fallo"
 
     def raise_err2(*a, **k):
         raise subprocess.CalledProcessError(1, a[0])
@@ -66,7 +64,7 @@ def test_ejecutar_permitido_con_ruta(monkeypatch):
 def test_ejecutar_reemplaza_y_copia_argumentos(monkeypatch):
     permitido = core_sistema.os.path.realpath("/usr/bin/env")
     comando = ["env", "VAR=1"]
-    llamado: dict[str, list[str]] = {}
+    llamado: dict[str, Any] = {}
 
     monkeypatch.setattr(core_sistema.os, "name", "posix", raising=False)
     monkeypatch.setattr(core_sistema.sys, "platform", "linux", raising=False)
@@ -76,6 +74,7 @@ def test_ejecutar_reemplaza_y_copia_argumentos(monkeypatch):
 
     def fake_run(args, **kwargs):
         llamado["args"] = args
+        llamado["kwargs"] = kwargs
         comando[0] = "otro"
         return SimpleNamespace(stdout="", stderr="")
 
@@ -86,6 +85,9 @@ def test_ejecutar_reemplaza_y_copia_argumentos(monkeypatch):
 
     assert salida == ""
     assert llamado["args"][0].startswith("/proc/self/fd/")
+    fd = int(llamado["args"][0].rsplit("/", 1)[1])
+    assert llamado["kwargs"]["pass_fds"] == (fd,)
+    assert llamado["kwargs"]["close_fds"] is True
     assert llamado["args"] is not comando
     assert comando[0] == "otro"
 
@@ -116,7 +118,7 @@ def test_ejecutar_no_usa_proc_self_en_darwin(monkeypatch, tmp_path):
 async def test_ejecutar_async_reemplaza_y_copia_argumentos(monkeypatch):
     permitido = core_sistema.os.path.realpath("/usr/bin/env")
     comando = ["env"]
-    llamado: dict[str, list[str]] = {}
+    llamado: dict[str, Any] = {}
 
     monkeypatch.setattr(core_sistema.os, "name", "posix", raising=False)
     monkeypatch.setattr(core_sistema.sys, "platform", "linux", raising=False)
@@ -134,6 +136,7 @@ async def test_ejecutar_async_reemplaza_y_copia_argumentos(monkeypatch):
 
     async def fake_create_subprocess_exec(*args, **kwargs):
         llamado["args"] = list(args)
+        llamado["kwargs"] = kwargs
         comando[0] = "otro"
         return FakeProc()
 
@@ -146,7 +149,24 @@ async def test_ejecutar_async_reemplaza_y_copia_argumentos(monkeypatch):
 
     assert salida == ""
     assert llamado["args"][0].startswith("/proc/self/fd/")
+    fd = int(llamado["args"][0].rsplit("/", 1)[1])
+    assert llamado["kwargs"]["pass_fds"] == (fd,)
+    assert llamado["kwargs"]["close_fds"] is True
     assert comando[0] == "otro"
+
+
+@pytest.mark.skipif(
+    not (os.name == "posix" and core_sistema.sys.platform.startswith("linux")),
+    reason="Requiere Linux con /proc/self/fd",
+)
+def test_ejecutar_linux_hereda_descriptor_del_ejecutable(tmp_path):
+    ejecutable = tmp_path / "descriptor_abierto"
+    ejecutable.write_text('#!/bin/sh\ncat "$0"\n')
+    ejecutable.chmod(0o755)
+
+    salida = core_sistema.ejecutar([str(ejecutable)], permitidos=[str(ejecutable)])
+
+    assert 'cat "$0"' in salida
 
 
 @pytest.mark.asyncio
@@ -218,9 +238,7 @@ async def test_ejecutar_stream_no_usa_proc_self_en_darwin(monkeypatch):
 
     resultado = [
         linea
-        async for linea in core_sistema.ejecutar_stream(
-            comando, permitidos=[permitido]
-        )
+        async for linea in core_sistema.ejecutar_stream(comando, permitidos=[permitido])
     ]
 
     assert resultado == ["linea\n"]

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Compila y ejecuta el ejemplo 'Hello World' usando clang++."""
+
 from __future__ import annotations
 import subprocess
 import time
@@ -22,7 +23,9 @@ def compile_with_clang() -> float:
 def run_binary() -> tuple[str, float]:
     """Ejecuta el binario generado y devuelve su salida y el tiempo."""
     start = time.perf_counter()
-    completed = subprocess.run([str(BINARY)], capture_output=True, text=True, check=True)
+    completed = subprocess.run(
+        [str(BINARY)], capture_output=True, text=True, check=True
+    )
     elapsed = time.perf_counter() - start
     return completed.stdout.strip(), elapsed
 

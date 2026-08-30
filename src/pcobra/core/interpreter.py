@@ -1,13 +1,16 @@
 """Implementación del intérprete del lenguaje Cobra."""
 
+import ast
 import logging
 import os
 import hashlib
 import inspect
 import math
+import multiprocessing
+import threading
 import warnings
 from pathlib import Path
-from typing import Mapping, Optional
+from typing import Any, Mapping, Optional
 from pcobra.cobra.usar_loader import ModuloFueraCatalogoPublicoError, usar_modulo
 from pcobra.cobra.usar_policy import USAR_COBRA_PUBLIC_MODULES
 
@@ -72,6 +75,7 @@ from .semantic_validators import (
     construir_cadena,
     PrimitivaPeligrosaError,
 )
+from .semantic_validators.base import ValidadorBase
 from .semantico import AnalizadorSemantico
 from .cobra_config import limite_nodos
 from .import_utils import (
@@ -88,12 +92,11 @@ from .usar_symbol_policy import (
     validate_usar_symbol_metadata,
 )
 from .environment import Environment
+from pcobra.corelibs.datos import longitud
 from pcobra.cobra.usar_loader import descubrir_raiz_proyecto
 
 MODULES_PATH = _DEFAULT_MODULES_PATH
-REPL_USAR_EXTERNAL_MODULE_ERROR = (
-    "usar_error[modulo_no_permitido]: módulo externo no permitido en REPL estricto (solo alias oficiales Cobra)"
-)
+REPL_USAR_EXTERNAL_MODULE_ERROR = "usar_error[modulo_no_permitido]: módulo externo no permitido en REPL estricto (solo alias oficiales Cobra)"
 
 
 def _usar_modulo_con_estado_aislado(
@@ -104,50 +107,72 @@ def _usar_modulo_con_estado_aislado(
     module_cache: dict[Path, dict[str, object]],
     loading_stack: list[Path],
     contexto_proyecto_verificado: bool,
+    safe_mode: bool,
 ) -> Mapping[str, object]:
     """Llama a ``usar_modulo`` pasando estado aislado si la función lo soporta."""
 
     parametros = inspect.signature(usar_modulo).parameters
-    kwargs = {
+    kwargs: dict[str, Any] = {
         "project_root": project_root,
         "current_file": current_file,
     }
-    if any(param.kind == inspect.Parameter.VAR_KEYWORD for param in parametros.values()) or (
-        "module_cache" in parametros and "loading_stack" in parametros
-    ):
+    if any(
+        param.kind == inspect.Parameter.VAR_KEYWORD for param in parametros.values()
+    ) or ("module_cache" in parametros and "loading_stack" in parametros):
         kwargs["module_cache"] = module_cache
         kwargs["loading_stack"] = loading_stack
-    if any(param.kind == inspect.Parameter.VAR_KEYWORD for param in parametros.values()) or (
-        "contexto_proyecto_verificado" in parametros
-    ):
+    if any(
+        param.kind == inspect.Parameter.VAR_KEYWORD for param in parametros.values()
+    ) or ("contexto_proyecto_verificado" in parametros):
         kwargs["contexto_proyecto_verificado"] = contexto_proyecto_verificado
+    if (
+        any(
+            param.kind == inspect.Parameter.VAR_KEYWORD for param in parametros.values()
+        )
+        or "safe_mode" in parametros
+    ):
+        kwargs["safe_mode"] = safe_mode
     return usar_modulo(nombre, **kwargs)
+
+
 USAR_DIRECT_BACKEND_IMPORT_ERROR = (
     "usar_error[backend_import_directo]: import directo de backend no permitido en usar"
 )
-USAR_NON_CANONICAL_MODULE_ERROR = (
-    "usar_error[modulo_no_canonico]: el módulo solicitado no es canónico; use el alias oficial Cobra"
-)
-USAR_NON_PUBLIC_MODULE_ERROR = (
-    "usar_error[modulo_fuera_catalogo_publico]: el módulo solicitado está fuera de USAR_COBRA_PUBLIC_MODULES"
-)
-USAR_NON_FACING_MODULE_ERROR = (
-    "usar_error[modulo_no_cobra_facing]: el módulo solicitado no está marcado como Cobra-facing"
-)
+USAR_NON_CANONICAL_MODULE_ERROR = "usar_error[modulo_no_canonico]: el módulo solicitado no es canónico; use el alias oficial Cobra"
+USAR_NON_PUBLIC_MODULE_ERROR = "usar_error[modulo_fuera_catalogo_publico]: el módulo solicitado está fuera de USAR_COBRA_PUBLIC_MODULES"
+USAR_NON_FACING_MODULE_ERROR = "usar_error[modulo_no_cobra_facing]: el módulo solicitado no está marcado como Cobra-facing"
 USAR_INVALID_EXPORT_ERROR = "usar_error[export_invalido]"
 USAR_SYMBOL_CONFLICT_ERROR = "usar_error[conflicto_simbolo]"
+USAR_MODULE_NOT_FOUND_ERROR = "usar_error[modulo_no_encontrado]"
+USAR_MODULE_LOAD_ERROR = "usar_error[carga_modulo_error]"
 USAR_COLLISION_STRICT_ERROR = "strict_error"
 USAR_COLLISION_WARN_ALIAS_REQUIRED = "warn_alias_required"
-_USAR_COLLISION_POLICIES = frozenset({USAR_COLLISION_STRICT_ERROR, USAR_COLLISION_WARN_ALIAS_REQUIRED})
-def formatear_error_usar_usuario(codigo: str, modulo: str, contexto_minimo: str | None = None) -> str:
+_USAR_COLLISION_POLICIES = frozenset(
+    {USAR_COLLISION_STRICT_ERROR, USAR_COLLISION_WARN_ALIAS_REQUIRED}
+)
+
+
+def formatear_error_usar_usuario(
+    codigo: str, modulo: str, contexto_minimo: str | None = None
+) -> str:
     """Devuelve errores cortos y legibles para la salida de usuario en `usar`."""
+    codigos = {
+        "conflicto_simbolo": USAR_SYMBOL_CONFLICT_ERROR,
+        "export_invalido": USAR_INVALID_EXPORT_ERROR,
+        "modulo_no_encontrado": USAR_MODULE_NOT_FOUND_ERROR,
+        "carga_modulo_error": USAR_MODULE_LOAD_ERROR,
+    }
     mensajes = {
         "modulo_fuera_catalogo": f"No se puede usar '{modulo}': módulo fuera del catálogo público.",
         "conflicto_simbolo": f"No se puede usar '{modulo}': hay conflicto de símbolos en el contexto actual.",
         "export_invalido": f"No se puede usar '{modulo}': no hay símbolos exportables válidos.",
+        "modulo_no_encontrado": f"No se puede usar '{modulo}': módulo no encontrado.",
         "carga_modulo_error": f"No se puede usar '{modulo}': error al cargar el módulo.",
     }
     base = mensajes.get(codigo, f"No se puede usar '{modulo}'.")
+    if codigo in codigos:
+        codigo_publico = codigos[codigo].split(":", 1)[0]
+        base = f"{codigo_publico}: {base}"
     if contexto_minimo:
         return f"{base} {contexto_minimo}"
     return base
@@ -182,24 +207,24 @@ def _error_usuario_modulo_fuera_catalogo(
     repl_estricto: bool,
     incluir_detalle: bool,
 ) -> PermissionError:
-    """Crea un PermissionError corto y conserva el detalle técnico como nota."""
+    """Crea el error público según el contrato directo o del REPL."""
 
     if repl_estricto:
         mensaje = (
-            f"Importación no permitida en 'usar': '{modulo}'. "
-            "Es un módulo backend/no canónico y no forma parte de la API pública. "
+            f"Importación no permitida en 'usar': '{modulo}'. Es un módulo "
+            "backend/no canónico y no forma parte de la API pública. "
+            f"{REPL_USAR_EXTERNAL_MODULE_ERROR}. "
             f"Módulos permitidos: {_resumir_modulos_permitidos_usar()}."
         )
     else:
         mensaje = formatear_error_usar_usuario("modulo_fuera_catalogo", modulo)
 
+    codigo_publico = USAR_NON_PUBLIC_MODULE_ERROR.split(":", 1)[0]
+    mensaje = f"{mensaje} {codigo_publico}"
     if incluir_detalle:
-        mensaje = f"{mensaje} {USAR_NON_PUBLIC_MODULE_ERROR}. Detalle: {detalle}"
-
-    error = PermissionError(mensaje)
-    if not incluir_detalle:
-        error.add_note(str(detalle))
-    return error
+        detalle_publico = USAR_NON_PUBLIC_MODULE_ERROR.split(":", 1)[1].strip()
+        mensaje = f"{mensaje}: {detalle_publico}. {detalle}"
+    return PermissionError(mensaje)
 
 
 def _runtime_debug_enabled() -> bool:
@@ -232,6 +257,7 @@ def _sincronizar_config_import() -> None:
     _import_utils.MODULES_PATH = MODULES_PATH
     _import_utils.IMPORT_WHITELIST = IMPORT_WHITELIST
 
+
 class ExcepcionCobra(Exception):
     def __init__(self, valor):
         super().__init__(valor)
@@ -254,6 +280,30 @@ class _ControlRetorno(Exception):
         self.valor = valor
 
 
+class _EstadoEjecucion(threading.local):
+    """Estado mutable que pertenece exclusivamente a una ejecución/hilo.
+
+    Inventario: las pilas de scopes y de bloques de memoria locales,
+    ``call_depth``, el conjunto temporal de evaluación recursiva y la
+    profundidad de aislamiento del worker. Las señales de control
+    (``_ControlRetorno``, ``_ControlRomper`` y ``_ControlContinuar``), junto
+    con ``visitados`` y demás temporales de evaluación, viajan por la pila de
+    Python y por tanto ya son locales a cada llamada.
+
+    El entorno global se conserva por referencia: los workers crean scopes
+    locales cuyo padre léxico apunta a él. Cuando una llamada necesita aislar
+    los bindings capturados se usa una copia *superficial* de ``values`` para
+    preservar las referencias léxicas a objetos compartidos.
+    """
+
+    def __init__(self) -> None:
+        self.contextos: list[Environment] | None = None
+        self.mem_contextos: list[dict[str, tuple[int, int]]] | None = None
+        self.call_depth = 0
+        self.eval_stack: set[tuple[int, int]] = set()
+        self.thread_isolation_depth = 0
+
+
 class InterpretadorCobra:
     """Interpreta y ejecuta nodos del lenguaje Cobra."""
 
@@ -271,6 +321,19 @@ class InterpretadorCobra:
         """Imprime trazas internas solo cuando el modo debug está activo."""
         if self.in_execution() and self._debug_trazas_habilitadas():
             print(mensaje)
+
+    @staticmethod
+    def _valor_literal(valor: Any) -> Any:
+        """Convierte representaciones textuales válidas de cadenas a runtime."""
+        if not isinstance(valor, str) or len(valor) < 2:
+            return valor
+        if valor[0] not in {"'", '"'} or valor[-1] != valor[0]:
+            return valor
+        try:
+            normalizado = ast.literal_eval(valor)
+        except (SyntaxError, ValueError):
+            return valor
+        return normalizado if isinstance(normalizado, str) else valor
 
     @staticmethod
     def _registrar_auditoria_validador(
@@ -297,8 +360,7 @@ class InterpretadorCobra:
 
     @staticmethod
     def _cargar_validadores(ruta):
-        """Carga una lista de validadores desde un archivo Python."""
-        import ast
+        """Carga descriptores en un worker aislado y construye clases admitidas."""
 
         ruta_abs = os.path.abspath(ruta)
         if not _ruta_import_permitida(ruta_abs):
@@ -320,222 +382,112 @@ class InterpretadorCobra:
             ) from e
         hash_corto = hashlib.sha256(source.encode("utf-8")).hexdigest()[:12]
 
-        try:
-            tree = ast.parse(source, filename=ruta_real)
-        except SyntaxError as e:
-            InterpretadorCobra._registrar_auditoria_validador(
-                ruta_real,
-                "rechazado",
-                "sintaxis_invalida",
-                hash_corto=hash_corto,
-                fase="parse",
-            )
-            raise ImportError(
-                "El archivo de validadores tiene sintaxis inválida."
-            ) from e
+        from .validator_worker import run_validator_worker
 
-        magia_permitida = {"__name__"}
-        tokens_sensibles = {
-            "__subclasses__",
-            "__globals__",
-            "__dict__",
-            "__mro__",
-            "__bases__",
-            "__getattribute__",
-            "__setattr__",
-            "__delattr__",
-            "__code__",
-            "__closure__",
-            "__func__",
-            "__self__",
-        }
-        for node in ast.walk(tree):
-            if isinstance(node, (ast.Import, ast.ImportFrom)):
+        context = multiprocessing.get_context("spawn")
+        parent, child = context.Pipe(duplex=False)
+        process = context.Process(
+            target=run_validator_worker,
+            args=(child, {"source": source, "filename": ruta_real}),
+        )
+        process.start()
+        child.close()
+        timeout = float(os.getenv("PCOBRA_VALIDATOR_TIMEOUT", "2"))
+        response = None
+        try:
+            if parent.poll(timeout):
+                response = parent.recv()
+            else:
+                process.terminate()
+                process.join(0.5)
+                if process.is_alive():
+                    process.kill()
                 InterpretadorCobra._registrar_auditoria_validador(
                     ruta_real,
                     "rechazado",
-                    "import_no_permitido",
+                    "timeout",
                     hash_corto=hash_corto,
-                    fase="policy_check",
+                    fase="worker",
                 )
+                raise ImportError("El validador adicional superó el tiempo permitido.")
+        except EOFError:
+            response = None
+        finally:
+            if process.is_alive():
+                process.terminate()
+            process.join()
+            parent.close()
+
+        if not isinstance(response, dict) or response.get("estado") != "ok":
+            codigo = (
+                response.get("codigo")
+                if isinstance(response, dict)
+                else "worker_terminado"
+            )
+            if (
+                response is None
+                and process.exitcode is not None
+                and process.exitcode < 0
+            ):
+                codigo = "cpu_excedida"
+            mensajes = {
+                "import_no_permitido": "No se permiten importaciones en validadores adicionales.",
+                "atributo_magico_no_permitido": "Se detectó un atributo mágico no permitido.",
+                "introspeccion_no_permitida": "Se detectó introspección no permitida.",
+                "memoria_excedida": "El validador adicional excede los límites de memoria permitidos.",
+                "cpu_excedida": "El validador adicional superó el tiempo permitido.",
+                "resultado_no_serializable": "El resultado del validador no es serializable.",
+                "descriptor_invalido": "El validador adicional devolvió un descriptor inválido.",
+                "worker_terminado": "El proceso del validador terminó sin resultado.",
+                "sintaxis_invalida": "El validador adicional contiene sintaxis inválida.",
+                "error_en_ejecucion": "El validador adicional falló durante su ejecución aislada.",
+            }
+            InterpretadorCobra._registrar_auditoria_validador(
+                ruta_real,
+                "rechazado",
+                str(codigo),
+                hash_corto=hash_corto,
+                fase="worker",
+            )
+            raise ImportError(
+                mensajes.get(
+                    codigo, "No se pudo cargar el validador adicional de forma segura."
+                )
+            )
+
+        from .semantic_validators import (
+            ValidadorImportSeguro,
+            ValidadorPrimitivaPeligrosa,
+            ValidadorProhibirReflexion,
+            ValidadorSistemaArchivos,
+        )
+
+        registry = {
+            "import_seguro": ValidadorImportSeguro,
+            "primitiva_peligrosa": ValidadorPrimitivaPeligrosa,
+            "reflexion_segura": ValidadorProhibirReflexion,
+            "sistema_archivos": ValidadorSistemaArchivos,
+        }
+        validators = []
+        for descriptor in response.get("validadores", []):
+            validator_class = registry.get(descriptor["nombre"])
+            if validator_class is None:
                 raise ImportError(
-                    "ImportError: no se permiten importaciones en validadores adicionales."
+                    "El descriptor solicita un validador no preautorizado."
                 )
-            if isinstance(node, ast.Attribute):
-                if (
-                    node.attr.startswith("__")
-                    and node.attr.endswith("__")
-                    and node.attr not in magia_permitida
-                ):
-                    InterpretadorCobra._registrar_auditoria_validador(
-                        ruta_real,
-                        "rechazado",
-                        "atributo_magico_no_permitido",
-                        hash_corto=hash_corto,
-                        fase="policy_check",
-                    )
-                    raise ImportError(
-                        "ImportError: se detectó acceso a atributo mágico no permitido en el validador adicional."
-                    )
-            if isinstance(node, ast.Constant) and isinstance(node.value, str):
-                if any(token in node.value for token in tokens_sensibles):
-                    InterpretadorCobra._registrar_auditoria_validador(
-                        ruta_real,
-                        "rechazado",
-                        "cadena_introspeccion_sensible",
-                        hash_corto=hash_corto,
-                        fase="policy_check",
-                    )
-                    raise ImportError(
-                        "ImportError: se detectó un patrón de introspección no permitido en el validador adicional."
-                    )
-            if isinstance(node, ast.Call):
-                func = node.func
-                if isinstance(func, ast.Name) and func.id == "__import__":
-                    InterpretadorCobra._registrar_auditoria_validador(
-                        ruta_real,
-                        "rechazado",
-                        "dunder_import_bloqueado",
-                        hash_corto=hash_corto,
-                        fase="policy_check",
-                    )
-                    raise ImportError(
-                        "ImportError: el uso de __import__ está bloqueado en validadores adicionales."
-                    )
-                if isinstance(func, ast.Name) and func.id == "getattr":
-                    primer_arg = node.args[0] if node.args else None
-                    objetivo_sensible = isinstance(primer_arg, ast.Name) and primer_arg.id in {
-                        "__builtins__",
-                        "builtins",
-                        "object",
-                        "type",
-                    }
-                    atributo_sensible = (
-                        len(node.args) > 1
-                        and isinstance(node.args[1], ast.Constant)
-                        and isinstance(node.args[1].value, str)
-                        and any(token in node.args[1].value for token in tokens_sensibles)
-                    )
-                    if objetivo_sensible or atributo_sensible:
-                        InterpretadorCobra._registrar_auditoria_validador(
-                            ruta_real,
-                            "rechazado",
-                            "getattr_introspeccion_bloqueado",
-                            hash_corto=hash_corto,
-                            fase="policy_check",
-                        )
-                        raise ImportError(
-                            "ImportError: uso de introspección dinámica no permitido en el validador adicional."
-                        )
-
-        from .sandbox import cargar_simbolos_restrictedpython
-        from .semantic_validators.base import ValidadorBase
-
-        import builtins
-
-        rp_symbols, has_restricted_python = cargar_simbolos_restrictedpython()
-        if not has_restricted_python:
-            raise ImportError(
-                "Los validadores adicionales requieren RestrictedPython instalado "
-                "y compatible con la API de seguridad de Cobra."
-            )
-
-        rp_safe_builtins = rp_symbols["safe_builtins"]
-        safe_builtins = {
-            nombre: rp_safe_builtins[nombre]
-            for nombre in (
-                "len",
-                "range",
-                "__build_class__",
-                "Exception",
-                "object",
-            )
-            if nombre in rp_safe_builtins
-        }
-        safe_builtins.setdefault("len", builtins.len)
-        safe_builtins.setdefault("range", builtins.range)
-        safe_builtins.setdefault("__build_class__", builtins.__build_class__)
-        safe_builtins.setdefault("Exception", builtins.Exception)
-        safe_builtins.setdefault("object", builtins.object)
-
-        namespace = {
-            "__builtins__": safe_builtins,
-            "ValidadorBase": ValidadorBase,
-            "__name__": "validators",
-            "__metaclass__": builtins.type,
-            "_print_": rp_symbols["PrintCollector"],
-            "_getattr_": rp_symbols["default_guarded_getattr"],
-            "_getitem_": rp_symbols["default_guarded_getitem"],
-            "_iter_unpack_sequence_": rp_symbols["guarded_iter_unpack_sequence"],
-            "_unpack_sequence_": rp_symbols["guarded_unpack_sequence"],
-        }
-        compile_restricted = rp_symbols["compile_restricted"]
-        try:
-            byte_code = compile_restricted(source, ruta_abs, "exec")
-        except TimeoutError as e:
-            InterpretadorCobra._registrar_auditoria_validador(
-                ruta_real,
-                "rechazado",
-                "timeout",
-                hash_corto=hash_corto,
-                fase="compile",
-            )
-            raise ImportError(
-                "El validador adicional superó el tiempo permitido."
-            ) from e
-        except (MemoryError, OverflowError) as e:
-            InterpretadorCobra._registrar_auditoria_validador(
-                ruta_real,
-                "rechazado",
-                "memoria_excedida",
-                hash_corto=hash_corto,
-                fase="compile",
-            )
-            raise ImportError(
-                "El validador adicional excede los límites de memoria permitidos."
-            ) from e
-        try:
-            exec(byte_code, namespace)
-        except TimeoutError as e:
-            InterpretadorCobra._registrar_auditoria_validador(
-                ruta_real,
-                "rechazado",
-                "timeout",
-                hash_corto=hash_corto,
-                fase="exec",
-            )
-            raise ImportError(
-                "El validador adicional superó el tiempo permitido."
-            ) from e
-        except (MemoryError, OverflowError) as e:
-            InterpretadorCobra._registrar_auditoria_validador(
-                ruta_real,
-                "rechazado",
-                "memoria_excedida",
-                hash_corto=hash_corto,
-                fase="exec",
-            )
-            raise ImportError(
-                "El validador adicional excede los límites de memoria permitidos."
-            ) from e
-        except Exception as e:
-            InterpretadorCobra._registrar_auditoria_validador(
-                ruta_real,
-                "rechazado",
-                "error_en_ejecucion",
-                hash_corto=hash_corto,
-                fase="exec",
-            )
-            raise ImportError(
-                "No se pudo cargar el validador adicional de forma segura."
-            ) from e
+            try:
+                validators.append(validator_class(**descriptor["parametros"]))
+            except (TypeError, ValueError) as exc:
+                raise ImportError(
+                    "Parámetros inválidos para el validador preautorizado."
+                ) from exc
         InterpretadorCobra._registrar_auditoria_validador(
             ruta_real,
             "permitido",
             hash_corto=hash_corto,
             fase="exec",
         )
-        return namespace.get("VALIDADORES_EXTRA", [])
+        return validators
 
     def __init__(
         self,
@@ -553,8 +505,8 @@ class InterpretadorCobra:
             devuelta por :func:`construir_cadena`, restringiendo primitivas
             como ``import`` o ``hilo``.
         extra_validators: list | str, optional
-            Lista de instancias adicionales o ruta a un módulo que defina
-            ``VALIDADORES_EXTRA``.
+            Ruta a un módulo que defina ``VALIDADORES_EXTRA`` mediante
+            descriptores declarativos. Las instancias y callables se rechazan.
         main_file: Path | str, optional
             Archivo principal conocido por CLI/runtime para resolver módulos de
             proyecto con ``usar`` desde la raíz canonicalizada.
@@ -562,28 +514,60 @@ class InterpretadorCobra:
         extra = extra_validators
         if isinstance(extra, str):
             extra = self._cargar_validadores(extra)
+        elif isinstance(extra, list) and all(
+            isinstance(validador, ValidadorBase) for validador in extra
+        ):
+            extra = list(extra)
+        elif extra:
+            raise TypeError(
+                "Los validadores adicionales deben indicarse mediante una ruta "
+                "con descriptores declarativos o instancias preautorizadas; "
+                "no se admiten callables arbitrarios."
+            )
 
         self.safe_mode = safe_mode
         # Regla de fases: analysis = sin efectos, execution = con efectos.
         # Por defecto iniciamos en ejecución para preservar compatibilidad fuera del REPL.
         self.mode = "execution"
+
+        self._main_file: Path | None = None
+        self._project_root: Path = Path.cwd().resolve()
+        self._contexto_proyecto_verificado = False
+        self.configurar_archivo_principal(main_file)
+
         self._validador = (
-            construir_cadena(extra, emitir_side_effects=True) if safe_mode else None
+            construir_cadena(
+                extra,
+                emitir_side_effects=True,
+                main_file=self._main_file,
+                project_root=self._project_root,
+            )
+            if safe_mode
+            else None
         )
         # Analizador semántico persistente para mantener contexto entre ejecuciones
         self.analizador = AnalizadorSemantico()
         # Conjunto para evitar validar el mismo nodo varias veces
         self._validados = set()
-        # Pila de entornos para mantener variables locales en cada llamada
-        self.contextos = [Environment()]
+        # Estado estrictamente por ejecución. El entorno raíz sigue siendo la
+        # referencia léxica compartida desde la que parten los workers.
+        self._execution_state = _EstadoEjecucion()
+        self._global_environment = Environment()
+        self._global_mem_context: dict[str, tuple[int, int]] = {}
+        self.contextos = [self._global_environment]
+        self.funciones_nativas = {"longitud": longitud}
         # Mapa paralelo para gestionar bloques de memoria por contexto
-        self.mem_contextos = [{}]
+        self.mem_contextos = [self._global_mem_context]
         # Gestor genético de estrategias de memoria
         self.gestor_memoria = GestorMemoriaGenetico()
         self.estrategia = self.gestor_memoria.poblacion[0]
         self.op_memoria = 0
         self._eval_stack = set()
         self._call_depth = 0
+        # Orden de bloqueo único: ninguna ruta adquiere otro lock mientras
+        # mantiene éste. Solo protege el gestor/estrategia de memoria común.
+        self._thread_execution_lock = threading.RLock()
+        self._thread_isolation_depth = 0
         # Funciones Cobra declaradas en el AST fuente. Se mantiene separada del
         # entorno de variables para que los optimizadores puedan eliminar nodos
         # ``NodoFuncion`` sin impedir que sus nombres sigan siendo resolubles
@@ -597,10 +581,6 @@ class InterpretadorCobra:
         # Metadatos de símbolos inyectados por `usar` para soportar reimport idempotente.
         # nombre_simbolo -> {"module": str, "exported_name": str, "callable_id": int}
         self._usar_symbol_metadata: dict[str, dict[str, object]] = {}
-        self._main_file: Path | None = None
-        self._project_root: Path = Path.cwd().resolve()
-        self._contexto_proyecto_verificado = False
-        self.configurar_archivo_principal(main_file)
         self._current_module_stack: list[Path] = []
         self._usar_module_cache: dict[Path, dict[str, object]] = {}
         self._usar_loading_stack: list[Path] = []
@@ -609,6 +589,54 @@ class InterpretadorCobra:
         self._imported_module_paths: set[Path] = set()
         # Debe ejecutarse siempre después de crear _validador y _usar_symbol_metadata.
         self.asegurar_estado_runtime_inicial()
+
+    @property
+    def contextos(self) -> list[Environment]:
+        contextos = self._execution_state.contextos
+        if contextos is None:
+            contextos = [self._global_environment]
+            self._execution_state.contextos = contextos
+        return contextos
+
+    @contextos.setter
+    def contextos(self, value: list[Environment]) -> None:
+        self._execution_state.contextos = value
+
+    @property
+    def mem_contextos(self) -> list[dict[str, tuple[int, int]]]:
+        contextos = self._execution_state.mem_contextos
+        if contextos is None:
+            contextos = [self._global_mem_context]
+            self._execution_state.mem_contextos = contextos
+        return contextos
+
+    @mem_contextos.setter
+    def mem_contextos(self, value: list[dict[str, tuple[int, int]]]) -> None:
+        self._execution_state.mem_contextos = value
+
+    @property
+    def _call_depth(self) -> int:
+        return self._execution_state.call_depth
+
+    @_call_depth.setter
+    def _call_depth(self, value: int) -> None:
+        self._execution_state.call_depth = value
+
+    @property
+    def _eval_stack(self) -> Any:
+        return self._execution_state.eval_stack
+
+    @_eval_stack.setter
+    def _eval_stack(self, value: Any) -> None:
+        self._execution_state.eval_stack = value
+
+    @property
+    def _thread_isolation_depth(self) -> int:
+        return self._execution_state.thread_isolation_depth
+
+    @_thread_isolation_depth.setter
+    def _thread_isolation_depth(self, value: int) -> None:
+        self._execution_state.thread_isolation_depth = value
 
     def asegurar_estado_runtime_inicial(self) -> None:
         """Garantiza estado mínimo de runtime para metadata de `usar`.
@@ -629,7 +657,9 @@ class InterpretadorCobra:
           forma silenciosa aquí; la validación estricta en etapa='pre-auditoría'
           debe fallar con ``invalid_container``.
         """
-        if (not hasattr(self, "_usar_symbol_metadata")) or self._usar_symbol_metadata is None:
+        if (
+            not hasattr(self, "_usar_symbol_metadata")
+        ) or self._usar_symbol_metadata is None:
             self._usar_symbol_metadata = {}
 
         validador = getattr(self, "_validador", None)
@@ -639,7 +669,9 @@ class InterpretadorCobra:
             elif validador._metadata_simbolos_usar is None:
                 validador._metadata_simbolos_usar = {}
 
-    def configurar_restriccion_usar_repl(self, alias_map: dict[str, str] | None) -> None:
+    def configurar_restriccion_usar_repl(
+        self, alias_map: dict[str, str] | None
+    ) -> None:
         """Configura whitelist explícita de módulos `usar` para flujo REPL.
 
         Cuando ``alias_map`` es ``None``, no se aplica restricción adicional.
@@ -662,14 +694,16 @@ class InterpretadorCobra:
             raise ValueError(f"Modo inválido: {mode}")
         previo = self.mode
         self.mode = mode
-        if self._validador is not None and hasattr(self._validador, "emitir_side_effects"):
+        if self._validador is not None and hasattr(
+            self._validador, "emitir_side_effects"
+        ):
             self._validador.emitir_side_effects = mode == "execution"
             if hasattr(self._validador, "mode"):
                 self._validador.mode = mode
         return previo
 
     @property
-    def variables(self):
+    def variables(self) -> Any:
         """Devuelve el mapeo local del entorno activo (compatibilidad)."""
         return self.contextos[-1].values
 
@@ -700,7 +734,55 @@ class InterpretadorCobra:
                 return indice
         return None
 
-    def _liberar_memoria_variable_en_contexto(self, nombre: str, indice_contexto: int) -> None:
+    def _entorno_funcion_activo(self) -> Environment | None:
+        """Devuelve el entorno de la llamada activa, si existe."""
+        for entorno in reversed(self.contextos):
+            if entorno.is_function_scope:
+                return entorno
+        return None
+
+    def _entorno_global(self) -> Environment:
+        entorno = self.contextos[-1]
+        while entorno.parent is not None:
+            entorno = entorno.parent
+        return entorno
+
+    def _indice_contexto_entorno(self, entorno: Environment) -> int | None:
+        for indice, candidato in enumerate(self.contextos):
+            if candidato is entorno:
+                return indice
+        return None
+
+    def _declarar_nolocal(self, nombre: str) -> None:
+        entorno_funcion = self._entorno_funcion_activo()
+        if entorno_funcion is None:
+            raise SyntaxError("nolocal fuera de función")
+        if nombre in entorno_funcion.local_names:
+            raise SyntaxError(f"Nombre '{nombre}' declarado local y nolocal")
+        if nombre in entorno_funcion.global_names:
+            raise SyntaxError(f"Nombre '{nombre}' declarado global y nolocal")
+
+        exterior = entorno_funcion.parent
+        while exterior is not None and exterior.parent is not None:
+            if exterior.is_function_scope and nombre in exterior.values:
+                entorno_funcion.nonlocal_bindings[nombre] = exterior
+                return
+            exterior = exterior.parent
+        raise SyntaxError(f"No existe binding nolocal para '{nombre}'")
+
+    def _declarar_global(self, nombre: str) -> None:
+        entorno_funcion = self._entorno_funcion_activo()
+        if entorno_funcion is None:
+            return
+        if nombre in entorno_funcion.local_names:
+            raise SyntaxError(f"Nombre '{nombre}' declarado local y global")
+        if nombre in entorno_funcion.nonlocal_bindings:
+            raise SyntaxError(f"Nombre '{nombre}' declarado nolocal y global")
+        entorno_funcion.global_names.add(nombre)
+
+    def _liberar_memoria_variable_en_contexto(
+        self, nombre: str, indice_contexto: int
+    ) -> None:
         """Libera el bloque de memoria asociado a ``nombre`` en un contexto concreto."""
         if indice_contexto < 0 or indice_contexto >= len(self.mem_contextos):
             return
@@ -833,12 +915,14 @@ class InterpretadorCobra:
                     continue
 
     def _construir_funcion(self, nodo):
+        entorno = self.contextos[-1]
         return {
             "tipo": "funcion",
             "nombre": nodo.nombre,
             "parametros": list(nodo.parametros),
             "cuerpo": list(nodo.cuerpo),
-            "scope_lexico": self.contextos[-1],
+            "scope_lexico": entorno,
+            "entorno": entorno,
         }
 
     def _registrar_funciones_declaradas_como_valores(self, ast) -> None:
@@ -856,8 +940,8 @@ class InterpretadorCobra:
             return
         for nodo in ast:
             if isinstance(nodo, NodoFuncion):
-                self._funciones_declaradas_valor[nodo.nombre] = (
-                    self._construir_funcion(nodo)
+                self._funciones_declaradas_valor[nodo.nombre] = self._construir_funcion(
+                    nodo
                 )
 
     def _construir_clase(self, nodo, bases):
@@ -1035,21 +1119,23 @@ class InterpretadorCobra:
     # -- Gestión de memoria -------------------------------------------------
     def solicitar_memoria(self, tam):
         """Solicita un bloque a la estrategia actual."""
-        index = self.estrategia.asignar(tam)
-        if index == -1:
-            self.gestor_memoria.evolucionar(verbose=False)
-            self.estrategia = self.gestor_memoria.poblacion[0]
+        with self._thread_execution_lock:
             index = self.estrategia.asignar(tam)
-        self.op_memoria += 1
-        if self.op_memoria >= 1000:
-            self.gestor_memoria.evolucionar(verbose=False)
-            self.estrategia = self.gestor_memoria.poblacion[0]
-            self.op_memoria = 0
-        return index
+            if index == -1:
+                self.gestor_memoria.evolucionar(verbose=False)
+                self.estrategia = self.gestor_memoria.poblacion[0]
+                index = self.estrategia.asignar(tam)
+            self.op_memoria += 1
+            if self.op_memoria >= 1000:
+                self.gestor_memoria.evolucionar(verbose=False)
+                self.estrategia = self.gestor_memoria.poblacion[0]
+                self.op_memoria = 0
+            return index
 
     def liberar_memoria(self, index, tam):
         """Libera un bloque de memoria."""
-        self.estrategia.liberar(index, tam)
+        with self._thread_execution_lock:
+            self.estrategia.liberar(index, tam)
 
     # -- Utilidades ---------------------------------------------------------
     def _validar(self, nodo):
@@ -1073,7 +1159,9 @@ class InterpretadorCobra:
             cursor = getattr(cursor, "siguiente", None)
         self._asegurar_metadata_usar_sincronizada(etapa="pre-auditoría")
         hash_interp = self._hash_estructural_metadata(self._usar_symbol_metadata)
-        hash_validador = self._hash_estructural_metadata(getattr(self._validador, "_metadata_simbolos_usar", {}))
+        hash_validador = self._hash_estructural_metadata(
+            getattr(self._validador, "_metadata_simbolos_usar", {})
+        )
         if hash_interp != hash_validador:
             raise PrimitivaPeligrosaError(
                 "Desincronización de metadata usar detectada antes de auditoría: "
@@ -1088,7 +1176,9 @@ class InterpretadorCobra:
             modulo = metadata.get("module")
             if isinstance(modulo, str):
                 for validador_registrable in validadores_registrables:
-                    validador_registrable.registrar_simbolo_publico_usar(nombre, modulo, metadata=dict(metadata))
+                    validador_registrable.registrar_simbolo_publico_usar(
+                        nombre, modulo, metadata=dict(metadata)
+                    )
         # En ejecución permitimos side effects de auditoría visibles al usuario.
         nodo.aceptar(self._validador)
 
@@ -1098,9 +1188,7 @@ class InterpretadorCobra:
             validate_usar_symbol_metadata(nombre, metadata_normalizada)
         except ValueError as exc:
             # Preserva el motivo original para diagnóstico en REPL sin exponer internals sensibles.
-            raise PrimitivaPeligrosaError(
-                f"validation_reason='{exc}'"
-            ) from exc
+            raise PrimitivaPeligrosaError(f"validation_reason='{exc}'") from exc
 
     def _canonicalizar_metadata_usar(
         self,
@@ -1115,7 +1203,9 @@ class InterpretadorCobra:
             modulo_metadata = metadata.get("module")
             if isinstance(modulo_metadata, str):
                 modulo = modulo_metadata
-        metadata_normalizada = normalizar_metadata_simbolo_usar(metadata, modulo, nombre)
+        metadata_normalizada = normalizar_metadata_simbolo_usar(
+            metadata, modulo, nombre
+        )
         metadata_validada = validate_usar_symbol_metadata(nombre, metadata_normalizada)
         logging.debug(
             "USAR_METADATA_PIPELINE route=legacy-normalized module=%s symbol=%s",
@@ -1147,8 +1237,12 @@ class InterpretadorCobra:
             return ""
         payload = {
             "symbol": symbol,
-            "expected_keys": sorted(expected_keys) if expected_keys is not None else None,
-            "received_keys": sorted(received_keys) if received_keys is not None else None,
+            "expected_keys": (
+                sorted(expected_keys) if expected_keys is not None else None
+            ),
+            "received_keys": (
+                sorted(received_keys) if received_keys is not None else None
+            ),
             "validator_type": "validate_usar_symbol_metadata",
         }
         return f" detalle_debug={payload}"
@@ -1205,7 +1299,11 @@ class InterpretadorCobra:
             return
 
         # Eliminar del validador los símbolos que ya no están en el intérprete.
-        claves_a_eliminar = [nombre for nombre in metadata_validador if nombre not in self._usar_symbol_metadata]
+        claves_a_eliminar = [
+            nombre
+            for nombre in metadata_validador
+            if nombre not in self._usar_symbol_metadata
+        ]
         for nombre in claves_a_eliminar:
             del metadata_validador[nombre]
 
@@ -1220,8 +1318,12 @@ class InterpretadorCobra:
                 continue
             if not isinstance(metadata_val_actual, dict):
                 continue
-            metadata_val_actual = self._canonicalizar_metadata_usar(nombre, metadata_val_actual)
-            mismo_modulo = metadata_val_actual.get("module") == metadata_interp.get("module")
+            metadata_val_actual = self._canonicalizar_metadata_usar(
+                nombre, metadata_val_actual
+            )
+            mismo_modulo = metadata_val_actual.get("module") == metadata_interp.get(
+                "module"
+            )
             payload_cambio = metadata_val_actual != metadata_interp
             if mismo_modulo and payload_cambio:
                 metadata_validador[nombre] = dict(metadata_interp)
@@ -1247,10 +1349,14 @@ class InterpretadorCobra:
         metadata_validador = getattr(self._validador, "_metadata_simbolos_usar", None)
         if isinstance(self._usar_symbol_metadata, dict):
             for nombre, metadata in list(self._usar_symbol_metadata.items()):
-                self._usar_symbol_metadata[nombre] = self._canonicalizar_metadata_usar(nombre, metadata)
+                self._usar_symbol_metadata[nombre] = self._canonicalizar_metadata_usar(
+                    nombre, metadata
+                )
         if isinstance(metadata_validador, dict):
             for nombre, metadata in list(metadata_validador.items()):
-                metadata_validador[nombre] = self._canonicalizar_metadata_usar(nombre, metadata)
+                metadata_validador[nombre] = self._canonicalizar_metadata_usar(
+                    nombre, metadata
+                )
 
     def _validar_metadata_usar_en_ejecucion(self, *, etapa: str | None = None) -> None:
         """Valida metadata de `usar` en etapa='pre-auditoría' de forma estricta.
@@ -1291,7 +1397,9 @@ class InterpretadorCobra:
         # Fail-closed: no conversiones implícitas de payloads en pre-auditoría.
         for nombre, metadata_interp in self._usar_symbol_metadata.items():
             try:
-                metadata_interp_canonica = self._canonicalizar_metadata_usar(nombre, metadata_interp)
+                metadata_interp_canonica = self._canonicalizar_metadata_usar(
+                    nombre, metadata_interp
+                )
                 self._usar_symbol_metadata[nombre] = dict(metadata_interp_canonica)
             except PrimitivaPeligrosaError as exc:
                 raise PrimitivaPeligrosaError(
@@ -1302,7 +1410,9 @@ class InterpretadorCobra:
                 ) from exc
             metadata_val = metadata_validador.get(nombre)
             try:
-                metadata_val_canonica = self._canonicalizar_metadata_usar(nombre, metadata_val)
+                metadata_val_canonica = self._canonicalizar_metadata_usar(
+                    nombre, metadata_val
+                )
                 metadata_validador[nombre] = dict(metadata_val_canonica)
             except PrimitivaPeligrosaError as exc:
                 tipo_recibido = type(metadata_val).__name__
@@ -1373,7 +1483,9 @@ class InterpretadorCobra:
         try:
             validar_ast_estructural(ast)
         except ErrorEstructuraAST as exc:
-            raise RuntimeError(f"Estructura AST inválida en fase '{fase}': {exc}") from exc
+            raise RuntimeError(
+                f"Estructura AST inválida en fase '{fase}': {exc}"
+            ) from exc
 
     def _asegurar_no_autorreferencia_asignacion(
         self, nombre, valor_nodo, visitados
@@ -1398,7 +1510,12 @@ class InterpretadorCobra:
                 if isinstance(actual, NodoIdentificador):
                     if actual.nombre == nombre:
                         # Permite patrones válidos como ``x = x + 1`` usando el
-                        # valor previamente materializado en el entorno actual.
+                        # valor previamente materializado en el entorno actual;
+                        # sin un binding previo, ``x = x`` sí es un ciclo.
+                        if not self.contextos[-1].contains(nombre):
+                            raise RuntimeError(
+                                f"Ciclo de variables detectado en '{nombre}'"
+                            )
                         continue
                     self._resolver_identificador(actual.nombre, visitados)
                     continue
@@ -1447,10 +1564,7 @@ class InterpretadorCobra:
         try:
             texto = repr(valor)
         except RecursionError:
-            return (
-                f"<repr_recursivo tipo={type(valor).__name__} "
-                f"id={id(valor)}>"
-            )
+            return f"<repr_recursivo tipo={type(valor).__name__} " f"id={id(valor)}>"
         if len(texto) <= max_chars:
             return texto
         restante = len(texto) - max_chars
@@ -1635,14 +1749,23 @@ class InterpretadorCobra:
             # Para NodoUsar, ejecutamos primero para poblar _usar_symbol_metadata
             # antes de la auditoría.
             result = self.ejecutar_usar(nodo)
-            self._auditar_en_ejecucion(nodo)  # Auditar después de la ejecución para NodoUsar
+            self._auditar_en_ejecucion(
+                nodo
+            )  # Auditar después de la ejecución para NodoUsar
             return result
-        
+
         # Para el resto de los nodos, auditar antes de la ejecución
         self._auditar_en_ejecucion(nodo)
-        
+
         if isinstance(nodo, NodoAsignacion):
-            return self.ejecutar_asignacion(nodo)
+            es_asignacion_de_variable = isinstance(nodo.variable, str)
+            entorno_admite_nuevos_bindings = isinstance(self.contextos[-1], Environment)
+            return self.ejecutar_asignacion(
+                nodo,
+                permitir_asignacion_inicial=(
+                    es_asignacion_de_variable and entorno_admite_nuevos_bindings
+                ),
+            )
         elif isinstance(nodo, NodoCondicional):
             return self.ejecutar_condicional(nodo)
         elif isinstance(nodo, NodoBucleMientras):
@@ -1704,9 +1827,11 @@ class InterpretadorCobra:
             if indice_contexto is not None:
                 self._liberar_memoria_variable_en_contexto(nombre, indice_contexto)
         elif isinstance(nodo, NodoGlobal):
-            pass  # sin efecto en este intérprete simplificado
+            for nombre in nodo.nombres:
+                self._declarar_global(nombre)
         elif isinstance(nodo, NodoNoLocal):
-            pass
+            for nombre in nodo.nombres:
+                self._declarar_nolocal(nombre)
         elif isinstance(nodo, NodoWith):
             self.evaluar_expresion(nodo.contexto)
             self.contextos.append(Environment(parent=self.contextos[-1]))
@@ -1740,10 +1865,16 @@ class InterpretadorCobra:
         else:
             raise ValueError(f"Nodo no soportado: {type(nodo)}")
 
-    def ejecutar_asignacion(self, nodo, visitados=None):
+    def ejecutar_asignacion(
+        self,
+        nodo,
+        visitados=None,
+        *,
+        permitir_asignacion_inicial=True,
+    ):
         """Evalúa una asignación de variable o atributo."""
-        # Contrato: una declaración (`var`/`variable`) solo muta contexto y nunca
-        # devuelve señal de control para cortar un bloque.
+        # El valor de una asignación es un resultado ordinario. El control de
+        # flujo se propaga exclusivamente mediante las señales _Control*.
         visitados = set() if visitados is None else visitados
         nombre = getattr(nodo, "identificador", getattr(nodo, "variable", None))
         valor_nodo = getattr(nodo, "expresion", getattr(nodo, "valor", None))
@@ -1762,28 +1893,65 @@ class InterpretadorCobra:
             self._verificar_valor_contexto(valor)
             atributos[nombre.nombre] = valor
         else:
-            if getattr(nodo, "inferencia", False) or getattr(nodo, "declaracion", False):
+            entorno_funcion = self._entorno_funcion_activo()
+            destino_declarado = None
+            if entorno_funcion is not None:
+                destino_declarado = entorno_funcion.nonlocal_bindings.get(nombre)
+                if nombre in entorno_funcion.global_names:
+                    destino_declarado = self._entorno_global()
+            if getattr(nodo, "inferencia", False) or getattr(
+                nodo, "declaracion", False
+            ):
                 # Declaración local (explícita o por inferencia)
+                if entorno_funcion is not None:
+                    if nombre in entorno_funcion.nonlocal_bindings:
+                        raise SyntaxError(
+                            f"Nombre '{nombre}' declarado nolocal y local"
+                        )
+                    if nombre in entorno_funcion.global_names:
+                        raise SyntaxError(f"Nombre '{nombre}' declarado global y local")
+                    entorno_funcion.local_names.add(nombre)
                 indice_contexto = len(self.mem_contextos) - 1
                 self._liberar_memoria_variable_en_contexto(nombre, indice_contexto)
                 indice = self.solicitar_memoria(1)
                 self.mem_contextos[indice_contexto][nombre] = (indice, 1)
                 self.contextos[-1].define(nombre, valor)
-                # Contrato explícito: toda declaración muta estado local y
-                # devuelve ``None`` (nunca señal de control).
-                return None
+                return valor
             else:
-                indice_contexto = self._indice_entorno_variable(nombre)
+                indice_contexto = (
+                    self._indice_contexto_entorno(destino_declarado)
+                    if destino_declarado is not None
+                    else self._indice_entorno_variable(nombre)
+                )
+                if destino_declarado is not None:
+                    destino_declarado.values[nombre] = valor
+                    if indice_contexto is not None:
+                        self._liberar_memoria_variable_en_contexto(
+                            nombre, indice_contexto
+                        )
+                        indice = self.solicitar_memoria(1)
+                        self.mem_contextos[indice_contexto][nombre] = (indice, 1)
+                    return valor
                 if indice_contexto is None:
-                    if self._call_depth == 0:
+                    if self._call_depth == 0 and not permitir_asignacion_inicial:
                         raise NameError(f"Variable no declarada: {nombre}")
-                    # Una asignación simple dentro de una función introduce un
-                    # nombre local cuando no existe en su cadena léxica. Este
-                    # contexto permanece activo durante todo el cuerpo.
+                    # Dentro de una función, una primera asignación simple
+                    # introduce un nombre local durante la llamada.
                     indice_contexto = len(self.mem_contextos) - 1
                     indice = self.solicitar_memoria(1)
                     self.mem_contextos[indice_contexto][nombre] = (indice, 1)
                     self.contextos[-1].define(nombre, valor)
+                    if entorno_funcion is not None:
+                        entorno_funcion.local_names.add(nombre)
+                elif 0 < indice_contexto < len(self.contextos) - 1:
+                    # Sin una declaración ``nolocal``, una escritura desde una
+                    # función anidada sombrea el local de la función exterior.
+                    indice_contexto = len(self.mem_contextos) - 1
+                    indice = self.solicitar_memoria(1)
+                    self.mem_contextos[indice_contexto][nombre] = (indice, 1)
+                    self.contextos[-1].define(nombre, valor)
+                    if entorno_funcion is not None:
+                        entorno_funcion.local_names.add(nombre)
                 else:
                     # Mutación sobre una variable existente: ``set`` solo
                     # actualiza en el scope donde ya está declarada.
@@ -1791,9 +1959,7 @@ class InterpretadorCobra:
                     indice = self.solicitar_memoria(1)
                     self.mem_contextos[indice_contexto][nombre] = (indice, 1)
                     self.contextos[-1].set(nombre, valor)
-        # Igual que una declaración, una reasignación solo muta estado y nunca
-        # debe propagarse como señal de control dentro de bloques/bucles.
-        return None
+        return valor
 
     def evaluar_expresion(self, expresion, visitados=None):
         """Resuelve el valor de una expresión de forma recursiva.
@@ -1821,6 +1987,7 @@ class InterpretadorCobra:
             raise Exception("Recursive evaluation detected")
         self._eval_stack.add(expresion_key)
         try:
+
             def _retorno_critico(resultado, *, operador=None):
                 return self._asegurar_resultado_no_ast(
                     resultado,
@@ -1829,14 +1996,14 @@ class InterpretadorCobra:
                 )
 
             if isinstance(expresion, NodoValor):
-                return expresion.valor  # Obtiene el valor directo si es un NodoValor
+                return expresion.valor
             elif isinstance(expresion, Token) and expresion.tipo in {
                 TipoToken.ENTERO,
                 TipoToken.FLOTANTE,
                 TipoToken.CADENA,
                 TipoToken.BOOLEANO,
             }:
-                return expresion.valor  # Si es un token de tipo literal, devuelve su valor
+                return self._valor_literal(expresion.valor)
             elif isinstance(expresion, NodoAsignacion):
                 # Resuelve asignaciones anidadas y devuelve su valor
                 return self.ejecutar_asignacion(expresion, visitados)
@@ -1918,7 +2085,9 @@ class InterpretadorCobra:
                     f"left_type={type(expresion.izquierda).__name__} "
                     f"right_type={type(expresion.derecha).__name__}"
                 )
-                self._trace_debug(f"[BIN] op_tipo={tipo} op_valor={expresion.operador.valor}")
+                self._trace_debug(
+                    f"[BIN] op_tipo={tipo} op_valor={expresion.operador.valor}"
+                )
 
                 left = self.evaluar_expresion(expresion.izquierda, visitados)
                 self._trace_debug(
@@ -1973,66 +2142,92 @@ class InterpretadorCobra:
                 if tipo == TipoToken.MAYORQUE:
                     verificar_comparables(left, right, ">")
                     result = left > right
-                    self._trace_debug(f"[BIN-RESULT] value={result} type={type(result).__name__}")
+                    self._trace_debug(
+                        f"[BIN-RESULT] value={result} type={type(result).__name__}"
+                    )
                     return result
                 elif tipo == TipoToken.MENORQUE:
                     verificar_comparables(left, right, "<")
                     result = left < right
-                    self._trace_debug(f"[BIN-RESULT] value={result} type={type(result).__name__}")
+                    self._trace_debug(
+                        f"[BIN-RESULT] value={result} type={type(result).__name__}"
+                    )
                     return result
                 elif tipo == TipoToken.MAYORIGUAL:
                     verificar_comparables(left, right, ">=")
                     result = left >= right
-                    self._trace_debug(f"[BIN-RESULT] value={result} type={type(result).__name__}")
+                    self._trace_debug(
+                        f"[BIN-RESULT] value={result} type={type(result).__name__}"
+                    )
                     return result
                 elif tipo == TipoToken.MENORIGUAL:
                     verificar_comparables(left, right, "<=")
                     result = left <= right
-                    self._trace_debug(f"[BIN-RESULT] value={result} type={type(result).__name__}")
+                    self._trace_debug(
+                        f"[BIN-RESULT] value={result} type={type(result).__name__}"
+                    )
                     return result
                 elif tipo == TipoToken.IGUAL:
                     result = left == right
-                    self._trace_debug(f"[BIN-RESULT] value={result} type={type(result).__name__}")
+                    self._trace_debug(
+                        f"[BIN-RESULT] value={result} type={type(result).__name__}"
+                    )
                     return result
                 elif tipo == TipoToken.DIFERENTE:
                     result = left != right
-                    self._trace_debug(f"[BIN-RESULT] value={result} type={type(result).__name__}")
+                    self._trace_debug(
+                        f"[BIN-RESULT] value={result} type={type(result).__name__}"
+                    )
                     return result
 
                 if tipo == TipoToken.SUMA:
                     verificar_sumables(left, right)
                     result = left + right
-                    self._trace_debug(f"[BIN-RESULT] value={result} type={type(result).__name__}")
+                    self._trace_debug(
+                        f"[BIN-RESULT] value={result} type={type(result).__name__}"
+                    )
                     return result
                 elif tipo == TipoToken.RESTA:
                     verificar_numeros(left, right, "-")
                     result = left - right
-                    self._trace_debug(f"[BIN-RESULT] value={result} type={type(result).__name__}")
+                    self._trace_debug(
+                        f"[BIN-RESULT] value={result} type={type(result).__name__}"
+                    )
                     return result
                 elif tipo == TipoToken.MULT:
                     verificar_numeros(left, right, "*")
                     result = left * right
-                    self._trace_debug(f"[BIN-RESULT] value={result} type={type(result).__name__}")
+                    self._trace_debug(
+                        f"[BIN-RESULT] value={result} type={type(result).__name__}"
+                    )
                     return result
                 elif tipo == TipoToken.DIV:
                     verificar_numeros(left, right, "/")
                     result = left / right
-                    self._trace_debug(f"[BIN-RESULT] value={result} type={type(result).__name__}")
+                    self._trace_debug(
+                        f"[BIN-RESULT] value={result} type={type(result).__name__}"
+                    )
                     return result
                 elif tipo == TipoToken.MOD:
                     verificar_numeros(left, right, "%")
                     result = left % right
-                    self._trace_debug(f"[BIN-RESULT] value={result} type={type(result).__name__}")
+                    self._trace_debug(
+                        f"[BIN-RESULT] value={result} type={type(result).__name__}"
+                    )
                     return result
                 elif tipo == TipoToken.Y:
                     verificar_booleanos(left, right, "&&")
                     result = left and right
-                    self._trace_debug(f"[BIN-RESULT] value={result} type={type(result).__name__}")
+                    self._trace_debug(
+                        f"[BIN-RESULT] value={result} type={type(result).__name__}"
+                    )
                     return result
                 elif tipo == TipoToken.O:
                     verificar_booleanos(left, right, "||")
                     result = left or right
-                    self._trace_debug(f"[BIN-RESULT] value={result} type={type(result).__name__}")
+                    self._trace_debug(
+                        f"[BIN-RESULT] value={result} type={type(result).__name__}"
+                    )
                     return result
                 else:
                     raise ValueError(f"Operador no soportado: {tipo}")
@@ -2108,9 +2303,7 @@ class InterpretadorCobra:
         # cualquier asignación queda visible al salir del condicional.
         # Nota: no se captura ``NameError`` ni otras excepciones aquí para no
         # ocultar la causa real del fallo en la evaluación de la condición.
-        bloque_si = getattr(
-            nodo, "cuerpo_si", getattr(nodo, "bloque_si", NodoBloque())
-        )
+        bloque_si = getattr(nodo, "cuerpo_si", getattr(nodo, "bloque_si", NodoBloque()))
         bloque_sino = getattr(
             nodo, "cuerpo_sino", getattr(nodo, "bloque_sino", NodoBloque())
         )
@@ -2156,8 +2349,7 @@ class InterpretadorCobra:
             iterador = iter(iterable)
         except TypeError as exc:
             raise TypeError(
-                "El iterable de 'para' no es recorrible: "
-                f"{type(iterable).__name__}"
+                "El iterable de 'para' no es recorrible: " f"{type(iterable).__name__}"
             ) from exc
 
         for valor in iterador:
@@ -2231,13 +2423,21 @@ class InterpretadorCobra:
         entorno_capturado = funcion.get(
             "scope_lexico", funcion.get("entorno", self.contextos[-1])
         )
-        self.contextos.append(Environment(parent=entorno_capturado))
+        if self._thread_isolation_depth:
+            entorno_capturado = Environment(
+                values=dict(entorno_capturado.values),
+                parent=entorno_capturado.parent,
+            )
+        self.contextos.append(
+            Environment(parent=entorno_capturado, is_function_scope=True)
+        )
         self.mem_contextos.append({})
         try:
             for nombre_param, valor in zip(parametros, argumentos):
                 indice = self.solicitar_memoria(1)
                 self.mem_contextos[-1][nombre_param] = (indice, 1)
                 self.contextos[-1].define(nombre_param, valor)
+                self.contextos[-1].local_names.add(nombre_param)
 
             self._call_depth += 1
             try:
@@ -2282,7 +2482,12 @@ class InterpretadorCobra:
                 if emitir_salida_llamada:
                     print(valor)
         else:
-            funcion = self.obtener_variable(nodo.nombre)
+            try:
+                funcion = self.obtener_variable(nodo.nombre)
+            except NameError:
+                if nodo.nombre not in self.funciones_nativas:
+                    raise
+                funcion = self.funciones_nativas[nodo.nombre]
 
             if callable(funcion):
                 argumentos_resueltos = []
@@ -2328,12 +2533,20 @@ class InterpretadorCobra:
                 entorno_capturado = funcion.get(
                     "scope_lexico", funcion.get("entorno", self.contextos[-1])
                 )
-                self.contextos.append(Environment(parent=entorno_capturado))
+                if self._thread_isolation_depth:
+                    entorno_capturado = Environment(
+                        values=dict(entorno_capturado.values),
+                        parent=entorno_capturado.parent,
+                    )
+                self.contextos.append(
+                    Environment(parent=entorno_capturado, is_function_scope=True)
+                )
                 self.mem_contextos.append({})
                 for nombre_param, valor in zip(parametros, argumentos_resueltos):
                     indice = self.solicitar_memoria(1)
                     self.mem_contextos[-1][nombre_param] = (indice, 1)
                     self.contextos[-1].define(nombre_param, valor)
+                    self.contextos[-1].local_names.add(nombre_param)
 
             def limpiar_contexto():
                 # Se restaura el scope anterior al finalizar la llamada.
@@ -2437,13 +2650,17 @@ class InterpretadorCobra:
             raise ValueError(f"Método '{nodo.nombre_metodo}' no encontrado")
 
         entorno_capturado = metodo.get("entorno", self.contextos[-1])
-        self.contextos.append(Environment(parent=entorno_capturado))
+        self.contextos.append(
+            Environment(parent=entorno_capturado, is_function_scope=True)
+        )
         self.mem_contextos.append({})
         self.contextos[-1].define("self", objeto)
+        self.contextos[-1].local_names.add("self")
         for nombre_param, arg in zip(metodo.get("parametros", [])[1:], nodo.argumentos):
             valor = self.evaluar_expresion(arg)
             self._verificar_valor_contexto(valor)
             self.contextos[-1].define(nombre_param, valor)
+            self.contextos[-1].local_names.add(nombre_param)
 
         try:
             self._call_depth += 1
@@ -2502,7 +2719,8 @@ class InterpretadorCobra:
             # Pasar la pila de carga del intérprete a cargar_ast_modulo
             ruta_para_loader = (
                 str(ruta_canonica)
-                if getattr(cargar_ast_modulo, "__module__", "") == "pcobra.core.import_utils"
+                if getattr(cargar_ast_modulo, "__module__", "")
+                == "pcobra.core.import_utils"
                 else ruta_import_legacy
             )
             ast = cargar_ast_modulo(
@@ -2517,7 +2735,13 @@ class InterpretadorCobra:
         self._current_module_stack.append(ruta_canonica)
         try:
             for subnodo in ast:
-                self.ejecutar_nodo(subnodo)
+                modo_previo = self._set_mode("analysis")
+                try:
+                    self._validar(subnodo)
+                    self._set_mode("execution")
+                    self.ejecutar_nodo(subnodo)
+                finally:
+                    self._set_mode(modo_previo)
         finally:
             self._current_module_stack.pop()
             self._import_execution_stack.pop()
@@ -2544,6 +2768,7 @@ class InterpretadorCobra:
             module_cache=self._usar_module_cache,
             loading_stack=self._usar_loading_stack,
             contexto_proyecto_verificado=self._contexto_proyecto_verificado,
+            safe_mode=self.safe_mode,
         )
         self._inyectar_exports_modulo_proyecto(exports)
 
@@ -2602,7 +2827,7 @@ class InterpretadorCobra:
         """
 
         try:
-            nombre_modulo_limpio = str(nodo.modulo).strip().strip('\"\'')
+            nombre_modulo_limpio = str(nodo.modulo).strip().strip("\"'")
             current_file = (
                 self._current_module_stack[-1]
                 if self._current_module_stack
@@ -2615,38 +2840,102 @@ class InterpretadorCobra:
                 module_cache=self._usar_module_cache,
                 loading_stack=self._usar_loading_stack,
                 contexto_proyecto_verificado=self._contexto_proyecto_verificado,
+                safe_mode=self.safe_mode,
             )
             self._inyectar_exports_modulo_proyecto(exports)
         except Exception as exc:
             detalle_usar_habilitado = _usar_detalle_habilitado()
-            exc_usuario = exc
-            if (
-                isinstance(exc, ModuloFueraCatalogoPublicoError)
-            ):
+            exc_usuario: Exception
+            if isinstance(exc, ModuloFueraCatalogoPublicoError):
                 exc_usuario = _error_usuario_modulo_fuera_catalogo(
                     nombre_modulo_limpio,
                     exc,
                     repl_estricto=self._repl_usar_alias_map is not None,
                     incluir_detalle=detalle_usar_habilitado,
                 )
+            elif isinstance(exc, ValueError):
+                mensaje = str(exc)
+                if "Nombre de módulo inválido en 'usar':" in mensaje:
+                    exc_usuario = ValueError(mensaje)
+                else:
+                    # Los rechazos de política continúan exponiendo el contrato
+                    # público estable, sin filtrar detalles internos.
+                    exc_usuario = PermissionError(USAR_DIRECT_BACKEND_IMPORT_ERROR)
+                    exc_usuario.add_note(mensaje)
+            elif isinstance(exc, FileNotFoundError):
+                exc_usuario = FileNotFoundError(
+                    formatear_error_usar_usuario(
+                        "modulo_no_encontrado", nombre_modulo_limpio
+                    )
+                )
+                exc_usuario.add_note(str(exc))
+            elif isinstance(exc, NameError):
+                mensaje = str(exc)
+                marcador_colision = "colisión estructurada="
+                colision_estructurada = False
+                if marcador_colision in mensaje:
+                    payload = mensaje.split(marcador_colision, 1)[1].strip()
+                    try:
+                        detalle_colision = ast.literal_eval(payload)
+                    except (ValueError, SyntaxError):
+                        detalle_colision = None
+                    colision_estructurada = isinstance(
+                        detalle_colision, dict
+                    ) and detalle_colision.get("code") in {
+                        "symbol_collision",
+                        "symbol_collision_runtime_recheck",
+                    }
+
+                if colision_estructurada:
+                    # El detalle estructurado permanece en la causa interna;
+                    # la frontera pública expone el diagnóstico estable de `usar`.
+                    exc_usuario = NameError(
+                        formatear_error_usar_usuario(
+                            "conflicto_simbolo", nombre_modulo_limpio
+                        )
+                    )
+
+                else:
+                    exc_usuario = NameError(
+                        formatear_error_usar_usuario(
+                            "conflicto_simbolo", nombre_modulo_limpio
+                        )
+                    )
+            elif isinstance(exc, (ImportError, PermissionError)):
+                mensaje = str(exc)
+
+                if (
+                    isinstance(exc, ImportError)
+                    and "Ciclo de módulos detectado en usar:" in mensaje
+                ):
+                    exc_usuario = ImportError(mensaje)
+                elif "usar_error[" in mensaje:
+                    exc_usuario = type(exc)(mensaje)
+                else:
+                    exc_usuario = type(exc)(
+                        formatear_error_usar_usuario(
+                            "carga_modulo_error", nombre_modulo_limpio
+                        )
+                    )
+                    exc_usuario.add_note(mensaje)
+            else:
+                exc_usuario = ImportError(
+                    formatear_error_usar_usuario(
+                        "carga_modulo_error", nombre_modulo_limpio
+                    )
+                )
+                exc_usuario.add_note(str(exc))
             if detalle_usar_habilitado:
-                logging.exception("Error al usar el módulo '%s': %s", nodo.modulo, exc_usuario)
+                logging.exception(
+                    "Error al usar el módulo '%s': %s", nodo.modulo, exc_usuario
+                )
             else:
                 logging.debug(
                     "Error esperado al usar módulo %s: %s",
                     nodo.modulo,
                     exc_usuario,
                 )
-            if isinstance(
-                exc,
-                (ImportError, PermissionError, ValueError, NameError, FileNotFoundError),
-            ):
-                if exc_usuario is not exc:
-                    raise exc_usuario from exc
-                raise
-            raise ImportError(
-                formatear_error_usar_usuario("carga_modulo_error", nodo.modulo)
-            ) from exc
+            raise exc_usuario from exc
 
     def _detectar_conflictos_usar_en_contexto(
         self,
@@ -2713,11 +3002,15 @@ class InterpretadorCobra:
             metadata_simbolo = metadata_por_simbolo.get(nombre)
             if metadata_simbolo is None:
                 continue
-            metadata_simbolo = self._canonicalizar_metadata_usar(nombre, metadata_simbolo)
+            metadata_simbolo = self._canonicalizar_metadata_usar(
+                nombre, metadata_simbolo
+            )
             simbolo = self._materializar_valor(simbolo, visitados=None)
             contexto_actual.define(nombre, simbolo)
             self._usar_symbol_metadata[nombre] = dict(metadata_simbolo)
-            if self._validador is not None and hasattr(self._validador, "registrar_simbolo_publico_usar"):
+            if self._validador is not None and hasattr(
+                self._validador, "registrar_simbolo_publico_usar"
+            ):
                 resumen = {
                     "module": metadata_simbolo.get("module"),
                     "symbol": metadata_simbolo.get("symbol"),
@@ -2733,7 +3026,10 @@ class InterpretadorCobra:
                 )
                 self._sincronizar_metadata_usar_no_destructiva()
                 self._trace_debug(f"[USAR_METADATA][POST_REGISTRO] {resumen}")
-                if str(metadata_simbolo.get("module")) == "archivo" and nombre == "existe":
+                if (
+                    str(metadata_simbolo.get("module")) == "archivo"
+                    and nombre == "existe"
+                ):
                     self._trace_debug(
                         "[USAR_TRACE][archivo.existe] confirmado wrapper sanitizado "
                         f"(public_api={metadata_simbolo.get('public_api')}, sanitized={metadata_simbolo.get('sanitized')})"
@@ -2754,10 +3050,22 @@ class InterpretadorCobra:
 
     def ejecutar_hilo(self, nodo):
         """Ejecuta una función en un hilo separado."""
-        import threading
 
         def destino():
-            self.ejecutar_llamada_funcion(nodo.llamada)
+            # ``threading.local`` crea pilas limpias para este worker. No se
+            # serializa la ejecución completa: solo las operaciones realmente
+            # compartidas (p. ej. memoria) toman su bloqueo específico.
+            self._thread_isolation_depth += 1
+            try:
+                self.ejecutar_llamada_funcion(nodo.llamada)
+            finally:
+                self._thread_isolation_depth -= 1
+                # Una excepción no debe dejar scopes ni temporales vivos en el
+                # estado local si el Thread es retenido por instrumentación.
+                self.contextos[:] = [self._global_environment]
+                self.mem_contextos[:] = [self._global_mem_context]
+                self._eval_stack.clear()
+                self._call_depth = 0
 
         # El hilo se marca como daemon para evitar que bloquee el cierre del
         # intérprete si queda en ejecución al finalizar el programa.

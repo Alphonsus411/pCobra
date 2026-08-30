@@ -21,12 +21,13 @@ from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
 
 logger = logging.getLogger(__name__)
 
+
 class DependenciasCommand(BaseCommand):
     """Gestiona las dependencias del proyecto.
-    
-    Este comando permite listar e instalar las dependencias definidas en 
+
+    Este comando permite listar e instalar las dependencias definidas en
     requirements.txt y pyproject.toml.
-    
+
     Ejemplos:
         cobra dependencias listar
         cobra dependencias instalar
@@ -36,10 +37,10 @@ class DependenciasCommand(BaseCommand):
 
     def register_subparser(self, subparsers: Any) -> CustomArgumentParser:
         """Registra los argumentos del subcomando.
-        
+
         Args:
             subparsers: Objeto para registrar subcomandos
-            
+
         Returns:
             CustomArgumentParser: Parser configurado para este subcomando
         """
@@ -54,10 +55,10 @@ class DependenciasCommand(BaseCommand):
 
     def run(self, args: Any) -> int:
         """Ejecuta la lógica del comando.
-        
+
         Args:
             args: Argumentos parseados del comando
-            
+
         Returns:
             int: 0 si la ejecución fue exitosa, 1 en caso de error
         """
@@ -86,7 +87,9 @@ class DependenciasCommand(BaseCommand):
             RuntimeError: Si no se puede determinar la ruta del proyecto
         """
 
-        override = os.environ.get("PCOBRA_PROJECT_ROOT") or os.environ.get("PCOBRA_CODE_ROOT")
+        override = os.environ.get("PCOBRA_PROJECT_ROOT") or os.environ.get(
+            "PCOBRA_CODE_ROOT"
+        )
         if override:
             ruta_override = Path(override).expanduser().resolve()
             if ruta_override.exists():
@@ -94,7 +97,9 @@ class DependenciasCommand(BaseCommand):
 
         ruta_actual = Path(__file__).resolve()
         for candidato in ruta_actual.parents:
-            if (candidato / "pyproject.toml").exists() or (candidato / "requirements.txt").exists():
+            if (candidato / "pyproject.toml").exists() or (
+                candidato / "requirements.txt"
+            ).exists():
                 return candidato
 
         raise RuntimeError("No se pudo determinar la ruta del proyecto")
@@ -102,7 +107,7 @@ class DependenciasCommand(BaseCommand):
     @classmethod
     def _ruta_requirements(cls) -> Path:
         """Obtiene la ruta al archivo requirements.txt.
-        
+
         Returns:
             Path: Ruta absoluta al archivo requirements.txt
         """
@@ -111,7 +116,7 @@ class DependenciasCommand(BaseCommand):
     @classmethod
     def _ruta_pyproject(cls) -> Path:
         """Obtiene la ruta al archivo pyproject.toml.
-        
+
         Returns:
             Path: Ruta absoluta al archivo pyproject.toml
         """
@@ -120,10 +125,10 @@ class DependenciasCommand(BaseCommand):
     @classmethod
     def _validar_dependencia(cls, dep: str) -> bool:
         """Valida el formato de una dependencia.
-        
+
         Args:
             dep: Dependencia a validar
-            
+
         Returns:
             bool: True si la dependencia es válida
         """
@@ -132,10 +137,10 @@ class DependenciasCommand(BaseCommand):
     @classmethod
     def _leer_requirements(cls) -> List[str]:
         """Lee las dependencias del archivo requirements.txt.
-        
+
         Returns:
             List[str]: Lista de dependencias encontradas
-            
+
         Raises:
             IOError: Si hay problemas leyendo el archivo
         """
@@ -175,10 +180,10 @@ class DependenciasCommand(BaseCommand):
     @classmethod
     def _leer_pyproject(cls) -> List[str]:
         """Lee las dependencias del archivo pyproject.toml.
-        
+
         Returns:
             List[str]: Lista de dependencias encontradas
-            
+
         Raises:
             IOError: Si hay problemas leyendo el archivo
             tomllib.TOMLDecodeError: Si hay errores en el formato TOML
@@ -190,7 +195,11 @@ class DependenciasCommand(BaseCommand):
                 with open(ruta, "rb") as f:
                     data = tomllib.load(f)
                 project = data.get("project", {})
-                deps.extend(d for d in project.get("dependencies", []) if cls._validar_dependencia(d))
+                deps.extend(
+                    d
+                    for d in project.get("dependencies", [])
+                    if cls._validar_dependencia(d)
+                )
                 for extra in project.get("optional-dependencies", {}).values():
                     deps.extend(d for d in extra if cls._validar_dependencia(d))
             except (IOError, tomllib.TOMLDecodeError) as e:
@@ -202,10 +211,10 @@ class DependenciasCommand(BaseCommand):
     @classmethod
     def _obtener_dependencias(cls) -> List[str]:
         """Obtiene la lista combinada de dependencias sin duplicados.
-        
+
         Returns:
             List[str]: Lista de dependencias únicas
-            
+
         Raises:
             Exception: Si hay error leyendo algún archivo de dependencias
         """
@@ -215,15 +224,15 @@ class DependenciasCommand(BaseCommand):
     @classmethod
     def _crear_entorno_virtual(cls) -> Optional[str]:
         """Crea un entorno virtual para instalar las dependencias.
-        
+
         Returns:
             Optional[str]: Ruta al entorno virtual o None si falla
-            
+
         Raises:
             OSError: Si no hay suficiente espacio en disco
         """
         venv_path = cls._get_project_root() / ".venv"
-        
+
         if venv_path.exists():
             logger.info("Eliminando entorno virtual existente")
             try:
@@ -237,7 +246,7 @@ class DependenciasCommand(BaseCommand):
             free_space = shutil.disk_usage(str(venv_path.parent)).free
             if free_space < 100 * 1024 * 1024:
                 raise OSError("Espacio insuficiente en disco")
-                
+
             venv.create(venv_path, with_pip=True)
             return str(venv_path)
         except OSError as e:
@@ -247,7 +256,7 @@ class DependenciasCommand(BaseCommand):
     @classmethod
     def _listar_dependencias(cls) -> int:
         """Lista todas las dependencias encontradas.
-        
+
         Returns:
             int: 0 si la ejecución fue exitosa, 1 en caso de error
         """
@@ -267,7 +276,7 @@ class DependenciasCommand(BaseCommand):
     @classmethod
     def _instalar_dependencias(cls) -> int:
         """Instala las dependencias en un entorno virtual.
-        
+
         Returns:
             int: 0 si la instalación fue exitosa, 1 en caso de error
         """
@@ -282,14 +291,20 @@ class DependenciasCommand(BaseCommand):
                 mostrar_error(_("No se pudo crear el entorno virtual"))
                 return 1
 
-            with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".txt") as tmp:
+            with tempfile.NamedTemporaryFile(
+                mode="w", delete=False, suffix=".txt"
+            ) as tmp:
                 for dep in deps:
                     tmp.write(f"{dep}\n")
                 tmp_path = tmp.name
 
             try:
                 scripts_dir = "Scripts" if sys.platform == "win32" else "bin"
-                pip_path = str(Path(venv_path) / scripts_dir / ("pip.exe" if sys.platform == "win32" else "pip"))
+                pip_path = str(
+                    Path(venv_path)
+                    / scripts_dir
+                    / ("pip.exe" if sys.platform == "win32" else "pip")
+                )
 
                 if not Path(pip_path).exists():
                     mostrar_error(_("No se encontró pip en el entorno virtual"))
@@ -299,14 +314,16 @@ class DependenciasCommand(BaseCommand):
                     [pip_path, "install", "-r", tmp_path],
                     check=True,
                     capture_output=True,
-                    text=True
+                    text=True,
                 )
                 mostrar_info(_("Dependencias instaladas en el entorno virtual"))
                 return 0
 
             except subprocess.CalledProcessError as e:
                 logger.exception("Error en la instalación de dependencias")
-                mostrar_error(_("Error instalando dependencias: {err}").format(err=e.stderr))
+                mostrar_error(
+                    _("Error instalando dependencias: {err}").format(err=e.stderr)
+                )
                 return 1
             finally:
                 try:

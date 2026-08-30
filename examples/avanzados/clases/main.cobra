@@ -1,0 +1,6 @@
+import "estudiante.cobra"
+
+imprimir "Hola, soy Ana"
+imprimir "Estudio Ingeniería"
+imprimir "Hola, soy Luis"
+imprimir "Estudio Matemáticas"

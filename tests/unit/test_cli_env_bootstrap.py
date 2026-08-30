@@ -27,7 +27,9 @@ def test_configurar_entorno_autocrea_env_desde_example(tmp_path, monkeypatch, ca
 
     env_file = tmp_path / ".env"
     assert env_file.exists()
-    assert env_file.read_text(encoding="utf-8") == env_example.read_text(encoding="utf-8")
+    assert env_file.read_text(encoding="utf-8") == env_example.read_text(
+        encoding="utf-8"
+    )
     assert "No se encontró .env; se creó automáticamente" in caplog.text
     assert any(
         record.levelname == "INFO"
@@ -53,7 +55,9 @@ def test_configurar_entorno_falla_si_falta_sqlite_db_key(tmp_path, monkeypatch, 
     assert "Falta SQLITE_DB_KEY en el entorno" in caplog.text
 
 
-def test_configurar_entorno_setea_db_path_por_default_con_sqlite_db_key(tmp_path, monkeypatch):
+def test_configurar_entorno_setea_db_path_por_default_con_sqlite_db_key(
+    tmp_path, monkeypatch
+):
     monkeypatch.chdir(tmp_path)
     monkeypatch.setenv("SQLITE_DB_KEY", "clave-segura")
     monkeypatch.delenv("COBRA_DB_PATH", raising=False)

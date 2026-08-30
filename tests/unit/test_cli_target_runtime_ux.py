@@ -19,8 +19,12 @@ from pcobra.cobra.cli.target_policies import (
 )
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 
-FIRST_TRANSPILATION_ONLY = TRANSPILATION_ONLY_TARGETS[0] if TRANSPILATION_ONLY_TARGETS else None
-FIRST_BEST_EFFORT = BEST_EFFORT_RUNTIME_TARGETS[0] if BEST_EFFORT_RUNTIME_TARGETS else None
+FIRST_TRANSPILATION_ONLY = (
+    TRANSPILATION_ONLY_TARGETS[0] if TRANSPILATION_ONLY_TARGETS else None
+)
+FIRST_BEST_EFFORT = (
+    BEST_EFFORT_RUNTIME_TARGETS[0] if BEST_EFFORT_RUNTIME_TARGETS else None
+)
 
 
 def _build_parser_for(command):
@@ -34,7 +38,7 @@ def _build_parser_for(command):
 def test_compilar_acepta_los_8_targets_oficiales_en_tipo(target):
     parser, _ = _build_parser_for(CompileCommand())
 
-    args = parser.parse_args(["compilar", "archivo.co", "--tipo", target])
+    args = parser.parse_args(["compilar", "archivo.cobra", "--tipo", target])
 
     assert args.tipo == target
 
@@ -43,7 +47,12 @@ def test_compilar_acepta_los_8_targets_oficiales_en_tipos():
     parser, _ = _build_parser_for(CompileCommand())
 
     args = parser.parse_args(
-        ["compilar", "archivo.co", "--tipos", ",".join(OFFICIAL_TRANSPILATION_TARGETS)]
+        [
+            "compilar",
+            "archivo.cobra",
+            "--tipos",
+            ",".join(OFFICIAL_TRANSPILATION_TARGETS),
+        ]
     )
 
     assert args.tipos == list(OFFICIAL_TRANSPILATION_TARGETS)
@@ -53,14 +62,27 @@ def test_compilar_acepta_los_8_targets_oficiales_en_tipos():
     ("command", "flag", "supported_targets"),
     [
         (ExecuteCommand(), "--contenedor", DOCKER_EXECUTABLE_TARGETS),
-        (InteractiveCommand(MagicMock()), "--sandbox-docker", DOCKER_EXECUTABLE_TARGETS),
+        (
+            InteractiveCommand(MagicMock()),
+            "--sandbox-docker",
+            DOCKER_EXECUTABLE_TARGETS,
+        ),
     ],
 )
-def test_execute_e_interactive_aceptan_solo_targets_runtime(command, flag, supported_targets):
+def test_execute_e_interactive_aceptan_solo_targets_runtime(
+    command, flag, supported_targets
+):
     parser, _ = _build_parser_for(command)
 
     for target in supported_targets:
-        args = parser.parse_args([command.name, flag, target, *(["archivo.co"] if command.name == "ejecutar" else [])])
+        args = parser.parse_args(
+            [
+                command.name,
+                flag,
+                target,
+                *(["archivo.cobra"] if command.name == "ejecutar" else []),
+            ]
+        )
         attr = "contenedor" if flag == "--contenedor" else "sandbox_docker"
         assert getattr(args, attr) == target
 
@@ -69,23 +91,57 @@ runtime_error_cases = []
 if FIRST_TRANSPILATION_ONLY:
     runtime_error_cases.extend(
         [
-            (ExecuteCommand(), ["ejecutar", "archivo.co", "--contenedor", FIRST_TRANSPILATION_ONLY], DOCKER_EXECUTABLE_TARGETS, FIRST_TRANSPILATION_ONLY),
-            (InteractiveCommand(MagicMock()), ["interactive", "--sandbox-docker", FIRST_TRANSPILATION_ONLY], DOCKER_EXECUTABLE_TARGETS, FIRST_TRANSPILATION_ONLY),
-            (VerifyCommand(), ["verificar", "archivo.co", "--lenguajes", FIRST_TRANSPILATION_ONLY], VERIFICATION_EXECUTABLE_TARGETS, FIRST_TRANSPILATION_ONLY),
+            (
+                ExecuteCommand(),
+                ["ejecutar", "archivo.cobra", "--contenedor", FIRST_TRANSPILATION_ONLY],
+                DOCKER_EXECUTABLE_TARGETS,
+                FIRST_TRANSPILATION_ONLY,
+            ),
+            (
+                InteractiveCommand(MagicMock()),
+                ["interactive", "--sandbox-docker", FIRST_TRANSPILATION_ONLY],
+                DOCKER_EXECUTABLE_TARGETS,
+                FIRST_TRANSPILATION_ONLY,
+            ),
+            (
+                VerifyCommand(),
+                ["verificar", "archivo.cobra", "--lenguajes", FIRST_TRANSPILATION_ONLY],
+                VERIFICATION_EXECUTABLE_TARGETS,
+                FIRST_TRANSPILATION_ONLY,
+            ),
         ]
     )
 if FIRST_BEST_EFFORT:
     runtime_error_cases.extend(
         [
-            (ExecuteCommand(), ["ejecutar", "archivo.co", "--contenedor", FIRST_BEST_EFFORT], DOCKER_EXECUTABLE_TARGETS, FIRST_BEST_EFFORT),
-            (InteractiveCommand(MagicMock()), ["interactive", "--sandbox-docker", FIRST_BEST_EFFORT], DOCKER_EXECUTABLE_TARGETS, FIRST_BEST_EFFORT),
-            (VerifyCommand(), ["verificar", "archivo.co", "--lenguajes", FIRST_BEST_EFFORT], VERIFICATION_EXECUTABLE_TARGETS, FIRST_BEST_EFFORT),
+            (
+                ExecuteCommand(),
+                ["ejecutar", "archivo.cobra", "--contenedor", FIRST_BEST_EFFORT],
+                DOCKER_EXECUTABLE_TARGETS,
+                FIRST_BEST_EFFORT,
+            ),
+            (
+                InteractiveCommand(MagicMock()),
+                ["interactive", "--sandbox-docker", FIRST_BEST_EFFORT],
+                DOCKER_EXECUTABLE_TARGETS,
+                FIRST_BEST_EFFORT,
+            ),
+            (
+                VerifyCommand(),
+                ["verificar", "archivo.cobra", "--lenguajes", FIRST_BEST_EFFORT],
+                VERIFICATION_EXECUTABLE_TARGETS,
+                FIRST_BEST_EFFORT,
+            ),
         ]
     )
 
 
-@pytest.mark.parametrize(("command", "argv", "supported_targets", "unsupported_target"), runtime_error_cases)
-def test_errores_cli_aclran_cuando_un_target_no_tiene_runtime_oficial(command, argv, supported_targets, unsupported_target, caplog):
+@pytest.mark.parametrize(
+    ("command", "argv", "supported_targets", "unsupported_target"), runtime_error_cases
+)
+def test_errores_cli_aclran_cuando_un_target_no_tiene_runtime_oficial(
+    command, argv, supported_targets, unsupported_target, caplog
+):
     parser, _ = _build_parser_for(command)
 
     with pytest.raises(SystemExit):
@@ -104,7 +160,11 @@ def test_errores_cli_aclran_cuando_un_target_no_tiene_runtime_oficial(command, a
     ("command", "runtime_targets", "transpilation_only_targets"),
     [
         (ExecuteCommand(), DOCKER_EXECUTABLE_TARGETS, TRANSPILATION_ONLY_TARGETS),
-        (InteractiveCommand(MagicMock()), DOCKER_EXECUTABLE_TARGETS, TRANSPILATION_ONLY_TARGETS),
+        (
+            InteractiveCommand(MagicMock()),
+            DOCKER_EXECUTABLE_TARGETS,
+            TRANSPILATION_ONLY_TARGETS,
+        ),
         (VerifyCommand(), VERIFICATION_EXECUTABLE_TARGETS, TRANSPILATION_ONLY_TARGETS),
     ],
 )
@@ -144,7 +204,9 @@ def test_verify_parser_documenta_solo_runtimes_ejecutables_en_la_opcion_lenguaje
 
 def test_interactive_run_mantiene_error_centralizado_para_target_invalido_runtime():
     if not FIRST_TRANSPILATION_ONLY:
-        pytest.skip("No hay targets oficiales solo de transpilación en la política pública actual")
+        pytest.skip(
+            "No hay targets oficiales solo de transpilación en la política pública actual"
+        )
 
     cmd = InteractiveCommand(MagicMock())
     args = SimpleNamespace(
@@ -158,9 +220,17 @@ def test_interactive_run_mantiene_error_centralizado_para_target_invalido_runtim
 
     with pytest.MonkeyPatch.context() as mp:
         mensajes: list[str] = []
-        mp.setattr("pcobra.cobra.cli.commands.interactive_cmd.limitar_memoria_mb", lambda *_: None)
-        mp.setattr("pcobra.cobra.cli.commands.interactive_cmd.validar_dependencias", lambda *_: None)
-        mp.setattr("pcobra.cobra.cli.commands.interactive_cmd.mostrar_error", mensajes.append)
+        mp.setattr(
+            "pcobra.cobra.cli.commands.interactive_cmd.limitar_memoria_mb",
+            lambda *_: None,
+        )
+        mp.setattr(
+            "pcobra.cobra.cli.commands.interactive_cmd.validar_dependencias",
+            lambda *_: None,
+        )
+        mp.setattr(
+            "pcobra.cobra.cli.commands.interactive_cmd.mostrar_error", mensajes.append
+        )
         ret = cmd.run(args)
 
     assert ret == 1

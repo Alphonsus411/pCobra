@@ -34,9 +34,18 @@ PRIORITY_FEATURES = (
 )
 
 TRANSPILER_FEATURE_CONSTANTS = {
-    "python": ("pcobra.cobra.transpilers.transpiler.to_python", "PYTHON_FEATURE_NODE_SUPPORT"),
-    "javascript": ("pcobra.cobra.transpilers.transpiler.to_js", "JAVASCRIPT_FEATURE_NODE_SUPPORT"),
-    "rust": ("pcobra.cobra.transpilers.transpiler.to_rust", "RUST_FEATURE_NODE_SUPPORT"),
+    "python": (
+        "pcobra.cobra.transpilers.transpiler.to_python",
+        "PYTHON_FEATURE_NODE_SUPPORT",
+    ),
+    "javascript": (
+        "pcobra.cobra.transpilers.transpiler.to_js",
+        "JAVASCRIPT_FEATURE_NODE_SUPPORT",
+    ),
+    "rust": (
+        "pcobra.cobra.transpilers.transpiler.to_rust",
+        "RUST_FEATURE_NODE_SUPPORT",
+    ),
 }
 
 
@@ -74,7 +83,11 @@ def _feature_nodes(feature: str) -> list[object]:
                 asincronica=True,
             )
         ],
-        "tipos_compuestos": [NodoLlamadaFuncion("longitud", [NodoLista([NodoValor("Ana"), NodoValor("Luis")])])],
+        "tipos_compuestos": [
+            NodoLlamadaFuncion(
+                "longitud", [NodoLista([NodoValor("Ana"), NodoValor("Luis")])]
+            )
+        ],
     }
     return fixtures[feature]
 
@@ -87,7 +100,9 @@ def _contract_status(feature_id: str, backend: str) -> str:
             "tipos_compuestos": "colecciones",
         }[feature_id]
         return AST_FEATURE_MINIMUM_CONTRACT[backend][matrix_key]
-    matrix_key = {"imports_corelibs": "corelibs", "manejo_errores": "holobit"}[feature_id]
+    matrix_key = {"imports_corelibs": "corelibs", "manejo_errores": "holobit"}[
+        feature_id
+    ]
     return BACKEND_COMPATIBILITY[backend][matrix_key]
 
 
@@ -99,7 +114,9 @@ def _contract_status(feature_id: str, backend: str) -> str:
         ("fase_3", ("tipos_compuestos",)),
     ],
 )
-def test_language_equivalence_priority_phases_follow_contract(phase: str, expected: tuple[str, ...]):
+def test_language_equivalence_priority_phases_follow_contract(
+    phase: str, expected: tuple[str, ...]
+):
     assert LANGUAGE_EQUIVALENCE_PRIORITY_PHASES[phase] == expected
 
 
@@ -111,13 +128,17 @@ def test_feature_node_mapping_is_explicit_and_synchronized_across_matrix_and_tra
     matrix_mapping = BACKEND_FEATURE_NODE_SUPPORT[backend][feature]
 
     module_name, constant_name = TRANSPILER_FEATURE_CONSTANTS[backend]
-    transpiler_mapping = getattr(importlib.import_module(module_name), constant_name)[feature]
+    transpiler_mapping = getattr(importlib.import_module(module_name), constant_name)[
+        feature
+    ]
     assert transpiler_mapping == matrix_mapping
 
 
 @pytest.mark.parametrize("backend", OFFICIAL_TARGETS)
 @pytest.mark.parametrize("feature", PRIORITY_FEATURES)
-def test_priority_features_have_minimal_expected_backend_behavior(backend: str, feature: str):
+def test_priority_features_have_minimal_expected_backend_behavior(
+    backend: str, feature: str
+):
     status = _contract_status(feature, backend)
     mapped_nodes = BACKEND_FEATURE_NODE_SUPPORT[backend][feature]
 
@@ -134,7 +155,10 @@ def test_priority_features_have_minimal_expected_backend_behavior(backend: str, 
 PHASE1_ACCEPTANCE_MARKERS = {
     ("rust", "decoradores"): ("// @decorador", "// decorador aplicado:"),
     ("rust", "async"): ("async fn obtener_datos", "return fetch().await;"),
-    ("rust", "imports_corelibs"): ("use crate::corelibs::*;", "use crate::standard_library::*;"),
+    ("rust", "imports_corelibs"): (
+        "use crate::corelibs::*;",
+        "use crate::standard_library::*;",
+    ),
 }
 
 

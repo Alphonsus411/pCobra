@@ -11,7 +11,9 @@ def test_benchmark_execution_time_variance(monkeypatch):
         time.sleep(0.1)
         return [{"backend": "cobra", "time": 0.1, "memory_kb": 1}]
 
-    monkeypatch.setattr(benchmarks_cmd.BenchmarksCommand, "_run_benchmarks", fake_run, raising=False)
+    monkeypatch.setattr(
+        benchmarks_cmd.BenchmarksCommand, "_run_benchmarks", fake_run, raising=False
+    )
     cmd = benchmarks_cmd.BenchmarksCommand()
 
     start = time.perf_counter()

@@ -7,7 +7,6 @@ from pcobra.cobra.stdlib_contract.base import (
     RuntimeMapping,
 )
 
-
 SYSTEM_CONTRACT = ContractDescriptor(
     module="cobra.system",
     public_api=(
@@ -24,11 +23,25 @@ SYSTEM_CONTRACT = ContractDescriptor(
         "cobra.system.dormir",
     ),
     public_exports=(
-        PublicApiExport("cobra.system.leer", "src/pcobra/standard_library/archivo.py", "leer"),
-        PublicApiExport("cobra.system.escribir", "src/pcobra/standard_library/archivo.py", "escribir"),
-        PublicApiExport("cobra.system.adjuntar", "src/pcobra/standard_library/archivo.py", "adjuntar"),
-        PublicApiExport("cobra.system.existe", "src/pcobra/standard_library/archivo.py", "existe"),
-        PublicApiExport("cobra.system.ejecutar", "src/pcobra/corelibs/sistema.py", "ejecutar"),
+        PublicApiExport(
+            "cobra.system.leer", "src/pcobra/standard_library/archivo.py", "leer"
+        ),
+        PublicApiExport(
+            "cobra.system.escribir",
+            "src/pcobra/standard_library/archivo.py",
+            "escribir",
+        ),
+        PublicApiExport(
+            "cobra.system.adjuntar",
+            "src/pcobra/standard_library/archivo.py",
+            "adjuntar",
+        ),
+        PublicApiExport(
+            "cobra.system.existe", "src/pcobra/standard_library/archivo.py", "existe"
+        ),
+        PublicApiExport(
+            "cobra.system.ejecutar", "src/pcobra/corelibs/sistema.py", "ejecutar"
+        ),
         PublicApiExport(
             "cobra.system.ejecutar_comando_async",
             "src/pcobra/corelibs/sistema.py",
@@ -39,10 +52,16 @@ SYSTEM_CONTRACT = ContractDescriptor(
             "src/pcobra/corelibs/sistema.py",
             "obtener_env",
         ),
-        PublicApiExport("cobra.system.listar_dir", "src/pcobra/corelibs/sistema.py", "listar_dir"),
+        PublicApiExport(
+            "cobra.system.listar_dir", "src/pcobra/corelibs/sistema.py", "listar_dir"
+        ),
         PublicApiExport("cobra.system.ahora", "src/pcobra/corelibs/tiempo.py", "ahora"),
-        PublicApiExport("cobra.system.formatear", "src/pcobra/corelibs/tiempo.py", "formatear"),
-        PublicApiExport("cobra.system.dormir", "src/pcobra/corelibs/tiempo.py", "dormir"),
+        PublicApiExport(
+            "cobra.system.formatear", "src/pcobra/corelibs/tiempo.py", "formatear"
+        ),
+        PublicApiExport(
+            "cobra.system.dormir", "src/pcobra/corelibs/tiempo.py", "dormir"
+        ),
     ),
     primary_backend="python",
     allowed_fallback=("rust", "javascript"),
@@ -52,25 +71,49 @@ SYSTEM_CONTRACT = ContractDescriptor(
         core_nativos=("src/pcobra/core/nativos/sistema.js",),
     ),
     coverage=(
-        FunctionCoverage("cobra.system.leer", {"python": "full", "rust": "partial", "javascript": "partial"}),
+        FunctionCoverage(
+            "cobra.system.leer",
+            {"python": "full", "rust": "partial", "javascript": "partial"},
+        ),
         FunctionCoverage(
             "cobra.system.escribir",
             {"python": "full", "rust": "partial", "javascript": "partial"},
         ),
-        FunctionCoverage("cobra.system.adjuntar", {"python": "full", "rust": "partial", "javascript": "partial"}),
-        FunctionCoverage("cobra.system.existe", {"python": "full", "rust": "partial", "javascript": "partial"}),
+        FunctionCoverage(
+            "cobra.system.adjuntar",
+            {"python": "full", "rust": "partial", "javascript": "partial"},
+        ),
+        FunctionCoverage(
+            "cobra.system.existe",
+            {"python": "full", "rust": "partial", "javascript": "partial"},
+        ),
         FunctionCoverage(
             "cobra.system.ejecutar",
             {"python": "full", "rust": "partial", "javascript": "partial"},
         ),
-        FunctionCoverage("cobra.system.ejecutar_comando_async", {"python": "full", "rust": "partial", "javascript": "partial"}),
+        FunctionCoverage(
+            "cobra.system.ejecutar_comando_async",
+            {"python": "full", "rust": "partial", "javascript": "partial"},
+        ),
         FunctionCoverage(
             "cobra.system.obtener_env",
             {"python": "full", "rust": "partial", "javascript": "partial"},
         ),
-        FunctionCoverage("cobra.system.listar_dir", {"python": "full", "rust": "partial", "javascript": "partial"}),
-        FunctionCoverage("cobra.system.ahora", {"python": "full", "rust": "partial", "javascript": "partial"}),
-        FunctionCoverage("cobra.system.formatear", {"python": "full", "rust": "partial", "javascript": "partial"}),
-        FunctionCoverage("cobra.system.dormir", {"python": "full", "rust": "partial", "javascript": "partial"}),
+        FunctionCoverage(
+            "cobra.system.listar_dir",
+            {"python": "full", "rust": "partial", "javascript": "partial"},
+        ),
+        FunctionCoverage(
+            "cobra.system.ahora",
+            {"python": "full", "rust": "partial", "javascript": "partial"},
+        ),
+        FunctionCoverage(
+            "cobra.system.formatear",
+            {"python": "full", "rust": "partial", "javascript": "partial"},
+        ),
+        FunctionCoverage(
+            "cobra.system.dormir",
+            {"python": "full", "rust": "partial", "javascript": "partial"},
+        ),
     ),
 )

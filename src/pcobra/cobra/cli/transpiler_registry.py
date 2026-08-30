@@ -51,7 +51,9 @@ def cli_plugin_transpilers() -> Mapping[str, type]:
     return plugin_transpilers()
 
 
-def cli_register_transpiler_backend(backend: str, transpiler_cls, *, context: str) -> str:
+def cli_register_transpiler_backend(
+    backend: str, transpiler_cls, *, context: str
+) -> str:
     """Registra un backend de plugin delegando al registro canónico."""
     return register_transpiler_backend(backend, transpiler_cls, context=context)
 

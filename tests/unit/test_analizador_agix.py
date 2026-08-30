@@ -181,9 +181,7 @@ def test_generar_sugerencias_codigo_valido_expone_regla_nombres_descriptivos():
 
     reasoner_cls, instancia = _doble_reasoner()
     instancia.select_best_model.side_effect = lambda evaluaciones: next(
-        ev
-        for ev in evaluaciones
-        if ev["rule_id"] == "LP-3.1-NOMBRES-DESCRIPTIVOS"
+        ev for ev in evaluaciones if ev["rule_id"] == "LP-3.1-NOMBRES-DESCRIPTIVOS"
     )
 
     with patch.object(analizador_agix, "Reasoner", reasoner_cls):
@@ -194,9 +192,7 @@ def test_generar_sugerencias_codigo_valido_expone_regla_nombres_descriptivos():
         "[regla: LP-3.1-NOMBRES-DESCRIPTIVOS; §3.1 Léxico]"
     ]
     evaluaciones = instancia.select_best_model.call_args.args[0]
-    assert any(
-        ev["rule_id"] == "LP-3.1-NOMBRES-DESCRIPTIVOS" for ev in evaluaciones
-    )
+    assert any(ev["rule_id"] == "LP-3.1-NOMBRES-DESCRIPTIVOS" for ev in evaluaciones)
 
 
 def test_reglas_libro_programacion_validan_entrada_antes_de_candidatos():
@@ -255,9 +251,7 @@ def test_generar_sugerencias_pasa_argumentos_y_clasifica_fallo_oficial_agix():
     assert capturado.value.__cause__ is error_agix
     evaluaciones = instancia.select_best_model.call_args.args[0]
     assert all(0.0 <= evaluacion["accuracy"] <= 0.5 for evaluacion in evaluaciones)
-    assert all(
-        evaluacion["interpretability"] >= 0.0 for evaluacion in evaluaciones
-    )
+    assert all(evaluacion["interpretability"] >= 0.0 for evaluacion in evaluaciones)
 
 
 def test_motor_canonico_es_agix_y_no_agi_core():

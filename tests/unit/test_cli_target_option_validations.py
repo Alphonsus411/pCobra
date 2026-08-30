@@ -62,19 +62,33 @@ def test_compile_parser_rechaza_lenguajes_no_oficiales(flag, value):
 @pytest.mark.parametrize("target", OFFICIAL_TARGETS)
 def test_benchmarks_run_acepta_backends_canonicos(target, monkeypatch):
     mensajes: list[str] = []
-    monkeypatch.setattr("pcobra.cobra.cli.commands.benchmarks_cmd.Path.exists", lambda _self: False)
-    monkeypatch.setattr("pcobra.cobra.cli.commands.benchmarks_cmd.mostrar_info", lambda m: mensajes.append(m))
-    rc = BenchmarksCommand().run(SimpleNamespace(backend=target, iteraciones=1, output=None))
+    monkeypatch.setattr(
+        "pcobra.cobra.cli.commands.benchmarks_cmd.Path.exists", lambda _self: False
+    )
+    monkeypatch.setattr(
+        "pcobra.cobra.cli.commands.benchmarks_cmd.mostrar_info",
+        lambda m: mensajes.append(m),
+    )
+    rc = BenchmarksCommand().run(
+        SimpleNamespace(backend=target, iteraciones=1, output=None)
+    )
     assert rc == 0
 
 
 @pytest.mark.parametrize("raw_backend", ("c++", "ensamblador"))
 def test_benchmarks_run_rechaza_aliases_legacy(raw_backend, monkeypatch):
     errores: list[str] = []
-    monkeypatch.setattr("pcobra.cobra.cli.commands.benchmarks_cmd.Path.exists", lambda _self: False)
-    monkeypatch.setattr("pcobra.cobra.cli.commands.benchmarks_cmd.mostrar_error", lambda m: errores.append(m))
+    monkeypatch.setattr(
+        "pcobra.cobra.cli.commands.benchmarks_cmd.Path.exists", lambda _self: False
+    )
+    monkeypatch.setattr(
+        "pcobra.cobra.cli.commands.benchmarks_cmd.mostrar_error",
+        lambda m: errores.append(m),
+    )
 
-    rc = BenchmarksCommand().run(SimpleNamespace(backend=raw_backend, iteraciones=1, output=None))
+    rc = BenchmarksCommand().run(
+        SimpleNamespace(backend=raw_backend, iteraciones=1, output=None)
+    )
 
     assert rc == 1
     assert errores
@@ -82,10 +96,17 @@ def test_benchmarks_run_rechaza_aliases_legacy(raw_backend, monkeypatch):
 
 def test_benchmarks_run_rechaza_backend_no_oficial(monkeypatch):
     errores: list[str] = []
-    monkeypatch.setattr("pcobra.cobra.cli.commands.benchmarks_cmd.Path.exists", lambda _self: False)
-    monkeypatch.setattr("pcobra.cobra.cli.commands.benchmarks_cmd.mostrar_error", lambda m: errores.append(m))
+    monkeypatch.setattr(
+        "pcobra.cobra.cli.commands.benchmarks_cmd.Path.exists", lambda _self: False
+    )
+    monkeypatch.setattr(
+        "pcobra.cobra.cli.commands.benchmarks_cmd.mostrar_error",
+        lambda m: errores.append(m),
+    )
 
-    rc = BenchmarksCommand().run(SimpleNamespace(backend="fantasy", iteraciones=1, output=None))
+    rc = BenchmarksCommand().run(
+        SimpleNamespace(backend="fantasy", iteraciones=1, output=None)
+    )
 
     assert rc == 1
     assert errores

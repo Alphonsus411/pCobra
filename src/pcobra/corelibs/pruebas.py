@@ -143,7 +143,9 @@ def lanza_error(
         raise AssertionError(predeterminado) from exc
 
     nombre_esperado = _nombre_tipo_error(tipo_error)
-    raise AssertionError(f"Se esperaba error {nombre_esperado}, pero no se lanzó ninguno")
+    raise AssertionError(
+        f"Se esperaba error {nombre_esperado}, pero no se lanzó ninguno"
+    )
 
 
 def _validar_tipo_error(
@@ -154,11 +156,17 @@ def _validar_tipo_error(
     tipos = tipo_error if isinstance(tipo_error, tuple) else (tipo_error,)
     if not tipos:
         raise TypeError("tipo_error debe incluir al menos una clase de excepción")
-    if not all(isinstance(tipo, type) and issubclass(tipo, BaseException) for tipo in tipos):
-        raise TypeError("tipo_error debe ser una clase de excepción o una tupla de ellas")
+    if not all(
+        isinstance(tipo, type) and issubclass(tipo, BaseException) for tipo in tipos
+    ):
+        raise TypeError(
+            "tipo_error debe ser una clase de excepción o una tupla de ellas"
+        )
 
 
-def _nombre_tipo_error(tipo_error: type[BaseException] | tuple[type[BaseException], ...]) -> str:
+def _nombre_tipo_error(
+    tipo_error: type[BaseException] | tuple[type[BaseException], ...],
+) -> str:
     """Representa de forma estable un tipo o tupla de tipos de excepción."""
 
     if isinstance(tipo_error, tuple):

@@ -1,6 +1,8 @@
 from typing import Any
 
-from pcobra.cobra.architecture.backend_policy import assert_public_command_uses_only_public_backends
+from pcobra.cobra.architecture.backend_policy import (
+    assert_public_command_uses_only_public_backends,
+)
 from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.cli.commands.interactive_cmd import (
     InteractiveCommand,
@@ -22,8 +24,10 @@ from pcobra.cobra.core.semantic_validators import PrimitivaPeligrosaError
 from pcobra.cobra.cli.target_policies import parse_runtime_target
 from pcobra.cobra.cli.utils.unicode_sanitize import sanitize_input
 
+
 class ReplCommandV2(BaseCommand):
     """Comando v2 público para iniciar el REPL de Cobra."""
+
     # Nota técnica:
     # La semántica del camino normal (parseo + ejecución + fallback de
     # expresiones top-level) se define en InteractiveCommand.
@@ -31,6 +35,7 @@ class ReplCommandV2(BaseCommand):
 
     name = "repl"
     capability = "execute"
+
     def __init__(self) -> None:
         super().__init__()
         self._delegate = InteractiveCommand(
@@ -161,7 +166,9 @@ class ReplCommandV2(BaseCommand):
         sandbox = bool(getattr(args, "sandbox", False))
         sandbox_docker = getattr(args, "sandbox_docker", None)
         if sandbox_docker:
-            assert_public_command_uses_only_public_backends(command="repl", targets=(sandbox_docker,))
+            assert_public_command_uses_only_public_backends(
+                command="repl", targets=(sandbox_docker,)
+            )
 
         while True:
             try:

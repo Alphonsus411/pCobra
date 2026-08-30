@@ -115,13 +115,8 @@ def test_misma_secuencia_semantica_equivale_entre_run_y_repl(tmp_path, monkeypat
     monkeypatch.setattr(
         "pcobra.cobra.cli.services.run_service.limitar_cpu_segundos", lambda *_: None
     )
-    codigo = (
-        "mientras verdadero:\n"
-        "    var total = 7\n"
-        "    romper\n"
-        "fin"
-    )
-    archivo = tmp_path / "programa.co"
+    codigo = "mientras verdadero:\n" "    var total = 7\n" "    romper\n" "fin"
+    archivo = tmp_path / "programa.cobra"
     archivo.write_text(codigo, encoding="utf-8")
 
     out_run, err_run = StringIO(), StringIO()
@@ -148,10 +143,7 @@ def test_mutacion_en_mientras_y_lectura_posterior_persisten_en_repl():
     out_repl, err_repl = StringIO(), StringIO()
     with redirect_stdout(out_repl), redirect_stderr(err_repl):
         repl.ejecutar_codigo(
-            "mientras verdadero:\n"
-            "    var dato = 2\n"
-            "    romper\n"
-            "fin"
+            "mientras verdadero:\n" "    var dato = 2\n" "    romper\n" "fin"
         )
         repl.ejecutar_codigo("var dato = 3")
         repl.ejecutar_codigo("imprimir(dato)")
@@ -177,12 +169,7 @@ def test_persistencia_basica_var_x_e_impresion_equivale_entre_run_y_repl():
 def test_bloque_si_comparte_estado_posterior_equivale_entre_run_y_repl():
     resultado_script, resultado_repl = _run_pipeline_and_repl(
         prelude="var x = 5",
-        snippet=(
-            "si verdadero:\n"
-            "    x = x * 2\n"
-            "fin\n"
-            "imprimir(x)"
-        ),
+        snippet=("si verdadero:\n" "    x = x * 2\n" "fin\n" "imprimir(x)"),
         variables_estado=("x",),
     )
 
@@ -198,7 +185,9 @@ def test_bloque_si_comparte_estado_posterior_equivale_entre_run_y_repl():
         ("x * 2", "10"),
     ],
 )
-def test_repl_evalua_expresiones_con_estado_persistente(expresion: str, salida_esperada: str):
+def test_repl_evalua_expresiones_con_estado_persistente(
+    expresion: str, salida_esperada: str
+):
     repl = InteractiveCommand(InterpretadorCobra())
     repl._seguro_repl = False
     repl._extra_validators_repl = None
@@ -223,7 +212,9 @@ def test_repl_fallback_expresion_sin_duplicar_salida_y_nameerror_real_preservado
         repl.ejecutar_codigo("var x = 5")
         repl.ejecutar_codigo("x + 10")
 
-    lineas = [linea.strip() for linea in out_repl.getvalue().splitlines() if linea.strip()]
+    lineas = [
+        linea.strip() for linea in out_repl.getvalue().splitlines() if linea.strip()
+    ]
     assert err_repl.getvalue() == ""
     assert lineas == ["15"]
 
@@ -257,7 +248,9 @@ def test_repl_statement_normal_imprimir_no_duplica_salida():
         repl.ejecutar_codigo("var x = 5")
         repl.ejecutar_codigo("imprimir(x)")
 
-    lineas_salida = [linea for linea in out_repl.getvalue().splitlines() if linea.strip()]
+    lineas_salida = [
+        linea for linea in out_repl.getvalue().splitlines() if linea.strip()
+    ]
     assert err_repl.getvalue() == ""
     assert lineas_salida == ["5"]
 
@@ -265,11 +258,7 @@ def test_repl_statement_normal_imprimir_no_duplica_salida():
 @pytest.mark.integration
 def test_instrucciones_posteriores_a_si_y_llamadas_con_valor_se_ejecutan():
     resultado_script, resultado_repl = _run_pipeline_and_repl(
-        prelude=(
-            "func valor():\n"
-            "    retorno 7\n"
-            "fin"
-        ),
+        prelude=("func valor():\n" "    retorno 7\n" "fin"),
         snippet=(
             "si verdadero:\n"
             "    valor()\n"
@@ -294,20 +283,13 @@ def test_repl_llamada_funcion_auditoria_una_sola_vez_y_retorno_correcto():
 
     with patch("logging.debug") as warning_mock:
         with redirect_stdout(out_repl), redirect_stderr(err_repl):
-            repl.ejecutar_codigo(
-                "func solo_definicion(n):\n"
-                "    retorno n\n"
-                "fin"
-            )
+            repl.ejecutar_codigo("func solo_definicion(n):\n" "    retorno n\n" "fin")
         warnings_definicion = list(warning_mock.call_args_list)
 
         warning_mock.reset_mock()
         with redirect_stdout(out_repl), redirect_stderr(err_repl):
             repl.ejecutar_codigo(
-                "func test(n):\n"
-                "    retorno n * 2\n"
-                "fin\n"
-                "test(1)"
+                "func test(n):\n" "    retorno n * 2\n" "fin\n" "test(1)"
             )
         warnings_llamada_simple = list(warning_mock.call_args_list)
 
@@ -324,7 +306,9 @@ def test_repl_llamada_funcion_auditoria_una_sola_vez_y_retorno_correcto():
             )
         warnings_llamada_anidada = list(warning_mock.call_args_list)
 
-    lineas_salida = [linea.strip() for linea in out_repl.getvalue().splitlines() if linea.strip()]
+    lineas_salida = [
+        linea.strip() for linea in out_repl.getvalue().splitlines() if linea.strip()
+    ]
 
     assert err_repl.getvalue() == ""
     assert warnings_definicion == []
@@ -342,25 +326,18 @@ def test_repl_definir_funcion_triple_no_produce_salida_en_definicion() -> None:
 
     with patch("logging.warning") as warning_mock:
         with redirect_stdout(out_repl), redirect_stderr(err_repl):
-            repl.ejecutar_codigo(
-                "func doble(x):\n"
-                "    retorno x * 2\n"
-                "fin"
-            )
-            repl.ejecutar_codigo(
-                "func triple(x):\n"
-                "    retorno doble(x) + x\n"
-                "fin"
-            )
+            repl.ejecutar_codigo("func doble(x):\n" "    retorno x * 2\n" "fin")
+            repl.ejecutar_codigo("func triple(x):\n" "    retorno doble(x) + x\n" "fin")
 
     assert err_repl.getvalue() == ""
     assert out_repl.getvalue() == ""
     assert warning_mock.call_args_list == []
 
 
-
 @pytest.mark.integration
-def test_repl_incremental_var_var_imprimir_y_nameerror_sin_temporales_internas() -> None:
+def test_repl_incremental_var_var_imprimir_y_nameerror_sin_temporales_internas() -> (
+    None
+):
     repl = InteractiveCommand(InterpretadorCobra())
     repl._seguro_repl = False
     repl._extra_validators_repl = None
@@ -453,7 +430,9 @@ def test_repl_persistencia_entre_entradas_tras_error_intermedio_real() -> None:
             repl.ejecutar_codigo("var y = 10 / 0")
         repl.ejecutar_codigo("imprimir(x)")
 
-    lineas = [linea.strip() for linea in out_repl.getvalue().splitlines() if linea.strip()]
+    lineas = [
+        linea.strip() for linea in out_repl.getvalue().splitlines() if linea.strip()
+    ]
     assert err_repl.getvalue() == ""
     assert lineas == ["5"]
     assert repl.interpretador.contextos[-1].get("x") == 5
@@ -472,7 +451,7 @@ def test_anidacion_condicional_bucle_equivale_en_salida_y_estado(tmp_path, monke
         "    fin\n"
         "fin"
     )
-    archivo = tmp_path / "anidado.co"
+    archivo = tmp_path / "anidado.cobra"
     archivo.write_text(codigo, encoding="utf-8")
 
     out_run, err_run = StringIO(), StringIO()
@@ -567,23 +546,13 @@ def test_error_sintactico_equivale_en_tipo_y_mensaje(codigo_erroneo):
         (
             "mutacion_en_mientras_persiste",
             "var contador = 10",
-            (
-                "mientras verdadero:\n"
-                "    contador = 15\n"
-                "    romper\n"
-                "fin"
-            ),
+            ("mientras verdadero:\n" "    contador = 15\n" "    romper\n" "fin"),
             {"contador": 15},
         ),
         (
             "mutacion_en_mientras_persiste_fuera_del_bucle",
             "var total = 1",
-            (
-                "mientras verdadero:\n"
-                "    total = 4\n"
-                "    romper\n"
-                "fin"
-            ),
+            ("mientras verdadero:\n" "    total = 4\n" "    romper\n" "fin"),
             {"total": 4},
         ),
         (
@@ -628,15 +597,15 @@ def test_runtime_estado_final_paridad_run_vs_repl(
         variables_estado=tuple(variables_esperadas.keys()),
     )
 
-    assert resultado_script["stderr"] == resultado_repl["stderr"] == "", (
-        f"{caso}: no debe haber errores entre run y REPL"
-    )
-    assert resultado_script["estado"] == resultado_repl["estado"], (
-        f"{caso}: el estado final del contexto debe ser equivalente"
-    )
-    assert resultado_script["estado"] == variables_esperadas, (
-        f"{caso}: el estado final debe respetar semántica de scope esperada"
-    )
+    assert (
+        resultado_script["stderr"] == resultado_repl["stderr"] == ""
+    ), f"{caso}: no debe haber errores entre run y REPL"
+    assert (
+        resultado_script["estado"] == resultado_repl["estado"]
+    ), f"{caso}: el estado final del contexto debe ser equivalente"
+    assert (
+        resultado_script["estado"] == variables_esperadas
+    ), f"{caso}: el estado final debe respetar semántica de scope esperada"
 
 
 @pytest.mark.integration
@@ -650,7 +619,9 @@ def test_sandbox_normaliza_safe_mode_y_validadores_igual_en_run_y_repl(monkeypat
             self.extra_validators = extra_validators
             self.contextos = [{}]
             self._usar_symbol_metadata = {}
-            self._validador = type("_ValidadorDummy", (), {"_metadata_simbolos_usar": {}})()
+            self._validador = type(
+                "_ValidadorDummy", (), {"_metadata_simbolos_usar": {}}
+            )()
 
         def ejecutar_ast(self, _ast):
             return None
@@ -666,16 +637,33 @@ def test_sandbox_normaliza_safe_mode_y_validadores_igual_en_run_y_repl(monkeypat
 
     capturas: list[tuple[str, bool | None, object]] = []
 
-    def _capturar_script(codigo, *, safe_mode=None, extra_validators=None, imprimir_resultado=False, main_file=None):
+    def _capturar_script(
+        codigo,
+        *,
+        safe_mode=None,
+        extra_validators=None,
+        imprimir_resultado=False,
+        main_file=None,
+    ):
         capturas.append((codigo, safe_mode, extra_validators))
         return "print('ok')"
 
     monkeypatch.setattr(run_service_module, "InterpretadorCobra", DummyInterp)
     monkeypatch.setattr(interactive_module, "InterpretadorCobra", DummyInterp)
-    monkeypatch.setattr(run_service_module, "construir_script_sandbox_canonico", _capturar_script)
-    monkeypatch.setattr(interactive_module, "construir_script_sandbox_canonico", _capturar_script)
-    monkeypatch.setattr(run_service_module.sandbox_module, "ejecutar_en_sandbox", lambda *_args, **_kwargs: "")
-    monkeypatch.setattr(interactive_module, "ejecutar_en_sandbox", lambda *_args, **_kwargs: "")
+    monkeypatch.setattr(
+        run_service_module, "construir_script_sandbox_canonico", _capturar_script
+    )
+    monkeypatch.setattr(
+        interactive_module, "construir_script_sandbox_canonico", _capturar_script
+    )
+    monkeypatch.setattr(
+        run_service_module.sandbox_module,
+        "ejecutar_en_sandbox",
+        lambda *_args, **_kwargs: "",
+    )
+    monkeypatch.setattr(
+        interactive_module, "ejecutar_en_sandbox", lambda *_args, **_kwargs: ""
+    )
 
     servicio = RunService()
     rc = servicio.ejecutar_en_sandbox(
@@ -693,8 +681,6 @@ def test_sandbox_normaliza_safe_mode_y_validadores_igual_en_run_y_repl(monkeypat
     assert capturas[0][1] is True and capturas[1][1] is True
     assert [getattr(v, "origen", None) for v in capturas[0][2]] == ["uno.py", "dos.py"]
     assert [getattr(v, "origen", None) for v in capturas[1][2]] == ["uno.py", "dos.py"]
-
-
 
 
 @pytest.mark.integration
@@ -719,7 +705,7 @@ def test_paridad_funcional_acotada_run_y_repl_en_declaraciones_secuenciales(
     monkeypatch.setattr(
         "pcobra.cobra.cli.services.run_service.limitar_cpu_segundos", lambda *_: None
     )
-    archivo = tmp_path / f"paridad_{caso}.co"
+    archivo = tmp_path / f"paridad_{caso}.cobra"
     archivo.write_text(codigo + "\n", encoding="utf-8")
 
     out_run, err_run = StringIO(), StringIO()
@@ -759,7 +745,7 @@ def test_run_no_corta_sentencias_posteriores_en_bloque_si(tmp_path, monkeypatch)
         "fin\n"
         'imprimir("fin")\n'
     )
-    archivo = tmp_path / "bloque_si.co"
+    archivo = tmp_path / "bloque_si.cobra"
     archivo.write_text(codigo, encoding="utf-8")
 
     out_run, err_run = StringIO(), StringIO()
@@ -768,15 +754,20 @@ def test_run_no_corta_sentencias_posteriores_en_bloque_si(tmp_path, monkeypatch)
 
     assert rc_run == 0
     assert err_run.getvalue() == ""
-    assert [ln.strip() for ln in out_run.getvalue().splitlines() if ln.strip()] == ["medio", "fin"]
+    assert [ln.strip() for ln in out_run.getvalue().splitlines() if ln.strip()] == [
+        "medio",
+        "fin",
+    ]
 
 
 @pytest.mark.integration
-def test_run_retorno_fuera_de_funcion_muestra_error_corto_sin_traceback(tmp_path, monkeypatch):
+def test_run_retorno_fuera_de_funcion_muestra_error_corto_sin_traceback(
+    tmp_path, monkeypatch
+):
     monkeypatch.setattr(
         "pcobra.cobra.cli.services.run_service.limitar_cpu_segundos", lambda *_: None
     )
-    archivo = tmp_path / "retornar_top_level.co"
+    archivo = tmp_path / "retornar_top_level.cobra"
     archivo.write_text("retornar 1\n", encoding="utf-8")
 
     out_run, err_run = StringIO(), StringIO()
@@ -807,7 +798,7 @@ def test_run_conservar_control_break_y_continue_en_mientras(tmp_path, monkeypatc
         "    fin\n"
         "fin\n"
     )
-    archivo = tmp_path / "control_break_continue.co"
+    archivo = tmp_path / "control_break_continue.cobra"
     archivo.write_text(codigo, encoding="utf-8")
 
     out_run, err_run = StringIO(), StringIO()
@@ -816,12 +807,18 @@ def test_run_conservar_control_break_y_continue_en_mientras(tmp_path, monkeypatc
 
     assert rc_run == 0
     assert err_run.getvalue() == ""
-    assert [ln.strip() for ln in out_run.getvalue().splitlines() if ln.strip()] == ["1", "3", "4"]
+    assert [ln.strip() for ln in out_run.getvalue().splitlines() if ln.strip()] == [
+        "1",
+        "3",
+        "4",
+    ]
 
 
 @pytest.mark.integration
 @pytest.mark.parametrize("con_bom", [True, False])
-def test_run_acepta_utf8_bom_en_frontera_de_entrada(tmp_path, monkeypatch, con_bom: bool):
+def test_run_acepta_utf8_bom_en_frontera_de_entrada(
+    tmp_path, monkeypatch, con_bom: bool
+):
     monkeypatch.setattr(
         "pcobra.cobra.cli.services.run_service.limitar_cpu_segundos", lambda *_: None
     )
@@ -829,7 +826,7 @@ def test_run_acepta_utf8_bom_en_frontera_de_entrada(tmp_path, monkeypatch, con_b
     if con_bom:
         contenido = "\ufeff" + contenido
 
-    archivo = tmp_path / ("programa_bom.co" if con_bom else "programa_sin_bom.co")
+    archivo = tmp_path / ("programa_bom.cobra" if con_bom else "programa_sin_bom.cobra")
     archivo.write_text(contenido, encoding="utf-8")
 
     out_run, err_run = StringIO(), StringIO()
@@ -838,7 +835,10 @@ def test_run_acepta_utf8_bom_en_frontera_de_entrada(tmp_path, monkeypatch, con_b
 
     assert rc_run == 0
     assert err_run.getvalue() == ""
-    assert [ln.strip() for ln in out_run.getvalue().splitlines() if ln.strip()] == ["antes", "despues"]
+    assert [ln.strip() for ln in out_run.getvalue().splitlines() if ln.strip()] == [
+        "antes",
+        "despues",
+    ]
 
 
 @pytest.mark.integration
@@ -848,8 +848,8 @@ def test_run_utf8_bom_y_sin_bom_producen_salida_identica(tmp_path, monkeypatch):
     )
     script = 'imprimir("antes")\nvar x = 3\nimprimir("despues")\n'
 
-    archivo_sin_bom = tmp_path / "script_sin_bom.co"
-    archivo_con_bom = tmp_path / "script_con_bom.co"
+    archivo_sin_bom = tmp_path / "script_sin_bom.cobra"
+    archivo_con_bom = tmp_path / "script_con_bom.cobra"
     archivo_sin_bom.write_text(script, encoding="utf-8")
     archivo_con_bom.write_text("\ufeff" + script, encoding="utf-8")
 
@@ -864,7 +864,10 @@ def test_run_utf8_bom_y_sin_bom_producen_salida_identica(tmp_path, monkeypatch):
         salidas.append(out_run.getvalue())
 
     assert salidas[0] == salidas[1]
-    assert [ln.strip() for ln in salidas[0].splitlines() if ln.strip()] == ["antes", "despues"]
+    assert [ln.strip() for ln in salidas[0].splitlines() if ln.strip()] == [
+        "antes",
+        "despues",
+    ]
 
 
 @pytest.mark.integration
@@ -872,7 +875,7 @@ def test_build_rechaza_programa_semanticamente_invalido_sin_generar_codigo(
     tmp_path, monkeypatch
 ):
     monkeypatch.setenv("SQLITE_DB_KEY", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=")
-    archivo = tmp_path / "invalido.co"
+    archivo = tmp_path / "invalido.cobra"
     archivo.write_text("imprimir(no_definida)\n", encoding="utf-8")
 
     out_build, err_build = StringIO(), StringIO()
@@ -891,8 +894,8 @@ def test_build_utf8_bom_y_sin_bom_compilan_sin_token_bom(tmp_path, monkeypatch):
     monkeypatch.setenv("SQLITE_DB_KEY", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=")
     script = 'imprimir("hola")\n'
 
-    archivo_sin_bom = tmp_path / "build_sin_bom.co"
-    archivo_con_bom = tmp_path / "build_con_bom.co"
+    archivo_sin_bom = tmp_path / "build_sin_bom.cobra"
+    archivo_con_bom = tmp_path / "build_con_bom.cobra"
     archivo_sin_bom.write_text(script, encoding="utf-8")
     archivo_con_bom.write_text("\ufeff" + script, encoding="utf-8")
 
@@ -927,17 +930,17 @@ def test_run_usar_modulos_oficiales_produce_salida_exacta(tmp_path, monkeypatch)
         'usar "datos"\n'
         'imprimir("antes")\n'
         'imprimir("despues")\n'
-        'imprimir(mcd(16, 24))\n'
-        'imprimir(es_finito(8))\n'
+        "imprimir(mcd(16, 24))\n"
+        "imprimir(es_finito(8))\n"
         'imprimir(existe("README.md"))\n'
         'imprimir(existe("pyproject.toml"))\n'
         'imprimir(existe("../README.md"))\n'
         'imprimir(mayusculas("cobra"))\n'
         'imprimir(reemplazar("mi-cancion", "mi-", ""))\n'
-        'imprimir(longitud([1, 2, 3]))\n'
-        'imprimir(elemento([10, 20, 30], 1))\n'
+        "imprimir(longitud([1, 2, 3]))\n"
+        "imprimir(elemento([10, 20, 30], 1))\n"
     )
-    archivo = tmp_path / "modulos_oficiales.co"
+    archivo = tmp_path / "modulos_oficiales.cobra"
     archivo.write_text(codigo, encoding="utf-8")
 
     out_run, err_run = StringIO(), StringIO()
@@ -962,13 +965,17 @@ def test_run_usar_modulos_oficiales_produce_salida_exacta(tmp_path, monkeypatch)
 
 
 @pytest.mark.integration
-def test_run_error_lexico_sigue_siendo_corto_sin_traceback_con_y_sin_bom(tmp_path, monkeypatch):
+def test_run_error_lexico_sigue_siendo_corto_sin_traceback_con_y_sin_bom(
+    tmp_path, monkeypatch
+):
     monkeypatch.setattr(
         "pcobra.cobra.cli.services.run_service.limitar_cpu_segundos", lambda *_: None
     )
 
     for prefijo in ("", "\ufeff"):
-        archivo = tmp_path / ("error_sin_bom.co" if not prefijo else "error_con_bom.co")
+        archivo = tmp_path / (
+            "error_sin_bom.cobra" if not prefijo else "error_con_bom.cobra"
+        )
         archivo.write_text(prefijo + 'imprimir("cadena sin cerrar)\n', encoding="utf-8")
 
         out_run, err_run = StringIO(), StringIO()
@@ -986,7 +993,7 @@ def test_run_usar_numpy_rechaza_sin_traceback_ni_error_duplicado(tmp_path, monke
     monkeypatch.setattr(
         "pcobra.cobra.cli.services.run_service.limitar_cpu_segundos", lambda *_: None
     )
-    archivo = tmp_path / "numpy.co"
+    archivo = tmp_path / "numpy.cobra"
     archivo.write_text('usar "numpy"\n', encoding="utf-8")
 
     out_run, err_run = StringIO(), StringIO()
@@ -1008,7 +1015,7 @@ def test_run_usar_archivo_habilita_existe_readme_local(tmp_path, monkeypatch):
         "pcobra.cobra.cli.services.run_service.limitar_cpu_segundos", lambda *_: None
     )
     codigo = 'usar "archivo"\nimprimir(existe("README.md"))\n'
-    archivo = tmp_path / "programa.co"
+    archivo = tmp_path / "programa.cobra"
     archivo.write_text(codigo, encoding="utf-8")
 
     out_run, err_run = StringIO(), StringIO()
@@ -1021,12 +1028,14 @@ def test_run_usar_archivo_habilita_existe_readme_local(tmp_path, monkeypatch):
 
 
 @pytest.mark.integration
-def test_run_usar_archivo_existe_parent_es_falso_por_wrapper_seguro(tmp_path, monkeypatch):
+def test_run_usar_archivo_existe_parent_es_falso_por_wrapper_seguro(
+    tmp_path, monkeypatch
+):
     monkeypatch.setattr(
         "pcobra.cobra.cli.services.run_service.limitar_cpu_segundos", lambda *_: None
     )
     codigo = 'usar "archivo"\nimprimir(existe("../README.md"))\n'
-    archivo = tmp_path / "programa.co"
+    archivo = tmp_path / "programa.cobra"
     archivo.write_text(codigo, encoding="utf-8")
 
     out_run, err_run = StringIO(), StringIO()
@@ -1044,7 +1053,7 @@ def test_run_existe_sin_usar_archivo_permanece_bloqueado(tmp_path, monkeypatch):
         "pcobra.cobra.cli.services.run_service.limitar_cpu_segundos", lambda *_: None
     )
     codigo = 'imprimir(existe("README.md"))\n'
-    archivo = tmp_path / "programa.co"
+    archivo = tmp_path / "programa.cobra"
     archivo.write_text(codigo, encoding="utf-8")
 
     out_run, err_run = StringIO(), StringIO()
@@ -1058,12 +1067,14 @@ def test_run_existe_sin_usar_archivo_permanece_bloqueado(tmp_path, monkeypatch):
 
 
 @pytest.mark.integration
-def test_run_error_funcion_no_declarada_conserva_identificador_completo(tmp_path, monkeypatch):
+def test_run_error_funcion_no_declarada_conserva_identificador_completo(
+    tmp_path, monkeypatch
+):
     monkeypatch.setattr(
         "pcobra.cobra.cli.services.run_service.limitar_cpu_segundos", lambda *_: None
     )
     codigo = 'usar "numero"\nimprimir(funcion_que_no_existe(1))\n'
-    archivo = tmp_path / "funcion_no_declarada.co"
+    archivo = tmp_path / "funcion_no_declarada.cobra"
     archivo.write_text(codigo, encoding="utf-8")
 
     out_run, err_run = StringIO(), StringIO()

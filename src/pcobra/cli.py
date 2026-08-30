@@ -188,6 +188,25 @@ def build_legacy_cli_shim_main(ruta_modulo_legacy: str):
         from pcobra.cobra.cli.cli import CliApplication
 
         configure_encoding()
+
+        argv_logging = list(argv if argv is not None else sys.argv[1:])
+        debug = "--debug" in argv_logging
+        verbose = 0
+        for argumento in argv_logging:
+            if argumento in {"-v", "--verbose"}:
+                verbose += 1
+            elif argumento.startswith("--verbose="):
+                try:
+                    verbose += int(argumento.split("=", 1)[1] or 0)
+                except ValueError:
+                    verbose += 1
+
+        configure_logging(debug=debug, verbose=verbose)
+        if debug:
+            os.environ["PCOBRA_DEBUG_TRACES"] = "1"
+        else:
+            os.environ.pop("PCOBRA_DEBUG_TRACES", None)
+
         previous_profile = os.environ.get("COBRA_CLI_COMMAND_PROFILE")
         if previous_profile is None:
             os.environ["COBRA_CLI_COMMAND_PROFILE"] = "development"

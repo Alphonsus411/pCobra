@@ -8,6 +8,3 @@ from pcobra.cobra.transpilers.compatibility_matrix import (
     PUBLIC_BACKEND_COMPATIBILITY,
     SDK_PARTIAL_BACKENDS,
 )
-
-
-

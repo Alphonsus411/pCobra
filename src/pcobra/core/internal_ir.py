@@ -39,7 +39,6 @@ from .ast_nodes import (
     NodoTryCatch,
 )
 
-
 # ---------------------------------------------------------------------------
 #  Dataclasses que describen el IR interno
 # ---------------------------------------------------------------------------
@@ -247,7 +246,9 @@ def _convert_statement(node) -> InternalIRStatement:
     if isinstance(node, NodoAsignacion):
         nombre = getattr(node, "identificador", node.variable)
         valor = getattr(node, "expresion", getattr(node, "valor", None))
-        return InternalIRAssignment(_target_name(nombre), _expr_to_text(valor), node.inferencia)
+        return InternalIRAssignment(
+            _target_name(nombre), _expr_to_text(valor), node.inferencia
+        )
 
     if isinstance(node, NodoCondicional):
         cond = _expr_to_text(node.condicion)
@@ -284,7 +285,9 @@ def _convert_statement(node) -> InternalIRStatement:
         )
 
     if isinstance(node, NodoRetorno):
-        valor = _expr_to_text(node.expresion) if getattr(node, "expresion", None) else None
+        valor = (
+            _expr_to_text(node.expresion) if getattr(node, "expresion", None) else None
+        )
         return InternalIRReturn(valor)
 
     if isinstance(node, NodoLlamadaFuncion):
@@ -300,7 +303,9 @@ def _convert_statement(node) -> InternalIRStatement:
         return InternalIRPrint(_expr_to_text(node.expresion))
 
     if isinstance(node, NodoHolobit):
-        return InternalIRHolobit(node.nombre or "", [_expr_to_text(v) for v in node.valores])
+        return InternalIRHolobit(
+            node.nombre or "", [_expr_to_text(v) for v in node.valores]
+        )
 
     if isinstance(node, NodoProyectar):
         return InternalIRCall(

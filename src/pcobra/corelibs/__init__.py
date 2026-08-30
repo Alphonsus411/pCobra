@@ -185,6 +185,7 @@ from .coleccion import (
 from .seguridad import hash_sha256, generar_uuid
 from .red import (
     obtener_url,
+    obtener_url_texto,
     obtener_url_async,
     enviar_post,
     enviar_post_async,
@@ -194,6 +195,7 @@ from .sistema import (
     obtener_os,
     ejecutar,
     ejecutar_async,
+    ejecutar_comando_async,
     ejecutar_stream,
     obtener_env,
     listar_dir,
@@ -406,6 +408,7 @@ __all__ = [
     "hash_sha256",
     "generar_uuid",
     "obtener_url",
+    "obtener_url_texto",
     "obtener_url_async",
     "enviar_post",
     "enviar_post_async",
@@ -413,6 +416,7 @@ __all__ = [
     "obtener_os",
     "ejecutar",
     "ejecutar_async",
+    "ejecutar_comando_async",
     "ejecutar_stream",
     "obtener_env",
     "listar_dir",
@@ -545,7 +549,7 @@ centrar_texto.__doc__ = (
 
 rellenar_ceros.__doc__ = (
     "Reexporta :func:`pcobra.corelibs.texto.rellenar_ceros`. Es análogo a ``str.zfill``"
-    " de Python, a ``fmt.Sprintf(\"%0*d\", ancho, valor)`` en Go y a ``padStart``"
+    ' de Python, a ``fmt.Sprintf("%0*d", ancho, valor)`` en Go y a ``padStart``'
     " con ceros en JavaScript."
 )
 

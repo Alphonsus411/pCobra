@@ -25,9 +25,19 @@ from __future__ import annotations
 
 import asyncio
 
-from typing import Any, Awaitable, Callable, Coroutine, Iterable, Mapping, Sequence, TypeVar
+from typing import (
+    Any,
+    Awaitable,
+    Callable,
+    Coroutine,
+    Iterable,
+    Mapping,
+    Sequence,
+    TypeVar,
+)
 
 from .archivo import leer, escribir, adjuntar, existe
+
 DATOS_EXPORTS = [
     "agrupar_y_resumir",
     "a_listas",
@@ -74,9 +84,7 @@ except ModuleNotFoundError as exc:  # pragma: no cover - depende de extras
             ) from _MISSING_DATOS_ERROR
 
         _stub.__name__ = nombre
-        _stub.__doc__ = (
-            "Función no disponible: requiere dependencias opcionales 'pandas' y 'numpy'."
-        )
+        _stub.__doc__ = "Función no disponible: requiere dependencias opcionales 'pandas' y 'numpy'."
         return _stub
 
     for _nombre in DATOS_EXPORTS:
@@ -312,23 +320,58 @@ leer_json: Callable[..., list[dict[str, Any]]]
 leer_excel: Callable[..., list[dict[str, Any]]]
 leer_parquet: Callable[..., list[dict[str, Any]]]
 leer_feather: Callable[..., list[dict[str, Any]]]
-describir: Callable[[Iterable[dict[str, Any]] | Mapping[str, Sequence[Any]]], dict[str, Any]]
-correlacion_pearson: Callable[[Iterable[dict[str, Any]] | Mapping[str, Sequence[Any]]], dict[str, dict[str, Any]]]
-correlacion_spearman: Callable[[Iterable[dict[str, Any]] | Mapping[str, Sequence[Any]]], dict[str, dict[str, Any]]]
-matriz_covarianza: Callable[[Iterable[dict[str, Any]] | Mapping[str, Sequence[Any]]], dict[str, dict[str, Any]]]
+describir: Callable[
+    [Iterable[dict[str, Any]] | Mapping[str, Sequence[Any]]], dict[str, Any]
+]
+correlacion_pearson: Callable[
+    [Iterable[dict[str, Any]] | Mapping[str, Sequence[Any]]], dict[str, dict[str, Any]]
+]
+correlacion_spearman: Callable[
+    [Iterable[dict[str, Any]] | Mapping[str, Sequence[Any]]], dict[str, dict[str, Any]]
+]
+matriz_covarianza: Callable[
+    [Iterable[dict[str, Any]] | Mapping[str, Sequence[Any]]], dict[str, dict[str, Any]]
+]
 calcular_percentiles: Callable[..., dict[str, dict[str, Any]]]
-resumen_rapido: Callable[[Iterable[dict[str, Any]] | Mapping[str, Sequence[Any]]], list[dict[str, Any]]]
-seleccionar_columnas: Callable[[Iterable[dict[str, Any]] | Mapping[str, Sequence[Any]], Sequence[str]], list[dict[str, Any]]]
-filtrar: Callable[[Iterable[dict[str, Any]] | Mapping[str, Sequence[Any]], Callable[[dict[str, Any]], bool]], list[dict[str, Any]]]
+resumen_rapido: Callable[
+    [Iterable[dict[str, Any]] | Mapping[str, Sequence[Any]]], list[dict[str, Any]]
+]
+seleccionar_columnas: Callable[
+    [Iterable[dict[str, Any]] | Mapping[str, Sequence[Any]], Sequence[str]],
+    list[dict[str, Any]],
+]
+filtrar: Callable[
+    [
+        Iterable[dict[str, Any]] | Mapping[str, Sequence[Any]],
+        Callable[[dict[str, Any]], bool],
+    ],
+    list[dict[str, Any]],
+]
 mapear: Callable[[Iterable[Any], Callable[[Any], Any]], list[Any]]
 reducir: Callable[[Iterable[Any], Callable[[Any, Any], Any], Any], Any]
-mutar_columna: Callable[[Iterable[dict[str, Any]] | Mapping[str, Sequence[Any]], str, Callable[[dict[str, Any]], Any]], list[dict[str, Any]]]
+mutar_columna: Callable[
+    [
+        Iterable[dict[str, Any]] | Mapping[str, Sequence[Any]],
+        str,
+        Callable[[dict[str, Any]], Any],
+    ],
+    list[dict[str, Any]],
+]
 pivotar_ancho: Callable[..., list[dict[str, Any]]]
 pivotar_largo: Callable[..., list[dict[str, Any]]]
 desplegar_tabla: Callable[..., list[dict[str, Any]]]
 tabla_cruzada: Callable[..., list[dict[str, Any]]]
-agrupar_y_resumir: Callable[[Iterable[dict[str, Any]] | Mapping[str, Sequence[Any]], Sequence[str], Mapping[str, Any]], list[dict[str, Any]]]
-a_listas: Callable[[Iterable[dict[str, Any]] | Mapping[str, Sequence[Any]]], dict[str, list[Any]]]
+agrupar_y_resumir: Callable[
+    [
+        Iterable[dict[str, Any]] | Mapping[str, Sequence[Any]],
+        Sequence[str],
+        Mapping[str, Any],
+    ],
+    list[dict[str, Any]],
+]
+a_listas: Callable[
+    [Iterable[dict[str, Any]] | Mapping[str, Sequence[Any]]], dict[str, list[Any]]
+]
 de_listas: Callable[[Mapping[str, Sequence[Any]]], list[dict[str, Any]]]
 escribir_csv: Callable[..., None]
 escribir_json: Callable[..., None]
@@ -349,7 +392,9 @@ iniciar_gui: Callable[..., None]
 iniciar_gui_idle: Callable[..., None]
 
 T_co = TypeVar("T_co")
-proteger_tarea: Callable[[Awaitable[T_co] | Coroutine[Any, Any, T_co]], asyncio.Future[T_co]]
+proteger_tarea: Callable[
+    [Awaitable[T_co] | Coroutine[Any, Any, T_co]], asyncio.Future[T_co]
+]
 ejecutar_en_hilo: Callable[..., Awaitable[Any]]
 
 memoizar: Callable[..., Callable[..., Any]]

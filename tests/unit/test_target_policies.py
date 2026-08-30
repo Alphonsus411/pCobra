@@ -47,5 +47,7 @@ def test_parse_target_list_rechaza_valores_fuera_del_set_canonico_en_cualquier_p
 
 def test_parse_target_emite_advertencia_consistente_en_backend_interno(monkeypatch):
     monkeypatch.setenv("COBRA_INTERNAL_LEGACY_TARGETS", "1")
-    with pytest.raises(RuntimeError, match="Legacy backend lifecycle deshabilitado por defecto"):
+    with pytest.raises(
+        RuntimeError, match="Legacy backend lifecycle deshabilitado por defecto"
+    ):
         parse_target("go")

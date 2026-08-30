@@ -16,7 +16,9 @@ def test_overview_declara_frontera_publica_unica():
 
 def test_overview_marca_superficies_migracion_interna():
     assert INTERNAL_MIGRATION_ONLY_SURFACES["cli_v1"] == "internal migration only"
-    assert INTERNAL_MIGRATION_ONLY_SURFACES["legacy_targets"] == "internal migration only"
+    assert (
+        INTERNAL_MIGRATION_ONLY_SURFACES["legacy_targets"] == "internal migration only"
+    )
     assert "bench" in INTERNAL_MIGRATION_ONLY_SURFACES["obsolete_commands"]
 
 

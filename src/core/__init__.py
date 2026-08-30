@@ -11,6 +11,7 @@ Implementación:
 - replica ``__path__`` para que ``import core.algo`` siga resolviendo los
   submódulos reales de ``pcobra.core``.
 """
+
 # pcobra-compat: allow-legacy-imports
 
 from __future__ import annotations
@@ -68,5 +69,5 @@ sys.modules.setdefault(_target_name, _target)
 sys.modules.setdefault(__name__, sys.modules[__name__])
 for _mod_name, _mod in list(sys.modules.items()):
     if _mod_name.startswith(f"{_target_name}."):
-        alias = __name__ + _mod_name[len(_target_name):]
+        alias = __name__ + _mod_name[len(_target_name) :]
         sys.modules.setdefault(alias, _mod)

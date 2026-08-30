@@ -7,7 +7,6 @@ import pytest
 
 from pcobra.standard_library import decoradores
 
-
 EXPECTED_DECORATORS = {
     "memoizar",
     "dataclase",
@@ -93,7 +92,9 @@ def test_sincronizar_rechaza_corutinas():
 async def test_reintentar_async_reintenta_hasta_exito():
     estado = {"intentos": 0}
 
-    @decoradores.reintentar_async(intentos=3, excepciones=(ValueError,), retardo_inicial=0, estilizar=False)
+    @decoradores.reintentar_async(
+        intentos=3, excepciones=(ValueError,), retardo_inicial=0, estilizar=False
+    )
     async def operacion() -> str:
         estado["intentos"] += 1
         if estado["intentos"] < 2:
@@ -109,7 +110,9 @@ def test_reintentar_reintenta_hasta_exito(monkeypatch: pytest.MonkeyPatch):
 
     estado = {"intentos": 0}
 
-    @decoradores.reintentar(intentos=3, excepciones=(RuntimeError,), retardo_inicial=0, estilizar=False)
+    @decoradores.reintentar(
+        intentos=3, excepciones=(RuntimeError,), retardo_inicial=0, estilizar=False
+    )
     def operacion() -> str:
         estado["intentos"] += 1
         if estado["intentos"] < 3:

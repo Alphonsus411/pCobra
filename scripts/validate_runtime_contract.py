@@ -22,8 +22,12 @@ from pcobra.cobra.cli.target_policies import (
     validate_runtime_support_contract,
 )
 from pcobra.cobra.stdlib_contract.validator import validate_contracts
-from pcobra.cobra.stdlib_contract.validator import validate_contracts_against_runtime_matrix
-from pcobra.cobra.stdlib_contract.validator import validate_generated_stdlib_contract_matrix
+from pcobra.cobra.stdlib_contract.validator import (
+    validate_contracts_against_runtime_matrix,
+)
+from pcobra.cobra.stdlib_contract.validator import (
+    validate_generated_stdlib_contract_matrix,
+)
 from pcobra.cobra.usar_loader import USAR_COBRA_PUBLIC_MODULES
 
 from pcobra.cobra.transpilers.compatibility_matrix import (
@@ -31,8 +35,6 @@ from pcobra.cobra.transpilers.compatibility_matrix import (
     BACKEND_FEATURE_GAPS,
     CONTRACT_FEATURES,
 )
-
-
 
 USAR_COBRA_PUBLIC_MODULES_EXPECTED: tuple[str, ...] = (
     "numero",
@@ -45,7 +47,19 @@ USAR_COBRA_PUBLIC_MODULES_EXPECTED: tuple[str, ...] = (
     "tiempo",
     "red",
     "holobit",
+    "ruta",
+    "serializacion",
+    "proceso",
+    "registro",
+    "argumentos",
+    "pruebas",
+    "temporal",
+    "cripto",
+    "regex",
+    "compresion",
+    "configuracion",
 )
+
 
 def main() -> int:
     validate_runtime_support_contract()

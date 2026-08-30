@@ -5,7 +5,7 @@ from cobra.cli.utils.messages import color_disabled
 
 
 def test_cli_ejecutar_archivo_inexistente(tmp_path, capsys):
-    archivo = tmp_path / "no.co"
+    archivo = tmp_path / "no.cobra"
     cmd = ExecuteCommand()
     args = Namespace(archivo=str(archivo), sandbox=False, contenedor=None)
     with color_disabled():

@@ -59,7 +59,7 @@ def _ejecutar_por_ruta_script(
                     PipelineInput(
                         codigo=prelude,
                         interpretador_cls=interpretador_cls,
-                        safe_mode=False, # Fixed: Use explicit False
+                        safe_mode=seguro,
                         extra_validators=None,
                     )
                 )
@@ -68,7 +68,7 @@ def _ejecutar_por_ruta_script(
                 PipelineInput(
                     codigo=codigo,
                     interpretador_cls=interpretador_cls,
-                    safe_mode=False, # Fixed: Use explicit False
+                    safe_mode=seguro,
                     extra_validators=None,
                     interpretador=interpretador,
                 )
@@ -139,12 +139,12 @@ def _ejecutar_snippets_secuenciales_script(
                 for snippet in snippets:
                     setup, resultado_pipeline = ejecutar_pipeline_explicito(
                         PipelineInput(
-                        codigo=snippet,
-                        interpretador_cls=interpretador_cls,
-                        safe_mode=False, # Added safe_mode
-                        extra_validators=None,
-                        interpretador=interpretador,
-                    )
+                            codigo=snippet,
+                            interpretador_cls=interpretador_cls,
+                            safe_mode=False,  # Added safe_mode
+                            extra_validators=None,
+                            interpretador=interpretador,
+                        )
                     )
                     interpretador = setup.interpretador
             except Exception as err:  # noqa: BLE001 - contrato de paridad
@@ -202,7 +202,9 @@ def _ejecutar_snippets_secuenciales_repl(
 
 def _ejecutar_repl_v2_con_entradas(entradas: list[str]) -> dict[str, object]:
     repl = repl_v2_module.ReplCommandV2()
-    args = SimpleNamespace(seguro=False, extra_validators=None, sandbox=False, sandbox_docker=None)
+    args = SimpleNamespace(
+        seguro=False, extra_validators=None, sandbox=False, sandbox_docker=None
+    )
     out_repl, err_repl = StringIO(), StringIO()
     with redirect_stdout(out_repl), redirect_stderr(err_repl):
         with patch.object(
@@ -295,24 +297,30 @@ def test_paridad_script_vs_repl_con_snippets_secuenciales_y_estado_final() -> No
     assert resultado_repl["error"] is None
     assert resultado_script["error"] is None
     assert resultado_script["stderr"] == resultado_repl["stderr"] == ""
-    assert _normalizar_stdout_paridad(resultado_script["stdout"]) == _normalizar_stdout_paridad(
-        resultado_repl["stdout"]
-    ) == ""
-    assert resultado_script["estado"] == resultado_repl["estado"] == {
-        "acumulado": 1,
-    }
+    assert (
+        _normalizar_stdout_paridad(resultado_script["stdout"])
+        == _normalizar_stdout_paridad(resultado_repl["stdout"])
+        == ""
+    )
+    assert (
+        resultado_script["estado"]
+        == resultado_repl["estado"]
+        == {
+            "acumulado": 1,
+        }
+    )
 
 
 @pytest.mark.integration
 def test_run_script_no_interrumpe_secuencia_con_asignacion_var_variable() -> None:
-    codigo = (
-        'imprimir("antes")\n'
-        "var x = 3\n"
-        'imprimir("despues")'
-    )
+    codigo = 'imprimir("antes")\n' "var x = 3\n" 'imprimir("despues")'
 
     resultado = _ejecutar_por_ruta_script(codigo, ("x",))
-    lineas = [linea.strip() for linea in str(resultado["stdout"]).splitlines() if linea.strip()]
+    lineas = [
+        linea.strip()
+        for linea in str(resultado["stdout"]).splitlines()
+        if linea.strip()
+    ]
 
     assert resultado["stderr"] == ""
     assert lineas == ["antes", "despues"]
@@ -327,8 +335,12 @@ def test_paridad_script_vs_repl_con_error_en_snippet_secuencial() -> None:
         "imprimir(no_existe_en_ambas_rutas)",
     ]
 
-    resultado_script = _ejecutar_snippets_secuenciales_script(snippets, variables_estado=("base",))
-    resultado_repl = _ejecutar_snippets_secuenciales_repl(snippets, variables_estado=("base",))
+    resultado_script = _ejecutar_snippets_secuenciales_script(
+        snippets, variables_estado=("base",)
+    )
+    resultado_repl = _ejecutar_snippets_secuenciales_repl(
+        snippets, variables_estado=("base",)
+    )
 
     assert resultado_script["error"] is not None
     assert resultado_repl["error"] is not None
@@ -359,9 +371,9 @@ def test_paridad_script_vs_repl_bloque_anidado_mientras_con_si_y_fin() -> None:
 
     assert resultado_script["stderr"] == resultado_repl["stderr"] == ""
     assert resultado_repl["error"] is None
-    assert _normalizar_stdout_paridad(resultado_script["stdout"]) == _normalizar_stdout_paridad(
-        resultado_repl["stdout"]
-    )
+    assert _normalizar_stdout_paridad(
+        resultado_script["stdout"]
+    ) == _normalizar_stdout_paridad(resultado_repl["stdout"])
     assert resultado_script["estado"] == resultado_repl["estado"] == {"acumulado": 0}
 
 
@@ -428,12 +440,16 @@ def test_repl_v2_detecta_bloque_anidado_completo_solo_por_parser() -> None:
 
 
 @pytest.mark.integration
-def test_repl_v2_echo_expresiones_y_estado_persistente_en_entradas_secuenciales() -> None:
-    resultado = _ejecutar_repl_v2_con_entradas([
-        "var x = 5",
-        "x + 10",
-        "x * 2",
-    ])
+def test_repl_v2_echo_expresiones_y_estado_persistente_en_entradas_secuenciales() -> (
+    None
+):
+    resultado = _ejecutar_repl_v2_con_entradas(
+        [
+            "var x = 5",
+            "x + 10",
+            "x * 2",
+        ]
+    )
 
     lineas = _lineas_stdout_repl_v2(resultado)
 
@@ -443,9 +459,11 @@ def test_repl_v2_echo_expresiones_y_estado_persistente_en_entradas_secuenciales(
 
 @pytest.mark.integration
 def test_repl_v2_reporta_error_real_en_expresion_con_variable_no_declarada() -> None:
-    resultado = _ejecutar_repl_v2_con_entradas([
-        "x + 10",
-    ])
+    resultado = _ejecutar_repl_v2_con_entradas(
+        [
+            "x + 10",
+        ]
+    )
 
     assert resultado["stderr"] == ""
     assert "Variable no declarada: x" in str(resultado["stdout"])
@@ -454,13 +472,15 @@ def test_repl_v2_reporta_error_real_en_expresion_con_variable_no_declarada() -> 
 
 @pytest.mark.integration
 def test_repl_v2_no_altera_semantica_en_statements_var_imprimir_y_si_fin() -> None:
-    resultado = _ejecutar_repl_v2_con_entradas([
-        "var bandera = verdadero",
-        "si bandera:",
-        "    imprimir(10)",
-        "fin",
-        "imprimir(20)",
-    ])
+    resultado = _ejecutar_repl_v2_con_entradas(
+        [
+            "var bandera = verdadero",
+            "si bandera:",
+            "    imprimir(10)",
+            "fin",
+            "imprimir(20)",
+        ]
+    )
 
     lineas = _lineas_stdout_repl_v2(resultado)
 
@@ -502,9 +522,7 @@ def test_repl_incremental_var_var_imprimir_sin_regresion_cse_y_estado_final() ->
 def test_repl_incremental_con_bloque_si_comparte_estado_y_sin_regresion_cse() -> None:
     snippets = [
         "var x = 5",
-        "si verdadero:\n"
-        "    x = x * 2\n"
-        "fin",
+        "si verdadero:\n" "    x = x * 2\n" "fin",
         "imprimir(x)",
     ]
     resultado = _ejecutar_snippets_secuenciales_repl(
@@ -532,11 +550,13 @@ def test_repl_incremental_con_bloque_si_comparte_estado_y_sin_regresion_cse() ->
 
 @pytest.mark.integration
 def test_repl_v2_conserva_variables_tras_error_intermedio_real() -> None:
-    resultado = _ejecutar_repl_v2_con_entradas([
-        "var x = 5",
-        "var y = 10 / 0",
-        "imprimir(x)",
-    ])
+    resultado = _ejecutar_repl_v2_con_entradas(
+        [
+            "var x = 5",
+            "var y = 10 / 0",
+            "imprimir(x)",
+        ]
+    )
 
     lineas = _lineas_stdout_repl_v2(resultado)
     evidencia = "\n".join(lineas)
@@ -548,12 +568,14 @@ def test_repl_v2_conserva_variables_tras_error_intermedio_real() -> None:
 
 @pytest.mark.integration
 def test_repl_v2_fallback_expresion_sin_duplicar_y_nameerror_real() -> None:
-    resultado = _ejecutar_repl_v2_con_entradas([
-        "var x = 5",
-        "x + 10",
-        "x + 10",
-        "no_definida + 1",
-    ])
+    resultado = _ejecutar_repl_v2_con_entradas(
+        [
+            "var x = 5",
+            "x + 10",
+            "x + 10",
+            "no_definida + 1",
+        ]
+    )
 
     lineas = _lineas_stdout_repl_v2(resultado)
     lineas_15 = [linea for linea in lineas if linea == "15"]
@@ -565,10 +587,12 @@ def test_repl_v2_fallback_expresion_sin_duplicar_y_nameerror_real() -> None:
 
 @pytest.mark.integration
 def test_repl_v2_regresion_var_21_y_expresion_usa_misma_sesion() -> None:
-    resultado = _ejecutar_repl_v2_con_entradas([
-        "var x = 21",
-        "x * 2",
-    ])
+    resultado = _ejecutar_repl_v2_con_entradas(
+        [
+            "var x = 21",
+            "x * 2",
+        ]
+    )
 
     lineas = _lineas_stdout_repl_v2(resultado)
     interpretador = resultado["interpretador"]
@@ -580,13 +604,15 @@ def test_repl_v2_regresion_var_21_y_expresion_usa_misma_sesion() -> None:
 
 @pytest.mark.integration
 def test_repl_v2_regresion_bloque_si_muta_variable_y_persiste_fuera() -> None:
-    resultado = _ejecutar_repl_v2_con_entradas([
-        "var x = 21",
-        "si verdadero:",
-        "    x = x * 2",
-        "fin",
-        "x",
-    ])
+    resultado = _ejecutar_repl_v2_con_entradas(
+        [
+            "var x = 21",
+            "si verdadero:",
+            "    x = x * 2",
+            "fin",
+            "x",
+        ]
+    )
 
     lineas = _lineas_stdout_repl_v2(resultado)
     interpretador = resultado["interpretador"]
@@ -599,9 +625,9 @@ def test_repl_v2_regresion_bloque_si_muta_variable_y_persiste_fuera() -> None:
 @pytest.mark.integration
 def test_paridad_run_y_repl_usar_archivo_habilita_existe_rutas_relativas() -> None:
     codigo = (
-        "usar \"archivo\"\n"
-        "var existe_local = existe(\"README.md\")\n"
-        "var existe_parent = existe(\"../README.md\")"
+        'usar "archivo"\n'
+        'var existe_local = existe("README.md")\n'
+        'var existe_parent = existe("../README.md")'
     )
     variables = ("existe_local", "existe_parent")
 

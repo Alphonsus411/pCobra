@@ -35,7 +35,9 @@ def extract_doc_versions(path: Path) -> set[str]:
     content = path.read_text(encoding="utf-8")
     versions: set[str] = set()
 
-    for match in re.finditer(r"(?mi)^\s*(?:versión|version)\s+(\d+\.\d+\.\d+)\s*$", content):
+    for match in re.finditer(
+        r"(?mi)^\s*(?:versión|version)\s+(\d+\.\d+\.\d+)\s*$", content
+    ):
         versions.add(match.group(1))
     for match in re.finditer(r"releases/download/v(\d+\.\d+\.\d+)/", content):
         versions.add(match.group(1))
@@ -51,7 +53,10 @@ def main() -> int:
     for doc in PUBLIC_DOCS:
         versions = extract_doc_versions(doc)
         if not versions:
-            print(f"ERROR: no se encontró versión pública en {doc.relative_to(ROOT)}.", file=sys.stderr)
+            print(
+                f"ERROR: no se encontró versión pública en {doc.relative_to(ROOT)}.",
+                file=sys.stderr,
+            )
             return 1
         if versions != {canonical}:
             mismatches.append((doc, versions))

@@ -71,7 +71,9 @@ class _ConstantFolder(NodeVisitor):
 
     def visit_condicional(self, nodo: NodoCondicional):
         nodo.condicion = self.visit(nodo.condicion)
-        nodo.bloque_si = NodoBloque([self.visit(n) for n in nodo.bloque_si.instrucciones])
+        nodo.bloque_si = NodoBloque(
+            [self.visit(n) for n in nodo.bloque_si.instrucciones]
+        )
         nodo.bloque_sino = NodoBloque(
             [self.visit(n) for n in nodo.bloque_sino.instrucciones]
         )

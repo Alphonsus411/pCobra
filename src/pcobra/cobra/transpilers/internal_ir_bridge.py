@@ -76,11 +76,7 @@ def normalize_to_cobra_ast(programa: Any) -> list[Any]:
     if programa is None:
         return []
     if isinstance(programa, InternalIRModule):
-        return [
-            _convert_statement(stmt)
-            for stmt in programa.body
-            if stmt is not None
-        ]
+        return [_convert_statement(stmt) for stmt in programa.body if stmt is not None]
     if isinstance(programa, Sequence) and not isinstance(programa, (str, bytes)):
         if all(isinstance(elem, InternalIRStatement) for elem in programa):
             return [_convert_statement(stmt) for stmt in programa if stmt is not None]
@@ -122,9 +118,7 @@ def _convert_statement(stmt: InternalIRStatement) -> Any:
     if isinstance(stmt, InternalIRFunction):
         cuerpo = [_convert_statement(s) for s in stmt.body]
         decoradores = [
-            NodoDecorador(_parse_expression(expr))
-            for expr in stmt.decorators
-            if expr
+            NodoDecorador(_parse_expression(expr)) for expr in stmt.decorators if expr
         ]
         return NodoFuncion(
             stmt.name,
@@ -160,9 +154,7 @@ def _convert_statement(stmt: InternalIRStatement) -> Any:
         return NodoHolobit(nombre, valores)
 
     if isinstance(stmt, InternalIRUnknown):
-        raise ValueError(
-            f"Nodo de IR interno no soportado: {stmt.description}"
-        )
+        raise ValueError(f"Nodo de IR interno no soportado: {stmt.description}")
 
     raise TypeError(f"Tipo de instrucción no reconocido: {type(stmt)!r}")
 
@@ -249,10 +241,14 @@ def _python_ast_to_cobra(node: pyast.AST, *, original: str) -> Any:
         return NodoOperacionUnaria(token, operando)
 
     if isinstance(node, pyast.List):
-        return NodoLista([_python_ast_to_cobra(e, original=original) for e in node.elts])
+        return NodoLista(
+            [_python_ast_to_cobra(e, original=original) for e in node.elts]
+        )
 
     if isinstance(node, pyast.Tuple):
-        return NodoLista([_python_ast_to_cobra(e, original=original) for e in node.elts])
+        return NodoLista(
+            [_python_ast_to_cobra(e, original=original) for e in node.elts]
+        )
 
     if isinstance(node, pyast.Dict):
         elementos: List[tuple[Any, Any]] = []
@@ -291,7 +287,7 @@ def _map_boolop(op: pyast.boolop) -> callable[[], Token]:
     if isinstance(op, pyast.And):
         return lambda: Token(TipoToken.Y, "&&")
     if isinstance(op, pyast.Or):
-            return lambda: Token(TipoToken.O, "||")
+        return lambda: Token(TipoToken.O, "||")
     raise TypeError(f"Operador booleano no soportado: {type(op).__name__}")
 
 

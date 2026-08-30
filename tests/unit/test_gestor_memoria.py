@@ -11,8 +11,9 @@ def test_asignacion_y_liberacion():
 
     # Liberar el bloque
     estrategia.liberar(index, 10)
-    assert all(bloque is None for bloque in
-               estrategia.memoria[index:index + 10]), "Error: La memoria no se liberó correctamente"
+    assert all(
+        bloque is None for bloque in estrategia.memoria[index : index + 10]
+    ), "Error: La memoria no se liberó correctamente"
 
 
 def test_asignacion_espacio_justo_al_final():
@@ -36,4 +37,6 @@ def test_gestor_memoria_genetico():
         gestor.evolucionar()
 
     # Verificamos que la población evolucione y no quede vacía
-    assert len(gestor.poblacion) > 0, "Error: La población de estrategias es demasiado pequeña"
+    assert (
+        len(gestor.poblacion) > 0
+    ), "Error: La población de estrategias es demasiado pequeña"

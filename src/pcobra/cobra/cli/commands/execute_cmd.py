@@ -19,6 +19,8 @@ from pcobra.cobra.cli.target_policies import (
 from pcobra.cobra.cli.utils.autocomplete import files_completer
 from pcobra.cobra.cli.utils.messages import mostrar_error
 from pcobra.cobra.core.sandbox import validar_dependencias
+from pcobra.cobra.cli.execution_pipeline import analizar_codigo, preparar_interpretador
+from pcobra.cobra.core.runtime import InterpretadorCobra, construir_cadena
 
 sys.modules.setdefault("cli.commands.execute_cmd", sys.modules[__name__])
 RUNTIME_MANAGER = RuntimeManager()
@@ -36,9 +38,15 @@ class ExecuteCommand(BaseCommand):
 
     def register_subparser(self, subparsers):
         parser = subparsers.add_parser(self.name, help=_("Ejecuta un script Cobra"))
-        parser.add_argument("archivo", help=_("Ruta al archivo a ejecutar")).completer = files_completer()
-        parser.add_argument("--debug", action="store_true", default=False, help=_("Show debug messages"))
-        parser.add_argument("--sandbox", action="store_true", help=_("Ejecuta el código en una sandbox"))
+        parser.add_argument(
+            "archivo", help=_("Ruta al archivo a ejecutar")
+        ).completer = files_completer()
+        parser.add_argument(
+            "--debug", action="store_true", default=False, help=_("Show debug messages")
+        )
+        parser.add_argument(
+            "--sandbox", action="store_true", help=_("Ejecuta el código en una sandbox")
+        )
         parser.add_argument(
             "--contenedor",
             type=lambda value: parse_runtime_target(
@@ -74,6 +82,26 @@ class ExecuteCommand(BaseCommand):
             verbose=int(getattr(args, "verbose", 0) or 0),
             depurar=bool(getattr(args, "depurar", False)),
             extra_validators=getattr(args, "extra_validators", None),
-            allow_insecure_fallback=bool(getattr(args, "allow_insecure_fallback", False)),
+            allow_insecure_fallback=bool(
+                getattr(args, "allow_insecure_fallback", False)
+            ),
         )
         return self._service.run(request)
+
+    def _ejecutar_normal(self, codigo: str, seguro: bool, extra_validators: Any) -> int:
+        """Compatibilidad CLI: usa la construcción canónica del intérprete."""
+
+        try:
+            ast = analizar_codigo(codigo)
+            setup = preparar_interpretador(
+                interpretador_cls=InterpretadorCobra,
+                safe_mode=seguro,
+                extra_validators=extra_validators,
+            )
+            if seguro:
+                construir_cadena(setup.validadores_extra)
+            setup.interpretador.ejecutar_ast(ast)
+            return 0
+        except Exception as exc:
+            mostrar_error(str(exc))
+            return 1

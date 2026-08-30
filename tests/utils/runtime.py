@@ -1,4 +1,5 @@
 """Utilidades para ejecutar código en distintos lenguajes durante los tests."""
+
 from __future__ import annotations
 
 import os
@@ -177,7 +178,9 @@ def execute_transpiled_code(
             )
         except subprocess.CalledProcessError as exc:
             if exc.returncode == -9:
-                pytest.skip("python finalizado por SIGKILL del entorno durante la ejecución")
+                pytest.skip(
+                    "python finalizado por SIGKILL del entorno durante la ejecución"
+                )
             raise
         return proc.stdout
 
@@ -226,7 +229,9 @@ def execute_transpiled_code(
             pytest.skip("go no disponible")
         src = tmp_path / "prog.go"
         src.write_text(code)
-        proc = subprocess.run([comp, "run", str(src)], capture_output=True, text=True, check=True)
+        proc = subprocess.run(
+            [comp, "run", str(src)], capture_output=True, text=True, check=True
+        )
         return proc.stdout
 
     if lang == "java":
@@ -248,6 +253,8 @@ def execute_transpiled_code(
         pytest.fail(f"Falta implementar ejecución oficial para {lang}")
 
     if lang in SUPPORTED_TARGETS:
-        pytest.skip(f"{lang} es oficial de transpilación pero no tiene runner asociado en esta suite")
+        pytest.skip(
+            f"{lang} es oficial de transpilación pero no tiene runner asociado en esta suite"
+        )
 
     pytest.skip(f"ejecución no soportada para {lang}")

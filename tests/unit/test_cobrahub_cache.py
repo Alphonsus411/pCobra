@@ -116,7 +116,7 @@ def test_cli_hub_publicar_delega_en_cobrahub_packages_sin_red():
         codigo = HubCommand().run(args)
 
     assert codigo == 0
-    publicar.assert_called_once_with("dist/demo.co")
+    publicar.assert_called_once_with(str(Path("dist/demo.co")))
 
 
 def test_cli_hub_buscar_imprime_resultados_normalizados(capsys):
@@ -180,7 +180,9 @@ def test_cli_hub_publicar_e_instalar_devuelven_error_si_falla_operacion():
     assert codigo_instalar != 0
 
 
-def test_cli_hub_cache_listar_conserva_salida_ordenada(tmp_path: Path, monkeypatch, capsys):
+def test_cli_hub_cache_listar_conserva_salida_ordenada(
+    tmp_path: Path, monkeypatch, capsys
+):
     monkeypatch.setenv("COBRAHUB_CACHE_DIR", str(tmp_path))
     (tmp_path / "b.co").write_text("x", encoding="utf-8")
     (tmp_path / "a.co").write_text("x", encoding="utf-8")
@@ -207,4 +209,4 @@ def test_main_cobra_cli_hub_publicar_delega_sin_red():
         codigo = main(["hub", "publicar", "dist/demo.co"])
 
     assert codigo == 0
-    publicar.assert_called_once_with("dist/demo.co")
+    publicar.assert_called_once_with(str(Path("dist/demo.co")))

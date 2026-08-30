@@ -33,7 +33,12 @@ def test_auditor_rechaza_exposiciones_en_registro_choices_y_docs_publicas(tmp_pa
         "choices públicos CLI/GUI",
         "documentación pública",
     }
-    assert {violation.term.lower() for violation in violations} >= {"go", "js", "java", "wasm"}
+    assert {violation.term.lower() for violation in violations} >= {
+        "go",
+        "js",
+        "java",
+        "wasm",
+    }
 
 
 def test_auditor_permite_docs_historicos_pruebas_de_rechazo_y_shims_legacy(tmp_path):

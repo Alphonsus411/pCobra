@@ -53,6 +53,7 @@ def write_lockfile(
 
     _write_lockfile(path, resolved, version=1 if legacy_v1 else 2)
 
+
 __all__ = [
     "CobraDependencyError",
     "DeclaredDependency",

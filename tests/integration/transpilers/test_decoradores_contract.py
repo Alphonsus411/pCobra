@@ -11,7 +11,9 @@ from pcobra.core.ast_nodes import NodoFuncion, NodoIdentificador, NodoRetorno, N
 from tests.integration.transpilers.backend_contracts import TRANSPILERS
 
 FIXTURES_DIR = Path(__file__).resolve().parents[2] / "fixtures" / "decoradores"
-LANGUAGE_EQUIVALENCE = Path(__file__).resolve().parents[3] / "data" / "language_equivalence.yml"
+LANGUAGE_EQUIVALENCE = (
+    Path(__file__).resolve().parents[3] / "data" / "language_equivalence.yml"
+)
 
 EXPECTED_DECORATORS = {
     "memoizar",
@@ -67,6 +69,8 @@ def test_matriz_decoradores_por_backend_esta_declarada_y_alineada_con_contrato_a
 
 @pytest.mark.parametrize("decorator_name", sorted(EXPECTED_DECORATORS))
 @pytest.mark.parametrize("backend", OFFICIAL_TARGETS)
-def test_fixture_decorador_genera_salida_para_todos_los_backends(backend: str, decorator_name: str):
+def test_fixture_decorador_genera_salida_para_todos_los_backends(
+    backend: str, decorator_name: str
+):
     generated = _generate(backend, decorator_name)
     assert generated.strip(), f"{backend} no generó salida para {decorator_name}"

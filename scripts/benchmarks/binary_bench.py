@@ -6,6 +6,5 @@ el código reusable de runtime vive en ``src/pcobra/...``.
 
 from pcobra.cobra.benchmarks.binary_bench import main
 
-
 if __name__ == "__main__":
     raise SystemExit(main())

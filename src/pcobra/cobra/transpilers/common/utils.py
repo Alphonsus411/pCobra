@@ -168,7 +168,10 @@ MINIMAL_RUNTIME_ROUTE_MARKERS = {
     "rust": {
         "corelibs": "use crate::corelibs::*;",
         "standard_library": "use crate::standard_library::*;",
-        "minimal_symbols": ("fn longitud<T: ToString>(valor: T) -> usize {", "fn mostrar<T: Display>(valor: T) {"),
+        "minimal_symbols": (
+            "fn longitud<T: ToString>(valor: T) -> usize {",
+            "fn mostrar<T: Display>(valor: T) {",
+        ),
     },
 }
 

@@ -14,17 +14,17 @@ class QualiaCommand(BaseCommand):
 
     name = "qualia"
     requires_sqlite_key: bool = True
-    
+
     # Constantes para las acciones
     ACCION_MOSTRAR = "mostrar"
     ACCION_REINICIAR = "reiniciar"
 
     def register_subparser(self, subparsers: Any) -> CustomArgumentParser:
         """Registra los argumentos del subcomando.
-        
+
         Args:
             subparsers: Objeto para registrar los subcomandos
-            
+
         Returns:
             CustomArgumentParser: El parser configurado para el subcomando
         """
@@ -39,13 +39,13 @@ class QualiaCommand(BaseCommand):
 
     def run(self, args: Any) -> int:
         """Ejecuta la lógica del comando.
-        
+
         Args:
             args: Argumentos parseados que contienen la acción a ejecutar
-            
+
         Returns:
             int: 0 si la operación fue exitosa, 1 si hubo error
-            
+
         Raises:
             AttributeError: Si hay problemas al acceder a los datos de Qualia
             json.JSONDecodeError: Si hay error al convertir los datos a JSON
@@ -61,7 +61,10 @@ class QualiaCommand(BaseCommand):
         try:
             if accion in {self.ACCION_MOSTRAR, self.ACCION_REINICIAR}:
                 estado = qualia_bridge.qualia_status()
-                if not estado.get("enabled") and estado.get("reason_code") == "optional_dependency_missing":
+                if (
+                    not estado.get("enabled")
+                    and estado.get("reason_code") == "optional_dependency_missing"
+                ):
                     mostrar_info(
                         _(
                             "Qualia está deshabilitada porque falta una dependencia opcional: {reason}"
@@ -83,9 +86,9 @@ class QualiaCommand(BaseCommand):
 
                 if resultado.get("legacy_error"):
                     mostrar_error(
-                        _("No se pudo eliminar el archivo de estado heredado: {error}").format(
-                            error=resultado["legacy_error"]
-                        )
+                        _(
+                            "No se pudo eliminar el archivo de estado heredado: {error}"
+                        ).format(error=resultado["legacy_error"])
                     )
                     return 1
 
@@ -95,17 +98,13 @@ class QualiaCommand(BaseCommand):
             return 1
 
         except (AttributeError, json.JSONDecodeError) as e:
-            mostrar_error(_("Error al procesar datos de Qualia: {error}").format(
-                error=str(e)
-            ))
+            mostrar_error(
+                _("Error al procesar datos de Qualia: {error}").format(error=str(e))
+            )
             return 1
         except (PermissionError, IOError) as e:
-            mostrar_error(_("Error de acceso a archivo: {error}").format(
-                error=str(e)
-            ))
+            mostrar_error(_("Error de acceso a archivo: {error}").format(error=str(e)))
             return 1
         except Exception as e:
-            mostrar_error(_("Error inesperado: {error}").format(
-                error=str(e)
-            ))
+            mostrar_error(_("Error inesperado: {error}").format(error=str(e)))
             return 1

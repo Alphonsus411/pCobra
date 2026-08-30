@@ -107,9 +107,9 @@ class _DeadCodeRemover(NodeVisitor):
             return True
         if isinstance(nodo, NodoCondicional):
             if nodo.bloque_si.instrucciones and nodo.bloque_sino.instrucciones:
-                return self._es_salida(nodo.bloque_si.instrucciones[-1]) and self._es_salida(
-                    nodo.bloque_sino.instrucciones[-1]
-                )
+                return self._es_salida(
+                    nodo.bloque_si.instrucciones[-1]
+                ) and self._es_salida(nodo.bloque_sino.instrucciones[-1])
         return False
 
     def _limpiar_bloque(self, bloque: NodoBloque):

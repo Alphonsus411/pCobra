@@ -50,9 +50,7 @@ class LLVMBackend:
         self.instrucciones.clear()
         resultado = self.generar_expresion(expr)
         cuerpo = "\n  ".join(self.instrucciones)
-        return (
-            f"define i32 @{nombre}() {{\n  {cuerpo}\n  ret i32 {resultado}\n}}"
-        )
+        return f"define i32 @{nombre}() {{\n  {cuerpo}\n  ret i32 {resultado}\n}}"
 
 
 def generar_ir_expresion(expr: Expr) -> str:

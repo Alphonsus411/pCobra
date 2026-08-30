@@ -15,7 +15,7 @@ def _doble_reasoner():
 
 
 def test_cli_agix_generates_suggestion(tmp_path, capsys):
-    archivo = tmp_path / "ejemplo.co"
+    archivo = tmp_path / "ejemplo.cobra"
     archivo.write_text("var x = 5")
     cmd = AgixCommand()
     args = Namespace(
@@ -42,7 +42,7 @@ def test_cli_agix_generates_suggestion(tmp_path, capsys):
 
 
 def test_cli_agix_pad_values(tmp_path, capsys):
-    archivo = tmp_path / "ejemplo.co"
+    archivo = tmp_path / "ejemplo.cobra"
     archivo.write_text("var x = 5")
     reasoner_cls, instancia = _doble_reasoner()
     pad_mock = create_autospec(analizador_agix.PADState, spec_set=True)
@@ -87,7 +87,7 @@ def test_cli_agix_pad_values(tmp_path, capsys):
 def test_cli_agix_pasa_argumentos_de_seleccion_y_muestra_error_concreto(
     tmp_path, capsys
 ):
-    archivo = tmp_path / "ejemplo.co"
+    archivo = tmp_path / "ejemplo.cobra"
     archivo.write_text("var x = 5")
     args = Namespace(
         archivo=str(archivo),
@@ -114,7 +114,7 @@ def test_cli_agix_pasa_argumentos_de_seleccion_y_muestra_error_concreto(
 
 
 def test_cli_agix_muestra_fallo_previsto_del_motor(tmp_path, capsys):
-    archivo = tmp_path / "ejemplo.co"
+    archivo = tmp_path / "ejemplo.cobra"
     archivo.write_text("var x = 5")
     args = Namespace(
         archivo=str(archivo),
@@ -136,7 +136,7 @@ def test_cli_agix_muestra_fallo_previsto_del_motor(tmp_path, capsys):
 
 
 def test_cli_agix_no_oculta_errores_de_programacion(tmp_path):
-    archivo = tmp_path / "ejemplo.co"
+    archivo = tmp_path / "ejemplo.cobra"
     archivo.write_text("var x = 5")
     args = Namespace(
         archivo=str(archivo),

@@ -129,8 +129,9 @@ def test_cli_subprocess_preserva_utf8_en_salida_acentuada():
         check=True,
     )
 
-    assert result.stdout == "después\n".encode("utf-8")
-    texto = result.stdout.decode("utf-8")
+    stdout = result.stdout.replace(b"\r\n", b"\n")
+    assert stdout == "después\n".encode("utf-8")
+    texto = stdout.decode("utf-8")
     assert texto == "después\n"
     assert "Ã©" not in texto
     assert "Ã±" not in texto

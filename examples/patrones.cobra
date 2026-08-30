@@ -1,0 +1,9 @@
+var x = 1
+var y = 2
+var resultado = 0
+
+si x > y:
+    resultado = x
+sino:
+    resultado = y
+fin

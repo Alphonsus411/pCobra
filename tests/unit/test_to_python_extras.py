@@ -16,20 +16,19 @@ IMPORTS = get_standard_imports("python")
 
 def test_transpilar_try_catch_throw():
     nodo = NodoTryCatch(
-        [NodoThrow(NodoValor("1"))],
+        [NodoThrow(NodoValor(1))],
         "e",
         [NodoImprimir(NodoIdentificador("e"))],
     )
     codigo = TranspiladorPython().generate_code([nodo])
     esperado = (
-        IMPORTS
-        + "try:\n    raise Exception(1)\nexcept Exception as e:\n    print(e)\n"
+        IMPORTS + "try:\n    raise Exception(1)\nexcept Exception as e:\n    print(e)\n"
     )
     assert codigo == esperado
 
 
 def test_transpilar_import(tmp_path):
-    mod = tmp_path / "mod.co"
+    mod = tmp_path / "mod.cobra"
     mod.write_text("var dato = 5")
     nodo = NodoImport(str(mod))
     codigo = TranspiladorPython().generate_code([nodo])
@@ -37,13 +36,22 @@ def test_transpilar_import(tmp_path):
     assert codigo == esperado
 
 
-def test_transpilar_usar():
+@pytest.mark.parametrize(
+    ("transpilador", "safe_mode_esperado"),
+    [
+        (TranspiladorPython(), True),
+        (TranspiladorPython(safe_mode=True), True),
+        (TranspiladorPython(safe_mode=False), False),
+    ],
+    ids=("default-seguro", "seguro-explicito", "inseguro-explicito"),
+)
+def test_transpilar_usar_respeta_contrato_safe_mode(transpilador, safe_mode_esperado):
     nodo = NodoUsar("math")
-    codigo = TranspiladorPython().generate_code([nodo])
+    codigo = transpilador.generate_code([nodo])
     esperado = (
         IMPORTS
         + "from pcobra.cobra.usar_loader import usar_modulo\n"
-        + "_usar_exports = usar_modulo('math')\n"
+        + f"_usar_exports = usar_modulo('math', safe_mode={safe_mode_esperado})\n"
         + "globals().update(dict(_usar_exports.get('simbolos', [])))\n"
     )
     assert codigo == esperado

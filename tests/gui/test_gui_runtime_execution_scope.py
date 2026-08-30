@@ -29,7 +29,7 @@ def test_ejecutar_codigo_carga_exports_de_datos_sin_importerror():
         salida = runtime.ejecutar_codigo('usar "datos"\nimprimir("datos cargado")')
     except ImportError as exc:  # pragma: no cover - mensaje de regresión
         if "No se encontraron símbolos exportables" in str(exc):
-            pytest.fail(f'No se esperaba ImportError al cargar datos: {exc}')
+            pytest.fail(f"No se esperaba ImportError al cargar datos: {exc}")
         raise
 
     assert "datos cargado" in salida
@@ -38,17 +38,17 @@ def test_ejecutar_codigo_carga_exports_de_datos_sin_importerror():
 def test_ejecutar_codigo_usar_datos_expone_longitud_para_listas():
     # Regresión: `usar "datos"` debe inyectar `longitud` en el runtime GUI
     # sin depender todavía de callbacks Cobra definidos por el usuario.
-    codigo = '''usar "datos"
+    codigo = """usar "datos"
 
 numeros = [1, 2, 3, 4]
 imprimir(longitud(numeros))
-'''
+"""
 
     try:
         salida = runtime.ejecutar_codigo(codigo)
     except ImportError as exc:  # pragma: no cover - mensaje de regresión
         if "No se encontraron símbolos exportables" in str(exc):
-            pytest.fail(f'No se esperaba error de exports al cargar datos: {exc}')
+            pytest.fail(f"No se esperaba error de exports al cargar datos: {exc}")
         raise
 
     assert "No se encontraron símbolos exportables" not in salida
@@ -69,9 +69,9 @@ def test_core_stdlib_usar_exports_datos_001_inyecta_filtrar_callable():
     # expone `filtrar` como símbolo callable en el runtime GUI. No ejecuta
     # callbacks Cobra, porque ese soporte avanzado pertenece al POC separado
     # CORE_DATA_FILTER_CALLBACK_001.
-    codigo = '''usar "datos"
+    codigo = """usar "datos"
 imprimir(filtrar)
-'''
+"""
 
     salida = runtime.ejecutar_codigo(codigo)
 
@@ -79,12 +79,12 @@ imprimir(filtrar)
 
 
 def test_core_data_filter_callback_001_llamada_directa_a_funcion_cobra():
-    codigo = '''func doble(n):
+    codigo = """func doble(n):
     retorno n * 2
 fin
 
 imprimir(doble(3))
-'''
+"""
 
     salida = runtime.ejecutar_codigo(codigo)
 
@@ -92,13 +92,13 @@ imprimir(doble(3))
 
 
 def test_core_data_filter_callback_001_funcion_cobra_como_valor_callable():
-    codigo = '''func doble(n):
+    codigo = """func doble(n):
     retorno n * 2
 fin
 
 f = doble
 imprimir(f(3))
-'''
+"""
 
     salida = runtime.ejecutar_codigo(codigo)
 
@@ -106,12 +106,12 @@ imprimir(f(3))
 
 
 def test_core_data_filter_callback_001_identificador_funcion_no_es_variable_inexistente():
-    codigo = '''func doble(n):
+    codigo = """func doble(n):
     retorno n * 2
 fin
 
 imprimir(doble)
-'''
+"""
 
     salida = runtime.ejecutar_codigo(codigo)
 
@@ -120,7 +120,7 @@ imprimir(doble)
 
 
 def test_core_data_filter_callback_001_poc_filtrar_con_callback_cobra():
-    codigo = '''usar "datos"
+    codigo = """usar "datos"
 
 func mayor_que_dos(n):
     retorno n > 2
@@ -129,7 +129,7 @@ fin
 numeros = [1, 2, 3, 4]
 resultado = filtrar(numeros, mayor_que_dos)
 imprimir(resultado)
-'''
+"""
 
     salida = runtime.ejecutar_codigo(codigo)
 
@@ -137,7 +137,7 @@ imprimir(resultado)
 
 
 def test_core_data_mapear_callback_contract_001_poc_mapear_con_callback_cobra():
-    codigo = '''usar "datos"
+    codigo = """usar "datos"
 
 func doble(n):
     retorno n * 2
@@ -146,7 +146,7 @@ fin
 numeros = [1, 2, 3]
 resultado = mapear(numeros, doble)
 imprimir(resultado)
-'''
+"""
 
     salida = runtime.ejecutar_codigo(codigo)
 
@@ -154,7 +154,7 @@ imprimir(resultado)
 
 
 def test_core_data_callbacks_mapear_y_filtrar_convivencia_en_gui_runtime():
-    codigo = '''usar "datos"
+    codigo = """usar "datos"
 
 func doble(n):
     retorno n * 2
@@ -166,7 +166,7 @@ fin
 
 imprimir(mapear([1, 2, 3], doble))
 imprimir(filtrar([1, 2, 3, 4], mayor_que_dos))
-'''
+"""
 
     salida = runtime.ejecutar_codigo(codigo)
 
@@ -175,7 +175,7 @@ imprimir(filtrar([1, 2, 3, 4], mayor_que_dos))
 
 
 def test_ejecutar_codigo_modulo_inexistente_falla_controladamente(tmp_path):
-    archivo_principal = tmp_path / "principal.co"
+    archivo_principal = tmp_path / "principal.cobra"
     archivo_principal.write_text('usar "modulo_inexistente"', encoding="utf-8")
 
     with pytest.raises(FileNotFoundError) as excinfo:
@@ -185,8 +185,10 @@ def test_ejecutar_codigo_modulo_inexistente_falla_controladamente(tmp_path):
 
     mensaje = str(excinfo.value)
 
-    assert "Módulo no encontrado: modulo_inexistente" in mensaje
-    assert "modulo_inexistente.co" in mensaje
+    assert "usar_error[modulo_no_encontrado]" in mensaje
+    assert "modulo_inexistente" in mensaje
+    assert "Ruta buscada" not in mensaje
+    assert "modulo_inexistente.cobra" not in mensaje
     assert "modulo_fuera_catalogo_publico" not in mensaje
 
 

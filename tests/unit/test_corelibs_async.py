@@ -2,6 +2,7 @@ import asyncio
 import functools
 
 import os
+import sys
 from types import SimpleNamespace
 
 import pytest
@@ -346,7 +347,9 @@ async def test_obtener_url_async(monkeypatch):
 
     if red.httpx is None:
         monkeypatch.setattr(red, "httpx", SimpleNamespace())
-    monkeypatch.setattr(red.httpx, "AsyncClient", lambda **_kwargs: cliente, raising=False)
+    monkeypatch.setattr(
+        red.httpx, "AsyncClient", lambda **_kwargs: cliente, raising=False
+    )
 
     texto = await red.obtener_url_async("https://example.com")
     assert texto == "hola"
@@ -356,6 +359,7 @@ async def test_obtener_url_async(monkeypatch):
 @pytest.mark.asyncio
 async def test_descargar_archivo_async_elimina_si_falla(monkeypatch, tmp_path):
     monkeypatch.setenv("COBRA_HOST_WHITELIST", "example.com")
+    monkeypatch.setenv("COBRA_IO_BASE_DIR", str(tmp_path))
 
     class _ResponseGrande(_FakeResponse):
         async def aiter_bytes(self, chunk_size=8192):
@@ -364,25 +368,30 @@ async def test_descargar_archivo_async_elimina_si_falla(monkeypatch, tmp_path):
     cliente = _FakeAsyncClient([_ResponseGrande()])
     if red.httpx is None:
         monkeypatch.setattr(red, "httpx", SimpleNamespace())
-    monkeypatch.setattr(red.httpx, "AsyncClient", lambda **_kwargs: cliente, raising=False)
+    monkeypatch.setattr(
+        red.httpx, "AsyncClient", lambda **_kwargs: cliente, raising=False
+    )
 
     destino = tmp_path / "archivo.bin"
     with pytest.raises(ValueError):
-        await red.descargar_archivo("https://example.com", destino)
+        await red.descargar_archivo("https://example.com", "archivo.bin")
     assert not destino.exists()
 
 
 @pytest.mark.asyncio
 async def test_descargar_archivo_async(monkeypatch, tmp_path):
     monkeypatch.setenv("COBRA_HOST_WHITELIST", "example.com")
+    monkeypatch.setenv("COBRA_IO_BASE_DIR", str(tmp_path))
     respuesta = _FakeResponse(body=b"contenido")
     cliente = _FakeAsyncClient([respuesta])
     if red.httpx is None:
         monkeypatch.setattr(red, "httpx", SimpleNamespace())
-    monkeypatch.setattr(red.httpx, "AsyncClient", lambda **_kwargs: cliente, raising=False)
+    monkeypatch.setattr(
+        red.httpx, "AsyncClient", lambda **_kwargs: cliente, raising=False
+    )
 
     destino = tmp_path / "datos.bin"
-    ruta = await red.descargar_archivo("https://example.com", destino)
+    ruta = await red.descargar_archivo("https://example.com", "datos.bin")
     assert ruta.read_bytes() == b"contenido"
 
 
@@ -464,8 +473,9 @@ class _FakeStderr:
     def __init__(self, data=b""):
         self._data = data
 
-    async def read(self):
-        return self._data
+    async def read(self, _tamano=-1):
+        data, self._data = self._data, b""
+        return data
 
 
 class _FakeProcStream:
@@ -548,6 +558,69 @@ async def test_ejecutar_stream_error_provoca_excepcion(monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_ejecutar_stream_drena_stderr_y_entrega_stdout_incrementalmente(
+    monkeypatch,
+):
+    ejecutable = sys.executable
+    monkeypatch.setattr(sistema.sys, "platform", "darwin")
+    codigo = (
+        "import sys, time\n"
+        "print('primera', flush=True)\n"
+        "sys.stderr.write('E' * (1024 * 1024))\n"
+        "sys.stderr.flush()\n"
+        "time.sleep(0.25)\n"
+        "print('segunda', flush=True)\n"
+        "print('tercera', flush=True)\n"
+    )
+    primera_recibida = asyncio.Event()
+    lineas = []
+
+    async def consumir() -> None:
+        async for linea in sistema.ejecutar_stream(
+            [ejecutable, "-c", codigo],
+            permitidos=[ejecutable],
+            timeout=5,
+        ):
+            lineas.append(linea)
+            primera_recibida.set()
+
+    consumo = asyncio.create_task(consumir())
+    await asyncio.wait_for(primera_recibida.wait(), timeout=1)
+    assert lineas == ["primera\n"]
+    assert not consumo.done()
+    await consumo
+    assert lineas == ["primera\n", "segunda\n", "tercera\n"]
+
+
+@pytest.mark.asyncio
+async def test_ejecutar_stream_acota_stderr_y_conserva_codigo_y_final_util(
+    monkeypatch,
+):
+    ejecutable = sys.executable
+    monkeypatch.setattr(sistema.sys, "platform", "darwin")
+    codigo = (
+        "import sys\n"
+        "sys.stderr.write('E' * (1024 * 1024))\n"
+        "sys.stderr.write('detalle-final-util')\n"
+        "sys.stderr.flush()\n"
+        "raise SystemExit(7)\n"
+    )
+
+    with pytest.raises(RuntimeError) as excinfo:
+        async for _ in sistema.ejecutar_stream(
+            [ejecutable, "-c", codigo],
+            permitidos=[ejecutable],
+            timeout=5,
+        ):
+            pass
+
+    mensaje = str(excinfo.value)
+    assert "código 7" in mensaje
+    assert "detalle-final-util" in mensaje
+    assert len(mensaje) < 70 * 1024
+
+
+@pytest.mark.asyncio
 async def test_recolectar_retorna_valores_en_orden():
     async def producir(valor, demora):
         await asyncio.sleep(demora)
@@ -619,7 +692,9 @@ async def test_carrera_propaga_excepcion_y_cancela():
 
 @pytest.mark.asyncio
 async def test_esperar_timeout_devuelve_resultado():
-    resultado = await asincrono.esperar_timeout(asyncio.sleep(0.01, result="hecho"), 0.5)
+    resultado = await asincrono.esperar_timeout(
+        asyncio.sleep(0.01, result="hecho"), 0.5
+    )
     assert resultado == "hecho"
 
 

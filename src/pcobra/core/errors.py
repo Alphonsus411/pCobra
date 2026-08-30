@@ -1,5 +1,6 @@
 """Excepciones comunes del núcleo de Cobra."""
 
+
 class LexerError(Exception):
     """Excepción base para errores del analizador léxico."""
 

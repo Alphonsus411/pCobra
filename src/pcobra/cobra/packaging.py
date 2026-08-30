@@ -169,9 +169,7 @@ def manifest_to_dict(manifest: PackageManifest | PackageManifestV2) -> dict[str,
             data[key] = (
                 list(value)
                 if isinstance(value, list)
-                else dict(value)
-                if isinstance(value, dict)
-                else value
+                else dict(value) if isinstance(value, dict) else value
             )
     return data
 

@@ -84,7 +84,9 @@ def _migrate_hash(hash_file: Path) -> bool:
     fragments: list[tuple[str, str]] = []
     token_file = hash_file.with_suffix(".tok")
     if token_file.exists():
-        fragments.append((FULL_TOKENS_KEY, _normalize_json(token_file.read_text(encoding="utf-8"))))
+        fragments.append(
+            (FULL_TOKENS_KEY, _normalize_json(token_file.read_text(encoding="utf-8")))
+        )
 
     fragment_dir = hash_file.parent / FRAGMENT_DIR_NAME / hash_key
     fragments.extend(_load_fragments(fragment_dir))
@@ -94,7 +96,9 @@ def _migrate_hash(hash_file: Path) -> bool:
     except database.DatabaseKeyError as exc:  # pragma: no cover - validado antes
         LOGGER.error("Configura SQLITE_DB_KEY antes de ejecutar la migración: %s", exc)
         raise
-    except database.DatabaseDependencyError as exc:  # pragma: no cover - depende del entorno
+    except (
+        database.DatabaseDependencyError
+    ) as exc:  # pragma: no cover - depende del entorno
         LOGGER.error("No fue posible inicializar SQLitePlus: %s", exc)
         raise
     except Exception as exc:  # pragma: no cover - errores inusuales

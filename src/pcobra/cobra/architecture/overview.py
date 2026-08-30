@@ -11,10 +11,14 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Final
 
-
 PUBLIC_LANGUAGE_BOUNDARY: Final[str] = "cobra"
 PUBLIC_CLI_V2_COMMANDS: Final[tuple[str, ...]] = (
-    "run", "build", "test", "mod", "repl", "gui"
+    "run",
+    "build",
+    "test",
+    "mod",
+    "repl",
+    "gui",
 )
 
 # Toda ruta de usuario termina resolviendo backend mediante esta fachada.
@@ -73,11 +77,11 @@ PUBLIC_FLOW_DIAGRAM: Final[str] = (
 def validate_public_architecture_overview() -> None:
     """Garantiza una frontera pública única y estable."""
     if PUBLIC_LANGUAGE_BOUNDARY != "cobra":
-        raise RuntimeError("La frontera pública de lenguaje debe ser únicamente 'cobra'.")
+        raise RuntimeError(
+            "La frontera pública de lenguaje debe ser únicamente 'cobra'."
+        )
 
-    if PUBLIC_CLI_V2_COMMANDS != (
-        "run", "build", "test", "mod", "repl", "gui"
-    ):
+    if PUBLIC_CLI_V2_COMMANDS != ("run", "build", "test", "mod", "repl", "gui"):
         raise RuntimeError(
             "La CLI pública v2 debe exponer exactamente run/build/test/mod/repl/gui."
         )

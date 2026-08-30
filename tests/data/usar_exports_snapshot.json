@@ -215,6 +215,8 @@
     "proceso": [
       "ejecutar",
       "capturar",
+      "ejecutar_async",
+      "ejecutar_stream",
       "codigo_salida",
       "salida",
       "errores"

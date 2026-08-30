@@ -7,7 +7,6 @@ from pathlib import Path
 
 import pytest
 
-
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SRC_ROOT = REPO_ROOT / "src"
 REGRESSION_IMPORT = "scripts.benchmarks"
@@ -30,6 +29,8 @@ def _run_python_isolated(code: str) -> subprocess.CompletedProcess[str]:
         [sys.executable, "-I", "-c", bootstrap + code],
         capture_output=True,
         text=True,
+        encoding="utf-8",
+        errors="strict",
     )
 
 
@@ -37,8 +38,7 @@ def test_cli_main_smoke_help_en_entorno_aislado() -> None:
     """Smoke test rápido: el arranque de CLI con ayuda no debe romper imports."""
 
     result = _run_python_isolated(
-        "from pcobra.cli import main; "
-        "raise SystemExit(main(['--ayuda']))"
+        "from pcobra.cli import main; " "raise SystemExit(main(['--ayuda']))"
     )
 
     assert result.returncode == 0, (
@@ -106,8 +106,6 @@ def test_import_bench_cmd_no_depende_de_scripts_py_path() -> None:
     )
 
 
-
-
 def test_import_pcobra_no_carga_backends_legacy_en_startup() -> None:
     """`import pcobra` no debe cargar transpilers/backends legacy por defecto."""
 
@@ -132,6 +130,7 @@ def test_import_pcobra_no_carga_backends_legacy_en_startup() -> None:
         f"stdout={result.stdout!r} stderr={result.stderr!r}"
     )
 
+
 def test_cli_startup_preserva_utf8_en_literal_imprimir() -> None:
     """Contrato: startup de CLI debe preservar UTF-8 sin mojibake en salida."""
 
@@ -139,7 +138,7 @@ def test_cli_startup_preserva_utf8_en_literal_imprimir() -> None:
         "import tempfile; "
         "from pathlib import Path; "
         "from pcobra.cli import main; "
-        "tmp = Path(tempfile.gettempdir()) / 'pcobra_utf8_test.co'; "
+        "tmp = Path(tempfile.gettempdir()) / 'pcobra_utf8_test.cobra'; "
         "tmp.write_text('imprimir(\"áéíóú ñ € 🚀\")\\n', encoding='utf-8'); "
         "raise SystemExit(main(['ejecutar', str(tmp)]))"
     )
@@ -153,8 +152,7 @@ def test_cli_startup_preserva_utf8_en_literal_imprimir() -> None:
         f"stdout={result.stdout!r}"
     )
     assert "Ã¡" not in result.stdout and "â" not in result.stdout, (
-        "Se detectó posible mojibake en salida de CLI. "
-        f"stdout={result.stdout!r}"
+        "Se detectó posible mojibake en salida de CLI. " f"stdout={result.stdout!r}"
     )
 
 
@@ -178,8 +176,13 @@ def test_cli_bootstrap_no_monkey_patchea_lexer() -> None:
     )
 
 
-@pytest.mark.parametrize("command,argv", [("repl", ["repl", "-h"]), ("run", ["run", "-h"]), ("test", ["test", "-h"])])
-def test_cli_public_commands_do_not_import_legacy_transpilers_on_startup(command: str, argv: list[str]) -> None:
+@pytest.mark.parametrize(
+    "command,argv",
+    [("repl", ["repl", "-h"]), ("run", ["run", "-h"]), ("test", ["test", "-h"])],
+)
+def test_cli_public_commands_do_not_import_legacy_transpilers_on_startup(
+    command: str, argv: list[str]
+) -> None:
     """`repl`/`ejecutar`/`test` no deben cargar módulos legacy en import/startup."""
 
     result = _run_python_isolated(

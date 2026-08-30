@@ -24,12 +24,18 @@ def _args(**kwargs) -> Namespace:
     return Namespace(**base)
 
 
-def _execution(*, has_failures: bool = False, profile: str = "completo") -> sv.SyntaxValidationExecution:
+def _execution(
+    *, has_failures: bool = False, profile: str = "completo"
+) -> sv.SyntaxValidationExecution:
     return sv.SyntaxValidationExecution(
         report=sv.SyntaxReport(
             python=sv.ValidationResult("ok", "py"),
             cobra=sv.ValidationResult("ok", "cobra"),
-            targets={"javascript": sv.TargetSummary(ok=1, fail=0, skipped=0)} if profile != "solo-cobra" else {},
+            targets=(
+                {"javascript": sv.TargetSummary(ok=1, fail=0, skipped=0)}
+                if profile != "solo-cobra"
+                else {}
+            ),
             strict=False,
             errors_by_target={},
         ),
@@ -41,7 +47,11 @@ def _execution(*, has_failures: bool = False, profile: str = "completo") -> sv.S
 
 def test_validar_sintaxis_solo_cobra_ok(monkeypatch):
     command = ValidarSintaxisCommand()
-    monkeypatch.setattr(cmd_module, "execute_syntax_validation", lambda **_: _execution(profile="solo-cobra"))
+    monkeypatch.setattr(
+        cmd_module,
+        "execute_syntax_validation",
+        lambda **_: _execution(profile="solo-cobra"),
+    )
 
     rc = command.run(_args(solo_cobra=True, perfil="transpiladores"))
     assert rc == 0
@@ -52,7 +62,11 @@ def test_validar_sintaxis_respeta_validar_politica_modo(monkeypatch):
     mensajes: list[str] = []
 
     monkeypatch.setattr(cmd_module, "mostrar_error", lambda msg: mensajes.append(msg))
-    monkeypatch.setattr(cmd_module, "validar_politica_modo", lambda *_, **__: (_ for _ in ()).throw(ValueError("modo bloqueado")))
+    monkeypatch.setattr(
+        cmd_module,
+        "validar_politica_modo",
+        lambda *_, **__: (_ for _ in ()).throw(ValueError("modo bloqueado")),
+    )
 
     rc = command.run(_args())
 
@@ -62,7 +76,11 @@ def test_validar_sintaxis_respeta_validar_politica_modo(monkeypatch):
 
 def test_validar_sintaxis_strict_convierte_error_en_exit_code_1(monkeypatch):
     command = ValidarSintaxisCommand()
-    monkeypatch.setattr(cmd_module, "execute_syntax_validation", lambda **_: _execution(has_failures=True))
+    monkeypatch.setattr(
+        cmd_module,
+        "execute_syntax_validation",
+        lambda **_: _execution(has_failures=True),
+    )
 
     rc = command.run(_args(strict=True, targets="javascript"))
     assert rc == 1
@@ -72,7 +90,9 @@ def test_validar_sintaxis_report_json_en_archivo(monkeypatch, tmp_path: Path):
     command = ValidarSintaxisCommand()
     output = tmp_path / "reporte.json"
 
-    monkeypatch.setattr(cmd_module, "execute_syntax_validation", lambda **_: _execution())
+    monkeypatch.setattr(
+        cmd_module, "execute_syntax_validation", lambda **_: _execution()
+    )
 
     rc = command.run(_args(report_json=str(output)))
 
@@ -82,12 +102,16 @@ def test_validar_sintaxis_report_json_en_archivo(monkeypatch, tmp_path: Path):
     assert "python" in payload and "cobra" in payload
 
 
-def test_validar_sintaxis_report_json_incluye_errors_by_target_si_existe(monkeypatch, tmp_path: Path):
+def test_validar_sintaxis_report_json_incluye_errors_by_target_si_existe(
+    monkeypatch, tmp_path: Path
+):
     command = ValidarSintaxisCommand()
     output = tmp_path / "reporte.json"
 
     execution = _execution(has_failures=True)
-    execution.report.errors_by_target = {"javascript": ['{"stage":"validator","error":"boom"}']}
+    execution.report.errors_by_target = {
+        "javascript": ['{"stage":"validator","error":"boom"}']
+    }
     monkeypatch.setattr(cmd_module, "execute_syntax_validation", lambda **_: execution)
 
     rc = command.run(_args(report_json=str(output), targets="javascript"))

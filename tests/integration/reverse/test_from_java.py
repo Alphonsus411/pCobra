@@ -7,6 +7,7 @@ try:
 except ImportError:
     ReverseFromJava = None
 
+
 @pytest.mark.skipif(ReverseFromJava is None, reason="ReverseFromJava module not found")
 def test_reverse_from_java_constructs():
     code = """

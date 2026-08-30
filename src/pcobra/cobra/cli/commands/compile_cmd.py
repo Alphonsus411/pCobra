@@ -30,9 +30,13 @@ from pcobra.cobra.cli.deprecation_policy import (
     enforce_target_deprecation_policy,
     visible_public_targets,
 )
-from pcobra.cobra.cli.utils.messages import mostrar_advertencia, mostrar_error, mostrar_info
+from pcobra.cobra.cli.utils.messages import (
+    mostrar_advertencia,
+    mostrar_error,
+    mostrar_info,
+)
 from pcobra.cobra.cli.utils.validators import validar_archivo_existente
-from pcobra.cobra.packaging import es_paquete_cobra
+from pcobra.cobra.extensions import es_fuente_cobra, es_ruta_paquete_cobra
 from pcobra.cobra.cli.utils.autocomplete import files_completer
 from pcobra.cobra.core import ParserError
 from pcobra.cobra.core.cobra_config import tiempo_max_transpilacion
@@ -70,12 +74,14 @@ def _validate_official_backend_or_raise(backend: str, *, context: str) -> str:
     except ArgumentTypeError as exc:
         raise ValueError(str(exc)) from exc
 
+
 TARGETS_HELP = ", ".join(visible_public_targets(OFFICIAL_TRANSPILATION_TARGETS))
 
 
 def parse_official_target_list(value: str) -> list[str]:
     """Normaliza una lista de targets usando el validador canónico único."""
     return parse_target_list(value)
+
 
 def validate_file(filepath: str) -> bool:
     """Valida que el archivo sea accesible y cumpla con los límites establecidos."""
@@ -86,13 +92,18 @@ def validate_file(filepath: str) -> bool:
     if not os.access(path, os.R_OK):
         raise ValueError(f"No hay permisos de lectura para '{filepath}'")
     if os.path.getsize(path) > MAX_FILE_SIZE:
-        raise ValueError(f"El archivo excede el tamaño máximo permitido ({MAX_FILE_SIZE} bytes)")
-    if es_paquete_cobra(path):
+        raise ValueError(
+            f"El archivo excede el tamaño máximo permitido ({MAX_FILE_SIZE} bytes)"
+        )
+    if es_ruta_paquete_cobra(path):
         raise ValueError(
             "El archivo es un paquete Cobra .co, no una fuente transpirable. "
             "Instálalo o extráelo con el comando paquete antes de compilar."
         )
+    if not es_fuente_cobra(path):
+        raise ValueError("El archivo fuente Cobra debe usar la extensión .cobra.")
     return True
+
 
 def validar_dependencias_con_alias(backend: str, mod_info: dict) -> None:
     """Valida dependencias usando únicamente el target canónico público."""
@@ -146,6 +157,7 @@ def run_transpiler_pool(languages: list, ast, executor) -> list:
             parametros,
         ).get(timeout=PROCESS_TIMEOUT)
 
+
 class CompileCommand(BaseCommand):
     """Transpila un archivo Cobra a distintos lenguajes."""
 
@@ -174,12 +186,16 @@ class CompileCommand(BaseCommand):
             "--backend",
             type=parse_target,
             choices=lang_choices,
-            help=_("Alias deprecado de --tipo ({targets}).").format(targets=TARGETS_HELP),
+            help=_("Alias deprecado de --tipo ({targets}).").format(
+                targets=TARGETS_HELP
+            ),
         )
         parser.add_argument(
             "--tipos",
             type=parse_official_target_list,
-            help=_("Lista de lenguajes separados por comas ({targets}).").format(targets=TARGETS_HELP),
+            help=_("Lista de lenguajes separados por comas ({targets}).").format(
+                targets=TARGETS_HELP
+            ),
         )
         parser.set_defaults(cmd=self)
         return parser
@@ -228,13 +244,17 @@ class CompileCommand(BaseCommand):
                 return 1
 
         mod_info = cli_toml_map()
-        preferred_backend = getattr(args, "backend", None) or getattr(args, "tipo", None)
+        preferred_backend = getattr(args, "backend", None) or getattr(
+            args, "tipo", None
+        )
         if preferred_backend and preferred_backend not in current_lang_choices:
             mostrar_error(invalid_target_error(preferred_backend))
             return 1
         if getattr(args, "backend", None):
             mostrar_advertencia(
-                _("La opción --backend está deprecada en 'compilar'; use --tipo. Se eliminará en una versión futura.")
+                _(
+                    "La opción --backend está deprecada en 'compilar'; use --tipo. Se eliminará en una versión futura."
+                )
             )
         try:
             resolution, _runtime = backend_pipeline.resolve_backend_runtime(
@@ -295,9 +315,11 @@ class CompileCommand(BaseCommand):
                         )
                     except ValueError as validation_err:
                         raise ValueError(str(validation_err))
-                
+
                 try:
-                    resultados = run_transpiler_pool(lenguajes, ast, self._ejecutar_transpilador)
+                    resultados = run_transpiler_pool(
+                        lenguajes, ast, self._ejecutar_transpilador
+                    )
                     for lang, resultado in resultados:
                         mostrar_info(
                             f"Código generado ({_transpiler_class_display(lang)}) para {_target_label(lang)} ({lang}):"
@@ -329,4 +351,3 @@ class CompileCommand(BaseCommand):
         except Exception as e:
             mostrar_error(str(e))
             return 1
-

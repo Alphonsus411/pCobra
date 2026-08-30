@@ -3,9 +3,10 @@ from __future__ import annotations
 import importlib.util
 from pathlib import Path
 
-
 _CONFTEST_PATH = Path(__file__).resolve().parents[1] / "conftest.py"
-_SPEC = importlib.util.spec_from_file_location("tests_conftest_contract", _CONFTEST_PATH)
+_SPEC = importlib.util.spec_from_file_location(
+    "tests_conftest_contract", _CONFTEST_PATH
+)
 assert _SPEC is not None and _SPEC.loader is not None
 tests_conftest = importlib.util.module_from_spec(_SPEC)
 _SPEC.loader.exec_module(tests_conftest)
@@ -39,8 +40,11 @@ def test_no_clasifica_pruebas_vigentes_sin_legacy() -> None:
 
 
 def test_no_sobrescribe_marca_legacy_explicita() -> None:
-    assert tests_conftest._marcas_legacy_para_item(
-        "tests/legacy/test_obsoleto.py",
-        "tests/legacy/test_obsoleto.py::test_obsoleto",
-        {"legacy"},
-    ) == ()
+    assert (
+        tests_conftest._marcas_legacy_para_item(
+            "tests/legacy/test_obsoleto.py",
+            "tests/legacy/test_obsoleto.py::test_obsoleto",
+            {"legacy"},
+        )
+        == ()
+    )

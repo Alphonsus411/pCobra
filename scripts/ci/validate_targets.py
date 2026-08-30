@@ -50,12 +50,13 @@ from scripts.targets_policy_common import (
     HOLOBIT_MATRIX_DOC_PATHS,
     PUBLIC_RUNTIME_POLICY_PATHS,
     PUBLIC_TEXT_PATHS,
-
     find_non_python_sdk_promotion_errors,
     find_public_alias_errors,
     read_target_policy,
 )
-from scripts.generar_matriz_transpiladores import _build_markdown as build_transpilers_matrix_markdown
+from scripts.generar_matriz_transpiladores import (
+    _build_markdown as build_transpilers_matrix_markdown,
+)
 
 FINAL_OFFICIAL_TARGETS = tuple(OFFICIAL_TARGETS)
 
@@ -101,6 +102,7 @@ REPO_AUDIT_ALLOWED_FILE_PATHS = frozenset(
         "scripts/validate_targets_policy.py",
         "scripts/ci/validate_targets.py",
         "scripts/ci/audit_targets_contract.py",
+        "scripts/ci/audit_public_backend_exposure_terms.py",
         "scripts/audit_retired_targets.py",
         "scripts/ci/validate_workflow_target_matrix.py",
         "tests/unit/test_cli_target_aliases.py",
@@ -150,6 +152,9 @@ REPO_AUDIT_PUBLIC_TEXT_PREFIXES: tuple[str, ...] = (
     ".github/workflows/",
     "pcobra.toml",
     "cobra.toml",
+)
+HISTORICAL_TARGET_REFERENCE_PATTERN = re.compile(
+    r"<!-- target-policy: historical-reference -->.*?<!-- /target-policy -->"
 )
 DOC_TABLE_PATHS = (
     "docs/targets_policy.md",
@@ -419,7 +424,10 @@ def validate_registry_literal_source() -> list[str]:
     for node in module.body:
         if not isinstance(node, ast.AnnAssign):
             continue
-        if not isinstance(node.target, ast.Name) or node.target.id != "TRANSPILER_CLASS_PATHS":
+        if (
+            not isinstance(node.target, ast.Name)
+            or node.target.id != "TRANSPILER_CLASS_PATHS"
+        ):
             continue
         assign_count += 1
         if isinstance(node.value, ast.Dict):
@@ -443,7 +451,9 @@ def validate_registry_literal_source() -> list[str]:
                 "src/pcobra/cobra/transpilers/registry.py: clave no válida en TRANSPILER_CLASS_PATHS"
             )
             continue
-        if not isinstance(key_node, ast.Constant) or not isinstance(key_node.value, str):
+        if not isinstance(key_node, ast.Constant) or not isinstance(
+            key_node.value, str
+        ):
             errors.append(
                 "src/pcobra/cobra/transpilers/registry.py: todas las claves de TRANSPILER_CLASS_PATHS deben ser strings literales"
             )
@@ -502,7 +512,9 @@ def validate_runtime_routes_and_shims() -> list[str]:
         if "shim" not in lowered or "históric" not in lowered:
             errors.append(f"{rel}: debe declararse explícitamente como shim histórico")
         if "pcobra" not in content:
-            errors.append(f"{rel}: shim sin delegación explícita al árbol canónico pcobra")
+            errors.append(
+                f"{rel}: shim sin delegación explícita al árbol canónico pcobra"
+            )
     return errors
 
 
@@ -510,8 +522,14 @@ def validate_critical_signature_alignment() -> list[str]:
     """Compara firmas/constantes críticas entre árbol canónico y shims publicados."""
     errors: list[str] = []
 
-    import cli.cli as shim_cli_entry
+    # ``pcobra`` publica aliases legacy en ``sys.modules`` al importarse. Retirarlos
+    # aquí permite que la comprobación cargue los shims físicos que quiere comparar.
+    for module_name in tuple(sys.modules):
+        if module_name == "cobra" or module_name.startswith("cobra."):
+            sys.modules.pop(module_name)
+
     import cobra.cli.cli as shim_cobra_entry
+    import cli.cli as shim_cli_entry
     import cobra.cli.target_policies as shim_policies
     import cobra.transpilers.compatibility_matrix as shim_matrix
     import cobra.transpilers.registry as shim_registry
@@ -523,26 +541,58 @@ def validate_critical_signature_alignment() -> list[str]:
     import pcobra.cobra.transpilers.targets as canonical_targets
 
     if tuple(shim_targets.TIER1_TARGETS) != tuple(canonical_targets.TIER1_TARGETS):
-        errors.append("src/cobra/transpilers/targets.py: TIER1_TARGETS desalineado con ruta canónica")
+        errors.append(
+            "src/cobra/transpilers/targets.py: TIER1_TARGETS desalineado con ruta canónica"
+        )
     if tuple(shim_targets.TIER2_TARGETS) != tuple(canonical_targets.TIER2_TARGETS):
-        errors.append("src/cobra/transpilers/targets.py: TIER2_TARGETS desalineado con ruta canónica")
-    if tuple(shim_targets.OFFICIAL_TARGETS) != tuple(canonical_targets.OFFICIAL_TARGETS):
-        errors.append("src/cobra/transpilers/targets.py: OFFICIAL_TARGETS desalineado con ruta canónica")
+        errors.append(
+            "src/cobra/transpilers/targets.py: TIER2_TARGETS desalineado con ruta canónica"
+        )
+    if tuple(shim_targets.OFFICIAL_TARGETS) != tuple(
+        canonical_targets.OFFICIAL_TARGETS
+    ):
+        errors.append(
+            "src/cobra/transpilers/targets.py: OFFICIAL_TARGETS desalineado con ruta canónica"
+        )
 
-    if tuple(shim_registry.TRANSPILER_CLASS_PATHS) != tuple(canonical_registry.TRANSPILER_CLASS_PATHS):
-        errors.append("src/cobra/transpilers/registry.py: TRANSPILER_CLASS_PATHS desalineado con ruta canónica")
-    if tuple(shim_registry.official_transpiler_targets()) != tuple(canonical_registry.official_transpiler_targets()):
-        errors.append("src/cobra/transpilers/registry.py: official_transpiler_targets() desalineado con ruta canónica")
+    if tuple(shim_registry.TRANSPILER_CLASS_PATHS) != tuple(
+        canonical_registry.TRANSPILER_CLASS_PATHS
+    ):
+        errors.append(
+            "src/cobra/transpilers/registry.py: TRANSPILER_CLASS_PATHS desalineado con ruta canónica"
+        )
+    if tuple(shim_registry.official_transpiler_targets()) != tuple(
+        canonical_registry.official_transpiler_targets()
+    ):
+        errors.append(
+            "src/cobra/transpilers/registry.py: official_transpiler_targets() desalineado con ruta canónica"
+        )
 
-    if tuple(shim_matrix.CONTRACT_FEATURES) != tuple(canonical_matrix.CONTRACT_FEATURES):
-        errors.append("src/cobra/transpilers/compatibility_matrix.py: CONTRACT_FEATURES desalineado con ruta canónica")
-    if tuple(shim_matrix.SDK_FULL_BACKENDS) != tuple(canonical_matrix.SDK_FULL_BACKENDS):
-        errors.append("src/cobra/transpilers/compatibility_matrix.py: SDK_FULL_BACKENDS desalineado con ruta canónica")
+    if tuple(shim_matrix.CONTRACT_FEATURES) != tuple(
+        canonical_matrix.CONTRACT_FEATURES
+    ):
+        errors.append(
+            "src/cobra/transpilers/compatibility_matrix.py: CONTRACT_FEATURES desalineado con ruta canónica"
+        )
+    if tuple(shim_matrix.SDK_FULL_BACKENDS) != tuple(
+        canonical_matrix.SDK_FULL_BACKENDS
+    ):
+        errors.append(
+            "src/cobra/transpilers/compatibility_matrix.py: SDK_FULL_BACKENDS desalineado con ruta canónica"
+        )
 
-    if tuple(shim_policies.OFFICIAL_TRANSPILATION_TARGETS) != tuple(canonical_policies.OFFICIAL_TRANSPILATION_TARGETS):
-        errors.append("src/cobra/cli/target_policies.py: OFFICIAL_TRANSPILATION_TARGETS desalineado con ruta canónica")
-    if tuple(shim_policies.OFFICIAL_RUNTIME_TARGETS) != tuple(canonical_policies.OFFICIAL_RUNTIME_TARGETS):
-        errors.append("src/cobra/cli/target_policies.py: OFFICIAL_RUNTIME_TARGETS desalineado con ruta canónica")
+    if tuple(shim_policies.OFFICIAL_TRANSPILATION_TARGETS) != tuple(
+        canonical_policies.OFFICIAL_TRANSPILATION_TARGETS
+    ):
+        errors.append(
+            "src/cobra/cli/target_policies.py: OFFICIAL_TRANSPILATION_TARGETS desalineado con ruta canónica"
+        )
+    if tuple(shim_policies.OFFICIAL_RUNTIME_TARGETS) != tuple(
+        canonical_policies.OFFICIAL_RUNTIME_TARGETS
+    ):
+        errors.append(
+            "src/cobra/cli/target_policies.py: OFFICIAL_RUNTIME_TARGETS desalineado con ruta canónica"
+        )
 
     canonical_sig = inspect.signature(canonical_registry.official_transpiler_targets)
     shim_sig = inspect.signature(shim_registry.official_transpiler_targets)
@@ -588,7 +638,14 @@ def validate_targeted_artifact_roots(
             f"received={tuple(official_targets)}, expected={FINAL_OFFICIAL_TARGETS}"
         )
 
-    ignored_parts = {".git", ".venv", ".venv-release-test", "venv", "site-packages", "__pycache__"}
+    ignored_parts = {
+        ".git",
+        ".venv",
+        ".venv-release-test",
+        "venv",
+        "site-packages",
+        "__pycache__",
+    }
     found_forward_paths = {
         path.relative_to(ROOT).as_posix()
         for path in ROOT.rglob("to_*.py")
@@ -608,7 +665,9 @@ def validate_targeted_artifact_roots(
         )
 
     found_forward = {path.name for path in TRANSPILER_DIR.glob("to_*.py")}
-    expected_forward = {Path(path).name for path in EXPECTED_TRANSPILER_MODULES} | {"to_js.py"}
+    expected_forward = {Path(path).name for path in EXPECTED_TRANSPILER_MODULES} | {
+        "to_js.py"
+    }
     if found_forward != expected_forward:
         errors.append(
             f"{TRANSPILER_DIR.relative_to(ROOT).as_posix()}: directorio canónico desalineado -> "
@@ -624,7 +683,9 @@ def validate_targeted_artifact_roots(
         module_name.rsplit(".", maxsplit=1)[-1] + ".py"
         for module_name, _ in EXPECTED_TRANSPILER_REGISTRY.values()
     }
-    if expected_registry_modules != ({Path(path).name for path in EXPECTED_TRANSPILER_MODULES}):
+    if expected_registry_modules != (
+        {Path(path).name for path in EXPECTED_TRANSPILER_MODULES}
+    ):
         errors.append(
             "scripts/ci/validate_targets.py: EXPECTED_TRANSPILER_MODULES debe derivar exactamente de EXPECTED_TRANSPILER_REGISTRY -> "
             f"modules={sorted(expected_forward)}, registry={sorted(expected_registry_modules)}"
@@ -991,7 +1052,10 @@ def validate_retired_targets_guardrail() -> list[str]:
         for line_no, line in enumerate(content.splitlines(), start=1):
             if RETIRED_TARGETS_LITERAL not in line:
                 continue
-            if any(pattern.search(line) for pattern in PACKAGING_RETIRED_LITERAL_ALLOW_PATTERNS):
+            if any(
+                pattern.search(line)
+                for pattern in PACKAGING_RETIRED_LITERAL_ALLOW_PATTERNS
+            ):
                 continue
             errors.append(
                 f"{rel_path}:{line_no}: fuga de histórico retirado en rutas de packaging ({RETIRED_TARGETS_LITERAL})"
@@ -1047,7 +1111,9 @@ def validate_productive_imports_no_retired_artifacts() -> list[str]:
     for rel_path, required_tokens in PACKAGING_EXPLICIT_EXCLUSIONS.items():
         path = ROOT / rel_path
         if not path.exists():
-            errors.append(f"{rel_path}: archivo de packaging no encontrado para verificar exclusiones explícitas")
+            errors.append(
+                f"{rel_path}: archivo de packaging no encontrado para verificar exclusiones explícitas"
+            )
             continue
         content = path.read_text(encoding="utf-8", errors="ignore")
         for token in required_tokens:
@@ -1072,16 +1138,17 @@ def validate_final_backend_repo_audit() -> list[str]:
             content = path.read_text(encoding="utf-8")
         except UnicodeDecodeError:
             continue
+        auditable_content = HISTORICAL_TARGET_REFERENCE_PATTERN.sub("", content)
         for pattern, description in REPO_AUDIT_FORBIDDEN_TERMS:
-            for match in pattern.finditer(content):
-                line_no = content.count("\n", 0, match.start()) + 1
+            for match in pattern.finditer(auditable_content):
+                line_no = auditable_content.count("\n", 0, match.start()) + 1
                 errors.append(
                     f"{rel}:{line_no}: referencia fuera del conjunto final -> {description}"
                 )
         if rel.startswith(REPO_AUDIT_PUBLIC_TEXT_PREFIXES):
             for pattern, alias in REPO_AUDIT_FORBIDDEN_ALIAS_LITERALS:
-                for match in pattern.finditer(content):
-                    line_no = content.count("\n", 0, match.start()) + 1
+                for match in pattern.finditer(auditable_content):
+                    line_no = auditable_content.count("\n", 0, match.start()) + 1
                     errors.append(
                         f"{rel}:{line_no}: alias legacy literal fuera del conjunto final -> {alias}"
                     )
@@ -1134,8 +1201,6 @@ def _public_cli_env() -> dict[str, str]:
     return env
 
 
-
-
 def _run_stage(name: str, errors: list[str]) -> int | None:
     if not errors:
         return None
@@ -1181,7 +1246,6 @@ def main() -> int:
             "comandos/help sin aliases legacy",
             validate_cli_public_surfaces_no_legacy_aliases(),
         ),
-
     )
     for stage_name, errors in stages:
         result = _run_stage(stage_name, errors)

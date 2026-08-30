@@ -47,7 +47,6 @@ def dormir(segundos: float) -> None:
     time.sleep(segundos)
 
 
-
 def epoch(fecha: datetime | None = None) -> float:
     """Convierte una fecha a timestamp Unix en segundos."""
 

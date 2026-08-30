@@ -14,7 +14,6 @@ from tests.integration.transpilers.backend_contracts import (
 )
 from tests.utils.targets import assert_tier_targets_match_policy
 
-
 TIER2_BACKENDS = assert_tier_targets_match_policy("tier2", transpilers=TRANSPILERS)
 
 
@@ -29,7 +28,9 @@ def test_tier2_matrix_declares_minimum_battery_for_every_target(backend: str):
     "backend, feature",
     [(backend, feature) for backend in TIER2_BACKENDS for feature in REQUIRED_FEATURES],
 )
-def test_tier2_backend_contract_matches_compatibility_matrix(backend: str, feature: str):
+def test_tier2_backend_contract_matches_compatibility_matrix(
+    backend: str, feature: str
+):
     support_level = BACKEND_COMPATIBILITY[backend][feature]
     if support_level == "none":
         with pytest.raises(NotImplementedError):
@@ -51,7 +52,9 @@ def test_tier2_backend_contract_matches_compatibility_matrix(backend: str, featu
 
 @pytest.mark.parametrize("backend", TIER2_BACKENDS)
 @pytest.mark.parametrize("feature", HOLOBIT_FEATURES)
-def test_tier2_holobit_primitives_generate_code_for_every_official_target(backend: str, feature: str):
+def test_tier2_holobit_primitives_generate_code_for_every_official_target(
+    backend: str, feature: str
+):
     if BACKEND_COMPATIBILITY[backend][feature] == "none":
         with pytest.raises(NotImplementedError):
             generate_code(backend, feature)
@@ -80,8 +83,10 @@ def test_tier2_backend_runtime_hooks_are_present_when_expected(backend: str):
 
 
 def test_tier2_suite_targets_only_official_backends():
-    assert assert_tier_targets_match_policy("tier2", transpilers=TRANSPILERS) == TIER2_BACKENDS
-
+    assert (
+        assert_tier_targets_match_policy("tier2", transpilers=TRANSPILERS)
+        == TIER2_BACKENDS
+    )
 
 
 def test_tier2_suite_no_admite_backends_extra_ni_perdidos():

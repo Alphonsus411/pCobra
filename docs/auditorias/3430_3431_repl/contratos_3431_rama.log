@@ -1,0 +1,71 @@
+...............................................................F........ [ 63%]
+..FFFF....................................                               [100%]
+=================================== FAILURES ===================================
+___ test_repl_contract_pipeline_completo_por_modulo_canonico[configuracion] ____
+tests/integration/test_repl_usar_entrypoints_contract.py:1104: in test_repl_contract_pipeline_completo_por_modulo_canonico
+    interp.contextos[-1].values[symbol](config)
+src/pcobra/cobra/usar_loader.py:185: in protegido
+    __verificar(kwargs)
+src/pcobra/cobra/usar_loader.py:169: in verificar_permiso
+    raise PermissionError(
+E   PermissionError: capacidad filesystem.read denegada en modo seguro
+________ test_repl_contract_pipeline_completo_por_modulo_canonico[ruta] ________
+tests/integration/test_repl_usar_entrypoints_contract.py:1150: in test_repl_contract_pipeline_completo_por_modulo_canonico
+    interp.contextos[-1].values[symbol]("cobra/mod.co")
+src/pcobra/cobra/usar_loader.py:185: in protegido
+    __verificar(kwargs)
+src/pcobra/cobra/usar_loader.py:169: in verificar_permiso
+    raise PermissionError(
+E   PermissionError: capacidad filesystem.read denegada en modo seguro
+___ test_repl_contract_pipeline_completo_por_modulo_canonico[serializacion] ____
+tests/integration/test_repl_usar_entrypoints_contract.py:1158: in test_repl_contract_pipeline_completo_por_modulo_canonico
+    interp.contextos[-1].values[symbol](ruta_json)
+src/pcobra/cobra/usar_loader.py:185: in protegido
+    __verificar(kwargs)
+src/pcobra/cobra/usar_loader.py:169: in verificar_permiso
+    raise PermissionError(
+E   PermissionError: capacidad filesystem.read denegada en modo seguro
+______ test_repl_contract_pipeline_completo_por_modulo_canonico[sistema] _______
+tests/integration/test_repl_usar_entrypoints_contract.py:1039: in test_repl_contract_pipeline_completo_por_modulo_canonico
+    interp.contextos[-1].values[symbol](".")
+src/pcobra/cobra/usar_loader.py:185: in protegido
+    __verificar(kwargs)
+src/pcobra/cobra/usar_loader.py:169: in verificar_permiso
+    raise PermissionError(
+E   PermissionError: capacidad filesystem.read denegada en modo seguro
+______ test_repl_contract_pipeline_completo_por_modulo_canonico[temporal] ______
+tests/integration/test_repl_usar_entrypoints_contract.py:1173: in test_repl_contract_pipeline_completo_por_modulo_canonico
+    interp.contextos[-1].values[symbol]()
+src/pcobra/cobra/usar_loader.py:185: in protegido
+    __verificar(kwargs)
+src/pcobra/cobra/usar_loader.py:169: in verificar_permiso
+    raise PermissionError(
+E   PermissionError: capacidad filesystem.write denegada en modo seguro
+=============================== warnings summary ===============================
+tests/integration/test_repl_usar_entrypoints_contract.py::test_repl_contract_pipeline_completo_por_modulo_canonico[asincrono]
+  /workspace/pCobra/tests/integration/test_repl_usar_entrypoints_contract.py:1062: DeprecationWarning: There is no current event loop
+    interp.contextos[-1].values[symbol](asyncio.Future())
+
+tests/integration/test_repl_usar_entrypoints_contract.py::test_repl_contract_colision_warn_alias_required_estructurada
+  /workspace/pCobra/src/pcobra/core/interpreter.py:2743: RuntimeWarning: Conflicto de nombres en `usar`: el símbolo 'es_finito' ya existe y no será sobrescrito.
+    self._inyectar_exports_modulo_proyecto(exports)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+============================= slowest 10 durations =============================
+0.89s call     tests/integration/test_repl_usar_entrypoints_contract.py::test_holobit_corelib_exporta_solo_simbolos_canonicos_publicos
+0.26s call     tests/integration/test_repl_usar_entrypoints_contract.py::test_repl_contrato_cli_superficie_publica_y_error_corto_numpy
+0.25s call     tests/integration/test_repl_usar_entrypoints_contract.py::test_repl_usar_modulos_numero_logica_tiempo_y_datos_con_epoch_rango
+0.24s call     tests/integration/test_repl_usar_entrypoints_contract.py::test_repl_integracion_usar_modulos_publicos_end_to_end[<lambda>-<lambda>-<lambda>]
+0.23s call     tests/integration/test_repl_usar_entrypoints_contract.py::test_repl_integracion_usar_modulos_publicos_end_to_end[ReplCommandV2-<lambda>-<lambda>]
+0.18s call     tests/integration/test_repl_usar_entrypoints_contract.py::test_repl_usar_datos_numero_archivo_contrato_basico_sin_errores_metadata
+0.07s call     tests/integration/test_repl_usar_entrypoints_contract.py::test_interprete_corelibs_superficie_minima_requerida
+0.06s call     tests/cli/test_repl_script_parity_contract.py::test_paridad_script_vs_repl_mientras_asignaciones_y_retorno_observable
+0.03s call     tests/integration/test_repl_usar_entrypoints_contract.py::test_repl_usar_datos_longitud_imprimir_lista_y_variable[ReplCommandV2-<lambda>-<lambda>]
+0.03s call     tests/integration/test_repl_usar_entrypoints_contract.py::test_repl_usar_datos_longitud_imprimir_lista_y_variable[<lambda>-<lambda>-<lambda>]
+=========================== short test summary info ============================
+FAILED tests/integration/test_repl_usar_entrypoints_contract.py::test_repl_contract_pipeline_completo_por_modulo_canonico[configuracion]
+FAILED tests/integration/test_repl_usar_entrypoints_contract.py::test_repl_contract_pipeline_completo_por_modulo_canonico[ruta]
+FAILED tests/integration/test_repl_usar_entrypoints_contract.py::test_repl_contract_pipeline_completo_por_modulo_canonico[serializacion]
+FAILED tests/integration/test_repl_usar_entrypoints_contract.py::test_repl_contract_pipeline_completo_por_modulo_canonico[sistema]
+FAILED tests/integration/test_repl_usar_entrypoints_contract.py::test_repl_contract_pipeline_completo_por_modulo_canonico[temporal]
+5 failed, 109 passed, 2 warnings in 4.00s

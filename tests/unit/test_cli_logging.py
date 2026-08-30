@@ -34,7 +34,11 @@ sys.modules.setdefault("jsonschema", fake_jsonschema)
 
 ipykernel_mod = ModuleType("ipykernel")
 kernelbase_mod = ModuleType("ipykernel.kernelbase")
+
+
 class DummyKernel: ...
+
+
 kernelbase_mod.Kernel = DummyKernel
 sys.modules.setdefault("ipykernel", ipykernel_mod)
 sys.modules.setdefault("ipykernel.kernelbase", kernelbase_mod)
@@ -52,9 +56,15 @@ def test_cli_no_debug(caplog):
     app = CliApplication()
     app.initialize()
 
-    with patch.object(app, "execute_command", return_value=0), \
-         patch.object(app, "_parse_arguments", side_effect=lambda argv: app.parser.parse_args(argv)), \
-         patch("cobra.cli.cli.messages.mostrar_logo"):
+    with (
+        patch.object(app, "execute_command", return_value=0),
+        patch.object(
+            app,
+            "_parse_arguments",
+            side_effect=lambda argv: app.parser.parse_args(argv),
+        ),
+        patch("cobra.cli.cli.messages.mostrar_logo"),
+    ):
         with caplog.at_level(logging.DEBUG):
             ret = app.run([])
 
@@ -67,9 +77,15 @@ def test_cli_run_twice_keeps_third_party_logging_operational():
     logging.getLogger().handlers.clear()
     app = CliApplication()
 
-    with patch.object(app, "execute_command", return_value=0), \
-         patch.object(app, "_parse_arguments", side_effect=lambda argv: app.parser.parse_args(argv)), \
-         patch("cobra.cli.cli.messages.mostrar_logo"):
+    with (
+        patch.object(app, "execute_command", return_value=0),
+        patch.object(
+            app,
+            "_parse_arguments",
+            side_effect=lambda argv: app.parser.parse_args(argv),
+        ),
+        patch("cobra.cli.cli.messages.mostrar_logo"),
+    ):
         assert app.run([]) == 0
         assert app.run([]) == 0
 

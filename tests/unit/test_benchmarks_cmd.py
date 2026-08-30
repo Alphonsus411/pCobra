@@ -30,6 +30,7 @@ def test_benchmarks_command_runs(monkeypatch):
 @pytest.mark.timeout(10)
 def test_benchmarks_command_handles_errors(monkeypatch):
     """Devuelve código adecuado si el script falla."""
+
     def fake_run(_config):
         raise FileNotFoundError
 

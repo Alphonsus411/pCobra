@@ -12,7 +12,10 @@ from pcobra.cobra.transpilers import registry
         (
             {
                 **registry.TRANSPILER_CLASS_PATHS,
-                "fantasy": ("pcobra.cobra.transpilers.transpiler.to_python", "TranspiladorPython"),
+                "fantasy": (
+                    "pcobra.cobra.transpilers.transpiler.to_python",
+                    "TranspiladorPython",
+                ),
             },
             "claves fuera de contrato",
         ),
@@ -49,5 +52,3 @@ def test_validate_public_registry_contract_falla_con_clave_extra(monkeypatch):
 
     with pytest.raises(RuntimeError, match="PUBLIC_TRANSPILER_CLASS_PATHS"):
         registry._validate_public_registry_contract()
-
-

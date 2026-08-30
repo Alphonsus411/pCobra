@@ -23,7 +23,9 @@ def _module_name_for(path: Path) -> str:
     return f"{MODULE_PREFIX}.{suffix}" if suffix else MODULE_PREFIX
 
 
-def _resolve_relative_module(current_module: str, level: int, module: str | None) -> str | None:
+def _resolve_relative_module(
+    current_module: str, level: int, module: str | None
+) -> str | None:
     parts = current_module.split(".")
     if level > len(parts):
         return None
@@ -40,7 +42,9 @@ def _extract_imported_modules(tree: ast.AST, current_module: str) -> set[str]:
             imports.update(alias.name for alias in node.names)
         elif isinstance(node, ast.ImportFrom):
             if node.level:
-                resolved = _resolve_relative_module(current_module, node.level, node.module)
+                resolved = _resolve_relative_module(
+                    current_module, node.level, node.module
+                )
                 if resolved:
                     imports.add(resolved)
                 continue
@@ -121,12 +125,21 @@ def classify_core_sccs(
 ) -> tuple[list[set[str]], list[set[str]], list[set[str]]]:
     allowed_baseline = set(ALLOWED_CORE_SCCS)
     forbidden_baseline = set(FORBIDDEN_CORE_SCCS)
-    allowed = [component for component in cyclic_components if frozenset(component) in allowed_baseline]
-    forbidden = [component for component in cyclic_components if frozenset(component) in forbidden_baseline]
+    allowed = [
+        component
+        for component in cyclic_components
+        if frozenset(component) in allowed_baseline
+    ]
+    forbidden = [
+        component
+        for component in cyclic_components
+        if frozenset(component) in forbidden_baseline
+    ]
     unexpected = [
         component
         for component in cyclic_components
-        if frozenset(component) not in allowed_baseline and frozenset(component) not in forbidden_baseline
+        if frozenset(component) not in allowed_baseline
+        and frozenset(component) not in forbidden_baseline
     ]
     return allowed, forbidden, unexpected
 
@@ -148,7 +161,9 @@ def main() -> int:
             print("   ---")
         return 1
 
-    print("✅ Sin ciclos de imports en src/pcobra/core (todas las SCC son de tamaño 1).")
+    print(
+        "✅ Sin ciclos de imports en src/pcobra/core (todas las SCC son de tamaño 1)."
+    )
     return 0
 
 

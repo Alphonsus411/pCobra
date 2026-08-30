@@ -17,8 +17,14 @@ def main() -> int:
     sync_contract_artifacts(
         contract_dir=ROOT / "src" / "pcobra" / "cobra" / "stdlib_contract",
         docs_generated_md=ROOT / "docs" / "_generated" / "stdlib_contract_matrix.md",
-        docs_generated_json=ROOT / "docs" / "_generated" / "stdlib_contract_matrix.json",
-        docs_stdlib_md=ROOT / "docs" / "standard_library" / "matriz_stdlib_unificada.md",
+        docs_generated_json=ROOT
+        / "docs"
+        / "_generated"
+        / "stdlib_contract_matrix.json",
+        docs_stdlib_md=ROOT
+        / "docs"
+        / "standard_library"
+        / "matriz_stdlib_unificada.md",
     )
     return 0
 

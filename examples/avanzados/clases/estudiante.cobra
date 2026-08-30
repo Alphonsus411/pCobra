@@ -1,0 +1,13 @@
+import "persona.cobra"
+
+clase Estudiante(Persona):
+    metodo __init__(self, nombre, carrera):
+        atributo self nombre = nombre
+        atributo self carrera = carrera
+    fin
+
+    metodo presentar(self):
+        imprimir "Hola, soy " + atributo self nombre
+        imprimir "Estudio " + atributo self carrera
+    fin
+fin

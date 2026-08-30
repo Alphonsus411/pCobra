@@ -73,10 +73,7 @@ def test_transpilador_condicional():
     ast = [NodoCondicional("x > 5", [NodoAsignacion("y", 2)], [NodoAsignacion("y", 3)])]
     transpilador = TranspiladorJavaScript()
     resultado = transpilador.generate_code(ast)
-    expected = (
-        IMPORTS
-        + "if (x > 5) {\n    let y = 2;\n} else {\n    let y = 3;\n}"
-    )
+    expected = IMPORTS + "if (x > 5) {\n    let y = 2;\n} else {\n    let y = 3;\n}"
     assert resultado == expected
 
 
@@ -301,6 +298,7 @@ def test_export_import():
     )
     assert resultado == esperado
 
+
 def test_decoradores_en_clase_y_metodo_js():
     decor = NodoDecorador(NodoIdentificador("dec"))
     metodo = NodoMetodo("run", ["a"], [NodoPasar()], asincronica=True)
@@ -334,12 +332,7 @@ def test_clase_con_decorador_desde_parser_js():
     ast = Parser(tokens).parsear()
     t = TranspiladorJavaScript()
     resultado = t.generate_code(ast)
-    esperado = IMPORTS + (
-        "class C {\n"
-        + ";\n"
-        + "}\n"
-        + "C = dec(C);"
-    )
+    esperado = IMPORTS + ("class C {\n" + ";\n" + "}\n" + "C = dec(C);")
     assert resultado == esperado
 
 

@@ -6,8 +6,12 @@ import pytest
 
 fake_requests = ModuleType("requests")
 fake_requests.Response = type("Response", (), {})
-fake_requests.get = lambda *args, **kwargs: (_ for _ in ()).throw(RuntimeError("requests no disponible"))
-fake_requests.post = lambda *args, **kwargs: (_ for _ in ()).throw(RuntimeError("requests no disponible"))
+fake_requests.get = lambda *args, **kwargs: (_ for _ in ()).throw(
+    RuntimeError("requests no disponible")
+)
+fake_requests.post = lambda *args, **kwargs: (_ for _ in ()).throw(
+    RuntimeError("requests no disponible")
+)
 sys.modules.setdefault("requests", fake_requests)
 sys.modules.setdefault("httpx", ModuleType("httpx"))
 

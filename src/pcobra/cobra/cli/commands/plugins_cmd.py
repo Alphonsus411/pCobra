@@ -11,6 +11,7 @@ from pcobra.cobra.cli.utils.messages import mostrar_info, mostrar_error
 @dataclass
 class PluginInfo:
     """Información de un plugin."""
+
     nombre: str
     version: str
     descripcion: Optional[str] = None
@@ -21,7 +22,7 @@ class PluginsCommand(BaseCommand):
 
     name: str = "plugins"
     requires_sqlite_key: bool = False
-    
+
     # Constantes para comandos y argumentos
     CMD_BUSCAR = "buscar"
     ARG_ACCION = "accion"
@@ -29,30 +30,31 @@ class PluginsCommand(BaseCommand):
 
     def register_subparser(self, subparsers) -> CustomArgumentParser:
         """Registra los argumentos del subcomando.
-        
+
         Args:
             subparsers: Objeto para registrar subcomandos
-            
+
         Returns:
             CustomArgumentParser: El parser configurado para este subcomando
         """
         parser = subparsers.add_parser(self.name, help=_("Lista plugins instalados"))
         sub = parser.add_subparsers(dest=self.ARG_ACCION)
-        
+
         bus = sub.add_parser(
-            self.CMD_BUSCAR, 
-            help=_("Filtra plugins por nombre o descripción")
+            self.CMD_BUSCAR, help=_("Filtra plugins por nombre o descripción")
         )
-        bus.add_argument(self.ARG_TEXTO, help=_("Texto a buscar en nombre o descripción"))
+        bus.add_argument(
+            self.ARG_TEXTO, help=_("Texto a buscar en nombre o descripción")
+        )
         parser.set_defaults(cmd=self, accion=None)
         return parser
 
     def _formatear_plugin(self, plugin: PluginInfo) -> str:
         """Formatea la información del plugin para mostrar.
-        
+
         Args:
             plugin: Información del plugin a formatear
-            
+
         Returns:
             str: Texto formateado del plugin
         """
@@ -62,11 +64,11 @@ class PluginsCommand(BaseCommand):
 
     def _filtrar_plugins(self, registro: Dict, texto: str) -> Dict:
         """Filtra los plugins según el texto de búsqueda.
-        
+
         Args:
             registro: Registro completo de plugins
             texto: Texto para filtrar
-            
+
         Returns:
             Dict: Registro filtrado de plugins
         """
@@ -74,26 +76,25 @@ class PluginsCommand(BaseCommand):
         return {
             nombre: datos
             for nombre, datos in registro.items()
-            if texto in nombre.lower() or 
-               texto in datos.get("description", "").lower()
+            if texto in nombre.lower() or texto in datos.get("description", "").lower()
         }
 
     def run(self, args) -> int:
         """Ejecuta la lógica del comando.
-        
+
         Args:
             args: Argumentos parseados del comando
-            
+
         Returns:
             int: 0 si la ejecución fue exitosa, 1 si hubo errores
-            
+
         Raises:
             ValueError: Si hay error al obtener o procesar el registro de plugins
             IOError: Si hay error de E/S al acceder al registro
         """
         try:
             registro = obtener_registro_detallado()
-            
+
             if not registro:
                 mostrar_info(_("No hay plugins instalados"))
                 return 0
@@ -104,11 +105,11 @@ class PluginsCommand(BaseCommand):
             for nombre, datos in registro.items():
                 if not isinstance(datos, dict):
                     raise ValueError(f"Datos inválidos para el plugin {nombre}")
-                    
+
                 plugin = PluginInfo(
                     nombre=nombre,
                     version=datos.get("version", ""),
-                    descripcion=datos.get("description")
+                    descripcion=datos.get("description"),
                 )
                 mostrar_info(self._formatear_plugin(plugin))
 

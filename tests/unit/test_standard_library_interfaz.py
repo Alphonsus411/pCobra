@@ -25,8 +25,16 @@ Tree = import_optional_attr("rich.tree", "Tree", safe_stub=True)
 
 
 def _cargar_interfaz() -> ModuleType:
-    ruta = Path(__file__).resolve().parents[2] / "src" / "pcobra" / "standard_library" / "interfaz.py"
-    spec = importlib.util.spec_from_file_location("pcobra.standard_library.interfaz", ruta)
+    ruta = (
+        Path(__file__).resolve().parents[2]
+        / "src"
+        / "pcobra"
+        / "standard_library"
+        / "interfaz.py"
+    )
+    spec = importlib.util.spec_from_file_location(
+        "pcobra.standard_library.interfaz", ruta
+    )
     if spec is None or spec.loader is None:  # pragma: no cover - error al cargar
         raise RuntimeError("No se pudo preparar el módulo de interfaz")
     modulo = importlib.util.module_from_spec(spec)
@@ -282,7 +290,9 @@ def test_preguntar_opcion_envia_opciones_como_texto(monkeypatch):
 
 def test_preguntar_opcion_falla_con_defecto_fuera_de_lista(monkeypatch):
     prompt_mod = ModuleType("rich.prompt")
-    prompt_mod.Prompt = type("Prompt", (), {"ask": classmethod(lambda cls, *a, **k: "")})
+    prompt_mod.Prompt = type(
+        "Prompt", (), {"ask": classmethod(lambda cls, *a, **k: "")}
+    )
     monkeypatch.setitem(sys.modules, "rich.prompt", prompt_mod)
 
     with pytest.raises(ValueError):
@@ -475,7 +485,11 @@ def test_mostrar_tabla_con_secuencias_infiere_columnas_y_ajusta():
     tabla = mostrar_tabla(filas, console=console)
 
     console.print.assert_called_once_with(tabla)
-    assert [col.header for col in tabla.columns] == ["columna_1", "columna_2", "columna_3"]
+    assert [col.header for col in tabla.columns] == [
+        "columna_1",
+        "columna_2",
+        "columna_3",
+    ]
     assert tabla.columns[1]._cells == ["Lovelace", ""]
     assert tabla.columns[2]._cells == ["Pionera", ""]
 
@@ -534,7 +548,9 @@ def test_mostrar_tabla_paginada_una_pagina_no_importa_prompt(monkeypatch):
 
     monkeypatch.setattr(interfaz, "mostrar_tabla", fake_mostrar_tabla)
 
-    resultado = mostrar_tabla_paginada([1, 2], tamano_pagina=10, console=Mock(spec=Console))
+    resultado = mostrar_tabla_paginada(
+        [1, 2], tamano_pagina=10, console=Mock(spec=Console)
+    )
 
     assert resultado == ["tabla"]
     assert observadas == [[1, 2]]
@@ -563,6 +579,7 @@ def test_mostrar_tabla_paginada_valida_tamano_pagina():
     with pytest.raises(ValueError):
         mostrar_tabla_paginada([], tamano_pagina=0)
 
+
 def test_mostrar_columnas_imprime_render_columns():
     console = Mock()
     console.print = Mock()
@@ -581,7 +598,9 @@ def test_mostrar_columnas_reparte_elementos_por_limite():
     console = Mock()
     console.print = Mock()
 
-    columnas = mostrar_columnas(["A", "B", "C", "D"], numero_columnas=2, console=console)
+    columnas = mostrar_columnas(
+        ["A", "B", "C", "D"], numero_columnas=2, console=console
+    )
 
     render = console.print.call_args.args[0]
     assert columnas is render
@@ -640,7 +659,9 @@ def test_estado_temporal_sin_rich_status_usa_fallback_stub():
 
 def test_barra_progreso_avanza():
     console = Console(record=True)
-    with barra_progreso(total=2, descripcion="Carga", console=console, transient=False) as (progreso, tarea):
+    with barra_progreso(
+        total=2, descripcion="Carga", console=console, transient=False
+    ) as (progreso, tarea):
         progreso.advance(tarea)
         progreso.advance(tarea)
         assert progreso.tasks[0].completed == pytest.approx(2)
@@ -648,7 +669,10 @@ def test_barra_progreso_avanza():
 
 def test_barra_progreso_sin_total_muestra_completados():
     console = Console(record=True)
-    with barra_progreso(descripcion="Carga", console=console, transient=False) as (progreso, tarea):
+    with barra_progreso(descripcion="Carga", console=console, transient=False) as (
+        progreso,
+        tarea,
+    ):
         progreso.advance(tarea, 3)
         assert progreso.tasks[0].completed == pytest.approx(3)
 

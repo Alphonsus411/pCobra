@@ -5,9 +5,7 @@ def test_canonical_cobra_toml_mapping_python(tmp_path, monkeypatch):
     mod = "biblioteca.co"
     toml_file = tmp_path / "cobra.toml"
     toml_file.write_text(
-        "[modulos]\n"
-        "[modulos.'biblioteca.co']\n"
-        "python = 'biblioteca.py'\n",
+        "[modulos]\n" "[modulos.'biblioteca.co']\n" "python = 'biblioteca.py'\n",
         encoding="utf-8",
     )
 
@@ -22,9 +20,7 @@ def test_canonical_cobra_toml_mapping_javascript(tmp_path, monkeypatch):
     mod = "biblioteca.co"
     toml_file = tmp_path / "cobra.toml"
     toml_file.write_text(
-        "[modulos]\n"
-        "[modulos.'biblioteca.co']\n"
-        "javascript = 'biblioteca.js'\n",
+        "[modulos]\n" "[modulos.'biblioteca.co']\n" "javascript = 'biblioteca.js'\n",
         encoding="utf-8",
     )
 

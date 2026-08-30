@@ -1,49 +1,48 @@
 import pytest
 import logging
-from core.interpreter import InterpretadorCobra, IMPORT_WHITELIST
-from core.semantic_validators.base import ValidadorBase
-from core.ast_nodes import NodoValor
+from pcobra.core.ast_nodes import NodoValor
+from pcobra.core.interpreter import IMPORT_WHITELIST, InterpretadorCobra
+from pcobra.core.semantic_validators.base import ValidadorBase
+
 
 class DummyError(Exception):
     pass
 
+
 class DummyValidator(ValidadorBase):
     def visit_valor(self, nodo):
-        raise DummyError('validado')
+        raise DummyError("validado")
 
 
-@pytest.fixture(autouse=True)
-def _evitar_limites_reales_en_tests(monkeypatch):
-    monkeypatch.setattr("core.interpreter._lim_cpu", lambda *_: None)
-    monkeypatch.setattr("core.interpreter._lim_mem", lambda *_: None)
+def _nombres_cadena(validador):
+    nombres = []
+    while validador is not None:
+        nombres.append(type(validador).__name__)
+        validador = validador.siguiente
+    return nombres
 
 
 def test_interpreter_extra_validators_list():
-    interp = InterpretadorCobra(extra_validators=[DummyValidator()])
-    with pytest.raises(DummyError):
-        interp.ejecutar_ast([NodoValor(1)])
+    with pytest.raises(TypeError, match="instancias ni callables"):
+        InterpretadorCobra(extra_validators=[DummyValidator()])
 
 
 def test_interpreter_extra_validators_file(tmp_path):
-    mod = tmp_path / 'vals.py'
+    mod = tmp_path / "vals.py"
     mod.write_text(
-        'class V(ValidadorBase):\n'
-        '    def visit_valor(self, nodo):\n'
-        '        raise Exception("file")\n'
-        'VALIDADORES_EXTRA = [V()]\n'
+        "VALIDADORES_EXTRA = " "[{'nombre': 'reflexion_segura', 'parametros': {}}]\n"
     )
     IMPORT_WHITELIST.add(str(tmp_path))
     try:
         interp = InterpretadorCobra(extra_validators=str(mod))
-        with pytest.raises(Exception):
-            interp.ejecutar_ast([NodoValor(2)])
+        assert "ValidadorProhibirReflexion" in _nombres_cadena(interp._validador)
     finally:
         IMPORT_WHITELIST.discard(str(tmp_path))
 
 
 def test_interpreter_rejects_unwhitelisted_validators(tmp_path):
-    mod = tmp_path / 'vals.py'
-    mod.write_text('VALIDADORES_EXTRA = []')
+    mod = tmp_path / "vals.py"
+    mod.write_text("VALIDADORES_EXTRA = []")
     with pytest.raises(ImportError):
         InterpretadorCobra(extra_validators=str(mod))
 
@@ -64,7 +63,7 @@ def test_validator_import_blocked(tmp_path):
     mod.write_text("__import__('os').system('echo hola')\nVALIDADORES_EXTRA = []\n")
     IMPORT_WHITELIST.add(str(tmp_path))
     try:
-        with pytest.raises(ImportError, match="__import__"):
+        with pytest.raises(ImportError, match="importaciones"):
             InterpretadorCobra._cargar_validadores(str(mod))
     finally:
         IMPORT_WHITELIST.discard(str(tmp_path))
@@ -73,8 +72,7 @@ def test_validator_import_blocked(tmp_path):
 def test_validator_getattr_introspeccion_blocked(tmp_path):
     mod = tmp_path / "vals.py"
     mod.write_text(
-        "x = getattr(__builtins__, '__subclasses__', None)\n"
-        "VALIDADORES_EXTRA = []\n"
+        "x = getattr(__builtins__, '__subclasses__', None)\n" "VALIDADORES_EXTRA = []\n"
     )
     IMPORT_WHITELIST.add(str(tmp_path))
     try:
@@ -117,6 +115,7 @@ def test_validator_malicioso_timeout_controlado(tmp_path, monkeypatch):
     mod = tmp_path / "vals_loop.py"
     mod.write_text("while True:\n    pass\n")
     IMPORT_WHITELIST.add(str(tmp_path))
+
     def _compile_timeout(*_args, **_kwargs):
         raise TimeoutError("timeout interno sensible")
 
@@ -128,10 +127,13 @@ def test_validator_malicioso_timeout_controlado(tmp_path, monkeypatch):
         IMPORT_WHITELIST.discard(str(tmp_path))
 
 
-def test_validator_malicioso_estructura_enorme_rechazo_controlado(tmp_path, monkeypatch):
+def test_validator_malicioso_estructura_enorme_rechazo_controlado(
+    tmp_path, monkeypatch
+):
     mod = tmp_path / "vals_big.py"
     mod.write_text("VALIDADORES_EXTRA = [0] * 10_000_000\n")
     IMPORT_WHITELIST.add(str(tmp_path))
+
     def _compile_mem(*_args, **_kwargs):
         raise MemoryError("detalle sensible de memoria")
 

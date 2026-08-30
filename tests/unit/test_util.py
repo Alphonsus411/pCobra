@@ -13,4 +13,3 @@ def test_util():
     assert util.es_vacio([]) is True
     assert util.es_vacio("a") is False
     assert util.repetir("a", 3) == "aaa"
-

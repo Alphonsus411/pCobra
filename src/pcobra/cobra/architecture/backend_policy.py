@@ -45,9 +45,13 @@ def assert_public_targets_contract(targets: tuple[str, ...], *, source: str) -> 
         )
 
 
-def assert_public_command_uses_only_public_backends(*, command: str, targets: tuple[str, ...]) -> None:
+def assert_public_command_uses_only_public_backends(
+    *, command: str, targets: tuple[str, ...]
+) -> None:
     """Falla si un comando público consume cualquier backend fuera de PUBLIC_BACKENDS."""
-    legacy_targets = tuple(target for target in targets if target not in PUBLIC_BACKENDS)
+    legacy_targets = tuple(
+        target for target in targets if target not in PUBLIC_BACKENDS
+    )
     if legacy_targets:
         raise RuntimeError(
             "[PUBLIC CONTRACT] Comando público fuera de contrato: "

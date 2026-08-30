@@ -20,13 +20,7 @@ def test_ci_lint_no_cross_command_imports_guard_passes_on_repo() -> None:
 
 def test_ci_lint_reports_temporary_commands_v2_violation(tmp_path: Path) -> None:
     command = (
-        tmp_path
-        / "src"
-        / "pcobra"
-        / "cobra"
-        / "cli"
-        / "commands_v2"
-        / "run_cmd.py"
+        tmp_path / "src" / "pcobra" / "cobra" / "cli" / "commands_v2" / "run_cmd.py"
     )
     command.parent.mkdir(parents=True)
     command.write_text(
@@ -38,4 +32,6 @@ def test_ci_lint_reports_temporary_commands_v2_violation(tmp_path: Path) -> None
 
     assert any("import entre comandos no permitido" in item for item in violations)
     assert any("commands_v2.build_cmd" in item for item in violations)
-    assert any("src/pcobra/cobra/cli/commands_v2/run_cmd.py:1" in item for item in violations)
+    assert any(
+        "src/pcobra/cobra/cli/commands_v2/run_cmd.py:1" in item for item in violations
+    )

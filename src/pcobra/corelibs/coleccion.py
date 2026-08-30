@@ -13,14 +13,18 @@ K = TypeVar("K")
 _SIN_VALOR = object()
 
 
-def _asegurar_iterable(valor: Iterable[T] | Sequence[T], nombre: str = "lista") -> List[T]:
+def _asegurar_iterable(
+    valor: Iterable[T] | Sequence[T], nombre: str = "lista"
+) -> List[T]:
     try:
         return list(valor)
     except TypeError as exc:  # pragma: no cover - rama de validación
         raise TypeError(f"{nombre} debe ser iterable") from exc
 
 
-def _asegurar_callable(funcion: Callable[..., Any], nombre: str = "funcion") -> Callable[..., Any]:
+def _asegurar_callable(
+    funcion: Callable[..., Any], nombre: str = "funcion"
+) -> Callable[..., Any]:
     if not callable(funcion):
         raise TypeError(f"{nombre} debe ser invocable")
     return funcion
@@ -31,6 +35,7 @@ def _obtener_funcion_clave(clave: Callable[[T], K] | str) -> Callable[[T], K]:
         return clave
 
     if isinstance(clave, str):
+
         def extractor(valor: T) -> K:  # type: ignore[return-value]
             if isinstance(valor, dict):
                 if clave not in valor:
@@ -38,7 +43,9 @@ def _obtener_funcion_clave(clave: Callable[[T], K] | str) -> Callable[[T], K]:
                 return valor[clave]  # type: ignore[return-value]
             if hasattr(valor, clave):
                 return getattr(valor, clave)
-            raise AttributeError(f"El atributo '{clave}' no existe en el objeto {valor!r}")
+            raise AttributeError(
+                f"El atributo '{clave}' no existe en el objeto {valor!r}"
+            )
 
         return extractor
 
@@ -189,9 +196,7 @@ def particionar(
     return verdaderos, falsos
 
 
-def mezclar(
-    lista: Iterable[T] | Sequence[T], semilla: int | None = None
-) -> List[T]:
+def mezclar(lista: Iterable[T] | Sequence[T], semilla: int | None = None) -> List[T]:
     """Retorna una copia de ``lista`` con los elementos reordenados aleatoriamente."""
 
     import random
@@ -208,7 +213,10 @@ def zip_listas(*listas: Iterable[T] | Sequence[T]) -> List[Tuple[Any, ...]]:
 
     if not listas:
         return []
-    materiales = [_asegurar_iterable(lista, nombre=f"lista_{indice + 1}") for indice, lista in enumerate(listas)]
+    materiales = [
+        _asegurar_iterable(lista, nombre=f"lista_{indice + 1}")
+        for indice, lista in enumerate(listas)
+    ]
     return [tuple(elementos) for elementos in zip(*materiales)]
 
 

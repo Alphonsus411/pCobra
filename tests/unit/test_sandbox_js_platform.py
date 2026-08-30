@@ -26,7 +26,9 @@ def _skip_if_no_vm2():
     if not shutil.which("node"):
         pytest.skip("node no disponible")
     try:
-        subprocess.run(["node", "-e", "require('vm2')"], check=True, capture_output=True)
+        subprocess.run(
+            ["node", "-e", "require('vm2')"], check=True, capture_output=True
+        )
     except subprocess.CalledProcessError:
         pytest.skip("vm2 no disponible")
 

@@ -1,26 +1,31 @@
+/**
+ * @name Nodo AST sin validación de tipos
+ * @description Reporta clases Nodo cuyo __post_init__ no valida tipos mediante isinstance o assert.
+ * @kind problem
+ * @problem.severity error
+ * @precision high
+ * @id py/ast-no-type-validation
+ * @tags security
+ */
+
 import python
 
-/**
- * Reporta clases que representan nodos de AST cuyo nombre
- * empieza por "Nodo" y cuyo método __post_init__ no contiene
- * validación de tipos mediante llamadas a `isinstance` ni
- * sentencias `assert`.
- */
 from Class c
 where
-  c.getName().regexp("^Nodo") and
-  not exists(Method m |
-    m.getDeclaringType() = c and
+  c.getName().regexpMatch("^Nodo.*") and
+  not exists(Function m |
+    m.getScope() = c and
     m.getName() = "__post_init__" and
     (
       // Búsqueda de llamada a builtin isinstance
-      exists(FunctionCall fc |
-        fc.getEnclosingCallable() = m and
-        fc.getTarget().hasQualifiedName("isinstance")
+      exists(Call call, Name callee |
+        call.getScope() = m and
+        call.getFunc() = callee and
+        callee.getId() = "isinstance"
       ) or
       // Búsqueda de sentencia assert
-      exists(AssertStmt ast |
-        ast.getEnclosingCallable() = m
+      exists(Assert ast |
+        ast.getScope() = m
       )
     )
   )

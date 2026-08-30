@@ -23,7 +23,9 @@ def test_get_toml_map_missing_file_returns_empty_and_logs_error(monkeypatch, cap
     assert "Error al cargar cobra.toml" in caplog.text
 
 
-def test_get_toml_map_invalid_file_returns_empty_and_logs_error(tmp_path, monkeypatch, caplog):
+def test_get_toml_map_invalid_file_returns_empty_and_logs_error(
+    tmp_path, monkeypatch, caplog
+):
     module_map._toml_cache = None
     bad_toml = tmp_path / "cobra.toml"
     bad_toml.write_text("invalid = ]")
@@ -36,7 +38,9 @@ def test_get_toml_map_invalid_file_returns_empty_and_logs_error(tmp_path, monkey
     assert "Error al cargar cobra.toml" in caplog.text
 
 
-def test_get_toml_map_rechaza_required_targets_fuera_de_public_backends(tmp_path, monkeypatch):
+def test_get_toml_map_rechaza_required_targets_fuera_de_public_backends(
+    tmp_path, monkeypatch
+):
     module_map._toml_cache = None
     bad_toml = tmp_path / "cobra.toml"
     bad_toml.write_text(
@@ -85,7 +89,9 @@ def test_get_mapped_path_returns_original_when_no_mapping(monkeypatch):
     assert module_map.get_mapped_path("m", "python") == "m"
 
 
-def test_get_mapped_path_devuelve_original_para_backend_fuera_del_set_canonico(monkeypatch):
+def test_get_mapped_path_devuelve_original_para_backend_fuera_del_set_canonico(
+    monkeypatch,
+):
     monkeypatch.setattr(
         module_map,
         "get_toml_map",
@@ -104,7 +110,9 @@ def test_get_mapped_path_resuelve_desde_tabla_modulos_en_toml(monkeypatch):
 
 
 def test_get_mapped_path_ignora_mappings_en_raiz_legacy(monkeypatch):
-    monkeypatch.setattr(module_map, "get_toml_map", lambda: {"m": {"javascript": "m.js"}})
+    monkeypatch.setattr(
+        module_map, "get_toml_map", lambda: {"m": {"javascript": "m.js"}}
+    )
     assert module_map.get_mapped_path("m", "javascript") == "m"
 
 
