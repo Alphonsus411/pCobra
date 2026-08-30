@@ -2,9 +2,6 @@
 - Planificada la retirada del alias legacy interno `crear_handler_sugerencias_agix` tras confirmar que no tiene consumidores externos en el repositorio; la entrada canónica y recomendada del IDLE gráfico es `crear_handler_sugerencias`.
 
 ## v10.1.2 - 2026-08-30
-
-### Estabilización
-
 - Consolidada la integración del contrato de extensiones en `master`.
 - Corregidas regresiones de tipado atribuibles a la integración.
 - Validado el contrato oficial de runtime para `python`, `javascript` y `rust`.
