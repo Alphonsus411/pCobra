@@ -10,7 +10,7 @@ import multiprocessing
 import threading
 import warnings
 from pathlib import Path
-from typing import Mapping, Optional
+from typing import Any, Mapping, Optional
 from pcobra.cobra.usar_loader import ModuloFueraCatalogoPublicoError, usar_modulo
 from pcobra.cobra.usar_policy import USAR_COBRA_PUBLIC_MODULES
 
@@ -112,7 +112,7 @@ def _usar_modulo_con_estado_aislado(
     """Llama a ``usar_modulo`` pasando estado aislado si la función lo soporta."""
 
     parametros = inspect.signature(usar_modulo).parameters
-    kwargs = {
+    kwargs: dict[str, Any] = {
         "project_root": project_root,
         "current_file": current_file,
     }
@@ -323,7 +323,7 @@ class InterpretadorCobra:
             print(mensaje)
 
     @staticmethod
-    def _valor_literal(valor):
+    def _valor_literal(valor: Any) -> Any:
         """Convierte representaciones textuales válidas de cadenas a runtime."""
         if not isinstance(valor, str) or len(valor) < 2:
             return valor
@@ -591,7 +591,7 @@ class InterpretadorCobra:
         self.asegurar_estado_runtime_inicial()
 
     @property
-    def contextos(self):
+    def contextos(self) -> list[Environment]:
         contextos = self._execution_state.contextos
         if contextos is None:
             contextos = [self._global_environment]
@@ -599,11 +599,11 @@ class InterpretadorCobra:
         return contextos
 
     @contextos.setter
-    def contextos(self, value):
+    def contextos(self, value: list[Environment]) -> None:
         self._execution_state.contextos = value
 
     @property
-    def mem_contextos(self):
+    def mem_contextos(self) -> list[dict[str, tuple[int, int]]]:
         contextos = self._execution_state.mem_contextos
         if contextos is None:
             contextos = [self._global_mem_context]
@@ -611,31 +611,31 @@ class InterpretadorCobra:
         return contextos
 
     @mem_contextos.setter
-    def mem_contextos(self, value):
+    def mem_contextos(self, value: list[dict[str, tuple[int, int]]]) -> None:
         self._execution_state.mem_contextos = value
 
     @property
-    def _call_depth(self):
+    def _call_depth(self) -> int:
         return self._execution_state.call_depth
 
     @_call_depth.setter
-    def _call_depth(self, value):
+    def _call_depth(self, value: int) -> None:
         self._execution_state.call_depth = value
 
     @property
-    def _eval_stack(self):
+    def _eval_stack(self) -> Any:
         return self._execution_state.eval_stack
 
     @_eval_stack.setter
-    def _eval_stack(self, value):
+    def _eval_stack(self, value: Any) -> None:
         self._execution_state.eval_stack = value
 
     @property
-    def _thread_isolation_depth(self):
+    def _thread_isolation_depth(self) -> int:
         return self._execution_state.thread_isolation_depth
 
     @_thread_isolation_depth.setter
-    def _thread_isolation_depth(self, value):
+    def _thread_isolation_depth(self, value: int) -> None:
         self._execution_state.thread_isolation_depth = value
 
     def asegurar_estado_runtime_inicial(self) -> None:
@@ -703,7 +703,7 @@ class InterpretadorCobra:
         return previo
 
     @property
-    def variables(self):
+    def variables(self) -> Any:
         """Devuelve el mapeo local del entorno activo (compatibilidad)."""
         return self.contextos[-1].values
 
@@ -2768,6 +2768,7 @@ class InterpretadorCobra:
             module_cache=self._usar_module_cache,
             loading_stack=self._usar_loading_stack,
             contexto_proyecto_verificado=self._contexto_proyecto_verificado,
+            safe_mode=self.safe_mode,
         )
         self._inyectar_exports_modulo_proyecto(exports)
 

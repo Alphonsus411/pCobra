@@ -48,8 +48,8 @@ class ProfileCommand(BaseCommand):
             self.logger.warning(f"Error al eliminar archivo temporal {archivo}: {e}")
 
     def _obtener_argumento(
-        self, args: Namespace, nombre: str, default: Optional[any] = None
-    ) -> any:
+        self, args: Namespace, nombre: str, default: Optional[Any] = None
+    ) -> Any:
         """Obtiene un argumento del namespace de argumentos con valor por defecto."""
         return getattr(args, nombre, default)
 

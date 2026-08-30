@@ -925,7 +925,9 @@ _PURE_PUBLIC_SYMBOLS: dict[str, tuple[str, ...]] = {
 }
 
 for _module_name, _contract in tuple(CANONICAL_MODULE_SURFACE_CONTRACTS.items()):
-    _capabilities = {name: frozenset() for name in _PURE_PUBLIC_SYMBOLS[_module_name]}
+    _capabilities: dict[str, frozenset[str]] = {
+        name: frozenset() for name in _PURE_PUBLIC_SYMBOLS[_module_name]
+    }
     _capabilities.update(_EFFECTFUL_PUBLIC_SYMBOLS.get(_module_name, {}))
     CANONICAL_MODULE_SURFACE_CONTRACTS[_module_name] = replace(
         _contract, symbol_capabilities=_capabilities

@@ -26,7 +26,7 @@ from dataclasses import is_dataclass, asdict
 from importlib import util as importlib_util
 from importlib.metadata import PackageNotFoundError, distribution
 from pathlib import Path
-from typing import Any, Iterable, Mapping
+from typing import Any, Iterable, Mapping, cast
 
 __all__ = [
     "DatabaseDependencyError",
@@ -203,7 +203,9 @@ def _load_sqliteplus_class(*, silent_optional: bool = False):
             if constants_module_previo is _MODULO_AUSENTE:
                 sys.modules.pop(constants_name, None)
             else:
-                sys.modules[constants_name] = constants_module_previo
+                sys.modules[constants_name] = cast(
+                    types.ModuleType, constants_module_previo
+                )
         utils_module = sys.modules.setdefault(
             "sqliteplus.utils", types.ModuleType("sqliteplus.utils")
         )
@@ -232,7 +234,7 @@ def _load_sqliteplus_class(*, silent_optional: bool = False):
         if module_previo is _MODULO_AUSENTE:
             sys.modules.pop(module_name, None)
         else:
-            sys.modules[module_name] = module_previo
+            sys.modules[module_name] = cast(types.ModuleType, module_previo)
     sqliteplus_class = getattr(module, "SQLitePlus", None)
     if sqliteplus_class is None:  # pragma: no cover - instalación dañada
         return _use_optional_fallback(

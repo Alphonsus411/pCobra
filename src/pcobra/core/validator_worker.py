@@ -10,11 +10,16 @@ import ast
 import builtins
 import math
 import os
-from typing import Any
+from typing import Any, Protocol, cast
 
 MAX_SOURCE_BYTES = 1_000_000
 MAX_DESCRIPTORS = 32
 MAX_CONTAINER_ITEMS = 128
+
+
+class _Connection(Protocol):
+    def send(self, obj: object) -> None: ...
+    def close(self) -> None: ...
 
 
 def _apply_resource_limits() -> None:
@@ -25,12 +30,20 @@ def _apply_resource_limits() -> None:
     except ImportError:  # pragma: no cover - ruta explícita no POSIX
         return
 
+    # ``resource`` expone atributos dependientes de plataforma.
+    # El import anterior conserva la protección runtime; aquí aislamos
+    # únicamente esa variación de typeshed/mypy.
+    resource_api: Any = resource
+
     memory = 256 * 1024 * 1024
-    resource.setrlimit(resource.RLIMIT_AS, (memory, memory))
-    cpu_consumida = resource.getrusage(resource.RUSAGE_SELF)
+    resource_api.setrlimit(resource_api.RLIMIT_AS, (memory, memory))
+    cpu_consumida = resource_api.getrusage(resource_api.RUSAGE_SELF)
     usada = cpu_consumida.ru_utime + cpu_consumida.ru_stime
     limite_blando = max(1, math.ceil(usada + 1.0))
-    resource.setrlimit(resource.RLIMIT_CPU, (limite_blando, limite_blando + 1))
+    resource_api.setrlimit(
+        resource_api.RLIMIT_CPU,
+        (limite_blando, limite_blando + 1),
+    )
 
 
 def _check_policy(source: str, filename: str) -> ast.AST:
@@ -97,10 +110,13 @@ def _normalize_descriptors(value: Any) -> list[dict[str, Any]]:
             descriptor["parametros"], dict
         ):
             raise TypeError("descriptor_invalido")
-    return result
+    return cast(list[dict[str, Any]], result)
 
 
-def run_validator_worker(connection, request: dict[str, Any]) -> None:
+def run_validator_worker(
+    connection: _Connection,
+    request: dict[str, Any],
+) -> None:
     """Punto de entrada ``spawn``: siempre intenta responder datos primitivos."""
 
     try:

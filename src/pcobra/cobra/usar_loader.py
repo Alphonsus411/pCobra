@@ -10,7 +10,8 @@ import subprocess
 import sys
 import tomllib as tomli
 from functools import wraps
-from typing import Any
+from types import ModuleType
+from typing import Any, cast
 
 from pcobra.cobra.imports import resolver as imports_resolver
 from pcobra.cobra.imports.resolver import ImportResolutionError
@@ -159,9 +160,9 @@ def _aplicar_capacidades(
             continue
 
         def verificar_permiso(
-            kwargs,
-            __capacidades=capacidades_enforced,
-        ):
+            kwargs: dict[str, Any],
+            __capacidades: frozenset[CapacidadUsar] = capacidades_enforced,
+        ) -> None:
             if safe_mode:
                 if (
                     CapacidadUsar.PROCESS_SPAWN in __capacidades
@@ -178,19 +179,25 @@ def _aplicar_capacidades(
 
         if modulo == "red" and inspect.iscoroutinefunction(simbolo):
 
-            @wraps(simbolo)
+            @cast(Any, wraps(simbolo))
             async def protegido(
-                *args, __simbolo=simbolo, __verificar=verificar_permiso, **kwargs
-            ):
+                *args: Any,
+                __simbolo: Any = simbolo,
+                __verificar: Any = verificar_permiso,
+                **kwargs: Any,
+            ) -> Any:
                 __verificar(kwargs)
                 return await __simbolo(*args, **kwargs)
 
         else:
 
-            @wraps(simbolo)
+            @cast(Any, wraps(simbolo))
             def protegido(
-                *args, __simbolo=simbolo, __verificar=verificar_permiso, **kwargs
-            ):
+                *args: Any,
+                __simbolo: Any = simbolo,
+                __verificar: Any = verificar_permiso,
+                **kwargs: Any,
+            ) -> Any:
                 __verificar(kwargs)
                 return __simbolo(*args, **kwargs)
 
@@ -565,7 +572,7 @@ def _cargar_modulo_local_desde_directorio(nombre: str, directorio: Path):
         if modulo_previo is _MODULO_AUSENTE:
             sys.modules.pop(nombre, None)
         else:
-            sys.modules[nombre] = modulo_previo
+            sys.modules[nombre] = cast(ModuleType, modulo_previo)
     return modulo
 
 
@@ -589,7 +596,7 @@ def _cargar_modulo_local_desde_ruta(nombre: str, ruta: Path):
         if modulo_existente is _MODULO_AUSENTE:
             sys.modules.pop(nombre, None)
         else:
-            sys.modules[nombre] = modulo_existente
+            sys.modules[nombre] = cast(ModuleType, modulo_existente)
     return modulo
 
 

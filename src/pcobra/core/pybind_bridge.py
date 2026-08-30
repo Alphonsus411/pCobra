@@ -9,7 +9,7 @@ import sys
 import tempfile
 import shutil
 from types import ModuleType
-from typing import Dict, Iterable, Optional
+from typing import Dict, Iterable, Optional, cast
 
 from pybind11.setup_helpers import Pybind11Extension, build_ext
 from setuptools import Distribution
@@ -93,7 +93,7 @@ def cargar_extension(ruta: str) -> ModuleType:
             if modulo_previo is _MODULO_AUSENTE:
                 sys.modules.pop(nombre, None)
             else:
-                sys.modules[nombre] = modulo_previo
+                sys.modules[nombre] = cast(ModuleType, modulo_previo)
         _cache[path] = module
     return _cache[path]
 

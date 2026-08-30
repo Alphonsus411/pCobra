@@ -10,7 +10,7 @@ import shutil
 import subprocess
 from collections import deque
 from collections.abc import Iterable
-from typing import AsyncIterator
+from typing import Any, AsyncIterator, cast
 
 # Variable de entorno que permite definir una lista blanca mínima
 WHITELIST_ENV = "COBRA_EJECUTAR_PERMITIDOS"
@@ -152,7 +152,7 @@ def ejecutar(
     try:
         _verificar_descriptor(fd, st_dev, st_ino)
         _verificar_ruta(exe_real, st_dev, st_ino)
-        opciones_descriptor = {}
+        opciones_descriptor: dict[str, Any] = {}
         if os.name == "posix" and sys.platform.startswith("linux"):
             if not os.path.exists("/proc/self/fd"):
                 raise RuntimeError("No está disponible /proc/self/fd")
@@ -171,7 +171,7 @@ def ejecutar(
         )
         _verificar_descriptor(fd, st_dev, st_ino)
         _verificar_ruta(exe_real, st_dev, st_ino)
-        return resultado.stdout
+        return cast(str, resultado.stdout)
     except subprocess.TimeoutExpired as exc:
         if exc.stderr:
             return exc.stderr
@@ -180,7 +180,7 @@ def ejecutar(
         ) from exc
     except subprocess.CalledProcessError as exc:
         if exc.stderr:
-            return exc.stderr
+            return cast(str, exc.stderr)
         raise RuntimeError(f"Error al ejecutar '{' '.join(args)}': {exc}") from exc
     finally:
         try:
@@ -206,7 +206,7 @@ async def ejecutar_async(
     try:
         _verificar_descriptor(fd, st_dev, st_ino)
         _verificar_ruta(exe_real, st_dev, st_ino)
-        opciones_descriptor = {}
+        opciones_descriptor: dict[str, Any] = {}
         if os.name == "posix" and sys.platform.startswith("linux"):
             if not os.path.exists("/proc/self/fd"):
                 raise RuntimeError("No está disponible /proc/self/fd")
@@ -266,7 +266,7 @@ async def ejecutar_stream(
     bucle = asyncio.get_running_loop()
     deadline = None if timeout is None else bucle.time() + timeout
 
-    async def esperar(esperable):
+    async def esperar(esperable: Any) -> Any:
         if deadline is None:
             return await esperable
         restante = deadline - bucle.time()
@@ -303,7 +303,7 @@ async def ejecutar_stream(
     try:
         _verificar_descriptor(fd, st_dev, st_ino)
         _verificar_ruta(exe_real, st_dev, st_ino)
-        opciones_descriptor = {}
+        opciones_descriptor: dict[str, Any] = {}
         if os.name == "posix" and sys.platform.startswith("linux"):
             if not os.path.exists("/proc/self/fd"):
                 raise RuntimeError("No está disponible /proc/self/fd")

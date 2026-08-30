@@ -11,7 +11,7 @@ from __future__ import annotations
 import asyncio
 import shlex
 import subprocess
-from collections.abc import Sequence
+from collections.abc import AsyncIterator, Sequence
 from typing import Any
 
 ResultadoProceso = dict[str, int | str]
@@ -168,7 +168,7 @@ async def ejecutar_async(
 async def ejecutar_stream(
     comando: str | Sequence[object],
     **opciones: Any,
-):
+) -> AsyncIterator[str]:
     """Produce por líneas la salida capturada de un proceso terminado."""
 
     resultado = await ejecutar_async(comando, **opciones)

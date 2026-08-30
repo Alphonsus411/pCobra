@@ -71,12 +71,14 @@ def directorio_temporal(*, prefijo: Optional[str] = None) -> str:
     """Crea un directorio temporal y devuelve su ruta como texto."""
 
     prefijo_validado = _validar_texto_opcional(prefijo, "prefijo")
-    opciones_directorio = {}
     if os.environ.get("COBRA_IO_BASE_DIR"):
-        opciones_directorio["dir"] = _resolver_ruta(
-            ".", permitir_absoluta_dentro_base=True
+        ruta = tempfile.mkdtemp(
+            prefix=prefijo_validado,
+            dir=_resolver_ruta(".", permitir_absoluta_dentro_base=True),
         )
-    return str(Path(tempfile.mkdtemp(prefix=prefijo_validado, **opciones_directorio)))
+    else:
+        ruta = tempfile.mkdtemp(prefix=prefijo_validado)
+    return str(Path(ruta))
 
 
 def limpiar(ruta: PathLike) -> bool:
