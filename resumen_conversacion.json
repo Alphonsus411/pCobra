@@ -1,399 +1,257 @@
 {
-  "metadata": {
-    "titulo": "Resumen de conversación y estado de trabajo sobre pCobra",
-    "asistente": "Bella",
-    "idioma": "es",
-    "fecha_resumen": "2026-07-29",
-    "repositorio": "Alphonsus411/pCobra",
-    "rama_contractual": "fix/contrato-extensiones-cobra",
-    "suite_global_estabilizada": false,
-    "origen_del_estado": "Informes y archivos proporcionados por el usuario; no verificado directamente por Bella sobre el repositorio vivo."
+  "proyecto": "pCobra",
+  "fecha": "2026-08-30",
+  "sesion": "Publicacion y validacion de pCobra 10.1.2 en PyPI",
+  "objetivo_principal": "Crear una copia estable, reproducible y externa de pCobra en PyPI como capa adicional de resiliencia frente a fallos locales o de GitHub.",
+  "resultado_general": "COMPLETADO",
+  "version_estable": {
+    "version": "10.1.2",
+    "tag": "v10.1.2",
+    "estado": "publicada_y_validada",
+    "pypi": {
+      "paquete": "pcobra",
+      "version_publicada": "10.1.2",
+      "latest": "10.1.2",
+      "verificacion": "python -m pip index versions pcobra",
+      "resultado": "PASS"
+    }
   },
-  "objetivo_general": {
-    "descripcion": "Eliminar contaminaciones de identidad modular y AST causadas por imports legacy durante la colección de Pytest, corregir los defectos funcionales revelados por la canonicalización y estabilizar la suite incrementalmente.",
-    "estrategia": "Corregir un contaminante por tarea, demostrar causalidad, preservar contratos vigentes y localizar el siguiente contaminante mediante colección global.",
-    "namespace_canonico": [
-      "pcobra.core.*",
-      "pcobra.cobra.*",
-      "pcobra.cli.*"
+  "versionado": {
+    "pyproject_toml": {
+      "anterior": "10.1.1",
+      "actual": "10.1.2",
+      "rol": "fuente principal de version de distribucion"
+    },
+    "README_md": {
+      "anterior": "10.0.13",
+      "actual": "10.1.2"
+    },
+    "CHANGELOG_md": {
+      "entrada": "v10.1.2 - 2026-08-30",
+      "estado": "validada por scripts/check_changelog.py",
+      "correccion_realizada": "Se elimino la subseccion intermedia '### Estabilizacion' porque el validador exige lineas '- ' inmediatamente despues del encabezado de version."
+    },
+    "versiones_internas_no_modificadas": [
+      "DEFAULT_ABI_VERSION",
+      "SYNTAX_REPORT_SCHEMA_VERSION",
+      "src/pcobra/cobra/cli/__init__.py::__version__",
+      "ventanas de deprecacion 10.0.10 -> 10.2.0",
+      "versiones de ejemplos y plugins"
+    ]
+  },
+  "commits_release": [
+    {
+      "sha_corto": "1c66b004",
+      "mensaje": "chore(release): prepare 10.1.2",
+      "archivos": [
+        "CHANGELOG.md",
+        "README.md",
+        "pyproject.toml"
+      ]
+    },
+    {
+      "sha_corto": "08820d6c",
+      "sha": "08820d6c3426d71359911006c76a6a7fb260cfa0",
+      "mensaje": "fix(release): align changelog format for 10.1.2",
+      "motivo": "Adaptar CHANGELOG.md al contrato real de scripts/check_changelog.py."
+    }
+  ],
+  "tag_release": {
+    "nombre": "v10.1.2",
+    "commit_final": "08820d6c3426d71359911006c76a6a7fb260cfa0",
+    "estado_remoto": "publicado",
+    "politica_desde_publicacion": "Considerar v10.1.2 inmutable. No volver a mover el tag."
+  },
+  "build_local": {
+    "resultado": "PASS",
+    "artefactos": [
+      "pcobra-10.1.2-py3-none-any.whl",
+      "pcobra-10.1.2.tar.gz"
     ],
-    "namespaces_legacy_problematicos": [
-      "core.*",
-      "cobra.*",
-      "cli.*",
-      "bindings.*"
+    "twine_check": "PASS",
+    "validacion_entorno_limpio": "PASS",
+    "version_metadata": "10.1.2",
+    "cobra_version": "10.1.2",
+    "import_pcobra": "PASS",
+    "cobra_help": "PASS",
+    "compileall": "PASS"
+  },
+  "validacion_post_pypi": {
+    "instalacion_pcobra_10_1_2": "PASS",
+    "cli": {
+      "cobra_help": "PASS",
+      "descripcion": "La interfaz publica de comandos responde correctamente."
+    },
+    "repl": {
+      "comando": "cobra repl",
+      "resultado": "PASS",
+      "observacion": "REPL iniciado correctamente, banner Cobra visible y salida mediante 'salir' funcional."
+    },
+    "gui": {
+      "comando": "cobra gui",
+      "resultado": "PASS",
+      "observacion": "GUI principal iniciada correctamente y mostrada en ejecucion real.",
+      "elementos_observados": [
+        "arbol de proyecto",
+        "editor",
+        "acciones de archivo",
+        "gestion de paquetes",
+        "selector de backend",
+        "Ejecutar",
+        "Tokens",
+        "AST",
+        "Sugerencias del Libro",
+        "Correccion"
+      ]
+    },
+    "conclusion": "pCobra 10.1.2 no solo esta publicada: la distribucion obtenida e instalada ha demostrado funcionamiento real de CLI, REPL y GUI."
+  },
+  "ci_cd_release": {
+    "workflow": ".github/workflows/release.yml",
+    "trigger": "push de tags v*",
+    "runs_relevantes": [
+      {
+        "id": "33301456766",
+        "resultado": "FAIL",
+        "causa_principal": "Formato de CHANGELOG.md incompatible con scripts/check_changelog.py."
+      },
+      {
+        "id": "33302732860",
+        "resultado": "FAIL",
+        "avance": "Validate changelog PASS",
+        "causa_publicacion": "PyPI respondio HTTP 403 por ausencia de credenciales validas en GitHub Actions."
+      },
+      {
+        "id": "33303026179",
+        "resultado_global": "FAIL",
+        "publicacion_pypi": "SUCCESS",
+        "fallos_restantes": [
+          "Build and push Docker image",
+          "Build CLI en Linux",
+          "Build CLI en macOS Intel",
+          "Build CLI en macOS ARM",
+          "Build CLI en Windows"
+        ]
+      }
+    ]
+  },
+  "autenticacion_pypi": {
+    "problema_detectado": "El workflow esperaba secrets de PyPI pero el repositorio no tenia ningun Actions secret configurado.",
+    "workflow_esperaba": {
+      "TWINE_USERNAME": "secrets.PYPI_USERNAME",
+      "TWINE_PASSWORD": "secrets.PYPI_PASSWORD"
+    },
+    "secrets_configurados": [
+      "PYPI_USERNAME",
+      "PYPI_PASSWORD"
     ],
+    "PYPI_USERNAME": "__token__",
+    "PYPI_PASSWORD": "Token de PyPI almacenado como GitHub Actions Secret; valor no registrado en este resumen.",
+    "resultado": "La siguiente ejecucion consiguio publicar pcobra 10.1.2 en PyPI."
+  },
+  "fallos_ci_pendientes": {
+    "afectan_version_python_publicada": false,
+    "docker": {
+      "estado": "pendiente",
+      "workflow_step": "Build and push Docker image"
+    },
+    "ejecutables": {
+      "estado": "pendiente",
+      "plataformas": [
+        "Windows x64",
+        "Ubuntu x64",
+        "macOS Intel x86_64",
+        "macOS ARM64"
+      ],
+      "dato_conocido_linux": "scripts/build_cli.sh presento un problema de permisos en CI.",
+      "criterio": "Resolver en trabajo posterior sin modificar la release PyPI 10.1.2."
+    },
+    "node_actions": {
+      "estado": "advertencia",
+      "detalle": "GitHub Actions aviso sobre acciones basadas en Node.js 20 forzadas a Node.js 24.",
+      "clasificacion": "No fue la causa principal de la publicacion."
+    }
+  },
+  "arquitectura_publica_relevante": {
+    "interfaz": "cobra",
     "backends_oficiales": [
       "python",
       "javascript",
       "rust"
+    ],
+    "compatibilidad_sdk_completa": [
+      "python"
+    ],
+    "compatibilidad_parcial": [
+      "javascript",
+      "rust"
     ]
   },
-  "restricciones_permanentes": {
-    "rama": [
-      "Trabajar exclusivamente en fix/contrato-extensiones-cobra.",
-      "No utilizar work como rama alternativa o sustitutiva.",
-      "Verificar rama, remoto, HEAD, merge-base, divergencia y árbol antes de inspeccionar o modificar."
+  "resiliencia_conseguida": {
+    "capas": [
+      "working tree local",
+      "Git local",
+      "GitHub master",
+      "tag Git v10.1.2",
+      "wheel y sdist construidos",
+      "PyPI pcobra==10.1.2"
     ],
-    "componentes_protegidos": [
-      "src/pcobra/core/lexer.py",
-      "src/pcobra/core/parser.py",
-      "src/pcobra/cobra/core/lexer.py",
-      "src/pcobra/cobra/core/parser.py",
-      "src/pcobra/core/optimizations/constant_folder.py",
-      "gramática",
-      "tokens"
-    ],
-    "practicas_prohibidas": [
-      "Manipular sys.modules.",
-      "Usar importlib.reload.",
-      "Copiar clases AST o atributos.",
-      "Añadir aliases o shims artificiales.",
-      "Aceptar clases AST duplicadas mediante cambios de producción.",
-      "Detectar nodos únicamente por el nombre textual de la clase.",
-      "Relajar aserciones.",
-      "Añadir skips o xfails para ocultar fallos.",
-      "Cambiar entradas o resultados esperados sin contradicción contractual demostrada.",
-      "Hacer push manual.",
-      "Ejecutar pull, merge, rebase, cherry-pick o reset --hard dentro del flujo acordado."
-    ]
+    "comando_recuperacion": "pip install pcobra==10.1.2",
+    "objetivo": "Disponer de una version estable recuperable incluso ante problemas locales o del repositorio."
   },
-  "causa_raiz_tecnica": {
-    "descripcion": "Python puede ejecutar el mismo archivo físico bajo nombres modulares distintos, creando objetos módulo y clases independientes.",
-    "archivo_recurrente": "src/pcobra/core/ast_nodes.py",
-    "identidades_duplicadas_habituales": [
-      "pcobra.core.ast_nodes",
-      "core.ast_nodes"
-    ],
-    "cadena_transitiva_frecuente": [
-      "import legacy de core.interpreter",
-      "core.interpreter",
-      "core.optimizations",
-      "core.optimizations.constant_folder",
-      "core.ast_nodes"
-    ],
-    "efectos": [
-      "isinstance falla entre nodos canónicos y legacy.",
-      "issubclass falla entre clases homónimas.",
-      "El atributo pcobra.core.ast_nodes puede quedar desalineado respecto de sys.modules.",
-      "El intérprete y constant_folder pueden rechazar nodos válidos.",
-      "La contaminación puede comenzar durante la colección, antes de ejecutar las pruebas."
-    ],
-    "criterio_causal": "Un wrapper legacy solo se considera contaminante cuando se demuestra que crea una segunda identidad de módulo o clase, o que desalineó el atributo del paquete padre."
-  },
-  "metodologia_de_diagnostico": {
-    "instrumentacion": "Plugins temporales de Pytest almacenados exclusivamente bajo /tmp.",
-    "eventos": [
-      "BEFORE",
-      "AFTER",
-      "FILE_AFTER"
-    ],
-    "estado_sano_esperado": {
-      "canonical_present": true,
-      "legacy_present": false,
-      "parent_aligned": true
-    },
-    "datos_comparados": [
-      "Presencia de módulos canónicos y legacy.",
-      "id de los módulos.",
-      "__file__ y realpath.",
-      "__name__ y __package__.",
-      "Alineación de atributos de paquetes padre.",
-      "Identidad de clases AST.",
-      "Relaciones is, isinstance e issubclass.",
-      "Primera operación que cambia el estado de sano a contaminado."
-    ],
-    "validaciones_habituales": [
-      "Archivo focal aislado.",
-      "Colección focal con probe.",
-      "Reproducción secuencial de imports.",
-      "Órdenes directo e inverso con test_end_to_end.",
-      "Conjunto acumulado de archivos corregidos.",
-      "Colección global para localizar el siguiente contaminante.",
-      "git diff --check.",
-      "Comprobación explícita de componentes protegidos."
-    ]
-  },
-  "historial_de_descontaminacion": [
-    {
-      "archivo": "tests/unit/test_imports_alias_clase.py",
-      "correccion": "Migración de nodos AST, transpiladores y helpers a rutas pcobra.*.",
-      "commit_reportado": "6d7548d00cba9ba9c32299b9309d30371298edcc",
-      "resultado": "La colección dejó de duplicar identidades AST en este archivo."
-    },
-    {
-      "archivo": "tests/unit/test_inlining_transpilers.py",
-      "causa": "Import superior desde core.ast_nodes.",
-      "correccion": "Canonicalización de AST, transpiladores Python y JavaScript e import_helper.",
-      "commits_reportados": [
-        "fc1a2668240448f9ed95377e19c6716012206082",
-        "18e7bf4"
+  "comunicacion": {
+    "linkedin": {
+      "estado": "borrador_preparado",
+      "mensaje_central": "pCobra 10.1.2 ya es una version estable, publicada y demostrada en funcionamiento.",
+      "puntos_fuertes": [
+        "Instalacion desde PyPI",
+        "CLI funcional",
+        "REPL funcional demostrado",
+        "GUI funcional demostrada",
+        "Version estable recuperable",
+        "Python, JavaScript y Rust como backends oficiales"
       ],
-      "merge_reportado": "b9334f189dd86cb1f2be406d3b7497cc14e6b74d"
-    },
-    {
-      "archivo": "tests/unit/test_interactive_block_depth.py",
-      "causa": "core.interpreter cargaba transitivamente core.optimizations.constant_folder y core.ast_nodes.",
-      "correccion": "Imports y objetivos de patch migrados a módulos canónicos.",
-      "commit_reportado": "a669f4430d6aec1cd7e4e5de653526214e6041d1"
-    },
-    {
-      "archivos": [
-        "tests/unit/test_interactive_cmd_repl_pipeline_coupling.py",
-        "tests/unit/test_interactive_cmd_repl_state_persistence.py"
-      ],
-      "correccion": "Canonicalización del intérprete, InteractiveCommand, AST y objetivos de patch.",
-      "commits_reportados": [
-        "422570f",
-        "58430c4"
-      ],
-      "merge_reportado": "48cdfb9e01e585c347664ae8678115494f6c6c8c"
-    },
-    {
-      "archivo": "tests/unit/test_interface.py",
-      "causa": "Imports legacy mezclaban Lexer, Parser, AST y transpiladores.",
-      "correccion": "Canonicalización de todos los imports internos.",
-      "commits_reportados": [
-        "542f29c2795c7850269ebc3374dce8659523f959",
-        "49f9128"
-      ],
-      "merge_reportado": "781481e970273b1a3d14980a3c4bcfbcd9c06613"
-    },
-    {
-      "archivo": "tests/unit/test_interpreter.py",
-      "causa": "from core.interpreter import InterpretadorCobra creaba core.ast_nodes transitivamente.",
-      "correccion": "Canonicalización del intérprete, Environment, Lexer, tokens, AST y targets de monkeypatch.",
-      "commit_reportado": "05b7383b3108a5b8c1f5110b091e8e6982a537f4",
-      "resultado_identidad": "36 pruebas recolectadas sin módulos legacy.",
-      "fallos_funcionales_revelados": 5
-    },
-    {
-      "archivo": "src/pcobra/core/interpreter.py",
-      "tipo": "Corrección funcional",
-      "problemas_resueltos": [
-        "Valor de retorno de asignaciones.",
-        "Retorno temprano y limpieza de contexto en with.",
-        "Restauración de mode durante imports fallidos.",
-        "Disponibilidad de longitud.",
-        "Evaluación recursiva de listas literales."
-      ],
-      "commits_reportados": [
-        "fbca04e",
-        "987d7e4"
-      ],
-      "resultado": "tests/unit/test_interpreter.py quedó en 36 passed."
-    },
-    {
-      "archivo": "tests/unit/test_interpreter_atributo.py",
-      "causa": "Imports legacy del intérprete, Lexer, Parser y AST.",
-      "correccion": "Canonicalización de los imports.",
-      "commits_reportados": [
-        "eeeaf8a99e553c6fc022250824bf3da9b2489064",
-        "2d67f32"
-      ],
-      "fallo_funcional_revelado": "El literal de cadena se imprimía como \"Ana\" incluyendo delimitadores."
-    },
-    {
-      "archivo": "tests/unit/test_interpreter_concurrency.py",
-      "causa": "Imports legacy de core.interpreter y core.ast_nodes.",
-      "correccion": "Canonicalización exclusiva de imports.",
-      "commits_reportados": [
-        "2141e21",
-        "05a3349"
-      ],
-      "fallo_funcional_revelado": "NameError para contador antes de iniciar los hilos."
-    },
-    {
-      "archivos": [
-        "src/pcobra/core/interpreter.py",
-        "tests/unit/test_interpreter_cycles.py"
-      ],
-      "tipo": "Corrección funcional y de identidad",
-      "correcciones_funcionales": [
-        "Materialización segura de literales de cadena mediante ast.literal_eval para literales delimitados válidos.",
-        "Primera asignación introduce un binding en el entorno activo.",
-        "Reasignación actualiza el scope propietario.",
-        "Lecturas inexistentes continúan produciendo NameError.",
-        "Autorreferencia inicial inválida continúa fallando.",
-        "RLock por intérprete compartido.",
-        "Aislamiento del entorno capturado durante llamadas originadas por hilos."
-      ],
-      "correccion_identidad": "Canonicalización de imports en test_interpreter_cycles.py.",
-      "commits_reportados": [
-        "70b45db",
-        "b69f0c4",
-        "403f55f"
-      ],
-      "resultado": "74 passed, 1 skipped en el conjunto acumulado de ese punto."
-    },
-    {
-      "archivo": "tests/unit/test_interpreter_herencia.py",
-      "causa": "Imports legacy de core.interpreter y core.ast_nodes.",
-      "correccion": "Canonicalización exclusiva de ambos imports.",
-      "commits_reportados": [
-        "4937e14ee1f44877dbd812def93da5e1e2b0a9e4",
-        "2914778"
-      ],
-      "resultado": "La prueba de resolución de método heredado continuó pasando sin cambios de producción."
-    },
-    {
-      "archivo": "tests/unit/test_interpreter_hilo.py",
-      "causa": "El primer contaminante era from core.ast_nodes import ..., seguido por core.interpreter.",
-      "correccion": "Canonicalización exclusiva de AST e intérprete.",
-      "commit_local_reportado": "85f1461b7806831b40f5aac49a233c7dfa9e4db2",
-      "resultado": [
-        "1 passed en el archivo focal.",
-        "Cinco repeticiones focales correctas.",
-        "Cinco repeticiones de test_interpreter_concurrency.py correctas.",
-        "52 passed en los seis archivos saneados.",
-        "76 passed y 1 skipped en el conjunto acumulado."
-      ]
-    }
-  ],
-  "estado_contractual_mas_reciente_reportado": {
-    "rama": "fix/contrato-extensiones-cobra",
-    "head_local": "85f1461b7806831b40f5aac49a233c7dfa9e4db2",
-    "mensaje_head": "Evita contaminación AST en pruebas de hilos del intérprete",
-    "referencia_remota_base_reportada": "c7a37556ab4dd6b8feadb1d0596501c4f7eddf5b",
-    "divergencia": {
-      "ahead": 1,
-      "behind": 0
-    },
-    "arbol": "limpio",
-    "push_manual": false,
-    "produccion_modificada_en_ultima_tarea": false,
-    "lexer": "intacto",
-    "parser": "intacto",
-    "gramatica": "intacta",
-    "tokens": "intactos",
-    "constant_folder": "intacto"
-  },
-  "ultima_validacion_acumulada": {
-    "passed": 76,
-    "skipped": 1,
-    "failed": 0,
-    "skip_conocido": "Variante JavaScript de tests/integration/test_end_to_end.py omitida por condición ambiental existente.",
-    "archivos_saneados_confirmados": [
-      "tests/unit/test_interpreter.py",
-      "tests/unit/test_interpreter_atributo.py",
-      "tests/unit/test_interpreter_concurrency.py",
-      "tests/unit/test_interpreter_cycles.py",
-      "tests/unit/test_interpreter_herencia.py",
-      "tests/unit/test_interpreter_hilo.py"
-    ],
-    "resultado_archivos_saneados": {
-      "passed": 52,
-      "failed": 0
+      "frase_cierre_propuesta": "Ya no es solo un proyecto que compila. Es una version que se puede instalar, abrir, usar y demostrar."
     }
   },
-  "ultima_coleccion_global_reportada": {
-    "tests_collected": 4714,
-    "exit_code": 0,
-    "suite_funcional_global_ejecutada": false,
-    "suite_funcional_global_estabilizada": false,
-    "warnings_ultimo_informe": [
-      "PytestDeprecationWarning en tests/integration/test_notebooks_execution.py.",
-      "PytestCollectionWarning relativo a TestCommandV2."
+  "siguiente_hito": {
+    "tarea": "Crear video de demostracion de pCobra 10.1.2",
+    "estado": "APARCADO",
+    "horizonte": "semana que viene",
+    "contenido_recomendado": [
+      "Instalacion de pcobra 10.1.2 desde PyPI",
+      "Comprobacion de cobra --version",
+      "Demostracion de cobra help",
+      "Demostracion interactiva de cobra repl",
+      "Arranque y recorrido de cobra gui",
+      "Programa Cobra sencillo ejecutado en directo",
+      "Mostrar brevemente editor, Tokens, AST y Sugerencias del Libro",
+      "Cerrar mostrando que la version utilizada procede de PyPI"
     ],
-    "observacion": "En reportes anteriores también apareció una SyntaxWarning en una prueba de sandbox; el último informe no la enumeró."
+    "objetivo_comunicativo": "Demostrar visualmente que pCobra 10.1.2 es una distribucion estable y utilizable, no solamente una release publicada."
   },
-  "fallos_pendientes_confirmados": {
-    "tests/unit/test_interpreter_scope_contract.py": {
-      "total_fallos": 3,
-      "fallos": [
-        {
-          "tipo": "shadowing",
-          "observado": 2,
-          "esperado": 1
-        },
-        {
-          "tipo": "contrato_de_entorno",
-          "descripcion": "Ausencia del atributo o propiedad entorno."
-        },
-        {
-          "tipo": "asignacion_no_declarada",
-          "descripcion": "Una asignación que debería exigir un binding previo no produce NameError."
-        }
-      ],
-      "caracter": "Fallos funcionales reproducibles en procesos limpios."
-    },
-    "tests/unit/test_interpreter_loop_scope_regression.py": {
-      "total_fallos": 4,
-      "error_representativo": "ValueError: Nodo no soportado: <class 'pcobra.core.ast_nodes.NodoAsignacion'>",
-      "hipotesis_principal": "Incompatibilidad de identidad AST causada por imports legacy del archivo o de dependencias cargadas en el mismo proceso."
-    }
+  "estado_git_local": {
+    "master": "08820d6c3426d71359911006c76a6a7fb260cfa0",
+    "origin_master": "08820d6c3426d71359911006c76a6a7fb260cfa0",
+    "tag_v10_1_2": "08820d6c3426d71359911006c76a6a7fb260cfa0",
+    "pendiente_local": "resumen_conversacion.json permanece como artefacto local de trabajo cuando este modificado.",
+    "recomendacion": "Mantener resumen_conversacion.json fuera de commits de producto salvo decision explicita."
   },
-  "contaminantes_pendientes": {
-    "candidato_relacionado_inmediato": "tests/unit/test_interpreter_inheritance.py",
-    "motivo": "Contiene imports legacy y fue el primer candidato posterior identificado entre las pruebas relacionadas.",
-    "frontera_global": "El último probe global no atribuyó una frontera única a un archivo: los módulos legacy reaparecieron durante la fase final de modificación de items de colección.",
-    "otros_archivos_relacionados_ejecutados": {
-      "tests/unit/test_interpreter_inheritance.py": "2 passed de forma aislada, pero contiene imports legacy.",
-      "tests/unit/test_interpreter_objects.py": "2 passed.",
-      "tests/unit/test_interpreter_scope_contract.py": "16 passed, 3 failed.",
-      "tests/unit/test_interpreter_loop_scope_regression.py": "4 failed.",
-      "tests/unit/test_metodo_atributo.py": "28 passed.",
-      "tests/integration/test_interpreter_loop_mutation_persistence.py": "1 passed.",
-      "tests/integration/test_interpreter_string_equality.py": "2 passed."
-    }
+  "criterio_para_proxima_release": {
+    "version_actual": "10.1.2",
+    "inmutable": true,
+    "si_hay_correcciones_posteriores_que_requieran_publicacion": "Usar 10.1.3 en lugar de modificar o volver a publicar 10.1.2."
   },
-  "siguiente_tarea_preparada": {
-    "estado": "Prompt generado, todavía sin informe de ejecución proporcionado.",
-    "objetivos": [
-      "Canonicalizar imports legacy en tests/unit/test_interpreter_inheritance.py.",
-      "Canonicalizar imports y eliminar incompatibilidades AST en tests/unit/test_interpreter_loop_scope_regression.py.",
-      "Diagnosticar y corregir los tres fallos funcionales de tests/unit/test_interpreter_scope_contract.py.",
-      "Preservar los seis archivos ya saneados.",
-      "Mantener Lexer, Parser, gramática, tokens y constant_folder intactos.",
-      "Ejecutar los tres archivos individualmente y en varios órdenes.",
-      "Repetir pruebas concurrentes.",
-      "Ejecutar ambos órdenes con test_end_to_end.",
-      "Ejecutar validación acumulada y colección global.",
-      "Localizar el siguiente contaminante sin corregirlo."
-    ],
-    "archivos_inicialmente_autorizados": [
-      "tests/unit/test_interpreter_inheritance.py",
-      "tests/unit/test_interpreter_loop_scope_regression.py",
-      "tests/unit/test_interpreter_scope_contract.py"
-    ],
-    "produccion_condicionalmente_autorizada": [
-      "src/pcobra/core/interpreter.py",
-      "Módulo canónico real de Environment, solo con evidencia causal."
-    ],
-    "contratos_funcionales_a_preservar": [
-      "Lectura desde el scope actual hacia padres.",
-      "Declaración en el scope activo.",
-      "Reasignación en el scope propietario.",
-      "Shadowing local sin mutar el exterior.",
-      "Eliminación de bindings locales al salir del scope.",
-      "Closures, parámetros y retornos.",
-      "Persistencia contractual de mutaciones de bucles.",
-      "Global y nolocal.",
-      "Aislamiento concurrente y RLock.",
-      "Entorno de instancias y métodos.",
-      "Primera asignación válida.",
-      "Autorreferencia inicial inválida."
-    ]
-  },
-  "desviaciones_de_plataforma": {
-    "descripcion": "En varias tareas una instrucción superior de la plataforma obligó a crear commits y registrar PR mediante make_pr.",
-    "acciones": [
-      "Se crearon commits focalizados.",
-      "Se registraron PR.",
-      "No se hicieron pushes manuales."
-    ],
-    "nota_sobre_shas": "Los SHA locales reportados en ejecuciones anteriores no siempre existen en clones posteriores porque los cambios fueron integrados mediante commits equivalentes o merges con SHA distintos."
-  },
-  "documentacion_disponible": {
-    "readme_proyecto": "README general de pCobra, versión reportada 10.0.13.",
-    "libro_principal": "docs/LIBRO_PROGRAMACION_COBRA.md.",
-    "inventario_repositorio": "Estructura completa del proyecto proporcionada por el usuario.",
-    "contratos_relevantes": [
-      "CLI pública única cobra.",
-      "Backends oficiales python, javascript y rust.",
-      "Imports internos nuevos mediante pcobra.cobra.* o rutas canónicas pcobra.*.",
-      "Rutas legacy reservadas para compatibilidad histórica."
-    ]
-  },
-  "siguiente_paso": "Ejecutar en Codex el último prompt preparado para resolver contaminación en inheritance y loop_scope_regression, junto con los tres defectos funcionales de scope; después revisar el informe resultante antes de avanzar."
+  "estado_final": {
+    "pypi_10_1_2": "OK",
+    "cli": "OK",
+    "repl": "OK",
+    "gui": "OK",
+    "tag": "OK",
+    "master_sincronizado": true,
+    "release_python": "CERRADA",
+    "pipeline_docker": "PENDIENTE",
+    "pipeline_ejecutables": "PENDIENTE",
+    "proximo_trabajo": "Video demostrativo y, de forma independiente, saneamiento del pipeline Docker/ejecutables."
+  }
 }
