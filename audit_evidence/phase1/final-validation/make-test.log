@@ -1,0 +1,49 @@
+python scripts/grammar_coverage.py --threshold=30
+❌ Cobertura 0.00% inferior al umbral 30.00%
+Cobertura de gramática: 0.00% (0/42)
+Reglas no utilizadas:
+  - __argumentos_star_5
+  - __coincidencia_plus_7
+  - __expr_star_6
+  - __funcion_star_1
+  - __parametros_star_4
+  - __patron_star_3
+  - __start_star_0
+  - __switch_plus_2
+  - argumentos
+  - asignacion
+  - brazo_coincidencia
+  - bucle_mientras
+  - bucle_para
+  - case
+  - clase
+  - coincidencia
+  - condicional
+  - cuerpo
+  - decorador
+  - expr
+  - funcion
+  - funcion_asincronica
+  - garantia
+  - hilo
+  - holobit
+  - importacion
+  - impresion
+  - lambda
+  - llamada
+  - macro
+  - operador
+  - option
+  - parametros
+  - patron
+  - retorno
+  - start
+  - statement
+  - switch
+  - try_catch
+  - usar
+  - valor
+  - with_stmt
+make: *** [Makefile:41: test] Error 1
+EXIT_CODE=2
+WALL_SECONDS=1

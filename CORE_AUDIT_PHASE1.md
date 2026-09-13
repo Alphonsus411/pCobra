@@ -508,6 +508,53 @@ las bases en comentario, copia firmas sin tipos y no tiene visitante registrado
 para `NodoLlamadaMetodo`. Por tanto, la existencia de una construcción homóloga
 en Python o JavaScript no se contabiliza como soporte Cobra.
 
+# 11. Respuestas a las diez preguntas del criterio de éxito
+
+1. **¿Cuál es la sintaxis pública que gobierna la auditoría?** La publicada por
+   `docs/LIBRO_PROGRAMACION_COBRA.md`; el registro
+   `PALABRAS_RESERVADAS` de `src/pcobra/cobra/core/utils.py` es inventario de
+   implementación, no autorización para promover aliases. Las pruebas
+   `test_02_desde_usar_no_aplica_sin_contrato_normativo` y la ausencia
+   deliberada de TEST 5 aplican esa distinción.
+2. **¿Qué backends son públicos?** `PUBLIC_BACKENDS`, en
+   `src/pcobra/cobra/architecture/backend_policy.py`, fija `python`,
+   `javascript` y `rust`; la parametrización de TEST 1–4 usa esa misma fuente,
+   no una lista paralela.
+3. **¿`usar CADENA` recorre la cadena pública?** Sí: `Lexer` y `Parser`
+   producen `NodoUsar`; `PythonAdapter`, `JavaScriptAdapter` y `RustAdapter`
+   generan texto que TEST 1 valida. Solo Python materializa y ejecuta hoy el
+   runtime de importación; en JS/Rust no se afirma una semántica inexistente.
+4. **¿`desde ... usar ...` es sintaxis Cobra válida?** No según §3.6 del Libro.
+   `ClassicParser.declaracion_desde` exige `IMPORT`, no `USAR`; TEST 2 lo marca
+   **NO APLICA** y `tests/unit/test_desde_usar_auditoria.py` caracteriza el
+   rechazo sin inventar gramática.
+5. **¿Las clases se obtienen desde fuente?** La declaración sí:
+   `Parser.declaracion_clase` crea `NodoClase`, como verifican
+   `tests/unit/test_parser_clase.py` y los reproductores de esta fase. Eso no
+   implica soporte integral de objetos.
+6. **¿Construcción y constructor funcionan extremo a extremo?** No.
+   `Parser.llamada_funcion` produce `NodoLlamadaFuncion`, no `NodoInstancia`, y
+   el runtime `ejecutar_instancia` no invoca `__init__`; TEST 3 exige el
+   resultado observable y queda en `xfail(strict=True)` para los tres targets.
+7. **¿Atributos y llamadas a métodos funcionan desde texto Cobra?** No de forma
+   completa. `Parser.exp_atributo` permite parte del acceso, pero deja el
+   paréntesis de una llamada sin consumir y no crea `NodoLlamadaMetodo`; TEST 3
+   y el caso `llamada_metodo` del smoke reproducen el corte.
+8. **¿La herencia es equivalente en los tres destinos?** No. El Parser recoge
+   bases, Python conserva la declaración, JavaScript solo usa la primera y Rust
+   no modela la base de forma compilable. TEST 4 exige imprimir `7` y registra
+   seis `xfail` totales junto con TEST 3, sin convertir sintaxis aceptada en
+   equivalencia semántica.
+9. **¿`super`, override y miembros estáticos/de clase tienen contrato público?**
+   No hay contrato normativo suficiente para `super`; por ello no existe un
+   TEST 5 positivo. Override, visibilidad y miembros estáticos/de clase no se
+   declaran soportados basándose en capacidades de Python/JS/Rust.
+10. **¿Puede cerrarse el hallazgo sin Lexer/Parser?** No. Los símbolos que
+    faltan en la ruta pública (`NodoInstancia` y `NodoLlamadaMetodo`) requieren
+    primero aclarar el Libro y después autorización específica para Parser.
+    Esta fase se limita a evidencia y pruebas estrictas; no modifica ninguno de
+    los dos archivos protegidos.
+
 # 12. Resultado y evidencia
 
 La regresión cubre desde fuente Cobra las cadenas simple y punteada, la ruta
@@ -580,3 +627,97 @@ por separado si las características hoy **NO SOPORTADO** entrarán alguna vez e
 la norma. Hasta entonces no debe usarse la capacidad OO del lenguaje anfitrión
 como evidencia ni promocionarse `NodoInstancia`/`NodoLlamadaMetodo` manuales a
 sintaxis pública.
+
+# 16. Validación final y comparación con la baseline
+
+La validación se ejecutó el 13 de septiembre de 2026, en el orden solicitado,
+con Python 3.12.13, pytest 9.0.3, Node 20.20.2 y rustc 1.87.0. Los contadores se
+transcriben del resumen final de pytest; cuando pytest no llegó a ejecutar o a
+terminar la colección, se usa **N/D**, nunca cero inferido.
+
+| Paso | Comando | passed | failed | skipped | xfailed | xpassed | warnings | Duración pytest | Salida / estado |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---|
+| Dirigidas añadidas | `PYTHONPATH="$PWD/src:$PWD" pytest -ra tests/integration/test_core_audit_phase1.py` | 3 | 0 | 3 | 6 | 0 | 0 | 4.73 s | código 0; pared 7 s |
+| Lexer/Parser/AST (41 archivos enumerados en la evidencia) | `PYTHONPATH="$PWD/src:$PWD" pytest -ra <41 archivos test_lexer*, test_parser* y test_ast*>` | 142 | 14 | 0 | 0 | 0 | 2 | 12.33 s | código 1; pared 14 s |
+| Transpiladores (44 archivos enumerados en la evidencia) | `PYTHONPATH="$PWD/src:$PWD" pytest -ra <44 archivos con transpil/to_python/to_js/to_rust>` | N/D | N/D | N/D | N/D | N/D | 0 | 7.16 s | código 2; colección interrumpida por 1 error |
+| Oficial completo | `make test` | N/D | N/D | N/D | N/D | N/D | N/D | N/A | código 2; pared 1 s; pytest no arrancó |
+
+Las salidas íntegras están en `audit_evidence/phase1/final-validation/` durante
+la ejecución de auditoría. La comparación honesta con la baseline es:
+
+- La baseline no ofrece un resumen final de ejecución completa: recopiló 4977
+  items, 3 skips y 3 warnings en 14.90 s; `make test` se detuvo en el mismo gate
+  0/42, y la ejecución sin cobertura se interrumpió sin resumen. Por ello no
+  existe un contador baseline de `passed/failed/xfailed/xpassed` contra el que
+  calcular deltas numéricos de las dos suites agrupadas.
+- El comando oficial reproduce exactamente el bloqueo previo: cobertura de
+  gramática 0.00 % (0/42), inferior a 30.00 %, antes de pytest. Delta del gate:
+  **0 reglas, 0 puntos porcentuales y mismo código 2**; no es regresión nueva.
+- Los 14 fallos dirigidos de Lexer/Parser/AST son preexistentes: los archivos de
+  producción y pruebas implicados no difieren entre el SHA baseline
+  `21ff2307a1fa027156b2b4657c6baef7bfdc1a83` y `HEAD`. Incluyen las
+  inconsistencias ya documentadas (`TRY`, `DEFER`, `IN` inexistentes), errores
+  históricos de AST/importación, decimal doble, decorador/sugerencia y casos de
+  Parser. Esta fase documental no puede corregirlos sin mezclar hallazgos y, en
+  varios casos, sin autorización de Lexer/Parser.
+- La suite de transpiladores se corta durante colección por el preexistente
+  `TranspiladorPython(safe_mode=True)` de
+  `tests/unit/test_to_python_extras.py`, cuya clase no acepta argumentos. Tanto
+  la prueba como `to_python.py` son idénticos al SHA baseline. No se inventan
+  contadores de casos no ejecutados.
+- Las pruebas nuevas obtienen exactamente su contrato: 3 passes, 3 skips
+  normativos y 6 xfails estrictos; no hay failures ni xpasses. Al no existir en
+  el SHA baseline, su comparación aplicable es contra los estados esperados de
+  la tabla de §13, todos coincidentes.
+
+El smoke `PYTHONPATH="$PWD/src:$PWD" python
+ audit_evidence/phase1/classes-backends.py` validó el código generado con
+`ast.parse` de Python y con `node --check` en los casos que llegaron a destino.
+`rustc --crate-type lib` estaba disponible y rechazó honestamente los tres
+resultados alcanzables: imports de runtime no resueltos/tipos incompatibles en
+clases y un `let` inválido a nivel de módulo en instanciación. El caso de llamada
+a método se detuvo antes, en Parser. El script terminó con código 0 porque es un
+recolector de diagnóstico por caso; los `FAIL rustc` registrados **no se
+reinterpretan como positivos**.
+
+# 17. Integridad del diff, riesgos y recomendaciones para Fase 2
+
+`git diff --check` finaliza sin errores. `git diff --name-only` confirma que
+`src/pcobra/cobra/core/lexer.py` y `src/pcobra/cobra/core/parser.py` no figuran
+en el diff. La revisión completa solo incorpora este cierre documental y la
+evidencia de validación: no incluye Cobra Hub, publicación en PyPI, cambios
+especulativos, nuevos `skip`/`xfail`, eliminación de pruebas ni aserciones
+reducidas. Tampoco cambia ejemplos ni el Libro para ocultar resultados.
+
+Riesgos que permanecen:
+
+- **Alto — gate oficial bloqueado:** `make test` no alcanza pytest mientras la
+  cobertura gramatical siga en 0/42; una suite verde aislada no sustituye el
+  comando oficial.
+- **Alto — ruta OO cortada antes del AST:** construcción y llamada no producen
+  `NodoInstancia`/`NodoLlamadaMetodo`; cualquier arreglo solo en backends daría
+  falsos positivos.
+- **Alto — Rust no compilable para los smoke OO:** hay dependencias de runtime,
+  firmas/tipos y declaraciones de nivel superior que deben separarse por
+  hallazgo.
+- **Medio — colección de transpiladores bloqueada:** el contrato histórico de
+  `safe_mode` impide obtener contadores completos.
+- **Medio — baseline incompleta:** la ejecución original interrumpida no permite
+  comparar todos los contadores; afirmar delta cero global sería incorrecto.
+
+Recomendaciones concretas para Fase 2, en commits futuros separados por
+hallazgo y únicamente tras la autorización correspondiente:
+
+1. Restaurar primero el gate de cobertura gramatical y registrar una baseline
+   completa reproducible con todos los contadores.
+2. Resolver por separado el contrato `safe_mode` del transpilador Python y
+   volver a ejecutar la suite completa de transpiladores.
+3. Pedir una decisión normativa sobre instanciación, llamada, constructor y
+   atributos; solo después solicitar autorización específica para Parser.
+4. Conservar pruebas desde texto Cobra y resultados observables, y hacer que
+   cualquier `xfail(strict=True)` que pase obligue a reclasificar el hallazgo.
+5. Tratar JavaScript y Rust en hallazgos distintos: constructor/`self`/herencia
+   en JS; imports, tipos, ubicación de declaraciones y llamadas en Rust.
+6. Repetir el orden de esta sección y archivar salidas completas, incluyendo
+   limitaciones reales de herramientas, antes de declarar ausencia de
+   regresiones.

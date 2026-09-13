@@ -1,0 +1,29 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-9.0.3, pluggy-1.6.0
+rootdir: /workspace/pCobra
+configfile: pyproject.toml
+plugins: anyio-4.13.0, flet-0.86.1
+collected 12 items
+
+tests/integration/test_core_audit_phase1.py ...sssxxxxxx                 [100%]
+
+============================= slowest 10 durations =============================
+1.16s call     tests/integration/test_core_audit_phase1.py::test_01_usar_forma_normativa_compila_en_destinos_publicos[python]
+0.39s call     tests/integration/test_core_audit_phase1.py::test_01_usar_forma_normativa_compila_en_destinos_publicos[rust]
+0.17s call     tests/integration/test_core_audit_phase1.py::test_01_usar_forma_normativa_compila_en_destinos_publicos[javascript]
+0.01s setup    tests/integration/test_core_audit_phase1.py::test_01_usar_forma_normativa_compila_en_destinos_publicos[python]
+
+(6 durations < 0.005s hidden.  Use -vv to show these durations.)
+=========================== short test summary info ============================
+SKIPPED [1] tests/integration/test_core_audit_phase1.py:86: NO APLICA (python): §3.6 solo publica `usar CADENA` y el Parser no admite `desde ... usar ...`
+SKIPPED [1] tests/integration/test_core_audit_phase1.py:86: NO APLICA (javascript): §3.6 solo publica `usar CADENA` y el Parser no admite `desde ... usar ...`
+SKIPPED [1] tests/integration/test_core_audit_phase1.py:86: NO APLICA (rust): §3.6 solo publica `usar CADENA` y el Parser no admite `desde ... usar ...`
+XFAIL tests/integration/test_core_audit_phase1.py::test_03_clase_constructor_atributo_metodo_e_instancia[python] - ROTO: la fuente no produce NodoInstancia/NodoLlamadaMetodo; constructor, atributo y llamada no tienen ruta pública completa
+XFAIL tests/integration/test_core_audit_phase1.py::test_03_clase_constructor_atributo_metodo_e_instancia[javascript] - ROTO: la fuente no produce NodoInstancia/NodoLlamadaMetodo; constructor, atributo y llamada no tienen ruta pública completa
+XFAIL tests/integration/test_core_audit_phase1.py::test_03_clase_constructor_atributo_metodo_e_instancia[rust] - ROTO: la fuente no produce NodoInstancia/NodoLlamadaMetodo; constructor, atributo y llamada no tienen ruta pública completa
+XFAIL tests/integration/test_core_audit_phase1.py::test_04_herencia_simple_con_resultado_observable[python] - PARCIAL/ROTO: el Libro incluye herencia en el diseño, pero la llamada heredada no atraviesa el flujo canónico y Rust no modela la base
+XFAIL tests/integration/test_core_audit_phase1.py::test_04_herencia_simple_con_resultado_observable[javascript] - PARCIAL/ROTO: el Libro incluye herencia en el diseño, pero la llamada heredada no atraviesa el flujo canónico y Rust no modela la base
+XFAIL tests/integration/test_core_audit_phase1.py::test_04_herencia_simple_con_resultado_observable[rust] - PARCIAL/ROTO: el Libro incluye herencia en el diseño, pero la llamada heredada no atraviesa el flujo canónico y Rust no modela la base
+=================== 3 passed, 3 skipped, 6 xfailed in 4.73s ====================
+EXIT_CODE=0
+WALL_SECONDS=7
