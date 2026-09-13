@@ -524,6 +524,31 @@ del nodo, las tres emisiones, `ast.parse`, `node --check` y `rustc` cuando las
 herramientas están instaladas. No existe una prueba positiva normativa que se
 pueda añadir honestamente mientras falte la producción en el Libro y el Parser.
 
+La suite dedicada `tests/integration/test_core_audit_phase1.py` consolida los
+casos de esta fase y usa exactamente los backends públicos de
+`PUBLIC_BACKENDS`: Python, JavaScript y Rust. TEST 1 valida desde fuente la
+forma normativa `usar "texto"`, comprueba el `NodoUsar`, verifica la sintaxis o
+compilación de cada destino y ejecuta Python, único destino que materializa hoy
+la semántica de `usar`. Cuando `node` o `rustc` no están instalados, el caso se
+registra como **NO APLICA** en vez de presentar la limitación del entorno como
+un defecto del backend.
+
+# 13. Casos nuevos y estados de la suite dedicada
+
+| Caso | Fuente normativa / flujo | Python | JavaScript | Rust | Resultado esperado |
+|---|---|---|---|---|---|
+| TEST 1 — `usar` | Libro §3.6: `usar CADENA` | Sintaxis + ejecución | Sintaxis; runtime de importación **NO APLICA** | Compilación; runtime de importación **NO APLICA** | **OK** en el alcance declarado |
+| TEST 2 — `desde ... usar ...` | No existe forma normativa en el Libro; el Parser la rechaza | **NO APLICA** | **NO APLICA** | **NO APLICA** | `skip` explícito, sin inventar gramática |
+| TEST 3 — clase, constructor, atributo, método e instancia | Libro §3.5 y forma efectiva de atributo; el flujo se corta en instanciación/llamada | **ROTO** | **ROTO** | **ROTO** | `xfail(strict=True)` hasta existir ruta pública completa |
+| TEST 4 — herencia simple | El Libro declara herencia en el diseño y el Parser recoge la base | **ROTO** en ejecución desde fuente | **ROTO** en ejecución desde fuente | **ROTO** además en representación de la base | `xfail(strict=True)` con resultado observable exigido |
+| TEST 5 — superclase y override | `super` no está publicado; override no tiene contrato normativo demostrado | **NO APLICA** | **NO APLICA** | **NO APLICA** | No se añade un positivo engañoso |
+
+Los `xfail` no sustituyen la verificación por fragmentos de texto: cada caso
+formula el resultado ejecutable requerido y es estricto, de modo que una
+implementación futura que lo satisfaga obliga a actualizar conscientemente el
+estado de auditoría. Tampoco se fabrican `NodoInstancia` ni
+`NodoLlamadaMetodo`; toda comprobación empieza en texto Cobra.
+
 # 14. Estado del hallazgo de clases y objetos
 
 **ROTO.** La declaración aislada llega a `NodoClase`, pero ni siquiera la clase
