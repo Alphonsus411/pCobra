@@ -1,0 +1,7 @@
+ERROR: usage: pytest [options] [file_or_dir] [file_or_dir] [...]
+pytest: error: unrecognized arguments: --cov=src/pcobra --cov-report=term-missing --cov-fail-under=90
+  inifile: /workspace/pCobra/pyproject.toml
+  rootdir: /workspace/pCobra
+
+
+__PYTEST_OFFICIAL_COMMAND_EXIT_CODE__=4

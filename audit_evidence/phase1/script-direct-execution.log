@@ -1,0 +1,3 @@
+$ ./scripts/test.sh --collect-only
+/bin/bash: line 1: ./scripts/test.sh: Permission denied
+exit_code=126
