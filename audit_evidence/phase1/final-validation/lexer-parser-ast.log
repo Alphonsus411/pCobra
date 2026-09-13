@@ -1,0 +1,353 @@
+Selected 41 files
+tests/test_lexer.py
+tests/test_lexer_indices.py
+tests/test_lexer_parser_contract.py
+tests/test_parser.py
+tests/unit/test_ast_cache.py
+tests/unit/test_ast_cache_security.py
+tests/unit/test_ast_canonical_import_identity.py
+tests/unit/test_ast_contract.py
+tests/unit/test_ast_limit.py
+tests/unit/test_ast_nodes_property_contract.py
+tests/unit/test_ast_nodes_tipo.py
+tests/unit/test_ast_repr_policy.py
+tests/unit/test_lexer.py
+tests/unit/test_lexer_additional_cases.py
+tests/unit/test_lexer_basics.py
+tests/unit/test_lexer_edge_unicode.py
+tests/unit/test_lexer_errors.py
+tests/unit/test_lexer_errors_extra.py
+tests/unit/test_lexer_keywords_vs_identifiers.py
+tests/unit/test_lexer_metodo_atributo.py
+tests/unit/test_lexer_token_index.py
+tests/unit/test_parser.py
+tests/unit/test_parser_ast.py
+tests/unit/test_parser_block_contract.py
+tests/unit/test_parser_boolean_literals.py
+tests/unit/test_parser_clase.py
+tests/unit/test_parser_condicional_anidado.py
+tests/unit/test_parser_consistencia_ast.py
+tests/unit/test_parser_decorador.py
+tests/unit/test_parser_del_global.py
+tests/unit/test_parser_equality_contract.py
+tests/unit/test_parser_error_reporting.py
+tests/unit/test_parser_errors_extra.py
+tests/unit/test_parser_factories.py
+tests/unit/test_parser_generics.py
+tests/unit/test_parser_holobit.py
+tests/unit/test_parser_inferencia.py
+tests/unit/test_parser_nuevos.py
+tests/unit/test_parser_para_long_loop.py
+tests/unit/test_parser_sugerencias.py
+tests/unit/test_parser_switch.py
+============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-9.0.3, pluggy-1.6.0
+rootdir: /workspace/pCobra
+configfile: pyproject.toml
+plugins: anyio-4.13.0, flet-0.86.1
+collected 156 items
+
+tests/test_lexer.py ..                                                   [  1%]
+tests/test_lexer_indices.py .                                            [  1%]
+tests/test_lexer_parser_contract.py .....                                [  5%]
+tests/test_parser.py ......                                              [  8%]
+tests/unit/test_ast_cache.py .....                                       [ 12%]
+tests/unit/test_ast_cache_security.py ...                                [ 14%]
+tests/unit/test_ast_canonical_import_identity.py .F..                    [ 16%]
+tests/unit/test_ast_contract.py ........                                 [ 21%]
+tests/unit/test_ast_limit.py .                                           [ 22%]
+tests/unit/test_ast_nodes_property_contract.py .                         [ 23%]
+tests/unit/test_ast_nodes_tipo.py .F                                     [ 24%]
+tests/unit/test_ast_repr_policy.py .                                     [ 25%]
+tests/unit/test_lexer.py ...........                                     [ 32%]
+tests/unit/test_lexer_additional_cases.py .....                          [ 35%]
+tests/unit/test_lexer_basics.py ..                                       [ 36%]
+tests/unit/test_lexer_edge_unicode.py ...                                [ 38%]
+tests/unit/test_lexer_errors.py ..                                       [ 39%]
+tests/unit/test_lexer_errors_extra.py .F.                                [ 41%]
+tests/unit/test_lexer_keywords_vs_identifiers.py ..                      [ 42%]
+tests/unit/test_lexer_metodo_atributo.py .                               [ 43%]
+tests/unit/test_lexer_token_index.py .                                   [ 44%]
+tests/unit/test_parser.py FF.F                                           [ 46%]
+tests/unit/test_parser_ast.py .                                          [ 47%]
+tests/unit/test_parser_block_contract.py ............F                   [ 55%]
+tests/unit/test_parser_boolean_literals.py ......                        [ 59%]
+tests/unit/test_parser_clase.py ......                                   [ 63%]
+tests/unit/test_parser_condicional_anidado.py ..                         [ 64%]
+tests/unit/test_parser_consistencia_ast.py F                             [ 65%]
+tests/unit/test_parser_decorador.py ..                                   [ 66%]
+tests/unit/test_parser_del_global.py ............                        [ 74%]
+tests/unit/test_parser_equality_contract.py ............                 [ 82%]
+tests/unit/test_parser_error_reporting.py F...                           [ 84%]
+tests/unit/test_parser_errors_extra.py F.......                          [ 89%]
+tests/unit/test_parser_factories.py ...                                  [ 91%]
+tests/unit/test_parser_generics.py ..                                    [ 92%]
+tests/unit/test_parser_holobit.py ..                                     [ 94%]
+tests/unit/test_parser_inferencia.py .                                   [ 94%]
+tests/unit/test_parser_nuevos.py ..FF                                    [ 97%]
+tests/unit/test_parser_para_long_loop.py F                               [ 98%]
+tests/unit/test_parser_sugerencias.py F                                  [ 98%]
+tests/unit/test_parser_switch.py ..                                      [100%]
+
+=================================== FAILURES ===================================
+____________ test_modulos_oficiales_tienen_una_sola_clave_canonica _____________
+tests/unit/test_ast_canonical_import_identity.py:73: in test_modulos_oficiales_tienen_una_sola_clave_canonica
+    assert result.returncode == 0, result.stderr
+E   AssertionError: Traceback (most recent call last):
+E       File "<string>", line 17, in <module>
+E     AssertionError: ('pcobra.core.ast_nodes', {'pcobra.core.ast_nodes', 'core.ast_nodes'})
+E
+E   assert 1 == 0
+E    +  where 1 = CompletedProcess(args=['/root/.pyenv/versions/3.12.13/bin/python', '-c', "\nimport importlib\nimport pathlib\nimport s... line 17, in <module>\nAssertionError: (\'pcobra.core.ast_nodes\', {\'pcobra.core.ast_nodes\', \'core.ast_nodes\'})\n').returncode
+________________ test_nodo_tipo_acepta_tokens_y_copia_genericos ________________
+tests/unit/test_ast_nodes_tipo.py:20: in test_nodo_tipo_acepta_tokens_y_copia_genericos
+    assert copia.nombre == "Vector"
+E   AssertionError: assert 'Token(TipoTo...ADOR: Vector)' == 'Vector'
+E
+E     - Vector
+E     + Token(TipoToken.IDENTIFICADOR: Vector)
+_________________________ test_multiple_decimal_points _________________________
+tests/unit/test_lexer_errors_extra.py:22: in test_multiple_decimal_points
+    with pytest.raises(LexerError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE <class 'pcobra.core.errors.LexerError'>
+_______________________ test_parser_asignacion_variable ________________________
+tests/unit/test_parser.py:24: in test_parser_asignacion_variable
+    arbol = parser.parsear()
+            ^^^^^^^^^^^^^^^^
+src/pcobra/cobra/core/parser.py:306: in parsear
+    resultado = self._parsear_base()
+                ^^^^^^^^^^^^^^^^^^^^
+src/pcobra/cobra/core/parser.py:278: in _parsear_base
+    nodos.append(self.declaracion())
+                 ^^^^^^^^^^^^^^^^^^
+src/pcobra/cobra/core/parser.py:347: in declaracion
+    return handler()
+           ^^^^^^^^^
+src/pcobra/cobra/core/parser.py:505: in declaracion_asignacion
+    valor = self.expresion()
+            ^^^^^^^^^^^^^^^^
+src/pcobra/cobra/core/parser.py:1508: in expresion
+    return self.exp_o()
+           ^^^^^^^^^^^^
+src/pcobra/cobra/core/parser.py:1512: in exp_o
+    nodo = self.exp_y()
+           ^^^^^^^^^^^^
+src/pcobra/cobra/core/parser.py:1522: in exp_y
+    nodo = self.exp_equality()
+           ^^^^^^^^^^^^^^^^^^^
+src/pcobra/cobra/core/parser.py:1532: in exp_equality
+    nodo = self.exp_comparison()
+           ^^^^^^^^^^^^^^^^^^^^^
+src/pcobra/cobra/core/parser.py:1542: in exp_comparison
+    nodo = self.exp_addition()
+           ^^^^^^^^^^^^^^^^^^^
+src/pcobra/cobra/core/parser.py:1557: in exp_addition
+    nodo = self.exp_multiplication()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+src/pcobra/cobra/core/parser.py:1567: in exp_multiplication
+    nodo = self.exp_unario()
+           ^^^^^^^^^^^^^^^^^
+src/pcobra/cobra/core/parser.py:1590: in exp_unario
+    return self.termino()
+           ^^^^^^^^^^^^^^
+src/pcobra/cobra/core/parser.py:1663: in termino
+    return self.declaracion_holobit()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/pcobra/cobra/core/parser.py:566: in declaracion_holobit
+    raise ParserError(
+E   pcobra.cobra.core.parser.ParserError: Token inesperado en declaracion_holobit: TipoToken.RESTA
+
+During handling of the above exception, another exception occurred:
+tests/unit/test_parser.py:49: in test_parser_asignacion_variable
+    pytest.fail(f"Error en el parser: {e}")
+E   Failed: Error en el parser: Token inesperado en declaracion_holobit: TipoToken.RESTA
+_______________________ test_parser_condicional_si_sino ________________________
+tests/unit/test_parser.py:80: in test_parser_condicional_si_sino
+    assert isinstance(
+E   AssertionError: Se esperaba 'NodoCondicional', pero se encontró NodoAsignacion
+E   assert False
+E    +  where False = isinstance(<NodoAsignacion id=140624273295552>, NodoCondicional)
+
+During handling of the above exception, another exception occurred:
+tests/unit/test_parser.py:87: in test_parser_condicional_si_sino
+    pytest.fail(f"Error en el parser: {e}")
+E   Failed: Error en el parser: Se esperaba 'NodoCondicional', pero se encontró NodoAsignacion
+E   assert False
+E    +  where False = isinstance(<NodoAsignacion id=140624273295552>, NodoCondicional)
+----------------------------- Captured stdout call -----------------------------
+Tokens generados: [Token(TipoToken.VAR: var @ 2:5), Token(TipoToken.IDENTIFICADOR: x @ 2:9), Token(TipoToken.ASIGNAR: = @ 2:11), Token(TipoToken.ENTERO: 10 @ 2:13), Token(TipoToken.SI: si @ 3:5), Token(TipoToken.IDENTIFICADOR: x @ 3:8), Token(TipoToken.MAYORQUE: > @ 3:10), Token(TipoToken.ENTERO: 5 @ 3:12), Token(TipoToken.DOSPUNTOS: : @ 3:14), Token(TipoToken.PROYECTAR: proyectar @ 4:9), Token(TipoToken.LPAREN: ( @ 4:18), Token(TipoToken.IDENTIFICADOR: x @ 4:19), Token(TipoToken.COMA: , @ 4:20), Token(TipoToken.CADENA: 2D @ 4:22), Token(TipoToken.RPAREN: ) @ 4:26), Token(TipoToken.SINO: sino @ 5:5), Token(TipoToken.DOSPUNTOS: : @ 5:10), Token(TipoToken.GRAFICAR: graficar @ 6:9), Token(TipoToken.LPAREN: ( @ 6:17), Token(TipoToken.IDENTIFICADOR: x @ 6:18), Token(TipoToken.RPAREN: ) @ 6:19), Token(TipoToken.FIN: fin @ 7:5), Token(TipoToken.EOF: None @ 8:5)]
+______________________ test_parser_advertencia_alias_enum ______________________
+tests/unit/test_parser.py:109: in test_parser_advertencia_alias_enum
+    parser.parsear()
+src/pcobra/cobra/core/parser.py:306: in parsear
+    resultado = self._parsear_base()
+                ^^^^^^^^^^^^^^^^^^^^
+src/pcobra/cobra/core/parser.py:278: in _parsear_base
+    nodos.append(self.declaracion())
+                 ^^^^^^^^^^^^^^^^^^
+src/pcobra/cobra/core/parser.py:379: in declaracion
+    return self.expresion()
+           ^^^^^^^^^^^^^^^^
+src/pcobra/cobra/core/parser.py:1508: in expresion
+    return self.exp_o()
+           ^^^^^^^^^^^^
+src/pcobra/cobra/core/parser.py:1512: in exp_o
+    nodo = self.exp_y()
+           ^^^^^^^^^^^^
+src/pcobra/cobra/core/parser.py:1522: in exp_y
+    nodo = self.exp_equality()
+           ^^^^^^^^^^^^^^^^^^^
+src/pcobra/cobra/core/parser.py:1532: in exp_equality
+    nodo = self.exp_comparison()
+           ^^^^^^^^^^^^^^^^^^^^^
+src/pcobra/cobra/core/parser.py:1542: in exp_comparison
+    nodo = self.exp_addition()
+           ^^^^^^^^^^^^^^^^^^^
+src/pcobra/cobra/core/parser.py:1557: in exp_addition
+    nodo = self.exp_multiplication()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+src/pcobra/cobra/core/parser.py:1567: in exp_multiplication
+    nodo = self.exp_unario()
+           ^^^^^^^^^^^^^^^^^
+src/pcobra/cobra/core/parser.py:1590: in exp_unario
+    return self.termino()
+           ^^^^^^^^^^^^^^
+src/pcobra/cobra/core/parser.py:1669: in termino
+    raise ParserError(f"Token inesperado en término: {token.tipo}")
+E   pcobra.cobra.core.parser.ParserError: Token inesperado en término: TipoToken.DOSPUNTOS
+_ test_regresion_mensajes_con_espacios_y_saltos_de_linea[\ntry\n    pasar\nfin\n-Se esperaba ':' despu\xe9s de 'try'] _
+tests/unit/test_parser_block_contract.py:140: in test_regresion_mensajes_con_espacios_y_saltos_de_linea
+    assert _error_de_parseo(codigo) == mensaje_esperado
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+tests/unit/test_parser_block_contract.py:12: in _error_de_parseo
+    parser.parsear()
+src/pcobra/cobra/core/parser.py:306: in parsear
+    resultado = self._parsear_base()
+                ^^^^^^^^^^^^^^^^^^^^
+src/pcobra/cobra/core/parser.py:278: in _parsear_base
+    nodos.append(self.declaracion())
+                 ^^^^^^^^^^^^^^^^^^
+src/pcobra/cobra/core/parser.py:347: in declaracion
+    return handler()
+           ^^^^^^^^^
+src/pcobra/cobra/core/parser.py:1060: in declaracion_try_catch
+    if self.token_actual().tipo in (TipoToken.TRY, TipoToken.INTENTAR):
+                                    ^^^^^^^^^^^^^
+E   AttributeError: type object 'TipoToken' has no attribute 'TRY'
+_________________________ test_parser_consistencia_ast _________________________
+tests/unit/test_parser_consistencia_ast.py:93: in test_parser_consistencia_ast
+    classic, lark = _parse_with_both(fragment)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/unit/test_parser_consistencia_ast.py:82: in _parse_with_both
+    classic = ClassicParser(tokens).parsear()
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/pcobra/cobra/core/parser.py:306: in parsear
+    resultado = self._parsear_base()
+                ^^^^^^^^^^^^^^^^^^^^
+src/pcobra/cobra/core/parser.py:278: in _parsear_base
+    nodos.append(self.declaracion())
+                 ^^^^^^^^^^^^^^^^^^
+src/pcobra/cobra/core/parser.py:347: in declaracion
+    return handler()
+           ^^^^^^^^^
+src/pcobra/cobra/core/parser.py:424: in declaracion_para
+    self._exigir_dospuntos("el iterable en 'para'")
+src/pcobra/cobra/core/parser.py:266: in _exigir_dospuntos
+    raise ParserError(f"Se esperaba ':' {detalle}")
+E   cobra.core.parser.ParserError: Se esperaba ':' después del iterable en 'para'
+________________________ test_error_en_declaracion_para ________________________
+tests/unit/test_parser_error_reporting.py:10: in test_error_en_declaracion_para
+    Token(TipoToken.IN, "in"),
+          ^^^^^^^^^^^^
+E   AttributeError: type object 'TipoToken' has no attribute 'IN'
+_______________________ test_decorator_without_function ________________________
+tests/unit/test_parser_errors_extra.py:13: in test_decorator_without_function
+    with pytest.raises(ParserError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE <class 'pcobra.cobra.core.parser.ParserError'>
+_______________________ test_parser_defer_dentro_funcion _______________________
+tests/unit/test_parser_nuevos.py:33: in test_parser_defer_dentro_funcion
+    ast = parser.parsear()
+          ^^^^^^^^^^^^^^^^
+src/pcobra/cobra/core/parser.py:306: in parsear
+    resultado = self._parsear_base()
+                ^^^^^^^^^^^^^^^^^^^^
+src/pcobra/cobra/core/parser.py:278: in _parsear_base
+    nodos.append(self.declaracion())
+                 ^^^^^^^^^^^^^^^^^^
+src/pcobra/cobra/core/parser.py:347: in declaracion
+    return handler()
+           ^^^^^^^^^
+src/pcobra/cobra/core/parser.py:833: in declaracion_funcion
+    cuerpo.append(self.declaracion())
+                  ^^^^^^^^^^^^^^^^^^
+src/pcobra/cobra/core/parser.py:347: in declaracion
+    return handler()
+           ^^^^^^^^^
+src/pcobra/cobra/core/parser.py:1117: in declaracion_defer
+    self.comer(TipoToken.DEFER)
+               ^^^^^^^^^^^^^^^
+E   AttributeError: type object 'TipoToken' has no attribute 'DEFER'
+____________ test_parser_defer_fuera_de_funcion_generar_advertencia ____________
+tests/unit/test_parser_nuevos.py:41: in test_parser_defer_fuera_de_funcion_generar_advertencia
+    ast = parser.parsear()
+          ^^^^^^^^^^^^^^^^
+src/pcobra/cobra/core/parser.py:306: in parsear
+    resultado = self._parsear_base()
+                ^^^^^^^^^^^^^^^^^^^^
+src/pcobra/cobra/core/parser.py:278: in _parsear_base
+    nodos.append(self.declaracion())
+                 ^^^^^^^^^^^^^^^^^^
+src/pcobra/cobra/core/parser.py:347: in declaracion
+    return handler()
+           ^^^^^^^^^
+src/pcobra/cobra/core/parser.py:1117: in declaracion_defer
+    self.comer(TipoToken.DEFER)
+               ^^^^^^^^^^^^^^^
+E   AttributeError: type object 'TipoToken' has no attribute 'DEFER'
+____________________ test_parser_para_mas_de_mil_sentencias ____________________
+tests/unit/test_parser_para_long_loop.py:9: in test_parser_para_mas_de_mil_sentencias
+    Token(TipoToken.IN, "in"),
+          ^^^^^^^^^^^^
+E   AttributeError: type object 'TipoToken' has no attribute 'IN'
+________________________ test_sugerencia_palabra_clave _________________________
+tests/unit/test_parser_sugerencias.py:10: in test_sugerencia_palabra_clave
+    with pytest.raises(ParserError, match="¿Quiso decir 'imprimir'?"):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE <class 'pcobra.cobra.core.parser.ParserError'>
+=============================== warnings summary ===============================
+tests/unit/test_ast_cache_security.py::test_carga_ast_malicioso
+tests/unit/test_ast_cache_security.py::test_carga_tokens_maliciosos
+  /workspace/pCobra/src/pcobra/core/ast_cache.py:210: DeprecationWarning: El uso de 'COBRA_AST_CACHE' está obsoleto; utilice 'COBRA_DB_PATH' en su lugar.
+    _ensure_alias_configured()
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+============================= slowest 10 durations =============================
+3.35s call     tests/unit/test_ast_canonical_import_identity.py::test_modulos_oficiales_tienen_una_sola_clave_canonica
+0.57s call     tests/unit/test_ast_canonical_import_identity.py::test_contrato_checkout_shim_ast_reutiliza_identidad_canonica_en_ambos_ordenes
+0.13s call     tests/unit/test_parser_consistencia_ast.py::test_parser_consistencia_ast
+0.05s call     tests/test_lexer_parser_contract.py::test_parser_factories_no_declara_claves_duplicadas
+0.03s call     tests/unit/test_ast_repr_policy.py::test_politica_repr_nodos_ast
+0.01s setup    tests/unit/test_ast_cache.py::test_obtener_ast_reutiliza
+0.01s call     tests/unit/test_ast_cache.py::test_obtener_ast_reutiliza_tokens
+
+(3 durations < 0.005s hidden.  Use -vv to show these durations.)
+=========================== short test summary info ============================
+FAILED tests/unit/test_ast_canonical_import_identity.py::test_modulos_oficiales_tienen_una_sola_clave_canonica
+FAILED tests/unit/test_ast_nodes_tipo.py::test_nodo_tipo_acepta_tokens_y_copia_genericos
+FAILED tests/unit/test_lexer_errors_extra.py::test_multiple_decimal_points - ...
+FAILED tests/unit/test_parser.py::test_parser_asignacion_variable - Failed: E...
+FAILED tests/unit/test_parser.py::test_parser_condicional_si_sino - Failed: E...
+FAILED tests/unit/test_parser.py::test_parser_advertencia_alias_enum - pcobra...
+FAILED tests/unit/test_parser_block_contract.py::test_regresion_mensajes_con_espacios_y_saltos_de_linea[\ntry\n    pasar\nfin\n-Se esperaba ':' despu\xe9s de 'try']
+FAILED tests/unit/test_parser_consistencia_ast.py::test_parser_consistencia_ast
+FAILED tests/unit/test_parser_error_reporting.py::test_error_en_declaracion_para
+FAILED tests/unit/test_parser_errors_extra.py::test_decorator_without_function
+FAILED tests/unit/test_parser_nuevos.py::test_parser_defer_dentro_funcion - A...
+FAILED tests/unit/test_parser_nuevos.py::test_parser_defer_fuera_de_funcion_generar_advertencia
+FAILED tests/unit/test_parser_para_long_loop.py::test_parser_para_mas_de_mil_sentencias
+FAILED tests/unit/test_parser_sugerencias.py::test_sugerencia_palabra_clave
+================= 14 failed, 142 passed, 2 warnings in 12.33s ==================
+EXIT_CODE=1
+WALL_SECONDS=14

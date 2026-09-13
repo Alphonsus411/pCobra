@@ -1,0 +1,10 @@
+$ python --version
+Python 3.12.13
+$ pytest --version
+pytest 9.0.3
+$ command -v node
+/root/.nvm/versions/node/v20.20.2/bin/node
+v20.20.2
+$ command -v rustc
+/root/.cargo/bin/rustc
+rustc 1.87.0 (17067e9ac 2025-05-09)

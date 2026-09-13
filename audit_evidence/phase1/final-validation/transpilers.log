@@ -1,0 +1,64 @@
+Selected 44 files
+tests/integration/test_kernel_transpiler.py
+tests/integration/test_transpilador_syntax.py
+tests/integration/test_transpiladores.py
+tests/integration/test_transpile_semantics.py
+tests/integration/test_transpilers_generation.py
+tests/performance/test_transpile_time.py
+tests/test_transpilers.py
+tests/unit/test_bench_transpilers_cmd.py
+tests/unit/test_ci_lint_no_parallel_transpilers_registry.py
+tests/unit/test_ci_lint_public_no_direct_transpiler_imports.py
+tests/unit/test_cli_commands_no_local_transpilers_constant_contract.py
+tests/unit/test_cli_transpilar_inverso_cmd.py
+tests/unit/test_cli_transpiler_registry_contract.py
+tests/unit/test_cobra_installer_transpile.py
+tests/unit/test_inlining_transpilers.py
+tests/unit/test_integracion_transpiladores.py
+tests/unit/test_public_commands_no_direct_transpilers_contract.py
+tests/unit/test_public_commands_transpiler_import_contract.py
+tests/unit/test_reverse_transpilers_registry.py
+tests/unit/test_roundtrip_transpilation.py
+tests/unit/test_run_transpiler_pool.py
+tests/unit/test_smoke_transpilation_official_targets.py
+tests/unit/test_to_js.py
+tests/unit/test_to_js2.py
+tests/unit/test_to_js3.py
+tests/unit/test_to_js4.py
+tests/unit/test_to_js_holobit_runtime_snapshot.py
+tests/unit/test_to_js_objects.py
+tests/unit/test_to_python.py
+tests/unit/test_to_python2.py
+tests/unit/test_to_python3.py
+tests/unit/test_to_python4.py
+tests/unit/test_to_python_extras.py
+tests/unit/test_to_python_funciones.py
+tests/unit/test_to_python_nuevos.py
+tests/unit/test_to_python_objects.py
+tests/unit/test_to_rust.py
+tests/unit/test_transpiladores_incompletos.py
+tests/unit/test_transpilar_inverso_target_help.py
+tests/unit/test_transpile_python.py
+tests/unit/test_transpiler_backend_regression.py
+tests/unit/test_transpiler_feature_parity.py
+tests/unit/test_transpiler_runtime_hook_mapping.py
+tests/unit/test_transpilers_import_no_tree_sitter.py
+============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-9.0.3, pluggy-1.6.0
+rootdir: /workspace/pCobra
+configfile: pyproject.toml
+plugins: anyio-4.13.0, flet-0.86.1
+collected 308 items / 1 error
+
+==================================== ERRORS ====================================
+_____________ ERROR collecting tests/unit/test_to_python_extras.py _____________
+tests/unit/test_to_python_extras.py:43: in <module>
+    (TranspiladorPython(safe_mode=True), True),
+     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   TypeError: TranspiladorPython() takes no arguments
+=========================== short test summary info ============================
+ERROR tests/unit/test_to_python_extras.py - TypeError: TranspiladorPython() t...
+!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+=============================== 1 error in 7.16s ===============================
+EXIT_CODE=2
+WALL_SECONDS=9
