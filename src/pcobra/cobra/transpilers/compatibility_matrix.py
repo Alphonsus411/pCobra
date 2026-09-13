@@ -164,7 +164,7 @@ _BACKEND_FEATURE_NODE_SUPPORT_MODEL: Final[dict[str, dict[str, tuple[str, ...]]]
     },
     "javascript": {
         "decoradores": ("visit_decorador", "visit_funcion"),
-        "imports_corelibs": ("visit_import", "visit_llamada_funcion"),
+        "imports_corelibs": ("visit_usar", "visit_import", "visit_llamada_funcion"),
         "manejo_errores": ("visit_try_catch", "visit_throw"),
         "async": ("visit_funcion", "visit_esperar"),
         "tipos_compuestos": (
