@@ -232,6 +232,73 @@ no publica esa producción ni alias para ella y el Parser actual requiere
 `IMPORT`. Conforme a las reglas de la auditoría, se detiene antes de modificar
 Lexer o Parser; tampoco se presenta `import` como sintaxis pública Cobra.
 
+# 7. Barrido acotado de palabras coincidentes con lenguajes backend
+
+## 7.1 Alcance y criterio de clasificación
+
+Se buscó cada palabra completa, respetando mayúsculas y minúsculas, en el
+checkout versionado y se excluyeron `.git`, cachés y artefactos locales. El
+análisis se acotó después a las superficies que permiten decidir el significado
+de una coincidencia: Lexer y Parser canónicos, registro de palabras reservadas,
+AST/runtime, transpiladores, ejemplos, documentación y pruebas. Cada aparición
+se clasificó por su **contexto**, no solo por el archivo: **A** sintaxis pública,
+**B** alias o rama histórica, **C** implementación interna del host, **D** texto
+generado para un target, **E** nombre técnico/API (por ejemplo,
+`visit_try_catch` o una capacidad llamada `async`), **F** documentación y **G**
+prueba. Así, un `for` que itera una lista dentro del propio transpilador es C,
+mientras que el `for` interpolado en su salida es D; una cadena Cobra dentro de
+pytest sigue siendo G y aporta evidencia de A/B solo si recorre Lexer y Parser.
+
+Para A y B se ejecutó la verificación desde texto fuente con
+`Lexer(...).tokenizar()` y `ClassicParser(...).parsear()`. Los nombres que caen
+en `IDENTIFICADOR` no se consideran palabras Cobra. Tampoco se consideraron
+evidencia las palabras de Python que implementa el compilador ni las cadenas de
+Python, JavaScript o Rust emitidas por los backends. La columna «backend»
+resume exclusivamente D; `—` significa que no se encontró ese lexema como
+palabra generada relevante, aunque pueda existir un visitante para el nodo.
+
+## 7.2 Resultado
+
+| término | español existente | público | alias | backend | decisión |
+|---|---|---|---|---|---|
+| `try` | `intentar` | No ejecutable: Lexer → `INTENTAR`; Parser falla al consultar `TipoToken.TRY` inexistente | **B**, histórico y documentado en el índice | **D:** Python `try`; JS `try` | Preservar; registrar la inconsistencia común con `intentar`, sin tocar Lexer/Parser |
+| `catch` | `capturar` | No ejecutable: Lexer → `CAPTURAR`; Parser consulta `TipoToken.CATCH` inexistente | **B**, histórico y documentado en el índice | **D:** JS `catch`; Python usa `except` | Preservar; mismo riesgo de la construcción de errores |
+| `throw` | `lanzar` | No ejecutable: Lexer → `LANZAR`; Parser consulta `TipoToken.THROW` inexistente | **B**, histórico y documentado en el índice | **D:** JS `throw`; Python usa `raise`; Rust degrada la operación | Preservar; no presentar el nodo o el backend como prueba de sintaxis válida |
+| `switch` | `segun` | Sí: Lexer → `SWITCH` y Parser → `NodoSwitch`; el Libro lo incluye, pero no desarrolla una regla normativa propia | `segun` comparte token y es alias histórico no descrito por el Libro | **D:** JS `switch`; Python/Rust usan otras construcciones | Conservar ambas formas; recomendar completar el contrato normativo antes de elegir forma canónica |
+| `case` | `caso` | Sí, contextual dentro de `switch`: Lexer → `CASE` y Parser → `NodoCase` | `caso` comparte token; ambas formas constan en el índice | **D:** JS `case`; Python/Rust usan otras construcciones | Conservar ambas formas; no inferir preferencia lingüística del nombre del nodo |
+| `yield` | `generar` (nombre del token, no lexema español aceptado) | No ejecutable: Lexer → `GENERAR`; Parser consulta `TipoToken.YIELD` inexistente | **B**, legado documentado en el índice; no existe alias español equivalente en Lexer | **D:** Python/JS/Rust `yield` | Preservar y registrar el doble riesgo: Parser inconsistente y ausencia de forma española normativa |
+| `for` | `para` | No: Lexer → `IDENTIFICADOR`; Parser solo consume `PARA` | No | **D:** Python/JS en el visitante del nodo; Rust solo en soporte generado, sin ruta `NodoPara` | Mantener como C/D/E donde corresponda; no convertirlo en alias Cobra |
+| `in` | `en` | No: Lexer → `IDENTIFICADOR`; Parser consume `EN` | No, aunque figura en el registro y en el índice automático del Libro | **D:** Python/JS en bucles y comprensiones; Rust solo en soporte generado | Registrar conflicto del índice/registro con Lexer; no añadir sintaxis |
+| `def` | `definir` | No: Lexer → `IDENTIFICADOR`; `TipoToken.DEF` no tiene patrón ni consumo | No; `definir` sí es alias de `func` | **D:** Python `def` | Clasificar coincidencias como C/D/E/F/G; no confundir el enum huérfano con sintaxis |
+| `class` | `clase` | No: Lexer → `IDENTIFICADOR`; Parser consume `CLASE` | No | **D:** Python/JS `class`; Rust usa `struct` | No convertirlo en alias Cobra |
+| `return` | `retorno` | No: Lexer → `IDENTIFICADOR`; Parser consume `RETORNO` | No | **D:** Python/JS/Rust `return` | No convertirlo en alias Cobra |
+| `break` | `romper` | No: Lexer → `IDENTIFICADOR`; Parser consume `ROMPER` | No | **D:** Python/JS/Rust `break` | No convertirlo en alias Cobra |
+| `continue` | `continuar` | No: Lexer → `IDENTIFICADOR`; Parser consume `CONTINUAR` | No | **D:** Python/JS/Rust `continue` | No convertirlo en alias Cobra |
+| `while` | `mientras` | No: Lexer → `IDENTIFICADOR`; Parser consume `MIENTRAS` | No | **D:** Python/JS/Rust `while` | No convertirlo en alias Cobra |
+| `async` | `asincronico` | No: Lexer → `IDENTIFICADOR`; Parser consume `ASINCRONICO` | No | **D:** Python/JS `async`; Rust `async` en salida compatible | Mantener como C/D/E; no convertirlo en alias Cobra |
+| `await` | `esperar` | No: Lexer → `IDENTIFICADOR`; Parser consume `ESPERAR` | No | **D:** Python/JS `await`; Rust `.await` | No convertirlo en alias Cobra |
+| `import` | `usar` (alternativa normativa, no alias token-a-token) | No normativa: Lexer → `IMPORT` y Parser → `NodoImport`, pero §3.6 publica `usar CADENA` | **B**, rama histórica; el índice automático contradice la prosa normativa | **D:** Python/JS `import`; Rust `use` o comentario | Preservar compatibilidad; mantenerla fuera de la superficie recomendada y registrar el conflicto documental |
+| `from` | `desde` | No: Lexer → `IDENTIFICADOR`; Parser solo inicia la rama `DESDE` con `desde` | No | **D:** Python `from`; JS usa `from` en importaciones; Rust usa `use` | No confundir salida generada con sintaxis Cobra; permanece ligado al bloqueo de `desde` |
+| `nonlocal` | `nolocal` | No: Lexer → `IDENTIFICADOR`; Parser consume `NOLOCAL` | No | **D:** Python `nonlocal`; JS/Rust emiten comentario | No convertirlo en alias Cobra |
+| `global` | `global` | Sí: Lexer → `GLOBAL` y Parser → `NodoGlobal`; solo consta en el índice del Libro | No; es la forma existente | **D:** Python `global`; JS/Rust emiten comentario | Conservar; recomendar documentar semántica y diferencias backend |
+| `lambda` | `lambda` | Sí, como expresión: Lexer → `LAMBDA` y Parser → `NodoLambda`; consta en el índice y valores permitidos | No; es la forma existente | **D:** Python `lambda`; JS/Rust usan cierres | Conservar sin traducir; no equiparar las formas generadas con la fuente |
+| `func` | `definir` | Sí: ambos lexemas → `FUNC` y Parser → `NodoFuncion`; el Libro autoriza ambos | `definir` es alias público cubierto | **D:** Rust `fn`; Python `def`; JS `function` | Conservar `func` y `definir`; ninguna retirada normativa |
+| `var` | `variable` | Sí: `VAR` acepta `=`; `VARIABLE` es una declaración distinta que exige `:=`; ambos llegan al manejador de asignación y constan en el Libro | No son aliases equivalentes: tienen tokens y operadores requeridos distintos | **D:** JS `let`; Rust `let`; Python asignación sin palabra | Conservar ambas formas y su semántica; no normalizar ni deprecar en esta fase |
+
+Las coincidencias restantes del barrido quedan completamente explicadas por
+C (control y declaraciones de Python/Rust que implementan el proyecto), D
+(plantillas o resultados esperados de los tres targets), E (nombres de
+visitantes, nodos, capacidades y APIs), F o G. En particular, los lexemas
+ingleses hallados en `to_python.py`, `to_js.py`, `to_rust.py`, sus módulos de
+nodos o snapshots no modifican la columna «público».
+
+No se añaden pruebas en este corte. Los alias públicos conservados ya tienen
+cobertura léxica en `tests/test_lexer_parser_contract.py`; `definir` tiene
+además caracterización de Parser, `switch case` tiene pruebas
+desde fuente y los aliases de excepciones/yield ya están caracterizados por el
+contrato que expone su incoherencia. Añadir una prueba positiva de estos últimos
+ocultaría que hoy no atraviesan el Parser canónico.
+
 # 9. Caracterización de sintaxis `usar`
 
 El Libro §3.6 limita la norma a `usar CADENA`, con nombre simple o ruta lógica
