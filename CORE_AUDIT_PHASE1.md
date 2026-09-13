@@ -154,12 +154,12 @@ a `COMPLETO`, `PARCIAL`, `INCONSISTENTE`, `SIN TEST`, `SIN DOCUMENTAR` y
 | `caso` | `CASE` | U:`PALABRAS_RESERVADAS` | L:`CASE` | P:`declaracion_switch` | A:`NodoCase`/`NodoSwitch` | Py:`visit_switch` | JS:`visit_switch` | Rs:`visit_switch` | T:`test_parser_switch.py` cubre la construcción; sin prueba aislada del alias | Libro:§3.12 | `case` | **PARCIAL** — alias sin prueba dirigida propia |
 | `catch` | `CAPTURAR` | U:`PALABRAS_RESERVADAS` | L:`CAPTURAR` | P:`declaracion_try_catch`, bloqueado por `TipoToken.CATCH` inexistente | A:`NodoTryCatch` | Py:`visit_try_catch` | JS:`visit_try_catch` | Rs:`visit_try_catch` | T:`test_to_python_extras.py::test_transpilar_try_catch_throw` solo AST manual | Libro:§3.7 | `capturar` | **INCONSISTENTE** — token legado referenciado no existe |
 | `clase` | `CLASE` | U:`PALABRAS_RESERVADAS` | L:`CLASE` | P:`declaracion_clase` | A:`NodoClase` | Py:`visit_clase` | JS:`visit_clase` | Rs:`visit_clase` | T:`test_parser_clase.py::test_parser_declaracion_clase`, suites `test_to_*` | Libro:§3.5 | `estructura`, `registro` | **COMPLETO** — forma canónica trazada extremo a extremo |
-| `como` | `COMO` | U:`PALABRAS_RESERVADAS` | L:`COMO` | P:`declaracion_con`/`declaracion_desde` | A:campo `alias` de `NodoWith`/`NodoImportDesde` | Py:`visit_with`/`visit_import_desde` | JS: mismos visitantes | Rs: mismos visitantes | T:`test_parser_del_global.py::test_parser_con_alias` | Libro:§3.6 | `as` figura en registro pero no es sintaxis | **PARCIAL** — cobertura dirigida no alcanza los tres backends |
+| `como` | `COMO` | U:`PALABRAS_RESERVADAS` | L:`COMO` | P:`declaracion_con`/`declaracion_desde` | A:campo `alias` de `NodoWith`/`NodoImportDesde` | Py:`visit_with`/`visit_import_desde` | JS: mismos visitantes | Rs: mismos visitantes | T:`test_parser_del_global.py::test_parser_con_alias`, `test_desde_usar_auditoria.py` caracteriza la rama no pública | Libro:§3.6 no documenta alias para importación | `as` figura en registro pero no es sintaxis | **BLOQUEADO** — `como` solo es alcanzable en `NodoImportDesde` mediante `import`, no mediante `usar` |
 | `con` | `CON` | U:`PALABRAS_RESERVADAS` | L:`CON` | P:`declaracion_con` | A:`NodoWith` | Py:`visit_with` | JS:`visit_with` | Rs:`visit_with` | T:`test_parser_del_global.py::test_parser_con_alias`, `test_to_python.py::test_transpilador_with_asincronico` | Libro:índice/§3.8 | `with` no es reconocido | **PARCIAL** — semántica JS/Rust es aproximada/comentada |
 | `continuar` | `CONTINUAR` | U:`PALABRAS_RESERVADAS` | L:`CONTINUAR` | P:`declaracion_continuar` | A:`NodoContinuar` | Py:`visit_continuar` | JS:`visit_continuar` | Rs:`visit_continuar` | T:suites de control/transpiladores | Libro:§4.4 | — | **COMPLETO** — ruta completa |
 | `decorador` | `IDENTIFICADOR` (la sintaxis usa `@`→`DECORADOR`) | U:`PALABRAS_RESERVADAS` | L:`DECORADOR` solo para `@` | P:`declaracion_decorador` consume `@` | A:`NodoDecorador` | Py:`visit_decorador` | JS:`visit_decorador` | Rs:`visit_decorador` | T:`test_parser_decorador.py` y pruebas de transpiladores | Libro:§3.10 publica `@` | — | **NO IMPLEMENTADO** — la palabra constante no puede encabezar la construcción |
 | `defer` | `APLAZAR` | U:`PALABRAS_RESERVADAS` | L:`APLAZAR` | P:`declaracion_defer` intenta `TipoToken.DEFER` inexistente | A:`NodoDefer` | Py:`visit_defer` | JS:`visit_defer` | Rs:`visit_defer` | T:`test_parser_nuevos.py::test_parser_defer_dentro_funcion` evidencia la ruta | Libro: no lo documenta | `aplazar` | **INCONSISTENTE** — consumo imposible con el enum vigente |
-| `desde` | `DESDE` | U:`PALABRAS_RESERVADAS` | L:`DESDE` | P:`declaracion_desde` | A:`NodoImportDesde` | Py:`visit_import_desde` | JS:`visit_import_desde` | Rs:`visit_import_desde` | T:`test_parser_errors_extra.py::test_desde_without_import`; transpiladores parciales | Libro:índice léxico/§3.6 | — | **PARCIAL** — falta prueba positiva integral por backend |
+| `desde` | `DESDE` | U:`PALABRAS_RESERVADAS` | L:`DESDE` | P:`declaracion_desde` exige `IMPORT` | A:`NodoImportDesde` solo por rama no normativa | Py:`visit_import_desde` | JS:`visit_import_desde` | Rs:`visit_import_desde` | T:`test_desde_usar_auditoria.py` parte de texto y cubre bloqueo y rama legada | Libro:solo índice léxico; §3.6 define únicamente `usar CADENA` | — | **BLOQUEADO** — `desde CADENA usar ...` tokeniza, pero no puede generar AST sin cambiar Parser y sin norma publicada |
 | `eliminar` | `ELIMINAR` | U:`PALABRAS_RESERVADAS` | L:`ELIMINAR` | P:`declaracion_eliminar` | A:`NodoDel` | Py:`visit_del` | JS:`visit_del` | Rs:`visit_del` emite comentario | T:`test_parser_del_global.py::test_parser_del`/`test_transpilar_del` | Libro:índice léxico | — | **PARCIAL** — Rust no implementa semántica equivalente |
 | `elseif` | `SINO_SI` | U:`PALABRAS_RESERVADAS` | L:`SINO_SI` | P:`_parse_sino_si` por tipo de token | A:`NodoCondicional` | Py:`visit_condicional` | JS:`visit_condicional` | Rs:`visit_condicional` | T:`test_lexer.py::test_lexer_sino_si_y_elseif_generan_token_unico` | Libro:compatibilidad léxica | `sino si` | **COMPLETO** — alias normalizado antes del parser |
 | `enum` | `IDENTIFICADOR` | U:`PALABRAS_RESERVADAS` | L:`IDENTIFICADOR` | P:ningún consumo como declaración | A:sin nodo desde esa palabra | Py:sin ruta fuente | JS:sin ruta fuente | Rs:sin ruta fuente | T:`test_parser.py::test_parser_declaracion_enumeracion` usa `enumeracion` | Libro: no lo publica como sintaxis | `enumeracion` | **NO IMPLEMENTADO** — constante no utilizable en fuente Cobra |
@@ -226,6 +226,12 @@ El corte inicial únicamente añadió este informe. La revisión incremental de
 sincronización de `imports_corelibs` en la matriz. No modifica Lexer, Parser,
 ejemplos ni documentación normativa.
 
+La revisión incremental de `desde ... usar ...` añade exclusivamente una
+regresión de caracterización y esta evidencia. No corrige producción: el Libro
+no publica esa producción ni alias para ella y el Parser actual requiere
+`IMPORT`. Conforme a las reglas de la auditoría, se detiene antes de modificar
+Lexer o Parser; tampoco se presenta `import` como sintaxis pública Cobra.
+
 # 9. Caracterización de sintaxis `usar`
 
 El Libro §3.6 limita la norma a `usar CADENA`, con nombre simple o ruta lógica
@@ -233,6 +239,15 @@ punteada dentro de la cadena. El Parser conserva además una rama compatible
 para dos o más identificadores separados por puntos; rechaza un identificador
 simple sin comillas. Todas las formas aceptadas producen
 `NodoUsar(modulo: str)` sin ampliar por ello la gramática pública.
+
+Para la construcción solicitada, el Libro solo incluye `desde` en el índice de
+palabras reservadas. No contiene regla, ejemplo ni contrato
+`desde CADENA usar IDENTIFICADOR`, y §3.6 no documenta alias `como` para
+importaciones. El Lexer produce correctamente `DESDE`, `CADENA`, `USAR`,
+`IDENTIFICADOR`, `COMO`, `IDENTIFICADOR`; después `declaracion_desde` rechaza
+`USAR` porque exige `IMPORT`. La rama existente con la palabra `import` crea
+`NodoImportDesde(modulo, nombre, alias)`, pero queda caracterizada únicamente
+como implementación legada no normativa.
 
 # 10. Flujo runtime y backends
 
@@ -243,9 +258,48 @@ saneados al ámbito plano y registra metadata validada por las políticas de
 sintácticamente válido que no simula materialización runtime. La declaración
 JavaScript de `imports_corelibs` queda sincronizada con su visitante real.
 
+`NodoImportDesde` sí tiene rutas internas: el analizador semántico lo registra
+y recorre genéricamente; el intérprete lo degrada a `NodoImport(modulo)`, por
+lo que no conserva de forma observable la selección `nombre`/`alias`; Python,
+JavaScript y Rust emiten respectivamente `from ... import ... as ...`,
+`import { ... as ... } from ...` y `use ...::... as ...`. Esos visitantes se
+pueden alcanzar desde la rama legada con `import`, pero ninguno es alcanzable
+desde la forma Cobra solicitada `desde ... usar ...` debido al bloqueo previo
+del Parser. Por ello no se corrige un backend antes de resolver el contrato de
+sintaxis.
+
 # 12. Resultado y evidencia
 
 La regresión cubre desde fuente Cobra las cadenas simple y punteada, la ruta
 punteada sin comillas aceptada por compatibilidad y el rechazo del identificador
 simple sin comillas. También valida Python con `ast.parse`, JavaScript con
 `node --check` y Rust con `rustc` cuando las herramientas están disponibles.
+
+
+La regresión específica `tests/unit/test_desde_usar_auditoria.py` demuestra
+desde texto Cobra los tokens de `desde "paquete" usar simbolo como alias` y su
+rechazo antes de Python, JavaScript y Rust. Además caracteriza, sin elevarla a
+sintaxis pública, la rama legada `import`: comprueba el tipo y los tres campos
+del nodo, las tres emisiones, `ast.parse`, `node --check` y `rustc` cuando las
+herramientas están instaladas. No existe una prueba positiva normativa que se
+pueda añadir honestamente mientras falte la producción en el Libro y el Parser.
+
+# 14. Estado del hallazgo `desde ... usar ...`
+
+**BLOQUEADO.** No se confirma que la fuente normativa genere
+`NodoImportDesde`: hoy la fuente solicitada se detiene en Parser. El bloqueo no
+es una ausencia de backend; está antes del AST. Para desbloquearlo hacen falta,
+en este orden, una decisión normativa que publique la producción y sus alias y
+una autorización explícita para ajustar `declaracion_desde`. Hasta entonces no
+procede sustituir `usar` por `import`, inventar `from`/`as` ni declarar soporte
+integral por el mero hecho de que existan nodo y visitantes.
+
+# 15. Criterio de cierre pendiente
+
+Una revisión futura podrá cerrar el hallazgo cuando: (1) el Libro defina la
+sintaxis Cobra exacta; (2) una prueba positiva parta de esa fuente y compruebe
+`modulo`, `nombre` y `alias`; (3) el intérprete preserve la importación selectiva
+y el binding del alias; (4) los tres backends se alcancen desde el mismo AST; y
+(5) Python, JavaScript y Rust superen la validación sintáctica declarada por
+cada target. En este corte se conserva deliberadamente el estado bloqueado y
+se verifica que Lexer y Parser no cambian.
