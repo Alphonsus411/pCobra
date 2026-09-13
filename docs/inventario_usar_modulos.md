@@ -4,6 +4,18 @@ Fecha de actualización: 2026-05-03.
 
 ## 1) Contrato público Cobra-facing
 
+### 1.1 Sintaxis normativa y compatibilidad observada
+
+El Libro (§3.6) publica exclusivamente `usar CADENA`: tanto
+`usar "texto"` como `usar "utilidades.fechas"` son formas normativas. La ruta
+real comprobada es `PALABRAS_RESERVADAS` → `TipoToken.USAR` en `Lexer` →
+`Parser.declaracion_usar()` → `NodoUsar(modulo: str)`.
+
+El Parser también conserva compatibilidad con `usar utilidades.fechas`, que
+produce el mismo nodo, pero esa variante sin comillas no es normativa. En
+cambio, `usar texto` se rechaza expresamente: un identificador simple debe ir
+entre comillas. Esta caracterización no añade aliases ni gramática nueva.
+
 `usar` **solo** resuelve módulos Cobra-facing canónicos. La fuente única del contrato es:
 
 - `USAR_COBRA_PUBLIC_MODULES` en `src/pcobra/cobra/usar_loader.py`.
@@ -28,6 +40,10 @@ Módulos canónicos permitidos (orden contractual exacto):
 - `obtener_modulo(nombre, ...)` valida nombre seguro y permite únicamente módulos incluidos en la constante canónica.
 - `obtener_modulo_cobra_oficial(nombre)` resuelve desde `corelibs/` o `standard_library/`.
 - En REPL estricto, cualquier módulo externo se rechaza.
+- El intérprete entrega `NodoUsar.modulo` a `usar_modulo`, inyecta en el ámbito
+  plano solo los exports saneados y conserva su metadata para auditoría.
+  `usar_loader.py` centraliza la resolución, `usar_policy.py` define catálogo y
+  capacidades, y `usar_symbol_policy.py` filtra símbolos y valida metadata.
 
 ## 3) Verificación de consistencia
 
