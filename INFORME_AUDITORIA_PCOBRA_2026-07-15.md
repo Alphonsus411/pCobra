@@ -47,10 +47,11 @@ La aplicación de límites estaba acoplada a funciones públicas reutilizables d
 ## F-02: recursividad legítima detectada como ciclo
 
 **Prioridad:** 2  
-**Estado:** pendiente.  
+**Clasificación:** P1.
+**Estado:** corregido y verificado en la rama de trabajo.
 **Área:** análisis/runtime.  
 
-La recursividad válida no debe confundirse con ciclos estructurales inválidos del AST o de estructuras internas. Cualquier corrección debe inspeccionar primero la estructura actual producida por el Parser y detenerse si requiere cambios gramaticales.
+La recursividad válida no debe confundirse con ciclos estructurales inválidos del AST o de estructuras internas. La reparación se mantiene en el intérprete: la identidad temporal de una expresión se combina con la profundidad de llamada, mientras que la validación independiente del AST continúa rechazando ciclos estructurales reales. No fue necesario modificar Lexer ni Parser.
 
 ## F-05: divergencia semántica entre CLI, REPL e IDLE
 
@@ -171,3 +172,25 @@ Sólo debe corregirse si puede implementarse con la estructura AST existente.
 **Área:** ejemplos.  
 
 No cambiar sintaxis de ejemplos ni ocultar errores. Los ejemplos oficiales deben ejecutarse conforme al libro.
+
+## 10. Registro de defectos corregidos
+
+| Unidad de trabajo | Clasificación | Archivos de producción | Prueba de regresión | Punto de reparación |
+|---|---|---|---|---|
+| F-02 — recursividad legítima detectada como ciclo | **P1**: impide ejecutar programas válidos, pero no compromete el anfitrión ni datos | `src/pcobra/core/interpreter.py` | `tests/unit/test_interpreter_recursion_runtime.py::test_factorial_recursivo_oficial_ejecuta_sin_falso_ciclo_runtime` | Intérprete, después de Lexer y Parser |
+
+La incidencia independiente y su reproducción quedan en
+`docs/issues/audit_f02_recursion_runtime.md`. La regresión parte del ejemplo
+Cobra normativo y entra por `RunService`, por lo que cubre la superficie
+pública sin fabricar nodos AST. Lexer y Parser quedan expresamente fuera del
+cambio.
+
+## 11. Comparación antes/después
+
+| Unidad de trabajo | Antes | Después |
+|---|---|---|
+| F-02 | Una invocación recursiva volvía a evaluar el mismo objeto expresión y el seguimiento por identidad lo interpretaba como evaluación circular: la ejecución terminaba con `Recursive evaluation detected`. | El seguimiento distingue el mismo objeto expresión en profundidades de llamada diferentes. `factorial(5)` termina con código 0 e imprime `120`; un AST realmente cíclico sigue siendo rechazado por identidad antes de ejecutarse. |
+
+La prueba dirigida y la suite relacionada de ciclos del intérprete se ejecutan
+antes de continuar con otro hallazgo. Este cierre solo actualiza la trazabilidad
+del defecto ya reparado; no mezcla cambios de sintaxis, ejemplos ni refactors.
