@@ -1,4 +1,5 @@
 import ast
+import shutil
 import subprocess
 import tempfile
 from pcobra.cobra.core import Lexer, Parser
@@ -53,6 +54,48 @@ clase C(A, B):
 fin
 ''',
 }
+
+
+def validate_target(target, code, extension):
+    """Valida el texto emitido sin confundir ausencia de herramienta con fallo."""
+    if target == 'python':
+        ast.parse(code)
+        return 'OK ast.parse'
+
+    executable = 'node' if target == 'js' else 'rustc'
+    if shutil.which(executable) is None:
+        return f'NO APLICA {executable} no disponible'
+
+    with tempfile.TemporaryDirectory() as temporary_directory:
+        output_path = f'{temporary_directory}/output{extension}'
+        with open(output_path, 'w', encoding='utf-8') as output:
+            output.write(code)
+        command = (
+            ['node', '--check', output_path]
+            if target == 'js'
+            else [
+                'rustc',
+                '--crate-type',
+                'lib',
+                output_path,
+                '-o',
+                f'{temporary_directory}/output.rlib',
+            ]
+        )
+        process = subprocess.run(command, text=True, capture_output=True)
+
+    check_name = 'node --check' if target == 'js' else 'rustc'
+    result = ('OK' if process.returncode == 0 else 'FAIL') + f' {check_name}'
+    if process.returncode:
+        diagnostics = [
+            line.strip()
+            for line in process.stderr.splitlines()
+            if line.startswith('error')
+        ]
+        result += ': ' + ' | '.join(diagnostics[:3])
+    return result
+
+
 for name, source in cases.items():
     print(f'CASE {name}')
     try:
@@ -64,12 +107,6 @@ for name, source in cases.items():
     for target, tr, ext in [('python',TranspiladorPython(),'.py'),('js',TranspiladorJavaScript(),'.js'),('rust',TranspiladorRust(),'.rs')]:
         try:
             code=tr.generate_code(tree)
-            if target=='python': ast.parse(code); result='OK ast.parse'
-            else:
-                with tempfile.NamedTemporaryFile('w',suffix=ext,delete=False) as f: f.write(code); path=f.name
-                cmd=['node','--check',path] if target=='js' else ['rustc','--crate-type','lib',path,'-o',path+'.rlib']
-                p=subprocess.run(cmd,text=True,capture_output=True)
-                result=('OK' if p.returncode==0 else 'FAIL')+' '+('node --check' if target=='js' else 'rustc')
-                if p.returncode: result += ': '+(p.stderr.strip().splitlines()[0] if p.stderr.strip() else '')
+            result=validate_target(target, code, ext)
             print(f'{target}={result}')
         except Exception as e: print(f'{target}=FAIL {type(e).__name__}: {e}')
