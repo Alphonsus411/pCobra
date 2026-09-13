@@ -299,6 +299,97 @@ desde fuente y los aliases de excepciones/yield ya están caracterizados por el
 contrato que expone su incoherencia. Añadir una prueba positiva de estos últimos
 ocultaría que hoy no atraviesan el Parser canónico.
 
+# 8. Auditoría incremental de clases y objetos
+
+## 8.1 Método, alcance y contraste normativo
+
+Este corte toma como norma exclusivamente el Libro §3.5 y parte de texto Cobra:
+no cuenta como soporte que un test construya `NodoInstancia` o
+`NodoLlamadaMetodo` a mano. Se siguió `Parser.declaracion_clase` hasta
+`NodoClase`, el intérprete, `AnalizadorSemantico` y los generadores oficiales
+`TranspiladorPython`, `TranspiladorJavaScript` y `TranspiladorRust`. También se
+parseó `examples/clase_metodo_atributo.cobra` sin modificarlo.
+
+El Libro solo formaliza `clase IDENTIFICADOR: bloque` y
+`metodo IDENTIFICADOR([params]): bloque`; sus ejemplos añaden `atributo saldo`
+y `self.nombre = nombre`, pero esas dos formas **no coinciden** con el Parser.
+El ejemplo versionado sí usa las formas efectivas
+`atributo self nombre = nombre` y `atributo self nombre`, y produce un
+`NodoClase` con dos `NodoMetodo`. Esta aceptación no demuestra instanciación ni
+llamada porque el archivo únicamente declara la clase.
+
+Leyenda: **SOPORTADO** exige ruta pública desde fuente y comportamiento coherente;
+**PARCIAL** conserva alguna parte útil pero no el contrato entero; **ROTO** es
+una característica pretendida que tiene un reproductor desde fuente y falla;
+**NO SOPORTADO** significa que ni el Libro ni el flujo efectivo publican la
+característica. «Sin test fuente» distingue explícitamente las pruebas de AST
+manual, que solo evidencian componentes internos.
+
+## 8.2 Matriz por construcción
+
+| Elemento | Sintaxis Cobra exacta contrastada | Nodo AST desde Parser | Ejecutor / generador | Evidencia de test | Estado |
+|---|---|---|---|---|---|
+| Clase mínima | `clase Vacia: fin` | `NodoClase("Vacia", [], [])` | `ejecutar_clase`; `visit_clase` Py/JS/Rust; semántico `visit_clase` | `test_parser_clase.py::test_parser_declaracion_clase` solo usa clase con método; sin test mínimo multi-backend | **ROTO**: runtime registra la clase y JS/Rust emiten estructura, pero Python genera `class Vacia:` sin `pass`, sintaxis inválida |
+| Instanciación | `var c = C()` | `NodoAsignacion(..., NodoLlamadaFuncion("C", []))`, **no** `NodoInstancia` | runtime entra en `ejecutar_llamada_funcion`; backends emiten llamada ordinaria (`C()`, y no `new C()` en JS) | `test_interpreter_objects.py` y `test_to_python_objects.py` construyen `NodoInstancia` manualmente; sin test fuente | **ROTO**: el intérprete imprime `Función 'C' no implementada` y asigna `None`; `ejecutar_instancia` es inalcanzable desde esta sintaxis |
+| Constructor | Declaración aceptada: `metodo __init__(self, nombre): ... fin` (también `inicializar`, normalizado a `__init__`); el Libro muestra `__init__(nombre)` | `NodoMetodo(nombre="__init__", ...)`; ninguna llamada crea `NodoInstancia` ni dispara el método | `_construir_clase` almacena el descriptor, pero `ejecutar_instancia` no busca constructor; visitantes de método lo emiten literalmente | `test_parser_clase.py::test_parser_clase_alias_choque_nombres` comprueba normalización, no construcción; sin test fuente de constructor | **ROTO**: se declara, pero ni la instanciación pública ni `ejecutar_instancia` lo ejecutan |
+| Atributos de instancia | Forma efectiva: `atributo self nombre = nombre`; acceso: `atributo self nombre`. La forma del Libro `self.nombre = nombre` falla | `NodoAsignacion(NodoAtributo(...), ...)` / `NodoAtributo`; la forma punteada solo es expresión, no destino de asignación | `ejecutar_asignacion` escribe `__atributos__`; `evaluar_expresion` lee; `visit_atributo` Py/JS y `obtener_valor` Rust | el ejemplo fuente prueba parseo indirecto; `test_interpreter_objects.py::test_atributos_en_instancia` usa AST manual | **PARCIAL/ROTO público**: el cuerpo se representa y genera, pero no hay instancia pública sobre la que ejecutarlo; además el ejemplo normativo punteado no parsea |
+| Atributos de clase | No hay sintaxis OO normativa. `var x = 1` dentro del bloque es admitido como sentencia genérica | `NodoAsignacion` guardado en el campo `NodoClase.metodos` | semántico lo visita; `_construir_clase` intenta tratarlo como función y falla; Python emite atributo, JS `let` dentro de clase y Rust `let` dentro de `impl` | sin test fuente dirigido | **ROTO**: `clase C: var x = 1 fin` causa `AttributeError` en runtime y salida inválida JS/Rust; no se eleva esa aceptación accidental a sintaxis documentada |
+| Métodos | `metodo f(self, x): ... fin` (Parser admite también `func`) | `NodoMetodo` dentro de `NodoClase.metodos` | `_construir_funcion`; semántico `visit_metodo`; `visit_metodo` Py/JS/Rust | parser cubierto en `test_parser_clase.py`; paridad backend en `test_transpiler_feature_parity.py` usa AST manual | **PARCIAL**: declaración trazada, pero llamada pública rota; JS conserva `self` como argumento explícito y Rust emite parámetros sin tipos |
+| Acceso | `atributo objeto nombre` y, solo como expresión, `objeto.nombre` | ambos producen `NodoAtributo` | lector runtime y `visit_atributo`/`obtener_valor` de tres backends | `test_to_python_objects.py` y runtime de objetos usan AST manual; ejemplo cubre la primera forma durante parseo | **PARCIAL**: el nodo es alcanzable, pero un objeto Cobra no puede obtenerse por instanciación pública |
+| Modificación | `atributo objeto nombre = expresion`; no `objeto.nombre = expresion` | `NodoAsignacion` cuyo destino es `NodoAtributo` | `ejecutar_asignacion`; visitantes de asignación + atributo | ejemplo fuente contiene la forma efectiva; runtime dirigido solo con AST manual | **PARCIAL** por la misma ausencia de objetos instanciables desde fuente |
+| Llamada de método | La forma natural `objeto.metodo(args)` no tiene producción efectiva | ninguna: `termino` reduce la cadena punteada a `NodoAtributo` y deja `(`; el reproductor termina en `ParserError` | existe `ejecutar_llamada_metodo` y visitantes Py/JS, pero no son alcanzables; Rust ni siquiera registra visitante de llamada | `test_interpreter_objects.py` y `test_to_python_objects.py` construyen `NodoLlamadaMetodo` manualmente | **ROTO** |
+| Referencia propia | `self` es un `IDENTIFICADOR` ordinario y debe escribirse explícitamente en la lista si el cuerpo lo usa | `NodoIdentificador("self")`; no hay nodo propio | `ejecutar_llamada_metodo` inyecta `self`, pero solo en la ruta manual; backends lo imprimen sin normalización | pruebas manuales de objetos; ejemplo fuente solo declara cuerpos | **PARCIAL**: sin regla normativa autónoma, validación de posición ni llamada pública |
+| Herencia simple | Forma efectiva no formalizada: `clase Derivada(Base): ... fin` | `NodoClase.bases == ["Base"]` | semántico valida base/ciclos; runtime resuelve y busca métodos en bases; Py emite `(Base)`, JS `extends Base`, Rust solo comentario | `test_semantico.py` y `test_interpreter_herencia.py` (este último con AST manual); sin prueba fuente extremo a extremo | **PARCIAL**: parseo/runtime interno existen, pero la llamada pública falla y Rust no implementa herencia |
+| Superclase | No hay sintaxis `super` publicada ni producción/nodo específico | ninguno | ninguno | sin test Cobra fuente | **NO SOPORTADO** |
+| Override | No tiene palabra especial: dos clases pueden declarar el mismo nombre mediante la sintaxis de herencia efectiva | dos `NodoMetodo` homónimos en clases distintas | runtime buscaría primero en derivada; backends emiten métodos, con las limitaciones anteriores | sin test fuente de override; herencia manual solo prueba método heredado | **PARCIAL**: resolución interna plausible y trazada, pero no invocable desde fuente; no se declara completa por capacidades del target |
+| Métodos estáticos | No hay decorator/modificador normativo ni flujo efectivo específico | ninguno | ninguno | sin test Cobra fuente | **NO SOPORTADO** |
+| Métodos de clase | No hay decorator/modificador normativo ni equivalente a `cls` | ninguno | ninguno | sin test Cobra fuente | **NO SOPORTADO** |
+| Visibilidad | No hay `publico`/`privado`/`protegido` ni regla normativa; guion bajo es solo parte del identificador | ninguno | ninguno | sin test Cobra fuente | **NO SOPORTADO** |
+| Composición | No posee sintaxis especial; requeriría guardar una instancia como atributo con las construcciones anteriores | sería `NodoAsignacion` + `NodoAtributo` + `NodoInstancia`, pero Parser nunca crea el último | componentes internos del runtime, sin ruta fuente completa | sin test fuente; no basta la capacidad de Python/JS | **ROTO** como programa OO público; no es una característica independiente implementada |
+| Retorno de método | `retorno expresion` es la forma canónica del Libro (`retornar` es aceptada); dentro de método | `NodoRetorno` en `NodoMetodo.cuerpo` | `ejecutar_llamada_metodo` captura `_ControlRetorno`; `visit_retorno` en tres backends | tests de retorno general; pruebas manuales de métodos retornan valores | **PARCIAL**: funciona en la ruta interna manual, pero no mediante llamada desde fuente |
+| Parámetros de método | lista `metodo f(self, x, y): ... fin`; son nombres sin tipos en esta ruta | `NodoMetodo.parametros: list[str]` | runtime omite el primer parámetro al ligar argumentos; visitantes los copian literalmente | parser comprueba nombre/método, pruebas manuales ejercitan un argumento | **PARCIAL**: no valida aridad en `ejecutar_llamada_metodo` y depende de una llamada inalcanzable |
+| Objetos como argumentos o resultados | No hay sintaxis especial: serían identificadores en argumentos o `retorno obj` | identificadores/retorno sí; no hay `NodoInstancia` desde fuente ni `NodoLlamadaMetodo` para consumir/producir el objeto | descriptores internos pueden circular como valores, pero solo entrando por AST manual | sin test fuente extremo a extremo | **ROTO** por depender de instanciación y llamada rotas |
+
+## 8.3 Reproductores mínimos observados
+
+```cobra
+# Instanciación: parsea como llamada de función y el runtime asigna None.
+clase C:
+fin
+var c = C()
+```
+
+```cobra
+# Llamada: ParserError en el paréntesis de cierre.
+clase C:
+    metodo f(self):
+        retorno 1
+    fin
+fin
+var c = C()
+imprimir c.f()
+```
+
+```cobra
+# Atributo de clase accidental: AttributeError en el runtime y JS/Rust inválidos.
+clase C:
+    var x = 1
+fin
+```
+
+```cobra
+# Las formas mostradas por §3.5 tampoco atraviesan el Parser actual.
+clase Cuenta:
+    atributo saldo
+fin
+```
+
+La última forma falla con «Se esperaba el nombre del atributo»; la asignación
+`self.nombre = nombre` del constructor del Libro falla al encontrar `=` porque
+el Parser solo admite el destino prefijado `atributo self nombre`. Corregir
+estas discrepancias exigiría decidir primero el contrato normativo y después
+tocar Parser, ambas acciones fuera de este hallazgo documental.
+
 # 9. Caracterización de sintaxis `usar`
 
 El Libro §3.6 limita la norma a `usar CADENA`, con nombre simple o ruta lógica
@@ -316,24 +407,32 @@ importaciones. El Lexer produce correctamente `DESDE`, `CADENA`, `USAR`,
 `NodoImportDesde(modulo, nombre, alias)`, pero queda caracterizada únicamente
 como implementación legada no normativa.
 
-# 10. Flujo runtime y backends
+# 10. Flujo runtime, semántico y backends de clases
 
-El intérprete resuelve `NodoUsar` mediante `usar_modulo`, incorpora exports
-saneados al ámbito plano y registra metadata validada por las políticas de
-`usar`. Desde el mismo AST, `PythonAdapter` materializa la llamada runtime;
-`JavaScriptAdapter` y `RustAdapter` emiten `// usar <modulo>`, un marcador
-sintácticamente válido que no simula materialización runtime. La declaración
-JavaScript de `imports_corelibs` queda sincronizada con su visitante real.
+`Parser.declaracion_clase` acepta bases entre paréntesis y cualquier declaración
+en el cuerpo, aunque el campo resultante se llame `metodos`. Cada método se
+normaliza mediante `ALIAS_METODOS_ESPECIALES` y se guarda como `NodoMetodo`.
+No existe, en cambio, una transición del Parser hacia `NodoInstancia` o
+`NodoLlamadaMetodo`: `C()` es `NodoLlamadaFuncion` y `obj.f()` se atasca después
+de construir un `NodoAtributo`. Ese corte anterior al AST domina el estado de
+instanciación y llamada.
 
-`NodoImportDesde` sí tiene rutas internas: el analizador semántico lo registra
-y recorre genéricamente; el intérprete lo degrada a `NodoImport(modulo)`, por
-lo que no conserva de forma observable la selección `nombre`/`alias`; Python,
-JavaScript y Rust emiten respectivamente `from ... import ... as ...`,
-`import { ... as ... } from ...` y `use ...::... as ...`. Esos visitantes se
-pueden alcanzar desde la rama legada con `import`, pero ninguno es alcanzable
-desde la forma Cobra solicitada `desde ... usar ...` debido al bloqueo previo
-del Parser. Por ello no se corrige un backend antes de resolver el contrato de
-sintaxis.
+`AnalizadorSemantico.visit_clase` declara la clase, valida que las bases ya sean
+clases, detecta ciclos y visita el contenido en un ámbito nuevo. No valida que
+el contenido sea realmente método, la posición de `self`, aridad de métodos,
+constructores, override ni visibilidad. En runtime, `_construir_clase` presupone
+que todo elemento tiene forma de función; por eso una asignación admitida dentro
+de clase rompe. `ejecutar_instancia` crea el diccionario de atributos pero no
+llama `__init__`. `ejecutar_llamada_metodo` implementa búsqueda derivada-primero,
+inyecta `self` y propaga retornos, pero ambos ejecutores dependen de nodos que el
+Parser no produce.
+
+Python genera clases y métodos, pero omite `pass` en una clase vacía. JavaScript
+usa solo la primera base, deja las adicionales en comentario y conserva `self`
+como parámetro explícito. Rust representa siempre una estructura vacía, deja
+las bases en comentario, copia firmas sin tipos y no tiene visitante registrado
+para `NodoLlamadaMetodo`. Por tanto, la existencia de una construcción homóloga
+en Python o JavaScript no se contabiliza como soporte Cobra.
 
 # 12. Resultado y evidencia
 
@@ -351,22 +450,34 @@ del nodo, las tres emisiones, `ast.parse`, `node --check` y `rustc` cuando las
 herramientas están instaladas. No existe una prueba positiva normativa que se
 pueda añadir honestamente mientras falte la producción en el Libro y el Parser.
 
-# 14. Estado del hallazgo `desde ... usar ...`
+# 14. Estado del hallazgo de clases y objetos
 
-**BLOQUEADO.** No se confirma que la fuente normativa genere
-`NodoImportDesde`: hoy la fuente solicitada se detiene en Parser. El bloqueo no
-es una ausencia de backend; está antes del AST. Para desbloquearlo hacen falta,
-en este orden, una decisión normativa que publique la producción y sus alias y
-una autorización explícita para ajustar `declaracion_desde`. Hasta entonces no
-procede sustituir `usar` por `import`, inventar `from`/`as` ni declarar soporte
-integral por el mero hecho de que existan nodo y visitantes.
+**ROTO.** La declaración aislada llega a `NodoClase`, pero ni siquiera la clase
+mínima es portable porque Python genera un bloque vacío inválido. El corte
+principal está en Parser: la sintaxis pública natural de construcción produce
+`NodoLlamadaFuncion` en vez de `NodoInstancia`, y una llamada punteada no produce
+`NodoLlamadaMetodo`. Constructor, atributos ejecutables, override, composición,
+retornos de método y objetos como argumentos/resultados quedan aguas abajo de
+esos dos bloqueos. Herencia simple es **PARCIAL** y `super`, estáticos, métodos
+de clase y visibilidad son **NO SOPORTADO**, no pendientes de implementación en
+este corte.
 
-# 15. Criterio de cierre pendiente
+No se modifica Lexer ni Parser. Tampoco se corrigen ejemplos o el Libro para
+ocultar que `atributo saldo` y `self.nombre = nombre` contradicen la forma que
+acepta hoy el Parser. La solución requiere una decisión normativa explícita y
+autorización específica para modificar Parser; por las reglas del repositorio,
+la auditoría se detiene y documenta el bloqueo.
 
-Una revisión futura podrá cerrar el hallazgo cuando: (1) el Libro defina la
-sintaxis Cobra exacta; (2) una prueba positiva parta de esa fuente y compruebe
-`modulo`, `nombre` y `alias`; (3) el intérprete preserve la importación selectiva
-y el binding del alias; (4) los tres backends se alcancen desde el mismo AST; y
-(5) Python, JavaScript y Rust superen la validación sintáctica declarada por
-cada target. En este corte se conserva deliberadamente el estado bloqueado y
-se verifica que Lexer y Parser no cambian.
+# 15. Criterio de cierre pendiente para clases
+
+El hallazgo solo podrá cerrarse incrementalmente, uno por uno, cuando: (1) el
+Libro defina sin contradicción clase vacía, construcción, llamada, constructor,
+atributos y herencia; (2) exista autorización para los cambios de Parser que
+sean imprescindibles; (3) pruebas desde **texto Cobra**, no AST manual,
+comprueben los nodos públicos; (4) semántico e intérprete validen y ejecuten el
+mismo contrato, incluido constructor, aridad, `self`, atributos y retorno; (5)
+los tres targets generen sintaxis válida y semántica declarada; y (6) se decida
+por separado si las características hoy **NO SOPORTADO** entrarán alguna vez en
+la norma. Hasta entonces no debe usarse la capacidad OO del lenguaje anfitrión
+como evidencia ni promocionarse `NodoInstancia`/`NodoLlamadaMetodo` manuales a
+sintaxis pública.
