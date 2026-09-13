@@ -111,6 +111,9 @@ from pcobra.cobra.transpilers.transpiler.js_nodes.throw import (
 from pcobra.cobra.transpilers.transpiler.js_nodes.importar import (
     visit_import as _visit_import,
 )
+from pcobra.cobra.transpilers.transpiler.js_nodes.usar import (
+    visit_usar as _visit_usar,
+)
 from pcobra.cobra.transpilers.transpiler.js_nodes.instancia import (
     visit_instancia as _visit_instancia,
 )
@@ -386,7 +389,7 @@ class TranspiladorJavaScript(BaseTranspiler):
 
 JAVASCRIPT_FEATURE_NODE_SUPPORT = {
     "decoradores": ("visit_decorador", "visit_funcion"),
-    "imports_corelibs": ("visit_import", "visit_llamada_funcion"),
+    "imports_corelibs": ("visit_usar", "visit_import", "visit_llamada_funcion"),
     "manejo_errores": ("visit_try_catch", "visit_throw"),
     "async": ("visit_funcion", "visit_esperar"),
     "tipos_compuestos": (
@@ -419,6 +422,7 @@ TranspiladorJavaScript.visit_metodo = _visit_metodo
 TranspiladorJavaScript.visit_try_catch = _visit_try_catch
 TranspiladorJavaScript.visit_throw = _visit_throw
 TranspiladorJavaScript.visit_import = _visit_import
+TranspiladorJavaScript.visit_usar = _visit_usar
 TranspiladorJavaScript.visit_instancia = _visit_instancia
 TranspiladorJavaScript.visit_atributo = _visit_atributo
 TranspiladorJavaScript.visit_proyectar = _visit_proyectar

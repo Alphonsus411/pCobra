@@ -1,8 +1,35 @@
 # Inventario técnico de módulos `usar`
 
-Fecha de actualización: 2026-05-03.
+Fecha de actualización: 2026-09-13.
 
 ## 1) Contrato público Cobra-facing
+
+### 1.1 Sintaxis: norma y comportamiento observado
+
+El Libro (§3.6) es normativo y publica exclusivamente una cadena después de
+`usar`. Sus dos variantes documentadas son una ruta simple (`usar "texto"`) y
+una ruta lógica punteada dentro de la cadena (`usar "mi_modulo.utilidades"`).
+
+La cadena completa comprobada en la implementación es:
+
+1. `PALABRAS_RESERVADAS` incluye `usar`.
+2. `Lexer` reconoce `usar` como `TipoToken.USAR`; `tokenizar()` delega en la
+   tokenización base (salvo los modos incremental o de perfilado).
+3. `Parser.declaracion_usar()` consume directamente un token `CADENA`, o bien
+   construye una ruta con dos o más tokens `IDENTIFICADOR` separados por
+   `PUNTO`, y produce en ambos casos `NodoUsar(modulo: str)`.
+
+Por tanto, las formas observadas son:
+
+| Fuente Cobra | Parser | Estado contractual |
+|---|---|---|
+| `usar "texto"` | acepta `NodoUsar("texto")` | normativa |
+| `usar "utilidades.fechas"` | acepta `NodoUsar("utilidades.fechas")` | normativa |
+| `usar utilidades.fechas` | acepta `NodoUsar("utilidades.fechas")` | compatibilidad observada, no publicada por el Libro |
+| `usar texto` | rechaza | un identificador simple exige comillas |
+
+Este inventario caracteriza la rama existente sin convertir la ruta punteada
+sin comillas en sintaxis normativa ni proponer aliases o gramática adicional.
 
 `usar` **solo** resuelve módulos Cobra-facing canónicos. La fuente única del contrato es:
 
@@ -28,6 +55,12 @@ Módulos canónicos permitidos (orden contractual exacto):
 - `obtener_modulo(nombre, ...)` valida nombre seguro y permite únicamente módulos incluidos en la constante canónica.
 - `obtener_modulo_cobra_oficial(nombre)` resuelve desde `corelibs/` o `standard_library/`.
 - En REPL estricto, cualquier módulo externo se rechaza.
+- El intérprete entrega `NodoUsar.modulo` a la API única `usar_modulo`, inyecta
+  únicamente los símbolos saneados en el ámbito plano y conserva su metadata
+  para auditoría. El cargador distingue módulos oficiales simples de módulos
+  Cobra de proyecto con ruta lógica punteada; `usar_policy.py` mantiene el
+  catálogo/capacidades y `usar_symbol_policy.py` filtra nombres y valida la
+  metadata de cada export antes de exponerlo.
 
 ## 3) Verificación de consistencia
 
