@@ -437,6 +437,13 @@ los tres transpiladores. Python se validó con `ast.parse`, JavaScript con
 completa y reproducible quedó en
 `audit_evidence/phase1/classes-backends.log`.
 
+El reproductor comprueba explícitamente la disponibilidad de `node` y `rustc`:
+si falta una herramienta registra **NO APLICA** en vez de atribuir el fallo al
+backend. Cuando `rustc` rechaza el resultado conserva hasta tres diagnósticos
+de nivel `error`; así se distingue el import de runtime no resoluble de otros
+errores de compilación, como una declaración `let` inválida en el nivel
+superior, sin alterar ni sanear el texto generado.
+
 Resultados observados:
 
 - La declaración/override y la herencia múltiple atravesaron Parser; Python y
