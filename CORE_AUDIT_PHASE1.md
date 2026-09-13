@@ -325,7 +325,41 @@ una característica pretendida que tiene un reproductor desde fuente y falla;
 característica. «Sin test fuente» distingue explícitamente las pruebas de AST
 manual, que solo evidencian componentes internos.
 
-## 8.2 Matriz por construcción
+## 8.2 Matriz de trazabilidad OO solicitada
+
+Los estados de esta matriz son exclusivamente **OK**, **PARCIAL**, **ROTO**,
+**NO SOPORTADO** y **NO APLICA**. Cada celda nombra el archivo y la función (o
+la clase de nodo, cuando el responsable AST no es una función). Se
+inspeccionaron tanto los puntos de enlace en `to_python.py`, `to_js.py` y
+`to_rust.py` como los visitantes que esos archivos importan; no se atribuye al
+archivo agregador la implementación que realmente reside en `*_nodes/`.
+
+Abreviaturas: **P** = `src/pcobra/cobra/core/parser.py`; **A** =
+`src/pcobra/core/ast_nodes.py`; **Py**, **JS** y **Rs** =
+`src/pcobra/cobra/transpilers/transpiler/python_nodes/`, `js_nodes/` y
+`rust_nodes/`; **TPy**, **TJS** y **TRs** = los respectivos `to_python.py`,
+`to_js.py` y `to_rust.py`; **T** = `tests/unit/`.
+
+| Característica | Parser | AST | Python | JS | Rust | Tests | Estado |
+|---|---|---|---|---|---|---|---|
+| Clases | **OK** — P:`Parser.declaracion_clase` | **OK** — A:`NodoClase` | **PARCIAL** — TPy:enlace `TranspiladorPython.visit_clase`; Py:`clase.py::visit_clase` (clase vacía sin `pass`) | **OK** — TJS:enlace `TranspiladorJavaScript.visit_clase`; JS:`clase.py::visit_clase` | **PARCIAL** — TRs:enlace `TranspiladorRust.visit_clase`; Rs:`clase.py::visit_clase` reduce la clase a `struct {}` + `impl` | **PARCIAL** — T:`test_parser_clase.py::test_parser_declaracion_clase`; sin clase vacía fuente→tres destinos | **PARCIAL** |
+| Constructor | **PARCIAL** — P:`Parser.declaracion_metodo` normaliza `inicializar` a `__init__`, pero P:`Parser.llamada_funcion` no crea instancia | **PARCIAL** — A:`NodoMetodo`; A:`NodoInstancia` existe pero no nace de esa fuente | **PARCIAL** — Py:`metodo.py::visit_metodo`; Py:`instancia.py::visit_instancia`; no enlaza ambos | **ROTO** — JS:`metodo.py::visit_metodo` emite `__init__`, no `constructor`; JS:`instancia.py::visit_instancia` solo sirve con AST manual | **ROTO** — Rs:`metodo.py::visit_metodo` emite `__init__`, mientras TRs:`TranspiladorRust.obtener_valor` espera `Clase::new` | **PARCIAL** — T:`test_parser_clase.py::test_parser_clase_alias_choque_nombres`; T:`test_to_python_objects.py::test_transpilar_instancia` usa AST manual | **ROTO** |
+| Atributos | **PARCIAL** — P:`Parser.exp_atributo` y P:`Parser.declaracion_asignacion`; la asignación punteada normativa no se acepta | **OK** — A:`NodoAtributo` y A:`NodoAsignacion` | **OK** — TPy:`TranspiladorPython.obtener_valor`; Py:`atributo.py::visit_atributo` | **OK** — TJS:`TranspiladorJavaScript.obtener_valor`; JS:`atributo.py::visit_atributo` | **PARCIAL** — TRs:`TranspiladorRust.obtener_valor`; no hay estado de instancia utilizable desde fuente | **PARCIAL** — T:`test_interpreter_objects.py::test_atributos_en_instancia` usa AST manual; sin caso fuente ejecutable | **PARCIAL** |
+| Métodos | **OK** — P:`Parser.declaracion_metodo` | **OK** — A:`NodoMetodo` | **OK** — Py:`metodo.py::visit_metodo` | **PARCIAL** — JS:`metodo.py::visit_metodo` conserva `self` como parámetro ordinario | **ROTO** — Rs:`metodo.py::visit_metodo` copia parámetros sin tipos y no compila el caso equivalente | **PARCIAL** — T:`test_parser_clase.py::test_parser_declaracion_clase`; T:`test_transpiler_feature_parity.py` usa AST manual | **PARCIAL** |
+| Instanciación | **ROTO** — P:`Parser.llamada_funcion` produce `NodoLlamadaFuncion` para `C()`; nunca llama A:`NodoInstancia` | **PARCIAL** — A:`NodoInstancia` existe, pero es inalcanzable desde fuente | **PARCIAL** — Py:`instancia.py::visit_instancia`; desde fuente TPy:`TranspiladorPython.obtener_valor` trata `C()` como llamada común | **ROTO** — JS:`instancia.py::visit_instancia` emitiría `new`, pero desde fuente TJS:`TranspiladorJavaScript.obtener_valor` emite `C()` | **ROTO** — TRs:`TranspiladorRust.obtener_valor` emitiría `::new` solo para AST manual; desde fuente genera una llamada/elemento inválido | **PARCIAL** — T:`test_to_python_objects.py::test_transpilar_instancia` y T:`test_to_js_objects.py::test_transpilar_instancia` construyen el nodo a mano | **ROTO** |
+| Herencia simple | **OK** — P:`Parser.declaracion_clase` recoge una base | **OK** — A:`NodoClase.bases` | **OK** — Py:`clase.py::visit_clase` conserva la base | **OK** — JS:`clase.py::visit_clase` emite `extends` | **ROTO** — Rs:`clase.py::visit_clase` deja la base en comentario, sin relación de tipos ni despacho | **PARCIAL** — T:`test_interpreter_herencia.py::test_metodo_heredado` parte de AST manual; falta ejecución desde fuente | **PARCIAL** |
+| Herencia múltiple | **OK** — P:`Parser.declaracion_clase` recoge todas las bases | **OK** — A:`NodoClase.bases` representa `list[str]` | **OK** — Py:`clase.py::visit_clase` conserva todas las bases y su MRO nativo | **ROTO** — JS:`clase.py::visit_clase` usa solo `bases[0]` y comenta las demás | **ROTO** — Rs:`clase.py::visit_clase` comenta todas las bases | **ROTO** — no hay función de test desde fuente que compare resolución/orden de métodos | **ROTO** |
+| Superclase | **NO SOPORTADO** — P:`Parser.termino` no reconoce una construcción `super` | **NO SOPORTADO** — A:no define nodo de superclase | **NO APLICA** — TPy:no registra visitante de superclase | **NO APLICA** — TJS:no registra visitante de superclase | **NO APLICA** — TRs:no registra visitante de superclase | **NO SOPORTADO** — T:no existe función de prueba Cobra para `super` | **NO SOPORTADO** |
+| Override | **PARCIAL** — P:`Parser.declaracion_clase` y P:`Parser.declaracion_metodo` aceptan nombres repetidos entre base/derivada sin validarlos | **PARCIAL** — A:`NodoClase` + A:`NodoMetodo` lo representan implícitamente | **OK** — Py:`clase.py::visit_clase` y Py:`metodo.py::visit_metodo` delegan el despacho al MRO de Python | **PARCIAL** — JS:`clase.py::visit_clase` y JS:`metodo.py::visit_metodo` preservan override simple, no el caso múltiple | **ROTO** — Rs:`clase.py::visit_clase` no modela herencia ni despacho | **ROTO** — no hay función de test fuente→ejecución para despacho sobrescrito | **ROTO** |
+| Acceso a miembros | **PARCIAL** — P:`Parser.exp_atributo` acepta lectura prefijada/punteada, pero no encadena una llamada | **OK** — A:`NodoAtributo` | **OK** — TPy:`TranspiladorPython.obtener_valor`; Py:`atributo.py::visit_atributo` | **OK** — TJS:`TranspiladorJavaScript.obtener_valor`; JS:`atributo.py::visit_atributo` | **PARCIAL** — TRs:`TranspiladorRust.obtener_valor` emite campo, aunque las clases carecen de campos | **PARCIAL** — T:`test_interpreter_objects.py::test_atributos_en_instancia` y T:`test_to_python_objects.py` dependen de AST manual | **PARCIAL** |
+| Llamadas a métodos | **ROTO** — P:`Parser.exp_atributo` deja `(` sin consumir; P:`Parser.llamada_funcion` solo parte de identificador simple | **PARCIAL** — A:`NodoLlamadaMetodo` existe, pero no lo crea el Parser | **PARCIAL** — Py:`llamada_metodo.py::visit_llamada_metodo`, solo alcanzable con AST manual | **PARCIAL** — JS:`llamada_metodo.py::visit_llamada_metodo`, solo alcanzable con AST manual | **ROTO** — TRs no importa ni registra `visit_llamada_metodo` y `TranspiladorRust.obtener_valor` no maneja A:`NodoLlamadaMetodo` | **ROTO** — T:`test_to_python_objects.py::test_transpilar_llamada_metodo` y T:`test_to_js_objects.py::test_transpilar_llamada_metodo` son manuales; el reproductor fuente falla | **ROTO** |
+
+Esta separación es deliberada: que Python conserve todas las bases no permite
+marcar la herencia múltiple como portable. JavaScript descarta semánticamente
+las bases posteriores y Rust no expresa ninguna; por ello no pueden mantener
+el mismo orden de resolución ni el mismo despacho que el AST sí representa.
+
+## 8.3 Matriz descriptiva complementaria
 
 | Elemento | Sintaxis Cobra exacta contrastada | Nodo AST desde Parser | Ejecutor / generador | Evidencia de test | Estado |
 |---|---|---|---|---|---|
@@ -350,7 +384,7 @@ manual, que solo evidencian componentes internos.
 | Parámetros de método | lista `metodo f(self, x, y): ... fin`; son nombres sin tipos en esta ruta | `NodoMetodo.parametros: list[str]` | runtime omite el primer parámetro al ligar argumentos; visitantes los copian literalmente | parser comprueba nombre/método, pruebas manuales ejercitan un argumento | **PARCIAL**: no valida aridad en `ejecutar_llamada_metodo` y depende de una llamada inalcanzable |
 | Objetos como argumentos o resultados | No hay sintaxis especial: serían identificadores en argumentos o `retorno obj` | identificadores/retorno sí; no hay `NodoInstancia` desde fuente ni `NodoLlamadaMetodo` para consumir/producir el objeto | descriptores internos pueden circular como valores, pero solo entrando por AST manual | sin test fuente extremo a extremo | **ROTO** por depender de instanciación y llamada rotas |
 
-## 8.3 Reproductores mínimos observados
+## 8.4 Reproductores mínimos observados
 
 ```cobra
 # Instanciación: parsea como llamada de función y el runtime asigna None.
@@ -389,6 +423,39 @@ La última forma falla con «Se esperaba el nombre del atributo»; la asignació
 el Parser solo admite el destino prefijado `atributo self nombre`. Corregir
 estas discrepancias exigiría decidir primero el contrato normativo y después
 tocar Parser, ambas acciones fuera de este hallazgo documental.
+
+## 8.5 Ejecución desde fuente y validación de destinos
+
+Se ejecutó `PYTHONPATH=$PWD/src:$PWD python
+audit_evidence/phase1/classes-backends.py` con cuatro
+programas Cobra independientes y equivalentes en intención: declaración con
+override simple, instanciación, llamada de método y herencia múltiple. El
+script siempre comenzó en `Lexer(...).analizar_token()` y
+`Parser(...).parsear()`; después pasó el AST resultante a `generate_code` de
+los tres transpiladores. Python se validó con `ast.parse`, JavaScript con
+`node --check` 20.20.2 y Rust con `rustc --crate-type lib` 1.87.0. La salida
+completa y reproducible quedó en
+`audit_evidence/phase1/classes-backends.log`.
+
+Resultados observados:
+
+- La declaración/override y la herencia múltiple atravesaron Parser; Python y
+  JavaScript produjeron sintaxis analizable. Rust no compiló. Esto no convierte
+  JavaScript en equivalente: su `visit_clase` solo aplica la primera base.
+- La instanciación atravesó Parser como `NodoLlamadaFuncion`; Python y
+  JavaScript produjeron texto analizable, pero JavaScript emitió `C()` en vez
+  de `new C()` y Rust produjo una declaración de nivel superior inválida.
+- La llamada `c.valor()` falló en Parser con `ParserError` al llegar al
+  paréntesis. Al no existir AST procedente de fuente, no se fabricó uno para
+  simular una validación positiva de los destinos.
+
+Por consiguiente, **no fue seguro ni metodológicamente válido comparar salida,
+retorno, estado de atributos o despacho entre los tres backends**: la cadena
+común se corta antes de disponer de un programa ejecutable equivalente. Sí se
+comparó todo lo alcanzable sin ocultar el defecto: tipo de AST, analizabilidad
+del texto Python/JavaScript y compilación Rust. Las pruebas que ejecutan esos
+comportamientos a partir de nodos construidos a mano se mantienen identificadas
+como evidencia interna, no como sustituto de la ruta desde fuente Cobra.
 
 # 9. Caracterización de sintaxis `usar`
 
