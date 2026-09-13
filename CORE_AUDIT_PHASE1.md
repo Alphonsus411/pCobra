@@ -201,7 +201,7 @@ a `COMPLETO`, `PARCIAL`, `INCONSISTENTE`, `SIN TEST`, `SIN DOCUMENTAR` y
 | `throw` | `LANZAR` | U:`PALABRAS_RESERVADAS` | L:`LANZAR` | P:`declaracion_throw` referencia `TipoToken.THROW` inexistente | A:`NodoThrow` | Py:`visit_throw` | JS:`visit_throw` | Rs:`visit_throw` | T:solo AST manual en transpiladores | Libro:compatibilidad de errores | `lanzar` | **INCONSISTENTE** — el token producido no coincide con el comprobado |
 | `transformar` | `TRANSFORMAR` | U:`PALABRAS_RESERVADAS` | L:`TRANSFORMAR` | P:`declaracion_transformar` | A:`NodoTransformar` | Py:`visit_transformar` | JS:`visit_transformar` | Rs:`visit_transformar` | T:suites Holobit y snapshots | Libro:§3.3 | — | **COMPLETO** — ruta multi-backend |
 | `try` | `INTENTAR` | U:`PALABRAS_RESERVADAS` | L:`INTENTAR` | P:`declaracion_try_catch` referencia `TipoToken.TRY` inexistente | A:`NodoTryCatch` | Py:`visit_try_catch` | JS:`visit_try_catch` | Rs:`visit_try_catch` | T:solo AST manual en `test_to_python_extras.py` | Libro:compatibilidad de errores | `intentar` | **INCONSISTENTE** — el parser no puede iniciar la construcción |
-| `usar` | `USAR` | U:`PALABRAS_RESERVADAS` | L:`USAR` | P:`declaracion_usar` | A:`NodoUsar` | Py:`visit_usar` | JS:sin `visit_usar` | Rs:`visit_usar` comentado | T:amplia integración `tests/integration/test_usar_*` | Libro:§3.6 y contrato REPL | — | **PARCIAL** — falta visitante JS y Rust no materializa importación |
+| `usar` | `USAR` | U:`PALABRAS_RESERVADAS` | L:`USAR` | P:`declaracion_usar` | A:`NodoUsar` | Py:`visit_usar` | JS:`visit_usar` (marcador) | Rs:`visit_usar` (marcador) | T:integración `tests/integration/test_usar_*` y caracterización multi-backend | Libro:§3.6 y contrato REPL | — | **PARCIAL** — Python materializa; JS y Rust generan marcadores válidos sin materializar el runtime |
 | `var` | `VAR` | U:`PALABRAS_RESERVADAS` | L:`VAR` | P:`declaracion_asignacion` | A:`NodoAsignacion` | Py:`visit_asignacion` | JS:`visit_asignacion` | Rs:`visit_asignacion` | T:`tests/test_lexer.py`, `tests/test_parser.py`, suites `test_to_*` | Libro:§2.2/§3.3 | — | **COMPLETO** — declaración canónica cubierta |
 | `with` | `IDENTIFICADOR` | U:`PALABRAS_RESERVADAS` | L:`IDENTIFICADOR` | P:`declaracion_con` solo acepta `CON` | A:sin nodo desde esa palabra | Py:sin ruta fuente | JS:sin ruta fuente | Rs:sin ruta fuente | T:pruebas usan `con`; menciones `with` son Python | Libro: no lo publica | `con` | **NO IMPLEMENTADO** — constante no utilizable en fuente Cobra |
 | `yield` | `GENERAR` | U:`PALABRAS_RESERVADAS` | L:`GENERAR` | P:`declaracion_yield` intenta `TipoToken.YIELD` inexistente | A:`NodoYield` | Py:`visit_yield` | JS:`visit_yield` | Rs:`visit_yield` | T:`test_to_js.py::test_transpilador_yield` usa AST manual | Libro:índice léxico | — | **INCONSISTENTE** — consumo imposible con el enum vigente |
@@ -221,6 +221,31 @@ solo registra los hallazgos: no añade ni retira tokens, aliases o reglas.
 
 # 6. Cambios y exclusiones
 
-Únicamente se añaden este informe y los registros de evidencia. No se modifica
-código de producción, Lexer, Parser, pruebas, ejemplos ni documentación
-normativa.
+El corte inicial únicamente añadió este informe. La revisión incremental de
+`usar` añade caracterización desde fuente, el visitante JavaScript mínimo y la
+sincronización de `imports_corelibs` en la matriz. No modifica Lexer, Parser,
+ejemplos ni documentación normativa.
+
+# 9. Caracterización de sintaxis `usar`
+
+El Libro §3.6 limita la norma a `usar CADENA`, con nombre simple o ruta lógica
+punteada dentro de la cadena. El Parser conserva además una rama compatible
+para dos o más identificadores separados por puntos; rechaza un identificador
+simple sin comillas. Todas las formas aceptadas producen
+`NodoUsar(modulo: str)` sin ampliar por ello la gramática pública.
+
+# 10. Flujo runtime y backends
+
+El intérprete resuelve `NodoUsar` mediante `usar_modulo`, incorpora exports
+saneados al ámbito plano y registra metadata validada por las políticas de
+`usar`. Desde el mismo AST, `PythonAdapter` materializa la llamada runtime;
+`JavaScriptAdapter` y `RustAdapter` emiten `// usar <modulo>`, un marcador
+sintácticamente válido que no simula materialización runtime. La declaración
+JavaScript de `imports_corelibs` queda sincronizada con su visitante real.
+
+# 12. Resultado y evidencia
+
+La regresión cubre desde fuente Cobra las cadenas simple y punteada, la ruta
+punteada sin comillas aceptada por compatibilidad y el rechazo del identificador
+simple sin comillas. También valida Python con `ast.parse`, JavaScript con
+`node --check` y Rust con `rustc` cuando las herramientas están disponibles.
