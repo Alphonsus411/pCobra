@@ -80,7 +80,7 @@ def test_transpilador_python_usar_invoca_api_canonica() -> None:
     codigo = transpiler.generate_code([nodo])
 
     assert "from pcobra.cobra.usar_loader import usar_modulo" in codigo
-    assert "_usar_exports = usar_modulo('texto')" in codigo
+    assert "_usar_exports = usar_modulo('texto', safe_mode=True)" in codigo
     assert "globals().update(dict(_usar_exports.get('simbolos', [])))" in codigo
     assert "obtener_modulo" not in codigo
 
@@ -92,7 +92,9 @@ def test_transpilador_python_usar_punteado_genera_usar_modulo_sin_parser() -> No
     codigo = TranspiladorPython().generate_code([nodo])
 
     assert "from pcobra.cobra.usar_loader import usar_modulo" in codigo
-    assert "_usar_exports = usar_modulo('utilidades.fechas')" in codigo
+    assert (
+        "_usar_exports = usar_modulo('utilidades.fechas', safe_mode=True)" in codigo
+    )
     assert "globals().update(dict(_usar_exports.get('simbolos', [])))" in codigo
     assert "obtener_modulo" not in codigo
 
@@ -237,13 +239,14 @@ def test_transpilador_python_usar_proyecto_incluye_contexto_estable(
     assert "from pcobra.cobra.usar_loader import usar_modulo" in codigo
     assert (
         "_usar_exports = usar_modulo("
-        f"'utilidades.fechas', project_root={str(proyecto.resolve())!r}, "
+        f"'utilidades.fechas', safe_mode=True, project_root={str(proyecto.resolve())!r}, "
         f"current_file={str(principal.resolve())!r})"
     ) in codigo
     assert llamadas == [
         (
             "utilidades.fechas",
             {
+                "safe_mode": True,
                 "project_root": str(proyecto.resolve()),
                 "current_file": str(principal.resolve()),
             },
@@ -312,7 +315,7 @@ def test_python_adapter_usar_proyecto_propaga_contexto_estable(tmp_path) -> None
 
     assert (
         "_usar_exports = usar_modulo("
-        f"'utilidades.fechas', project_root={str(proyecto.resolve())!r}, "
+        f"'utilidades.fechas', safe_mode=True, project_root={str(proyecto.resolve())!r}, "
         f"current_file={str(principal.resolve())!r})"
     ) in codigo
 
