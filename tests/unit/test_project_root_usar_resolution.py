@@ -815,7 +815,14 @@ def test_interpretador_usar_proyecto_detecta_ciclo_indirecto(monkeypatch, tmp_pa
     )
 
     interp = InterpretadorCobra(safe_mode=False, main_file=principal)
-    with pytest.raises(ImportError, match=r"usar_error\[carga_modulo_error\]"):
+    with pytest.raises(
+        ImportError,
+        match=(
+            r"Ciclo de módulos detectado en usar: "
+            r"utilidades/internas/a\.cobra -> utilidades/internas/b\.cobra -> "
+            r"utilidades/internas/c\.cobra -> utilidades/internas/a\.cobra"
+        ),
+    ):
         interp.ejecutar_usar(SimpleNamespace(modulo="utilidades.internas.a"))
 
 
