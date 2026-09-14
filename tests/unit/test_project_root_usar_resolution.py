@@ -301,8 +301,10 @@ def test_interpretador_usar_proyecto_detecta_ciclos_con_rutas_canonicas(
     try:
         interp.ejecutar_usar(SimpleNamespace(modulo="utilidades.a"))
     except ImportError as exc:
-        assert str(exc).startswith("usar_error[carga_modulo_error]")
-        assert "utilidades/a.cobra" not in str(exc)
+        assert str(exc) == (
+            "Ciclo de módulos detectado en usar: utilidades/a.cobra -> "
+            "utilidades/b.cobra -> utilidades/a.cobra"
+        )
     else:
         raise AssertionError("Se esperaba un ImportError por ciclo de módulos")
     assert interp._usar_loading_stack == []
