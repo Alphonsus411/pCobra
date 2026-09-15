@@ -20,7 +20,7 @@ def test_parser_romper_continuar():
     mientras x > 5:
         romper
     fin
-    para i in lista:
+    para i en lista:
         continuar
     fin
     """
