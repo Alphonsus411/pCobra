@@ -7,7 +7,7 @@ def test_error_en_declaracion_para():
     tokens = [
         Token(TipoToken.PARA, "para"),
         Token(TipoToken.IDENTIFICADOR, "i"),
-        Token(TipoToken.IN, "in"),
+        Token(TipoToken.EN, "en"),
         Token(TipoToken.IDENTIFICADOR, "nums"),
         Token(TipoToken.FIN, "fin"),
         Token(TipoToken.EOF, None),
