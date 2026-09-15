@@ -6,7 +6,7 @@ def test_parser_para_mas_de_mil_sentencias():
     tokens = [
         Token(TipoToken.PARA, "para"),
         Token(TipoToken.IDENTIFICADOR, "i"),
-        Token(TipoToken.IN, "in"),
+        Token(TipoToken.EN, "en"),
         Token(TipoToken.IDENTIFICADOR, "lista"),
         Token(TipoToken.DOSPUNTOS, ":"),
     ]
