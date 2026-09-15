@@ -22,11 +22,11 @@ def generar_tokens(*args):
 
 def test_parser_try_catch_throw():
     tokens = generar_tokens(
-        (TipoToken.TRY, "try"),
+        (TipoToken.INTENTAR, "try"),
         (TipoToken.DOSPUNTOS, ":"),
-        (TipoToken.THROW, "throw"),
+        (TipoToken.LANZAR, "throw"),
         (TipoToken.CADENA, "error"),
-        (TipoToken.CATCH, "catch"),
+        (TipoToken.CAPTURAR, "catch"),
         (TipoToken.IDENTIFICADOR, "e"),
         (TipoToken.DOSPUNTOS, ":"),
         (TipoToken.IMPRIMIR, "imprimir"),
