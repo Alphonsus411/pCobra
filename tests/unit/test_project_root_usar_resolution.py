@@ -881,8 +881,10 @@ def test_interpretador_usar_proyecto_detecta_ciclo_indirecto_en_root_con_cadena_
     with pytest.raises(ImportError) as excinfo:
         interp.ejecutar_usar(SimpleNamespace(modulo="a"))
 
-    assert str(excinfo.value).startswith("usar_error[carga_modulo_error]")
-    assert "a.cobra" not in str(excinfo.value)
+    assert str(excinfo.value) == (
+        "Ciclo de módulos detectado en usar: "
+        "a.cobra -> b.cobra -> c.cobra -> a.cobra"
+    )
     assert obtener_pila_carga_modulos_cobra_proyecto() == []
 
 
