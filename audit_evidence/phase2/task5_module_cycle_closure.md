@@ -132,6 +132,104 @@ indirecto**. En todos los casos la pila de carga terminó vacía. En particular,
 las pruebas históricas también verifican `[]` tras el ciclo canónico, tras los
 dos ciclos en la raíz y tras el `RuntimeError` sintético.
 
+## Mecanismo arquitectónico actual
+
+La función `_cargar_exports_modulo_cobra_proyecto` de
+`src/pcobra/cobra/usar_loader.py` aplica el siguiente ciclo de vida:
+
+1. Después de resolver y validar la ruta canónica, consulta primero esa ruta en
+   `module_cache`. Si ya existe, devuelve sus exports sin volver a cargar ni a
+   interpretar el módulo.
+2. `loading_stack` contiene únicamente las rutas de los módulos cuya carga está
+   en curso. Si la ruta solicitada ya figura en esa pila,
+   `formatear_ciclo_modulos_cobra_proyecto` construye la cadena del ciclo y la
+   función lanza `ImportError` con dicha cadena.
+3. La ruta se incorpora a la pila antes de cargar el AST y antes de iniciar su
+   interpretación.
+4. La entrada de caché se construye y almacena sólo después de que la
+   interpretación termine correctamente y se hayan extraído y construido los
+   exports. Una carga fallida, por tanto, no publica un resultado parcial.
+5. El bloque `finally` libera los contextos temporales y la memoria local del
+   intérprete, y retira la ruta de la pila de carga. Esta limpieza se ejecuta
+   tanto después del éxito como después de una excepción.
+
+## Distinción entre estados
+
+- **Módulo cargado correctamente:** tiene una entrada finalizada en la caché,
+  creada después de interpretar el AST y construir sus exports.
+- **Módulo visitado anteriormente:** es un concepto histórico. Por sí solo no
+  representa una carga activa ni demuestra la existencia de un ciclo.
+- **Módulo en la pila activa:** su carga todavía no ha terminado y forma parte
+  de la cadena de importación que se está evaluando.
+
+Una reimportación acíclica encuentra la entrada finalizada y usa la caché. En
+un grafo en diamante, el nodo compartido puede haberse cargado durante una rama
+anterior sin continuar activo cuando otra rama lo referencia. Sólo la reentrada
+en un módulo que aún pertenece a la cadena activa constituye un ciclo
+estructural.
+
+## Revisión histórica de las PR relacionadas
+
+La inspección local de los commits fusionados y de sus metadatos disponibles
+permitió comprobar lo siguiente:
+
+- **PR #3571, commit `0f9c7c0f`:** reemplazó las expectativas antiguas del ciclo
+  canónico de dos módulos por el mensaje exacto con la cadena completa. Sólo
+  modificó `tests/unit/test_project_root_usar_resolution.py`; no cambió el
+  contrato de runtime. Redujo el riesgo de aceptar mensajes incompletos o del
+  contrato anterior.
+- **PR #3572, commit `9975d75e`:** exigió la cadena completa del ciclo indirecto
+  anidado. Sólo cambió el mismo archivo de tests; no alteró runtime. Amplió la
+  precisión de la cobertura de ciclos indirectos.
+- **PR #3573, commit `1a046b00`:** actualizó el ciclo directo en la raíz para
+  exigir `a.cobra -> a.cobra`. Sólo modificó tests; no cambió el contrato
+  funcional. Eliminó una expectativa negativa antigua sobre la presencia de la
+  ruta.
+- **PR #3574, commit `733a8b35`:** exigió la cadena completa
+  `a.cobra -> b.cobra -> c.cobra -> a.cobra` para el ciclo indirecto en la
+  raíz. Sólo modificó tests; no cambió runtime. Cerró el riesgo de validar
+  únicamente un prefijo genérico.
+
+Esta revisión se limita a los commits y metadatos de merge disponibles en el
+repositorio local. No permite afirmar detalles de conversaciones, revisiones o
+checks remotos que no puedan comprobarse allí.
+
+## EXPECTATIVAS OBSOLETAS — CERRADO
+
+El runtime detecta ciclos reales y no produce falsos positivos en
+reimportaciones legítimas. Además, limpia el estado temporal después del éxito
+y de una excepción, conserva la recursividad legítima verificada por las suites
+relacionadas y no necesita cambios adicionales para Task 5.
+
+## Riesgos residuales
+
+### Riesgos del contrato de módulos
+
+La conclusión depende del contrato observado: rutas canónicas como claves,
+publicación en caché únicamente tras el éxito y pertenencia a la pila activa
+como criterio de ciclo. Las pruebas y la sonda reproducible sustentan ese
+comportamiento para carga simple, reimportación, cadenas, diamantes y ciclos
+directos e indirectos, además de la limpieza tras una excepción. El riesgo
+residual real es una regresión futura que altere alguno de esos invariantes; no
+hay en esta evidencia un defecto vigente conocido del contrato. En particular,
+los cuatro fallos históricos eran expectativas de tests obsoletas o
+insuficientemente precisas, no cuatro defectos actuales del runtime.
+
+### Defectos independientes de CI
+
+El fallo
+`tests/unit/test_parser_error_reporting.py::test_error_en_declaracion_para`, con
+`AttributeError: IN`, es independiente del contrato de módulos y queda fuera
+del alcance de Task 5. Un fallo global ajeno no invalida por sí solo la
+conclusión funcional aquí sustentada y debe investigarse sin mezclarlo con este
+cierre.
+
+## Siguiente acción recomendada
+
+Cerrar Task 5 y abrir cualquier fallo independiente de CI como una tarea
+separada. En concreto, `AttributeError: IN` es candidato de investigación, pero
+no debe corregirse como parte de este cambio documental.
+
 ## Alcance del cambio
 
 Esta tarea sólo añade la presente evidencia reproducible. No modifica código de
