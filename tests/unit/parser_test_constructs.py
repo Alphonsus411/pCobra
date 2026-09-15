@@ -49,7 +49,7 @@ def crear_ast_try_catch():
 
 @pytest.mark.timeout(5)
 def test_parser_para():
-    codigo = """para i in range(0,3):\n    imprimir(i)\nfin"""
+    codigo = """para i en range(0,3):\n    imprimir(i)\nfin"""
     tokens = Lexer(codigo).analizar_token()
     ast = Parser(tokens).parsear()
     assert repr(ast) == repr(crear_ast_para())

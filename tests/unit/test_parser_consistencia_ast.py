@@ -71,7 +71,7 @@ def _simplify_lark(tree):
 FRAGMENTS = [
     "var x = 1",
     "mientras 1:\n    var x = 1\nfin",
-    "para i in x:\n    var a = i\nfin",
+    "para i en x:\n    var a = i\nfin",
     "asincronico func f():\n    var x = 1\nfin",
     "switch x:\ncase 1:\n    var a = 2\nsino:\n    var b = 3\nfin",
 ]

@@ -7,7 +7,7 @@ from core.ast_nodes import NodoPara, NodoImprimir, NodoFuncion, NodoIdentificado
 def test_declaracion_para():
     """Prueba una declaración de bucle 'para'."""
     codigo = """
-    para i in range(0, 10):
+    para i en range(0, 10):
         imprimir(i)
     fin
     """
@@ -63,7 +63,7 @@ def test_funcion_y_para():
     """Prueba una función que incluye un bucle 'para'."""
     codigo = """
     func sumar_rangos():
-        para i in range(0, 5):
+        para i en range(0, 5):
             imprimir(i)
         fin
     fin
