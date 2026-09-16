@@ -150,3 +150,24 @@ implementado por este documento.
 **ALIASES SOPORTADOS: with/as**
 
 **IMPLEMENTACIÓN: pendiente de Task 15**
+
+## Corrección posterior del mantenedor
+
+La decisión anterior queda conservada arriba como registro histórico, pero fue
+adoptada a partir de una interpretación incorrecta de la intención del
+mantenedor y queda expresamente sustituida por esta corrección.
+
+La intención real no era aceptar `with/as` como aliases funcionales. pCobra
+debe preservar la funcionalidad equivalente a los context managers de Python
+exclusivamente mediante las palabras españolas `con/como`; `with/as` no son
+sintaxis Cobra actual.
+
+La política normativa definitiva pasa a ser:
+
+**POLÍTICA C — CONSOLIDAR SINTAXIS ESPAÑOLA**
+
+**FORMA CANÓNICA Y FUNCIONAL: con/como**
+
+**WITH/AS: NO SOPORTADOS COMO SINTAXIS COBRA**
+
+**FUNCIONALIDAD EQUIVALENTE A PYTHON WITH/AS: SÍ, MEDIANTE con/como**
