@@ -44,4 +44,4 @@ def test_lexer_token_defer_y_aplazar():
     codigo = "defer limpiar()\naplazar cerrar()"
     tokens = Lexer(codigo).analizar_token()
     tipos = [t.tipo for t in tokens if t.tipo != TipoToken.EOF]
-    assert tipos.count(TipoToken.DEFER) == 2
+    assert tipos.count(TipoToken.APLAZAR) == 2
