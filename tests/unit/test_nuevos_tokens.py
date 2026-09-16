@@ -33,11 +33,11 @@ def test_lexer_palabras_nuevas():
 
 
 def test_lexer_palabras_nuevas_en():
-    codigo = "with recurso as r: pasar fin"
+    codigo = "con recurso como r: pasar fin"
     tokens = Lexer(codigo).analizar_token()
     tipos = [t.tipo for t in tokens if t.tipo != TipoToken.EOF]
-    assert TipoToken.WITH in tipos
-    assert TipoToken.AS in tipos
+    assert TipoToken.CON in tipos
+    assert TipoToken.COMO in tipos
 
 
 def test_lexer_token_defer_y_aplazar():
