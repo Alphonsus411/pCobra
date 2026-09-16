@@ -102,9 +102,11 @@ def test_lexer_palabras_reservadas_con_cobertura_esperada() -> None:
         "nolocal": TipoToken.NOLOCAL,
         "lambda": TipoToken.LAMBDA,
         "con": TipoToken.CON,
+        "with": TipoToken.CON,
         "finalmente": TipoToken.FINALMENTE,
         "desde": TipoToken.DESDE,
         "como": TipoToken.COMO,
+        "as": TipoToken.COMO,
         "fin": TipoToken.FIN,
         "retorno": TipoToken.RETORNO,
     }
@@ -112,6 +114,23 @@ def test_lexer_palabras_reservadas_con_cobertura_esperada() -> None:
     for palabra, tipo in palabras_esperadas.items():
         tokens = Lexer(palabra).tokenizar()
         assert tokens[0].tipo == tipo, palabra
+
+
+def test_contexto_espanol_e_ingles_producen_semantica_equivalente() -> None:
+    def semantica(codigo: str) -> tuple[type, type, str, str, tuple[type, ...]]:
+        nodo = ClassicParser(Lexer(codigo).tokenizar()).parsear()[0]
+        return (
+            type(nodo),
+            type(nodo.contexto),
+            nodo.contexto.nombre,
+            nodo.alias,
+            tuple(type(sentencia) for sentencia in nodo.cuerpo),
+        )
+
+    forma_espanola = "con recurso como r:\n    pasar\nfin\n"
+    forma_inglesa = "with recurso as r:\n    pasar\nfin\n"
+
+    assert semantica(forma_espanola) == semantica(forma_inglesa)
 
 
 def test_lexer_no_tiene_especificaciones_reservadas_exactas_duplicadas() -> None:
