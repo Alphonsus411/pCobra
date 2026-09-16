@@ -1113,7 +1113,7 @@ class ClassicParser:
         """Parsea una sentencia ``defer``/``aplazar`` que difiere una acción."""
 
         token_defer = self.token_actual()
-        self.comer(TipoToken.DEFER)
+        self.comer(TipoToken.APLAZAR)
         expresion = self.expresion()
 
         if not self._en_bloque_funcional():
