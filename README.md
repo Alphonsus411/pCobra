@@ -781,7 +781,7 @@ describen todos los tokens disponibles:
 | LISTA | Palabra clave "lista" |
 | RBRACE | Símbolo "}" |
 | DEF | Palabra clave "def" |
-| IN | Palabra clave "in" |
+| EN | Palabra clave "en" |
 | LBRACE | Símbolo "{" |
 | FOR | Palabra clave "for" |
 | DOSPUNTOS | Símbolo ":" |

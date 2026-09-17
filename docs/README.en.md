@@ -473,7 +473,7 @@ The lexer converts code into tokens according to the regular expressions defined
 | LISTA | Keyword "lista" |
 | RBRACE | Symbol "}" |
 | DEF | Keyword "def" |
-| IN | Keyword "in" |
+| EN | Keyword "en" |
 | LBRACE | Symbol "{" |
 | FOR | Keyword "for" |
 | DOSPUNTOS | Symbol ":" |
