@@ -18,3 +18,18 @@ def test_repl_lexer_follows_con_como_keyword_contract(source, expected_token):
     tokens = [(token, value) for token, value in lex(source, CobraLexer()) if value.strip()]
 
     assert tokens == [(expected_token, source)]
+
+
+@pytest.mark.parametrize(
+    ("source", "expected_token"),
+    [
+        ("rasgo", Keyword),
+        ("interface", Keyword),
+        ("trait", Name),
+        ("interfaz", Name),
+    ],
+)
+def test_repl_lexer_follows_interface_keyword_contract(source, expected_token):
+    tokens = [(token, value) for token, value in lex(source, CobraLexer()) if value.strip()]
+
+    assert tokens == [(expected_token, source)]

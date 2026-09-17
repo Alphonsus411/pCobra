@@ -4,6 +4,7 @@
           | funcion
           | funcion_asincronica
           | clase
+          | interface
           | bucle_mientras
           | bucle_para
           | condicional
@@ -26,6 +27,8 @@ decorador: "@" IDENTIFICADOR
 funcion: decorador* "func" IDENTIFICADOR "(" parametros? ")" ":" cuerpo "fin"
 funcion_asincronica: decorador* "asincronico" "func" IDENTIFICADOR "(" parametros? ")" ":" cuerpo "fin"
 clase: "clase" IDENTIFICADOR ":" cuerpo "fin"
+interface: ("rasgo"|"interface") IDENTIFICADOR ":" metodo_abstracto* "fin"
+metodo_abstracto: "func" IDENTIFICADOR "(" parametros? ")"
 bucle_mientras: "mientras" expr ":" cuerpo "fin"
 bucle_para: "para" IDENTIFICADOR "en" expr ":" cuerpo "fin"
 condicional: "si" expr ":" cuerpo ("sino" ":" cuerpo)? "fin"

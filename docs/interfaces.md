@@ -1,10 +1,13 @@
 # Interfaces en Cobra
 
-Cobra soporta la declaración de interfaces utilizando la palabra clave `interface`.
+Cobra soporta la declaración de interfaces utilizando la palabra clave canónica `rasgo`.
 Las interfaces definen métodos abstractos que las clases pueden implementar.
 
+`interface` se mantiene temporalmente como alias de compatibilidad para código existente.
+Para código nuevo se recomienda `rasgo`.
+
 ```cobra
-interface Printable:
+rasgo Printable:
     func mostrar()
 fin
 
@@ -18,7 +21,7 @@ fin
 Una clase puede implementar varias interfaces a la vez o combinarlas con herencia de clases.
 
 ```cobra
-interface Comprimible:
+rasgo Comprimible:
     func comprimir()
 fin
 

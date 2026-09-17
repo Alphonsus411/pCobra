@@ -117,11 +117,19 @@ def test_lexer_palabras_reservadas_con_cobertura_esperada() -> None:
     assert "con" in PALABRAS_RESERVADAS
     assert "como" in PALABRAS_RESERVADAS
     assert "en" in PALABRAS_RESERVADAS
+    assert "rasgo" in PALABRAS_RESERVADAS
+    assert "interface" in PALABRAS_RESERVADAS
+    assert "trait" not in PALABRAS_RESERVADAS
+    assert "interfaz" not in PALABRAS_RESERVADAS
     assert "with" not in PALABRAS_RESERVADAS
     assert "as" not in PALABRAS_RESERVADAS
     assert "in" not in PALABRAS_RESERVADAS
 
     for identificador in ("with", "as", "in"):
+        tokens = Lexer(identificador).tokenizar()
+        assert tokens[0].tipo == TipoToken.IDENTIFICADOR, identificador
+
+    for identificador in ("trait", "interfaz"):
         tokens = Lexer(identificador).tokenizar()
         assert tokens[0].tipo == TipoToken.IDENTIFICADOR, identificador
 
