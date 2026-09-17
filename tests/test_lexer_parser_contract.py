@@ -3,6 +3,7 @@ from pathlib import Path
 
 from pcobra.cobra.core.lexer import Lexer, TipoToken
 from pcobra.cobra.core.parser import ClassicParser
+from pcobra.cobra.core.utils import PALABRAS_RESERVADAS
 
 ROOT = Path(__file__).resolve().parents[1]
 PARSER_PATH = ROOT / "src/pcobra/cobra/core/parser.py"
@@ -112,6 +113,15 @@ def test_lexer_palabras_reservadas_con_cobertura_esperada() -> None:
     for palabra, tipo in palabras_esperadas.items():
         tokens = Lexer(palabra).tokenizar()
         assert tokens[0].tipo == tipo, palabra
+
+    assert "con" in PALABRAS_RESERVADAS
+    assert "como" in PALABRAS_RESERVADAS
+    assert "with" not in PALABRAS_RESERVADAS
+    assert "as" not in PALABRAS_RESERVADAS
+
+    for identificador in ("with", "as"):
+        tokens = Lexer(identificador).tokenizar()
+        assert tokens[0].tipo == TipoToken.IDENTIFICADOR, identificador
 
 
 def test_lexer_no_tiene_especificaciones_reservadas_exactas_duplicadas() -> None:
