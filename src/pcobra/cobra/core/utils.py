@@ -50,7 +50,7 @@ PALABRAS_RESERVADAS = frozenset(
         "hilo",
         "retorno",
         "fin",
-        "in",
+        "en",
         "holobit",
         "imprimir",
         "proyectar",

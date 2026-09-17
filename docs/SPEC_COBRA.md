@@ -31,7 +31,7 @@ asignacion: ("var"|"variable")? IDENTIFICADOR "=" expr
 funcion: "func" IDENTIFICADOR "(" parametros? ")" ":" cuerpo "fin"
 clase: ("clase"|"estructura"|"registro") IDENTIFICADOR ":" cuerpo "fin"
 bucle_mientras: "mientras" expr ":" cuerpo "fin"
-bucle_para: "para" IDENTIFICADOR "in" expr ":" cuerpo "fin"
+bucle_para: "para" IDENTIFICADOR "en" expr ":" cuerpo "fin"
 condicional: "si" expr ":" cuerpo (("sino si"|"elseif") expr ":" cuerpo)* ("sino" ":" cuerpo)? "fin"
 garantia: ("garantia"|"guard") expr ":" cuerpo "sino" ":" cuerpo "fin"
 importacion: "import" CADENA
@@ -70,7 +70,7 @@ Cada regla define construcciones del lenguaje: por ejemplo `asignacion` utiliza 
 El lexer de `src/pcobra/cobra/lexico/lexer.py` define todos los tokens. Las principales palabras clave son:
 - `var`, `variable`, `func`, `metodo`, `atributo`
 - `si`, `sino`, `sino si`/`elseif`, `garantia`/`guard`, `mientras`, `para`, `import`, `usar`, `macro`, `hilo`, `asincronico`
-- `switch`, `case`, `clase`/`estructura`/`registro`, `enum`/`enumeracion`, `in`, `holobit`, `proyectar`, `transformar`, `graficar`
+- `switch`, `case`, `clase`/`estructura`/`registro`, `enum`/`enumeracion`, `en`, `holobit`, `proyectar`, `transformar`, `graficar`
 - `try`/`intentar`, `catch`/`capturar`, `throw`/`lanzar`
 - `&&`/`y`, `||`/`o`, `!`/`no`
 - `imprimir`, `yield`, `esperar`, `romper`, `continuar`, `pasar`, `afirmar`, `eliminar`,

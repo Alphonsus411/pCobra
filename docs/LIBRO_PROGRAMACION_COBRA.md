@@ -138,7 +138,7 @@ altura = 1.68
 - `holobit`
 - `import`
 - `imprimir`
-- `in`
+- `en`
 - `intentar`
 - `lambda`
 - `lanzar`
