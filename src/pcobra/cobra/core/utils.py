@@ -61,6 +61,7 @@ PALABRAS_RESERVADAS = frozenset(
         "clase",
         "estructura",
         "registro",
+        "rasgo",
         "interface",
         "metodo",
         "atributo",

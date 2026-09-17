@@ -48,7 +48,7 @@ TOKEN_REGEX_MAP = [
     (TipoToken.REGISTRO, r"\bregistro\b", Keyword),
     (TipoToken.ENUMERACION, r"\benumeracion\b", Keyword),
     (TipoToken.ENUMERACION, r"\benumeracion\b", Keyword),
-    (TipoToken.INTERFACE, r"\b(interface|trait)\b", Keyword),
+    (TipoToken.INTERFACE, r"\b(interface|rasgo)\b", Keyword),
     (TipoToken.EN, r"\ben\b", Keyword),
     (TipoToken.HOLOBIT, r"\bholobit\b", Keyword),
     (TipoToken.PROYECTAR, r"\bproyectar\b", Keyword),

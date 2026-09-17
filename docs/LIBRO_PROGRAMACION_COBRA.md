@@ -397,6 +397,15 @@ clase Usuario:
         self.nombre = nombre
 ```
 
+Las interfaces usan `rasgo` como palabra clave canónica; `interface` se
+mantiene temporalmente como alias de compatibilidad para código existente.
+
+```cobra
+rasgo Printable:
+    func imprimir()
+fin
+```
+
 **Anti-ejemplo frecuente:** exponer estado mutable sin invariantes.
 
 **Compatibilidad por backend:** clases básicas estables; herencia múltiple puede variar en calidad de transpiliación según backend.

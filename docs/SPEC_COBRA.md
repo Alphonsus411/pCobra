@@ -12,6 +12,7 @@ Para visualizar de manera esquemática el proceso completo de compilación y la 
 ?statement: asignacion
           | funcion
           | clase
+          | interface
           | bucle_mientras
           | bucle_para
           | condicional
@@ -30,6 +31,8 @@ Para visualizar de manera esquemática el proceso completo de compilación y la 
 asignacion: ("var"|"variable")? IDENTIFICADOR "=" expr
 funcion: "func" IDENTIFICADOR "(" parametros? ")" ":" cuerpo "fin"
 clase: ("clase"|"estructura"|"registro") IDENTIFICADOR ":" cuerpo "fin"
+interface: ("rasgo"|"interface") IDENTIFICADOR ":" metodo_abstracto* "fin"
+metodo_abstracto: "func" IDENTIFICADOR "(" parametros? ")"
 bucle_mientras: "mientras" expr ":" cuerpo "fin"
 bucle_para: "para" IDENTIFICADOR "en" expr ":" cuerpo "fin"
 condicional: "si" expr ":" cuerpo (("sino si"|"elseif") expr ":" cuerpo)* ("sino" ":" cuerpo)? "fin"
@@ -70,7 +73,7 @@ Cada regla define construcciones del lenguaje: por ejemplo `asignacion` utiliza 
 El lexer de `src/pcobra/cobra/lexico/lexer.py` define todos los tokens. Las principales palabras clave son:
 - `var`, `variable`, `func`, `metodo`, `atributo`
 - `si`, `sino`, `sino si`/`elseif`, `garantia`/`guard`, `mientras`, `para`, `import`, `usar`, `macro`, `hilo`, `asincronico`
-- `switch`, `case`, `clase`/`estructura`/`registro`, `enum`/`enumeracion`, `en`, `holobit`, `proyectar`, `transformar`, `graficar`
+- `switch`, `case`, `clase`/`estructura`/`registro`, `enum`/`enumeracion`, `rasgo`/`interface`, `en`, `holobit`, `proyectar`, `transformar`, `graficar`
 - `try`/`intentar`, `catch`/`capturar`, `throw`/`lanzar`
 - `&&`/`y`, `||`/`o`, `!`/`no`
 - `imprimir`, `yield`, `esperar`, `romper`, `continuar`, `pasar`, `afirmar`, `eliminar`,
@@ -143,6 +146,11 @@ Las clases pueden declararse con las palabras clave `clase`, `estructura` o
 `registro`. Las enumeraciones aceptan `enum` o `enumeracion`. El parser trata
 estos términos como sinónimos y registra una advertencia si en un mismo
 archivo se mezclan varios alias, para favorecer un estilo consistente.
+
+Las interfaces se declaran con la palabra clave canónica `rasgo`. `interface`
+se mantiene temporalmente como alias de compatibilidad para código existente;
+para código nuevo se recomienda `rasgo`. `trait` e `interfaz` no son aliases de
+sintaxis fuente.
 
 ## Control de flujo
 ```cobra

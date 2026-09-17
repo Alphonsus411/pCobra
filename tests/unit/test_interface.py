@@ -25,6 +25,15 @@ def test_parser_interface():
     assert ast[1].bases == ["Printable"]
 
 
+def test_parser_rasgo_canonico():
+    tokens = Lexer("rasgo I:\n    func m()\nfin\n").tokenizar()
+    ast = Parser(tokens).parsear()
+
+    assert isinstance(ast[0], NodoInterface)
+    assert ast[0].nombre == "I"
+    assert [metodo.nombre for metodo in ast[0].metodos] == ["m"]
+
+
 def test_transpiladores_interface_targets_publicos():
     tokens = Lexer("interface I:\n    func m()\nfin\n").tokenizar()
     ast = Parser(tokens).parsear()
