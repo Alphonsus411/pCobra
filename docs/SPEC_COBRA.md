@@ -44,7 +44,7 @@ impresion: "imprimir" "(" argumentos? ")"
 retorno: "retorno" expr
 hilo: "hilo" llamada
 switch: ("segun"|"switch") expr ":" case+ "fin"
-case: ("case" expr ":" cuerpo)+
+case: (("caso"|"case") expr ":" cuerpo)+
 try_catch: ("try"|"intentar") ":" cuerpo ("catch"|"capturar") IDENTIFICADOR ":" cuerpo "fin"
 llamada: IDENTIFICADOR "(" argumentos? ")"
 cuerpo: statement*
@@ -73,7 +73,7 @@ Cada regla define construcciones del lenguaje: por ejemplo `asignacion` utiliza 
 El lexer de `src/pcobra/cobra/lexico/lexer.py` define todos los tokens. Las principales palabras clave son:
 - `var`, `variable`, `func`, `definir`, `metodo`, `atributo`
 - `si`, `sino`, `sino si`/`elseif`, `garantia`/`guard`, `mientras`, `para`, `import`, `usar`, `macro`, `hilo`, `asincronico`
-- `segun` (forma canónica; `switch` es un alias de compatibilidad), `case`, `clase`/`estructura`/`registro`, `enum`/`enumeracion`, `rasgo`/`interface`, `en`, `holobit`, `proyectar`, `transformar`, `graficar`
+- `segun` (forma canónica; `switch` es un alias de compatibilidad), `caso` (forma canónica; `case` es un alias de compatibilidad), `clase`/`estructura`/`registro`, `enum`/`enumeracion`, `rasgo`/`interface`, `en`, `holobit`, `proyectar`, `transformar`, `graficar`
 - `try`/`intentar`, `catch`/`capturar`, `throw`/`lanzar`
 - `&&`/`y`, `||`/`o`, `!`/`no`
 - `imprimir`, `yield`, `esperar`, `romper`, `continuar`, `pasar`, `afirmar`, `eliminar`,
@@ -170,7 +170,7 @@ mientras x < 5:
     x += 1
 
 segun valor:
-case 1:
+caso 1:
     imprimir "uno"
 fin
 ```

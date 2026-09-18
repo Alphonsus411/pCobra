@@ -41,7 +41,7 @@ impresion: "imprimir" "(" argumentos? ")"
 retorno: "retorno" expr
 hilo: "hilo" llamada
 switch: ("segun"|"switch") expr ":" case+ ("sino" ":" cuerpo)? "fin"
-case: "case" patron ("si" expr)? ":" cuerpo
+case: ("caso"|"case") patron ("si" expr)? ":" cuerpo
 patron: "_" | IDENTIFICADOR | valor | "(" patron ("," patron)* ")"
 try_catch: ("try"|"intentar") ":" cuerpo ("catch"|"capturar") IDENTIFICADOR ":" cuerpo "fin"
 throw_stmt: ("throw"|"lanzar") expr
