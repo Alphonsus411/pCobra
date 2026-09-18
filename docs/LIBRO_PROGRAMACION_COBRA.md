@@ -125,8 +125,7 @@ altura = 1.68
 - `eliminar`
 - `elseif`
 - `en`
-- `enum`
-- `enumeracion`
+- `enumeracion` (forma canónica; `enum` se mantiene como alias de compatibilidad)
 - `esperar`
 - `estructura`
 - `fin`
@@ -211,6 +210,7 @@ altura = 1.68
 - `bucle_para`
 - `clase`
 - `condicional`
+- `enumeracion`
 - `expr`
 - `funcion`
 - `funcion_asincronica`
