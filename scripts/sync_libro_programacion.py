@@ -157,6 +157,13 @@ def build_syntax_index() -> str:
 
     parts.append("\n#### Palabras reservadas (gramática + SPEC)\n")
     for tok in sorted(set(grammar_literals + spec_tokens)):
+        if tok == "case":
+            continue
+        if tok == "caso":
+            parts.append(
+                "- `caso` (forma canónica; `case` se mantiene como alias de compatibilidad)"
+            )
+            continue
         parts.append(f"- `{tok}`")
 
     parts.append("\n#### Estructuras\n")
