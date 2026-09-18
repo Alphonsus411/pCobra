@@ -5,6 +5,13 @@ from pygments.token import Keyword, Name
 from pcobra.cobra.cli.repl.cobra_lexer import CobraLexer
 
 
+@pytest.mark.parametrize("source", ["elseif", "sino si"])
+def test_repl_lexer_follows_sino_si_keyword_contract(source):
+    tokens = [(token, value) for token, value in lex(source, CobraLexer()) if value.strip()]
+
+    assert tokens == [(Keyword, source)]
+
+
 @pytest.mark.parametrize(
     ("source", "expected_token"),
     [

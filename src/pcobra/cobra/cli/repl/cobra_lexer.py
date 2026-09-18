@@ -31,6 +31,7 @@ TOKEN_REGEX_MAP = [
     (TipoToken.FUNC, r"\b(func|definir)\b", Keyword),
     (TipoToken.METODO, r"\bmetodo\b", Keyword),
     (TipoToken.ATRIBUTO, r"\batributo\b", Keyword),
+    (TipoToken.SINO_SI, r"\b(?:sino\s+si|elseif)\b", Keyword),
     (TipoToken.SI, r"\bsi\b", Keyword),
     (TipoToken.SINO, r"\bsino\b", Keyword),
     (TipoToken.GARANTIA, r"\b(guard|garantia)\b", Keyword),
