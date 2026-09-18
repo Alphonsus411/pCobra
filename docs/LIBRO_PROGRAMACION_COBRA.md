@@ -157,11 +157,10 @@ altura = 1.68
 - `registro`
 - `retorno`
 - `romper`
-- `segun`
+- `segun` (forma canónica; `switch` se mantiene como alias de compatibilidad)
 - `si`
 - `sino`
 - `sino si`
-- `switch`
 - `throw`
 - `transformar`
 - `try`
