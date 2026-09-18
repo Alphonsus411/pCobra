@@ -18,6 +18,7 @@
           | llamada
           | switch
           | try_catch
+          | throw_stmt
           | with_stmt
           | option
           | expr
@@ -43,6 +44,7 @@ switch: "switch" expr ":" case+ ("sino" ":" cuerpo)? "fin"
 case: "case" patron ("si" expr)? ":" cuerpo
 patron: "_" | IDENTIFICADOR | valor | "(" patron ("," patron)* ")"
 try_catch: ("try"|"intentar") ":" cuerpo ("catch"|"capturar") IDENTIFICADOR ":" cuerpo "fin"
+throw_stmt: ("throw"|"lanzar") expr
 with_stmt: "con" expr ("como" IDENTIFICADOR)? ":" cuerpo "fin"
 option: "option" IDENTIFICADOR "=" expr
 llamada: IDENTIFICADOR "(" argumentos? ")"
