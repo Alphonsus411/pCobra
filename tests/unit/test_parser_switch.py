@@ -1,5 +1,7 @@
 from cobra.core import Lexer
 from cobra.core import Parser
+from cobra.core import NodoSwitch as NodoSwitchCanonico
+from cobra.core import TipoToken
 from core.ast_nodes import NodoSwitch, NodoCase, NodoImprimir, NodoGuard, NodoPattern
 
 
@@ -21,6 +23,20 @@ def test_parser_switch():
     assert isinstance(nodo.casos[0], NodoCase)
     assert len(nodo.por_defecto) == 1
     assert isinstance(nodo.por_defecto[0], NodoImprimir)
+
+
+def test_parser_segun_canonico():
+    codigo = """
+    segun x:
+        case 1:
+            pasar
+    fin
+    """
+    tokens = Lexer(codigo).analizar_token()
+    assert tokens[0].tipo == TipoToken.SWITCH
+
+    ast = Parser(tokens).parsear()
+    assert isinstance(ast[0], NodoSwitchCanonico)
 
 
 def test_parser_switch_patrones_guardia():

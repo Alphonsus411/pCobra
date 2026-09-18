@@ -157,7 +157,7 @@ altura = 1.68
 - `si`
 - `sino`
 - `sino si`
-- `switch`
+- `segun` (forma canónica; `switch` se mantiene como alias de compatibilidad)
 - `throw`
 - `transformar`
 - `try`
@@ -224,6 +224,15 @@ altura = 1.68
 - `usar`
 - `with_stmt`
 <!-- END: AUTO-SYNTAX-INDEX -->
+
+`segun` es la forma canónica en pCobra. `switch` se mantiene como alias de compatibilidad:
+
+```cobra
+segun valor:
+    case 1:
+        pasar
+fin
+```
 
 ### Tablas rápidas: token/estructura → uso práctico
 
