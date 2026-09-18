@@ -47,3 +47,17 @@ def test_repl_lexer_follows_garantia_keyword_contract(source):
     tokens = [(token, value) for token, value in lex(source, CobraLexer()) if value.strip()]
 
     assert tokens == [(Keyword, source)]
+
+
+@pytest.mark.parametrize(
+    ("source", "expected_token"),
+    [
+        ("enumeracion", Keyword),
+        ("enum", Keyword),
+        ("enumerador", Name),
+    ],
+)
+def test_repl_lexer_follows_enum_keyword_contract(source, expected_token):
+    tokens = [(token, value) for token, value in lex(source, CobraLexer()) if value.strip()]
+
+    assert tokens == [(expected_token, source)]

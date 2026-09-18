@@ -24,7 +24,7 @@
         },
         {
           "name": "keyword.control.cobra",
-            "match": "\\b(var|variable|func|definir|metodo|atributo|si|sino|guard|garantia|mientras|para|import|usar|option|macro|hilo|asincronico|switch|segun|case|caso|clase|rasgo|interface|en|holobit|proyectar|transformar|graficar|try|catch|throw|intentar|capturar|lanzar|imprimir|yield|esperar|romper|continuar|pasar|afirmar|eliminar|global|nolocal|lambda|con|finalmente|desde|como|retorno|fin)\\b"
+            "match": "\\b(var|variable|func|definir|metodo|atributo|si|sino|guard|garantia|mientras|para|import|usar|option|macro|hilo|asincronico|switch|segun|case|caso|clase|rasgo|interface|enum|enumeracion|en|holobit|proyectar|transformar|graficar|try|catch|throw|intentar|capturar|lanzar|imprimir|yield|esperar|romper|continuar|pasar|afirmar|eliminar|global|nolocal|lambda|con|finalmente|desde|como|retorno|fin)\\b"
         }
       ]
     },
