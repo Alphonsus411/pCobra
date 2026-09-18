@@ -32,7 +32,7 @@ Para visualizar de manera esquemática el proceso completo de compilación y la 
 asignacion: ("var"|"variable")? IDENTIFICADOR "=" expr
 funcion: ("func"|"definir") IDENTIFICADOR "(" parametros? ")" ":" cuerpo "fin"
 clase: ("clase"|"estructura"|"registro") IDENTIFICADOR ":" cuerpo "fin"
-enumeracion: ("enumeracion"|"enum") IDENTIFICADOR ":" IDENTIFICADOR ("," IDENTIFICADOR)* "fin"
+enumeracion: ("enumeracion"|"enum") IDENTIFICADOR ":" [IDENTIFICADOR ("," IDENTIFICADOR)* [","]] "fin"
 interface: ("rasgo"|"interface") IDENTIFICADOR ":" metodo_abstracto* "fin"
 metodo_abstracto: "func" IDENTIFICADOR "(" parametros? ")"
 bucle_mientras: "mientras" expr ":" cuerpo "fin"
