@@ -12,6 +12,7 @@ Para visualizar de manera esquemática el proceso completo de compilación y la 
 ?statement: asignacion
           | funcion
           | clase
+          | enumeracion
           | interface
           | bucle_mientras
           | bucle_para
@@ -31,6 +32,7 @@ Para visualizar de manera esquemática el proceso completo de compilación y la 
 asignacion: ("var"|"variable")? IDENTIFICADOR "=" expr
 funcion: ("func"|"definir") IDENTIFICADOR "(" parametros? ")" ":" cuerpo "fin"
 clase: ("clase"|"estructura"|"registro") IDENTIFICADOR ":" cuerpo "fin"
+enumeracion: ("enumeracion"|"enum") IDENTIFICADOR ":" IDENTIFICADOR ("," IDENTIFICADOR)* "fin"
 interface: ("rasgo"|"interface") IDENTIFICADOR ":" metodo_abstracto* "fin"
 metodo_abstracto: "func" IDENTIFICADOR "(" parametros? ")"
 bucle_mientras: "mientras" expr ":" cuerpo "fin"
@@ -73,7 +75,7 @@ Cada regla define construcciones del lenguaje: por ejemplo `asignacion` utiliza 
 El lexer de `src/pcobra/cobra/lexico/lexer.py` define todos los tokens. Las principales palabras clave son:
 - `var`, `variable`, `func`, `definir`, `metodo`, `atributo`
 - `si`, `sino`, `sino si`/`elseif`, `garantia`/`guard`, `mientras`, `para`, `import`, `usar`, `macro`, `hilo`, `asincronico`
-- `segun` (forma canónica; `switch` es un alias de compatibilidad), `caso` (forma canónica; `case` es un alias de compatibilidad), `clase`/`estructura`/`registro`, `enum`/`enumeracion`, `rasgo`/`interface`, `en`, `holobit`, `proyectar`, `transformar`, `graficar`
+- `segun` (forma canónica; `switch` es un alias de compatibilidad), `caso` (forma canónica; `case` es un alias de compatibilidad), `clase`/`estructura`/`registro`, `enumeracion` (forma canónica; `enum` es un alias de compatibilidad), `rasgo`/`interface`, `en`, `holobit`, `proyectar`, `transformar`, `graficar`
 - `try`/`intentar`, `catch`/`capturar`, `throw`/`lanzar`
 - `&&`/`y`, `||`/`o`, `!`/`no`
 - `imprimir`, `yield`, `esperar`, `romper`, `continuar`, `pasar`, `afirmar`, `eliminar`,
@@ -143,9 +145,11 @@ Si dos alias producen el mismo nombre dentro de una clase (por ejemplo,
 advertencia de choque para facilitar la depuración.
 
 Las clases pueden declararse con las palabras clave `clase`, `estructura` o
-`registro`. Las enumeraciones aceptan `enum` o `enumeracion`. El parser trata
-estos términos como sinónimos y registra una advertencia si en un mismo
-archivo se mezclan varios alias, para favorecer un estilo consistente.
+`registro`. Para las enumeraciones, `enumeracion` es la forma canónica y
+recomendada; `enum` sigue aceptándose como alias de compatibilidad, sin estar
+deprecado. Ambas formas producen la misma construcción. El parser registra una
+advertencia si en un mismo archivo se mezclan varios alias, para favorecer un
+estilo consistente.
 
 Las interfaces se declaran con la palabra clave canónica `rasgo`. `interface`
 se mantiene temporalmente como alias de compatibilidad para código existente;

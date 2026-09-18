@@ -171,6 +171,13 @@ def build_syntax_index() -> str:
                 "- `caso` (forma canónica; `case` se mantiene como alias de compatibilidad)"
             )
             continue
+        if tok == "enum":
+            continue
+        if tok == "enumeracion":
+            parts.append(
+                "- `enumeracion` (forma canónica; `enum` se mantiene como alias de compatibilidad)"
+            )
+            continue
         parts.append(f"- `{tok}`")
 
     parts.append("\n#### Estructuras\n")
