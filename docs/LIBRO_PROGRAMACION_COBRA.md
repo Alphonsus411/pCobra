@@ -114,7 +114,7 @@ altura = 1.68
 - `asincronico`
 - `atributo`
 - `capturar`
-- `case`
+- `caso` (forma canónica; `case` se mantiene como alias de compatibilidad)
 - `catch`
 - `clase`
 - `como`
@@ -225,11 +225,11 @@ altura = 1.68
 - `with_stmt`
 <!-- END: AUTO-SYNTAX-INDEX -->
 
-`segun` es la forma canónica en pCobra. `switch` se mantiene como alias de compatibilidad:
+`segun` y `caso` son las formas canónicas en pCobra. `switch` y `case`, respectivamente, se mantienen como aliases de compatibilidad:
 
 ```cobra
 segun valor:
-    case 1:
+    caso 1:
         pasar
 fin
 ```

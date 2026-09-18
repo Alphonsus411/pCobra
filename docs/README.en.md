@@ -540,7 +540,7 @@ The lexer converts code into tokens according to the regular expressions defined
 | DESDE | Keyword "desde" |
 | COMO | Keyword "como" |
 | SWITCH | Canonical keyword "segun"; "switch" remains a compatibility alias |
-| CASE | Keyword "case" or "caso" |
+| CASE | Canonical keyword "caso"; "case" remains a compatibility alias |
 
 The regular expressions are grouped in `especificacion_tokens` and processed in order to find matches. Keywords use patterns like `\bvar\b` or `\bfunc\b`, numbers use `\d+` or `\d+\.\d+` and strings are detected with `"[^\"]*"` or `'[^']*'`. Identifiers allow Unicode characters via `[^\W\d_][\w]*`. Operators and symbols use direct patterns like `==`, `&&` or `\(`. Before analysis, line and block comments are removed with `re.sub`.
 

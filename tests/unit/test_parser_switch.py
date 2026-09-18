@@ -39,6 +39,21 @@ def test_parser_segun_canonico():
     assert isinstance(ast[0], NodoSwitchCanonico)
 
 
+def test_parser_segun_caso_canonicos():
+    codigo = """
+    segun x:
+        caso 1:
+            pasar
+    fin
+    """
+    tokens = Lexer(codigo).analizar_token()
+    assert tokens[0].tipo == TipoToken.SWITCH
+    assert tokens[3].tipo == TipoToken.CASE
+
+    ast = Parser(tokens).parsear()
+    assert isinstance(ast[0], NodoSwitchCanonico)
+
+
 def test_parser_switch_patrones_guardia():
     codigo = """
     switch punto:
