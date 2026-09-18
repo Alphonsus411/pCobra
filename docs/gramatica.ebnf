@@ -24,7 +24,7 @@
 
 asignacion: ("var"|"variable")? IDENTIFICADOR "=" expr
 decorador: "@" IDENTIFICADOR
-funcion: decorador* "func" IDENTIFICADOR "(" parametros? ")" ":" cuerpo "fin"
+funcion: decorador* ("func"|"definir") IDENTIFICADOR "(" parametros? ")" ":" cuerpo "fin"
 funcion_asincronica: decorador* "asincronico" "func" IDENTIFICADOR "(" parametros? ")" ":" cuerpo "fin"
 clase: "clase" IDENTIFICADOR ":" cuerpo "fin"
 interface: ("rasgo"|"interface") IDENTIFICADOR ":" metodo_abstracto* "fin"

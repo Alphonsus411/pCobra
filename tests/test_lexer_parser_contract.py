@@ -114,6 +114,8 @@ def test_lexer_palabras_reservadas_con_cobertura_esperada() -> None:
         tokens = Lexer(palabra).tokenizar()
         assert tokens[0].tipo == tipo, palabra
 
+    assert "func" in PALABRAS_RESERVADAS
+    assert "definir" in PALABRAS_RESERVADAS
     assert "con" in PALABRAS_RESERVADAS
     assert "como" in PALABRAS_RESERVADAS
     assert "en" in PALABRAS_RESERVADAS

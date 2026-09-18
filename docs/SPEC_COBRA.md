@@ -29,7 +29,7 @@ Para visualizar de manera esquemática el proceso completo de compilación y la 
           | expr
 
 asignacion: ("var"|"variable")? IDENTIFICADOR "=" expr
-funcion: "func" IDENTIFICADOR "(" parametros? ")" ":" cuerpo "fin"
+funcion: ("func"|"definir") IDENTIFICADOR "(" parametros? ")" ":" cuerpo "fin"
 clase: ("clase"|"estructura"|"registro") IDENTIFICADOR ":" cuerpo "fin"
 interface: ("rasgo"|"interface") IDENTIFICADOR ":" metodo_abstracto* "fin"
 metodo_abstracto: "func" IDENTIFICADOR "(" parametros? ")"
@@ -71,7 +71,7 @@ Cada regla define construcciones del lenguaje: por ejemplo `asignacion` utiliza 
 
 ## Tokens y palabras reservadas
 El lexer de `src/pcobra/cobra/lexico/lexer.py` define todos los tokens. Las principales palabras clave son:
-- `var`, `variable`, `func`, `metodo`, `atributo`
+- `var`, `variable`, `func`, `definir`, `metodo`, `atributo`
 - `si`, `sino`, `sino si`/`elseif`, `garantia`/`guard`, `mientras`, `para`, `import`, `usar`, `macro`, `hilo`, `asincronico`
 - `switch`, `case`, `clase`/`estructura`/`registro`, `enum`/`enumeracion`, `rasgo`/`interface`, `en`, `holobit`, `proyectar`, `transformar`, `graficar`
 - `try`/`intentar`, `catch`/`capturar`, `throw`/`lanzar`
