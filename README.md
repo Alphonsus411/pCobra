@@ -847,7 +847,7 @@ describen todos los tokens disponibles:
 | FINALMENTE | Palabra clave "finalmente" |
 | DESDE | Palabra clave "desde" |
 | COMO | Palabra clave "como" |
-| SWITCH | Palabra clave "switch" o "segun" |
+| SWITCH | Palabra clave canónica "segun"; "switch" se mantiene como alias de compatibilidad |
 | CASE | Palabra clave "case" o "caso" |
 
 Las expresiones regulares se agrupan en `especificacion_tokens` y se procesan en orden para encontrar coincidencias. Las palabras clave usan patrones como `\bvar\b` o `\bfunc\b`, los números emplean `\d+` o `\d+\.\d+` y las cadenas se detectan con `"[^\"]*"` o `'[^']*'`. Los identificadores permiten caracteres Unicode mediante `[^\W\d_][\w]*`. Operadores y símbolos utilizan patrones directos como `==`, `&&` o `\(`. Antes del análisis se eliminan los comentarios de línea y de bloque con `re.sub`.

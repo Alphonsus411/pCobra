@@ -40,7 +40,7 @@ macro: "macro" IDENTIFICADOR "{" statement* "}"
 impresion: "imprimir" "(" argumentos? ")"
 retorno: "retorno" expr
 hilo: "hilo" llamada
-switch: "switch" expr ":" case+ ("sino" ":" cuerpo)? "fin"
+switch: ("segun"|"switch") expr ":" case+ ("sino" ":" cuerpo)? "fin"
 case: "case" patron ("si" expr)? ":" cuerpo
 patron: "_" | IDENTIFICADOR | valor | "(" patron ("," patron)* ")"
 try_catch: ("try"|"intentar") ":" cuerpo ("catch"|"capturar") IDENTIFICADOR ":" cuerpo "fin"
