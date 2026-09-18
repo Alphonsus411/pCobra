@@ -34,6 +34,7 @@ PALABRAS_RESERVADAS = frozenset(
     {
         "var",
         "func",
+        "definir",
         "si",
         "sino",
         "sino si",
