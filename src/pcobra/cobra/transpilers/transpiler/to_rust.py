@@ -4,6 +4,7 @@ Los parámetros de tipo de Cobra se convierten en genéricos idiomáticos de Rus
 
 from pcobra.cobra.core import TipoToken
 from pcobra.cobra.core.ast_nodes import (
+    NodoBloque,
     NodoLista,
     NodoDiccionario,
     NodoValor,
@@ -106,6 +107,21 @@ from pcobra.cobra.transpilers.transpiler.rust_nodes.yield_ import (
 from pcobra.cobra.transpilers.transpiler.rust_nodes.imprimir import (
     visit_imprimir as _visit_imprimir,
 )
+
+
+def _collect_enum_names(nodos):
+    """Recopila enums declarados en la secuencia y en cuerpos anidados."""
+    nombres = set()
+    for nodo in nodos:
+        if isinstance(nodo, NodoEnum):
+            nombres.add(nodo.nombre)
+
+        cuerpo = getattr(nodo, "cuerpo", None)
+        if isinstance(cuerpo, NodoBloque):
+            nombres.update(_collect_enum_names(cuerpo.instrucciones))
+        elif isinstance(cuerpo, (list, tuple)):
+            nombres.update(_collect_enum_names(cuerpo))
+    return nombres
 
 
 def visit_assert(self, nodo):
@@ -305,9 +321,7 @@ class TranspiladorRust(BaseTranspiler):
         nodos = normalize_to_cobra_ast(nodos)
         nodos = expandir_macros(nodos)
         nodos = optimize_constants(nodos)
-        self._enum_names = {
-            nodo.nombre for nodo in nodos if isinstance(nodo, NodoEnum)
-        }
+        self._enum_names = _collect_enum_names(nodos)
         for nodo in nodos:
             nodo.aceptar(self)
         lineas = list(self.codigo)
