@@ -1,6 +1,6 @@
 from pcobra.cobra.core import Lexer
 from pcobra.cobra.core import Parser
-from pcobra.core.ast_nodes import NodoEnum
+from pcobra.core.ast_nodes import NodoAtributo, NodoEnum, NodoIdentificador
 from pcobra.cobra.transpilers.transpiler.to_python import TranspiladorPython
 from pcobra.cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
 from pcobra.cobra.transpilers.transpiler.to_rust import TranspiladorRust
@@ -89,3 +89,36 @@ def test_transpilador_rust_enum_vacio_desde_fuente():
     ast = Parser(Lexer(codigo).analizar_token()).parsear()
     resultado = TranspiladorRust().generate_code(ast)
     assert resultado.endswith("enum Vacia {\n}")
+
+
+def test_transpilador_rust_acceso_variante_desde_enumeracion():
+    codigo = "enumeracion Color: ROJO, VERDE fin imprimir(Color.ROJO)"
+    ast = Parser(Lexer(codigo).analizar_token()).parsear()
+    resultado = TranspiladorRust().generate_code(ast)
+    assert "Color::ROJO" in resultado
+    assert "Color.ROJO" not in resultado
+
+
+def test_transpilador_rust_acceso_variante_desde_alias_enum():
+    codigo = "enum Color: ROJO, VERDE fin imprimir(Color.VERDE)"
+    ast = Parser(Lexer(codigo).analizar_token()).parsear()
+    resultado = TranspiladorRust().generate_code(ast)
+    assert "Color::VERDE" in resultado
+    assert "Color.VERDE" not in resultado
+
+
+def test_transpilador_rust_conserva_atributo_ordinario():
+    atributo = NodoAtributo(NodoIdentificador("objeto"), "campo")
+    assert TranspiladorRust().obtener_valor(atributo) == "objeto.campo"
+
+
+def test_transpilador_rust_no_filtra_enums_entre_generaciones():
+    transpilador = TranspiladorRust()
+    transpilador.generate_code([NodoEnum("Color", ["ROJO"])])
+
+    codigo = "imprimir(Color.ROJO)"
+    ast = Parser(Lexer(codigo).analizar_token()).parsear()
+    resultado = transpilador.generate_code(ast)
+
+    assert 'println!("{}", Color.ROJO);' in resultado
+    assert "Color::ROJO" not in resultado

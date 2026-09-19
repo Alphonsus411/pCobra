@@ -11,6 +11,7 @@ from pcobra.cobra.core.ast_nodes import (
     NodoOperacionUnaria,
     NodoIdentificador,
     NodoAtributo,
+    NodoEnum,
     NodoInstancia,
     NodoThrow,
     NodoTryCatch,
@@ -217,10 +218,12 @@ class TranspiladorRust(BaseTranspiler):
         self.codigo = []
         self.indent = 0
         self._defer_counter = 0
+        self._enum_names = set()
         self.usa_defer_helpers = False
         self.usa_runtime_holobit = False
 
     def generate_code(self, ast):
+        self.codigo = []
         self.codigo = self.transpilar(ast)
         return self.codigo
 
@@ -238,6 +241,11 @@ class TranspiladorRust(BaseTranspiler):
             return str(nodo.valor)
         if isinstance(nodo, NodoAtributo):
             obj = self.obtener_valor(nodo.objeto)
+            if (
+                isinstance(nodo.objeto, NodoIdentificador)
+                and nodo.objeto.nombre in self._enum_names
+            ):
+                return f"{obj}::{nodo.nombre}"
             return f"{obj}.{nodo.nombre}"
         if isinstance(nodo, NodoInstancia):
             args = ", ".join(self.obtener_valor(a) for a in nodo.argumentos)
@@ -297,6 +305,9 @@ class TranspiladorRust(BaseTranspiler):
         nodos = normalize_to_cobra_ast(nodos)
         nodos = expandir_macros(nodos)
         nodos = optimize_constants(nodos)
+        self._enum_names = {
+            nodo.nombre for nodo in nodos if isinstance(nodo, NodoEnum)
+        }
         for nodo in nodos:
             nodo.aceptar(self)
         lineas = list(self.codigo)
