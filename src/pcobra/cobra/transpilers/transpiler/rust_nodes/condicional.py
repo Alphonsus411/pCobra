@@ -4,14 +4,16 @@ def visit_condicional(self, nodo):
     condicion = self.obtener_valor(nodo.condicion)
     self.agregar_linea(f"if {condicion} {{")
     self.indent += 1
-    for instruccion in cuerpo_si:
-        instruccion.aceptar(self)
+    with self._enum_scope(cuerpo_si):
+        for instruccion in cuerpo_si:
+            instruccion.aceptar(self)
     self.indent -= 1
     if cuerpo_sino:
         self.agregar_linea("} else {")
         self.indent += 1
-        for instruccion in cuerpo_sino:
-            instruccion.aceptar(self)
+        with self._enum_scope(cuerpo_sino):
+            for instruccion in cuerpo_sino:
+                instruccion.aceptar(self)
         self.indent -= 1
         self.agregar_linea("}")
     else:

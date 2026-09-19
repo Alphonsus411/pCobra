@@ -4,8 +4,9 @@ from typing import Any
 def visit_try_catch(self, nodo: Any) -> None:
     self.agregar_linea("let resultado: Result<(), Box<dyn std::error::Error>> = (|| {")
     self.indent += 1
-    for inst in nodo.bloque_try:
-        inst.aceptar(self)
+    with self._enum_scope(nodo.bloque_try):
+        for inst in nodo.bloque_try:
+            inst.aceptar(self)
     self.agregar_linea("Ok(())")
     self.indent -= 1
     self.agregar_linea("})();")
@@ -16,8 +17,9 @@ def visit_try_catch(self, nodo: Any) -> None:
     self.indent += 1
     if nodo.nombre_excepcion:
         self.agregar_linea(f"let {nodo.nombre_excepcion} = e;")
-    for inst in nodo.bloque_catch:
-        inst.aceptar(self)
+    with self._enum_scope(nodo.bloque_catch):
+        for inst in nodo.bloque_catch:
+            inst.aceptar(self)
     self.indent -= 1
     self.agregar_linea("},")
     self.indent -= 1

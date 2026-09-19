@@ -2,6 +2,8 @@
 
 Los parámetros de tipo de Cobra se convierten en genéricos idiomáticos de Rust."""
 
+from contextlib import contextmanager
+
 from pcobra.cobra.core import TipoToken
 from pcobra.cobra.core.ast_nodes import (
     NodoLista,
@@ -143,8 +145,9 @@ def visit_with(self, nodo):
         )
     self.agregar_linea("{")
     self.indent += 1
-    for inst in nodo.cuerpo:
-        inst.aceptar(self)
+    with self._enum_scope(nodo.cuerpo):
+        for inst in nodo.cuerpo:
+            inst.aceptar(self)
     self.indent -= 1
     self.agregar_linea("}")
 
@@ -233,6 +236,16 @@ class TranspiladorRust(BaseTranspiler):
     def _direct_enum_names(self, nodos):
         """Devuelve los enums declarados directamente en una secuencia."""
         return {nodo.nombre for nodo in nodos if isinstance(nodo, NodoEnum)}
+
+    @contextmanager
+    def _enum_scope(self, nodos):
+        """Añade los enums directos de un bloque y restaura el scope exterior."""
+        prev_enum_names = self._enum_names
+        self._enum_names = prev_enum_names | self._direct_enum_names(nodos)
+        try:
+            yield
+        finally:
+            self._enum_names = prev_enum_names
 
     def obtener_valor(self, nodo):
         if isinstance(nodo, NodoValor):
