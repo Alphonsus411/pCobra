@@ -132,6 +132,52 @@ fin"""
     assert "Estado.ACTIVO" not in resultado
 
 
+def test_transpilador_rust_enum_local_no_contamina_funcion_hermana():
+    codigo = """func uno():
+    enumeracion Color: ROJO fin
+    imprimir(Color.ROJO)
+fin
+
+func dos():
+    imprimir(Color.ROJO)
+fin"""
+    ast = Parser(Lexer(codigo).analizar_token()).parsear()
+    resultado = TranspiladorRust().generate_code(ast)
+    funcion_uno, funcion_dos = resultado.split("fn dos()")
+
+    assert 'println!("{}", Color::ROJO);' in funcion_uno
+    assert 'println!("{}", Color.ROJO);' in funcion_dos
+    assert "Color::ROJO" not in funcion_dos
+
+
+def test_transpilador_rust_enum_global_visible_en_funcion():
+    codigo = """enumeracion Color: ROJO fin
+
+func principal():
+    imprimir(Color.ROJO)
+fin"""
+    ast = Parser(Lexer(codigo).analizar_token()).parsear()
+    resultado = TranspiladorRust().generate_code(ast)
+
+    assert 'println!("{}", Color::ROJO);' in resultado
+    assert "Color.ROJO" not in resultado
+
+
+def test_transpilador_rust_combina_enums_global_y_local_en_funcion():
+    codigo = """enumeracion Global: A fin
+
+func principal():
+    enumeracion Local: B fin
+    imprimir(Global.A)
+    imprimir(Local.B)
+fin"""
+    ast = Parser(Lexer(codigo).analizar_token()).parsear()
+    resultado = TranspiladorRust().generate_code(ast)
+
+    assert 'println!("{}", Global::A);' in resultado
+    assert 'println!("{}", Local::B);' in resultado
+
+
 def test_transpilador_rust_conserva_atributo_ordinario():
     atributo = NodoAtributo(NodoIdentificador("objeto"), "campo")
     assert TranspiladorRust().obtener_valor(atributo) == "objeto.campo"
