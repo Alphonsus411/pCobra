@@ -5,6 +5,7 @@ from unittest.mock import patch
 from cobra.core import Token, TipoToken, Lexer
 from cobra.core import Parser
 from core.ast_nodes import (
+    NodoAsignacion,
     NodoTryCatch,
     NodoThrow,
     NodoImprimir,
@@ -13,7 +14,7 @@ from core.ast_nodes import (
 )
 from cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
 from cobra.transpilers.transpiler.to_python import TranspiladorPython
-from core.interpreter import InterpretadorCobra
+from core.interpreter import ExcepcionCobra, InterpretadorCobra
 
 
 def generar_tokens(*args):
@@ -55,6 +56,83 @@ def test_interpreter_try_catch():
     interp.variables["mensaje"] = "hola"
     interp.ejecutar_nodo(nodo)
     assert interp.variables["e"] == "hola"
+
+
+def test_interpreter_try_finally_sin_excepcion_ejecuta_ambos_bloques():
+    nodo = NodoTryCatch(
+        [NodoAsignacion("try_ejecutado", NodoValor(True), declaracion=True)],
+        bloque_finally=[
+            NodoAsignacion("finally_ejecutado", NodoValor(True), declaracion=True)
+        ],
+    )
+    interp = InterpretadorCobra()
+
+    interp.ejecutar_nodo(nodo)
+
+    assert interp.variables["try_ejecutado"] is True
+    assert interp.variables["finally_ejecutado"] is True
+
+
+def test_interpreter_try_finally_repropaga_excepcion_despues_de_finally():
+    nodo = NodoTryCatch(
+        [NodoThrow(NodoValor("fallo"))],
+        bloque_finally=[
+            NodoAsignacion("finally_ejecutado", NodoValor(True), declaracion=True)
+        ],
+    )
+    interp = InterpretadorCobra()
+
+    with pytest.raises(ExcepcionCobra) as exc_info:
+        interp.ejecutar_nodo(nodo)
+
+    assert exc_info.value.valor == "fallo"
+    assert interp.variables["finally_ejecutado"] is True
+
+
+def test_interpreter_try_catch_conserva_excepcion_manejada():
+    nodo = NodoTryCatch(
+        [NodoThrow(NodoValor("fallo"))],
+        "e",
+        [NodoAsignacion("catch_ejecutado", NodoValor(True), declaracion=True)],
+    )
+    interp = InterpretadorCobra()
+
+    interp.ejecutar_nodo(nodo)
+
+    assert interp.variables["e"] == "fallo"
+    assert interp.variables["catch_ejecutado"] is True
+
+
+def test_interpreter_try_catch_finally_maneja_y_ejecuta_finally():
+    nodo = NodoTryCatch(
+        [NodoThrow(NodoValor("fallo"))],
+        "e",
+        [NodoAsignacion("catch_ejecutado", NodoValor(True), declaracion=True)],
+        [NodoAsignacion("finally_ejecutado", NodoValor(True), declaracion=True)],
+    )
+    interp = InterpretadorCobra()
+
+    interp.ejecutar_nodo(nodo)
+
+    assert interp.variables["e"] == "fallo"
+    assert interp.variables["catch_ejecutado"] is True
+    assert interp.variables["finally_ejecutado"] is True
+
+
+def test_interpreter_try_catch_finally_sin_excepcion_omite_catch():
+    nodo = NodoTryCatch(
+        [NodoAsignacion("try_ejecutado", NodoValor(True), declaracion=True)],
+        "e",
+        [NodoAsignacion("catch_ejecutado", NodoValor(True), declaracion=True)],
+        [NodoAsignacion("finally_ejecutado", NodoValor(True), declaracion=True)],
+    )
+    interp = InterpretadorCobra()
+
+    interp.ejecutar_nodo(nodo)
+
+    assert interp.variables["try_ejecutado"] is True
+    assert "catch_ejecutado" not in interp.variables
+    assert interp.variables["finally_ejecutado"] is True
 
 
 def test_transpiler_python_try_catch():
