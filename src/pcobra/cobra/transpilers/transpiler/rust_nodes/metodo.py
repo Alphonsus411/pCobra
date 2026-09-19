@@ -5,7 +5,8 @@ def visit_metodo(self, nodo):
     )
     self.agregar_linea(f"fn {nodo.nombre}{genericos}({parametros}) {{")
     self.indent += 1
-    for instruccion in nodo.cuerpo:
-        instruccion.aceptar(self)
+    with self._enum_scope(nodo.cuerpo):
+        for instruccion in nodo.cuerpo:
+            instruccion.aceptar(self)
     self.indent -= 1
     self.agregar_linea("}")
