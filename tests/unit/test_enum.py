@@ -107,6 +107,31 @@ def test_transpilador_rust_acceso_variante_desde_alias_enum():
     assert "Color.VERDE" not in resultado
 
 
+def test_transpilador_rust_acceso_variante_enum_en_funcion():
+    codigo = """func principal():
+    enumeracion Color: ROJO, VERDE fin
+    imprimir(Color.ROJO)
+fin"""
+    ast = Parser(Lexer(codigo).analizar_token()).parsear()
+    resultado = TranspiladorRust().generate_code(ast)
+
+    assert "enum Color {\n        ROJO,\n        VERDE,\n    }" in resultado
+    assert "Color::ROJO" in resultado
+    assert "Color.ROJO" not in resultado
+
+
+def test_transpilador_rust_acceso_variante_alias_enum_en_funcion():
+    codigo = """func principal():
+    enum Estado: ACTIVO, INACTIVO fin
+    imprimir(Estado.ACTIVO)
+fin"""
+    ast = Parser(Lexer(codigo).analizar_token()).parsear()
+    resultado = TranspiladorRust().generate_code(ast)
+
+    assert "Estado::ACTIVO" in resultado
+    assert "Estado.ACTIVO" not in resultado
+
+
 def test_transpilador_rust_conserva_atributo_ordinario():
     atributo = NodoAtributo(NodoIdentificador("objeto"), "campo")
     assert TranspiladorRust().obtener_valor(atributo) == "objeto.campo"
