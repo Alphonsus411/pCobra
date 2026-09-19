@@ -41,6 +41,14 @@ def test_transpilador_python_enum():
     assert codigo == esperado
 
 
+def test_transpilador_python_enum_vacio():
+    nodo = NodoEnum("Vacia", [])
+    codigo = TranspiladorPython().generate_code([nodo])
+    esperado = IMPORTS_PY + "class Vacia:\n    pass\n"
+    assert codigo == esperado
+    compile(codigo, "<cobra-enum-vacio>", "exec")
+
+
 def test_transpilador_js_enum():
     nodo = NodoEnum("Color", ["ROJO", "VERDE"])
     codigo = TranspiladorJavaScript().generate_code([nodo])
