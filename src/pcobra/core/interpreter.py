@@ -2379,6 +2379,8 @@ class InterpretadorCobra:
             for instruccion in nodo.bloque_try:
                 self.ejecutar_nodo(instruccion)
         except ExcepcionCobra as exc:
+            if nodo.nombre_excepcion is None:
+                raise
             if nodo.nombre_excepcion:
                 contexto_actual = self.contextos[-1]
                 if contexto_actual.contains(nodo.nombre_excepcion):
