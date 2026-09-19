@@ -1083,9 +1083,12 @@ class ClassicParser:
         bloque_catch = []
         if self.token_actual().tipo == TipoToken.CAPTURAR:
             self.avanzar()
-            if self.token_actual().tipo == TipoToken.IDENTIFICADOR:
-                nombre_exc = self.token_actual().valor
-                self.comer(TipoToken.IDENTIFICADOR)
+            if self.token_actual().tipo != TipoToken.IDENTIFICADOR:
+                raise ParserError(
+                    "Se esperaba un identificador después de 'catch' o 'capturar'"
+                )
+            nombre_exc = self.token_actual().valor
+            self.comer(TipoToken.IDENTIFICADOR)
             self._exigir_dospuntos("'catch/capturar'")
             bloque_catch = self._parse_bloque_condicional(
                 [TipoToken.FIN, TipoToken.EOF, TipoToken.FINALMENTE],

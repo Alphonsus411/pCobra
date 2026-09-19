@@ -101,6 +101,33 @@ def test_try_sin_catch_lanza_parser_error(codigo):
     [
         """
 intentar:
+    imprimir("x")
+capturar:
+    imprimir("error")
+fin
+""",
+        """
+try:
+    throw "fallo"
+catch:
+    imprimir("error")
+fin
+""",
+    ],
+)
+def test_catch_sin_identificador_lanza_parser_error(codigo):
+    with pytest.raises(
+        ParserError,
+        match="Se esperaba un identificador después de 'catch' o 'capturar'",
+    ):
+        parse(codigo).parsear()
+
+
+@pytest.mark.parametrize(
+    "codigo",
+    [
+        """
+intentar:
     lanzar "fallo"
 capturar e:
     imprimir(e)
