@@ -1,3 +1,6 @@
+from contextlib import redirect_stdout
+from io import StringIO
+
 import pytest
 
 from pcobra.core.ast_nodes import (
@@ -10,6 +13,7 @@ from pcobra.core.ast_nodes import (
 from pcobra.cobra.core.lexer import Lexer
 from pcobra.cobra.core.parser import Parser
 from pcobra.cobra.transpilers.transpiler.to_python import TranspiladorPython
+from pcobra.core.interpreter import InterpretadorCobra
 
 
 def _transpilar_y_compilar(nodo):
@@ -45,7 +49,11 @@ def _transpilar_y_compilar(nodo):
                 [NodoImprimir(NodoIdentificador("e"))],
                 [NodoImprimir(NodoValor("limpieza"))],
             ),
-            ("try:\n", "except Exception as e:\n", "finally:\n"),
+            (
+                "try:\n",
+                "except Exception as __cobra_excepcion_temporal:\n",
+                "finally:\n",
+            ),
             True,
         ),
     ],
@@ -89,3 +97,68 @@ def test_e2e_fuente_cobra_try_finally_genera_python_valido(fuente):
     compile(codigo, "<pcobra-test>", "exec")
     assert "try:\n" in codigo
     assert "finally:\n" in codigo
+
+
+def _ejecutar_python(codigo):
+    salida = StringIO()
+    compilado = compile(codigo, "<pcobra-test>", "exec")
+    with redirect_stdout(salida):
+        exec(compilado, {})
+    return salida.getvalue()
+
+
+def test_fuente_cobra_capturar_conserva_excepcion_durante_finalmente():
+    fuente = """
+intentar:
+    lanzar "fallo"
+capturar error:
+    imprimir(error)
+finalmente:
+    imprimir(error)
+fin
+"""
+    ast = Parser(Lexer(fuente).analizar_token()).parsear()
+    salida_interprete = StringIO()
+    with redirect_stdout(salida_interprete):
+        InterpretadorCobra().ejecutar_ast(ast)
+
+    codigo = TranspiladorPython().generate_code(ast)
+
+    assert _ejecutar_python(codigo) == salida_interprete.getvalue() == "fallo\nfallo\n"
+
+
+def test_nombre_temporal_no_colisiona_con_identificador_cobra():
+    fuente = """
+var __cobra_excepcion_temporal = "usuario"
+intentar:
+    lanzar "fallo"
+capturar error:
+    imprimir(error)
+finalmente:
+    imprimir(__cobra_excepcion_temporal)
+    imprimir(error)
+fin
+"""
+    ast = Parser(Lexer(fuente).analizar_token()).parsear()
+
+    codigo = TranspiladorPython().generate_code(ast)
+
+    assert "except Exception as __cobra_excepcion_temporal_1:" in codigo
+    assert _ejecutar_python(codigo) == "fallo\nusuario\nfallo\n"
+
+
+def test_fuente_cobra_sin_excepcion_omite_capturar():
+    fuente = """
+intentar:
+    imprimir("correcto")
+capturar error:
+    imprimir(error)
+finalmente:
+    imprimir("limpieza")
+fin
+"""
+    ast = Parser(Lexer(fuente).analizar_token()).parsear()
+
+    codigo = TranspiladorPython().generate_code(ast)
+
+    assert _ejecutar_python(codigo) == "correcto\nlimpieza\n"
