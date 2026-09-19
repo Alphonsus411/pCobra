@@ -1403,6 +1403,10 @@ class ClassicParser:
                 self.comer(TipoToken.COMA)
             elif self.token_actual().tipo == TipoToken.FIN:
                 break
+            else:
+                raise ParserError(
+                    "Se esperaba ',' o 'fin' después del miembro de enumeración"
+                )
         if self.token_actual().tipo != TipoToken.FIN:
             raise ParserError("Se esperaba 'fin' para cerrar el enum")
         self.comer(TipoToken.FIN)

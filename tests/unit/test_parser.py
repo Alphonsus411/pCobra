@@ -1,5 +1,5 @@
 import pytest
-from cobra.core import Parser
+from cobra.core import Parser, ParserError
 from core.ast_nodes import NodoAsignacion, NodoHolobit, NodoCondicional
 from cobra.core import Lexer
 
@@ -97,6 +97,33 @@ def test_parser_declaracion_enumeracion():
     assert type(enum).__name__ == "NodoEnum"
     assert enum.nombre == "Estado"
     assert enum.miembros == ["ACTIVO", "INACTIVO"]
+
+
+@pytest.mark.parametrize(
+    ("codigo", "miembros"),
+    [
+        ("enumeracion Vacia: fin", []),
+        ("enumeracion Color: ROJO fin", ["ROJO"]),
+        ("enumeracion Color: ROJO, VERDE, AZUL fin", ["ROJO", "VERDE", "AZUL"]),
+        ("enumeracion Color: ROJO, VERDE, fin", ["ROJO", "VERDE"]),
+    ],
+)
+def test_parser_enum_formas_validas(codigo, miembros):
+    ast = Parser(Lexer(codigo).analizar_token()).parsear()
+
+    assert ast[0].miembros == miembros
+
+
+@pytest.mark.parametrize(
+    "codigo",
+    [
+        "enumeracion Color: ROJO VERDE fin",
+        "enum Color: ROJO VERDE fin",
+    ],
+)
+def test_parser_enum_rechaza_miembros_sin_coma(codigo):
+    with pytest.raises(ParserError):
+        Parser(Lexer(codigo).analizar_token()).parsear()
 
 
 def test_parser_advertencia_alias_enum():
