@@ -25,7 +25,12 @@ def _generar_nombre_excepcion_temporal(self, nodo):
     base = "__cobra_excepcion_temporal"
     nombre = base
     sufijo = 0
-    while nombre in self.codigo or _contiene_nombre(nodo, nombre):
+    nombres_reservados = getattr(self, "_nombres_identificadores", set())
+    while (
+        nombre in nombres_reservados
+        or nombre in self.codigo
+        or _contiene_nombre(nodo, nombre)
+    ):
         sufijo += 1
         nombre = f"{base}_{sufijo}"
     return nombre
