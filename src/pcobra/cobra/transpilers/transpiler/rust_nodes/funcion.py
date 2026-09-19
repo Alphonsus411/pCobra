@@ -30,16 +30,14 @@ def visit_funcion(self, nodo):
     prefijo = "async fn" if getattr(nodo, "asincronica", False) else "fn"
     self.agregar_linea(f"{prefijo} {nodo.nombre}{genericos}({parametros}){retorno} {{")
     prev = getattr(self, "current_function", None)
-    prev_enum_names = self._enum_names
     self.current_function = nodo.nombre
-    self._enum_names = prev_enum_names | self._direct_enum_names(nodo.cuerpo)
     self.indent += 1
     try:
-        for instruccion in nodo.cuerpo:
-            instruccion.aceptar(self)
+        with self._enum_scope(nodo.cuerpo):
+            for instruccion in nodo.cuerpo:
+                instruccion.aceptar(self)
     finally:
         self.indent -= 1
-        self._enum_names = prev_enum_names
         self.current_function = prev
     self.agregar_linea("}")
 

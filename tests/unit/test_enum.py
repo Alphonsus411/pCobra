@@ -193,3 +193,102 @@ def test_transpilador_rust_no_filtra_enums_entre_generaciones():
 
     assert 'println!("{}", Color.ROJO);' in resultado
     assert "Color::ROJO" not in resultado
+
+
+def test_transpilador_rust_enum_local_en_mientras_y_no_fuga():
+    codigo = """func principal():
+    mientras verdadero:
+        enumeracion Color: ROJO, VERDE fin
+        imprimir(Color.ROJO)
+    fin
+
+    imprimir(Color.ROJO)
+fin"""
+    ast = Parser(Lexer(codigo).analizar_token()).parsear()
+    resultado = TranspiladorRust().generate_code(ast)
+    dentro, despues = resultado.split('println!("{}", Color::ROJO);')
+
+    assert "while true {" in dentro
+    assert 'println!("{}", Color.ROJO);' in despues
+    assert "Color::ROJO" not in despues
+
+
+def test_transpilador_rust_enum_local_aislado_entre_si_y_sino():
+    codigo = """func principal():
+    si verdadero:
+        enumeracion Estado: ACTIVO fin
+        imprimir(Estado.ACTIVO)
+    sino:
+        imprimir(Estado.ACTIVO)
+    fin
+fin"""
+    ast = Parser(Lexer(codigo).analizar_token()).parsear()
+    resultado = TranspiladorRust().generate_code(ast)
+    rama_si, rama_sino = resultado.split("} else {")
+
+    assert 'println!("{}", Estado::ACTIVO);' in rama_si
+    assert 'println!("{}", Estado.ACTIVO);' in rama_sino
+    assert "Estado::ACTIVO" not in rama_sino
+
+
+def test_transpilador_rust_enum_local_aislado_entre_try_y_catch():
+    codigo = """intentar:
+    enumeracion Error: FALLO fin
+    imprimir(Error.FALLO)
+capturar e:
+    imprimir(Error.FALLO)
+fin"""
+    ast = Parser(Lexer(codigo).analizar_token()).parsear()
+    resultado = TranspiladorRust().generate_code(ast)
+    bloque_try, bloque_catch = resultado.split("Err(e) => {")
+
+    assert 'println!("{}", Error::FALLO);' in bloque_try
+    assert 'println!("{}", Error.FALLO);' in bloque_catch
+    assert "Error::FALLO" not in bloque_catch
+
+
+def test_transpilador_rust_enum_local_aislado_entre_casos_switch():
+    codigo = """segun opcion:
+    caso 1:
+        enumeracion Estado: ACTIVO fin
+        imprimir(Estado.ACTIVO)
+    caso 2:
+        imprimir(Estado.ACTIVO)
+fin"""
+    ast = Parser(Lexer(codigo).analizar_token()).parsear()
+    resultado = TranspiladorRust().generate_code(ast)
+    primer_caso, segundo_caso = resultado.split("2 => {")
+
+    assert 'println!("{}", Estado::ACTIVO);' in primer_caso
+    assert 'println!("{}", Estado.ACTIVO);' in segundo_caso
+    assert "Estado::ACTIVO" not in segundo_caso
+
+
+def test_transpilador_rust_enum_local_en_with_y_no_fuga():
+    codigo = """con recurso como r:
+    enumeracion Estado: ACTIVO fin
+    imprimir(Estado.ACTIVO)
+fin
+imprimir(Estado.ACTIVO)"""
+    ast = Parser(Lexer(codigo).analizar_token()).parsear()
+    resultado = TranspiladorRust().generate_code(ast)
+    dentro, despues = resultado.split('println!("{}", Estado::ACTIVO);')
+
+    assert "{" in dentro
+    assert 'println!("{}", Estado.ACTIVO);' in despues
+    assert "Estado::ACTIVO" not in despues
+
+
+def test_transpilador_rust_enum_exterior_heredado_en_bloque():
+    codigo = """enumeracion Global: A fin
+func principal():
+    mientras verdadero:
+        imprimir(Global.A)
+        romper
+    fin
+fin"""
+    ast = Parser(Lexer(codigo).analizar_token()).parsear()
+    resultado = TranspiladorRust().generate_code(ast)
+
+    assert 'println!("{}", Global::A);' in resultado
+    assert "Global.A" not in resultado
