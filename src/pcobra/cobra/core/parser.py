@@ -1066,6 +1066,7 @@ class ClassicParser:
         bloque_try = self._parse_bloque_condicional(
             [
                 TipoToken.CAPTURAR,
+                TipoToken.FINALMENTE,
                 TipoToken.FIN,
                 TipoToken.EOF,
             ],
@@ -1074,9 +1075,13 @@ class ClassicParser:
         )
         self._validar_bloque_vacio("el bloque 'try'", bloque_try)
 
-        if self.token_actual().tipo != TipoToken.CAPTURAR:
+        if self.token_actual().tipo not in (
+            TipoToken.CAPTURAR,
+            TipoToken.FINALMENTE,
+        ):
             raise ParserError(
-                "Se esperaba 'catch' o 'capturar' después del bloque 'try'"
+                "Se esperaba 'catch', 'capturar' o 'finalmente' después del bloque "
+                "'try'"
             )
 
         nombre_exc = None
