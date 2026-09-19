@@ -100,10 +100,14 @@ def test_e2e_fuente_cobra_try_finally_genera_python_valido(fuente):
 
 
 def _ejecutar_python(codigo):
+    return _ejecutar_python_en_espacio(codigo, {})
+
+
+def _ejecutar_python_en_espacio(codigo, espacio):
     salida = StringIO()
     compilado = compile(codigo, "<pcobra-test>", "exec")
     with redirect_stdout(salida):
-        exec(compilado, {})
+        exec(compilado, espacio)
     return salida.getvalue()
 
 
@@ -145,6 +149,76 @@ fin
 
     assert "except Exception as __cobra_excepcion_temporal_1:" in codigo
     assert _ejecutar_python(codigo) == "fallo\nusuario\nfallo\n"
+
+
+def test_nombre_temporal_no_colisiona_con_referencia_cobra_futura():
+    fuente = """
+intentar:
+    lanzar "fallo"
+capturar error:
+    imprimir(error)
+finalmente:
+    imprimir(error)
+fin
+imprimir(__cobra_excepcion_temporal)
+"""
+    ast = Parser(Lexer(fuente).analizar_token()).parsear()
+
+    transpilador = TranspiladorPython()
+    codigo = transpilador.generate_code(ast)
+    codigo_repetido = transpilador.generate_code(ast)
+
+    assert codigo == codigo_repetido
+    assert "except Exception as __cobra_excepcion_temporal_1:" in codigo
+    espacio = {"__cobra_excepcion_temporal": "usuario"}
+    assert _ejecutar_python_en_espacio(codigo, espacio) == "fallo\nfallo\nusuario\n"
+
+
+def test_nombre_temporal_evade_varias_referencias_cobra_futuras():
+    fuente = """
+intentar:
+    lanzar "fallo"
+capturar error:
+    imprimir(error)
+finalmente:
+    imprimir(error)
+fin
+imprimir(__cobra_excepcion_temporal)
+imprimir(__cobra_excepcion_temporal_1)
+"""
+    ast = Parser(Lexer(fuente).analizar_token()).parsear()
+
+    codigo = TranspiladorPython().generate_code(ast)
+
+    assert "except Exception as __cobra_excepcion_temporal_2:" in codigo
+    espacio = {
+        "__cobra_excepcion_temporal": "usuario",
+        "__cobra_excepcion_temporal_1": "usuario 1",
+    }
+    assert _ejecutar_python_en_espacio(codigo, espacio) == (
+        "fallo\nfallo\nusuario\nusuario 1\n"
+    )
+
+
+def test_literal_futuro_no_reserva_nombre_temporal():
+    fuente = """
+intentar:
+    lanzar "fallo"
+capturar error:
+    imprimir(error)
+finalmente:
+    imprimir(error)
+fin
+imprimir("__cobra_excepcion_temporal")
+"""
+    ast = Parser(Lexer(fuente).analizar_token()).parsear()
+
+    codigo = TranspiladorPython().generate_code(ast)
+
+    assert "except Exception as __cobra_excepcion_temporal:" in codigo
+    assert _ejecutar_python(codigo) == (
+        "fallo\nfallo\n__cobra_excepcion_temporal\n"
+    )
 
 
 def test_fuente_cobra_sin_excepcion_omite_capturar():

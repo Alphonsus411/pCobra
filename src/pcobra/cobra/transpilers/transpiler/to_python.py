@@ -281,6 +281,7 @@ class TranspiladorPython(BaseTranspiler):
         self._async_function_depth = 0
         self._defer_stack: list[str] = []
         self._defer_counter = 0
+        self._nombres_identificadores = set()
         self.safe_mode = bool(safe_mode)
         self.source_file = self._normalizar_ruta_contexto(source_file)
         self.project_root = self._normalizar_ruta_contexto(project_root)
@@ -364,6 +365,7 @@ class TranspiladorPython(BaseTranspiler):
         if not self._contiene_funciones(nodos):
             nodos = inline_functions(nodos)
         nodos = remove_dead_code(nodos)
+        self._nombres_identificadores = self._recopilar_nombres_identificadores(nodos)
         usa_holobit = ast_requires_holobit_runtime(nodos)
         self.codigo = get_standard_imports("python")
         if usa_holobit:
@@ -401,6 +403,37 @@ class TranspiladorPython(BaseTranspiler):
         if self.usa_asyncio:
             codigo = "import asyncio\n" + codigo
         return codigo
+
+    def _recopilar_nombres_identificadores(self, nodos):
+        """Recopila referencias Cobra sin confundirlas con literales de texto."""
+
+        nombres = set()
+        pendientes = [nodos]
+        visitados = set()
+
+        while pendientes:
+            actual = pendientes.pop()
+            if actual is None or isinstance(actual, str):
+                continue
+            if isinstance(actual, NodoIdentificador):
+                nombres.add(actual.nombre)
+                continue
+            if isinstance(actual, dict):
+                pendientes.extend(actual.keys())
+                pendientes.extend(actual.values())
+                continue
+            if isinstance(actual, (list, tuple)):
+                pendientes.extend(actual)
+                continue
+
+            identificador = id(actual)
+            if identificador in visitados:
+                continue
+            visitados.add(identificador)
+            if isinstance(actual, NodoAST):
+                pendientes.extend(vars(actual).values())
+
+        return nombres
 
     def _contiene_nodo_valor(self, nodo, _visitados=None):
         if _visitados is None:
