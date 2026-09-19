@@ -74,3 +74,56 @@ def test_macro_llaves_desbalanceadas():
     codigo = "macro m { var x = 1 }}"
     with pytest.raises(ParserError):
         parse(codigo).parsear()
+
+
+@pytest.mark.parametrize(
+    "codigo",
+    [
+        """
+intentar:
+    imprimir("x")
+fin
+""",
+        """
+try:
+    throw "fallo"
+fin
+""",
+    ],
+)
+def test_try_sin_catch_lanza_parser_error(codigo):
+    with pytest.raises(ParserError):
+        parse(codigo).parsear()
+
+
+@pytest.mark.parametrize(
+    "codigo",
+    [
+        """
+intentar:
+    lanzar "fallo"
+capturar e:
+    imprimir(e)
+fin
+""",
+        """
+try:
+    throw "fallo"
+catch e:
+    imprimir(e)
+fin
+""",
+        """
+intentar:
+    imprimir("x")
+capturar e:
+    imprimir(e)
+finalmente:
+    imprimir("fin")
+fin
+""",
+    ],
+)
+def test_try_con_catch_valido_parsea(codigo):
+    ast = parse(codigo).parsear()
+    assert ast
