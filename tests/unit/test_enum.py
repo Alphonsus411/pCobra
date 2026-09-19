@@ -178,6 +178,86 @@ fin"""
     assert 'println!("{}", Local::B);' in resultado
 
 
+def test_transpilador_rust_acceso_variante_enum_en_metodo():
+    codigo = """clase Gestor:
+    metodo uno():
+        enumeracion Estado: ACTIVO, INACTIVO fin
+        imprimir(Estado.ACTIVO)
+    fin
+fin"""
+    ast = Parser(Lexer(codigo).analizar_token()).parsear()
+    resultado = TranspiladorRust().generate_code(ast)
+
+    assert 'println!("{}", Estado::ACTIVO);' in resultado
+    assert "Estado.ACTIVO" not in resultado
+
+
+def test_transpilador_rust_acceso_variante_alias_enum_en_metodo():
+    codigo = """clase Gestor:
+    metodo uno():
+        enum Estado: ACTIVO fin
+        imprimir(Estado.ACTIVO)
+    fin
+fin"""
+    ast = Parser(Lexer(codigo).analizar_token()).parsear()
+    resultado = TranspiladorRust().generate_code(ast)
+
+    assert 'println!("{}", Estado::ACTIVO);' in resultado
+    assert "Estado.ACTIVO" not in resultado
+
+
+def test_transpilador_rust_enum_local_no_contamina_metodo_hermano():
+    codigo = """clase Gestor:
+    metodo uno():
+        enumeracion Estado: ACTIVO fin
+        imprimir(Estado.ACTIVO)
+    fin
+
+    metodo dos():
+        imprimir(Estado.ACTIVO)
+    fin
+fin"""
+    ast = Parser(Lexer(codigo).analizar_token()).parsear()
+    resultado = TranspiladorRust().generate_code(ast)
+    metodo_uno, metodo_dos = resultado.split("fn dos()")
+
+    assert 'println!("{}", Estado::ACTIVO);' in metodo_uno
+    assert 'println!("{}", Estado.ACTIVO);' in metodo_dos
+    assert "Estado::ACTIVO" not in metodo_dos
+
+
+def test_transpilador_rust_enum_global_visible_en_metodo():
+    codigo = """enumeracion Global: A fin
+
+clase Gestor:
+    metodo uno():
+        imprimir(Global.A)
+    fin
+fin"""
+    ast = Parser(Lexer(codigo).analizar_token()).parsear()
+    resultado = TranspiladorRust().generate_code(ast)
+
+    assert 'println!("{}", Global::A);' in resultado
+    assert "Global.A" not in resultado
+
+
+def test_transpilador_rust_combina_enums_global_y_local_en_metodo():
+    codigo = """enumeracion Global: A fin
+
+clase Gestor:
+    metodo uno():
+        enumeracion Local: B fin
+        imprimir(Global.A)
+        imprimir(Local.B)
+    fin
+fin"""
+    ast = Parser(Lexer(codigo).analizar_token()).parsear()
+    resultado = TranspiladorRust().generate_code(ast)
+
+    assert 'println!("{}", Global::A);' in resultado
+    assert 'println!("{}", Local::B);' in resultado
+
+
 def test_transpilador_rust_conserva_atributo_ordinario():
     atributo = NodoAtributo(NodoIdentificador("objeto"), "campo")
     assert TranspiladorRust().obtener_valor(atributo) == "objeto.campo"
