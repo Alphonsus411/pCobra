@@ -63,6 +63,9 @@ from pcobra.cobra.transpilers.transpiler.rust_nodes.continuar import (
 from pcobra.cobra.transpilers.transpiler.rust_nodes.defer import (
     visit_defer as _visit_defer,
 )
+from pcobra.cobra.transpilers.transpiler.rust_nodes.enum import (
+    visit_enum as _visit_enum,
+)
 from pcobra.cobra.transpilers.transpiler.rust_nodes.funcion import (
     visit_funcion as _visit_funcion,
 )
@@ -374,3 +377,4 @@ TranspiladorRust.visit_graficar = visit_graficar
 TranspiladorRust.visit_esperar = visit_esperar
 TranspiladorRust.visit_imprimir = _visit_imprimir
 TranspiladorRust.visit_NodoImprimir = _visit_imprimir
+TranspiladorRust.visit_enum = _visit_enum
