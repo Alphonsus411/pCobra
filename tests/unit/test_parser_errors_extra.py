@@ -1,6 +1,6 @@
 import pytest
 from cobra.core import Lexer
-from cobra.core import Parser, ParserError
+from cobra.core import NodoTryCatch, Parser, ParserError
 
 
 def parse(code: str):
@@ -86,7 +86,7 @@ fin
 """,
         """
 try:
-    throw "fallo"
+    imprimir("x")
 fin
 """,
     ],
@@ -108,7 +108,7 @@ fin
 """,
         """
 try:
-    throw "fallo"
+    imprimir("x")
 catch:
     imprimir("error")
 fin
@@ -154,3 +154,24 @@ fin
 def test_try_con_catch_valido_parsea(codigo):
     ast = parse(codigo).parsear()
     assert ast
+
+
+@pytest.mark.parametrize("palabra_try", ["intentar", "try"])
+def test_try_con_finalmente_sin_catch_preserva_bloques_ast(palabra_try):
+    codigo = f"""
+{palabra_try}:
+    imprimir("x")
+finalmente:
+    imprimir("fin")
+fin
+"""
+
+    ast = parse(codigo).parsear()
+
+    assert len(ast) == 1
+    nodo = ast[0]
+    assert isinstance(nodo, NodoTryCatch)
+    assert len(nodo.bloque_try) == 1
+    assert nodo.nombre_excepcion is None
+    assert len(nodo.bloque_catch) == 0
+    assert len(nodo.bloque_finally) == 1
