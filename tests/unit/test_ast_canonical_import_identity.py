@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import ast
 import importlib
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -27,6 +28,61 @@ FORBIDDEN_IMPORT_SURFACES = ("core.ast_nodes", "cobra.core")
 CANONICAL_MODULES = {
     name: importlib.import_module(name) for name in CANONICAL_MODULE_NAMES
 }
+
+
+def _run_clean_ast_identity_probe(
+    first: str, second: str
+) -> subprocess.CompletedProcess:
+    """Ejecuta la sonda con la ruta legacy primero y sin estado de pytest."""
+
+    classes = (
+        "NodoAST",
+        "NodoClase",
+        "NodoMetodo",
+        "NodoAtributo",
+        "NodoLlamadaFuncion",
+        "NodoInstancia",
+        "NodoLlamadaMetodo",
+    )
+    script = f"""
+import importlib
+
+first = importlib.import_module({first!r})
+second = importlib.import_module({second!r})
+canonical = importlib.import_module('pcobra.core.ast_nodes')
+legacy = importlib.import_module('core.ast_nodes')
+
+assert first is second
+assert canonical is legacy
+for name in {classes!r}:
+    assert getattr(canonical, name) is getattr(legacy, name), name
+
+legacy_node = legacy.NodoInstancia('Clase')
+canonical_node = canonical.NodoLlamadaMetodo(
+    canonical.NodoIdentificador('obj'), 'metodo', []
+)
+assert isinstance(legacy_node, canonical.NodoAST)
+assert isinstance(canonical_node, legacy.NodoAST)
+
+constant_folder = importlib.import_module(
+    'pcobra.core.optimizations.constant_folder'
+)
+assert constant_folder.NodoAST is canonical.NodoAST
+assert constant_folder.optimize_constants([legacy_node]) == [legacy_node]
+"""
+    env = os.environ.copy()
+    # Reproduce la arquitectura histórica que exponía ``core`` directamente.
+    env["PYTHONPATH"] = os.pathsep.join(
+        (str(ROOT / "src" / "pcobra"), str(ROOT / "src"))
+    )
+    return subprocess.run(
+        [sys.executable, "-c", script],
+        cwd=ROOT.parent,
+        env=env,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
 
 
 def test_clases_ast_activas_proceden_del_modulo_canonico() -> None:
@@ -59,7 +115,10 @@ for canonical_name, module in modules.items():
         and pathlib.Path(loaded.__file__).resolve() == module_path
     }}
     assert module.__name__ == canonical_name
-    assert names_for_same_file == {{canonical_name}}, (canonical_name, names_for_same_file)
+    expected_names = {{canonical_name}}
+    if canonical_name == 'pcobra.core.ast_nodes':
+        expected_names.add('core.ast_nodes')
+    assert names_for_same_file == expected_names, (canonical_name, names_for_same_file)
     assert canonical_name.startswith('pcobra.')
 """
     result = subprocess.run(
@@ -110,6 +169,18 @@ for nombre in {clases!r}:
         )
 
         assert result.returncode == 0, result.stderr
+
+
+def test_ast_identity_core_then_pcobra_core() -> None:
+    result = _run_clean_ast_identity_probe("core.ast_nodes", "pcobra.core.ast_nodes")
+
+    assert result.returncode == 0, result.stderr
+
+
+def test_ast_identity_pcobra_core_then_core() -> None:
+    result = _run_clean_ast_identity_probe("pcobra.core.ast_nodes", "core.ast_nodes")
+
+    assert result.returncode == 0, result.stderr
 
 
 def test_pruebas_nuevas_no_importan_superficies_legacy() -> None:
