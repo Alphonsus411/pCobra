@@ -4,7 +4,10 @@
 >
 > Ruta pedagógica oficial de Cobra (de nivel inicial a avanzado).
 
-Este libro es la **guía pedagógica principal** para aprender Cobra de forma progresiva.
+Este libro es la **guía pedagógica principal** para aprender Cobra de forma progresiva y,
+conforme a `AGENTS.md`, la **fuente normativa para la sintaxis y el comportamiento
+del lenguaje**. Los documentos de planificación explican cómo implementar este contrato,
+pero no pueden sustituirlo ni inventar sintaxis.
 Si buscas una vista breve, consulta el [Resumen rápido](guia_basica.md).
 Si necesitas detalle normativo y comportamiento de runtime, usa primero la [Referencia técnica canónica](MANUAL_COBRA.md) y, si lo prefieres, su [versión RST autogenerada](MANUAL_COBRA.rst).
 
@@ -386,30 +389,79 @@ funcion aplicar(valor, fn):
 
 ### 3.5 Clases
 
-**Definición corta:** mecanismo OO para agrupar atributos y métodos.
+**CONTRATO DEL LENGUAJE — CONTRATO POO OBJETIVO / EN PROCESO DE IMPLEMENTACIÓN**
+
+Las clases agrupan atributos y métodos. En la sintaxis POO Cobra aprobada,
+`este` es la referencia propia y `inicializar` es el constructor. Estas son
+decisiones normativas del lenguaje, no nombres heredados de un backend.
 
 **Sintaxis formal simplificada:**
 
 ```text
-clase := "clase" IDENTIFICADOR ":" bloque
+clase := "clase" IDENTIFICADOR ":" bloque "fin"
 metodo := "metodo" IDENTIFICADOR "(" [params] ")" ":" bloque
 ```
 
-**Ejemplos:**
+El cierre normativo del ejemplo es el único `fin` de la clase; los métodos se
+delimitan por el siguiente `metodo` o por ese cierre de clase.
+
+**Ejemplo POO normativo mínimo:**
 
 ```cobra
-clase Cuenta:
-    atributo saldo
+clase Persona:
+    metodo inicializar(este, nombre):
+        atributo este nombre = nombre
 
-    metodo depositar(monto):
-        saldo = saldo + monto
+    metodo saludar(este):
+        imprimir "Hola", atributo este nombre
+fin
+
+var persona = Persona("Adolfo")
+persona.saludar()
 ```
 
-```cobra
-clase Usuario:
-    metodo __init__(nombre):
-        self.nombre = nombre
+El resultado contractual será:
+
+```text
+Hola Adolfo
 ```
+
+Este ejemplo define el objetivo normativo; **no es una prueba de funcionamiento
+actual**.
+
+**ESTADO DE IMPLEMENTACIÓN:** la POO está en proceso de alineación interna
+conforme a [`POO_ROADMAP.md`](POO_ROADMAP.md), mediante las Tasks 42B–42L. La
+implementación histórica del Parser todavía puede exigir cierres adicionales
+durante la transición. La Task 42C es responsable de alinear el Parser con este
+contrato. Mientras POO-011 siga pendiente, este Libro tampoco afirma soporte
+E2E completo de herencia.
+
+La lectura canónica de un atributo es `atributo este nombre` y su escritura es
+`atributo este nombre = nombre`. La forma punteada `este.nombre` no forma parte
+de este contrato y permanece pospuesta.
+
+#### Frontera de backends
+
+| Cobra | Python generado | JavaScript generado |
+|---|---|---|
+| `inicializar` | `__init__` | `constructor` |
+| `este` | `self` | `this` |
+| `Persona(...)` | `Persona(...)` | `new Persona(...)` |
+
+La tabla describe traducciones realizadas después de la frontera neutral. Los
+nombres de Python y JavaScript **no pertenecen a la sintaxis pública Cobra**.
+Rust tendrá una representación idiomática propia, definida y verificada en su
+tarea correspondiente.
+
+#### Métodos especiales
+
+`inicializar` es el único nombre Cobra de esta materia cuya decisión normativa
+queda aprobada aquí. Las formas Python `__str__`, `__len__`, `__eq__`,
+`__getattr__`, `__setattr__` y `__delattr__` no son vocabulario POO Cobra.
+Aunque existan aliases o conversiones históricas en la implementación, su
+interfaz Cobra definitiva queda **PENDIENTE DE CONTRATO**; esta tarea no inventa
+traducciones nuevas. La posible aceptación histórica de `__init__` y de su
+receptor Python tampoco se decide aquí y se revisará en la Task 42M.
 
 Las interfaces usan `rasgo` como palabra clave canónica; `interface` se
 mantiene temporalmente como alias de compatibilidad para código existente.
@@ -422,7 +474,9 @@ fin
 
 **Anti-ejemplo frecuente:** exponer estado mutable sin invariantes.
 
-**Compatibilidad por backend:** clases básicas estables; herencia múltiple puede variar en calidad de transpiliación según backend.
+**Compatibilidad por backend:** la implementación POO se encuentra en
+reconstrucción; solo debe declararse soporte donde existan las pruebas
+correspondientes.
 
 ### 3.6 Módulos
 

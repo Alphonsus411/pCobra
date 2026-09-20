@@ -104,17 +104,19 @@ func sumar(a, b):
     regresar a + b
 fin
 
-clase Persona:
-    metodo __init__(self, nombre):
-        atributo self nombre = nombre
-    metodo saludar(self):
-        imprimir "Hola", atributo self nombre
-    fin
-fin
 ```
 
-Los métodos especiales admiten alias legibles que se transpilan automáticamente
-al nombre mágico correspondiente. Los alias incorporados son:
+Esta SPEC describe principalmente capacidades observadas de la implementación.
+Por ello no reproduce aquí el contrato POO futuro como si ya funcionara. La
+sintaxis normativa aprobada (`este` como receptor e `inicializar` como
+constructor) está en la [sección 3.5 del Libro](LIBRO_PROGRAMACION_COBRA.md#35-clases),
+y su estado de implementación se sigue en [`POO_ROADMAP.md`](POO_ROADMAP.md).
+
+Los métodos especiales admiten actualmente aliases legibles que la
+implementación histórica convierte a nombres mágicos de Python. Esta tabla
+registra ese comportamiento implementado; no convierte los nombres de destino
+en sintaxis Cobra normativa. Salvo `inicializar`, ya aprobado por el Libro, el
+contrato público definitivo de estos aliases queda pendiente:
 
 | Alias              | Método generado |
 |--------------------|-----------------|
@@ -140,9 +142,11 @@ al nombre mágico correspondiente. Los alias incorporados son:
 | `salir_async`      | `__aexit__`     |
 | `texto`            | `__str__`       |
 
-Si dos alias producen el mismo nombre dentro de una clase (por ejemplo,
-`inicializar` y `__init__`), el parser conserva ambos nodos y emite una
-advertencia de choque para facilitar la depuración.
+Si dos nombres producen actualmente el mismo nombre interno dentro de una clase
+(por ejemplo, `inicializar` y el nombre Python histórico correspondiente), el
+parser conserva ambos nodos y emite una advertencia de choque para facilitar la
+depuración. Esta observación no decide si la forma histórica seguirá aceptándose
+como alias: esa compatibilidad se resolverá en una tarea específica.
 
 Las clases pueden declararse con las palabras clave `clase`, `estructura` o
 `registro`. Para las enumeraciones, `enumeracion` es la forma canónica y
