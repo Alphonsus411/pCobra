@@ -342,6 +342,125 @@ imprimir(__cobra_excepcion_temporal)
     )
 
 
+def _crear_proyecto_imports(tmp_path, principal, **modulos):
+    rutas = {}
+    for nombre, fuente in modulos.items():
+        ruta = tmp_path / f"{nombre}.cobra"
+        ruta.write_text(fuente, encoding="utf-8")
+        rutas[nombre] = ruta
+    fuente_principal = principal.format(
+        **{nombre: repr(str(ruta)) for nombre, ruta in rutas.items()}
+    )
+    ast = Parser(Lexer(fuente_principal).analizar_token()).parsear()
+    obtener_cache_ast_import_cobra().clear()
+    return ast, rutas
+
+
+FUENTE_TRY_IMPORTADO = """
+intentar:
+    lanzar "fallo A"
+capturar error:
+    imprimir(error)
+finalmente:
+    imprimir(error)
+fin
+"""
+
+
+def test_preanalisis_reserva_identificador_de_import_hermano(tmp_path):
+    """FALLA EN BASE con NameError; PASA EN HEAD mediante el grafo previo."""
+    ast, _ = _crear_proyecto_imports(
+        tmp_path,
+        "import {a}\nimport {b}\n",
+        a=FUENTE_TRY_IMPORTADO,
+        b="imprimir(__cobra_excepcion_temporal)\n",
+    )
+
+    codigo = TranspiladorPython().generate_code(ast)
+
+    assert "except Exception as __cobra_excepcion_temporal_1:" in codigo
+    assert (
+        _ejecutar_python_en_espacio(codigo, {"__cobra_excepcion_temporal": "usuario"})
+        == "fallo A\nfallo A\nusuario\n"
+    )
+
+
+def test_preanalisis_reserva_identificador_de_import_transitivo(tmp_path):
+    ast, rutas = _crear_proyecto_imports(
+        tmp_path,
+        "import {a}\n",
+        a=FUENTE_TRY_IMPORTADO + "import {b}\n",
+        b="imprimir(__cobra_excepcion_temporal)\n",
+    )
+    rutas["a"].write_text(
+        rutas["a"].read_text(encoding="utf-8").format(b=repr(str(rutas["b"]))),
+        encoding="utf-8",
+    )
+
+    codigo = TranspiladorPython().generate_code(ast)
+
+    assert "except Exception as __cobra_excepcion_temporal_1:" in codigo
+    assert (
+        _ejecutar_python_en_espacio(codigo, {"__cobra_excepcion_temporal": "usuario"})
+        == "fallo A\nfallo A\nusuario\n"
+    )
+
+
+def test_preanalisis_import_ciclico_termina_con_error_contractual(tmp_path):
+    ast, rutas = _crear_proyecto_imports(
+        tmp_path, "import {a}\n", a="import {b}\n", b="import {a}\n"
+    )
+    for nombre, destino in (("a", "b"), ("b", "a")):
+        rutas[nombre].write_text(
+            rutas[nombre]
+            .read_text(encoding="utf-8")
+            .format(**{destino: repr(str(rutas[destino]))}),
+            encoding="utf-8",
+        )
+
+    with pytest.raises(ImportError, match="Ciclo de módulos detectado en import"):
+        TranspiladorPython().generate_code(ast)
+
+
+def test_preanalisis_modulo_compartido_reutiliza_cache_y_es_determinista(tmp_path):
+    ast, rutas = _crear_proyecto_imports(
+        tmp_path,
+        "import {a}\nimport {b}\n",
+        a="import {c}\n",
+        b="import {c}\n",
+        c='imprimir("compartido")\n',
+    )
+    for nombre in ("a", "b"):
+        rutas[nombre].write_text(
+            rutas[nombre].read_text(encoding="utf-8").format(c=repr(str(rutas["c"]))),
+            encoding="utf-8",
+        )
+    transpilador = TranspiladorPython()
+
+    codigo = transpilador.generate_code(ast)
+    codigo_repetido = transpilador.generate_code(ast)
+
+    assert codigo == codigo_repetido
+    assert set(obtener_cache_ast_import_cobra()) == set(rutas.values())
+    assert _ejecutar_python(codigo) == "compartido\ncompartido\n"
+
+
+def test_preanalisis_identifica_rutas_equivalentes_por_clave_canonica(tmp_path):
+    modulo = tmp_path / "modulo.cobra"
+    modulo.write_text('imprimir("una ruta")\n', encoding="utf-8")
+    (tmp_path / "subdirectorio").mkdir()
+    ruta_directa = str(modulo)
+    ruta_equivalente = str(tmp_path / "subdirectorio" / ".." / modulo.name)
+    fuente = f"import {ruta_directa!r}\nimport {ruta_equivalente!r}\n"
+    ast = Parser(Lexer(fuente).analizar_token()).parsear()
+    obtener_cache_ast_import_cobra().clear()
+
+    codigo = TranspiladorPython().generate_code(ast)
+
+    assert list(obtener_cache_ast_import_cobra()) == [modulo.resolve()]
+    assert _ejecutar_python(codigo) == "una ruta\nuna ruta\n"
+
+
 def test_recolector_cubre_categorias_estructurales_de_identificadores():
     nodos = [
         NodoFuncion("funcion_usuario", ["parametro_usuario"], NodoBloque()),
