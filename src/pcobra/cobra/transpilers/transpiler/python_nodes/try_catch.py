@@ -1,38 +1,13 @@
-def _contiene_nombre(valor, nombre, visitados=None):
-    if valor == nombre:
-        return True
-    if isinstance(valor, str) or valor is None:
-        return False
-
-    if visitados is None:
-        visitados = set()
-    identificador = id(valor)
-    if identificador in visitados:
-        return False
-    visitados.add(identificador)
-
-    if isinstance(valor, (list, tuple)):
-        return any(_contiene_nombre(elemento, nombre, visitados) for elemento in valor)
-    if hasattr(valor, "__dict__"):
-        return any(
-            _contiene_nombre(elemento, nombre, visitados)
-            for elemento in vars(valor).values()
-        )
-    return False
-
-
 def _generar_nombre_excepcion_temporal(self, nodo):
     base = "__cobra_excepcion_temporal"
     nombre = base
     sufijo = 0
     nombres_reservados = getattr(self, "_nombres_identificadores", set())
-    while (
-        nombre in nombres_reservados
-        or nombre in self.codigo
-        or _contiene_nombre(nodo, nombre)
-    ):
+    nombres_temporales = getattr(self, "_nombres_temporales_excepcion", set())
+    while nombre in nombres_reservados or nombre in nombres_temporales:
         sufijo += 1
         nombre = f"{base}_{sufijo}"
+    nombres_temporales.add(nombre)
     return nombre
 
 
