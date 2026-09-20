@@ -8,6 +8,7 @@ from pcobra.core.ast_nodes import (
     NodoFor,
     NodoFuncion,
     NodoIdentificador,
+    NodoImport,
     NodoImportDesde,
     NodoImprimir,
     NodoInstancia,
@@ -340,6 +341,58 @@ imprimir(__cobra_excepcion_temporal)
     assert _ejecutar_python_en_espacio(codigo, espacio) == (
         "fallo importado\nfallo importado\nusuario\n"
     )
+
+
+def test_visitor_directo_import_cobra_inicializa_y_limpia_rutas(tmp_path):
+    modulo = tmp_path / "directo.cobra"
+    modulo.write_text('imprimir("visitante directo")\n', encoding="utf-8")
+    nodo_import = NodoImport(str(modulo))
+    obtener_cache_ast_import_cobra().clear()
+    transpilador = TranspiladorPython()
+
+    nodo_import.aceptar(transpilador)
+
+    assert "print('visitante directo')\n" in transpilador.codigo
+    assert transpilador._rutas_importacion_en_emision == []
+    assert _ejecutar_python(transpilador.codigo) == "visitante directo\n"
+
+
+def test_visitor_directo_import_cobra_limpia_rutas_despues_de_error(tmp_path):
+    modulo = tmp_path / "ciclico.cobra"
+    modulo.write_text(f"import {str(modulo)!r}\n", encoding="utf-8")
+    obtener_cache_ast_import_cobra().clear()
+    transpilador = TranspiladorPython()
+
+    with pytest.raises(ImportError, match="Ciclo de módulos detectado en import"):
+        NodoImport(str(modulo)).aceptar(transpilador)
+
+    assert transpilador._rutas_importacion_en_emision == []
+
+
+def test_visitor_directo_import_no_cobra_conserva_flujo(tmp_path):
+    modulo = tmp_path / "modulo.py"
+    modulo.write_text("import math\n", encoding="utf-8")
+    transpilador = TranspiladorPython()
+
+    NodoImport(str(modulo)).aceptar(transpilador)
+
+    assert transpilador.codigo == "import math\n\n"
+    assert transpilador._rutas_importacion_en_emision == []
+    compile(transpilador.codigo, "<pcobra-test>", "exec")
+
+
+def test_transpilar_reinicia_rutas_entre_ejecuciones():
+    ast = [NodoImprimir(NodoValor("independiente"))]
+    transpilador = TranspiladorPython()
+
+    primer_codigo = transpilador.generate_code(ast)
+    assert transpilador._rutas_importacion_en_emision == []
+    transpilador._rutas_importacion_en_emision.append("estado anterior")
+
+    segundo_codigo = transpilador.generate_code(ast)
+
+    assert segundo_codigo == primer_codigo
+    assert transpilador._rutas_importacion_en_emision == []
 
 
 def _crear_proyecto_imports(tmp_path, principal, **modulos):
