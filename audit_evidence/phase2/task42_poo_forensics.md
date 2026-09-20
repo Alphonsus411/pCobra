@@ -6,6 +6,8 @@
 **Fecha:** 2026-09-20.
 **Alcance:** exclusivamente observación. No se modificaron Lexer, Parser, AST, runtime, backends, pruebas ni documentación normativa.
 
+> **Actualización Task 42A:** `docs/POO_ROADMAP.md` es la fuente contractual permanente posterior a esta auditoría histórica. Esta actualización añade POO-016, corrige la causa de POO-013 tras reproducirla y ajusta dependencias; no afirma que la POO esté reparada.
+
 ## 1. Metodología y contrato objetivo
 
 Se leyó la cadena pública y sus adaptadores (`src/pcobra/cobra/core/*` reexporta en varios casos la implementación de `src/pcobra/core/*`), los tres backends oficiales, el analizador semántico, documentación, ejemplos y pruebas. Se ejecutaron reproductores con `PYTHONPATH=src`, siempre a partir de texto real, y se distinguieron de pruebas que construyen el AST a mano. Los fragmentos temporales se guardaron fuera del repositorio (`/tmp/task42_probe.py`).
@@ -121,7 +123,7 @@ La existencia de visitor no equivale a alcanzabilidad. Además, los tests manual
 
 ## 6. Semántico
 
-`visit_clase` declara la clase, exige que cada base ya sea un símbolo `clase`, detecta ciclos mediante el grafo `herencia`, abre ámbito y llama `aceptar` para cada elemento de `nodo.metodos`. `visit_metodo` declara el nombre y procesa parámetros/cuerpo. No define significado contextual para `self` ni `este`, no convierte llamadas de función en instancias y no suministra dispatch POO. Un atributo de clase accidental llega como `NodoAsignacion` al ámbito de clase; no existe modelo explícito de campos de clase.
+`visit_clase` declara la clase, exige que cada base ya sea un símbolo `clase`, detecta ciclos mediante el grafo `herencia`, abre ámbito y llama `aceptar` para cada elemento de `nodo.metodos`. `visit_metodo` declara el nombre y procesa parámetros/cuerpo. No define significado contextual para `self` ni `este`, no convierte llamadas de función en instancias y no suministra dispatch POO. Además, una escritura `atributo este nombre = nombre` produce un `NodoAsignacion` con destino `NodoAtributo`, pero `visit_asignacion` entrega ese nodo a `_validar_nombre` como si fuera un nombre simple y falla con `TypeError: El nombre debe ser string, no <class 'pcobra.core.ast_nodes.NodoAtributo'>` (POO-016). Un atributo de clase accidental llega como `NodoAsignacion` al ámbito de clase; no existe modelo explícito de campos de clase.
 
 ## 7. Runtime
 
@@ -240,7 +242,7 @@ Resultado observable futuro: `Hola Adolfo`.
 | inicializar | identificador | sí, destruye nombre | sí como `__init__` | no ejecuta constructor | solo por fuga | roto | roto | no | ROTO |
 | este | identificador | sí posicional | sí | no liga `este` | no traduce | no traduce | no traduce | no | ROTO |
 | atributo lectura | sí | sí | sí | sí* | emite punto | emite punto | parcial | no objeto invocable | PARCIAL |
-| atributo escritura | sí | sí forma `atributo` | sí | sí* | emite punto | emite punto | emite punto inválido según receptor | no | PARCIAL |
+| atributo escritura | sí | sí forma `atributo` | sí | sí*; semántico falla | emite punto | emite punto | emite punto inválido según receptor | no | ROTO |
 | instancia | sí como llamada | no crea nodo | no | sí* sin ctor | coincidencia accidental | falta `new` | llamada inválida | no | ROTO |
 | llamada método | sí | no | no | sí* | sí* | sí* | no completo | no | ROTO |
 | retorno método | sí | sí | sí | sí* | sí | sí | parcial | bloqueado | PARCIAL |
@@ -348,13 +350,15 @@ Resultado observable futuro: `Hola Adolfo`.
 - **Dependencias:** decisión contractual, posible Parser/AST.
 - **Archivos:** Parser, AST, semántico/runtime/backends.
 
-### POO-013 — P2 — optimizaciones rechazan nodos POO manuales
-- **Reproductor:** cuatro tests `test_to_python_objects.py`/`test_to_js_objects.py`.
-- **Actual:** `constant_folder` lanza `Estructura AST inválida` antes del visitor.
-- **Objetivo:** nodos POO soportados o diagnóstico contractual coherente.
-- **Causa:** visitor de optimización sin casos/passthrough.
-- **Dependencias:** nodos alcanzables primero o en paralelo controlado.
-- **Archivos:** optimizaciones/visitor.
+### POO-013 — P2 — incompatibilidad de identidad AST entre namespaces `core.ast_nodes` y `pcobra.core.ast_nodes`
+- **Reproductor:** cuatro tests `test_to_python_objects.py`/`test_to_js_objects.py` y sondas en procesos frescos con `PYTHONPATH=src:src/pcobra`, variando el orden de importación.
+- **Actual:** si se importa primero un transpilador por el namespace legado `cobra...`, `constant_folder` conserva una identidad `NodoAST` cargada antes de que los módulos visibles queden aliasados. Después, `NodoAST` visible de `core.ast_nodes is pcobra.core.ast_nodes` resulta `True`, pero es distinto del `NodoAST` ya capturado por `constant_folder`; el nodo satisface los dos primeros `isinstance` y no el tercero. El optimizador lanza `RuntimeError: Estructura AST inválida en optimización (constant_folder) en 'NodoInstancia': NodoInstancia` (análogamente para `NodoLlamadaMetodo`).
+- **Contraprueba:** importando primero `core.ast_nodes` o `pcobra.core.ast_nodes`, las tres identidades coinciden y tanto instancias canónicas como legadas atraviesan `constant_folder`.
+- **Objetivo:** identidad/compatibilidad única y estable, independiente del namespace y orden de importación.
+- **Causa final:** incompatibilidad de identidad AST dependiente del orden/import namespace, no ausencia de casos/passthrough POO.
+- **Dependencias:** reparar temprano; puede contaminar pruebas de frontend, runtime y backends.
+- **No reparar mediante:** casos artificiales añadidos al optimizador.
+- **Archivos:** inicialización/compatibilidad de namespaces AST; alcance exacto por determinar en 42B.
 
 ### POO-014 — P3 — documentación y ejemplos contradicen frontend/objetivo
 - **Reproductor:** ejemplos citados en §13.
@@ -372,22 +376,33 @@ Resultado observable futuro: `Hola Adolfo`.
 - **Dependencias:** decisión normativa separada tras herencia básica.
 - **Archivos:** por determinar; no tocar en 42A salvo decisión explícita.
 
+### POO-016 — P2 — analizador semántico rechaza asignación de atributo
+- **Reproductor:** clase con los cierres actualmente exigidos y cuerpo `atributo este nombre = nombre`.
+- **Actual:** el Parser produce `NodoAsignacion(variable=NodoAtributo(...), ...)`; `visit_asignacion` llama `_validar_nombre(NodoAtributo)` y obtiene exactamente `TypeError: El nombre debe ser string, no <class 'pcobra.core.ast_nodes.NodoAtributo'>`.
+- **Objetivo:** aceptar o validar semánticamente un destino `NodoAtributo` conforme al contrato POO sin debilitar la validación de asignaciones ordinarias.
+- **Causa:** el analizador semántico presupone que todo destino de asignación es un nombre simple.
+- **Dependencias:** atributos/semántico (42F), obligatoria antes del smoke E2E (42L).
+- **Archivos:** analizador semántico y pruebas focales futuras; ninguno modificado en 42A.
+
 ## 18. Dependencias y secuencia propuesta
 
-1. **42A — Congelar contrato textual mínimo:** decidir cierres, impresión del saludo y receptor contextual; reproductores Lexer/Parser. Criterio: especificación inequívoca; no cambiar Lexer salvo prueba de necesidad.
-2. **42B — AST semántico neutral de método/constructor/receptor:** preservar `inicializar` o clase de operación neutral; retirar dunders del AST. Criterio: snapshots sin nombres destino.
-3. **42C — Postfix de llamada a método desde texto:** crear `NodoLlamadaMetodo`, consumir todos los tokens, cubrir 0/N args. Criterio: ambos reproductores producen un nodo.
-4. **42D — Resolución de instanciación desde texto:** `Persona(...)` debe llegar a construcción neutral sin confundir funciones. Criterio: `NodoInstancia` o IR semántico equivalente demostrado.
-5. **42E — Atributos y cuerpo de clase:** consolidar lectura/escritura objetivo y rechazar/modelar atributos de clase. Criterio: AST exacto, sin aceptación accidental.
-6. **42F — Runtime POO:** constructor, binding `este`, aridad, retorno, atributos. Criterio: smoke del intérprete desde fuente.
-7. **42G — Python:** mapear receptor/constructor y clase vacía válida. Criterio: `python -m py_compile` + ejecución observable.
-8. **42H — JavaScript:** `constructor`, `this`, `new`, llamadas. Criterio: `node --check` + ejecución.
-9. **42I — Rust:** definir representación soportada (`struct/impl/new/campos/receptor`) y diagnósticos para lo no soportado. Criterio: `rustc`/`cargo check` del subconjunto declarado.
-10. **42J — Herencia/override:** simple primero; múltiple por contrato explícito; mantener `super` fuera hasta decisión propia. Criterio: fuente E2E en todos los backends soportados o error explícito.
-11. **42K — E2E contractual:** programa futuro imprime exactamente `Hola Adolfo` en runtime y backends declarados.
-12. **42L — Documentación y ejemplos:** solo después de verde; alinear Libro/SPEC/examples y separar limitaciones.
+La reproducción de POO-013 confirma que el orden de importación puede contaminar pruebas posteriores. Por ello recibe una microtarea temprana y se renumera la secuencia:
 
-Cada microtarea debe contener reproductor, causa, autorización de capas sensibles, pruebas dirigidas y criterio de cierre. No se inicia ninguna aquí.
+1. **42A — contrato + roadmap + corrección de auditoría:** establecer `docs/POO_ROADMAP.md`; ningún cambio productivo.
+2. **42B — compatibilidad de identidad AST:** normalizar `core.ast_nodes`, `pcobra.core.ast_nodes` y rutas relacionadas para que la identidad sea estable en ambos órdenes de importación.
+3. **42C — neutralidad de constructor/receptor en AST/frontend + cierre de métodos:** conservar identidad Cobra y hacer parseable el contrato aprobado.
+4. **42D — llamada de método postfix desde texto:** un único `NodoLlamadaMetodo` o IR neutral equivalente para 0/N argumentos.
+5. **42E — resolución neutral de instanciación:** distinguir clase de función en una fase decidida explícitamente.
+6. **42F — atributos + analizador semántico + cuerpo de clase:** incluye POO-012 y POO-016.
+7. **42G — runtime: constructor, `este`, aridad y llamadas:** smoke desde fuente, no AST manual.
+8. **42H — backend Python:** adaptaciones posteriores a la frontera neutral y clase vacía válida.
+9. **42I — backend JavaScript:** `constructor`, `this`, `new` y llamadas.
+10. **42J — backend Rust:** subconjunto idiomático explícito y diagnósticos para lo no soportado.
+11. **42K — herencia y override:** solo después de la POO elemental; `super` queda fuera.
+12. **42L — E2E contractual:** el programa futuro imprime exactamente `Hola Adolfo` en los destinos declarados.
+13. **42M — documentación, SPEC, Libro y ejemplos:** únicamente tras comportamiento implementado y probado.
+
+Cada microtarea debe contener reproductor, causa, autorización de capas sensibles, pruebas dirigidas y criterio de cierre. No se inicia ninguna aquí. El detalle contractual, los estados mantenibles y los invariantes están en `docs/POO_ROADMAP.md`.
 
 ## 19. Respuestas de cierre
 
@@ -410,6 +425,6 @@ Cada microtarea debe contener reproductor, causa, autorización de capas sensibl
 17. Desde texto: Clase, Método, Atributo; no Instancia ni LlamadaMétodo.
 18. Instancia, llamada, ejecución de atributos, herencia y override dependen principalmente de AST manual.
 19. Python hereda fugas pero se aproxima; JS carece de `constructor/this/new`; Rust es esquelético, sin herencia/campos/new coherente.
-20. Los cambios mínimos son la secuencia 42A–42L: contrato/AST neutral, postfix e instancia, atributos, runtime, cada backend, herencia, E2E y por último docs.
+20. Los cambios mínimos son la secuencia 42A–42M: contrato/AST neutral, postfix e instancia, atributos, runtime, cada backend, herencia, E2E y por último docs.
 
 **Cierre:** `Task 42 — AUDITORÍA COMPLETA`. **No** `POO — RESUELTA`.
