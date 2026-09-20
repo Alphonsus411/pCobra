@@ -389,7 +389,9 @@ funcion aplicar(valor, fn):
 
 ### 3.5 Clases
 
-**CONTRATO DEL LENGUAJE — CONTRATO POO OBJETIVO / EN PROCESO DE IMPLEMENTACIÓN**
+#### CONTRATO NORMATIVO POO
+
+**CONTRATO POO OBJETIVO — EN PROCESO DE IMPLEMENTACIÓN**
 
 Las clases agrupan atributos y métodos. En la sintaxis POO Cobra aprobada,
 `este` es la referencia propia y `inicializar` es el constructor. Estas son
@@ -399,27 +401,23 @@ decisiones normativas del lenguaje, no nombres heredados de un backend.
 
 ```text
 clase := "clase" IDENTIFICADOR ":" bloque "fin"
-metodo := "metodo" IDENTIFICADOR "(" [params] ")" ":" bloque "fin"
+metodo := "metodo" IDENTIFICADOR "(" [params] ")" ":" bloque
 ```
 
-Actualmente, cada método requiere su propio `fin`, además del `fin` que cierra
-la clase. La Task 42C tiene como objetivo revisar esta delimitación para que un
-método pueda terminar ante el siguiente `metodo` o el `fin` de clase, siempre
-que la implementación resulte inequívoca y no introduzca regresiones. Hasta que
-esa tarea se implemente y pruebe, este Libro muestra los cierres que acepta el
-Parser vigente.
+El `fin` de la producción `clase` cierra la clase completa. El contrato objetivo
+no exige un `fin` individual para cada método: el siguiente `metodo` o el `fin`
+de la clase delimitará su cuerpo. Implementar esta delimitación corresponde a
+la Task 42C.
 
-**Ejemplo POO normativo mínimo:**
+**Ejemplo normativo objetivo:**
 
 ```cobra
 clase Persona:
     metodo inicializar(este, nombre):
         atributo este nombre = nombre
-    fin
 
     metodo saludar(este):
         imprimir "Hola " + atributo este nombre
-    fin
 fin
 
 var persona = Persona("Adolfo")
@@ -433,15 +431,35 @@ Hola Adolfo
 ```
 
 Este ejemplo define el objetivo normativo; **no es una prueba de funcionamiento
-actual**.
+actual** del Parser, el runtime ni los backends.
 
-**ESTADO DE IMPLEMENTACIÓN:** la POO está en proceso de alineación interna
-conforme a [`POO_ROADMAP.md`](POO_ROADMAP.md), mediante las Tasks 42B–42L. La
-implementación vigente del Parser exige los cierres individuales documentados
-durante la transición. La Task 42C estudiará la eliminación de esos cierres
-individuales de método que aquí se documentan como obligatorios en el estado
-actual. Mientras POO-011 siga pendiente, este Libro tampoco afirma soporte E2E
-completo de herencia.
+#### ESTADO ACTUAL DE IMPLEMENTACIÓN
+
+El Parser histórico todavía exige un `fin` individual por método, además del
+`fin` de la clase:
+
+```cobra
+clase Persona:
+    metodo inicializar(este, nombre):
+        atributo este nombre = nombre
+    fin
+
+    metodo saludar(este):
+        imprimir "Hola " + atributo este nombre
+    fin
+fin
+```
+
+Esta forma se muestra **únicamente para describir la implementación actual**.
+No es sintaxis normativa, una variante oficial, una recomendación futura ni el
+smoke final. Que actualmente llegue a parsearse no la convierte en contrato
+Cobra ni decide su compatibilidad futura.
+
+La exigencia es la limitación conocida **POO-001**, permanece pendiente y la
+Task 42C debe eliminarla para implementar el contrato normativo. La POO sigue en
+proceso de alineación interna conforme a
+[`POO_ROADMAP.md`](POO_ROADMAP.md), mediante las Tasks 42B–42L. Mientras POO-011
+siga pendiente, este Libro tampoco afirma soporte E2E completo de herencia.
 
 La lectura canónica de un atributo es `atributo este nombre` y su escritura es
 `atributo este nombre = nombre`. La forma punteada `este.nombre` no forma parte

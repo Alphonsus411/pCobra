@@ -63,6 +63,17 @@ Parser mientras 42C permanece pendiente, y hace que el smoke use exclusivamente
 una expresión soportada por `imprimir`. No cambia ninguna decisión POO
 fundamental ni afirma soporte productivo completo.
 
+### ALINEACIÓN DOCUMENTAL TASK 42A.3
+
+Task 42A.1 alineó Libro y Roadmap en `este` e `inicializar`, y Task 42A.2
+corrigió la impresión multiargumento y documentó la limitación real del Parser.
+La revisión de 42A.2 detectó que incorporar el `fin` por método a la gramática
+normativa confundía esa implementación actual con el contrato. Task 42A.3
+separa definitivamente **CONTRATO NORMATIVO** de **ESTADO ACTUAL DEL PARSER**:
+el primero no contiene cierres individuales de método y el segundo registra que
+el Parser todavía los exige. POO-001 sigue pendiente para 42C. Esta alineación
+es exclusivamente documental y no modifica código productivo.
+
 ## 2. Principio fundamental y frontera neutral
 
 > pCobra posee su propia sintaxis y semántica pública. Python, JavaScript y Rust
@@ -91,22 +102,20 @@ frontend o el AST/IR neutral.
 
 ## 3. Contrato sintáctico objetivo
 
-La forma principal documentada durante el estado actual es:
+El **contrato normativo objetivo**, todavía en proceso de implementación, es:
 
 ```cobra
 clase Persona:
     metodo inicializar(este, nombre):
         atributo este nombre = nombre
-    fin
 
     metodo saludar(este):
         imprimir "Hola " + atributo este nombre
-    fin
 fin
 ```
 
-Este fragmento es el contrato deseado y **actualmente no funciona por completo**.
-No se modificará silenciosamente para acomodar las limitaciones del Parser.
+Este fragmento es el contrato deseado y el Parser actual todavía lo rechaza por
+POO-001. No se modificará silenciosamente para acomodar esa limitación.
 
 El futuro smoke E2E contractual es:
 
@@ -114,11 +123,9 @@ El futuro smoke E2E contractual es:
 clase Persona:
     metodo inicializar(este, nombre):
         atributo este nombre = nombre
-    fin
 
     metodo saludar(este):
         imprimir "Hola " + atributo este nombre
-    fin
 fin
 
 var persona = Persona("Adolfo")
@@ -214,21 +221,29 @@ representaciones de destino indicadas, nunca al AST neutral objetivo.
 
 ## 7. Cierre de métodos
 
-**ESTADO ACTUAL:** el Parser requiere:
+**ESTADO ACTUAL / REPRODUCTOR HISTÓRICO:** el Parser requiere:
 
-```text
-metodo ...
-    ...
+```cobra
+clase Persona:
+    metodo inicializar(este, nombre):
+        atributo este nombre = nombre
+    fin
+
+    metodo saludar(este):
+        imprimir "Hola " + atributo este nombre
+    fin
 fin
 ```
 
-además del `fin` de la clase. El Libro documenta temporalmente esta gramática
-implementada y no presenta la delimitación futura como disponible.
+Esta forma sirve únicamente para reproducir la implementación vigente: no es
+el contrato sintáctico objetivo, el smoke futuro ni un criterio de cierre. Que
+el Parser la acepte no crea un segundo dialecto oficial ni decide compatibilidad
+permanente.
 
-**OBJETIVO 42C:** hacer que la estructura aprobada pueda delimitar métodos
-mediante el siguiente `metodo` o el `fin` de clase, si la implementación
-demuestra que puede hacerse sin ambigüedad ni regresiones. Este objetivo no está
-resuelto; Task 42A.2 solo corrige la alineación documental.
+**OBJETIVO 42C / POO-001:** hacer que el contrato aprobado delimite cada método
+mediante el siguiente `metodo` o el `fin` de clase, sin cierres individuales.
+Este objetivo no está resuelto; Task 42A.3 solo separa documentalmente el
+contrato normativo del estado actual.
 
 ## 8. Atributos
 
@@ -350,7 +365,7 @@ sin prueba. Task 42A no resuelve ninguna reparación productiva.
 
 | ID | Severidad | Problema | Estado | Tarea |
 |---|---|---|---|---|
-| POO-001 | P1 | cierre público de métodos diverge del contrato | PENDIENTE | 42C |
+| POO-001 | P1 | el Parser exige `fin` por método aunque el contrato delimita por el siguiente `metodo` o el `fin` de clase | PENDIENTE | 42C |
 | POO-002 | P1 | `inicializar → __init__` ocurre en frontend/AST | PENDIENTE | 42C |
 | POO-003 | P1 | binding neutral de `este` ausente | PENDIENTE | 42C/42G |
 | POO-004 | P1 | instanciación inalcanzable desde fuente | PENDIENTE | 42E |
