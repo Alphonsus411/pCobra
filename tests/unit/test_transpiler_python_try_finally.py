@@ -4,11 +4,19 @@ from io import StringIO
 import pytest
 
 from pcobra.core.ast_nodes import (
+    NodoBloque,
+    NodoFor,
+    NodoFuncion,
     NodoIdentificador,
+    NodoImportDesde,
     NodoImprimir,
+    NodoInstancia,
+    NodoLlamadaFuncion,
+    NodoPasar,
     NodoThrow,
     NodoTryCatch,
     NodoValor,
+    NodoWith,
 )
 from pcobra.cobra.core.lexer import Lexer
 from pcobra.cobra.core.parser import Parser
@@ -200,6 +208,85 @@ imprimir(__cobra_excepcion_temporal_1)
     )
 
 
+def test_nombre_destino_llamada_no_se_usa_como_temporal():
+    """FALLA EN BASE: el alias de ``except`` borraba la función; PASA EN HEAD."""
+    fuente = """
+intentar:
+    lanzar "fallo"
+capturar error:
+    imprimir(error)
+finalmente:
+    imprimir(error)
+fin
+imprimir(__cobra_excepcion_temporal)
+__cobra_excepcion_temporal_1()
+"""
+    ast = Parser(Lexer(fuente).analizar_token()).parsear()
+
+    transpilador = TranspiladorPython()
+    codigo = transpilador.generate_code(ast)
+    codigo_repetido = transpilador.generate_code(ast)
+
+    assert codigo == codigo_repetido
+    assert "except Exception as __cobra_excepcion_temporal_2:" in codigo
+
+    def destino_llamada():
+        print("llamada conservada")
+
+    espacio = {
+        "__cobra_excepcion_temporal": "usuario",
+        "__cobra_excepcion_temporal_1": destino_llamada,
+    }
+    assert _ejecutar_python_en_espacio(codigo, espacio) == (
+        "fallo\nfallo\nusuario\nllamada conservada\n"
+    )
+
+
+def test_literal_en_bloque_intentar_no_reserva_nombre_temporal():
+    fuente = """
+intentar:
+    imprimir("__cobra_excepcion_temporal")
+    lanzar "fallo"
+capturar error:
+    imprimir(error)
+finalmente:
+    imprimir(error)
+fin
+"""
+    ast = Parser(Lexer(fuente).analizar_token()).parsear()
+
+    codigo = TranspiladorPython().generate_code(ast)
+
+    assert "except Exception as __cobra_excepcion_temporal:" in codigo
+    assert _ejecutar_python(codigo) == ("__cobra_excepcion_temporal\nfallo\nfallo\n")
+
+
+def test_recolector_cubre_categorias_estructurales_de_identificadores():
+    nodos = [
+        NodoFuncion("funcion_usuario", ["parametro_usuario"], NodoBloque()),
+        NodoFor("variable_bucle", NodoValor([]), [NodoPasar()]),
+        NodoWith(NodoIdentificador("contexto_usuario"), "alias_usuario", NodoBloque()),
+        NodoImportDesde("modulo.usuario", "simbolo_usuario", "importado_usuario"),
+        NodoInstancia("ClaseUsuario"),
+        NodoLlamadaFuncion("destino_usuario", []),
+    ]
+
+    nombres = TranspiladorPython()._recopilar_nombres_identificadores(nodos)
+
+    assert {
+        "funcion_usuario",
+        "parametro_usuario",
+        "variable_bucle",
+        "contexto_usuario",
+        "alias_usuario",
+        "simbolo_usuario",
+        "importado_usuario",
+        "ClaseUsuario",
+        "destino_usuario",
+    } <= nombres
+    assert "modulo.usuario" not in nombres
+
+
 def test_literal_futuro_no_reserva_nombre_temporal():
     fuente = """
 intentar:
@@ -216,9 +303,7 @@ imprimir("__cobra_excepcion_temporal")
     codigo = TranspiladorPython().generate_code(ast)
 
     assert "except Exception as __cobra_excepcion_temporal:" in codigo
-    assert _ejecutar_python(codigo) == (
-        "fallo\nfallo\n__cobra_excepcion_temporal\n"
-    )
+    assert _ejecutar_python(codigo) == ("fallo\nfallo\n__cobra_excepcion_temporal\n")
 
 
 def test_fuente_cobra_sin_excepcion_omite_capturar():

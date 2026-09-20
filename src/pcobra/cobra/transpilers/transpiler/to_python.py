@@ -18,9 +18,11 @@ from pcobra.cobra.core.ast_nodes import (
     NodoDiccionarioComprehension,
     NodoListaTipo,
     NodoDiccionarioTipo,
+    NodoTipo,
     NodoClase,
     NodoEnum,
     NodoInterface,
+    NodoMetodoAbstracto,
     NodoMetodo,
     NodoValor,
     NodoRetorno,
@@ -47,6 +49,8 @@ from pcobra.cobra.core.ast_nodes import (
     NodoLambda,
     NodoWith,
     NodoImportDesde,
+    NodoExport,
+    NodoMacro,
     NodoEsperar,
     NodoOption,
     NodoPattern,
@@ -69,6 +73,36 @@ from pcobra.cobra.transpilers.common.utils import (
     get_runtime_hooks,
 )
 from pcobra.cobra.transpilers.internal_ir_bridge import normalize_to_cobra_ast
+
+# Política central de campos AST que contienen identificadores Cobra como cadenas.
+# Los nombres de atributos y métodos quedan fuera: están cualificados por su objeto
+# y no compiten en el espacio de nombres del alias temporal de una excepción.
+_CAMPOS_IDENTIFICADORES_POR_TIPO = {
+    NodoAsignacion: ("variable",),
+    NodoHolobit: ("nombre",),
+    NodoFor: ("variable",),
+    NodoListaComprehension: ("variable",),
+    NodoDiccionarioComprehension: ("variable",),
+    NodoListaTipo: ("nombre",),
+    NodoDiccionarioTipo: ("nombre",),
+    NodoTipo: ("nombre",),
+    NodoFuncion: ("nombre", "parametros", "type_params"),
+    NodoMetodoAbstracto: ("nombre", "parametros"),
+    NodoInterface: ("nombre",),
+    NodoClase: ("nombre", "bases", "type_params"),
+    NodoEnum: ("nombre", "miembros"),
+    NodoMetodo: ("nombre", "parametros", "type_params"),
+    NodoInstancia: ("nombre_clase",),
+    NodoLlamadaFuncion: ("nombre",),
+    NodoGlobal: ("nombres",),
+    NodoNoLocal: ("nombres",),
+    NodoLambda: ("parametros",),
+    NodoWith: ("alias",),
+    NodoTryCatch: ("nombre_excepcion",),
+    NodoImportDesde: ("nombre", "alias"),
+    NodoExport: ("nombre",),
+    NodoMacro: ("nombre",),
+}
 
 from pcobra.cobra.transpilers.transpiler.python_nodes.asignacion import (
     visit_asignacion as _visit_asignacion,
@@ -282,6 +316,7 @@ class TranspiladorPython(BaseTranspiler):
         self._defer_stack: list[str] = []
         self._defer_counter = 0
         self._nombres_identificadores = set()
+        self._nombres_temporales_excepcion = set()
         self.safe_mode = bool(safe_mode)
         self.source_file = self._normalizar_ruta_contexto(source_file)
         self.project_root = self._normalizar_ruta_contexto(project_root)
@@ -366,6 +401,7 @@ class TranspiladorPython(BaseTranspiler):
             nodos = inline_functions(nodos)
         nodos = remove_dead_code(nodos)
         self._nombres_identificadores = self._recopilar_nombres_identificadores(nodos)
+        self._nombres_temporales_excepcion = set()
         usa_holobit = ast_requires_holobit_runtime(nodos)
         self.codigo = get_standard_imports("python")
         if usa_holobit:
@@ -411,6 +447,13 @@ class TranspiladorPython(BaseTranspiler):
         pendientes = [nodos]
         visitados = set()
 
+        def reservar(valor):
+            if isinstance(valor, str):
+                nombres.add(valor)
+            elif isinstance(valor, (list, tuple, set, frozenset)):
+                for elemento in valor:
+                    reservar(elemento)
+
         while pendientes:
             actual = pendientes.pop()
             if actual is None or isinstance(actual, str):
@@ -431,6 +474,11 @@ class TranspiladorPython(BaseTranspiler):
                 continue
             visitados.add(identificador)
             if isinstance(actual, NodoAST):
+                for tipo, campos in _CAMPOS_IDENTIFICADORES_POR_TIPO.items():
+                    if isinstance(actual, tipo):
+                        for campo in campos:
+                            reservar(getattr(actual, campo, None))
+                        break
                 pendientes.extend(vars(actual).values())
 
         return nombres
