@@ -4,7 +4,13 @@ def _generar_nombre_excepcion_temporal(self, nodo):
     sufijo = 0
     nombres_reservados = getattr(self, "_nombres_identificadores", set())
     nombres_temporales = getattr(self, "_nombres_temporales_excepcion", set())
-    while nombre in nombres_reservados or nombre in nombres_temporales:
+    # El texto ya emitido es una defensa conservadora adicional: puede encontrar
+    # literales, pero no sustituye las reservas estructurales ni las temporales.
+    while (
+        nombre in nombres_reservados
+        or nombre in nombres_temporales
+        or nombre in self.codigo
+    ):
         sufijo += 1
         nombre = f"{base}_{sufijo}"
     nombres_temporales.add(nombre)

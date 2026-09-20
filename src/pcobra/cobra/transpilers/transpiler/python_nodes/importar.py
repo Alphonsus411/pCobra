@@ -31,6 +31,9 @@ def visit_import(self, nodo):
             )
             ast_cache[ruta_canonica] = ast
 
+        self._nombres_identificadores.update(
+            self._recopilar_nombres_identificadores(ast)
+        )
         for subnodo in ast:
             subnodo.aceptar(self)
     else:

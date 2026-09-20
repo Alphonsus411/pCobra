@@ -12,6 +12,7 @@ from pcobra.core.ast_nodes import (
     NodoImprimir,
     NodoInstancia,
     NodoLlamadaFuncion,
+    NodoPara,
     NodoPasar,
     NodoThrow,
     NodoTryCatch,
@@ -21,6 +22,10 @@ from pcobra.core.ast_nodes import (
 from pcobra.cobra.core.lexer import Lexer
 from pcobra.cobra.core.parser import Parser
 from pcobra.cobra.transpilers.transpiler.to_python import TranspiladorPython
+from pcobra.cobra.transpilers.transpiler.python_nodes.try_catch import (
+    _generar_nombre_excepcion_temporal,
+)
+from pcobra.cobra.usar_loader import obtener_cache_ast_import_cobra
 from pcobra.core.interpreter import InterpretadorCobra
 
 
@@ -242,7 +247,7 @@ __cobra_excepcion_temporal_1()
     )
 
 
-def test_literal_en_bloque_intentar_no_reserva_nombre_temporal():
+def test_literal_ya_emitido_activa_defensa_textual_conservadora():
     fuente = """
 intentar:
     imprimir("__cobra_excepcion_temporal")
@@ -257,8 +262,84 @@ fin
 
     codigo = TranspiladorPython().generate_code(ast)
 
-    assert "except Exception as __cobra_excepcion_temporal:" in codigo
+    assert "except Exception as __cobra_excepcion_temporal_1:" in codigo
     assert _ejecutar_python(codigo) == ("__cobra_excepcion_temporal\nfallo\nfallo\n")
+
+
+def test_codigo_emitido_evade_candidato_ausente_de_reservas_estructurales():
+    transpilador = TranspiladorPython()
+    transpilador.codigo = "print('__cobra_excepcion_temporal')\n"
+
+    nombre = _generar_nombre_excepcion_temporal(transpilador, None)
+
+    assert transpilador._nombres_identificadores == set()
+    assert nombre == "__cobra_excepcion_temporal_1"
+
+
+def test_e2e_nodo_para_reserva_variable_antes_de_emitir_try_finally():
+    """FALLA EN BASE: el alias borraba la variable; PASA EN HEAD."""
+    fuente = """
+para __cobra_excepcion_temporal en [1]:
+    intentar:
+        lanzar "fallo"
+    capturar error:
+        imprimir(error)
+    finalmente:
+        imprimir(eval("__cobra_excepcion_temporal"))
+        imprimir(error)
+    fin
+fin
+"""
+    ast = Parser(Lexer(fuente).analizar_token()).parsear()
+    transpilador = TranspiladorPython()
+
+    assert isinstance(ast[0], NodoPara)
+    assert ast[0].variable == "__cobra_excepcion_temporal"
+    assert "__cobra_excepcion_temporal" in (
+        transpilador._recopilar_nombres_identificadores(ast)
+    )
+
+    codigo = transpilador.generate_code(ast)
+    codigo_repetido = transpilador.generate_code(ast)
+
+    assert codigo == codigo_repetido
+    assert "except Exception as __cobra_excepcion_temporal_1:" in codigo
+    assert _ejecutar_python(codigo) == "fallo\n1\nfallo\n"
+
+
+def test_e2e_import_cobra_reserva_ast_dinamico_antes_de_emitir(tmp_path):
+    """FALLA EN BASE: el AST importado no reservaba nombres; PASA EN HEAD."""
+    modulo = tmp_path / "modulo.cobra"
+    modulo.write_text(
+        """
+intentar:
+    lanzar "fallo importado"
+capturar error:
+    imprimir(error)
+finalmente:
+    imprimir(error)
+fin
+imprimir(__cobra_excepcion_temporal)
+""",
+        encoding="utf-8",
+    )
+    fuente_principal = f"import {str(modulo)!r}\n"
+    ast = Parser(Lexer(fuente_principal).analizar_token()).parsear()
+    obtener_cache_ast_import_cobra().clear()
+    transpilador = TranspiladorPython()
+
+    assert transpilador._recopilar_nombres_identificadores(ast) == set()
+
+    codigo = transpilador.generate_code(ast)
+    codigo_repetido = transpilador.generate_code(ast)
+
+    assert codigo == codigo_repetido
+    assert "__cobra_excepcion_temporal" in transpilador._nombres_identificadores
+    assert "except Exception as __cobra_excepcion_temporal_1:" in codigo
+    espacio = {"__cobra_excepcion_temporal": "usuario"}
+    assert _ejecutar_python_en_espacio(codigo, espacio) == (
+        "fallo importado\nfallo importado\nusuario\n"
+    )
 
 
 def test_recolector_cubre_categorias_estructurales_de_identificadores():
