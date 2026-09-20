@@ -425,8 +425,18 @@ canónico, incluso si un import legacy previo ya había precargado ese objeto en
 `sys.modules`. Las sondas en procesos limpios demuestran ambos órdenes con
 legacy permitido, el acceso por `pcobra.core.ast_nodes`, la identidad única y
 el caso funcional de `constant_folder`; otra sonda en fase 2 sin opt-in
-demuestra que importar el AST canónico no registra `core.ast_nodes`. Quedan así
-resueltos los dos riesgos P2 posteriores a 42B y POO-013 se considera cerrado.
+demuestra que importar el AST canónico no registra `core.ast_nodes`. Sin
+embargo, la auditoría posterior detectó que la ruta física histórica aún
+permitía cargar
+`core.ast_nodes` como una segunda copia cuando legacy estaba deshabilitado, por
+lo que este cierre fue prematuro.
+
+**Cierre Task 42B.2.** La carga directa de `core.ast_nodes` consulta la misma
+política y ahora se rechaza explícitamente cuando legacy está deshabilitado. Las
+pruebas en procesos limpios cubren fase 2 con y sin opt-in, fase 3 incluso con
+opt-in, ambos órdenes autorizados, identidad de módulo y clases, y el caso
+funcional cruzado de `constant_folder`. Con este punto de entrada cerrado quedan
+resueltos los riesgos P2 posteriores a 42B y POO-013 se considera cerrado.
 
 ### POO-016 — reproducción y contrato de reparación
 
