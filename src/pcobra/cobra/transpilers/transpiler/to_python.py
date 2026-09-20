@@ -158,6 +158,7 @@ from pcobra.cobra.transpilers.transpiler.python_nodes.throw import (
     visit_throw as _visit_throw,
 )
 from pcobra.cobra.transpilers.transpiler.python_nodes.importar import (
+    cargar_ast_import_cobra,
     visit_import as _visit_import,
 )
 from pcobra.cobra.transpilers.transpiler.python_nodes.usar import (
@@ -403,7 +404,9 @@ class TranspiladorPython(BaseTranspiler):
             nodos = inline_functions(nodos)
         nodos = remove_dead_code(nodos)
         self._nombres_identificadores = self._recopilar_nombres_identificadores(nodos)
+        self._preanalizar_importaciones_cobra(nodos)
         self._nombres_temporales_excepcion = set()
+        self._rutas_importacion_en_emision = []
         usa_holobit = ast_requires_holobit_runtime(nodos)
         self.codigo = get_standard_imports("python")
         if usa_holobit:
@@ -484,6 +487,49 @@ class TranspiladorPython(BaseTranspiler):
                 pendientes.extend(vars(actual).values())
 
         return nombres
+
+    def _preanalizar_importaciones_cobra(self, nodos):
+        """Reserva nombres de todo el grafo Cobra sin emitir código Python."""
+
+        rutas_visitadas = set()
+        ast_pendientes = [nodos]
+
+        while ast_pendientes:
+            ast = ast_pendientes.pop()
+            imports = []
+            pendientes = [ast]
+            nodos_visitados = set()
+
+            while pendientes:
+                actual = pendientes.pop()
+                if actual is None or isinstance(actual, str):
+                    continue
+                if isinstance(actual, NodoImport):
+                    imports.append(actual)
+                    continue
+                if isinstance(actual, dict):
+                    pendientes.extend(reversed(tuple(actual.values())))
+                    pendientes.extend(reversed(tuple(actual.keys())))
+                    continue
+                if isinstance(actual, (list, tuple)):
+                    pendientes.extend(reversed(actual))
+                    continue
+                identificador = id(actual)
+                if identificador in nodos_visitados:
+                    continue
+                nodos_visitados.add(identificador)
+                if isinstance(actual, NodoAST):
+                    pendientes.extend(reversed(tuple(vars(actual).values())))
+
+            for nodo_import in reversed(imports):
+                _, ruta_canonica, ast_importado = cargar_ast_import_cobra(nodo_import)
+                if ruta_canonica is None or ruta_canonica in rutas_visitadas:
+                    continue
+                rutas_visitadas.add(ruta_canonica)
+                self._nombres_identificadores.update(
+                    self._recopilar_nombres_identificadores(ast_importado)
+                )
+                ast_pendientes.append(ast_importado)
 
     def _contiene_nodo_valor(self, nodo, _visitados=None):
         if _visitados is None:
