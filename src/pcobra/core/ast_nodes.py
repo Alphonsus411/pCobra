@@ -6,6 +6,8 @@ from typing import Any, Iterator, List, Optional, TYPE_CHECKING
 from collections.abc import Mapping
 import warnings
 
+from pcobra import _resolve_legacy_import_policy
+
 # ``src/pcobra`` fue históricamente añadido directamente a ``sys.path``, por
 # lo que este mismo archivo todavía puede alcanzarse como ``core.ast_nodes``.
 # Registrar el nombre alternativo antes de definir las clases garantiza que un
@@ -14,7 +16,7 @@ _AST_MODULE_ALIASES = {
     "core.ast_nodes": "pcobra.core.ast_nodes",
     "pcobra.core.ast_nodes": "core.ast_nodes",
 }
-if __name__ in _AST_MODULE_ALIASES:
+if __name__ in _AST_MODULE_ALIASES and _resolve_legacy_import_policy()[1]:
     sys.modules.setdefault(_AST_MODULE_ALIASES[__name__], sys.modules[__name__])
 
 if TYPE_CHECKING:  # pragma: no cover - solo para verificación estática

@@ -11,6 +11,7 @@ de implementaciones manuales.
 
 from __future__ import annotations
 
+from . import ast_nodes as ast_nodes
 from .ast_nodes import *
 from .ast_nodes import NodoListaComprehension, NodoDiccionarioComprehension, NodoEnum
 from .visitor import NodeVisitor
