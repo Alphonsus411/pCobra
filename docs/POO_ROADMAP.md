@@ -1,17 +1,23 @@
-# Contrato y hoja de ruta de POO de pCobra
+# Hoja de ruta técnica de POO de pCobra
 
-> **ADVERTENCIA CONTRACTUAL**
+> **ADVERTENCIA DE GOBERNANZA**
 >
-> Este documento define el contrato y la hoja de ruta de la POO de pCobra.
+> Este documento es la hoja de ruta técnica vinculante para implementar y
+> verificar el contrato POO definido en el
+> [`Libro de Programación Cobra`](LIBRO_PROGRAMACION_COBRA.md). No sustituye al
+> Libro como especificación normativa del lenguaje.
+>
+> Durante las Tasks 42.x, cualquier implementación POO debe respetar las
+> decisiones normativas ya incorporadas al Libro y las restricciones técnicas
+> de este Roadmap.
 >
 > Cualquier agente automático, mantenedor o tarea futura que modifique Lexer,
 > Parser, AST, análisis semántico, runtime o backends relacionados con POO
 > **DEBE** leer este documento antes de realizar cambios.
 >
 > No se deben introducir decisiones sintácticas o semánticas incompatibles con
-> este contrato sin una tarea explícita que actualice primero esta hoja de ruta.
-> Este documento no es orientativo: es el contrato del proyecto para la
-> reconstrucción POO.
+> el Libro. Este documento no es orientativo en cuanto al plan técnico: explica
+> cómo implementar y verificar el contrato lingüístico sin desviaciones.
 
 ## 1. Trazabilidad y alcance
 
@@ -22,6 +28,30 @@
 
 Task 42A fija contrato y planificación; **no implementa reparaciones POO**. Los
 estados de esta hoja describen capacidades verificadas, no aspiraciones.
+
+### ALINEACIÓN NORMATIVA TASK 42A.1
+
+La divergencia histórica comprobada era:
+
+```text
+Antes:
+Libro   → self / __init__
+Roadmap → este / inicializar
+
+Después:
+Libro   → este / inicializar
+Roadmap → implementación de este / inicializar
+```
+
+Task 42A.1 resuelve exclusivamente esa contradicción documental y de
+gobernanza. No afirma que el código productivo ya esté alineado: los hallazgos
+POO y sus pruebas continúan pendientes según la tabla y la secuencia de este
+Roadmap. La jerarquía inequívoca es:
+
+```text
+AGENTS.md → Libro → contrato normativo del lenguaje
+POO_ROADMAP.md     → plan técnico para implementar y verificar ese contrato
+```
 
 ## 2. Principio fundamental y frontera neutral
 
@@ -374,35 +404,37 @@ La reparación debe aceptar o validar semánticamente `NodoAtributo` como destin
 según el contrato POO sin debilitar asignaciones ordinarias. Es dependencia de
 42F y debe estar corregido antes del smoke E2E; 42A solo lo documenta.
 
-## 15. Secuencia contractual de microtareas
+## 15. Secuencia de microtareas
 
 La reproducción de POO-013 demuestra que puede contaminar pruebas posteriores,
 por lo que recibe una microtarea temprana y el resto se renumera:
 
-1. **42A — contrato + roadmap + corrección de auditoría.** Documento canónico,
-   reproducciones y trazabilidad; ningún cambio productivo.
-2. **42B — compatibilidad de identidad AST.** Normalizar `core.ast_nodes`,
+1. **42A — auditoría + roadmap.** Reproducciones y trazabilidad; ningún
+   cambio productivo.
+2. **42A.1 — alineación normativa Libro ↔ Roadmap.** Resuelve la gobernanza y la
+   divergencia histórica documental; no repara POO productiva.
+3. **42B — compatibilidad de identidad AST.** Normalizar `core.ast_nodes`,
    `pcobra.core.ast_nodes` y rutas relacionadas, con ambos órdenes de import.
-3. **42C — neutralidad de constructor/receptor en AST/frontend + cierre de
+4. **42C — neutralidad de constructor/receptor en AST/frontend + cierre de
    métodos.** Preservar identidad Cobra y hacer parseable el contrato aprobado.
-4. **42D — llamada de método postfix desde texto.** Un nodo completo para 0/N
+5. **42D — llamada de método postfix desde texto.** Un nodo completo para 0/N
    argumentos, sin tokens residuales ni aceptación fragmentada.
-5. **42E — resolución neutral de instanciación.** Distinguir clase y función en
+6. **42E — resolución neutral de instanciación.** Distinguir clase y función en
    la fase neutral que se decida explícitamente.
-6. **42F — atributos + analizador semántico + cuerpo de clase.** Incluye
+7. **42F — atributos + analizador semántico + cuerpo de clase.** Incluye
    POO-016, lectura/escritura canónica y POO-012.
-7. **42G — runtime: constructor, `este`, aridad y llamadas.** Smoke desde fuente,
+8. **42G — runtime: constructor, `este`, aridad y llamadas.** Smoke desde fuente,
    no AST manual.
-8. **42H — backend Python.** `__init__`, `self`, `pass`, instancia y método solo
+9. **42H — backend Python.** `__init__`, `self`, `pass`, instancia y método solo
    tras la frontera neutral.
-9. **42I — backend JavaScript.** `constructor`, `this`, `new` y llamada.
-10. **42J — backend Rust.** Subconjunto explícito, representación idiomática y
+10. **42I — backend JavaScript.** `constructor`, `this`, `new` y llamada.
+11. **42J — backend Rust.** Subconjunto explícito, representación idiomática y
     diagnóstico para lo no soportado.
-11. **42K — herencia y override.** Después de POO elemental; `super` permanece
+12. **42K — herencia y override.** Después de POO elemental; `super` permanece
     fuera del contrato.
-12. **42L — E2E contractual.** El programa de §3 produce exactamente
+13. **42L — E2E contractual.** El programa de §3 produce exactamente
     `Hola Adolfo` en los destinos declarados.
-13. **42M — documentación, SPEC, Libro y ejemplos.** Solo describe lo realmente
+14. **42M — documentación, SPEC, Libro y ejemplos.** Solo describe lo realmente
     implementado y probado.
 
 Cada tarea debe reproducir primero su defecto, autorizar expresamente cualquier
@@ -429,12 +461,15 @@ La reconstrucción POO solo termina cuando hay evidencia focal y E2E de que:
 
 ## 17. Documentación
 
-> SPEC, Libro y ejemplos solo se actualizarán al final de la reconstrucción para
-> describir comportamiento realmente implementado y probado.
+> El Libro puede fijar decisiones normativas antes de que termine su
+> implementación, siempre que distinga visiblemente contrato y estado. SPEC,
+> ejemplos ejecutables y advertencias transitorias se reconciliarán por completo
+> al final de la reconstrucción.
 
 No se modificará documentación para aparentar que una característica funciona.
-Esta hoja puede registrar el contrato futuro porque está identificada de forma
-explícita como **ROADMAP contractual**.
+Task 42M sigue siendo necesaria para retirar advertencias transitorias,
+actualizar ejemplos ejecutables, limpiar compatibilidad documental histórica,
+documentar exactamente lo probado y cerrar POO-014.
 
 # INVARIANTES — NO ROMPER
 
