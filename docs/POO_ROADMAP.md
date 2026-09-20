@@ -377,7 +377,7 @@ sin prueba. Task 42A no resuelve ninguna reparación productiva.
 | POO-010 | P2 | representación POO Rust incompleta | PENDIENTE | 42J |
 | POO-011 | P2 | herencia divergente y E2E bloqueado | PENDIENTE | 42K |
 | POO-012 | P2 | atributo de clase en contenedor incorrecto | PENDIENTE | 42F |
-| POO-013 | P2 | identidad AST depende de namespace/orden de importación | PENDIENTE | 42B |
+| POO-013 | P2 | identidad AST depende de namespace/orden de importación | RESUELTO | 42B |
 | POO-014 | P3 | documentación y ejemplos contradicen frontend/objetivo | PENDIENTE | 42M |
 | POO-015 | P3 | operación `super` sin contrato aprobado | NO SOPORTADO POR CONTRATO | decisión futura independiente |
 | POO-016 | P2 | semántico rechaza `NodoAtributo` como destino | PENDIENTE | 42F |
@@ -408,6 +408,14 @@ ha capturado la identidad divergente. Por tanto, la causa final es
 importación**, no falta de casos/passthrough POO en `constant_folder`. No debe
 “repararse” añadiendo casos artificiales al optimizador; 42B normalizará la
 identidad/compatibilidad de namespaces antes de que contamine pruebas 42C–42J.
+
+**Resolución Task 42B.** `pcobra.core.ast_nodes` registra tempranamente
+`core.ast_nodes` (y viceversa) como nombre alternativo del mismo objeto módulo.
+Las pruebas en intérpretes limpios cubren ambos órdenes con la ruta histórica
+primero en `PYTHONPATH`, verifican la identidad de las clases POO, el
+`isinstance` cruzado y el paso de un `NodoInstancia` legado por
+`constant_folder`. La corrección actúa sobre la carga del módulo y no añade
+passthroughs al optimizador.
 
 ### POO-016 — reproducción y contrato de reparación
 
