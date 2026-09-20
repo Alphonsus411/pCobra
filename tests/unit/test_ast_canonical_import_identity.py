@@ -9,6 +9,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 from pcobra.core import ast_nodes
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -188,6 +190,14 @@ def test_ast_identity_pcobra_core_then_core() -> None:
     assert result.returncode == 0, result.stderr
 
 
+def test_ast_identity_fase_1_sin_opt_in_conserva_compatibilidad() -> None:
+    result = _run_clean_ast_identity_probe(
+        "core.ast_nodes", "pcobra.core.ast_nodes", phase=1, enabled=False
+    )
+
+    assert result.returncode == 0, result.stderr
+
+
 def test_ast_legacy_primero_enlaza_el_hijo_con_el_paquete_canonico() -> None:
     """El alias en sys.modules también queda visible como atributo del padre."""
 
@@ -232,6 +242,63 @@ assert 'core.ast_nodes' not in sys.modules
     result = subprocess.run(
         [sys.executable, "-c", script],
         cwd=ROOT,
+        env=env,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stderr
+
+
+@pytest.mark.parametrize(
+    ("phase", "opt_in"),
+    (
+        (2, False),
+        (3, False),
+        (3, True),
+    ),
+)
+def test_ast_legacy_se_rechaza_segun_politica_y_canonico_funciona(
+    phase: int, opt_in: bool
+) -> None:
+    """La ruta física histórica no elude las fases que desactivan legacy."""
+
+    script = """
+import importlib
+import sys
+
+try:
+    importlib.import_module('core.ast_nodes')
+except ImportError as exc:
+    assert 'Compatibilidad de imports legacy deshabilitada' in str(exc)
+    assert 'pcobra.core.ast_nodes' in str(exc)
+else:
+    raise AssertionError('core.ast_nodes debía ser rechazado')
+
+assert 'core.ast_nodes' not in sys.modules
+canonical = importlib.import_module('pcobra.core.ast_nodes')
+assert canonical.NodoAST.__module__ == 'pcobra.core.ast_nodes'
+assert 'core.ast_nodes' not in sys.modules
+
+constant_folder = importlib.import_module(
+    'pcobra.core.optimizations.constant_folder'
+)
+node = canonical.NodoInstancia('Clase')
+assert constant_folder.optimize_constants([node]) == [node]
+"""
+    env = os.environ.copy()
+    env["PCOBRA_LEGACY_IMPORT_PHASE"] = str(phase)
+    if opt_in:
+        env["PCOBRA_ENABLE_LEGACY_IMPORTS"] = "1"
+    else:
+        env.pop("PCOBRA_ENABLE_LEGACY_IMPORTS", None)
+    env["PYTHONPATH"] = os.pathsep.join(
+        (str(ROOT / "src" / "pcobra"), str(ROOT / "src"))
+    )
+    result = subprocess.run(
+        [sys.executable, "-c", script],
+        cwd=ROOT.parent,
         env=env,
         text=True,
         capture_output=True,

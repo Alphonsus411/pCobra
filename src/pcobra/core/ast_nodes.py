@@ -16,7 +16,13 @@ _AST_MODULE_ALIASES = {
     "core.ast_nodes": "pcobra.core.ast_nodes",
     "pcobra.core.ast_nodes": "core.ast_nodes",
 }
-if __name__ in _AST_MODULE_ALIASES and _resolve_legacy_import_policy()[1]:
+_legacy_phase, _legacy_enabled = _resolve_legacy_import_policy()
+if __name__ == "core.ast_nodes" and not _legacy_enabled:
+    raise ImportError(
+        "Compatibilidad de imports legacy deshabilitada en fase "
+        f"{_legacy_phase}; use `pcobra.core.ast_nodes`."
+    )
+if __name__ in _AST_MODULE_ALIASES and _legacy_enabled:
     sys.modules.setdefault(_AST_MODULE_ALIASES[__name__], sys.modules[__name__])
 
 if TYPE_CHECKING:  # pragma: no cover - solo para verificación estática
