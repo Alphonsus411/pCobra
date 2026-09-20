@@ -53,6 +53,16 @@ AGENTS.md → Libro → contrato normativo del lenguaje
 POO_ROADMAP.md     → plan técnico para implementar y verificar ese contrato
 ```
 
+### ALINEACIÓN DOCUMENTAL TASK 42A.2
+
+Task 42A.1 alineó el Libro con las decisiones `este` e `inicializar`, pero su
+revisión posterior detectó dos anticipaciones indebidas de la gramática vigente:
+la omisión del `fin` individual de cada método y el uso multiargumento de
+`imprimir`. Task 42A.2 devuelve el Libro a los cierres que acepta actualmente el
+Parser mientras 42C permanece pendiente, y hace que el smoke use exclusivamente
+una expresión soportada por `imprimir`. No cambia ninguna decisión POO
+fundamental ni afirma soporte productivo completo.
+
 ## 2. Principio fundamental y frontera neutral
 
 > pCobra posee su propia sintaxis y semántica pública. Python, JavaScript y Rust
@@ -81,15 +91,17 @@ frontend o el AST/IR neutral.
 
 ## 3. Contrato sintáctico objetivo
 
-La forma principal aprobada es:
+La forma principal documentada durante el estado actual es:
 
 ```cobra
 clase Persona:
     metodo inicializar(este, nombre):
         atributo este nombre = nombre
+    fin
 
     metodo saludar(este):
-        imprimir "Hola", atributo este nombre
+        imprimir "Hola " + atributo este nombre
+    fin
 fin
 ```
 
@@ -102,9 +114,11 @@ El futuro smoke E2E contractual es:
 clase Persona:
     metodo inicializar(este, nombre):
         atributo este nombre = nombre
+    fin
 
     metodo saludar(este):
-        imprimir "Hola", atributo este nombre
+        imprimir "Hola " + atributo este nombre
+    fin
 fin
 
 var persona = Persona("Adolfo")
@@ -200,7 +214,7 @@ representaciones de destino indicadas, nunca al AST neutral objetivo.
 
 ## 7. Cierre de métodos
 
-Existe una divergencia. El Parser actual requiere:
+**ESTADO ACTUAL:** el Parser requiere:
 
 ```text
 metodo ...
@@ -208,13 +222,13 @@ metodo ...
 fin
 ```
 
-además del `fin` de la clase. El contrato aprobado tiene un único `fin` de clase
-y delimita métodos como en §3. **No se introducirá `fin` obligatorio después de
-cada método solamente para conservar una limitación histórica del Parser.**
+además del `fin` de la clase. El Libro documenta temporalmente esta gramática
+implementada y no presenta la delimitación futura como disponible.
 
-La reparación futura estudiará una delimitación inequívoca por el siguiente
-`metodo` o el `fin` de clase, procurando no romper construcciones existentes.
-No se implementa en 42A.
+**OBJETIVO 42C:** hacer que la estructura aprobada pueda delimitar métodos
+mediante el siguiente `metodo` o el `fin` de clase, si la implementación
+demuestra que puede hacerse sin ambigüedad ni regresiones. Este objetivo no está
+resuelto; Task 42A.2 solo corrige la alineación documental.
 
 ## 8. Atributos
 
@@ -413,28 +427,31 @@ por lo que recibe una microtarea temprana y el resto se renumera:
    cambio productivo.
 2. **42A.1 — alineación normativa Libro ↔ Roadmap.** Resuelve la gobernanza y la
    divergencia histórica documental; no repara POO productiva.
-3. **42B — compatibilidad de identidad AST.** Normalizar `core.ast_nodes`,
+3. **42A.2 — alineación documental con la gramática vigente.** Documentar el
+   `fin` actualmente requerido por método y una única expresión en `imprimir`,
+   sin alterar las decisiones POO ni reparar código productivo.
+4. **42B — compatibilidad de identidad AST.** Normalizar `core.ast_nodes`,
    `pcobra.core.ast_nodes` y rutas relacionadas, con ambos órdenes de import.
-4. **42C — neutralidad de constructor/receptor en AST/frontend + cierre de
+5. **42C — neutralidad de constructor/receptor en AST/frontend + cierre de
    métodos.** Preservar identidad Cobra y hacer parseable el contrato aprobado.
-5. **42D — llamada de método postfix desde texto.** Un nodo completo para 0/N
+6. **42D — llamada de método postfix desde texto.** Un nodo completo para 0/N
    argumentos, sin tokens residuales ni aceptación fragmentada.
-6. **42E — resolución neutral de instanciación.** Distinguir clase y función en
+7. **42E — resolución neutral de instanciación.** Distinguir clase y función en
    la fase neutral que se decida explícitamente.
-7. **42F — atributos + analizador semántico + cuerpo de clase.** Incluye
+8. **42F — atributos + analizador semántico + cuerpo de clase.** Incluye
    POO-016, lectura/escritura canónica y POO-012.
-8. **42G — runtime: constructor, `este`, aridad y llamadas.** Smoke desde fuente,
+9. **42G — runtime: constructor, `este`, aridad y llamadas.** Smoke desde fuente,
    no AST manual.
-9. **42H — backend Python.** `__init__`, `self`, `pass`, instancia y método solo
+10. **42H — backend Python.** `__init__`, `self`, `pass`, instancia y método solo
    tras la frontera neutral.
-10. **42I — backend JavaScript.** `constructor`, `this`, `new` y llamada.
-11. **42J — backend Rust.** Subconjunto explícito, representación idiomática y
+11. **42I — backend JavaScript.** `constructor`, `this`, `new` y llamada.
+12. **42J — backend Rust.** Subconjunto explícito, representación idiomática y
     diagnóstico para lo no soportado.
-12. **42K — herencia y override.** Después de POO elemental; `super` permanece
+13. **42K — herencia y override.** Después de POO elemental; `super` permanece
     fuera del contrato.
-13. **42L — E2E contractual.** El programa de §3 produce exactamente
+14. **42L — E2E contractual.** El programa de §3 produce exactamente
     `Hola Adolfo` en los destinos declarados.
-14. **42M — documentación, SPEC, Libro y ejemplos.** Solo describe lo realmente
+15. **42M — documentación, SPEC, Libro y ejemplos.** Solo describe lo realmente
     implementado y probado.
 
 Cada tarea debe reproducir primero su defecto, autorizar expresamente cualquier

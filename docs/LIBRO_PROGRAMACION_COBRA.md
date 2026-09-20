@@ -399,11 +399,15 @@ decisiones normativas del lenguaje, no nombres heredados de un backend.
 
 ```text
 clase := "clase" IDENTIFICADOR ":" bloque "fin"
-metodo := "metodo" IDENTIFICADOR "(" [params] ")" ":" bloque
+metodo := "metodo" IDENTIFICADOR "(" [params] ")" ":" bloque "fin"
 ```
 
-El cierre normativo del ejemplo es el único `fin` de la clase; los métodos se
-delimitan por el siguiente `metodo` o por ese cierre de clase.
+Actualmente, cada método requiere su propio `fin`, además del `fin` que cierra
+la clase. La Task 42C tiene como objetivo revisar esta delimitación para que un
+método pueda terminar ante el siguiente `metodo` o el `fin` de clase, siempre
+que la implementación resulte inequívoca y no introduzca regresiones. Hasta que
+esa tarea se implemente y pruebe, este Libro muestra los cierres que acepta el
+Parser vigente.
 
 **Ejemplo POO normativo mínimo:**
 
@@ -411,9 +415,11 @@ delimitan por el siguiente `metodo` o por ese cierre de clase.
 clase Persona:
     metodo inicializar(este, nombre):
         atributo este nombre = nombre
+    fin
 
     metodo saludar(este):
-        imprimir "Hola", atributo este nombre
+        imprimir "Hola " + atributo este nombre
+    fin
 fin
 
 var persona = Persona("Adolfo")
@@ -431,10 +437,11 @@ actual**.
 
 **ESTADO DE IMPLEMENTACIÓN:** la POO está en proceso de alineación interna
 conforme a [`POO_ROADMAP.md`](POO_ROADMAP.md), mediante las Tasks 42B–42L. La
-implementación histórica del Parser todavía puede exigir cierres adicionales
-durante la transición. La Task 42C es responsable de alinear el Parser con este
-contrato. Mientras POO-011 siga pendiente, este Libro tampoco afirma soporte
-E2E completo de herencia.
+implementación vigente del Parser exige los cierres individuales documentados
+durante la transición. La Task 42C estudiará la eliminación de esos cierres
+individuales de método que aquí se documentan como obligatorios en el estado
+actual. Mientras POO-011 siga pendiente, este Libro tampoco afirma soporte E2E
+completo de herencia.
 
 La lectura canónica de un atributo es `atributo este nombre` y su escritura es
 `atributo este nombre = nombre`. La forma punteada `este.nombre` no forma parte
