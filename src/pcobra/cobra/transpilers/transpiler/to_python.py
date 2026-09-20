@@ -320,6 +320,7 @@ class TranspiladorPython(BaseTranspiler):
         self._defer_counter = 0
         self._nombres_identificadores = set()
         self._nombres_temporales_excepcion = set()
+        self._rutas_importacion_en_emision = []
         self.safe_mode = bool(safe_mode)
         self.source_file = self._normalizar_ruta_contexto(source_file)
         self.project_root = self._normalizar_ruta_contexto(project_root)
