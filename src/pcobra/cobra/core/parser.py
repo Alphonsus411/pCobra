@@ -1351,6 +1351,17 @@ class ClassicParser:
             and siguiente.tipo in [TipoToken.FUNC, TipoToken.METODO]
         )
 
+    def _es_delimitador_metodo(self) -> bool:
+        """Indica si comienza otro método según el contrato normativo."""
+        if self.token_actual().tipo == TipoToken.METODO:
+            return True
+        siguiente = self.token_siguiente()
+        return (
+            self.token_actual().tipo == TipoToken.ASINCRONICO
+            and siguiente is not None
+            and siguiente.tipo == TipoToken.METODO
+        )
+
     def _fin_metodo_historico(self) -> bool:
         """Reconoce un ``fin`` individual inequívoco de la sintaxis histórica."""
         if self.token_actual().tipo != TipoToken.FIN:
@@ -1399,7 +1410,7 @@ class ClassicParser:
         cuerpo = []
         while (
             self.token_actual().tipo not in [TipoToken.FIN, TipoToken.EOF]
-            and not self._es_inicio_metodo()
+            and not self._es_delimitador_metodo()
         ):
             cuerpo.append(self.declaracion())
 
