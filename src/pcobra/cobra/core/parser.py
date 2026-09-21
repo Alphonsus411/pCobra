@@ -25,6 +25,7 @@ from pcobra.cobra.core.ast_nodes import (
     NodoMetodo,
     NodoAtributo,
     NodoLlamadaFuncion,
+    NodoLlamadaMetodo,
     NodoHilo,
     NodoOperacionBinaria,
     NodoOperacionUnaria,
@@ -444,8 +445,12 @@ class ClassicParser:
         """Parsea una llamada a función."""
         nombre_funcion = self.token_actual().valor
         self.comer(TipoToken.IDENTIFICADOR)  # Consumir el nombre de la función
-        self.comer(TipoToken.LPAREN)  # Consumir '('
+        argumentos = self._argumentos_llamada()
+        return NodoLlamadaFuncion(nombre_funcion, argumentos)
 
+    def _argumentos_llamada(self):
+        """Parsea los argumentos de una llamada desde el paréntesis inicial."""
+        self.comer(TipoToken.LPAREN)
         argumentos = []
         # Si no es un paréntesis de cierre, hay argumentos
         if self.token_actual().tipo != TipoToken.RPAREN:
@@ -458,7 +463,7 @@ class ClassicParser:
                     break
 
         self.comer(TipoToken.RPAREN)  # Consumir ')'
-        return NodoLlamadaFuncion(nombre_funcion, argumentos)
+        return argumentos
 
     def declaracion_asignacion(self):
         """Procesa una asignación de variable opcionalmente inferida.
@@ -1703,10 +1708,23 @@ class ClassicParser:
                     self.comer(TipoToken.IDENTIFICADOR)
                     while self.token_actual().tipo == TipoToken.PUNTO:
                         self.comer(TipoToken.PUNTO)
-                        if self.token_actual().tipo != TipoToken.IDENTIFICADOR:
+                        es_nombre_metodo_literal = (
+                            self.token_actual().tipo == TipoToken.METODO
+                            and self.token_siguiente()
+                            and self.token_siguiente().tipo == TipoToken.LPAREN
+                        )
+                        if (
+                            self.token_actual().tipo != TipoToken.IDENTIFICADOR
+                            and not es_nombre_metodo_literal
+                        ):
                             raise ParserError("Se esperaba el nombre del atributo")
-                        objeto = NodoAtributo(objeto, self.token_actual().valor)
-                        self.comer(TipoToken.IDENTIFICADOR)
+                        nombre = self.token_actual().valor
+                        self.avanzar()
+                        if self.token_actual().tipo == TipoToken.LPAREN:
+                            return NodoLlamadaMetodo(
+                                objeto, nombre, self._argumentos_llamada()
+                            )
+                        objeto = NodoAtributo(objeto, nombre)
                     return objeto
                 self.comer(TipoToken.IDENTIFICADOR)
                 return NodoIdentificador(token.valor)
