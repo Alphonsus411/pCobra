@@ -21,6 +21,15 @@ import sys
 from types import ModuleType
 import warnings
 
+from pcobra import _resolve_legacy_import_policy
+
+_legacy_phase, _legacy_enabled = _resolve_legacy_import_policy()
+if not _legacy_enabled:
+    raise ImportError(
+        "Compatibilidad de imports legacy deshabilitada en fase "
+        f"{_legacy_phase}; use `pcobra.core`."
+    )
+
 warnings.warn(
     "`core` está deprecado; usa `pcobra.core`.",
     DeprecationWarning,

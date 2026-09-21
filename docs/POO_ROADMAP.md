@@ -448,8 +448,20 @@ ningún alias `core.*`; si está permitido, conserva el mecanismo común y la
 identidad única de módulo y clases. Las sondas en procesos Python limpios desde
 la raíz, con `PYTHONPATH=src`, prueban fase 1, fase 2 con y sin opt-in, y fase 3
 con y sin opt-in. También comprueban que el import canónico funciona en todos
-los casos y que `constant_folder` opera con los nodos canónicos. Solo tras cerrar
-esta segunda vía de entrada se considera POO-013 resuelto.
+los casos y que `constant_folder` opera con los nodos canónicos. Una auditoría
+posterior descubrió un segundo shim en `src/core/__init__.py`, accesible desde un
+directorio externo con `PYTHONPATH=ROOT/src`, que todavía omitía la política; por
+tanto, este cierre también fue prematuro.
+
+**Cierre Task 42B.4.** El segundo shim consulta ahora la misma función canónica
+`pcobra._resolve_legacy_import_policy()` antes de importar `pcobra.core`, emitir
+su aviso o registrar aliases. Una sonda específica ejecutada desde un directorio
+temporal con únicamente `ROOT/src` en `PYTHONPATH` verifica expresamente que
+`core.__file__` corresponde a `ROOT/src/core/__init__.py`, cubre las fases 1, 2
+y 3 con las variantes de opt-in pertinentes, y confirma identidad AST,
+ausencia de aliases cuando legacy está prohibido, funcionamiento canónico y
+`constant_folder`. Tras probar tanto el shim raíz como este segundo shim en las
+tres fases, POO-013 vuelve a considerarse resuelto.
 
 ### POO-016 — reproducción y contrato de reparación
 
