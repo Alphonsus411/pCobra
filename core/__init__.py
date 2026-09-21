@@ -11,6 +11,15 @@ _SRC = Path(__file__).resolve().parents[1] / "src"
 if str(_SRC) not in sys.path:
     sys.path.insert(0, str(_SRC))
 
+from pcobra import _resolve_legacy_import_policy
+
+_legacy_phase, _legacy_enabled = _resolve_legacy_import_policy()
+if not _legacy_enabled:
+    raise ImportError(
+        "Compatibilidad de imports legacy deshabilitada en fase "
+        f"{_legacy_phase}; use `pcobra.core`."
+    )
+
 _target_name = "pcobra.core"
 _target: ModuleType = import_module(_target_name)
 

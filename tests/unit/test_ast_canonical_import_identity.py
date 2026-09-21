@@ -178,6 +178,75 @@ for nombre in {clases!r}:
         assert result.returncode == 0, result.stderr
 
 
+@pytest.mark.parametrize(
+    ("phase", "opt_in", "legacy_enabled"),
+    (
+        (1, False, True),
+        (2, True, True),
+        (2, False, False),
+        (3, False, False),
+        (3, True, False),
+    ),
+)
+def test_checkout_shim_respeta_politica_legacy(
+    phase: int, opt_in: bool, legacy_enabled: bool
+) -> None:
+    """Prueba el shim físico desde la raíz con únicamente ``src`` en PYTHONPATH."""
+
+    script = f"""
+import importlib
+import sys
+
+if {legacy_enabled!r}:
+    legacy = importlib.import_module('core.ast_nodes')
+    canonical = importlib.import_module('pcobra.core.ast_nodes')
+    import core
+    import pcobra.core
+
+    assert canonical.NodoAST.__module__ == 'pcobra.core.ast_nodes'
+    assert legacy is canonical
+    assert core.ast_nodes is pcobra.core.ast_nodes
+    assert legacy.NodoAST is canonical.NodoAST
+
+    constant_folder = importlib.import_module(
+        'pcobra.core.optimizations.constant_folder'
+    )
+    node = canonical.NodoInstancia('Clase')
+    assert constant_folder.NodoAST is canonical.NodoAST
+    assert constant_folder.optimize_constants([node]) == [node]
+else:
+    try:
+        importlib.import_module('core.ast_nodes')
+    except ImportError as exc:
+        assert 'Compatibilidad de imports legacy deshabilitada' in str(exc)
+        assert 'pcobra.core' in str(exc)
+    else:
+        raise AssertionError('core.ast_nodes debía ser rechazado')
+
+    assert not [name for name in sys.modules if name.startswith('core.')]
+    canonical = importlib.import_module('pcobra.core.ast_nodes')
+    assert canonical.NodoAST.__module__ == 'pcobra.core.ast_nodes'
+    assert 'core.ast_nodes' not in sys.modules
+"""
+    env = os.environ.copy()
+    env["PCOBRA_LEGACY_IMPORT_PHASE"] = str(phase)
+    if opt_in:
+        env["PCOBRA_ENABLE_LEGACY_IMPORTS"] = "1"
+    else:
+        env.pop("PCOBRA_ENABLE_LEGACY_IMPORTS", None)
+    env["PYTHONPATH"] = str(ROOT / "src")
+    result = subprocess.run(
+        [sys.executable, "-c", script],
+        cwd=ROOT,
+        env=env,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stderr
+
+
 def test_ast_identity_core_then_pcobra_core() -> None:
     result = _run_clean_ast_identity_probe("core.ast_nodes", "pcobra.core.ast_nodes")
 

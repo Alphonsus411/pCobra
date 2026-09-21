@@ -431,12 +431,25 @@ permitía cargar
 `core.ast_nodes` como una segunda copia cuando legacy estaba deshabilitado, por
 lo que este cierre fue prematuro.
 
-**Cierre Task 42B.2.** La carga directa de `core.ast_nodes` consulta la misma
+**Estabilización Task 42B.2.** La carga directa de `core.ast_nodes` consulta la misma
 política y ahora se rechaza explícitamente cuando legacy está deshabilitado. Las
 pruebas en procesos limpios cubren fase 2 con y sin opt-in, fase 3 incluso con
 opt-in, ambos órdenes autorizados, identidad de módulo y clases, y el caso
-funcional cruzado de `constant_folder`. Con este punto de entrada cerrado quedan
-resueltos los riesgos P2 posteriores a 42B y POO-013 se considera cerrado.
+funcional cruzado de `constant_folder`. La auditoría posterior encontró aún un
+bypass en un checkout normal: con `cwd` en la raíz y `PYTHONPATH=src`, el shim
+físico `core/__init__.py` importaba primero `pcobra.core` y copiaba todos sus
+submódulos cargados a claves `core.*`. Así introducía `core.ast_nodes` en
+`sys.modules` antes de que pudiera ejecutarse el rechazo de 42B.2.
+
+**Cierre Task 42B.3.** El shim de checkout consulta ahora
+`pcobra._resolve_legacy_import_policy()` antes de importar el paquete canónico o
+copiar submódulos. Si legacy está deshabilitado, rechaza la carga sin registrar
+ningún alias `core.*`; si está permitido, conserva el mecanismo común y la
+identidad única de módulo y clases. Las sondas en procesos Python limpios desde
+la raíz, con `PYTHONPATH=src`, prueban fase 1, fase 2 con y sin opt-in, y fase 3
+con y sin opt-in. También comprueban que el import canónico funciona en todos
+los casos y que `constant_folder` opera con los nodos canónicos. Solo tras cerrar
+esta segunda vía de entrada se considera POO-013 resuelto.
 
 ### POO-016 — reproducción y contrato de reparación
 
