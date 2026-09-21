@@ -308,7 +308,9 @@ class ClassicParser:
 
         if self.errores:
             raise ParserError("\n".join(self.errores))
-        return resultado
+        from pcobra.cobra.core.resolucion_instancias import resolver_instanciaciones
+
+        return resolver_instanciaciones(resultado)
 
     def declaracion(self):
         """Procesa una instrucción o expresión."""

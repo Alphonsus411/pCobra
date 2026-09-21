@@ -282,10 +282,19 @@ una extensión normativa independiente.
 
 ## 9. Instanciación y llamadas de método
 
-`var persona = Persona("Adolfo")` debe construir una instancia cuando `Persona`
-sea una clase. Hoy `Persona(...)` produce `NodoLlamadaFuncion`, nunca
-`NodoInstancia` (**POO-004 — P1**). Queda pendiente decidir en tarea propia si
-la resolución neutral ocurre en Parser o en una fase semántica.
+`var persona = Persona("Adolfo")` construye una representación neutral de
+instancia cuando `Persona` es una clase declarada previamente
+(**POO-004 — P1 — RESUELTO**). El reconocimiento ocurre en una fase neutral
+inmediatamente posterior al parseo: el Parser conserva una llamada ordinaria
+durante el análisis sintáctico y `resolver_instanciaciones` la convierte en
+`NodoInstancia(nombre_clase, argumentos)` usando las declaraciones visibles,
+sin convenciones de mayúsculas ni nombres especiales. Los argumentos se
+conservan en su orden y las funciones continúan como `NodoLlamadaFuncion`.
+
+La resolución respeta el orden del programa: no incorpora referencias hacia
+delante. Si un mismo ámbito declara clase y función con el mismo nombre, la
+fase neutral no inventa precedencia y conserva la llamada genérica; el análisis
+semántico existente rechaza después la declaración duplicada.
 
 Las llamadas aprobadas son `persona.saludar()` y
 `persona.cambiar_nombre("Ana")`. Desde 42D ambas formas producen un único
