@@ -235,6 +235,24 @@ fin
     assert clase.metodos[0].cuerpo[0].nombre == "interior"
 
 
+def test_funcion_local_no_depende_de_su_indentation_visual():
+    cuerpos = []
+    for espacios in (1, 4, 8, 12):
+        clase = _clase(
+            "clase Ejemplo:\n"
+            "    metodo exterior(este):\n"
+            f"{' ' * espacios}func interior(x):\n"
+            "            imprimir x\n"
+            "        fin\n"
+            "fin\n"
+        )
+        cuerpos.append(clase.metodos[0].cuerpo)
+
+    assert all(len(clase_cuerpo) == 1 for clase_cuerpo in cuerpos)
+    assert all(isinstance(clase_cuerpo[0], NodoFuncion) for clase_cuerpo in cuerpos)
+    assert all(clase_cuerpo[0].nombre == "interior" for clase_cuerpo in cuerpos)
+
+
 def test_funcion_local_asincronica_permanece_en_metodo():
     clase = _clase(
         '''
@@ -313,7 +331,7 @@ fin
     ]
 
 
-def test_metodo_normativo_seguido_de_func_historico_no_lo_absorbe():
+def test_func_ambiguo_dentro_de_metodo_se_interpreta_como_funcion_local():
     clase = _clase(
         '''
 clase Ejemplo:
@@ -327,16 +345,14 @@ fin
 '''
     )
 
-    assert len(clase.metodos) == 2
-    primero, segundo = clase.metodos
-    assert [type(primero), type(segundo)] == [NodoMetodo, NodoMetodo]
-    assert [primero.nombre_original, segundo.nombre_original] == [
-        "primero",
-        "segundo",
-    ]
-    assert [type(nodo) for nodo in primero.cuerpo] == [NodoImprimir]
+    assert len(clase.metodos) == 1
+    primero = clase.metodos[0]
+    assert isinstance(primero, NodoMetodo)
+    assert primero.nombre_original == "primero"
+    assert [type(nodo) for nodo in primero.cuerpo] == [NodoImprimir, NodoFuncion]
+    segundo = primero.cuerpo[1]
+    assert segundo.nombre == "segundo"
     assert [type(nodo) for nodo in segundo.cuerpo] == [NodoImprimir]
-    assert not any(isinstance(nodo, NodoFuncion) for nodo in primero.cuerpo)
 
 
 def test_func_historico_seguido_de_metodo_normativo_produce_dos_metodos():
@@ -365,7 +381,7 @@ fin
     ]
 
 
-def test_metodo_normativo_seguido_de_func_historico_asincronico():
+def test_func_ambiguo_asincronico_dentro_de_metodo_es_funcion_local():
     clase = _clase(
         '''
 clase Ejemplo:
@@ -379,14 +395,13 @@ fin
 '''
     )
 
-    assert len(clase.metodos) == 2
-    primero, segundo = clase.metodos
-    assert [type(primero), type(segundo)] == [NodoMetodo, NodoMetodo]
-    assert [primero.nombre_original, segundo.nombre_original] == [
-        "primero",
-        "segundo",
-    ]
+    assert len(clase.metodos) == 1
+    primero = clase.metodos[0]
+    assert isinstance(primero, NodoMetodo)
+    assert primero.nombre_original == "primero"
     assert primero.asincronica is False
+    assert [type(nodo) for nodo in primero.cuerpo] == [NodoImprimir, NodoFuncion]
+    segundo = primero.cuerpo[1]
+    assert segundo.nombre == "segundo"
     assert segundo.asincronica is True
-    assert [type(nodo) for nodo in primero.cuerpo] == [NodoImprimir]
     assert [type(nodo) for nodo in segundo.cuerpo] == [NodoImprimir]
