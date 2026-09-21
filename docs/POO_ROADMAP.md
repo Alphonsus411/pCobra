@@ -288,10 +288,10 @@ sea una clase. Hoy `Persona(...)` produce `NodoLlamadaFuncion`, nunca
 la resolución neutral ocurre en Parser o en una fase semántica.
 
 Las llamadas aprobadas son `persona.saludar()` y
-`persona.cambiar_nombre("Ana")`. `NodoLlamadaMetodo` existe pero no se alcanza
-correctamente desde texto; el segundo ejemplo puede aceptarse accidentalmente
-como nodos separados (**POO-005 — P1**). La llamada completa debe tener una
-única representación semántica.
+`persona.cambiar_nombre("Ana")`. Desde 42D ambas formas producen un único
+`NodoLlamadaMetodo`, conservando el objeto, el nombre y los argumentos en orden
+(**POO-005 — P1 — RESUELTO**). El encadenamiento posterior a una llamada, como
+`objeto.obtener().saludar()`, queda fuera del alcance de 42D.
 
 ## 10. Runtime, receptor y aridad
 
@@ -396,7 +396,7 @@ sin prueba. Task 42A no resuelve ninguna reparación productiva.
 | POO-002 | P1 | `inicializar → __init__` ocurre en frontend/AST | PENDIENTE | 42C |
 | POO-003 | P1 | binding neutral de `este` ausente | PENDIENTE | 42C/42G |
 | POO-004 | P1 | instanciación inalcanzable desde fuente | PENDIENTE | 42E |
-| POO-005 | P1 | llamada de método postfix inalcanzable/corrupta | PENDIENTE | 42D |
+| POO-005 | P1 | llamada de método postfix inalcanzable/corrupta | RESUELTO | 42D |
 | POO-006 | P1 | constructor no se ejecuta en runtime | PENDIENTE | 42G |
 | POO-007 | P2 | aridad y receptor runtime no se validan | PENDIENTE | 42G |
 | POO-008 | P2 | backend Python genera clase vacía inválida | PENDIENTE | 42H |
