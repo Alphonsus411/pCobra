@@ -250,14 +250,27 @@ un segundo contrato normativo.
 La auditoría posterior de 42C detectó que `func` y `asincronico func` locales se
 interpretaban erróneamente como el siguiente método de clase. Task 42C.1 corrigió
 esa regresión, pero una segunda auditoría descubrió la ambigüedad inversa: un
-`func` histórico al nivel de la clase podía quedar absorbido por el método
-normativo anterior. Task 42C.2 distingue ambos contextos mediante la columna
-estructural de la declaración: `func`/`asincronico func` al nivel del método se
-mantienen como funciones locales y al nivel de sus declaraciones hermanas se
-conservan como alias de método de clase. Las pruebas dirigidas verifican el
-número y tipo de métodos y el contenido exacto de sus cuerpos en ambas formas,
-incluidas las variantes asíncronas. Con la coexistencia comprobada de ambos
-contextos, POO-001 queda definitivamente resuelto.
+`func` histórico situado después de un método normativo podía quedar absorbido
+por este. Task 42C.2 intentó distinguir ambos contextos mediante la columna de la
+declaración; Task 42C.3 retira esa solución porque la indentación no forma parte
+de la gramática Cobra y dos secuencias de tokens iguales no deben producir AST
+distintos.
+
+El Libro establece `metodo` para declarar métodos, mientras que la SPEC, la
+gramática EBNF y la especificación técnica establecen `func` para funciones. Una
+vez abierto el cuerpo de un método, no existe información puramente sintáctica
+que distinga un `func` local de un supuesto alias histórico de método hermano:
+ambos casos tienen la misma secuencia de tokens, incluso cuando la función lleva
+su `fin`. Por ello se aplica el contrato normativo: dentro de un método, `func` y
+`asincronico func` siempre son funciones locales, sin considerar su columna. El
+siguiente método debe declararse con `metodo` (o `asincronico metodo`).
+
+Se conserva la compatibilidad histórica inequívoca: un `func` encontrado por
+`declaracion_clase()` cuando no hay un método abierto todavía se sigue
+convirtiendo en `NodoMetodo`. Esta compatibilidad del Parser no se promociona a
+sintaxis normativa. Las pruebas fijan tanto esa excepción histórica como la
+interpretación normativa del caso ambiguo y la independencia de la indentación.
+Con esta decisión tokenística, POO-001 queda definitivamente resuelto.
 
 ## 8. Atributos
 
