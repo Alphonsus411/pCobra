@@ -293,6 +293,11 @@ Las llamadas aprobadas son `persona.saludar()` y
 (**POO-005 — P1 — RESUELTO**). El encadenamiento posterior a una llamada, como
 `objeto.obtener().saludar()`, queda fuera del alcance de 42D.
 
+Task 42D.1 fija la separación inspirada en Python: `metodo` es la palabra
+reservada de declaración; el nombre real del método es un `IDENTIFICADOR`, y es
+ese identificador el que se usa en las llamadas postfix. Con este contrato,
+POO-005 queda cerrado definitivamente.
+
 ## 10. Runtime, receptor y aridad
 
 Hay capacidades internas construidas sobre AST manual (`NodoInstancia`,

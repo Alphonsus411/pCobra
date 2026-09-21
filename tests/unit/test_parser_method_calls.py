@@ -1,7 +1,9 @@
 """Contrato focal del Parser para llamadas postfix de método."""
 
+import pytest
+
 from pcobra.cobra.core.lexer import Lexer, TipoToken
-from pcobra.cobra.core.parser import ClassicParser
+from pcobra.cobra.core.parser import ClassicParser, ParserError
 from pcobra.core.ast_nodes import (
     NodoAtributo,
     NodoIdentificador,
@@ -31,26 +33,27 @@ def test_llamada_metodo_sin_argumentos() -> None:
 
 
 def test_llamada_metodo_con_un_argumento() -> None:
-    _, _, ast = _parsear('persona.saludar("Hola")')
+    _, _, ast = _parsear('persona.cambiar_nombre("Ana")')
 
     llamada = ast[0]
     assert isinstance(llamada, NodoLlamadaMetodo)
+    assert llamada.nombre_metodo == "cambiar_nombre"
     assert len(llamada.argumentos) == 1
     assert isinstance(llamada.argumentos[0], NodoValor)
-    assert llamada.argumentos[0].valor == "Hola"
+    assert llamada.argumentos[0].valor == "Ana"
 
 
 def test_llamada_metodo_conserva_varios_argumentos_en_orden() -> None:
-    _, _, ast = _parsear("persona.metodo(1, 2, 3)")
+    _, _, ast = _parsear("persona.procesar(1, 2, 3)")
 
     llamada = ast[0]
     assert isinstance(llamada, NodoLlamadaMetodo)
-    assert llamada.nombre_metodo == "metodo"
+    assert llamada.nombre_metodo == "procesar"
     assert [argumento.valor for argumento in llamada.argumentos] == [1, 2, 3]
 
 
 def test_llamada_metodo_acepta_expresiones_como_argumentos() -> None:
-    _, _, ast = _parsear("persona.metodo(a + b, otra())")
+    _, _, ast = _parsear("persona.procesar(a + b, otra())")
 
     llamada = ast[0]
     assert isinstance(llamada, NodoLlamadaMetodo)
@@ -80,7 +83,7 @@ def test_acceso_atributo_permanece_intacto() -> None:
 
 
 def test_llamada_metodo_consume_sus_tokens_completamente() -> None:
-    tokens, parser, _ = _parsear("persona.metodo(1, 2, 3)")
+    tokens, parser, _ = _parsear("persona.procesar(1, 2, 3)")
 
     assert parser.token_actual().tipo == TipoToken.EOF
     assert tokens[parser.posicion :][0].tipo == TipoToken.EOF
@@ -89,6 +92,14 @@ def test_llamada_metodo_consume_sus_tokens_completamente() -> None:
         TipoToken.RPAREN,
         TipoToken.COMA,
     }.intersection(token.tipo for token in tokens[parser.posicion :])
+
+
+def test_llamada_metodo_rechaza_keyword_como_nombre() -> None:
+    tokens = Lexer("persona.metodo()").tokenizar()
+
+    assert tokens[2].tipo == TipoToken.METODO
+    with pytest.raises(ParserError, match="Se esperaba el nombre del atributo"):
+        ClassicParser(tokens).parsear()
 
 
 def test_dos_llamadas_metodo_consecutivas() -> None:
