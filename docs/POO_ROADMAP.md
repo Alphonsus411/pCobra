@@ -247,6 +247,12 @@ consumiendo sus propios cierres. La forma histórica se conserva temporalmente
 cuando su cierre individual es estructuralmente inequívoco, sin convertirla en
 un segundo contrato normativo.
 
+La auditoría posterior de 42C detectó que `func` y `asincronico func` locales se
+interpretaban erróneamente como el siguiente método de clase. Task 42C.1 corrige
+esa regresión: solo `metodo` y `asincronico metodo` delimitan el método anterior,
+mientras el alias histórico `func` en el nivel de clase continúa aceptándose. Con
+esta prueba de regresión, POO-001 queda definitivamente resuelto.
+
 ## 8. Atributos
 
 La forma canónica inicial de lectura es `atributo este nombre` y la de escritura

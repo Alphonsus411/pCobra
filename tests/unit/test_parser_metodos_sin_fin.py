@@ -3,6 +3,7 @@ from pcobra.core.ast_nodes import (
     NodoAsignacion,
     NodoClase,
     NodoCondicional,
+    NodoFuncion,
     NodoImprimir,
     NodoMetodo,
 )
@@ -210,3 +211,99 @@ fin
         "segundo",
     ]
     assert [len(metodo.cuerpo) for metodo in clase.metodos] == [1, 1]
+
+
+def test_funcion_local_permanece_en_metodo_y_no_en_clase():
+    clase = _clase(
+        '''
+clase Ejemplo:
+    metodo exterior(este):
+        func interior(x):
+            imprimir x
+        fin
+
+        imprimir "seguimos"
+fin
+'''
+    )
+
+    assert [metodo.nombre_original for metodo in clase.metodos] == ["exterior"]
+    assert [type(nodo) for nodo in clase.metodos[0].cuerpo] == [
+        NodoFuncion,
+        NodoImprimir,
+    ]
+    assert clase.metodos[0].cuerpo[0].nombre == "interior"
+
+
+def test_funcion_local_asincronica_permanece_en_metodo():
+    clase = _clase(
+        '''
+clase Ejemplo:
+    metodo exterior(este):
+        asincronico func interior(x):
+            imprimir x
+        fin
+
+        imprimir "seguimos"
+fin
+'''
+    )
+
+    assert [metodo.nombre_original for metodo in clase.metodos] == ["exterior"]
+    assert [type(nodo) for nodo in clase.metodos[0].cuerpo] == [
+        NodoFuncion,
+        NodoImprimir,
+    ]
+    assert clase.metodos[0].cuerpo[0].asincronica is True
+
+
+def test_funcion_local_con_varias_instrucciones_antes_de_otro_metodo():
+    clase = _clase(
+        '''
+clase Ejemplo:
+    metodo exterior(este):
+        func interior(x):
+            imprimir x
+            imprimir "dentro"
+        fin
+
+        imprimir "fin exterior"
+
+    metodo segundo(este):
+        imprimir "segundo"
+fin
+'''
+    )
+
+    assert [metodo.nombre_original for metodo in clase.metodos] == [
+        "exterior",
+        "segundo",
+    ]
+    exterior, segundo = clase.metodos
+    assert [type(nodo) for nodo in exterior.cuerpo] == [NodoFuncion, NodoImprimir]
+    assert [type(nodo) for nodo in exterior.cuerpo[0].cuerpo] == [
+        NodoImprimir,
+        NodoImprimir,
+    ]
+    assert [type(nodo) for nodo in segundo.cuerpo] == [NodoImprimir]
+
+
+def test_func_sigue_siendo_alias_historico_de_metodo_con_fin_individual():
+    clase = _clase(
+        '''
+clase Ejemplo:
+    func primero(este):
+        imprimir "uno"
+    fin
+    func segundo(este):
+        imprimir "dos"
+    fin
+fin
+'''
+    )
+
+    assert [type(metodo) for metodo in clase.metodos] == [NodoMetodo, NodoMetodo]
+    assert [metodo.nombre_original for metodo in clase.metodos] == [
+        "primero",
+        "segundo",
+    ]
