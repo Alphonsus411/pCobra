@@ -4,6 +4,12 @@ import sys
 
 import pytest
 from pcobra.cobra.core import Lexer, Parser
+from pcobra.cobra.core.ast_nodes import (
+    NodoAsignacion,
+    NodoInstancia,
+    NodoLlamadaFuncion,
+)
+from pcobra.cobra.cli.execution_pipeline import prevalidar_y_parsear_codigo
 
 
 def _reload_ast_cache(monkeypatch):
@@ -19,6 +25,11 @@ def _count_rows(db_path, table):
     with sqlite3.connect(db_path) as conn:
         cursor = conn.execute(f"SELECT COUNT(*) FROM {table}")
         return cursor.fetchone()[0]
+
+
+def _valor_asignado(ast):
+    assert type(ast[1]) is NodoAsignacion
+    return ast[1].expresion
 
 
 def test_obtener_ast_reutiliza(monkeypatch, base_datos_temporal):
@@ -125,3 +136,55 @@ def test_cache_fragmentos(monkeypatch, base_datos_temporal):
     ast_cache.obtener_tokens_fragmento(codigo)
     assert llamadas["count"] == 1
     assert _count_rows(base_datos_temporal, "ast_fragments") >= 1
+
+
+def test_obtener_ast_resuelve_igual_en_cache_miss_y_hit(
+    monkeypatch, base_datos_temporal
+):
+    ast_cache = _reload_ast_cache(monkeypatch)
+    codigo = "clase Persona:\nfin\nvar persona = Persona()"
+
+    cache_miss = ast_cache.obtener_ast(codigo)
+    cache_hit = ast_cache.obtener_ast(codigo)
+
+    assert type(_valor_asignado(cache_miss)) is NodoInstancia
+    assert type(_valor_asignado(cache_hit)) is NodoInstancia
+    assert ast_cache._serialize(cache_hit) == ast_cache._serialize(cache_miss)
+
+
+def test_pipeline_publico_devuelve_ast_resuelto(monkeypatch, base_datos_temporal):
+    _reload_ast_cache(monkeypatch)
+    codigo = "clase Persona:\nfin\nvar persona = Persona()"
+
+    ast = prevalidar_y_parsear_codigo(codigo)
+
+    assert type(_valor_asignado(ast)) is NodoInstancia
+
+
+def test_obtener_ast_resuelve_cache_sintactica_anterior_a_42e(
+    monkeypatch, base_datos_temporal
+):
+    ast_cache = _reload_ast_cache(monkeypatch)
+    codigo = "clase Persona:\nfin\nvar persona = Persona()"
+    ast_sintactico = Parser(Lexer(codigo).tokenizar()).parsear()
+
+    assert type(_valor_asignado(ast_sintactico)) is NodoLlamadaFuncion
+    ast_cache._store_ast(ast_cache._checksum(codigo), codigo, ast_sintactico)
+
+    cache_hit = ast_cache.obtener_ast(codigo)
+
+    assert type(_valor_asignado(cache_hit)) is NodoInstancia
+
+
+def test_obtener_ast_fragmento_resuelve_cache_sintactica(
+    monkeypatch, base_datos_temporal
+):
+    ast_cache = _reload_ast_cache(monkeypatch)
+    codigo = "clase Persona:\nfin\nvar persona = Persona()"
+
+    cache_miss = ast_cache.obtener_ast_fragmento(codigo)
+    cache_hit = ast_cache.obtener_ast_fragmento(codigo)
+
+    assert type(_valor_asignado(cache_miss)) is NodoInstancia
+    assert type(_valor_asignado(cache_hit)) is NodoInstancia
+    assert ast_cache._serialize(cache_hit) == ast_cache._serialize(cache_miss)

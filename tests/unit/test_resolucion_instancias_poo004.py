@@ -11,15 +11,25 @@ from pcobra.cobra.core.ast_nodes import (
 )
 from pcobra.cobra.core.lexer import Lexer
 from pcobra.cobra.core.parser import Parser
+from pcobra.cobra.core.resolucion_instancias import resolver_instanciaciones
 
 
 def _parsear(codigo: str):
-    return Parser(Lexer(codigo).analizar_token()).parsear()
+    ast_sintactico = Parser(Lexer(codigo).analizar_token()).parsear()
+    return resolver_instanciaciones(ast_sintactico)
 
 
 def _valor_asignado(nodo):
     assert type(nodo) is NodoAsignacion
     return nodo.expresion
+
+
+def test_parser_puro_conserva_llamada_sintactica():
+    ast = Parser(
+        Lexer("clase Persona:\nfin\nvar persona = Persona()").analizar_token()
+    ).parsear()
+
+    assert type(_valor_asignado(ast[1])) is NodoLlamadaFuncion
 
 
 def test_clase_sin_argumentos_produce_instancia():

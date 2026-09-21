@@ -284,12 +284,17 @@ una extensión normativa independiente.
 
 `var persona = Persona("Adolfo")` construye una representación neutral de
 instancia cuando `Persona` es una clase declarada previamente
-(**POO-004 — P1 — RESUELTO**). El reconocimiento ocurre en una fase neutral
+(**POO-004 — implementación funcional; cierre pendiente de hardening 42E.2**).
+Task 42E.1 sitúa el reconocimiento en una fase neutral
 inmediatamente posterior al parseo: el Parser conserva una llamada ordinaria
 durante el análisis sintáctico y `resolver_instanciaciones` la convierte en
 `NodoInstancia(nombre_clase, argumentos)` usando las declaraciones visibles,
 sin convenciones de mayúsculas ni nombres especiales. Los argumentos se
 conservan en su orden y las funciones continúan como `NodoLlamadaFuncion`.
+La caché conserva el AST sintáctico y aplica la resolución tanto en aciertos
+como en fallos, por lo que una entrada creada antes de 42E no cambia la
+semántica observable. El cierre definitivo queda pendiente de las reglas de
+ámbito y *shadowing* de 42E.2.
 
 La resolución respeta el orden del programa: no incorpora referencias hacia
 delante. Si un mismo ámbito declara clase y función con el mismo nombre, la

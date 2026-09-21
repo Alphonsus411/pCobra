@@ -327,20 +327,21 @@ def obtener_tokens(codigo: str):
 
 
 def obtener_ast(codigo: str):
-    """Obtiene el AST reutilizando la caché persistida si existe."""
+    """Obtiene y resuelve el AST reutilizando su forma sintáctica en caché."""
 
     hash_key = _checksum(codigo)
     ast = _load_ast(hash_key)
-    if ast is not None:
-        return ast
+    if ast is None:
+        tokens = obtener_tokens(codigo)
+        from importlib import import_module
 
-    tokens = obtener_tokens(codigo)
-    from importlib import import_module
+        parser_cls = getattr(import_module("pcobra.cobra.core.parser"), "Parser")
+        ast = parser_cls(tokens).parsear()
+        _store_ast(hash_key, codigo, ast)
 
-    parser_cls = getattr(import_module("pcobra.cobra.core.parser"), "Parser")
-    ast = parser_cls(tokens).parsear()
-    _store_ast(hash_key, codigo, ast)
-    return ast
+    from pcobra.cobra.core.resolucion_instancias import resolver_instanciaciones
+
+    return resolver_instanciaciones(ast)
 
 
 def obtener_tokens_fragmento(codigo: str):
@@ -359,21 +360,28 @@ def obtener_tokens_fragmento(codigo: str):
     return tokens
 
 
-def obtener_ast_fragmento(codigo: str):
-    """Obtiene el AST de un fragmento reutilizando la caché si existe."""
-
+def _obtener_ast_sintactico_fragmento(codigo: str):
+    """Obtiene el AST sintáctico de un fragmento para uso interno del parser."""
     hash_key = _checksum(codigo)
     ast = _load_fragment(hash_key, _FRAGMENT_AST_KEY)
-    if ast is not None:
-        return ast
+    if ast is None:
+        tokens = obtener_tokens_fragmento(codigo)
+        from importlib import import_module
 
-    tokens = obtener_tokens_fragmento(codigo)
-    from importlib import import_module
-
-    parser_cls = getattr(import_module("pcobra.cobra.core.parser"), "Parser")
-    ast = parser_cls(tokens).parsear()
-    _store_fragment(hash_key, codigo, _FRAGMENT_AST_KEY, ast)
+        parser_cls = getattr(import_module("pcobra.cobra.core.parser"), "Parser")
+        ast = parser_cls(tokens).parsear()
+        _store_fragment(hash_key, codigo, _FRAGMENT_AST_KEY, ast)
     return ast
+
+
+def obtener_ast_fragmento(codigo: str):
+    """Obtiene y resuelve un AST reutilizando su forma sintáctica en caché."""
+
+    ast = _obtener_ast_sintactico_fragmento(codigo)
+
+    from pcobra.cobra.core.resolucion_instancias import resolver_instanciaciones
+
+    return resolver_instanciaciones(ast)
 
 
 def limpiar_cache(*, vacuum: bool = False) -> None:

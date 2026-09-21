@@ -10,7 +10,7 @@ import sys
 from dataclasses import dataclass
 from typing import Any, Callable
 
-from pcobra.cobra.core import Lexer, Parser
+from pcobra.core.ast_cache import obtener_ast
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.utils.unicode_sanitize import sanitize_source_for_tokenizer
 from pcobra.cobra.cli.utils.validators import normalizar_validadores_extra
@@ -115,8 +115,7 @@ def prevalidar_y_parsear_codigo(codigo: str) -> Any:
     # - Aquí sólo aplicamos saneamiento Unicode compatible para tokenización,
     #   sin alterar reglas de Lexer/Parser.
     codigo_saneado = sanitize_source_for_tokenizer(codigo)
-    tokens = Lexer(codigo_saneado).tokenizar()
-    return Parser(tokens).parsear()
+    return obtener_ast(codigo_saneado)
 
 
 def ejecutar_ast(ast: Any, interpreter: Any) -> Any:
