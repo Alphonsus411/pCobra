@@ -1708,15 +1708,7 @@ class ClassicParser:
                     self.comer(TipoToken.IDENTIFICADOR)
                     while self.token_actual().tipo == TipoToken.PUNTO:
                         self.comer(TipoToken.PUNTO)
-                        es_nombre_metodo_literal = (
-                            self.token_actual().tipo == TipoToken.METODO
-                            and self.token_siguiente()
-                            and self.token_siguiente().tipo == TipoToken.LPAREN
-                        )
-                        if (
-                            self.token_actual().tipo != TipoToken.IDENTIFICADOR
-                            and not es_nombre_metodo_literal
-                        ):
+                        if self.token_actual().tipo != TipoToken.IDENTIFICADOR:
                             raise ParserError("Se esperaba el nombre del atributo")
                         nombre = self.token_actual().valor
                         self.avanzar()
