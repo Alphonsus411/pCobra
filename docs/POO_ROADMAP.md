@@ -248,10 +248,16 @@ cuando su cierre individual es estructuralmente inequívoco, sin convertirla en
 un segundo contrato normativo.
 
 La auditoría posterior de 42C detectó que `func` y `asincronico func` locales se
-interpretaban erróneamente como el siguiente método de clase. Task 42C.1 corrige
-esa regresión: solo `metodo` y `asincronico metodo` delimitan el método anterior,
-mientras el alias histórico `func` en el nivel de clase continúa aceptándose. Con
-esta prueba de regresión, POO-001 queda definitivamente resuelto.
+interpretaban erróneamente como el siguiente método de clase. Task 42C.1 corrigió
+esa regresión, pero una segunda auditoría descubrió la ambigüedad inversa: un
+`func` histórico al nivel de la clase podía quedar absorbido por el método
+normativo anterior. Task 42C.2 distingue ambos contextos mediante la columna
+estructural de la declaración: `func`/`asincronico func` al nivel del método se
+mantienen como funciones locales y al nivel de sus declaraciones hermanas se
+conservan como alias de método de clase. Las pruebas dirigidas verifican el
+número y tipo de métodos y el contenido exacto de sus cuerpos en ambas formas,
+incluidas las variantes asíncronas. Con la coexistencia comprobada de ambos
+contextos, POO-001 queda definitivamente resuelto.
 
 ## 8. Atributos
 

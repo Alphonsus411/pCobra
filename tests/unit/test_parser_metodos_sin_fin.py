@@ -307,3 +307,86 @@ fin
         "primero",
         "segundo",
     ]
+    assert [[type(nodo) for nodo in metodo.cuerpo] for metodo in clase.metodos] == [
+        [NodoImprimir],
+        [NodoImprimir],
+    ]
+
+
+def test_metodo_normativo_seguido_de_func_historico_no_lo_absorbe():
+    clase = _clase(
+        '''
+clase Ejemplo:
+    metodo primero(este):
+        imprimir "uno"
+
+    func segundo(este):
+        imprimir "dos"
+    fin
+fin
+'''
+    )
+
+    assert len(clase.metodos) == 2
+    primero, segundo = clase.metodos
+    assert [type(primero), type(segundo)] == [NodoMetodo, NodoMetodo]
+    assert [primero.nombre_original, segundo.nombre_original] == [
+        "primero",
+        "segundo",
+    ]
+    assert [type(nodo) for nodo in primero.cuerpo] == [NodoImprimir]
+    assert [type(nodo) for nodo in segundo.cuerpo] == [NodoImprimir]
+    assert not any(isinstance(nodo, NodoFuncion) for nodo in primero.cuerpo)
+
+
+def test_func_historico_seguido_de_metodo_normativo_produce_dos_metodos():
+    clase = _clase(
+        '''
+clase Ejemplo:
+    func primero(este):
+        imprimir "uno"
+    fin
+
+    metodo segundo(este):
+        imprimir "dos"
+fin
+'''
+    )
+
+    assert len(clase.metodos) == 2
+    assert [type(metodo) for metodo in clase.metodos] == [NodoMetodo, NodoMetodo]
+    assert [metodo.nombre_original for metodo in clase.metodos] == [
+        "primero",
+        "segundo",
+    ]
+    assert [[type(nodo) for nodo in metodo.cuerpo] for metodo in clase.metodos] == [
+        [NodoImprimir],
+        [NodoImprimir],
+    ]
+
+
+def test_metodo_normativo_seguido_de_func_historico_asincronico():
+    clase = _clase(
+        '''
+clase Ejemplo:
+    metodo primero(este):
+        imprimir "uno"
+
+    asincronico func segundo(este):
+        imprimir "dos"
+    fin
+fin
+'''
+    )
+
+    assert len(clase.metodos) == 2
+    primero, segundo = clase.metodos
+    assert [type(primero), type(segundo)] == [NodoMetodo, NodoMetodo]
+    assert [primero.nombre_original, segundo.nombre_original] == [
+        "primero",
+        "segundo",
+    ]
+    assert primero.asincronica is False
+    assert segundo.asincronica is True
+    assert [type(nodo) for nodo in primero.cuerpo] == [NodoImprimir]
+    assert [type(nodo) for nodo in segundo.cuerpo] == [NodoImprimir]
