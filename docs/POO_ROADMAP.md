@@ -58,9 +58,9 @@ POO_ROADMAP.md     → plan técnico para implementar y verificar ese contrato
 Task 42A.1 alineó el Libro con las decisiones `este` e `inicializar`, pero su
 revisión posterior detectó dos anticipaciones indebidas de la gramática vigente:
 la omisión del `fin` individual de cada método y el uso multiargumento de
-`imprimir`. Task 42A.2 devuelve el Libro a los cierres que acepta actualmente el
-Parser mientras 42C permanece pendiente, y hace que el smoke use exclusivamente
-una expresión soportada por `imprimir`. No cambia ninguna decisión POO
+`imprimir`. Task 42A.2 devolvió entonces el Libro a los cierres que aceptaba el
+Parser antes de 42C, y ajustó el smoke para usar exclusivamente una expresión
+soportada por `imprimir`. No cambió ninguna decisión POO
 fundamental ni afirma soporte productivo completo.
 
 ### ALINEACIÓN DOCUMENTAL TASK 42A.3
@@ -71,7 +71,7 @@ La revisión de 42A.2 detectó que incorporar el `fin` por método a la gramáti
 normativa confundía esa implementación actual con el contrato. Task 42A.3
 separa definitivamente **CONTRATO NORMATIVO** de **ESTADO ACTUAL DEL PARSER**:
 el primero no contiene cierres individuales de método y el segundo registra que
-el Parser todavía los exige. POO-001 sigue pendiente para 42C. Esta alineación
+el Parser todavía los exigía en ese momento. POO-001 quedó resuelto en 42C. Esta alineación
 es exclusivamente documental y no modifica código productivo.
 
 ## 2. Principio fundamental y frontera neutral
@@ -102,7 +102,7 @@ frontend o el AST/IR neutral.
 
 ## 3. Contrato sintáctico objetivo
 
-El **contrato normativo objetivo**, todavía en proceso de implementación, es:
+El **contrato normativo** implementado por el Parser es:
 
 ```cobra
 clase Persona:
@@ -114,8 +114,8 @@ clase Persona:
 fin
 ```
 
-Este fragmento es el contrato deseado y el Parser actual todavía lo rechaza por
-POO-001. No se modificará silenciosamente para acomodar esa limitación.
+Este fragmento es el contrato aprobado y el Parser lo acepta desde el cierre de
+POO-001 en Task 42C.
 
 El futuro smoke E2E contractual es:
 
@@ -221,7 +221,7 @@ representaciones de destino indicadas, nunca al AST neutral objetivo.
 
 ## 7. Cierre de métodos
 
-**ESTADO ACTUAL / REPRODUCTOR HISTÓRICO:** el Parser requiere:
+**REPRODUCTOR HISTÓRICO ANTERIOR A 42C:** el Parser requería:
 
 ```cobra
 clase Persona:
@@ -235,15 +235,17 @@ clase Persona:
 fin
 ```
 
-Esta forma sirve únicamente para reproducir la implementación vigente: no es
+Esta forma sirve únicamente para reproducir la implementación anterior: no es
 el contrato sintáctico objetivo, el smoke futuro ni un criterio de cierre. Que
 el Parser la acepte no crea un segundo dialecto oficial ni decide compatibilidad
 permanente.
 
-**OBJETIVO 42C / POO-001:** hacer que el contrato aprobado delimite cada método
-mediante el siguiente `metodo` o el `fin` de clase, sin cierres individuales.
-Este objetivo no está resuelto; Task 42A.3 solo separa documentalmente el
-contrato normativo del estado actual.
+**CONTRATO NORMATIVO (42C / POO-001 RESUELTO): los métodos NO llevan `fin`
+individual.** El Parser delimita cada cuerpo mediante el siguiente `metodo` (o
+su forma de método asíncrono) o el `fin` de clase. Los bloques anidados continúan
+consumiendo sus propios cierres. La forma histórica se conserva temporalmente
+cuando su cierre individual es estructuralmente inequívoco, sin convertirla en
+un segundo contrato normativo.
 
 ## 8. Atributos
 
@@ -365,7 +367,7 @@ sin prueba. Task 42A no resuelve ninguna reparación productiva.
 
 | ID | Severidad | Problema | Estado | Tarea |
 |---|---|---|---|---|
-| POO-001 | P1 | el Parser exige `fin` por método aunque el contrato delimita por el siguiente `metodo` o el `fin` de clase | PENDIENTE | 42C |
+| POO-001 | P1 | métodos delimitados por el siguiente `metodo` o el `fin` de clase, sin `fin` individual | RESUELTO | 42C |
 | POO-002 | P1 | `inicializar → __init__` ocurre en frontend/AST | PENDIENTE | 42C |
 | POO-003 | P1 | binding neutral de `este` ausente | PENDIENTE | 42C/42G |
 | POO-004 | P1 | instanciación inalcanzable desde fuente | PENDIENTE | 42E |
@@ -501,8 +503,9 @@ por lo que recibe una microtarea temprana y el resto se renumera:
    sin alterar las decisiones POO ni reparar código productivo.
 4. **42B — compatibilidad de identidad AST.** Normalizar `core.ast_nodes`,
    `pcobra.core.ast_nodes` y rutas relacionadas, con ambos órdenes de import.
-5. **42C — neutralidad de constructor/receptor en AST/frontend + cierre de
-   métodos.** Preservar identidad Cobra y hacer parseable el contrato aprobado.
+5. **42C — cierre de métodos (POO-001).** Hacer parseable el contrato aprobado
+   sin `fin` individual; no incluye la neutralidad pendiente de constructor o
+   receptor (POO-002/POO-003).
 6. **42D — llamada de método postfix desde texto.** Un nodo completo para 0/N
    argumentos, sin tokens residuales ni aceptación fragmentada.
 7. **42E — resolución neutral de instanciación.** Distinguir clase y función en
