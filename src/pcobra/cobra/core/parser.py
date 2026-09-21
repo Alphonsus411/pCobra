@@ -1340,6 +1340,30 @@ class ClassicParser:
         else:
             registro[metodo.nombre] = metodo
 
+    def _es_inicio_metodo(self) -> bool:
+        """Indica si el cursor apunta a una declaración de método de clase."""
+        if self.token_actual().tipo in [TipoToken.FUNC, TipoToken.METODO]:
+            return True
+        siguiente = self.token_siguiente()
+        return (
+            self.token_actual().tipo == TipoToken.ASINCRONICO
+            and siguiente is not None
+            and siguiente.tipo in [TipoToken.FUNC, TipoToken.METODO]
+        )
+
+    def _fin_metodo_historico(self) -> bool:
+        """Reconoce un ``fin`` individual inequívoco de la sintaxis histórica."""
+        if self.token_actual().tipo != TipoToken.FIN:
+            return False
+        siguiente = self.token_siguiente()
+        if siguiente is None:
+            return False
+        return siguiente.tipo == TipoToken.FIN or siguiente.tipo in [
+            TipoToken.FUNC,
+            TipoToken.METODO,
+            TipoToken.ASINCRONICO,
+        ]
+
     def declaracion_metodo(self, asincronica: bool = False):
         """Parsea la declaración de un método dentro de una clase."""
         if self.token_actual().tipo == TipoToken.ASINCRONICO:
@@ -1373,12 +1397,17 @@ class ClassicParser:
         self.comer(TipoToken.DOSPUNTOS)
 
         cuerpo = []
-        while self.token_actual().tipo not in [TipoToken.FIN, TipoToken.EOF]:
+        while (
+            self.token_actual().tipo not in [TipoToken.FIN, TipoToken.EOF]
+            and not self._es_inicio_metodo()
+        ):
             cuerpo.append(self.declaracion())
 
-        if self.token_actual().tipo != TipoToken.FIN:
-            raise ParserError("Se esperaba 'fin' para cerrar el método")
-        self.comer(TipoToken.FIN)
+        # El método termina estructuralmente ante el siguiente método o ante
+        # el ``fin`` que pertenece a la clase. Se conserva la forma histórica
+        # solo cuando el token posterior hace inequívoco su ``fin`` individual.
+        if self._fin_metodo_historico():
+            self.comer(TipoToken.FIN)
 
         return NodoMetodo(
             nombre,
@@ -1499,11 +1528,7 @@ class ClassicParser:
         metodos = []
         nombres_metodos: dict[str, NodoMetodo] = {}
         while self.token_actual().tipo not in [TipoToken.FIN, TipoToken.EOF]:
-            if self.token_actual().tipo in [
-                TipoToken.FUNC,
-                TipoToken.METODO,
-                TipoToken.ASINCRONICO,
-            ]:
+            if self._es_inicio_metodo():
                 metodo = self.declaracion_metodo()
                 self._verificar_choque_metodos(nombre, metodo, nombres_metodos)
                 metodos.append(metodo)
