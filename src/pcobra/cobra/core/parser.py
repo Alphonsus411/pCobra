@@ -1351,15 +1351,28 @@ class ClassicParser:
             and siguiente.tipo in [TipoToken.FUNC, TipoToken.METODO]
         )
 
-    def _es_delimitador_metodo(self) -> bool:
-        """Indica si comienza otro método según el contrato normativo."""
+    def _es_delimitador_metodo(self, columna_metodo: int | None) -> bool:
+        """Indica si comienza otro método al nivel del método actual."""
         if self.token_actual().tipo == TipoToken.METODO:
             return True
         siguiente = self.token_siguiente()
-        return (
+        if (
             self.token_actual().tipo == TipoToken.ASINCRONICO
             and siguiente is not None
             and siguiente.tipo == TipoToken.METODO
+        ):
+            return True
+
+        es_func = self.token_actual().tipo == TipoToken.FUNC
+        es_func_asincronica = (
+            self.token_actual().tipo == TipoToken.ASINCRONICO
+            and siguiente is not None
+            and siguiente.tipo == TipoToken.FUNC
+        )
+        return (
+            (es_func or es_func_asincronica)
+            and columna_metodo is not None
+            and self.token_actual().columna == columna_metodo
         )
 
     def _fin_metodo_historico(self) -> bool:
@@ -1377,6 +1390,7 @@ class ClassicParser:
 
     def declaracion_metodo(self, asincronica: bool = False):
         """Parsea la declaración de un método dentro de una clase."""
+        columna_metodo = self.token_actual().columna
         if self.token_actual().tipo == TipoToken.ASINCRONICO:
             self.comer(TipoToken.ASINCRONICO)
             asincronica = True
@@ -1410,7 +1424,7 @@ class ClassicParser:
         cuerpo = []
         while (
             self.token_actual().tipo not in [TipoToken.FIN, TipoToken.EOF]
-            and not self._es_delimitador_metodo()
+            and not self._es_delimitador_metodo(columna_metodo)
         ):
             cuerpo.append(self.declaracion())
 
