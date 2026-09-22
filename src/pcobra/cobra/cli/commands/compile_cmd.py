@@ -9,7 +9,7 @@ from pcobra.cobra.cli.target_policies import (
     parse_target,
     parse_target_list,
 )
-from pcobra.cobra.core.ast_cache import obtener_ast
+from pcobra.cobra.core.parsing import parsear_codigo_resuelto as obtener_ast
 from pcobra.cobra.core.sandbox import validar_dependencias
 from pcobra.cobra.core.semantic_validators import (
     PrimitivaPeligrosaError,

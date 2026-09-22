@@ -5,7 +5,6 @@ from pathlib import Path
 from typing import Any, List, Union
 
 from pcobra.core.lexer import Lexer
-from pcobra.core.parser import Parser
 from . import database
 from .qualia_knowledge import QualiaKnowledge
 
@@ -379,7 +378,9 @@ def register_execution(execution: Union[str, list]) -> None:
     """Registra una ejecución y persiste el estado actualizando el conocimiento."""
     if isinstance(execution, str):
         tokens = Lexer(execution).analizar_token()
-        ast = Parser(tokens).parsear()
+        from pcobra.cobra.core.parsing import parsear_tokens_resuelto
+
+        ast = parsear_tokens_resuelto(tokens)
         code = execution
     else:
         ast = execution
