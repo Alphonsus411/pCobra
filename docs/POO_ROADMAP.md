@@ -304,13 +304,22 @@ caché. Task 42E.2 completa el contrato con un modelo de bindings visibles:
 una declaración de clase habilita la conversión mientras que una asignación,
 una función o un parámetro posterior con el mismo nombre la enmascara. Los
 parámetros y asignaciones locales sólo alteran el ámbito de su función o
-método.
+método. Task 42E.2.1 completa la corrección y mantiene POO-004 como
+**RESUELTO**.
 
-Los bloques de control (`si`/`sino`, `mientras` y `para`) comparten el ámbito
-existente, igual que en el semántico y el intérprete; por ello las declaraciones
-recorridas en esos bloques actualizan la visibilidad posterior. En cambio, los
-cuerpos de funciones y métodos son ámbitos aislados, de modo que una clase
-local no se filtra al exterior. La resolución memoiza cada nodo por identidad:
+Los bloques de control (`si`/`sino`, `mientras` y `para`) operan sobre el ámbito
+de runtime existente, pero el resolver estático no confunde recorrer una rama
+con ejecutarla. Resuelve cada camino sobre una copia y hace un merge
+conservador: sólo conserva un binding de clase u otro binding cuando todos los
+caminos posibles coinciden; una discrepancia queda ambigua y no se convierte
+posteriormente en instancia. No se añade evaluación de constantes, por lo que
+incluso `si falso` contempla estáticamente ambos caminos. Los bucles fusionan
+el estado de cero iteraciones con el de una iteración analizada, incluida la
+variable iteradora de `para`.
+
+Los scopes reales de `con`, funciones y métodos aíslan sus bindings, de modo
+que una asignación o clase local no se filtra al exterior. La resolución
+memoiza cada nodo por identidad:
 si varios atributos apuntan al mismo nodo, como `NodoAsignacion.expresion` y
 `NodoAsignacion.valor`, ambos siguen apuntando al mismo objeto transformado.
 
