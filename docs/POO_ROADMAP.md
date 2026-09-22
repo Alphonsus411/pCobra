@@ -304,8 +304,9 @@ caché. Task 42E.2 completa el contrato con un modelo de bindings visibles:
 una declaración de clase habilita la conversión mientras que una asignación,
 una función o un parámetro posterior con el mismo nombre la enmascara. Los
 parámetros y asignaciones locales sólo alteran el ámbito de su función o
-método. Task 42E.2.1 completa la corrección y mantiene POO-004 como
-**RESUELTO**.
+método. Task 42E.2.1 completa el merge conservador y Task 42E.2.3 alinea la
+propagación de escrituras de `con` con la profundidad real de runtime; POO-004
+se mantiene **RESUELTO** tras cubrir esos escenarios.
 
 Los bloques de control (`si`/`sino`, `mientras` y `para`) operan sobre el ámbito
 de runtime existente, pero el resolver estático no confunde recorrer una rama
@@ -318,9 +319,23 @@ el estado de cero iteraciones con el de una iteración analizada, incluida la
 variable iteradora de `para`.
 
 Los scopes reales de funciones y métodos aíslan sus bindings. El entorno hijo
-de `con` aísla sus declaraciones locales (incluidos su alias y las clases),
-pero una asignación normal actualiza un binding exterior existente, igual que
-`Environment.set`; si el nombre no existe, se crea sólo en el entorno hijo.
+de `con` aísla sus declaraciones locales (incluidos su alias y las clases). En
+runtime, una asignación normal busca el entorno más cercano que contiene el
+nombre: desde un `con` global actualiza el binding global; desde un `con`
+dentro de función, un binding global también se actualiza, pero un binding de
+la función (índice intermedio entre global y el `con`) se sombrea en el entorno
+actual. Los `con` más profundos conservan esa misma regla: sólo atraviesan los
+entornos intermedios para escribir en global; un nombre inexistente se crea en
+el `con` actual y no escapa.
+
+Task 42E.2.3 transporta esas escrituras globales como un efecto componible del
+mismo análisis conservador de bindings. Una escritura directa se propaga; en
+`si`, sólo un efecto coincidente en ambas ramas queda determinado y cualquier
+diferencia queda ambigua; `mientras` y `para` fusionan el efecto de cero
+iteraciones con el de la iteración analizada. Un `con` anidado entrega sus
+efectos al `con` exterior, mientras las declaraciones locales y el alias no
+producen efectos externos. El resolver no interpreta condiciones ni
+iterables.
 La resolución memoiza cada nodo por identidad:
 si varios atributos apuntan al mismo nodo, como `NodoAsignacion.expresion` y
 `NodoAsignacion.valor`, ambos siguen apuntando al mismo objeto transformado.

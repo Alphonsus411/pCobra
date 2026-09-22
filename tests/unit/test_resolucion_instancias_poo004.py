@@ -610,6 +610,96 @@ def test_asignacion_externa_en_con_persiste_fuera():
     assert type(_valor_asignado(ast[3])) is NodoLlamadaFuncion
 
 
+def test_con_propaga_asignacion_externa_si_ambas_ramas_escriben():
+    ast = _parsear(
+        "clase C:\nfin\n"
+        "func f():\n"
+        "    retornar 1\n"
+        "fin\n"
+        "con recurso:\n"
+        "    si condicion:\n"
+        "        C = f\n"
+        "    sino:\n"
+        "        C = f\n"
+        "    fin\n"
+        "fin\n"
+        "var x = C()"
+    )
+
+    assert type(_valor_asignado(ast[3])) is NodoLlamadaFuncion
+
+
+def test_con_deja_ambiguo_write_externo_de_una_sola_rama():
+    ast = _parsear(
+        "clase C:\nfin\n"
+        "con recurso:\n"
+        "    si condicion:\n"
+        "        C = f\n"
+        "    fin\n"
+        "fin\n"
+        "var x = C()"
+    )
+
+    assert type(_valor_asignado(ast[2])) is NodoLlamadaFuncion
+
+
+def test_con_deja_ambiguo_write_externo_dentro_de_mientras():
+    ast = _parsear(
+        "clase C:\nfin\n"
+        "con recurso:\n"
+        "    mientras condicion:\n"
+        "        C = f\n"
+        "    fin\n"
+        "fin\n"
+        "var x = C()"
+    )
+
+    assert type(_valor_asignado(ast[2])) is NodoLlamadaFuncion
+
+
+def test_con_deja_ambiguo_write_externo_dentro_de_para():
+    ast = _parsear(
+        "clase C:\nfin\n"
+        "con recurso:\n"
+        "    para elemento en [1]:\n"
+        "        C = f\n"
+        "    fin\n"
+        "fin\n"
+        "var x = C()"
+    )
+
+    assert type(_valor_asignado(ast[2])) is NodoLlamadaFuncion
+
+
+def test_con_anidado_propaga_write_hasta_binding_global():
+    ast = _parsear(
+        "clase C:\nfin\n"
+        "con recurso1:\n"
+        "    con recurso2:\n"
+        "        C = f\n"
+        "    fin\n"
+        "fin\n"
+        "var x = C()"
+    )
+
+    assert type(_valor_asignado(ast[2])) is NodoLlamadaFuncion
+
+
+def test_con_en_funcion_no_reemplaza_clase_local_de_funcion():
+    ast = _parsear(
+        "func probar():\n"
+        "    clase C:\n"
+        "    fin\n"
+        "    con recurso:\n"
+        "        C = f\n"
+        "    fin\n"
+        "    C()\n"
+        "fin"
+    )
+
+    assert type(ast[0].cuerpo[-1]) is NodoInstancia
+
+
 def test_asignacion_de_nombre_nuevo_en_con_no_escapa():
     ast = _parsear(
         "func f():\n"
