@@ -164,7 +164,7 @@ class CompileCommand(BaseCommand):
     name = "compilar"
     capability = "codegen"
     aliases = ("transpilar",)
-    requires_sqlite_key: bool = True
+    requires_sqlite_key: bool = False
 
     def register_subparser(self, subparsers):
         """Registra los argumentos del subcomando."""

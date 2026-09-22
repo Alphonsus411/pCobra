@@ -11,6 +11,8 @@ from importlib.metadata import PackageNotFoundError, version
 from ipykernel.kernelbase import Kernel
 from jupyter_client.kernelspec import KernelSpecManager
 
+from pcobra.cobra.core.parsing import parsear_tokens_resuelto
+
 
 def _importar_modulo_runtime(
     canonical: str,
@@ -167,7 +169,7 @@ class CobraKernel(Kernel):
         try:
             with contextlib.redirect_stdout(stdout):
                 tokens = self._lexer_cls(code).tokenizar()
-                ast = self._parser_cls(tokens).parsear()
+                ast = parsear_tokens_resuelto(tokens, parser_cls=self._parser_cls)
                 python_error: Exception | None = None
                 if self.use_python:
                     try:

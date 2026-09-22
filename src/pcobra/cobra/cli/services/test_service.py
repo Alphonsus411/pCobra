@@ -24,7 +24,7 @@ from pcobra.cobra.cli.target_policies import (
 from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
 from pcobra.cobra.cli.utils.source import read_cobra_source
 from pcobra.cobra.cli.utils.validators import validar_archivo_existente
-from pcobra.cobra.core import Lexer, Parser
+from pcobra.cobra.core.parsing import parsear_codigo_resuelto
 
 MAX_FILE_SIZE = 10 * 1024 * 1024
 VALID_EXTENSIONS = {".cobra"}
@@ -55,8 +55,7 @@ class TestService:
             self.validate_languages(lenguajes)
 
             codigo = self.read_source_file(request.archivo)
-            tokens = Lexer(codigo).tokenizar()
-            ast = Parser(tokens).parsear()
+            ast = parsear_codigo_resuelto(codigo)
 
             with patch("sys.stdout", new_callable=StringIO) as out:
                 self._interprete.ejecutar_ast(ast)
