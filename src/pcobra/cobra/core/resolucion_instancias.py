@@ -8,18 +8,40 @@ from pcobra.cobra.core.ast_nodes import (
     NodoAST,
     NodoAsignacion,
     NodoBloque,
+    NodoBucleMientras,
     NodoClase,
+    NodoCondicional,
     NodoFuncion,
     NodoInstancia,
     NodoLlamadaFuncion,
     NodoMetodo,
     NodoPara,
+    NodoWith,
 )
 
 _CLASE = "clase"
 _OTRO = "otro"
+_AMBIGUO = "ambiguo"
 Bindings = dict[str, str]
 Memo = dict[int, Any]
+
+
+def _fusionar_bindings(bindings: Bindings, caminos: Iterable[Bindings]) -> None:
+    """Conserva sólo la información coincidente en todos los caminos posibles."""
+
+    estados = list(caminos)
+    nombres = set().union(bindings, *(estado.keys() for estado in estados))
+    ausente = object()
+    for nombre in nombres:
+        valores = {estado.get(nombre, ausente) for estado in estados}
+        if len(valores) == 1:
+            valor = valores.pop()
+            if valor is ausente:
+                bindings.pop(nombre, None)
+            else:
+                bindings[nombre] = valor
+        else:
+            bindings[nombre] = _AMBIGUO
 
 
 def resolver_instanciaciones(ast: list[NodoAST]) -> list[NodoAST]:
@@ -101,12 +123,41 @@ def _resolver_nodo(
         _resolver_bloque(nodo.cuerpo, bindings_locales, memo)
         return nodo
 
+    if isinstance(nodo, NodoCondicional):
+        memo[identidad] = nodo
+        nodo.condicion = _resolver_nodo(nodo.condicion, bindings, ambiguos, memo)
+        bindings_si = bindings.copy()
+        _resolver_bloque(nodo.bloque_si, bindings_si, memo)
+        bindings_sino = bindings.copy()
+        _resolver_bloque(nodo.bloque_sino, bindings_sino, memo)
+        _fusionar_bindings(bindings, (bindings_si, bindings_sino))
+        return nodo
+
+    if isinstance(nodo, NodoBucleMientras):
+        memo[identidad] = nodo
+        nodo.condicion = _resolver_nodo(nodo.condicion, bindings, ambiguos, memo)
+        bindings_iteracion = bindings.copy()
+        _resolver_bloque(nodo.cuerpo, bindings_iteracion, memo)
+        _fusionar_bindings(bindings, (bindings.copy(), bindings_iteracion))
+        return nodo
+
     if isinstance(nodo, NodoPara):
         memo[identidad] = nodo
         nodo.iterable = _resolver_nodo(nodo.iterable, bindings, ambiguos, memo)
+        bindings_iteracion = bindings.copy()
         if isinstance(nodo.variable, str):
-            bindings[nodo.variable] = _OTRO
-        _resolver_bloque(nodo.cuerpo, bindings, memo)
+            bindings_iteracion[nodo.variable] = _OTRO
+        _resolver_bloque(nodo.cuerpo, bindings_iteracion, memo)
+        _fusionar_bindings(bindings, (bindings.copy(), bindings_iteracion))
+        return nodo
+
+    if isinstance(nodo, NodoWith):
+        memo[identidad] = nodo
+        nodo.contexto = _resolver_nodo(nodo.contexto, bindings, ambiguos, memo)
+        bindings_locales = bindings.copy()
+        if isinstance(nodo.alias, str):
+            bindings_locales[nodo.alias] = _OTRO
+        _resolver_bloque(nodo.cuerpo, bindings_locales, memo)
         return nodo
 
     if isinstance(nodo, NodoBloque):

@@ -491,7 +491,7 @@ def test_asignacion_local_sombrea_clase_externa_dentro_de_funcion():
     assert type(ast[1].cuerpo[2]) is NodoLlamadaFuncion
 
 
-def test_clase_de_bloque_condicional_permanece_visible():
+def test_clase_de_bloque_condicional_no_se_asume_ejecutada():
     ast = _parsear(
         "si verdadero:\n"
         "    clase C:\n"
@@ -500,10 +500,10 @@ def test_clase_de_bloque_condicional_permanece_visible():
         "var x = C()"
     )
 
-    assert type(_valor_asignado(ast[1])) is NodoInstancia
+    assert type(_valor_asignado(ast[1])) is NodoLlamadaFuncion
 
 
-def test_clase_de_bucle_permanece_visible():
+def test_clase_de_bucle_no_se_asume_ejecutada():
     ast = _parsear(
         "mientras falso:\n"
         "    clase C:\n"
@@ -512,10 +512,10 @@ def test_clase_de_bucle_permanece_visible():
         "var x = C()"
     )
 
-    assert type(_valor_asignado(ast[1])) is NodoInstancia
+    assert type(_valor_asignado(ast[1])) is NodoLlamadaFuncion
 
 
-def test_variable_de_bucle_sombrea_clase_en_el_ambito_compartido():
+def test_variable_de_bucle_sombrea_clase_solo_en_el_camino_iterado():
     ast = _parsear(
         "clase C:\n"
         "fin\n"
@@ -527,6 +527,82 @@ def test_variable_de_bucle_sombrea_clase_en_el_ambito_compartido():
 
     assert type(ast[1].cuerpo[0]) is NodoLlamadaFuncion
     assert type(_valor_asignado(ast[2])) is NodoLlamadaFuncion
+
+
+def test_if_con_shadowing_condicional_deja_binding_ambiguo():
+    ast = _parsear(
+        "clase C:\nfin\n"
+        "si falso:\n"
+        "    var C = 0\n"
+        "fin\n"
+        "var x = C()"
+    )
+
+    # El resolver no hace constant folding: considera ejecutada y no ejecutada.
+    assert type(_valor_asignado(ast[2])) is NodoLlamadaFuncion
+
+
+def test_ambas_ramas_con_la_misma_clase_conservan_binding_seguro():
+    ast = _parsear(
+        "si condicion:\n"
+        "    clase C:\n"
+        "    fin\n"
+        "sino:\n"
+        "    clase C:\n"
+        "    fin\n"
+        "fin\n"
+        "var x = C()"
+    )
+
+    assert type(_valor_asignado(ast[1])) is NodoInstancia
+
+
+def test_while_con_shadowing_no_asume_una_iteracion():
+    ast = _parsear(
+        "clase C:\nfin\n"
+        "mientras condicion:\n"
+        "    var C = 0\n"
+        "fin\n"
+        "var x = C()"
+    )
+
+    assert type(_valor_asignado(ast[2])) is NodoLlamadaFuncion
+
+
+def test_para_con_shadowing_no_asume_una_iteracion():
+    ast = _parsear(
+        "clase C:\nfin\n"
+        "para elemento en []:\n"
+        "    var C = 0\n"
+        "fin\n"
+        "var x = C()"
+    )
+
+    assert type(_valor_asignado(ast[2])) is NodoLlamadaFuncion
+
+
+def test_shadowing_interno_de_con_no_escapa():
+    ast = _parsear(
+        "clase C:\nfin\n"
+        "con recurso:\n"
+        "    var C = 0\n"
+        "fin\n"
+        "var x = C()"
+    )
+
+    assert type(_valor_asignado(ast[2])) is NodoInstancia
+
+
+def test_clase_local_de_con_no_escapa():
+    ast = _parsear(
+        "con recurso:\n"
+        "    clase Local:\n"
+        "    fin\n"
+        "fin\n"
+        "var x = Local()"
+    )
+
+    assert type(_valor_asignado(ast[1])) is NodoLlamadaFuncion
 
 
 def test_clase_local_de_funcion_no_escapa_al_ambito_externo():
