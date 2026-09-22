@@ -41,6 +41,10 @@ def _valor_asignado(nodo):
     return nodo.expresion
 
 
+def _fallar_si_se_usa_cache(_codigo):
+    raise AssertionError("La caché no debe usarse sin una SQLITE_DB_KEY efectiva")
+
+
 def test_parser_puro_conserva_llamada_sintactica():
     ast = Parser(
         Lexer("clase Persona:\nfin\nvar persona = Persona()").analizar_token()
@@ -49,14 +53,51 @@ def test_parser_puro_conserva_llamada_sintactica():
     assert type(_valor_asignado(ast[1])) is NodoLlamadaFuncion
 
 
-def test_frontera_publica_sin_sqlite_devuelve_instancia(monkeypatch):
+def test_frontera_publica_sin_variable_sqlite_devuelve_instancia(monkeypatch):
     monkeypatch.delenv("SQLITE_DB_KEY", raising=False)
+    monkeypatch.setattr("pcobra.core.ast_cache.obtener_ast", _fallar_si_se_usa_cache)
 
     ast = parsear_codigo_resuelto(
         "clase Persona:\nfin\nvar persona = Persona()"
     )
 
     assert type(_valor_asignado(ast[1])) is NodoInstancia
+
+
+def test_frontera_publica_con_clave_sqlite_vacia_devuelve_instancia(monkeypatch):
+    monkeypatch.setenv("SQLITE_DB_KEY", "")
+    monkeypatch.setattr("pcobra.core.ast_cache.obtener_ast", _fallar_si_se_usa_cache)
+
+    ast = parsear_codigo_resuelto(
+        "clase Persona:\nfin\nvar persona = Persona()"
+    )
+
+    assert type(_valor_asignado(ast[1])) is NodoInstancia
+
+
+def test_frontera_publica_con_clave_sqlite_blanca_devuelve_instancia(monkeypatch):
+    monkeypatch.setenv("SQLITE_DB_KEY", "   ")
+    monkeypatch.setattr("pcobra.core.ast_cache.obtener_ast", _fallar_si_se_usa_cache)
+
+    ast = parsear_codigo_resuelto(
+        "clase Persona:\nfin\nvar persona = Persona()"
+    )
+
+    assert type(_valor_asignado(ast[1])) is NodoInstancia
+
+
+def test_frontera_publica_con_clave_sqlite_real_usa_cache(monkeypatch):
+    ast_cacheado = [object()]
+    monkeypatch.setenv("SQLITE_DB_KEY", "clave-valida")
+    monkeypatch.setattr(
+        "pcobra.core.ast_cache.obtener_ast", lambda _codigo: ast_cacheado
+    )
+
+    ast = parsear_codigo_resuelto(
+        "clase Persona:\nfin\nvar persona = Persona()"
+    )
+
+    assert ast is ast_cacheado
 
 
 def test_jupyter_entrega_ast_resuelto_al_interprete(monkeypatch):
@@ -213,7 +254,7 @@ def test_verification_service_entrega_ast_resuelto_a_runtime_y_transpilacion(
 def test_compile_sin_sqlite_alcanza_transpilacion_con_ast_resuelto(
     tmp_path, monkeypatch
 ):
-    monkeypatch.delenv("SQLITE_DB_KEY", raising=False)
+    monkeypatch.setenv("SQLITE_DB_KEY", "")
     archivo = tmp_path / "persona.cobra"
     archivo.write_text(
         "clase Persona:\nfin\nvar persona = Persona()", encoding="utf-8"
@@ -256,7 +297,7 @@ def test_compile_sin_sqlite_alcanza_transpilacion_con_ast_resuelto(
 def test_benchtranspilers_sin_sqlite_alcanza_transpilacion_con_ast_resuelto(
     tmp_path, monkeypatch
 ):
-    monkeypatch.delenv("SQLITE_DB_KEY", raising=False)
+    monkeypatch.setenv("SQLITE_DB_KEY", "")
     codigo = "clase Persona:\nfin\nvar persona = Persona()"
     capturados = []
     for size in bench_transpilers_cmd.VALID_SIZES:
