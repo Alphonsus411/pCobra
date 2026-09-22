@@ -74,6 +74,39 @@ def test_nolocal_lee_y_escribe_binding_de_funcion_exterior() -> None:
     assert inter.obtener_variable("resultado") == 2
 
 
+def test_nolocal_escribe_binding_exterior_desde_con() -> None:
+    inter = _ejecutar(
+        [
+            NodoFuncion(
+                "exterior",
+                [],
+                [
+                    NodoAsignacion("x", NodoValor(1), declaracion=True),
+                    NodoFuncion(
+                        "interior",
+                        [],
+                        [
+                            NodoNoLocal(["x"]),
+                            NodoWith(
+                                NodoValor(None),
+                                None,
+                                [NodoAsignacion("x", NodoValor(9))],
+                            ),
+                        ],
+                    ),
+                    NodoLlamadaFuncion("interior", []),
+                    NodoRetorno(NodoIdentificador("x")),
+                ],
+            ),
+            NodoAsignacion(
+                "resultado", NodoLlamadaFuncion("exterior", []), declaracion=True
+            ),
+        ]
+    )
+
+    assert inter.obtener_variable("resultado") == 9
+
+
 def test_nolocal_busca_el_binding_mas_cercano_en_dos_niveles() -> None:
     inter = _ejecutar(
         [

@@ -15,6 +15,7 @@ from pcobra.cobra.core.ast_nodes import (
     NodoInstancia,
     NodoLlamadaFuncion,
     NodoMetodo,
+    NodoNoLocal,
     NodoPara,
     NodoWith,
 )
@@ -24,6 +25,7 @@ _OTRO = "otro"
 _AMBIGUO = "ambiguo"
 _GLOBAL = "global"
 _LOCAL = "local"
+_NONLOCAL = "nolocal"
 _ALCANCE_AMBIGUO = "alcance_ambiguo"
 Bindings = dict[str, str]
 Alcances = dict[str, str]
@@ -55,10 +57,8 @@ def _fusionar_alcances(alcances: Alcances, caminos: Iterable[Alcances]) -> None:
     nombres = set().union(alcances, *(estado.keys() for estado in estados))
     for nombre in nombres:
         valores = {estado.get(nombre, _LOCAL) for estado in estados}
-        if valores == {_GLOBAL}:
-            alcances[nombre] = _GLOBAL
-        elif valores == {_LOCAL}:
-            alcances[nombre] = _LOCAL
+        if len(valores) == 1:
+            alcances[nombre] = valores.pop()
         else:
             alcances[nombre] = _ALCANCE_AMBIGUO
 
@@ -155,7 +155,7 @@ def _resolver_bloque(
                     alcance = globales.get(nombre, _LOCAL)
                     if nombre not in (nombres_externos or set()):
                         continue
-                    if alcance == _GLOBAL:
+                    if alcance in (_GLOBAL, _NONLOCAL):
                         escrituras_externas[nombre] = _OTRO
                     elif alcance == _ALCANCE_AMBIGUO:
                         escrituras_externas[nombre] = _AMBIGUO
@@ -243,6 +243,13 @@ def _resolver_nodo(
             globales=globales_locales,
             scope_global=False,
         )
+        return nodo
+
+    if isinstance(nodo, NodoNoLocal):
+        memo[identidad] = nodo
+        for nombre in nodo.nombres:
+            if globales.get(nombre) in (_LOCAL, _NONLOCAL):
+                globales[nombre] = _NONLOCAL
         return nodo
 
     if isinstance(nodo, NodoCondicional):
