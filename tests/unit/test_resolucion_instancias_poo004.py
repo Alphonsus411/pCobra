@@ -581,6 +581,100 @@ def test_para_con_shadowing_no_asume_una_iteracion():
     assert type(_valor_asignado(ast[2])) is NodoLlamadaFuncion
 
 
+def test_con_con_alcance_global_o_local_condicional_propaga_efecto_ambiguo():
+    ast = _parsear(
+        "clase C:\nfin\n"
+        "con recurso:\n"
+        "    si condicion:\n"
+        "        var C = 0\n"
+        "    fin\n"
+        "    C = f\n"
+        "fin\n"
+        "var x = C()"
+    )
+
+    assert type(_valor_asignado(ast[2])) is NodoLlamadaFuncion
+
+
+def test_clase_global_en_ambas_ramas_permite_write_externo_posterior():
+    ast = _parsear(
+        "si condicion:\n"
+        "    clase C:\n"
+        "    fin\n"
+        "sino:\n"
+        "    clase C:\n"
+        "    fin\n"
+        "fin\n"
+        "con recurso:\n"
+        "    C = f\n"
+        "fin\n"
+        "var x = C()"
+    )
+
+    assert type(_valor_asignado(ast[2])) is NodoLlamadaFuncion
+
+
+def test_con_fusiona_rama_local_y_rama_global_como_alcance_ambiguo():
+    ast = _parsear(
+        "clase C:\nfin\n"
+        "con recurso:\n"
+        "    si condicion:\n"
+        "        var C = 0\n"
+        "    sino:\n"
+        "        C = f\n"
+        "    fin\n"
+        "    C = f\n"
+        "fin\n"
+        "var x = C()"
+    )
+
+    assert type(_valor_asignado(ast[2])) is NodoLlamadaFuncion
+
+
+def test_con_no_inventa_global_ante_declaracion_local_condicional():
+    ast = _parsear(
+        "con recurso:\n"
+        "    si condicion:\n"
+        "        var X = 1\n"
+        "    fin\n"
+        "    X = f\n"
+        "fin\n"
+        "var resultado = X()"
+    )
+
+    assert type(_valor_asignado(ast[1])) is NodoLlamadaFuncion
+
+
+def test_con_con_while_de_alcance_ambiguo_conserva_posible_write_global():
+    ast = _parsear(
+        "clase C:\nfin\n"
+        "con recurso:\n"
+        "    mientras condicion:\n"
+        "        var C = 0\n"
+        "    fin\n"
+        "    C = f\n"
+        "fin\n"
+        "var x = C()"
+    )
+
+    assert type(_valor_asignado(ast[2])) is NodoLlamadaFuncion
+
+
+def test_con_con_para_de_alcance_ambiguo_conserva_posible_write_global():
+    ast = _parsear(
+        "clase C:\nfin\n"
+        "con recurso:\n"
+        "    para elemento en [1]:\n"
+        "        var C = 0\n"
+        "    fin\n"
+        "    C = f\n"
+        "fin\n"
+        "var x = C()"
+    )
+
+    assert type(_valor_asignado(ast[2])) is NodoLlamadaFuncion
+
+
 def test_shadowing_interno_de_con_no_escapa():
     ast = _parsear(
         "clase C:\nfin\n"

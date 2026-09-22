@@ -305,8 +305,9 @@ una declaración de clase habilita la conversión mientras que una asignación,
 una función o un parámetro posterior con el mismo nombre la enmascara. Los
 parámetros y asignaciones locales sólo alteran el ámbito de su función o
 método. Task 42E.2.1 completa el merge conservador y Task 42E.2.3 alinea la
-propagación de escrituras de `con` con la profundidad real de runtime; POO-004
-se mantiene **RESUELTO** tras cubrir esos escenarios.
+propagación de escrituras de `con` con la profundidad real de runtime. Task
+42E.2.4 completa el seguimiento path-sensitive del alcance; POO-004 se
+mantiene **RESUELTO** tras cubrir esos escenarios.
 
 Los bloques de control (`si`/`sino`, `mientras` y `para`) operan sobre el ámbito
 de runtime existente, pero el resolver estático no confunde recorrer una rama
@@ -317,6 +318,15 @@ posteriormente en instancia. No se añade evaluación de constantes, por lo que
 incluso `si falso` contempla estáticamente ambos caminos. Los bucles fusionan
 el estado de cero iteraciones con el de una iteración analizada, incluida la
 variable iteradora de `para`.
+
+El alcance de cada nombre también se modela con tres estados: global seguro,
+local seguro o ambiguo según el camino. Dos caminos globales conservan el
+alcance global y dos caminos locales conservan el local; cualquier mezcla de
+global y local, o con un alcance ya ambiguo, produce alcance ambiguo. La
+ausencia de un nombre se considera no global, de modo que una declaración
+local condicional no inventa un binding global. `si`/`sino`, `mientras` y
+`para` reciben explícitamente el contexto de módulo, por lo que las
+declaraciones realizadas en sus bloques mantienen el alcance que usa runtime.
 
 Los scopes reales de funciones y métodos aíslan sus bindings. El entorno hijo
 de `con` aísla sus declaraciones locales (incluidos su alias y las clases). En
@@ -335,7 +345,9 @@ diferencia queda ambigua; `mientras` y `para` fusionan el efecto de cero
 iteraciones con el de la iteración analizada. Un `con` anidado entrega sus
 efectos al `con` exterior, mientras las declaraciones locales y el alias no
 producen efectos externos. El resolver no interpreta condiciones ni
-iterables.
+iterables. Si el alcance del destino depende del camino, la escritura se
+propaga como efecto externo ambiguo: conserva la posibilidad de modificar el
+binding global sin afirmar que lo hace en todos los caminos.
 La resolución memoiza cada nodo por identidad:
 si varios atributos apuntan al mismo nodo, como `NodoAsignacion.expresion` y
 `NodoAsignacion.valor`, ambos siguen apuntando al mismo objeto transformado.
