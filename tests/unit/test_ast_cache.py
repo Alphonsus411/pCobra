@@ -156,9 +156,11 @@ def test_pipeline_publico_devuelve_ast_resuelto(monkeypatch, base_datos_temporal
     _reload_ast_cache(monkeypatch)
     codigo = "clase Persona:\nfin\nvar persona = Persona()"
 
-    ast = prevalidar_y_parsear_codigo(codigo)
+    cache_miss = prevalidar_y_parsear_codigo(codigo)
+    cache_hit = prevalidar_y_parsear_codigo(codigo)
 
-    assert type(_valor_asignado(ast)) is NodoInstancia
+    assert type(_valor_asignado(cache_miss)) is NodoInstancia
+    assert type(_valor_asignado(cache_hit)) is NodoInstancia
 
 
 def test_obtener_ast_resuelve_cache_sintactica_anterior_a_42e(

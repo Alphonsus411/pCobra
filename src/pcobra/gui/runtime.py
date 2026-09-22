@@ -1372,9 +1372,11 @@ def crear_handler_guardar_como(
 def analizar_codigo(codigo: str) -> tuple[list[Any], Any]:
     """Ejecuta Lexer y Parser una vez y devuelve tokens y AST."""
 
+    from pcobra.cobra.core.parsing import parsear_tokens_resuelto
+
     deps = require_gui_dependencies()
     tokens = deps["Lexer"](codigo).tokenizar()
-    ast = deps["Parser"](tokens).parsear()
+    ast = parsear_tokens_resuelto(tokens, parser_cls=deps["Parser"])
     return tokens, ast
 
 

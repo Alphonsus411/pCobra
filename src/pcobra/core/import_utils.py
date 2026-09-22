@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Iterable, FrozenSet, Tuple, List
 
 from pcobra.core.lexer import Lexer
-from pcobra.core.parser import Parser
+from pcobra.cobra.core.parsing import parsear_tokens_resuelto
 from pcobra.cobra.extensions import es_fuente_cobra
 from pcobra.cobra.usar_loader import formatear_ciclo_modulos_cobra_proyecto
 from .ast_nodes import NodoAsignacion, NodoClase, NodoFuncion, NodoExport
@@ -131,8 +131,7 @@ def cargar_ast_modulo(
                 )
         lexer = Lexer(codigo)
         tokens = lexer.analizar_token()
-        parser = Parser(tokens)
-        return parser.parsear()
+        return parsear_tokens_resuelto(tokens)
     finally:
         if loading_stack is not None:
             loading_stack.pop()

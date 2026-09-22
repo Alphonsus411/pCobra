@@ -293,8 +293,11 @@ sin convenciones de mayúsculas ni nombres especiales. Los argumentos se
 conservan en su orden y las funciones continúan como `NodoLlamadaFuncion`.
 La caché conserva el AST sintáctico y aplica la resolución tanto en aciertos
 como en fallos, por lo que una entrada creada antes de 42E no cambia la
-semántica observable. El cierre definitivo queda pendiente de las reglas de
-ámbito y *shadowing* de 42E.2.
+semántica observable. Task 42E.1.1 unifica los consumidores de producto en
+una frontera pública de AST resuelto y mantiene la caché SQLite como una
+optimización opcional: sin `SQLITE_DB_KEY`, la frontera usa directamente
+Lexer, Parser y resolución neutral. El cierre definitivo queda pendiente de las
+reglas de ámbito y *shadowing* de 42E.2.
 
 La resolución respeta el orden del programa: no incorpora referencias hacia
 delante. Si un mismo ámbito declara clase y función con el mismo nombre, la

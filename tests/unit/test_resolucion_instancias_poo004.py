@@ -12,6 +12,8 @@ from pcobra.cobra.core.ast_nodes import (
 from pcobra.cobra.core.lexer import Lexer
 from pcobra.cobra.core.parser import Parser
 from pcobra.cobra.core.resolucion_instancias import resolver_instanciaciones
+from pcobra.cobra.core.parsing import parsear_codigo_resuelto
+from pcobra.core.import_utils import cargar_ast_modulo
 
 
 def _parsear(codigo: str):
@@ -30,6 +32,40 @@ def test_parser_puro_conserva_llamada_sintactica():
     ).parsear()
 
     assert type(_valor_asignado(ast[1])) is NodoLlamadaFuncion
+
+
+def test_frontera_publica_sin_sqlite_devuelve_instancia(monkeypatch):
+    monkeypatch.delenv("SQLITE_DB_KEY", raising=False)
+
+    ast = parsear_codigo_resuelto(
+        "clase Persona:\nfin\nvar persona = Persona()"
+    )
+
+    assert type(_valor_asignado(ast[1])) is NodoInstancia
+
+
+def test_parser_incremental_conserva_contrato_sintactico(
+    monkeypatch, base_datos_temporal
+):
+    codigo = "clase Persona:\nfin\nvar persona = Persona()"
+    tokens = Lexer(codigo).analizar_token()
+
+    ast = Parser(tokens).parsear(incremental=True)
+
+    assert type(_valor_asignado(ast[1])) is NodoLlamadaFuncion
+
+
+def test_carga_modulo_usa_ast_resuelto(tmp_path):
+    modulo = tmp_path / "persona.cobra"
+    modulo.write_text(
+        "clase Persona:\nfin\nvar persona = Persona()", encoding="utf-8"
+    )
+
+    ast = cargar_ast_modulo(
+        str(modulo), modules_path=str(tmp_path), whitelist={str(tmp_path)}
+    )
+
+    assert type(_valor_asignado(ast[1])) is NodoInstancia
 
 
 def test_clase_sin_argumentos_produce_instancia():
