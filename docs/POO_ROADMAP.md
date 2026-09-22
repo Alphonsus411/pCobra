@@ -284,7 +284,7 @@ una extensión normativa independiente.
 
 `var persona = Persona("Adolfo")` construye una representación neutral de
 instancia cuando `Persona` es una clase declarada previamente
-(**POO-004 — implementación funcional; cierre pendiente de hardening 42E.2**).
+(**POO-004 — P1 — RESUELTO**).
 Task 42E.1 sitúa el reconocimiento en una fase neutral
 inmediatamente posterior al parseo: el Parser conserva una llamada ordinaria
 durante el análisis sintáctico y `resolver_instanciaciones` la convierte en
@@ -300,8 +300,19 @@ Lexer, Parser y resolución neutral. Task 42E.1.2 completa la migración a esa
 frontera de los entrypoints de producto de ejecución, verificación,
 transpilación, perfilado, benchmarks y Jupyter; `compilar` y
 `benchtranspilers` ya no exigen una clave SQLite para usar el fallback sin
-caché. El cierre definitivo queda pendiente de las reglas de ámbito y
-*shadowing* de 42E.2.
+caché. Task 42E.2 completa el contrato con un modelo de bindings visibles:
+una declaración de clase habilita la conversión mientras que una asignación,
+una función o un parámetro posterior con el mismo nombre la enmascara. Los
+parámetros y asignaciones locales sólo alteran el ámbito de su función o
+método.
+
+Los bloques de control (`si`/`sino`, `mientras` y `para`) comparten el ámbito
+existente, igual que en el semántico y el intérprete; por ello las declaraciones
+recorridas en esos bloques actualizan la visibilidad posterior. En cambio, los
+cuerpos de funciones y métodos son ámbitos aislados, de modo que una clase
+local no se filtra al exterior. La resolución memoiza cada nodo por identidad:
+si varios atributos apuntan al mismo nodo, como `NodoAsignacion.expresion` y
+`NodoAsignacion.valor`, ambos siguen apuntando al mismo objeto transformado.
 
 La resolución respeta el orden del programa: no incorpora referencias hacia
 delante. Si un mismo ámbito declara clase y función con el mismo nombre, la
@@ -421,7 +432,7 @@ sin prueba. Task 42A no resuelve ninguna reparación productiva.
 | POO-001 | P1 | métodos delimitados por el siguiente `metodo` o el `fin` de clase, sin `fin` individual | RESUELTO | 42C |
 | POO-002 | P1 | `inicializar → __init__` ocurre en frontend/AST | PENDIENTE | 42C |
 | POO-003 | P1 | binding neutral de `este` ausente | PENDIENTE | 42C/42G |
-| POO-004 | P1 | instanciación inalcanzable desde fuente | PENDIENTE | 42E |
+| POO-004 | P1 | instanciación inalcanzable desde fuente | RESUELTO | 42E |
 | POO-005 | P1 | llamada de método postfix inalcanzable/corrupta | RESUELTO | 42D |
 | POO-006 | P1 | constructor no se ejecuta en runtime | PENDIENTE | 42G |
 | POO-007 | P2 | aridad y receptor runtime no se validan | PENDIENTE | 42G |
