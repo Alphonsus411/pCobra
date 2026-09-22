@@ -593,6 +593,64 @@ def test_shadowing_interno_de_con_no_escapa():
     assert type(_valor_asignado(ast[2])) is NodoInstancia
 
 
+def test_asignacion_externa_en_con_persiste_fuera():
+    ast = _parsear(
+        "clase C:\nfin\n"
+        "func f():\n"
+        "    retornar 1\n"
+        "fin\n"
+        "con recurso:\n"
+        "    C = f\n"
+        "    C()\n"
+        "fin\n"
+        "var x = C()"
+    )
+
+    assert type(ast[2].cuerpo[1]) is NodoLlamadaFuncion
+    assert type(_valor_asignado(ast[3])) is NodoLlamadaFuncion
+
+
+def test_asignacion_de_nombre_nuevo_en_con_no_escapa():
+    ast = _parsear(
+        "func f():\n"
+        "    retornar 1\n"
+        "fin\n"
+        "con recurso:\n"
+        "    X = f\n"
+        "fin\n"
+        "var x = X()"
+    )
+
+    assert type(_valor_asignado(ast[2])) is NodoLlamadaFuncion
+
+
+def test_alias_de_con_es_local_y_no_sombrea_binding_exterior():
+    ast = _parsear(
+        "clase C:\nfin\n"
+        "con recurso como C:\n"
+        "    C()\n"
+        "fin\n"
+        "var x = C()"
+    )
+
+    assert type(ast[1].cuerpo[0]) is NodoLlamadaFuncion
+    assert type(_valor_asignado(ast[2])) is NodoInstancia
+
+
+def test_shadowing_local_de_con_afecta_llamada_interna_pero_no_externa():
+    ast = _parsear(
+        "clase C:\nfin\n"
+        "con recurso:\n"
+        "    var C = 0\n"
+        "    C()\n"
+        "fin\n"
+        "var x = C()"
+    )
+
+    assert type(ast[1].cuerpo[1]) is NodoLlamadaFuncion
+    assert type(_valor_asignado(ast[2])) is NodoInstancia
+
+
 def test_clase_local_de_con_no_escapa():
     ast = _parsear(
         "con recurso:\n"

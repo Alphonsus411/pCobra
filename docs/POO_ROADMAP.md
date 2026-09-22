@@ -317,9 +317,11 @@ incluso `si falso` contempla estáticamente ambos caminos. Los bucles fusionan
 el estado de cero iteraciones con el de una iteración analizada, incluida la
 variable iteradora de `para`.
 
-Los scopes reales de `con`, funciones y métodos aíslan sus bindings, de modo
-que una asignación o clase local no se filtra al exterior. La resolución
-memoiza cada nodo por identidad:
+Los scopes reales de funciones y métodos aíslan sus bindings. El entorno hijo
+de `con` aísla sus declaraciones locales (incluidos su alias y las clases),
+pero una asignación normal actualiza un binding exterior existente, igual que
+`Environment.set`; si el nombre no existe, se crea sólo en el entorno hijo.
+La resolución memoiza cada nodo por identidad:
 si varios atributos apuntan al mismo nodo, como `NodoAsignacion.expresion` y
 `NodoAsignacion.valor`, ambos siguen apuntando al mismo objeto transformado.
 
