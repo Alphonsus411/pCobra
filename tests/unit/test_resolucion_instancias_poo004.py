@@ -453,3 +453,102 @@ def test_colision_clase_funcion_no_inventa_precedencia():
     )
 
     assert type(_valor_asignado(ast[2])) is NodoLlamadaFuncion
+
+
+def test_asignacion_posterior_sombrea_clase_visible():
+    ast = _parsear(
+        "clase C:\nfin\n"
+        "func f():\n"
+        "    retornar 1\n"
+        "fin\n"
+        "var C = f\n"
+        "var x = C()"
+    )
+
+    assert type(_valor_asignado(ast[3])) is NodoLlamadaFuncion
+
+
+def test_parametro_sombrea_clase_externa_dentro_de_funcion():
+    ast = _parsear(
+        "clase C:\nfin\n"
+        "func probar(C):\n"
+        "    retornar C()\n"
+        "fin"
+    )
+
+    assert type(ast[1].cuerpo[1]) is NodoLlamadaFuncion
+
+
+def test_asignacion_local_sombrea_clase_externa_dentro_de_funcion():
+    ast = _parsear(
+        "clase C:\nfin\n"
+        "func probar():\n"
+        "    var C = otra\n"
+        "    retornar C()\n"
+        "fin"
+    )
+
+    assert type(ast[1].cuerpo[2]) is NodoLlamadaFuncion
+
+
+def test_clase_de_bloque_condicional_permanece_visible():
+    ast = _parsear(
+        "si verdadero:\n"
+        "    clase C:\n"
+        "    fin\n"
+        "fin\n"
+        "var x = C()"
+    )
+
+    assert type(_valor_asignado(ast[1])) is NodoInstancia
+
+
+def test_clase_de_bucle_permanece_visible():
+    ast = _parsear(
+        "mientras falso:\n"
+        "    clase C:\n"
+        "    fin\n"
+        "fin\n"
+        "var x = C()"
+    )
+
+    assert type(_valor_asignado(ast[1])) is NodoInstancia
+
+
+def test_variable_de_bucle_sombrea_clase_en_el_ambito_compartido():
+    ast = _parsear(
+        "clase C:\n"
+        "fin\n"
+        "para C en [1]:\n"
+        "    C()\n"
+        "fin\n"
+        "var x = C()"
+    )
+
+    assert type(ast[1].cuerpo[0]) is NodoLlamadaFuncion
+    assert type(_valor_asignado(ast[2])) is NodoLlamadaFuncion
+
+
+def test_clase_local_de_funcion_no_escapa_al_ambito_externo():
+    ast = _parsear(
+        "func crear():\n"
+        "    clase Local:\n"
+        "    fin\n"
+        "fin\n"
+        "var x = Local()"
+    )
+
+    assert type(_valor_asignado(ast[1])) is NodoLlamadaFuncion
+
+
+def test_resolucion_preserva_identidad_de_aliases_de_asignacion():
+    ast = Parser(
+        Lexer("clase C:\nfin\nvar x = C()").analizar_token()
+    ).parsear()
+    asignacion = ast[1]
+    assert asignacion.valor is asignacion.expresion
+
+    resolver_instanciaciones(ast)
+
+    assert asignacion.valor is asignacion.expresion
+    assert type(asignacion.valor) is NodoInstancia
