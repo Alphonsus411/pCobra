@@ -107,6 +107,43 @@ def test_nolocal_escribe_binding_exterior_desde_con() -> None:
     assert inter.obtener_variable("resultado") == 9
 
 
+def test_nolocal_declarado_en_con_persiste_para_con_hermano() -> None:
+    inter = _ejecutar(
+        [
+            NodoFuncion(
+                "exterior",
+                [],
+                [
+                    NodoAsignacion("x", NodoValor(1), declaracion=True),
+                    NodoFuncion(
+                        "interior",
+                        [],
+                        [
+                            NodoWith(
+                                NodoValor(None),
+                                None,
+                                [NodoNoLocal(["x"])],
+                            ),
+                            NodoWith(
+                                NodoValor(None),
+                                None,
+                                [NodoAsignacion("x", NodoValor(9))],
+                            ),
+                        ],
+                    ),
+                    NodoLlamadaFuncion("interior", []),
+                    NodoRetorno(NodoIdentificador("x")),
+                ],
+            ),
+            NodoAsignacion(
+                "resultado", NodoLlamadaFuncion("exterior", []), declaracion=True
+            ),
+        ]
+    )
+
+    assert inter.obtener_variable("resultado") == 9
+
+
 def test_nolocal_busca_el_binding_mas_cercano_en_dos_niveles() -> None:
     inter = _ejecutar(
         [

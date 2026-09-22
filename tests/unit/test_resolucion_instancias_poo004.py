@@ -868,6 +868,138 @@ def test_nolocal_propaga_write_a_traves_de_con_anidados():
     assert type(interior.cuerpo[-1]) is NodoLlamadaFuncion
 
 
+def test_nolocal_declarado_en_con_persiste_para_con_hermano():
+    ast = _parsear(
+        "func exterior():\n"
+        "    clase C:\n"
+        "    fin\n"
+        "    func interior():\n"
+        "        con uno:\n"
+        "            nolocal C\n"
+        "        fin\n"
+        "        con dos:\n"
+        "            C = f\n"
+        "        fin\n"
+        "        C()\n"
+        "    fin\n"
+        "fin"
+    )
+
+    interior = ast[0].cuerpo[1]
+    assert type(interior.cuerpo[-1]) is NodoLlamadaFuncion
+
+
+def test_nolocal_declarado_en_con_anidado_persiste_fuera_de_ambos():
+    ast = _parsear(
+        "func exterior():\n"
+        "    clase C:\n"
+        "    fin\n"
+        "    func interior():\n"
+        "        con uno:\n"
+        "            con dos:\n"
+        "                nolocal C\n"
+        "            fin\n"
+        "        fin\n"
+        "        con tres:\n"
+        "            C = f\n"
+        "        fin\n"
+        "        C()\n"
+        "    fin\n"
+        "fin"
+    )
+
+    interior = ast[0].cuerpo[1]
+    assert type(interior.cuerpo[-1]) is NodoLlamadaFuncion
+
+
+def test_nolocal_declarado_y_escrito_dentro_del_mismo_con_persiste():
+    ast = _parsear(
+        "func exterior():\n"
+        "    clase C:\n"
+        "    fin\n"
+        "    func interior():\n"
+        "        con recurso:\n"
+        "            nolocal C\n"
+        "            C = f\n"
+        "        fin\n"
+        "        C()\n"
+        "    fin\n"
+        "fin"
+    )
+
+    interior = ast[0].cuerpo[1]
+    assert type(interior.cuerpo[-1]) is NodoLlamadaFuncion
+
+
+def test_nolocal_declarado_condicionalmente_en_con_no_es_inequivoco():
+    ast = _parsear(
+        "func exterior():\n"
+        "    clase C:\n"
+        "    fin\n"
+        "    func interior():\n"
+        "        con recurso:\n"
+        "            si condicion:\n"
+        "                nolocal C\n"
+        "            fin\n"
+        "        fin\n"
+        "        con escritura:\n"
+        "            C = f\n"
+        "        fin\n"
+        "        C()\n"
+        "    fin\n"
+        "fin"
+    )
+
+    interior = ast[0].cuerpo[1]
+    assert type(interior.cuerpo[-1]) is NodoLlamadaFuncion
+
+
+def test_nolocal_declarado_en_loop_dentro_de_con_conserva_cero_iteraciones():
+    ast = _parsear(
+        "func exterior():\n"
+        "    clase C:\n"
+        "    fin\n"
+        "    func interior():\n"
+        "        con recurso:\n"
+        "            mientras condicion:\n"
+        "                nolocal C\n"
+        "            fin\n"
+        "        fin\n"
+        "        con escritura:\n"
+        "            C = f\n"
+        "        fin\n"
+        "        C()\n"
+        "    fin\n"
+        "fin"
+    )
+
+    interior = ast[0].cuerpo[1]
+    assert type(interior.cuerpo[-1]) is NodoLlamadaFuncion
+
+
+def test_con_condicional_con_nolocal_conserva_camino_sin_declaracion():
+    ast = _parsear(
+        "func exterior():\n"
+        "    clase C:\n"
+        "    fin\n"
+        "    func interior():\n"
+        "        si condicion:\n"
+        "            con recurso:\n"
+        "                nolocal C\n"
+        "            fin\n"
+        "        fin\n"
+        "        con escritura:\n"
+        "            C = f\n"
+        "        fin\n"
+        "        C()\n"
+        "    fin\n"
+        "fin"
+    )
+
+    interior = ast[0].cuerpo[1]
+    assert type(interior.cuerpo[-1]) is NodoLlamadaFuncion
+
+
 def test_nolocal_condicional_en_con_deja_binding_ambiguo():
     ast = _parsear(
         "func exterior():\n"

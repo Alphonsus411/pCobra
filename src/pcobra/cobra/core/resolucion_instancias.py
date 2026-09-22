@@ -168,6 +168,7 @@ def _resolver_bloque_con(
     memo: Memo,
     declarados_locales: set[str],
     globales: Alcances,
+    globales_padre: Alcances,
     escrituras_padre: Bindings | None,
     nombres_externos_padre: set[str] | None,
 ) -> None:
@@ -183,6 +184,12 @@ def _resolver_bloque_con(
         escrituras_externas=escrituras,
         nombres_externos=nombres_externos,
     )
+    for nombre, alcance in globales.items():
+        if (
+            alcance in (_NONLOCAL, _ALCANCE_AMBIGUO)
+            and alcance != globales_padre.get(nombre, _LOCAL)
+        ):
+            globales_padre[nombre] = alcance
     for nombre, estado in escrituras.items():
         if nombre not in declarados_locales:
             bindings_padre[nombre] = estado
@@ -440,6 +447,7 @@ def _resolver_nodo(
             memo,
             declarados_locales,
             globales_locales,
+            globales,
             escrituras_externas,
             nombres_externos,
         )
