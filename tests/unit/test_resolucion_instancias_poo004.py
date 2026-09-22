@@ -779,7 +779,7 @@ def test_con_anidado_propaga_write_hasta_binding_global():
     assert type(_valor_asignado(ast[2])) is NodoLlamadaFuncion
 
 
-def test_con_en_funcion_reemplaza_clase_local_de_funcion():
+def test_con_en_funcion_no_reemplaza_clase_local_de_funcion():
     ast = _parsear(
         "func probar():\n"
         "    clase C:\n"
@@ -791,10 +791,10 @@ def test_con_en_funcion_reemplaza_clase_local_de_funcion():
         "fin"
     )
 
-    assert type(ast[0].cuerpo[-1]) is NodoLlamadaFuncion
+    assert type(ast[0].cuerpo[-1]) is NodoInstancia
 
 
-def test_con_anidado_reemplaza_clase_local_de_funcion():
+def test_con_anidado_no_reemplaza_clase_local_de_funcion():
     ast = _parsear(
         "func probar():\n"
         "    clase C:\n"
@@ -808,7 +808,7 @@ def test_con_anidado_reemplaza_clase_local_de_funcion():
         "fin"
     )
 
-    assert type(ast[0].cuerpo[-1]) is NodoLlamadaFuncion
+    assert type(ast[0].cuerpo[-1]) is NodoInstancia
 
 
 def test_asignacion_de_nombre_nuevo_en_con_no_escapa():

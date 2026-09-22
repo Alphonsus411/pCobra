@@ -155,7 +155,7 @@ def _resolver_bloque(
                     alcance = globales.get(nombre, _LOCAL)
                     if nombre not in (nombres_externos or set()):
                         continue
-                    if alcance in (_GLOBAL, _LOCAL):
+                    if alcance == _GLOBAL:
                         escrituras_externas[nombre] = _OTRO
                     elif alcance == _ALCANCE_AMBIGUO:
                         escrituras_externas[nombre] = _AMBIGUO
