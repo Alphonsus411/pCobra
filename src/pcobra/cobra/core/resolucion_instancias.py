@@ -93,6 +93,52 @@ def _resolver_bloque(nodos: Any, bindings: Bindings, memo: Memo) -> None:
                 bindings[nombre] = _OTRO
 
 
+def _resolver_bloque_con(
+    nodos: Any,
+    bindings: Bindings,
+    bindings_padre: Bindings,
+    memo: Memo,
+    declarados_locales: set[str],
+) -> None:
+    """Resuelve el entorno hijo de ``con`` y propaga sus escrituras externas."""
+
+    instrucciones = nodos.instrucciones if isinstance(nodos, NodoBloque) else nodos
+    ambiguos = _nombres_ambiguos(instrucciones)
+
+    for indice, nodo in enumerate(instrucciones):
+        if isinstance(nodo, NodoClase):
+            declarados_locales.add(nodo.nombre)
+            clase_actual = {nodo.nombre} if nodo.nombre not in ambiguos else set()
+            bindings_de_metodos = bindings.copy()
+            bindings_de_metodos.update(
+                (nombre, _CLASE) for nombre in clase_actual
+            )
+            for metodo in nodo.metodos:
+                _resolver_nodo(metodo, bindings_de_metodos, ambiguos, memo)
+            bindings[nodo.nombre] = (
+                _OTRO if nodo.nombre in ambiguos else _CLASE
+            )
+            continue
+
+        instrucciones[indice] = _resolver_nodo(nodo, bindings, ambiguos, memo)
+        if isinstance(nodo, NodoFuncion):
+            if isinstance(nodo.nombre, str):
+                declarados_locales.add(nodo.nombre)
+                bindings[nodo.nombre] = _OTRO
+        elif isinstance(nodo, NodoAsignacion) and isinstance(nodo.variable, str):
+            nombre = nodo.variable
+            es_declaracion = nodo.declaracion or nodo.inferencia
+            if es_declaracion:
+                declarados_locales.add(nombre)
+            if (
+                not es_declaracion
+                and nombre not in declarados_locales
+                and nombre in bindings_padre
+            ):
+                bindings_padre[nombre] = _OTRO
+            bindings[nombre] = _OTRO
+
+
 def _resolver_nodo(
     nodo: Any,
     bindings: Bindings,
@@ -155,9 +201,13 @@ def _resolver_nodo(
         memo[identidad] = nodo
         nodo.contexto = _resolver_nodo(nodo.contexto, bindings, ambiguos, memo)
         bindings_locales = bindings.copy()
+        declarados_locales: set[str] = set()
         if isinstance(nodo.alias, str):
             bindings_locales[nodo.alias] = _OTRO
-        _resolver_bloque(nodo.cuerpo, bindings_locales, memo)
+            declarados_locales.add(nodo.alias)
+        _resolver_bloque_con(
+            nodo.cuerpo, bindings_locales, bindings, memo, declarados_locales
+        )
         return nodo
 
     if isinstance(nodo, NodoBloque):
