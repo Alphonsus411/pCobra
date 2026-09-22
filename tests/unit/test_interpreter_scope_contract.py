@@ -20,6 +20,7 @@ from pcobra.core.ast_nodes import (
     NodoRomper,
     NodoRetorno,
     NodoValor,
+    NodoWith,
 )
 from pcobra.core.environment import Environment
 from pcobra.core.interpreter import InterpretadorCobra
@@ -501,6 +502,35 @@ def test_shadowing_define_local_y_set_al_scope_mas_cercano() -> None:
 
     assert inter.obtener_variable("x") == 100
     assert inter.obtener_variable("resultado_local") == 1
+
+
+def test_asignacion_desde_con_sombrea_local_de_funcion_temporalmente() -> None:
+    original = 1
+    reemplazo = 2
+    inter = _ejecutar(
+        [
+            NodoFuncion(
+                "probar",
+                [],
+                [
+                    NodoAsignacion("C", NodoValor(original), declaracion=True),
+                    NodoWith(
+                        NodoValor("recurso"),
+                        None,
+                        [NodoAsignacion("C", NodoValor(reemplazo))],
+                    ),
+                    NodoRetorno(NodoIdentificador("C")),
+                ],
+            ),
+            NodoAsignacion(
+                "resultado",
+                NodoLlamadaFuncion("probar", []),
+                declaracion=True,
+            ),
+        ]
+    )
+
+    assert inter.obtener_variable("resultado") == original
 
 
 def test_closure_usa_environment_parent_en_llamadas() -> None:
