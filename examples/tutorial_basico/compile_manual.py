@@ -1,6 +1,6 @@
 from typing import List, Optional
 from cobra.core import Lexer
-from cobra.core import Parser
+from pcobra.cobra.core.parsing import parsear_tokens_resuelto
 from cobra.transpilers.transpiler.to_python import TranspiladorPython
 from core.ast_nodes import NodoValor, NodoImprimir
 
@@ -30,7 +30,7 @@ def procesar_archivo(ruta_archivo: str) -> Optional[str]:
             raise ValueError("No se encontraron tokens válidos")
 
         # Parsing
-        ast = Parser(tokens).parsear()
+        ast = parsear_tokens_resuelto(tokens)
         if not ast:
             raise ValueError("No se pudo generar el AST")
 

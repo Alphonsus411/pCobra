@@ -11,11 +11,16 @@ from pcobra.cobra.core.resolucion_instancias import resolver_instanciaciones
 
 
 def parsear_tokens_resuelto(
-    tokens: Iterable[Any], *, parser_cls: type[Any] = Parser
+    tokens: Iterable[Any],
+    *,
+    parser_cls: type[Any] = Parser,
+    parsear_kwargs: dict[str, Any] | None = None,
 ) -> list[Any]:
     """Parsea tokens y aplica la resolución neutral posterior al Parser."""
 
-    return resolver_instanciaciones(parser_cls(list(tokens)).parsear())
+    return resolver_instanciaciones(
+        parser_cls(list(tokens)).parsear(**(parsear_kwargs or {}))
+    )
 
 
 def parsear_codigo_resuelto(codigo: str, *, usar_cache: bool = True) -> list[Any]:

@@ -4,6 +4,8 @@ import pytest
 
 from pcobra.cli.cli import CliApplication
 from pcobra.cli.commands.cache_cmd import CacheCommand
+from pcobra.cli.commands.bench_transpilers_cmd import BenchTranspilersCommand
+from pcobra.cli.commands.compile_cmd import CompileCommand
 from pcobra.cli.commands.docs_cmd import DocsCommand
 from pcobra.cli.commands.flet_cmd import FletCommand
 from pcobra.cli.commands.plugins_cmd import PluginsCommand
@@ -27,6 +29,8 @@ def test_parse_error_no_evalua_sqlite_db_key(monkeypatch):
     ("command", "expected"),
     [
         (CacheCommand(), True),
+        (CompileCommand(), False),
+        (BenchTranspilersCommand(), False),
         (DocsCommand(), False),
         (FletCommand(), False),
         (PluginsCommand(), False),

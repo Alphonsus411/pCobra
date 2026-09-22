@@ -58,7 +58,7 @@ class BenchTranspilersCommand(BaseCommand):
     """Mide el rendimiento de los transpiladores."""
 
     name = "benchtranspilers"
-    requires_sqlite_key: bool = True
+    requires_sqlite_key: bool = False
 
     @staticmethod
     def _validate_benchmark_layout() -> None:

@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Optional, Any
 
 from pcobra.cobra.core import Lexer
-from pcobra.cobra.core import Parser
+from pcobra.cobra.core.parsing import parsear_tokens_resuelto
 from pcobra.cobra.core.interpreter import InterpretadorCobra
 from pcobra.cobra.core.sandbox import validar_dependencias
 from pcobra.cobra.core.semantic_validators import (
@@ -137,7 +137,9 @@ class ProfileCommand(BaseCommand):
 
         try:
             tokens = Lexer(codigo).tokenizar(profile=analysis)
-            ast = Parser(tokens).parsear(profile=analysis)
+            ast = parsear_tokens_resuelto(
+                tokens, parsear_kwargs={"profile": analysis}
+            )
         except Exception as e:
             mostrar_error(f"Error en análisis sintáctico: {e}")
             return 1

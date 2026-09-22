@@ -22,9 +22,8 @@ except ImportError:  # pragma: no cover - Windows
 else:
     psutil = None  # type: ignore
 
-from pcobra.cobra.core import Lexer
-from pcobra.cobra.core import Parser
 from pcobra.cobra.core.interpreter import InterpretadorCobra
+from pcobra.cobra.core.parsing import parsear_codigo_resuelto
 from pcobra.cobra.cli.execution_pipeline import construir_interprete_seguro_canonico
 
 try:  # pragma: no cover - dependencia opcional
@@ -173,8 +172,7 @@ class BenchThreadsCommand(BaseCommand):
             safe_mode=True,
             extra_validators=None,
         )
-        tokens = Lexer(SEQUENTIAL_CODE.read_text()).tokenizar()
-        ast = Parser(tokens).parsear()
+        ast = parsear_codigo_resuelto(SEQUENTIAL_CODE.read_text())
         interp.ejecutar_ast(ast)
 
     def run(self, args: Any) -> int:
