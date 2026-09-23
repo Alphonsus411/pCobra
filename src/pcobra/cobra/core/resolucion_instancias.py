@@ -93,7 +93,10 @@ def _fusionar_bindings_exteriores(
     )
     ausente = object()
     for nombre in nombres:
-        valores = {estado.get(nombre, ausente) for estado in estados}
+        valores = set()
+        for estado in estados:
+            valor = estado.get(nombre, ausente)
+            valores.add(ausente if valor == () else valor)
         if len(valores) == 1:
             valor = valores.pop()
             if valor is ausente:
