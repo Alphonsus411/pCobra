@@ -85,6 +85,87 @@ def test_del_en_bucles_conserva_camino_de_cero_iteraciones():
     assert type(para) is NodoLlamadaFuncion
 
 
+def test_del_en_ambas_ramas_consume_la_misma_capa_exterior():
+    ast = _parsear(
+        "func C():\nfin\n"
+        "func exterior():\n"
+        "    clase C:\n    fin\n"
+        "    func interior(C):\n"
+        "        si condicion:\n            eliminar C\n"
+        "        sino:\n            eliminar C\n        fin\n"
+        "        eliminar C\n"
+        "        C()\n"
+        "    fin\n"
+        "fin"
+    )
+
+    assert type(ast[1].cuerpo[1].cuerpo[-1]) is NodoLlamadaFuncion
+
+
+def test_del_en_una_rama_deja_ambigua_la_cadena_exterior():
+    ast = _parsear(
+        "func C():\nfin\n"
+        "func exterior():\n"
+        "    clase C:\n    fin\n"
+        "    func interior(C):\n"
+        "        si condicion:\n            eliminar C\n        fin\n"
+        "        eliminar C\n"
+        "        C()\n"
+        "    fin\n"
+        "fin"
+    )
+
+    assert type(ast[1].cuerpo[1].cuerpo[-1]) is NodoLlamadaFuncion
+
+
+def test_del_a_distinta_profundidad_no_elige_una_cadena_exterior():
+    ast = _parsear(
+        "func C():\nfin\n"
+        "func exterior():\n"
+        "    clase C:\n    fin\n"
+        "    func interior(C):\n"
+        "        si condicion:\n            eliminar C\n"
+        "        sino:\n            eliminar C\n            eliminar C\n        fin\n"
+        "        C()\n"
+        "    fin\n"
+        "fin"
+    )
+
+    assert type(ast[1].cuerpo[1].cuerpo[-1]) is NodoLlamadaFuncion
+
+
+def test_del_en_mientras_fusiona_cero_iteraciones_con_una_iteracion():
+    ast = _parsear(
+        "func C():\nfin\n"
+        "func exterior():\n"
+        "    clase C:\n    fin\n"
+        "    func interior(C):\n"
+        "        mientras condicion:\n            eliminar C\n        fin\n"
+        "        eliminar C\n"
+        "        C()\n"
+        "    fin\n"
+        "fin"
+    )
+
+    assert type(ast[1].cuerpo[1].cuerpo[-1]) is NodoLlamadaFuncion
+
+
+def test_del_en_para_fusiona_cero_iteraciones_con_una_iteracion():
+    ast = _parsear(
+        "func C():\nfin\n"
+        "func exterior():\n"
+        "    clase C:\n    fin\n"
+        "    func interior(C):\n"
+        "        para elemento en valores:\n            eliminar C\n        fin\n"
+        "        eliminar C\n"
+        "        C()\n"
+        "    fin\n"
+        "fin"
+    )
+
+    assert type(ast[1].cuerpo[1].cuerpo[-1]) is NodoLlamadaFuncion
+
+
 def test_del_local_de_funcion_invalida_clase_local():
     ast = _parsear(
         "func exterior():\n    clase C:\n    fin\n    eliminar C\n    C()\nfin"

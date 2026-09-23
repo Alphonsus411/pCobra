@@ -37,6 +37,7 @@ Alcances = dict[str, str]
 CadenaExterior = tuple[tuple[str, str], ...]
 BindingsExteriores = dict[str, CadenaExterior]
 Memo = dict[int, Any]
+_CADENA_EXTERIOR_AMBIGUA: CadenaExterior = ((_AMBIGUO, _ALCANCE_AMBIGUO),)
 
 
 def _alcance_desde_funcion_hija(alcance: str) -> str:
@@ -76,6 +77,31 @@ def _fusionar_alcances(alcances: Alcances, caminos: Iterable[Alcances]) -> None:
             alcances[nombre] = valores.pop()
         else:
             alcances[nombre] = _ALCANCE_AMBIGUO
+
+
+def _fusionar_bindings_exteriores(
+    bindings_exteriores: BindingsExteriores | None,
+    caminos: Iterable[BindingsExteriores],
+) -> None:
+    """Conserva una cadena exterior sólo si coincide en todos los caminos."""
+
+    if bindings_exteriores is None:
+        return
+    estados = list(caminos)
+    nombres = set().union(
+        bindings_exteriores, *(estado.keys() for estado in estados)
+    )
+    ausente = object()
+    for nombre in nombres:
+        valores = {estado.get(nombre, ausente) for estado in estados}
+        if len(valores) == 1:
+            valor = valores.pop()
+            if valor is ausente:
+                bindings_exteriores.pop(nombre, None)
+            else:
+                bindings_exteriores[nombre] = valor
+        else:
+            bindings_exteriores[nombre] = _CADENA_EXTERIOR_AMBIGUA
 
 
 def resolver_instanciaciones(ast: list[NodoAST]) -> list[NodoAST]:
@@ -366,6 +392,10 @@ def _resolver_nodo(
         es_exterior = nombre in (nombres_externos or set())
         if not es_exterior:
             cadena = (bindings_exteriores or {}).get(nombre, ())
+            if cadena == _CADENA_EXTERIOR_AMBIGUA:
+                bindings[nombre] = _AMBIGUO
+                globales[nombre] = _ALCANCE_AMBIGUO
+                return nodo
             if cadena:
                 bindings[nombre], globales[nombre] = cadena[0]
                 bindings_exteriores[nombre] = cadena[1:]
@@ -377,6 +407,12 @@ def _resolver_nodo(
 
         alcance_eliminado = globales.get(nombre, _LOCAL)
         cadena = (bindings_exteriores or {}).get(nombre, ())
+        if cadena == _CADENA_EXTERIOR_AMBIGUA:
+            bindings[nombre] = _AMBIGUO
+            globales[nombre] = _ALCANCE_AMBIGUO
+            if escrituras_externas is not None:
+                escrituras_externas[nombre] = _AMBIGUO
+            return nodo
         if cadena:
             bindings[nombre], globales[nombre] = cadena[0]
             bindings_exteriores[nombre] = cadena[1:]
@@ -481,6 +517,9 @@ def _resolver_nodo(
             bindings_globales,
             (bindings_globales_si, bindings_globales_sino),
         )
+        _fusionar_bindings_exteriores(
+            bindings_exteriores, (exteriores_si, exteriores_sino)
+        )
         if nombres_externos is not None:
             nombres_externos.clear()
             nombres_externos.update(
@@ -509,6 +548,7 @@ def _resolver_nodo(
         bindings_iteracion = bindings.copy()
         globales_iteracion = globales.copy()
         bindings_globales_iteracion = bindings_globales.copy()
+        exteriores_antes = dict(bindings_exteriores or {})
         exteriores_iteracion = dict(bindings_exteriores or {})
         nombres_externos_iteracion = (
             nombres_externos.copy() if nombres_externos is not None else None
@@ -540,6 +580,9 @@ def _resolver_nodo(
             bindings_globales,
             (bindings_globales.copy(), bindings_globales_iteracion),
         )
+        _fusionar_bindings_exteriores(
+            bindings_exteriores, (exteriores_antes, exteriores_iteracion)
+        )
         if nombres_externos is not None:
             nombres_externos.update(nombres_externos_iteracion or set())
         if escrituras_externas is not None:
@@ -566,6 +609,7 @@ def _resolver_nodo(
         bindings_iteracion = bindings.copy()
         globales_iteracion = globales.copy()
         bindings_globales_iteracion = bindings_globales.copy()
+        exteriores_antes = dict(bindings_exteriores or {})
         exteriores_iteracion = dict(bindings_exteriores or {})
         nombres_externos_iteracion = (
             nombres_externos.copy() if nombres_externos is not None else None
@@ -613,6 +657,9 @@ def _resolver_nodo(
         _fusionar_bindings(
             bindings_globales,
             (bindings_globales.copy(), bindings_globales_iteracion),
+        )
+        _fusionar_bindings_exteriores(
+            bindings_exteriores, (exteriores_antes, exteriores_iteracion)
         )
         if nombres_externos is not None:
             nombres_externos.update(nombres_externos_iteracion or set())
