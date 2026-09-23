@@ -263,6 +263,29 @@ def test_target_para_sombrea_clase_de_funcion_exterior_y_del_la_reexpone():
     assert type(llamada) is NodoInstancia
 
 
+def test_target_para_tras_del_parametro_reexpone_clase_de_funcion_exterior():
+    ast = _parsear(
+        "func exterior():\n    clase C:\n    fin\n    func interior(C):\n"
+        "        eliminar C\n        para C en valores:\n"
+        "            eliminar C\n            C()\n        fin\n    fin\nfin"
+    )
+
+    llamada = ast[0].cuerpo[-1].cuerpo[-1].cuerpo[-1]
+    assert type(llamada) is NodoInstancia
+
+
+def test_target_para_preserva_ownership_ambiguo_tras_global_condicional():
+    ast = _parsear(
+        "clase C:\nfin\nfunc exterior():\n    clase C:\n    fin\n"
+        "    func interior():\n        si condicion:\n            global C\n"
+        "        fin\n        para C en valores:\n            eliminar C\n"
+        "            C()\n        fin\n    fin\nfin"
+    )
+
+    llamada = ast[1].cuerpo[-1].cuerpo[-1].cuerpo[-1]
+    assert type(llamada) is NodoLlamadaFuncion
+
+
 def test_target_para_enclosing_funcion_reexpone_funcion_tras_del():
     ast = _parsear(
         "func exterior():\n    func C():\n    fin\n    func interior():\n"
@@ -308,6 +331,24 @@ def test_redeclaracion_tras_reexposicion_crea_nuevo_binding_local():
     )
 
     assert type(ast[1].cuerpo[-1]) is NodoInstancia
+
+
+def test_redeclaracion_variable_mismo_scope_no_reexpone_clase_sobrescrita():
+    ast = _parsear(
+        "func f():\n    clase C:\n    fin\n    var C = otra\n"
+        "    eliminar C\n    C()\nfin"
+    )
+
+    assert type(ast[0].cuerpo[-1]) is NodoLlamadaFuncion
+
+
+def test_redeclaracion_funcion_mismo_scope_no_reexpone_clase_sobrescrita():
+    ast = _parsear(
+        "func f():\n    clase C:\n    fin\n    func C():\n    fin\n"
+        "    eliminar C\n    C()\nfin"
+    )
+
+    assert type(ast[0].cuerpo[-1]) is NodoLlamadaFuncion
 
 
 def test_del_global_y_nolocal_invalidan_binding_dirigido():

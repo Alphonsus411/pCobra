@@ -39,6 +39,14 @@ BindingsExteriores = dict[str, CadenaExterior]
 Memo = dict[int, Any]
 
 
+def _alcance_desde_funcion_hija(alcance: str) -> str:
+    """Hace relativo al scope hijo el ownership recibido de su padre."""
+
+    if alcance == _LOCAL_PROPIO:
+        return _LOCAL
+    return alcance
+
+
 def _fusionar_bindings(bindings: Bindings, caminos: Iterable[Bindings]) -> None:
     """Conserva sólo la información coincidente en todos los caminos posibles."""
 
@@ -135,6 +143,7 @@ def _resolver_bloque(
                 not scope_global
                 and bindings_exteriores is not None
                 and nodo.nombre in bindings
+                and globales.get(nodo.nombre, _LOCAL) != _LOCAL_PROPIO
             ):
                 bindings_exteriores[nodo.nombre] = (
                     (bindings[nodo.nombre], globales.get(nodo.nombre, _LOCAL)),
@@ -172,6 +181,7 @@ def _resolver_bloque(
                         not scope_global
                         and bindings_exteriores is not None
                         and nombre in bindings
+                        and globales.get(nombre, _LOCAL) != _LOCAL_PROPIO
                     ):
                         bindings_exteriores[nombre] = (
                             (bindings[nombre], globales.get(nombre, _LOCAL)),
@@ -309,11 +319,22 @@ def _resolver_nodo(
         globales_locales.update(
             (parametro, _LOCAL_PROPIO) for parametro in nodo.parametros
         )
-        exteriores_locales = dict(bindings_exteriores or {})
+        exteriores_locales = {
+            nombre: tuple(
+                (estado, _alcance_desde_funcion_hija(alcance))
+                for estado, alcance in cadena
+            )
+            for nombre, cadena in (bindings_exteriores or {}).items()
+        }
         for parametro in nodo.parametros:
             if parametro in bindings:
                 exteriores_locales[parametro] = (
-                    (bindings[parametro], globales.get(parametro, _LOCAL)),
+                    (
+                        bindings[parametro],
+                        _alcance_desde_funcion_hija(
+                            globales.get(parametro, _LOCAL)
+                        ),
+                    ),
                     *exteriores_locales.get(parametro, ()),
                 )
         _resolver_bloque(
@@ -545,14 +566,16 @@ def _resolver_nodo(
         )
         if isinstance(nodo.variable, str):
             alcance_target = globales.get(nodo.variable, _LOCAL)
-            target_propio = alcance_target == _LOCAL_PROPIO
-            target_dirigido = alcance_target in (_GLOBAL, _NONLOCAL)
-            crea_local = not target_propio and not target_dirigido
+            crea_local = alcance_target == _LOCAL
             if crea_local and nodo.variable in bindings:
                 exteriores_iteracion[nodo.variable] = (
                     (bindings[nodo.variable], alcance_target),
                     *exteriores_iteracion.get(nodo.variable, ()),
                 )
+            elif alcance_target == _ALCANCE_AMBIGUO:
+                # El target puede escribir en bindings exteriores distintos
+                # según el camino; ninguna cadena concreta es segura tras él.
+                exteriores_iteracion.pop(nodo.variable, None)
             bindings_iteracion[nodo.variable] = _OTRO
             if crea_local:
                 globales_iteracion[nodo.variable] = _LOCAL_PROPIO
