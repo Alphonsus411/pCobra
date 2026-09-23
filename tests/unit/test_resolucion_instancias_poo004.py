@@ -5,6 +5,7 @@ from argparse import Namespace
 from types import SimpleNamespace
 
 import pcobra.jupyter_kernel as jupyter_kernel
+from pcobra.cobra.core import resolucion_instancias
 from pcobra.cobra.cli.commands import (
     bench_transpilers_cmd,
     benchthreads_cmd,
@@ -100,6 +101,60 @@ def test_del_en_ambas_ramas_consume_la_misma_capa_exterior():
     )
 
     assert type(ast[1].cuerpo[1].cuerpo[-1]) is NodoLlamadaFuncion
+
+
+def test_fusion_exterior_normaliza_ausencia_y_cadena_vacia():
+    fusion = {"C": ()}
+
+    resolucion_instancias._fusionar_bindings_exteriores(fusion, ({}, {"C": ()}))
+
+    assert "C" not in fusion
+
+
+def test_fusion_exterior_conserva_ambiguedad_real_y_cadenas_distintas():
+    capa_a = (("clase", "local"),)
+    capa_b = (("otro", "local"),)
+    cadena_a_b = (*capa_a, *capa_b)
+    casos = [
+        ({}, {"C": capa_a}),
+        ({"C": cadena_a_b}, {"C": capa_b}),
+    ]
+
+    for camino_a, camino_b in casos:
+        fusion = {}
+        resolucion_instancias._fusionar_bindings_exteriores(
+            fusion, (camino_a, camino_b)
+        )
+
+        assert fusion["C"] == resolucion_instancias._CADENA_EXTERIOR_AMBIGUA
+
+
+def test_fusion_exterior_conserva_cadenas_iguales():
+    cadena = (("clase", "local"),)
+    fusion = {}
+
+    resolucion_instancias._fusionar_bindings_exteriores(
+        fusion, ({"C": cadena}, {"C": cadena})
+    )
+
+    assert fusion["C"] == cadena
+
+
+def test_cadena_vacia_fusionada_no_recarga_global_eliminado():
+    ast = _parsear(
+        "clase C:\nfin\n"
+        "func f():\n"
+        "    si condicion:\n"
+        "        func C():\n        fin\n"
+        "        eliminar C\n"
+        "    fin\n"
+        "    eliminar C\n"
+        "    global C\n"
+        "    C()\n"
+        "fin"
+    )
+
+    assert type(ast[1].cuerpo[-1]) is NodoLlamadaFuncion
 
 
 def test_del_en_una_rama_deja_ambigua_la_cadena_exterior():
