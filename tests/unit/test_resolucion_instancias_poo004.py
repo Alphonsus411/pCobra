@@ -136,6 +136,29 @@ def test_del_parametro_reexpone_funcion_exterior_como_llamada():
     assert type(ast[1].cuerpo[-1]) is NodoLlamadaFuncion
 
 
+def test_dos_del_avanzan_de_parametro_a_clase_exterior_y_funcion_global():
+    ast = _parsear(
+        "func C():\nfin\nfunc exterior():\n    clase C:\n    fin\n"
+        "    func interior(C):\n        eliminar C\n        eliminar C\n"
+        "        C()\n    fin\nfin"
+    )
+
+    assert type(ast[1].cuerpo[-1].cuerpo[-1]) is NodoLlamadaFuncion
+
+
+def test_tres_del_avanzan_por_toda_la_cadena_de_bindings_lexicos():
+    ast = _parsear(
+        "func C():\nfin\nfunc nivel_uno():\n    clase C:\n    fin\n"
+        "    func nivel_dos():\n        clase C:\n        fin\n"
+        "        func nivel_tres(C):\n            eliminar C\n"
+        "            eliminar C\n            eliminar C\n            C()\n"
+        "        fin\n    fin\nfin"
+    )
+
+    llamada = ast[1].cuerpo[-1].cuerpo[-1].cuerpo[-1]
+    assert type(llamada) is NodoLlamadaFuncion
+
+
 def test_del_parametro_no_inicial_reexpone_clase_exterior():
     ast = _parsear(
         "clase C:\nfin\n"
@@ -227,6 +250,64 @@ def test_target_para_sobrescribe_clase_local_sin_restaurarla():
     )
 
     assert type(ast[0].cuerpo[1].cuerpo[-1]) is NodoLlamadaFuncion
+
+
+def test_target_para_sombrea_clase_de_funcion_exterior_y_del_la_reexpone():
+    ast = _parsear(
+        "func exterior():\n    clase C:\n    fin\n    func interior():\n"
+        "        para C en valores:\n            eliminar C\n            C()\n"
+        "        fin\n    fin\nfin"
+    )
+
+    llamada = ast[0].cuerpo[-1].cuerpo[0].cuerpo[-1]
+    assert type(llamada) is NodoInstancia
+
+
+def test_target_para_enclosing_funcion_reexpone_funcion_tras_del():
+    ast = _parsear(
+        "func exterior():\n    func C():\n    fin\n    func interior():\n"
+        "        para C en valores:\n            eliminar C\n            C()\n"
+        "        fin\n    fin\nfin"
+    )
+
+    llamada = ast[0].cuerpo[-1].cuerpo[0].cuerpo[-1]
+    assert type(llamada) is NodoLlamadaFuncion
+
+
+def test_target_para_nolocal_y_global_no_crean_shadow_local():
+    nolocal_ast = _parsear(
+        "func exterior():\n    clase C:\n    fin\n    func interior():\n"
+        "        nolocal C\n        para C en valores:\n            eliminar C\n"
+        "            C()\n        fin\n    fin\nfin"
+    )
+    global_ast = _parsear(
+        "clase C:\nfin\nfunc f():\n    global C\n    para C en valores:\n"
+        "        eliminar C\n        C()\n    fin\nfin"
+    )
+
+    assert type(nolocal_ast[0].cuerpo[-1].cuerpo[1].cuerpo[-1]) is NodoLlamadaFuncion
+    assert type(global_ast[1].cuerpo[1].cuerpo[-1]) is NodoLlamadaFuncion
+
+
+def test_del_condicional_del_target_local_enclosing_es_conservador():
+    ast = _parsear(
+        "func exterior():\n    clase C:\n    fin\n    func interior():\n"
+        "        para C en valores:\n            si condicion:\n"
+        "                eliminar C\n            fin\n            C()\n"
+        "        fin\n    fin\nfin"
+    )
+
+    llamada = ast[0].cuerpo[-1].cuerpo[0].cuerpo[-1]
+    assert type(llamada) is NodoLlamadaFuncion
+
+
+def test_redeclaracion_tras_reexposicion_crea_nuevo_binding_local():
+    ast = _parsear(
+        "clase C:\nfin\nfunc f(C):\n    eliminar C\n    clase C:\n    fin\n"
+        "    eliminar C\n    C()\nfin"
+    )
+
+    assert type(ast[1].cuerpo[-1]) is NodoInstancia
 
 
 def test_del_global_y_nolocal_invalidan_binding_dirigido():

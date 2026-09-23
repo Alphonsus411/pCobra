@@ -34,6 +34,8 @@ _NONLOCAL = "nolocal"
 _ALCANCE_AMBIGUO = "alcance_ambiguo"
 Bindings = dict[str, str]
 Alcances = dict[str, str]
+CadenaExterior = tuple[tuple[str, str], ...]
+BindingsExteriores = dict[str, CadenaExterior]
 Memo = dict[int, Any]
 
 
@@ -104,7 +106,7 @@ def _resolver_bloque(
     scope_global: bool = False,
     escrituras_externas: Bindings | None = None,
     nombres_externos: set[str] | None = None,
-    bindings_exteriores: Bindings | None = None,
+    bindings_exteriores: BindingsExteriores | None = None,
 ) -> None:
     instrucciones = nodos.instrucciones if isinstance(nodos, NodoBloque) else nodos
     ambiguos = _nombres_ambiguos(instrucciones)
@@ -128,6 +130,15 @@ def _resolver_bloque(
                     globales=globales,
                     bindings_globales=bindings_globales,
                     scope_global=False,
+                )
+            if (
+                not scope_global
+                and bindings_exteriores is not None
+                and nodo.nombre in bindings
+            ):
+                bindings_exteriores[nodo.nombre] = (
+                    (bindings[nodo.nombre], globales.get(nodo.nombre, _LOCAL)),
+                    *bindings_exteriores.get(nodo.nombre, ()),
                 )
             bindings[nodo.nombre] = estado_clase
             if scope_global:
@@ -153,10 +164,20 @@ def _resolver_bloque(
         if isinstance(nodo, (NodoFuncion, NodoAsignacion)):
             nombre = nodo.nombre if isinstance(nodo, NodoFuncion) else nodo.variable
             if isinstance(nombre, str):
-                bindings[nombre] = _OTRO
                 es_declaracion = isinstance(nodo, NodoFuncion) or (
                     nodo.declaracion or nodo.inferencia
                 )
+                if es_declaracion:
+                    if (
+                        not scope_global
+                        and bindings_exteriores is not None
+                        and nombre in bindings
+                    ):
+                        bindings_exteriores[nombre] = (
+                            (bindings[nombre], globales.get(nombre, _LOCAL)),
+                            *bindings_exteriores.get(nombre, ()),
+                        )
+                bindings[nombre] = _OTRO
                 if es_declaracion:
                     if nombres_externos is not None:
                         nombres_externos.discard(nombre)
@@ -206,7 +227,7 @@ def _resolver_bloque_con(
         bindings_globales=bindings_globales,
         escrituras_externas=escrituras,
         nombres_externos=nombres_externos,
-        bindings_exteriores=bindings_padre,
+        bindings_exteriores={},
     )
     for nombre, alcance in globales.items():
         if (
@@ -244,7 +265,7 @@ def _resolver_nodo(
     scope_global: bool,
     escrituras_externas: Bindings | None = None,
     nombres_externos: set[str] | None = None,
-    bindings_exteriores: Bindings | None = None,
+    bindings_exteriores: BindingsExteriores | None = None,
 ) -> Any:
     identidad = id(nodo)
     if identidad in memo:
@@ -288,6 +309,13 @@ def _resolver_nodo(
         globales_locales.update(
             (parametro, _LOCAL_PROPIO) for parametro in nodo.parametros
         )
+        exteriores_locales = dict(bindings_exteriores or {})
+        for parametro in nodo.parametros:
+            if parametro in bindings:
+                exteriores_locales[parametro] = (
+                    (bindings[parametro], globales.get(parametro, _LOCAL)),
+                    *exteriores_locales.get(parametro, ()),
+                )
         _resolver_bloque(
             nodo.cuerpo,
             bindings_locales,
@@ -296,7 +324,7 @@ def _resolver_nodo(
             bindings_globales=bindings_globales_locales,
             scope_global=False,
             nombres_externos=set(bindings) - set(nodo.parametros),
-            bindings_exteriores=bindings,
+            bindings_exteriores=exteriores_locales,
         )
         return nodo
 
@@ -309,16 +337,25 @@ def _resolver_nodo(
             return nodo
 
         es_exterior = nombre in (nombres_externos or set())
-        if not es_exterior and bindings_exteriores is not None:
-            if nombre in bindings_exteriores:
-                bindings[nombre] = bindings_exteriores[nombre]
+        if not es_exterior:
+            cadena = (bindings_exteriores or {}).get(nombre, ())
+            if cadena:
+                bindings[nombre], globales[nombre] = cadena[0]
+                bindings_exteriores[nombre] = cadena[1:]
+                if nombres_externos is not None:
+                    nombres_externos.add(nombre)
             else:
                 bindings[nombre] = _ELIMINADO
             return nodo
 
-        bindings[nombre] = _ELIMINADO
-        alcance = globales.get(nombre, _LOCAL)
-        if alcance == _GLOBAL:
+        alcance_eliminado = globales.get(nombre, _LOCAL)
+        cadena = (bindings_exteriores or {}).get(nombre, ())
+        if cadena:
+            bindings[nombre], globales[nombre] = cadena[0]
+            bindings_exteriores[nombre] = cadena[1:]
+        else:
+            bindings[nombre] = _ELIMINADO
+        if alcance_eliminado == _GLOBAL:
             bindings_globales[nombre] = _ELIMINADO
         if escrituras_externas is not None and es_exterior:
             escrituras_externas[nombre] = _ELIMINADO
@@ -368,6 +405,7 @@ def _resolver_nodo(
         bindings_si = bindings.copy()
         globales_si = globales.copy()
         bindings_globales_si = bindings_globales.copy()
+        exteriores_si = dict(bindings_exteriores or {})
         nombres_externos_si = (
             nombres_externos.copy() if nombres_externos is not None else None
         )
@@ -385,11 +423,12 @@ def _resolver_nodo(
             scope_global=scope_global,
             escrituras_externas=escrituras_si,
             nombres_externos=nombres_externos_si,
-            bindings_exteriores=bindings_exteriores,
+            bindings_exteriores=exteriores_si,
         )
         bindings_sino = bindings.copy()
         globales_sino = globales.copy()
         bindings_globales_sino = bindings_globales.copy()
+        exteriores_sino = dict(bindings_exteriores or {})
         nombres_externos_sino = (
             nombres_externos.copy() if nombres_externos is not None else None
         )
@@ -407,7 +446,7 @@ def _resolver_nodo(
             scope_global=scope_global,
             escrituras_externas=escrituras_sino,
             nombres_externos=nombres_externos_sino,
-            bindings_exteriores=bindings_exteriores,
+            bindings_exteriores=exteriores_sino,
         )
         _fusionar_bindings(bindings, (bindings_si, bindings_sino))
         _fusionar_alcances(globales, (globales_si, globales_sino))
@@ -443,6 +482,7 @@ def _resolver_nodo(
         bindings_iteracion = bindings.copy()
         globales_iteracion = globales.copy()
         bindings_globales_iteracion = bindings_globales.copy()
+        exteriores_iteracion = dict(bindings_exteriores or {})
         nombres_externos_iteracion = (
             nombres_externos.copy() if nombres_externos is not None else None
         )
@@ -465,7 +505,7 @@ def _resolver_nodo(
             scope_global=scope_global,
             escrituras_externas=escrituras_iteracion,
             nombres_externos=nombres_externos_iteracion,
-            bindings_exteriores=bindings_exteriores,
+            bindings_exteriores=exteriores_iteracion,
         )
         _fusionar_bindings(bindings, (bindings.copy(), bindings_iteracion))
         _fusionar_alcances(globales, (globales.copy(), globales_iteracion))
@@ -499,15 +539,24 @@ def _resolver_nodo(
         bindings_iteracion = bindings.copy()
         globales_iteracion = globales.copy()
         bindings_globales_iteracion = bindings_globales.copy()
+        exteriores_iteracion = dict(bindings_exteriores or {})
         nombres_externos_iteracion = (
             nombres_externos.copy() if nombres_externos is not None else None
         )
         if isinstance(nodo.variable, str):
-            target_existente = nodo.variable in bindings
+            alcance_target = globales.get(nodo.variable, _LOCAL)
+            target_propio = alcance_target == _LOCAL_PROPIO
+            target_dirigido = alcance_target in (_GLOBAL, _NONLOCAL)
+            crea_local = not target_propio and not target_dirigido
+            if crea_local and nodo.variable in bindings:
+                exteriores_iteracion[nodo.variable] = (
+                    (bindings[nodo.variable], alcance_target),
+                    *exteriores_iteracion.get(nodo.variable, ()),
+                )
             bindings_iteracion[nodo.variable] = _OTRO
-            if not target_existente:
-                globales_iteracion[nodo.variable] = _LOCAL
-            if not target_existente and nombres_externos_iteracion is not None:
+            if crea_local:
+                globales_iteracion[nodo.variable] = _LOCAL_PROPIO
+            if crea_local and nombres_externos_iteracion is not None:
                 nombres_externos_iteracion.discard(nodo.variable)
         escrituras_antes = (
             escrituras_externas.copy()
@@ -528,7 +577,7 @@ def _resolver_nodo(
             scope_global=scope_global,
             escrituras_externas=escrituras_iteracion,
             nombres_externos=nombres_externos_iteracion,
-            bindings_exteriores=bindings_exteriores,
+            bindings_exteriores=exteriores_iteracion,
         )
         _fusionar_bindings(bindings, (bindings.copy(), bindings_iteracion))
         _fusionar_alcances(globales, (globales.copy(), globales_iteracion))

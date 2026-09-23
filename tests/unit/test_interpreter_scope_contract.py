@@ -113,6 +113,130 @@ def test_del_parametro_reexpone_binding_exterior_en_runtime() -> None:
     assert inter.obtener_variable("resultado") == 7
 
 
+def test_del_encadenado_avanza_parametro_local_exterior_y_global() -> None:
+    inter = _ejecutar(
+        [
+            NodoAsignacion("x", NodoValor("global"), declaracion=True),
+            NodoFuncion(
+                "exterior",
+                [],
+                [
+                    NodoAsignacion("x", NodoValor("exterior"), declaracion=True),
+                    NodoFuncion(
+                        "interior",
+                        ["x"],
+                        [
+                            NodoDel(NodoIdentificador("x")),
+                            NodoDel(NodoIdentificador("x")),
+                            NodoRetorno(NodoIdentificador("x")),
+                        ],
+                    ),
+                    NodoRetorno(
+                        NodoLlamadaFuncion("interior", [NodoValor("parametro")])
+                    ),
+                ],
+            ),
+            NodoAsignacion(
+                "resultado", NodoLlamadaFuncion("exterior", []), declaracion=True
+            ),
+        ]
+    )
+
+    assert inter.obtener_variable("resultado") == "global"
+
+
+def test_target_para_en_funcion_interna_crea_shadow_local_sin_nolocal() -> None:
+    inter = _ejecutar(
+        [
+            NodoFuncion(
+                "exterior",
+                [],
+                [
+                    NodoAsignacion("x", NodoValor("exterior"), declaracion=True),
+                    NodoFuncion(
+                        "interior",
+                        [],
+                        [
+                            NodoPara(
+                                "x",
+                                NodoValor(["target"]),
+                                [NodoDel(NodoIdentificador("x"))],
+                            ),
+                            NodoRetorno(NodoIdentificador("x")),
+                        ],
+                    ),
+                    NodoRetorno(NodoLlamadaFuncion("interior", [])),
+                ],
+            ),
+            NodoAsignacion(
+                "resultado", NodoLlamadaFuncion("exterior", []), declaracion=True
+            ),
+        ]
+    )
+
+    assert inter.obtener_variable("resultado") == "exterior"
+
+
+def test_target_para_nolocal_modifica_y_elimina_binding_exterior() -> None:
+    inter = _ejecutar(
+        [
+            NodoAsignacion("x", NodoValor("global"), declaracion=True),
+            NodoFuncion(
+                "exterior",
+                [],
+                [
+                    NodoAsignacion("x", NodoValor("exterior"), declaracion=True),
+                    NodoFuncion(
+                        "interior",
+                        [],
+                        [
+                            NodoNoLocal(["x"]),
+                            NodoPara(
+                                "x",
+                                NodoValor(["target"]),
+                                [NodoDel(NodoIdentificador("x"))],
+                            ),
+                            NodoRetorno(NodoIdentificador("x")),
+                        ],
+                    ),
+                    NodoRetorno(NodoLlamadaFuncion("interior", [])),
+                ],
+            ),
+            NodoAsignacion(
+                "resultado", NodoLlamadaFuncion("exterior", []), declaracion=True
+            ),
+        ]
+    )
+
+    assert inter.obtener_variable("resultado") == "global"
+
+
+def test_target_para_global_modifica_y_elimina_binding_global() -> None:
+    inter = _ejecutar(
+        [
+            NodoAsignacion("x", NodoValor("global"), declaracion=True),
+            NodoFuncion(
+                "f",
+                [],
+                [
+                    NodoGlobal(["x"]),
+                    NodoPara(
+                        "x",
+                        NodoValor(["target"]),
+                        [NodoDel(NodoIdentificador("x"))],
+                    ),
+                    NodoRetorno(NodoIdentificador("x")),
+                ],
+            ),
+        ]
+    )
+
+    with pytest.raises(NameError, match="Variable no declarada: x"):
+        inter.ejecutar_nodo(NodoLlamadaFuncion("f", []))
+    with pytest.raises(NameError, match="Variable no declarada: x"):
+        inter.obtener_variable("x")
+
+
 def test_target_para_existente_actualiza_el_binding_visible_en_runtime() -> None:
     inter = _ejecutar(
         [
