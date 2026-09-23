@@ -11,6 +11,7 @@ from pcobra.core.ast_nodes import (
     NodoBucleMientras,
     NodoCondicional,
     NodoContinuar,
+    NodoDel,
     NodoFuncion,
     NodoGlobal,
     NodoIdentificador,
@@ -43,6 +44,142 @@ def _incremento(nombre: str) -> NodoAsignacion:
             NodoValor(1),
         ),
     )
+
+
+def test_environment_delete_elimina_solo_el_binding_mas_cercano() -> None:
+    exterior = Environment(values={"x": "exterior"})
+    interior = Environment(values={"x": "interior"}, parent=exterior)
+
+    interior.delete("x")
+
+    assert interior.get("x") == "exterior"
+    assert exterior.values == {"x": "exterior"}
+
+
+def test_environment_delete_recorre_padres_y_falla_si_no_existe() -> None:
+    exterior = Environment(values={"x": 1})
+    interior = Environment(parent=exterior)
+
+    interior.delete("x")
+
+    assert "x" not in exterior.values
+    with pytest.raises(NameError, match="Variable no declarada: ausente"):
+        interior.delete("ausente")
+
+
+def test_del_local_reexpone_binding_global_en_runtime() -> None:
+    inter = _ejecutar(
+        [
+            NodoAsignacion("x", NodoValor(7), declaracion=True),
+            NodoFuncion(
+                "f",
+                [],
+                [
+                    NodoAsignacion("x", NodoValor(1), declaracion=True),
+                    NodoDel(NodoIdentificador("x")),
+                    NodoRetorno(NodoIdentificador("x")),
+                ],
+            ),
+            NodoAsignacion(
+                "resultado", NodoLlamadaFuncion("f", []), declaracion=True
+            ),
+        ]
+    )
+
+    assert inter.obtener_variable("resultado") == 7
+
+
+def test_del_elimina_binding_local_de_funcion_en_runtime() -> None:
+    inter = _ejecutar(
+        [
+            NodoFuncion(
+                "f",
+                [],
+                [
+                    NodoAsignacion("x", NodoValor(1), declaracion=True),
+                    NodoDel(NodoIdentificador("x")),
+                    NodoRetorno(NodoIdentificador("x")),
+                ],
+            )
+        ]
+    )
+
+    with pytest.raises(NameError, match="Variable no declarada: x"):
+        inter.ejecutar_nodo(NodoLlamadaFuncion("f", []))
+
+
+def test_del_desde_con_sin_local_elimina_binding_exterior_en_runtime() -> None:
+    inter = _ejecutar(
+        [
+            NodoAsignacion("x", NodoValor(1), declaracion=True),
+            NodoWith(
+                NodoValor(None), None, [NodoDel(NodoIdentificador("x"))]
+            ),
+        ]
+    )
+
+    with pytest.raises(NameError, match="Variable no declarada: x"):
+        inter.obtener_variable("x")
+
+
+def test_alias_de_con_no_se_materializa_y_del_alcanza_el_exterior() -> None:
+    inter = _ejecutar(
+        [
+            NodoAsignacion("x", NodoValor(1), declaracion=True),
+            NodoWith(
+                NodoValor("recurso"),
+                "x",
+                [NodoDel(NodoIdentificador("x"))],
+            ),
+        ]
+    )
+
+    with pytest.raises(NameError, match="Variable no declarada: x"):
+        inter.obtener_variable("x")
+
+
+def test_global_y_nolocal_del_eliminan_el_binding_real_en_runtime() -> None:
+    global_inter = _ejecutar(
+        [
+            NodoAsignacion("x", NodoValor(1), declaracion=True),
+            NodoFuncion(
+                "borrar",
+                [],
+                [NodoGlobal(["x"]), NodoDel(NodoIdentificador("x"))],
+            ),
+            NodoLlamadaFuncion("borrar", []),
+        ]
+    )
+    with pytest.raises(NameError, match="Variable no declarada: x"):
+        global_inter.obtener_variable("x")
+
+    nolocal_inter = _ejecutar(
+        [
+            NodoFuncion(
+                "exterior",
+                [],
+                [
+                    NodoAsignacion("x", NodoValor(1), declaracion=True),
+                    NodoFuncion(
+                        "borrar",
+                        [],
+                        [
+                            NodoNoLocal(["x"]),
+                            NodoDel(NodoIdentificador("x")),
+                        ],
+                    ),
+                    NodoLlamadaFuncion("borrar", []),
+                    NodoRetorno(NodoValor("borrado")),
+                ],
+            ),
+            NodoAsignacion(
+                "resultado",
+                NodoLlamadaFuncion("exterior", []),
+                declaracion=True,
+            ),
+        ]
+    )
+    assert nolocal_inter.obtener_variable("resultado") == "borrado"
 
 
 def test_nolocal_lee_y_escribe_binding_de_funcion_exterior() -> None:
