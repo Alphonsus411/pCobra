@@ -108,6 +108,9 @@ def _resolver_bloque(
     for indice, nodo in enumerate(instrucciones):
         if isinstance(nodo, NodoClase):
             clase_actual = {nodo.nombre} if nodo.nombre not in ambiguos else set()
+            estado_clase = _OTRO if nodo.nombre in ambiguos else _CLASE
+            if scope_global:
+                bindings_globales[nodo.nombre] = estado_clase
             bindings_de_metodos = bindings.copy()
             bindings_de_metodos.update(
                 (nombre, _CLASE) for nombre in clase_actual
@@ -122,12 +125,9 @@ def _resolver_bloque(
                     bindings_globales=bindings_globales,
                     scope_global=False,
                 )
-            bindings[nodo.nombre] = (
-                _OTRO if nodo.nombre in ambiguos else _CLASE
-            )
+            bindings[nodo.nombre] = estado_clase
             if scope_global:
                 globales[nodo.nombre] = _GLOBAL
-                bindings_globales[nodo.nombre] = bindings[nodo.nombre]
             else:
                 globales[nodo.nombre] = _LOCAL_PROPIO
             if nombres_externos is not None:
