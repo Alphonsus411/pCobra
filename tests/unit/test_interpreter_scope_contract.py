@@ -74,6 +74,64 @@ def test_nolocal_lee_y_escribe_binding_de_funcion_exterior() -> None:
     assert inter.obtener_variable("resultado") == 2
 
 
+def test_global_en_funcion_escribe_binding_del_entorno_raiz() -> None:
+    inter = _ejecutar(
+        [
+            NodoAsignacion("x", NodoValor(1), declaracion=True),
+            NodoFuncion(
+                "cambiar",
+                [],
+                [NodoGlobal(["x"]), NodoAsignacion("x", NodoValor(9))],
+            ),
+            NodoLlamadaFuncion("cambiar", []),
+        ]
+    )
+
+    assert inter.obtener_variable("x") == 9
+
+
+def test_global_declarado_en_con_persiste_fuera_del_bloque() -> None:
+    inter = _ejecutar(
+        [
+            NodoAsignacion("x", NodoValor(1), declaracion=True),
+            NodoFuncion(
+                "cambiar",
+                [],
+                [
+                    NodoWith(NodoValor(None), None, [NodoGlobal(["x"])]),
+                    NodoAsignacion("x", NodoValor(9)),
+                ],
+            ),
+            NodoLlamadaFuncion("cambiar", []),
+        ]
+    )
+
+    assert inter.obtener_variable("x") == 9
+
+
+def test_global_en_con_dirige_escritura_de_con_hermano_al_entorno_raiz() -> None:
+    inter = _ejecutar(
+        [
+            NodoAsignacion("x", NodoValor(1), declaracion=True),
+            NodoFuncion(
+                "cambiar",
+                [],
+                [
+                    NodoWith(NodoValor(None), None, [NodoGlobal(["x"])]),
+                    NodoWith(
+                        NodoValor(None),
+                        None,
+                        [NodoAsignacion("x", NodoValor(9))],
+                    ),
+                ],
+            ),
+            NodoLlamadaFuncion("cambiar", []),
+        ]
+    )
+
+    assert inter.obtener_variable("x") == 9
+
+
 def test_nolocal_escribe_binding_exterior_desde_con() -> None:
     inter = _ejecutar(
         [
