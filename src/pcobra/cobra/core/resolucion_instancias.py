@@ -295,7 +295,7 @@ def _resolver_nodo(
             globales=globales_locales,
             bindings_globales=bindings_globales_locales,
             scope_global=False,
-            nombres_externos=set(bindings),
+            nombres_externos=set(bindings) - set(nodo.parametros),
             bindings_exteriores=bindings,
         )
         return nodo
@@ -503,9 +503,11 @@ def _resolver_nodo(
             nombres_externos.copy() if nombres_externos is not None else None
         )
         if isinstance(nodo.variable, str):
+            target_existente = nodo.variable in bindings
             bindings_iteracion[nodo.variable] = _OTRO
-            globales_iteracion[nodo.variable] = _LOCAL
-            if nombres_externos_iteracion is not None:
+            if not target_existente:
+                globales_iteracion[nodo.variable] = _LOCAL
+            if not target_existente and nombres_externos_iteracion is not None:
                 nombres_externos_iteracion.discard(nodo.variable)
         escrituras_antes = (
             escrituras_externas.copy()
