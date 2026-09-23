@@ -351,6 +351,38 @@ def test_redeclaracion_funcion_mismo_scope_no_reexpone_clase_sobrescrita():
     assert type(ast[0].cuerpo[-1]) is NodoLlamadaFuncion
 
 
+def test_clase_en_con_reexpone_clase_del_environment_padre_tras_del():
+    ast = _parsear(
+        "func f():\n    clase C:\n    fin\n    con recurso:\n"
+        "        clase C:\n        fin\n        eliminar C\n        C()\n"
+        "    fin\nfin"
+    )
+
+    assert type(ast[0].cuerpo[-1].cuerpo[-1]) is NodoInstancia
+
+
+def test_variable_en_con_reexpone_clase_del_environment_padre_tras_del():
+    ast = _parsear(
+        "func f():\n    clase C:\n    fin\n    con recurso:\n"
+        "        var C = otra\n        eliminar C\n        C()\n    fin\nfin"
+    )
+
+    assert type(ast[0].cuerpo[-1].cuerpo[-1]) is NodoInstancia
+
+
+def test_con_anidado_reexpone_cada_capa_lexica_tras_del():
+    ast = _parsear(
+        "func f():\n    clase C:\n    fin\n    con exterior:\n"
+        "        clase C:\n        fin\n        con interior:\n"
+        "            var C = otra\n            eliminar C\n            C()\n"
+        "        fin\n        eliminar C\n        C()\n    fin\nfin"
+    )
+
+    con_exterior = ast[0].cuerpo[-1]
+    assert type(con_exterior.cuerpo[1].cuerpo[-1]) is NodoInstancia
+    assert type(con_exterior.cuerpo[-1]) is NodoInstancia
+
+
 def test_del_global_y_nolocal_invalidan_binding_dirigido():
     global_ast = _parsear(
         "clase C:\nfin\nfunc f():\n    global C\n    eliminar C\n    C()\nfin"

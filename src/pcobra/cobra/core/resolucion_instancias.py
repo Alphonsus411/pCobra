@@ -143,7 +143,10 @@ def _resolver_bloque(
                 not scope_global
                 and bindings_exteriores is not None
                 and nodo.nombre in bindings
-                and globales.get(nodo.nombre, _LOCAL) != _LOCAL_PROPIO
+                and (
+                    globales.get(nodo.nombre, _LOCAL) != _LOCAL_PROPIO
+                    or nodo.nombre in (nombres_externos or set())
+                )
             ):
                 bindings_exteriores[nodo.nombre] = (
                     (bindings[nodo.nombre], globales.get(nodo.nombre, _LOCAL)),
@@ -181,7 +184,10 @@ def _resolver_bloque(
                         not scope_global
                         and bindings_exteriores is not None
                         and nombre in bindings
-                        and globales.get(nombre, _LOCAL) != _LOCAL_PROPIO
+                        and (
+                            globales.get(nombre, _LOCAL) != _LOCAL_PROPIO
+                            or nombre in (nombres_externos or set())
+                        )
                     ):
                         bindings_exteriores[nombre] = (
                             (bindings[nombre], globales.get(nombre, _LOCAL)),
