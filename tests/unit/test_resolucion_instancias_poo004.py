@@ -1147,6 +1147,53 @@ def test_global_recupera_funcion_raiz_oculta_por_clase_exterior():
     assert type(ast[1].cuerpo[1].cuerpo[-1]) is NodoLlamadaFuncion
 
 
+def test_metodo_con_global_instancia_su_clase_raiz_actual():
+    ast = _parsear(
+        "clase C:\n"
+        "    metodo crear(este):\n        global C\n        C()\n    fin\n"
+        "fin"
+    )
+
+    assert type(ast[0].metodos[0].cuerpo[-1]) is NodoInstancia
+
+
+def test_dos_metodos_con_global_instancian_su_clase_raiz_actual():
+    ast = _parsear(
+        "clase C:\n"
+        "    metodo uno(este):\n        global C\n        C()\n    fin\n"
+        "    metodo dos(este):\n        global C\n        C()\n    fin\n"
+        "fin"
+    )
+
+    assert all(type(metodo.cuerpo[-1]) is NodoInstancia for metodo in ast[0].metodos)
+
+
+def test_clase_local_no_se_registra_como_binding_global():
+    ast = _parsear(
+        "func exterior():\n"
+        "    clase C:\n"
+        "        metodo crear(este):\n"
+        "            global C\n"
+        "            C()\n"
+        "        fin\n"
+        "    fin\n"
+        "fin"
+    )
+
+    assert type(ast[0].cuerpo[0].metodos[0].cuerpo[-1]) is NodoLlamadaFuncion
+
+
+def test_clase_raiz_ambigua_no_se_registra_como_clase_inequivoca():
+    ast = _parsear(
+        "func C():\nfin\n"
+        "clase C:\n"
+        "    metodo crear(este):\n        global C\n        C()\n    fin\n"
+        "fin"
+    )
+
+    assert type(ast[1].metodos[0].cuerpo[-1]) is NodoLlamadaFuncion
+
+
 def test_global_selecciona_clase_raiz():
     ast = _parsear(
         "clase C:\nfin\nfunc interior():\n    global C\n    C()\nfin"
