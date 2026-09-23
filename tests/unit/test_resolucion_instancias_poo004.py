@@ -1133,3 +1133,155 @@ def test_resolucion_preserva_identidad_de_aliases_de_asignacion():
 
     assert asignacion.valor is asignacion.expresion
     assert type(asignacion.valor) is NodoInstancia
+
+
+def test_global_recupera_funcion_raiz_oculta_por_clase_exterior():
+    ast = _parsear(
+        "func C():\nfin\n"
+        "func exterior():\n"
+        "    clase C:\n    fin\n"
+        "    func interior():\n        global C\n        C()\n    fin\n"
+        "fin"
+    )
+
+    assert type(ast[1].cuerpo[1].cuerpo[-1]) is NodoLlamadaFuncion
+
+
+def test_global_selecciona_clase_raiz():
+    ast = _parsear(
+        "clase C:\nfin\nfunc interior():\n    global C\n    C()\nfin"
+    )
+
+    assert type(ast[1].cuerpo[-1]) is NodoInstancia
+
+
+def test_global_selecciona_funcion_raiz():
+    ast = _parsear(
+        "func C():\nfin\nfunc interior():\n    global C\n    C()\nfin"
+    )
+
+    assert type(ast[1].cuerpo[-1]) is NodoLlamadaFuncion
+
+
+def test_global_recupera_clase_raiz_oculta_por_binding_exterior():
+    ast = _parsear(
+        "clase C:\nfin\n"
+        "func exterior():\n"
+        "    var C = f\n"
+        "    func interior():\n        global C\n        C()\n    fin\n"
+        "fin"
+    )
+
+    assert type(ast[1].cuerpo[1].cuerpo[-1]) is NodoInstancia
+
+
+def test_escritura_posterior_a_global_invalida_clase_raiz():
+    ast = _parsear(
+        "clase C:\nfin\n"
+        "func interior():\n    global C\n    C = f\n    C()\nfin"
+    )
+
+    assert type(ast[1].cuerpo[-1]) is NodoLlamadaFuncion
+
+
+def test_global_declarado_y_escrito_en_con_persiste_fuera():
+    ast = _parsear(
+        "clase C:\nfin\n"
+        "func interior():\n"
+        "    con recurso:\n        global C\n        C = f\n    fin\n"
+        "    C()\nfin"
+    )
+
+    assert type(ast[1].cuerpo[-1]) is NodoLlamadaFuncion
+
+
+def test_global_en_con_persiste_para_escritura_en_con_hermano():
+    ast = _parsear(
+        "clase C:\nfin\n"
+        "func interior():\n"
+        "    con uno:\n        global C\n    fin\n"
+        "    con dos:\n        C = f\n    fin\n"
+        "    C()\nfin"
+    )
+
+    assert type(ast[1].cuerpo[-1]) is NodoLlamadaFuncion
+
+
+def test_global_en_con_anidado_persiste_fuera():
+    ast = _parsear(
+        "clase C:\nfin\n"
+        "func interior():\n"
+        "    con uno:\n        con dos:\n            global C\n        fin\n    fin\n"
+        "    C()\nfin"
+    )
+
+    assert type(ast[1].cuerpo[-1]) is NodoInstancia
+
+
+def test_global_condicional_no_se_convierte_en_instancia_segura():
+    ast = _parsear(
+        "clase C:\nfin\n"
+        "func exterior():\n"
+        "    var C = f\n"
+        "    func interior():\n"
+        "        si condicion:\n            global C\n        fin\n"
+        "        C()\n    fin\nfin"
+    )
+
+    assert type(ast[1].cuerpo[1].cuerpo[-1]) is NodoLlamadaFuncion
+
+
+def test_global_en_mientras_conserva_camino_de_cero_iteraciones():
+    ast = _parsear(
+        "clase C:\nfin\n"
+        "func exterior():\n    var C = f\n"
+        "    func interior():\n"
+        "        mientras condicion:\n            global C\n        fin\n"
+        "        C()\n    fin\nfin"
+    )
+
+    assert type(ast[1].cuerpo[1].cuerpo[-1]) is NodoLlamadaFuncion
+
+
+def test_global_en_para_conserva_camino_de_cero_iteraciones():
+    ast = _parsear(
+        "clase C:\nfin\n"
+        "func exterior():\n    var C = f\n"
+        "    func interior():\n"
+        "        para elemento en []:\n            global C\n        fin\n"
+        "        C()\n    fin\nfin"
+    )
+
+    assert type(ast[1].cuerpo[1].cuerpo[-1]) is NodoLlamadaFuncion
+
+
+def test_conflictos_global_nolocal_no_producen_instancia_segura():
+    for declaraciones in ("global C\n        nolocal C", "nolocal C\n        global C"):
+        ast = _parsear(
+            "clase C:\nfin\n"
+            "func exterior():\n    clase C:\n    fin\n"
+            f"    func interior():\n        {declaraciones}\n        C()\n    fin\n"
+            "fin"
+        )
+
+        assert type(ast[1].cuerpo[1].cuerpo[-1]) is NodoLlamadaFuncion
+
+
+def test_global_sin_binding_raiz_no_inventa_clase():
+    ast = _parsear("func interior():\n    global X\n    X()\nfin")
+
+    assert type(ast[0].cuerpo[-1]) is NodoLlamadaFuncion
+
+
+def test_global_de_modulo_no_altera_el_binding_visible():
+    ast = _parsear("clase C:\nfin\nglobal C\nC()")
+
+    assert type(ast[-1]) is NodoInstancia
+
+
+def test_global_no_anticipa_declaracion_raiz_futura():
+    ast = _parsear(
+        "func interior():\n    global C\n    C()\nfin\nclase C:\nfin"
+    )
+
+    assert type(ast[0].cuerpo[-1]) is NodoLlamadaFuncion
