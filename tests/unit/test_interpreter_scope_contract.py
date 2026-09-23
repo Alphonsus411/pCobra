@@ -18,6 +18,7 @@ from pcobra.core.ast_nodes import (
     NodoLlamadaFuncion,
     NodoOperacionBinaria,
     NodoNoLocal,
+    NodoPara,
     NodoRomper,
     NodoRetorno,
     NodoValor,
@@ -87,6 +88,56 @@ def test_del_local_reexpone_binding_global_en_runtime() -> None:
     )
 
     assert inter.obtener_variable("resultado") == 7
+
+
+def test_del_parametro_reexpone_binding_exterior_en_runtime() -> None:
+    inter = _ejecutar(
+        [
+            NodoAsignacion("x", NodoValor(7), declaracion=True),
+            NodoFuncion(
+                "f",
+                ["x"],
+                [
+                    NodoDel(NodoIdentificador("x")),
+                    NodoRetorno(NodoIdentificador("x")),
+                ],
+            ),
+            NodoAsignacion(
+                "resultado",
+                NodoLlamadaFuncion("f", [NodoValor(1)]),
+                declaracion=True,
+            ),
+        ]
+    )
+
+    assert inter.obtener_variable("resultado") == 7
+
+
+def test_target_para_existente_actualiza_el_binding_visible_en_runtime() -> None:
+    inter = _ejecutar(
+        [
+            NodoAsignacion("x", NodoValor(1), declaracion=True),
+            NodoPara("x", NodoValor([2]), []),
+        ]
+    )
+
+    assert inter.obtener_variable("x") == 2
+
+
+def test_del_target_para_existente_elimina_el_binding_visible_en_runtime() -> None:
+    inter = _ejecutar(
+        [
+            NodoAsignacion("x", NodoValor(1), declaracion=True),
+            NodoPara(
+                "x",
+                NodoValor([2]),
+                [NodoDel(NodoIdentificador("x"))],
+            ),
+        ]
+    )
+
+    with pytest.raises(NameError, match="Variable no declarada: x"):
+        inter.obtener_variable("x")
 
 
 def test_del_elimina_binding_local_de_funcion_en_runtime() -> None:

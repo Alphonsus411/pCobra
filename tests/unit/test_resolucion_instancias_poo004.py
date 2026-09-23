@@ -114,6 +114,121 @@ def test_del_local_reexpone_clase_exterior():
     assert type(ast[1].cuerpo[-1]) is NodoInstancia
 
 
+def test_del_parametro_reexpone_clase_exterior():
+    ast = _parsear(
+        "clase C:\nfin\nfunc f(C):\n    eliminar C\n    C()\nfin"
+    )
+
+    assert type(ast[1].cuerpo[-1]) is NodoInstancia
+
+
+def test_del_parametro_sin_exterior_no_inventa_clase():
+    ast = _parsear("func f(C):\n    eliminar C\n    C()\nfin")
+
+    assert type(ast[0].cuerpo[-1]) is NodoLlamadaFuncion
+
+
+def test_del_parametro_reexpone_funcion_exterior_como_llamada():
+    ast = _parsear(
+        "func C():\nfin\nfunc f(C):\n    eliminar C\n    C()\nfin"
+    )
+
+    assert type(ast[1].cuerpo[-1]) is NodoLlamadaFuncion
+
+
+def test_del_parametro_no_inicial_reexpone_clase_exterior():
+    ast = _parsear(
+        "clase C:\nfin\n"
+        "func f(x, C, y):\n    eliminar C\n    C()\nfin"
+    )
+
+    assert type(ast[1].cuerpo[-1]) is NodoInstancia
+
+
+def test_del_parametro_de_metodo_reexpone_clase_sin_afectar_receptor():
+    ast = _parsear(
+        "clase C:\nfin\nclase Contenedor:\n"
+        "    metodo crear(este, C):\n        eliminar C\n        C()\n    fin\n"
+        "fin"
+    )
+
+    assert ast[1].metodos[0].parametros == ["este", "C"]
+    assert type(ast[1].metodos[0].cuerpo[-1]) is NodoInstancia
+
+
+def test_del_condicional_de_parametro_es_conservador():
+    ast = _parsear(
+        "clase C:\nfin\nfunc f(C):\n"
+        "    si condicion:\n        eliminar C\n    fin\n    C()\nfin"
+    )
+
+    assert type(ast[1].cuerpo[-1]) is NodoLlamadaFuncion
+
+
+def test_redeclaracion_tras_del_parametro_reemplaza_estado_eliminado():
+    ast = _parsear(
+        "clase C:\nfin\nfunc f(C):\n"
+        "    eliminar C\n    clase C:\n    fin\n    C()\nfin"
+    )
+
+    assert type(ast[1].cuerpo[-1]) is NodoInstancia
+
+
+def test_target_para_nuevo_eliminado_no_inventa_clase():
+    ast = _parsear(
+        "func f():\n    para C en valores:\n"
+        "        eliminar C\n        C()\n    fin\nfin"
+    )
+
+    assert type(ast[0].cuerpo[0].cuerpo[-1]) is NodoLlamadaFuncion
+
+
+def test_target_para_existente_no_restaura_clase_sobrescrita():
+    ast = _parsear(
+        "clase C:\nfin\nfunc f():\n    para C en valores:\n"
+        "        eliminar C\n        C()\n    fin\nfin"
+    )
+
+    assert type(ast[1].cuerpo[0].cuerpo[-1]) is NodoLlamadaFuncion
+
+
+def test_target_para_existente_sobre_funcion_permanece_llamada():
+    ast = _parsear(
+        "func C():\nfin\nfunc f():\n    para C en valores:\n"
+        "        eliminar C\n        C()\n    fin\nfin"
+    )
+
+    assert type(ast[1].cuerpo[0].cuerpo[-1]) is NodoLlamadaFuncion
+
+
+def test_target_para_distinto_no_afecta_clase_visible():
+    ast = _parsear(
+        "clase C:\nfin\nfunc f():\n    para x en valores:\n"
+        "        eliminar x\n        C()\n    fin\nfin"
+    )
+
+    assert type(ast[1].cuerpo[0].cuerpo[-1]) is NodoInstancia
+
+
+def test_del_condicional_del_target_para_es_conservador():
+    ast = _parsear(
+        "clase C:\nfin\nfunc f():\n    para C en valores:\n"
+        "        si condicion:\n            eliminar C\n        fin\n"
+        "        C()\n    fin\nfin"
+    )
+
+    assert type(ast[1].cuerpo[0].cuerpo[-1]) is NodoLlamadaFuncion
+
+
+def test_target_para_sobrescribe_clase_local_sin_restaurarla():
+    ast = _parsear(
+        "func f():\n    clase C:\n    fin\n    para C en valores:\n"
+        "        eliminar C\n        C()\n    fin\nfin"
+    )
+
+    assert type(ast[0].cuerpo[1].cuerpo[-1]) is NodoLlamadaFuncion
+
+
 def test_del_global_y_nolocal_invalidan_binding_dirigido():
     global_ast = _parsear(
         "clase C:\nfin\nfunc f():\n    global C\n    eliminar C\n    C()\nfin"
