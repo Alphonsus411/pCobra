@@ -18,6 +18,7 @@ from pcobra.cobra.cli.services.contracts import TestRequest as CobraTestRequest
 from pcobra.cobra.core.ast_nodes import (
     NodoAsignacion,
     NodoClase,
+    NodoDel,
     NodoIdentificador,
     NodoInstancia,
     NodoLlamadaFuncion,
@@ -43,6 +44,112 @@ def _valor_asignado(nodo):
 
 def _fallar_si_se_usa_cache(_codigo):
     raise AssertionError("La caché no debe usarse sin una SQLITE_DB_KEY efectiva")
+
+
+def _ultima_llamada(codigo: str):
+    ast = _parsear(codigo)
+    llamada = ast[-1]
+    if type(llamada) is NodoAsignacion:
+        llamada = _valor_asignado(llamada)
+    return ast, llamada
+
+
+def test_del_global_invalida_clase_sin_reemplazarla_por_otro_binding():
+    ast, llamada = _ultima_llamada("clase C:\nfin\neliminar C\nC()")
+
+    assert type(ast[1]) is NodoDel
+    assert type(llamada) is NodoLlamadaFuncion
+
+
+def test_del_condicional_en_una_o_ambas_ramas_es_conservador():
+    _, una_rama = _ultima_llamada(
+        "clase C:\nfin\nsi condicion:\n    eliminar C\nfin\nC()"
+    )
+    _, ambas_ramas = _ultima_llamada(
+        "clase C:\nfin\nsi condicion:\n    eliminar C\nsino:\n    eliminar C\nfin\nC()"
+    )
+
+    assert type(una_rama) is NodoLlamadaFuncion
+    assert type(ambas_ramas) is NodoLlamadaFuncion
+
+
+def test_del_en_bucles_conserva_camino_de_cero_iteraciones():
+    _, mientras = _ultima_llamada(
+        "clase C:\nfin\nmientras condicion:\n    eliminar C\nfin\nC()"
+    )
+    _, para = _ultima_llamada(
+        "clase C:\nfin\npara elemento en []:\n    eliminar C\nfin\nC()"
+    )
+
+    assert type(mientras) is NodoLlamadaFuncion
+    assert type(para) is NodoLlamadaFuncion
+
+
+def test_del_local_de_funcion_invalida_clase_local():
+    ast = _parsear(
+        "func exterior():\n    clase C:\n    fin\n    eliminar C\n    C()\nfin"
+    )
+
+    assert type(ast[0].cuerpo[-1]) is NodoLlamadaFuncion
+
+
+def test_del_desde_con_y_alias_no_materializado_eliminan_binding_exterior():
+    ast = _parsear(
+        "clase C:\nfin\ncon recurso:\n    eliminar C\nfin\nC()"
+    )
+    alias = _parsear(
+        "clase C:\nfin\ncon recurso como C:\n    eliminar C\nfin\nC()"
+    )
+
+    assert type(ast[-1]) is NodoLlamadaFuncion
+    assert type(alias[-1]) is NodoLlamadaFuncion
+
+
+def test_del_local_reexpone_clase_exterior():
+    ast = _parsear(
+        "clase C:\nfin\n"
+        "func f():\n    var C = otra\n    eliminar C\n    C()\nfin"
+    )
+
+    assert type(ast[1].cuerpo[-1]) is NodoInstancia
+
+
+def test_del_global_y_nolocal_invalidan_binding_dirigido():
+    global_ast = _parsear(
+        "clase C:\nfin\nfunc f():\n    global C\n    eliminar C\n    C()\nfin"
+    )
+    nolocal_ast = _parsear(
+        "func exterior():\n    clase C:\n    fin\n"
+        "    func interior():\n        nolocal C\n        eliminar C\n        C()\n    fin\nfin"
+    )
+
+    assert type(global_ast[1].cuerpo[-1]) is NodoLlamadaFuncion
+    assert type(nolocal_ast[0].cuerpo[-1].cuerpo[-1]) is NodoLlamadaFuncion
+
+
+def test_del_inexistente_no_inventa_binding_y_redeclaraciones_lo_reemplazan():
+    _, inexistente = _ultima_llamada("eliminar X\nX()")
+    _, redeclarada = _ultima_llamada(
+        "clase C:\nfin\neliminar C\nclase C:\nfin\nC()"
+    )
+    _, asignada = _ultima_llamada(
+        "clase C:\nfin\neliminar C\nvar C = f\nC()"
+    )
+
+    assert type(inexistente) is NodoLlamadaFuncion
+    assert type(redeclarada) is NodoInstancia
+    assert type(asignada) is NodoLlamadaFuncion
+
+
+def test_del_preserva_identidad_ast_y_memoizacion_del_objetivo():
+    ast_sintactico = Parser(Lexer("clase C:\nfin\neliminar C").analizar_token()).parsear()
+    nodo_del = ast_sintactico[1]
+    objetivo = nodo_del.objetivo
+
+    resuelto = resolver_instanciaciones(ast_sintactico)
+
+    assert resuelto[1] is nodo_del
+    assert resuelto[1].objetivo is objetivo
 
 
 def test_parser_puro_conserva_llamada_sintactica():
