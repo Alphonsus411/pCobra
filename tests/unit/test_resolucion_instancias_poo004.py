@@ -1740,6 +1740,54 @@ def test_global_recupera_funcion_raiz_oculta_por_clase_exterior():
     assert type(ast[1].cuerpo[1].cuerpo[-1]) is NodoLlamadaFuncion
 
 
+def test_global_sin_binding_raiz_no_resucita_cadena_lexica_en_con():
+    ast = _parsear(
+        "func exterior():\n"
+        "    clase C:\n    fin\n"
+        "    func intermedia():\n"
+        "        func C():\n        fin\n"
+        "        func interior():\n"
+        "            global C\n"
+        "            con recurso:\n"
+        "                clase C:\n                fin\n"
+        "                eliminar C\n"
+        "                C()\n"
+        "            fin\n"
+        "        fin\n"
+        "    fin\n"
+        "fin"
+    )
+
+    llamada = ast[0].cuerpo[1].cuerpo[1].cuerpo[-1].cuerpo[-1]
+    assert type(llamada) is NodoLlamadaFuncion
+
+
+def test_global_existente_no_deja_cadena_lexica_detras_en_con():
+    ast = _parsear(
+        "func C():\nfin\n"
+        "func exterior():\n"
+        "    clase C:\n    fin\n"
+        "    func intermedia():\n"
+        "        clase C:\n        fin\n"
+        "        func interior():\n"
+        "            global C\n"
+        "            con recurso:\n"
+        "                clase C:\n                fin\n"
+        "                eliminar C\n"
+        "                C()\n"
+        "                eliminar C\n"
+        "                C()\n"
+        "            fin\n"
+        "        fin\n"
+        "    fin\n"
+        "fin"
+    )
+
+    cuerpo_con = ast[1].cuerpo[1].cuerpo[1].cuerpo[-1].cuerpo
+    assert type(cuerpo_con[-3]) is NodoLlamadaFuncion
+    assert type(cuerpo_con[-1]) is NodoLlamadaFuncion
+
+
 def test_metodo_con_global_instancia_su_clase_raiz_actual():
     ast = _parsear(
         "clase C:\n"

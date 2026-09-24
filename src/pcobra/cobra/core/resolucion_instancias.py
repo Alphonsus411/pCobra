@@ -444,6 +444,8 @@ def _resolver_nodo(
                 bindings[nombre] = _AMBIGUO
             else:
                 globales[nombre] = _GLOBAL
+                if bindings_exteriores is not None:
+                    bindings_exteriores.pop(nombre, None)
                 if nombre in bindings_globales:
                     bindings[nombre] = bindings_globales[nombre]
                 else:
