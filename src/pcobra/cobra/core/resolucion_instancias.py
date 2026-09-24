@@ -281,16 +281,25 @@ def _resolver_bloque_con(
         bindings_exteriores=bindings_exteriores,
     )
     for nombre, alcance in globales.items():
+        alcance_padre = globales_padre.get(nombre, _LOCAL)
         if (
             alcance in (_GLOBAL, _NONLOCAL, _ALCANCE_AMBIGUO)
-            and alcance != globales_padre.get(nombre, _LOCAL)
+            and alcance != alcance_padre
         ):
             globales_padre[nombre] = alcance
+            if bindings_exteriores_padre is not None:
+                cadena = bindings_exteriores.get(nombre)
+                if cadena is None or cadena == ():
+                    bindings_exteriores_padre.pop(nombre, None)
+                elif cadena == _CADENA_EXTERIOR_AMBIGUA:
+                    bindings_exteriores_padre[nombre] = cadena
             if alcance == _GLOBAL:
                 if nombre in bindings_globales:
                     bindings_padre[nombre] = bindings_globales[nombre]
                 else:
                     bindings_padre.pop(nombre, None)
+            elif alcance == _ALCANCE_AMBIGUO:
+                bindings_padre[nombre] = _AMBIGUO
     for nombre, estado in escrituras.items():
         # El runtime no materializa el alias de ``con`` en Environment; por
         # ello ``delete`` atraviesa ese nombre y alcanza el binding padre.

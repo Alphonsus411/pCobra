@@ -1895,6 +1895,87 @@ def test_global_en_con_persiste_para_escritura_en_con_hermano():
     assert type(ast[1].cuerpo[-1]) is NodoLlamadaFuncion
 
 
+def test_global_en_con_invalida_ancestry_para_con_hermano():
+    ast = _parsear(
+        "func exterior():\n"
+        "    clase C:\n    fin\n"
+        "    func intermedia():\n"
+        "        func C():\n        fin\n"
+        "        func interior():\n"
+        "            con uno:\n                global C\n            fin\n"
+        "            con dos:\n"
+        "                clase C:\n                fin\n"
+        "                eliminar C\n                C()\n"
+        "            fin\n"
+        "        fin\n"
+        "    fin\n"
+        "fin"
+    )
+
+    llamada = ast[0].cuerpo[1].cuerpo[1].cuerpo[1].cuerpo[-1]
+    assert type(llamada) is NodoLlamadaFuncion
+
+
+def test_global_existente_en_con_prevalece_en_con_hermano():
+    ast = _parsear(
+        "func C():\nfin\n"
+        "func exterior():\n"
+        "    clase C:\n    fin\n"
+        "    func interior():\n"
+        "        con uno:\n            global C\n        fin\n"
+        "        con dos:\n"
+        "            clase C:\n            fin\n"
+        "            eliminar C\n            C()\n"
+        "        fin\n"
+        "    fin\n"
+        "fin"
+    )
+
+    llamada = ast[1].cuerpo[1].cuerpo[1].cuerpo[-1]
+    assert type(llamada) is NodoLlamadaFuncion
+
+
+def test_global_condicional_en_con_propaga_ancestry_ambigua_al_hermano():
+    ast = _parsear(
+        "clase C:\nfin\n"
+        "func exterior():\n"
+        "    clase C:\n    fin\n"
+        "    func interior():\n"
+        "        con uno:\n"
+        "            si condicion:\n                global C\n            fin\n"
+        "        fin\n"
+        "        con dos:\n"
+        "            clase C:\n            fin\n"
+        "            eliminar C\n            C()\n"
+        "        fin\n"
+        "    fin\n"
+        "fin"
+    )
+
+    llamada = ast[1].cuerpo[1].cuerpo[1].cuerpo[-1]
+    assert type(llamada) is NodoLlamadaFuncion
+
+
+def test_con_hermanos_sin_global_preservan_ancestry_del_padre():
+    ast = _parsear(
+        "clase C:\nfin\n"
+        "func f():\n"
+        "    clase C:\n    fin\n"
+        "    con uno:\n"
+        "        clase C:\n        fin\n"
+        "        eliminar C\n        C()\n"
+        "    fin\n"
+        "    con dos:\n"
+        "        clase C:\n        fin\n"
+        "        eliminar C\n        C()\n"
+        "    fin\n"
+        "fin"
+    )
+
+    llamadas = (ast[1].cuerpo[1].cuerpo[-1], ast[1].cuerpo[2].cuerpo[-1])
+    assert all(type(llamada) is NodoInstancia for llamada in llamadas)
+
+
 def test_global_en_con_anidado_persiste_fuera():
     ast = _parsear(
         "clase C:\nfin\n"
