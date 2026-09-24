@@ -1994,6 +1994,28 @@ def test_shadow_conserva_clase_conocida_sobre_ancestry_ambigua():
     assert type(llamada) is NodoInstancia
 
 
+def test_redeclaracion_local_no_recupera_head_del_mismo_environment():
+    ast = _parsear(
+        "clase C:\nfin\n"
+        "func exterior():\n"
+        "    func C():\n    fin\n"
+        "    func interior():\n"
+        "        si condicion:\n"
+        "            clase C:\n            fin\n"
+        "        sino:\n"
+        "            global C\n"
+        "        fin\n"
+        "        var C = 0\n"
+        "        eliminar C\n"
+        "        C()\n"
+        "    fin\n"
+        "fin"
+    )
+
+    llamada = ast[1].cuerpo[1].cuerpo[-1]
+    assert type(llamada) is NodoLlamadaFuncion
+
+
 def test_segundo_del_penetra_en_tail_ambigua_bajo_head_conocida():
     ast = _parsear(
         "clase C:\nfin\n"

@@ -54,6 +54,14 @@ def _anteponer_binding_exterior(
     )
 
 
+def _es_binding_exterior_recuperable(
+    nombre: str, nombres_externos: set[str] | None
+) -> bool:
+    """Indica si el binding visible pertenece a un ``Environment`` padre."""
+
+    return nombre in (nombres_externos or set())
+
+
 def _alcance_desde_funcion_hija(alcance: str) -> str:
     """Hace relativo al scope hijo el ownership recibido de su padre."""
 
@@ -186,10 +194,7 @@ def _resolver_bloque(
                 not scope_global
                 and bindings_exteriores is not None
                 and nodo.nombre in bindings
-                and (
-                    globales.get(nodo.nombre, _LOCAL) != _LOCAL_PROPIO
-                    or nodo.nombre in (nombres_externos or set())
-                )
+                and _es_binding_exterior_recuperable(nodo.nombre, nombres_externos)
             ):
                 # Un ``con`` hermano debe conservar la invalidación que recibió
                 # del padre; fuera de ese alias temporal, el binding visible sí
@@ -237,10 +242,7 @@ def _resolver_bloque(
                         not scope_global
                         and bindings_exteriores is not None
                         and nombre in bindings
-                        and (
-                            globales.get(nombre, _LOCAL) != _LOCAL_PROPIO
-                            or nombre in (nombres_externos or set())
-                        )
+                        and _es_binding_exterior_recuperable(nombre, nombres_externos)
                     ):
                         # Dentro de ``con`` la cola puede proceder de otro alias
                         # hermano y no constituye una capa concreta recuperable.
@@ -579,7 +581,7 @@ def _resolver_nodo(
         if nombres_externos is not None:
             nombres_externos.clear()
             nombres_externos.update(
-                (nombres_externos_si or set()) | (nombres_externos_sino or set())
+                (nombres_externos_si or set()) & (nombres_externos_sino or set())
             )
         if escrituras_externas is not None:
             _fusionar_bindings(
