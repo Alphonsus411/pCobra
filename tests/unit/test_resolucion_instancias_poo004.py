@@ -1974,6 +1974,104 @@ def test_global_condicional_en_con_preserva_binding_clase_compartido():
     assert type(llamada) is NodoInstancia
 
 
+def test_shadow_conserva_clase_conocida_sobre_ancestry_ambigua():
+    ast = _parsear(
+        "clase C:\nfin\n"
+        "func exterior():\n"
+        "    clase C:\n    fin\n"
+        "    func interior():\n"
+        "        con recurso:\n"
+        "            si condicion:\n                global C\n            fin\n"
+        "        fin\n"
+        "        var C = f\n"
+        "        eliminar C\n"
+        "        C()\n"
+        "    fin\n"
+        "fin"
+    )
+
+    llamada = ast[1].cuerpo[1].cuerpo[-1]
+    assert type(llamada) is NodoInstancia
+
+
+def test_segundo_del_penetra_en_tail_ambigua_bajo_head_conocida():
+    ast = _parsear(
+        "clase C:\nfin\n"
+        "func exterior():\n"
+        "    clase C:\n    fin\n"
+        "    func interior():\n"
+        "        con recurso:\n"
+        "            si condicion:\n                global C\n            fin\n"
+        "        fin\n"
+        "        var C = f\n"
+        "        eliminar C\n"
+        "        eliminar C\n"
+        "        C()\n"
+        "    fin\n"
+        "fin"
+    )
+
+    llamada = ast[1].cuerpo[1].cuerpo[-1]
+    assert type(llamada) is NodoLlamadaFuncion
+
+
+def test_multiples_heads_conocidas_se_consumen_antes_de_tail_ambigua():
+    ast = _parsear(
+        "clase C:\nfin\n"
+        "func exterior():\n"
+        "    clase C:\n    fin\n"
+        "    func interior():\n"
+        "        con recurso:\n"
+        "            si condicion:\n                global C\n            fin\n"
+        "        fin\n"
+        "        func capa_uno():\n"
+        "            clase C:\n            fin\n"
+        "            func capa_dos():\n"
+        "                var C = f\n"
+        "                eliminar C\n"
+        "                C()\n"
+        "                eliminar C\n"
+        "                C()\n"
+        "                eliminar C\n"
+        "                C()\n"
+        "            fin\n"
+        "        fin\n"
+        "    fin\n"
+        "fin"
+    )
+
+    cuerpo = ast[1].cuerpo[1].cuerpo[1].cuerpo[1].cuerpo
+    assert type(cuerpo[2]) is NodoInstancia
+    assert type(cuerpo[4]) is NodoInstancia
+    assert type(cuerpo[6]) is NodoLlamadaFuncion
+
+
+def test_declaraciones_clase_y_funcion_anteponen_head_a_tail_ambigua():
+    prefijo = (
+        "clase C:\nfin\n"
+        "func exterior():\n"
+        "    clase C:\n    fin\n"
+        "    func interior():\n"
+        "        con recurso:\n"
+        "            si condicion:\n                global C\n            fin\n"
+        "        fin\n"
+    )
+    sufijo = (
+        "        eliminar C\n"
+        "        C()\n"
+        "        eliminar C\n"
+        "        C()\n"
+        "    fin\n"
+        "fin"
+    )
+
+    for shadow in ("        clase C:\n        fin\n", "        func C():\n        fin\n"):
+        ast = _parsear(prefijo + shadow + sufijo)
+        cuerpo = ast[1].cuerpo[1].cuerpo
+        assert type(cuerpo[-3]) is NodoInstancia
+        assert type(cuerpo[-1]) is NodoLlamadaFuncion
+
+
 def test_global_condicional_en_con_fusiona_bindings_realmente_distintos():
     ast = _parsear(
         "func C():\nfin\n"

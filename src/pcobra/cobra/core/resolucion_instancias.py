@@ -40,6 +40,20 @@ Memo = dict[int, Any]
 _CADENA_EXTERIOR_AMBIGUA: CadenaExterior = ((_AMBIGUO, _ALCANCE_AMBIGUO),)
 
 
+def _anteponer_binding_exterior(
+    bindings_exteriores: BindingsExteriores,
+    nombre: str,
+    estado: str,
+    alcance: str,
+) -> None:
+    """Conserva una capa conocida aun si precede a una cola ambigua."""
+
+    bindings_exteriores[nombre] = (
+        (estado, alcance),
+        *bindings_exteriores.get(nombre, ()),
+    )
+
+
 def _alcance_desde_funcion_hija(alcance: str) -> str:
     """Hace relativo al scope hijo el ownership recibido de su padre."""
 
@@ -177,13 +191,19 @@ def _resolver_bloque(
                     or nodo.nombre in (nombres_externos or set())
                 )
             ):
-                if bindings_exteriores.get(nodo.nombre) != _CADENA_EXTERIOR_AMBIGUA:
-                    bindings_exteriores[nodo.nombre] = (
-                        (
-                            bindings[nodo.nombre],
-                            globales.get(nodo.nombre, _LOCAL),
-                        ),
-                        *bindings_exteriores.get(nodo.nombre, ()),
+                # Un ``con`` hermano debe conservar la invalidación que recibió
+                # del padre; fuera de ese alias temporal, el binding visible sí
+                # es una capa léxica conocida que precede a la cola ambigua.
+                if (
+                    escrituras_externas is None
+                    or bindings_exteriores.get(nodo.nombre)
+                    != _CADENA_EXTERIOR_AMBIGUA
+                ):
+                    _anteponer_binding_exterior(
+                        bindings_exteriores,
+                        nodo.nombre,
+                        bindings[nodo.nombre],
+                        globales.get(nodo.nombre, _LOCAL),
                     )
             bindings[nodo.nombre] = estado_clase
             if scope_global:
@@ -222,13 +242,18 @@ def _resolver_bloque(
                             or nombre in (nombres_externos or set())
                         )
                     ):
-                        if bindings_exteriores.get(nombre) != _CADENA_EXTERIOR_AMBIGUA:
-                            bindings_exteriores[nombre] = (
-                                (
-                                    bindings[nombre],
-                                    globales.get(nombre, _LOCAL),
-                                ),
-                                *bindings_exteriores.get(nombre, ()),
+                        # Dentro de ``con`` la cola puede proceder de otro alias
+                        # hermano y no constituye una capa concreta recuperable.
+                        if (
+                            escrituras_externas is None
+                            or bindings_exteriores.get(nombre)
+                            != _CADENA_EXTERIOR_AMBIGUA
+                        ):
+                            _anteponer_binding_exterior(
+                                bindings_exteriores,
+                                nombre,
+                                bindings[nombre],
+                                globales.get(nombre, _LOCAL),
                             )
                 bindings[nombre] = _OTRO
                 if es_declaracion:
