@@ -1956,6 +1956,42 @@ def test_global_condicional_en_con_propaga_ancestry_ambigua_al_hermano():
     assert type(llamada) is NodoLlamadaFuncion
 
 
+def test_global_condicional_en_con_preserva_binding_clase_compartido():
+    ast = _parsear(
+        "clase C:\nfin\n"
+        "func exterior():\n"
+        "    clase C:\n    fin\n"
+        "    func interior():\n"
+        "        con recurso:\n"
+        "            si condicion:\n                global C\n            fin\n"
+        "        fin\n"
+        "        C()\n"
+        "    fin\n"
+        "fin"
+    )
+
+    llamada = ast[1].cuerpo[1].cuerpo[-1]
+    assert type(llamada) is NodoInstancia
+
+
+def test_global_condicional_en_con_fusiona_bindings_realmente_distintos():
+    ast = _parsear(
+        "func C():\nfin\n"
+        "func exterior():\n"
+        "    clase C:\n    fin\n"
+        "    func interior():\n"
+        "        con recurso:\n"
+        "            si condicion:\n                global C\n            fin\n"
+        "        fin\n"
+        "        C()\n"
+        "    fin\n"
+        "fin"
+    )
+
+    llamada = ast[1].cuerpo[1].cuerpo[-1]
+    assert type(llamada) is NodoLlamadaFuncion
+
+
 def test_con_hermanos_sin_global_preservan_ancestry_del_padre():
     ast = _parsear(
         "clase C:\nfin\n"
