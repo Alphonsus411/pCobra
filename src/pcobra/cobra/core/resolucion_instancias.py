@@ -177,10 +177,14 @@ def _resolver_bloque(
                     or nodo.nombre in (nombres_externos or set())
                 )
             ):
-                bindings_exteriores[nodo.nombre] = (
-                    (bindings[nodo.nombre], globales.get(nodo.nombre, _LOCAL)),
-                    *bindings_exteriores.get(nodo.nombre, ()),
-                )
+                if bindings_exteriores.get(nodo.nombre) != _CADENA_EXTERIOR_AMBIGUA:
+                    bindings_exteriores[nodo.nombre] = (
+                        (
+                            bindings[nodo.nombre],
+                            globales.get(nodo.nombre, _LOCAL),
+                        ),
+                        *bindings_exteriores.get(nodo.nombre, ()),
+                    )
             bindings[nodo.nombre] = estado_clase
             if scope_global:
                 globales[nodo.nombre] = _GLOBAL
@@ -218,10 +222,14 @@ def _resolver_bloque(
                             or nombre in (nombres_externos or set())
                         )
                     ):
-                        bindings_exteriores[nombre] = (
-                            (bindings[nombre], globales.get(nombre, _LOCAL)),
-                            *bindings_exteriores.get(nombre, ()),
-                        )
+                        if bindings_exteriores.get(nombre) != _CADENA_EXTERIOR_AMBIGUA:
+                            bindings_exteriores[nombre] = (
+                                (
+                                    bindings[nombre],
+                                    globales.get(nombre, _LOCAL),
+                                ),
+                                *bindings_exteriores.get(nombre, ()),
+                            )
                 bindings[nombre] = _OTRO
                 if es_declaracion:
                     if nombres_externos is not None:
@@ -299,7 +307,10 @@ def _resolver_bloque_con(
                 else:
                     bindings_padre.pop(nombre, None)
             elif alcance == _ALCANCE_AMBIGUO:
-                bindings_padre[nombre] = _AMBIGUO
+                if nombre in bindings:
+                    bindings_padre[nombre] = bindings[nombre]
+                else:
+                    bindings_padre.pop(nombre, None)
     for nombre, estado in escrituras.items():
         # El runtime no materializa el alias de ``con`` en Environment; por
         # ello ``delete`` atraviesa ese nombre y alcanza el binding padre.
