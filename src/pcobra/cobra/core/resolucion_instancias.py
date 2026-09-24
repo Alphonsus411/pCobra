@@ -259,11 +259,17 @@ def _resolver_bloque_con(
     globales_padre: Alcances,
     escrituras_padre: Bindings | None,
     nombres_externos_padre: set[str] | None,
+    bindings_exteriores_padre: BindingsExteriores | None,
 ) -> None:
     """Resuelve ``con`` y compone escrituras a bindings léxicos exteriores."""
 
     escrituras: Bindings = {}
     nombres_externos = set(bindings_padre)
+    bindings_exteriores = {
+        nombre: cadena
+        for nombre, cadena in (bindings_exteriores_padre or {}).items()
+        if cadena
+    }
     _resolver_bloque(
         nodos,
         bindings,
@@ -272,7 +278,7 @@ def _resolver_bloque_con(
         bindings_globales=bindings_globales,
         escrituras_externas=escrituras,
         nombres_externos=nombres_externos,
-        bindings_exteriores={},
+        bindings_exteriores=bindings_exteriores,
     )
     for nombre, alcance in globales.items():
         if (
@@ -707,6 +713,7 @@ def _resolver_nodo(
             globales,
             escrituras_externas,
             nombres_externos,
+            bindings_exteriores,
         )
         return nodo
 

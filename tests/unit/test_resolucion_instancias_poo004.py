@@ -519,6 +519,87 @@ def test_con_anidado_reexpone_cada_capa_lexica_tras_del():
     assert type(con_exterior.cuerpo[-1]) is NodoInstancia
 
 
+def test_dos_del_en_con_reexponen_clase_global_tras_clase_padre():
+    ast = _parsear(
+        "clase C:\nfin\n"
+        "func f():\n"
+        "    clase C:\n    fin\n"
+        "    con recurso:\n"
+        "        clase C:\n        fin\n"
+        "        eliminar C\n        eliminar C\n        C()\n"
+        "    fin\n"
+        "fin"
+    )
+
+    assert type(ast[1].cuerpo[-1].cuerpo[-1]) is NodoInstancia
+
+
+def test_tres_del_en_con_recorren_toda_la_cadena_de_clases():
+    ast = _parsear(
+        "clase C:\nfin\n"
+        "func exterior():\n"
+        "    clase C:\n    fin\n"
+        "    func interior():\n"
+        "        clase C:\n        fin\n"
+        "        con recurso:\n"
+        "            clase C:\n            fin\n"
+        "            eliminar C\n            eliminar C\n"
+        "            eliminar C\n            C()\n"
+        "        fin\n"
+        "    fin\n"
+        "fin"
+    )
+
+    llamada = ast[1].cuerpo[-1].cuerpo[-1].cuerpo[-1]
+    assert type(llamada) is NodoInstancia
+
+
+def test_dos_del_en_con_reexponen_funcion_global_tras_clase_padre():
+    ast = _parsear(
+        "func C():\nfin\n"
+        "func f():\n"
+        "    clase C:\n    fin\n"
+        "    con recurso:\n"
+        "        clase C:\n        fin\n"
+        "        eliminar C\n        eliminar C\n        C()\n"
+        "    fin\n"
+        "fin"
+    )
+
+    assert type(ast[1].cuerpo[-1].cuerpo[-1]) is NodoLlamadaFuncion
+
+
+def test_dos_del_en_con_atraviesan_variable_hasta_clase_global():
+    ast = _parsear(
+        "clase C:\nfin\n"
+        "func f():\n"
+        "    var C = otra\n"
+        "    con recurso:\n"
+        "        clase C:\n        fin\n"
+        "        eliminar C\n        eliminar C\n        C()\n"
+        "    fin\n"
+        "fin"
+    )
+
+    assert type(ast[1].cuerpo[-1].cuerpo[-1]) is NodoInstancia
+
+
+def test_con_no_concretiza_cadena_exterior_ambigua_heredada():
+    ast = _parsear(
+        "clase C:\nfin\n"
+        "func f():\n"
+        "    clase C:\n    fin\n"
+        "    si condicion:\n        eliminar C\n    fin\n"
+        "    con recurso:\n"
+        "        clase C:\n        fin\n"
+        "        eliminar C\n        eliminar C\n        C()\n"
+        "    fin\n"
+        "fin"
+    )
+
+    assert type(ast[1].cuerpo[-1].cuerpo[-1]) is NodoLlamadaFuncion
+
+
 def test_del_global_y_nolocal_invalidan_binding_dirigido():
     global_ast = _parsear(
         "clase C:\nfin\nfunc f():\n    global C\n    eliminar C\n    C()\nfin"
