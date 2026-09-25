@@ -126,6 +126,29 @@ def _fusionar_alcances(alcances: Alcances, caminos: Iterable[Alcances]) -> None:
             alcances[nombre] = _ALCANCE_AMBIGUO
 
 
+def _fusionar_cadenas_post_del(cadenas: Iterable[CadenaExterior]) -> CadenaExterior:
+    """Conserva el kind común aunque owner o ancestry dependan del camino."""
+
+    estados = list(cadenas)
+    if not estados or any(not cadena for cadena in estados):
+        return _CADENA_EXTERIOR_AMBIGUA
+    if any(cadena == _CADENA_EXTERIOR_AMBIGUA for cadena in estados):
+        return _CADENA_EXTERIOR_AMBIGUA
+
+    kinds = {cadena[0][0] for cadena in estados}
+    if len(kinds) != 1:
+        return _CADENA_EXTERIOR_AMBIGUA
+    alcances = {cadena[0][1] for cadena in estados}
+    head = (
+        kinds.pop(),
+        alcances.pop() if len(alcances) == 1 else _ALCANCE_AMBIGUO,
+    )
+    tails = [cadena[1:] for cadena in estados]
+    if all(tail == tails[0] for tail in tails):
+        return (head, *tails[0])
+    return (head, *_fusionar_cadenas_post_del(tails))
+
+
 def _fusionar_bindings_exteriores(
     bindings_exteriores: BindingsExteriores | None,
     caminos: Iterable[BindingsExteriores],
@@ -165,29 +188,31 @@ def _fusionar_bindings_exteriores(
                 # ``eliminar`` son independientes. Si ambos caminos ya
                 # recuperan la misma cadena léxica no hace falta alinearlos.
                 continue
+            estados_alineados = [dict(estado) for estado in estados]
             for indice, procedencias in enumerate(procedencias_por_camino):
                 if (
                     procedencias.get(nombre, _PROCEDENCIA_LOCAL)
                     == _PROCEDENCIA_EXTERIOR
                     and nombre in bindings_por_camino[indice]
                 ):
-                    estados[indice][nombre] = (
+                    estados_alineados[indice][nombre] = (
                         (
                             bindings_por_camino[indice][nombre],
                             alcances_por_camino[indice].get(nombre, _LOCAL),
                         ),
-                        *estados[indice].get(nombre, ()),
+                        *estados_alineados[indice].get(nombre, ()),
                     )
-            cadenas = [estado.get(nombre, ()) for estado in estados]
+            cadenas = [estado.get(nombre, ()) for estado in estados_alineados]
             if cadenas and all(cadena == cadenas[0] for cadena in cadenas):
                 # La head sólo alinea el binding visible entre caminos: no es
                 # una frontera léxica y, por tanto, no puede sobrevivir como
                 # ancestry recuperable mediante ``eliminar``. La coincidencia
-                # alineada tampoco hace iguales las cadenas originales: marca
-                # como ambigua la transición posterior al borrado sin
-                # materializar la head sintética.
+                # alineada tampoco hace iguales las cadenas originales. La
+                # fusión posterior conserva sólo kinds coincidentes, sin
+                # materializar la head sintética ni inventar ownership.
+                cadena_post_del = _fusionar_cadenas_post_del(cadenas_originales)
                 for indice in range(len(estados)):
-                    estados[indice][nombre] = _CADENA_EXTERIOR_AMBIGUA
+                    estados[indice][nombre] = cadena_post_del
     nombres = set().union(
         bindings_exteriores, *(estado.keys() for estado in estados)
     )
@@ -204,7 +229,11 @@ def _fusionar_bindings_exteriores(
             else:
                 bindings_exteriores[nombre] = valor
         else:
-            bindings_exteriores[nombre] = _CADENA_EXTERIOR_AMBIGUA
+            cadenas = [
+                () if estado.get(nombre, ausente) is ausente else estado[nombre]
+                for estado in estados
+            ]
+            bindings_exteriores[nombre] = _fusionar_cadenas_post_del(cadenas)
 
 
 def resolver_instanciaciones(ast: list[NodoAST]) -> list[NodoAST]:
@@ -544,6 +573,19 @@ def _resolver_nodo(
             nombre, _PROCEDENCIA_LOCAL
         )
         if procedencia == _PROCEDENCIA_MIXTA:
+            cadena = (bindings_exteriores or {}).get(nombre, ())
+            if cadena and cadena != _CADENA_EXTERIOR_AMBIGUA:
+                bindings[nombre], globales[nombre] = cadena[0]
+                bindings_exteriores[nombre] = cadena[1:]
+                if nombres_externos is not None:
+                    nombres_externos[nombre] = (
+                        _PROCEDENCIA_MIXTA
+                        if globales[nombre] == _ALCANCE_AMBIGUO
+                        else _PROCEDENCIA_EXTERIOR
+                    )
+                if escrituras_externas is not None:
+                    escrituras_externas[nombre] = _AMBIGUO
+                return nodo
             bindings[nombre] = _AMBIGUO
             globales[nombre] = _ALCANCE_AMBIGUO
             if bindings_exteriores is not None:
