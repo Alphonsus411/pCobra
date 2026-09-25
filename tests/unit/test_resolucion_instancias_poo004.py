@@ -187,6 +187,84 @@ def test_fusion_mixta_con_heads_alineadas_marca_post_del_ambiguo():
     assert fusion["C"] == resolucion_instancias._CADENA_EXTERIOR_AMBIGUA
 
 
+def test_del_preserva_clase_recuperada_con_ownership_distinto():
+    ast = _parsear(
+        "clase C:\nfin\n"
+        "func exterior():\n"
+        "    clase C:\n    fin\n"
+        "    con recurso:\n"
+        "        si condicion:\n"
+        "            clase C:\n            fin\n"
+        "        sino:\n"
+        "            var marcador = 0\n"
+        "        fin\n"
+        "        eliminar C\n"
+        "        C()\n"
+        "    fin\n"
+        "fin"
+    )
+
+    llamada = ast[1].cuerpo[1].cuerpo[-1]
+    assert type(llamada) is NodoInstancia
+
+
+def test_fusion_post_del_separa_kind_owner_y_tail():
+    fusionar = resolucion_instancias._fusionar_cadenas_post_del
+    ambigua = resolucion_instancias._CADENA_EXTERIOR_AMBIGUA
+
+    assert fusionar(((('clase', 'local'),), (('clase', 'global'),))) == (
+        ("clase", "alcance_ambiguo"),
+    )
+    assert fusionar(((('otro', 'local'),), (('otro', 'global'),))) == (
+        ("otro", "alcance_ambiguo"),
+    )
+    assert fusionar(((('clase', 'local'),), (('otro', 'global'),))) == ambigua
+    assert fusionar(((('clase', 'local'),), (('ambiguo', 'global'),))) == ambigua
+    assert fusionar(((('clase', 'local'),), (('clase', 'local'),))) == (
+        ("clase", "local"),
+    )
+    assert fusionar(
+        (
+            (("clase", "local"), ("clase", "global")),
+            (("clase", "global"), ("otro", "local")),
+        )
+    ) == (("clase", "alcance_ambiguo"), *ambigua)
+
+
+def test_fusion_sintetica_conserva_kind_inmediato_sin_inventar_owner():
+    fusion = {}
+
+    resolucion_instancias._fusionar_bindings_exteriores(
+        fusion,
+        (
+            {"C": (("clase", "local"), ("otro", "global"))},
+            {"C": (("clase", "global"),)},
+        ),
+        bindings_caminos=({"C": "clase"}, {"C": "clase"}),
+        alcances_caminos=({"C": "local_propio"}, {"C": "local"}),
+        procedencias_caminos=({"C": "local"}, {"C": "exterior"}),
+    )
+
+    assert fusion["C"] == (
+        ("clase", "alcance_ambiguo"),
+        *resolucion_instancias._CADENA_EXTERIOR_AMBIGUA,
+    )
+
+
+def test_fusion_sintetica_con_kinds_inmediatos_distintos_es_ambigua():
+    fusion = {}
+
+    resolucion_instancias._fusionar_bindings_exteriores(
+        fusion,
+        ({"C": (("clase", "local"),)}, {"C": (("otro", "global"),)}),
+        bindings_caminos=({"C": "otro"}, {"C": "otro"}),
+        alcances_caminos=({"C": "local_propio"}, {"C": "local"}),
+        procedencias_caminos=({"C": "local"}, {"C": "exterior"}),
+    )
+
+    assert fusion["C"] == resolucion_instancias._CADENA_EXTERIOR_AMBIGUA
+
+
 def test_descendiente_recupera_ancestry_lexica_real_tras_del():
     ast = _parsear(
         "clase C:\nfin\n"
