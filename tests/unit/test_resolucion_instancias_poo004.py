@@ -62,7 +62,23 @@ def test_del_global_invalida_clase_sin_reemplazarla_por_otro_binding():
     assert type(llamada) is NodoLlamadaFuncion
 
 
-def test_procedencia_mixta_con_clase_comun_reexpone_clase_tras_del():
+def test_procedencia_mixta_con_clase_comun_conserva_binding_visible():
+    ast = _parsear(
+        "clase C:\nfin\n"
+        "func f():\n"
+        "    si condicion:\n"
+        "        clase C:\n        fin\n"
+        "    sino:\n"
+        "        var marcador = 0\n"
+        "    fin\n"
+        "    C()\n"
+        "fin"
+    )
+
+    assert type(ast[1].cuerpo[-1]) is NodoInstancia
+
+
+def test_head_de_merge_no_crea_history_en_el_mismo_environment():
     ast = _parsear(
         "clase C:\nfin\n"
         "func f():\n"
@@ -77,7 +93,46 @@ def test_procedencia_mixta_con_clase_comun_reexpone_clase_tras_del():
         "fin"
     )
 
-    assert type(ast[1].cuerpo[-1]) is NodoInstancia
+    assert type(ast[1].cuerpo[-1]) is NodoLlamadaFuncion
+
+
+def test_head_sintetica_de_merge_no_se_hereda_como_ancestry_lexica():
+    ast = _parsear(
+        "func C():\nfin\n"
+        "func exterior():\n"
+        "    clase C:\n    fin\n"
+        "    con recurso:\n"
+        "        si condicion:\n"
+        "            clase C:\n            fin\n"
+        "        sino:\n"
+        "            var marcador = 0\n"
+        "        fin\n"
+        "        func interior():\n"
+        "            eliminar C\n"
+        "            C()\n"
+        "        fin\n"
+        "    fin\n"
+        "fin"
+    )
+
+    llamada = ast[1].cuerpo[1].cuerpo[1].cuerpo[-1]
+    assert type(llamada) is NodoLlamadaFuncion
+
+
+def test_descendiente_recupera_ancestry_lexica_real_tras_del():
+    ast = _parsear(
+        "clase C:\nfin\n"
+        "func exterior():\n"
+        "    func C():\n    fin\n"
+        "    func interior():\n"
+        "        eliminar C\n"
+        "        C()\n"
+        "    fin\n"
+        "fin"
+    )
+
+    llamada = ast[1].cuerpo[1].cuerpo[-1]
+    assert type(llamada) is NodoInstancia
 
 
 def test_procedencia_mixta_con_estados_distintos_permanece_neutral_tras_del():
