@@ -36,8 +36,12 @@ Bindings = dict[str, str]
 Alcances = dict[str, str]
 CadenaExterior = tuple[tuple[str, str], ...]
 BindingsExteriores = dict[str, CadenaExterior]
+Procedencias = dict[str, str]
 Memo = dict[int, Any]
 _CADENA_EXTERIOR_AMBIGUA: CadenaExterior = ((_AMBIGUO, _ALCANCE_AMBIGUO),)
+_PROCEDENCIA_LOCAL = "local"
+_PROCEDENCIA_EXTERIOR = "exterior"
+_PROCEDENCIA_MIXTA = "mixta"
 
 
 def _anteponer_binding_exterior(
@@ -55,11 +59,32 @@ def _anteponer_binding_exterior(
 
 
 def _es_binding_exterior_recuperable(
-    nombre: str, nombres_externos: set[str] | None
+    nombre: str,
+    procedencias: Procedencias | None,
 ) -> bool:
-    """Indica si el binding visible pertenece a un ``Environment`` padre."""
+    """Indica si el estado visible es recuperable tras una declaración local."""
 
-    return nombre in (nombres_externos or set())
+    procedencia = (procedencias or {}).get(nombre, _PROCEDENCIA_LOCAL)
+    return procedencia == _PROCEDENCIA_EXTERIOR
+
+
+def _fusionar_procedencias(
+    procedencias: Procedencias | None,
+    caminos: Iterable[Procedencias],
+) -> None:
+    """Conserva si el binding es local, exterior o depende del camino."""
+
+    if procedencias is None:
+        return
+    estados = list(caminos)
+    nombres = set().union(procedencias, *(estado.keys() for estado in estados))
+    for nombre in nombres:
+        valores = {
+            estado.get(nombre, _PROCEDENCIA_LOCAL) for estado in estados
+        }
+        procedencias[nombre] = (
+            valores.pop() if len(valores) == 1 else _PROCEDENCIA_MIXTA
+        )
 
 
 def _alcance_desde_funcion_hija(alcance: str) -> str:
@@ -104,12 +129,58 @@ def _fusionar_alcances(alcances: Alcances, caminos: Iterable[Alcances]) -> None:
 def _fusionar_bindings_exteriores(
     bindings_exteriores: BindingsExteriores | None,
     caminos: Iterable[BindingsExteriores],
+    *,
+    bindings_caminos: Iterable[Bindings] | None = None,
+    alcances_caminos: Iterable[Alcances] | None = None,
+    procedencias_caminos: Iterable[Procedencias] | None = None,
 ) -> None:
     """Conserva una cadena exterior sólo si coincide en todos los caminos."""
 
     if bindings_exteriores is None:
         return
     estados = list(caminos)
+    if (
+        bindings_caminos is not None
+        and alcances_caminos is not None
+        and procedencias_caminos is not None
+    ):
+        bindings_por_camino = list(bindings_caminos)
+        alcances_por_camino = list(alcances_caminos)
+        procedencias_por_camino = list(procedencias_caminos)
+        estados = [dict(estado) for estado in estados]
+        nombres = set().union(*(estado.keys() for estado in procedencias_por_camino))
+        for nombre in nombres:
+            procedencias_nombre = {
+                estado.get(nombre, _PROCEDENCIA_LOCAL)
+                for estado in procedencias_por_camino
+            }
+            estados_visibles = {
+                estado.get(nombre, _AMBIGUO) for estado in bindings_por_camino
+            }
+            if len(procedencias_nombre) == 1 or len(estados_visibles) != 1:
+                continue
+            for indice, procedencias in enumerate(procedencias_por_camino):
+                if (
+                    procedencias.get(nombre, _PROCEDENCIA_LOCAL)
+                    == _PROCEDENCIA_EXTERIOR
+                    and nombre in bindings_por_camino[indice]
+                ):
+                    estados[indice][nombre] = (
+                        (
+                            bindings_por_camino[indice][nombre],
+                            alcances_por_camino[indice].get(nombre, _LOCAL),
+                        ),
+                        *estados[indice].get(nombre, ()),
+                    )
+            cadenas = [estado.get(nombre, ()) for estado in estados]
+            if cadenas and all(cadena == cadenas[0] for cadena in cadenas):
+                cadena = cadenas[0]
+                if cadena:
+                    estados[0][nombre] = (
+                        (cadena[0][0], _ALCANCE_AMBIGUO), *cadena[1:]
+                    )
+                    for indice in range(1, len(estados)):
+                        estados[indice][nombre] = estados[0][nombre]
     nombres = set().union(
         bindings_exteriores, *(estado.keys() for estado in estados)
     )
@@ -164,7 +235,7 @@ def _resolver_bloque(
     bindings_globales: Bindings,
     scope_global: bool = False,
     escrituras_externas: Bindings | None = None,
-    nombres_externos: set[str] | None = None,
+    nombres_externos: Procedencias | None = None,
     bindings_exteriores: BindingsExteriores | None = None,
 ) -> None:
     instrucciones = nodos.instrucciones if isinstance(nodos, NodoBloque) else nodos
@@ -194,7 +265,9 @@ def _resolver_bloque(
                 not scope_global
                 and bindings_exteriores is not None
                 and nodo.nombre in bindings
-                and _es_binding_exterior_recuperable(nodo.nombre, nombres_externos)
+                and _es_binding_exterior_recuperable(
+                    nodo.nombre, nombres_externos
+                )
             ):
                 # Un ``con`` hermano debe conservar la invalidación que recibió
                 # del padre; fuera de ese alias temporal, el binding visible sí
@@ -216,7 +289,7 @@ def _resolver_bloque(
             else:
                 globales[nodo.nombre] = _LOCAL_PROPIO
             if nombres_externos is not None:
-                nombres_externos.discard(nodo.nombre)
+                nombres_externos[nodo.nombre] = _PROCEDENCIA_LOCAL
             continue
 
         instrucciones[indice] = _resolver_nodo(
@@ -242,7 +315,9 @@ def _resolver_bloque(
                         not scope_global
                         and bindings_exteriores is not None
                         and nombre in bindings
-                        and _es_binding_exterior_recuperable(nombre, nombres_externos)
+                        and _es_binding_exterior_recuperable(
+                            nombre, nombres_externos
+                        )
                     ):
                         # Dentro de ``con`` la cola puede proceder de otro alias
                         # hermano y no constituye una capa concreta recuperable.
@@ -260,7 +335,7 @@ def _resolver_bloque(
                 bindings[nombre] = _OTRO
                 if es_declaracion:
                     if nombres_externos is not None:
-                        nombres_externos.discard(nombre)
+                        nombres_externos[nombre] = _PROCEDENCIA_LOCAL
                     if scope_global:
                         globales[nombre] = _GLOBAL
                         bindings_globales[nombre] = _OTRO
@@ -272,7 +347,10 @@ def _resolver_bloque(
                         bindings_globales[nombre] = _OTRO
                     if escrituras_externas is None:
                         continue
-                    if nombre not in (nombres_externos or set()):
+                    if (nombres_externos or {}).get(nombre) not in (
+                        _PROCEDENCIA_EXTERIOR,
+                        _PROCEDENCIA_MIXTA,
+                    ):
                         continue
                     if alcance in (_GLOBAL, _NONLOCAL):
                         escrituras_externas[nombre] = _OTRO
@@ -293,13 +371,15 @@ def _resolver_bloque_con(
     bindings_globales_padre: Bindings,
     globales_padre: Alcances,
     escrituras_padre: Bindings | None,
-    nombres_externos_padre: set[str] | None,
+    nombres_externos_padre: Procedencias | None,
     bindings_exteriores_padre: BindingsExteriores | None,
 ) -> None:
     """Resuelve ``con`` y compone escrituras a bindings léxicos exteriores."""
 
     escrituras: Bindings = {}
-    nombres_externos = set(bindings_padre)
+    nombres_externos = {
+        nombre: _PROCEDENCIA_EXTERIOR for nombre in bindings_padre
+    }
     bindings_exteriores = {
         nombre: cadena
         for nombre, cadena in (bindings_exteriores_padre or {}).items()
@@ -347,7 +427,8 @@ def _resolver_bloque_con(
                 bindings_globales_padre[nombre] = estado
             if (
                 escrituras_padre is not None
-                and nombre in (nombres_externos_padre or set())
+                and (nombres_externos_padre or {}).get(nombre)
+                in (_PROCEDENCIA_EXTERIOR, _PROCEDENCIA_MIXTA)
             ):
                 escrituras_padre[nombre] = estado
 
@@ -362,7 +443,7 @@ def _resolver_nodo(
     bindings_globales: Bindings,
     scope_global: bool,
     escrituras_externas: Bindings | None = None,
-    nombres_externos: set[str] | None = None,
+    nombres_externos: Procedencias | None = None,
     bindings_exteriores: BindingsExteriores | None = None,
 ) -> Any:
     identidad = id(nodo)
@@ -432,7 +513,14 @@ def _resolver_nodo(
             globales=globales_locales,
             bindings_globales=bindings_globales_locales,
             scope_global=False,
-            nombres_externos=set(bindings) - set(nodo.parametros),
+            nombres_externos={
+                nombre: _PROCEDENCIA_EXTERIOR
+                for nombre in bindings
+                if nombre not in nodo.parametros
+            }
+            | {
+                parametro: _PROCEDENCIA_LOCAL for parametro in nodo.parametros
+            },
             bindings_exteriores=exteriores_locales,
         )
         return nodo
@@ -445,7 +533,19 @@ def _resolver_nodo(
         if nombre not in bindings or bindings[nombre] == _ELIMINADO:
             return nodo
 
-        es_exterior = nombre in (nombres_externos or set())
+        procedencia = (nombres_externos or {}).get(
+            nombre, _PROCEDENCIA_LOCAL
+        )
+        if procedencia == _PROCEDENCIA_MIXTA:
+            bindings[nombre] = _AMBIGUO
+            globales[nombre] = _ALCANCE_AMBIGUO
+            if bindings_exteriores is not None:
+                bindings_exteriores[nombre] = _CADENA_EXTERIOR_AMBIGUA
+            if escrituras_externas is not None:
+                escrituras_externas[nombre] = _AMBIGUO
+            return nodo
+
+        es_exterior = (nombres_externos or {}).get(nombre) == _PROCEDENCIA_EXTERIOR
         if not es_exterior:
             cadena = (bindings_exteriores or {}).get(nombre, ())
             if cadena == _CADENA_EXTERIOR_AMBIGUA:
@@ -456,7 +556,11 @@ def _resolver_nodo(
                 bindings[nombre], globales[nombre] = cadena[0]
                 bindings_exteriores[nombre] = cadena[1:]
                 if nombres_externos is not None:
-                    nombres_externos.add(nombre)
+                    nombres_externos[nombre] = (
+                        _PROCEDENCIA_MIXTA
+                        if globales[nombre] == _ALCANCE_AMBIGUO
+                        else _PROCEDENCIA_EXTERIOR
+                    )
             else:
                 bindings[nombre] = _ELIMINADO
             return nodo
@@ -495,8 +599,12 @@ def _resolver_nodo(
                     bindings_exteriores.pop(nombre, None)
                 if nombre in bindings_globales:
                     bindings[nombre] = bindings_globales[nombre]
+                    if nombres_externos is not None:
+                        nombres_externos[nombre] = _PROCEDENCIA_EXTERIOR
                 else:
                     bindings.pop(nombre, None)
+                    if nombres_externos is not None:
+                        nombres_externos.pop(nombre, None)
         return nodo
 
     if isinstance(nodo, NodoNoLocal):
@@ -508,6 +616,8 @@ def _resolver_nodo(
                 bindings[nombre] = _AMBIGUO
             elif alcance in (_LOCAL, _NONLOCAL):
                 globales[nombre] = _NONLOCAL
+                if nombres_externos is not None:
+                    nombres_externos[nombre] = _PROCEDENCIA_EXTERIOR
         return nodo
 
     if isinstance(nodo, NodoCondicional):
@@ -576,12 +686,19 @@ def _resolver_nodo(
             (bindings_globales_si, bindings_globales_sino),
         )
         _fusionar_bindings_exteriores(
-            bindings_exteriores, (exteriores_si, exteriores_sino)
+            bindings_exteriores,
+            (exteriores_si, exteriores_sino),
+            bindings_caminos=(bindings_si, bindings_sino),
+            alcances_caminos=(globales_si, globales_sino),
+            procedencias_caminos=(
+                nombres_externos_si or {},
+                nombres_externos_sino or {},
+            ),
         )
         if nombres_externos is not None:
-            nombres_externos.clear()
-            nombres_externos.update(
-                (nombres_externos_si or set()) & (nombres_externos_sino or set())
+            _fusionar_procedencias(
+                nombres_externos,
+                (nombres_externos_si or {}, nombres_externos_sino or {}),
             )
         if escrituras_externas is not None:
             _fusionar_bindings(
@@ -642,7 +759,10 @@ def _resolver_nodo(
             bindings_exteriores, (exteriores_antes, exteriores_iteracion)
         )
         if nombres_externos is not None:
-            nombres_externos.update(nombres_externos_iteracion or set())
+            _fusionar_procedencias(
+                nombres_externos,
+                (nombres_externos.copy(), nombres_externos_iteracion or {}),
+            )
         if escrituras_externas is not None:
             _fusionar_bindings(
                 escrituras_externas,
@@ -688,7 +808,9 @@ def _resolver_nodo(
             if crea_local:
                 globales_iteracion[nodo.variable] = _LOCAL_PROPIO
             if crea_local and nombres_externos_iteracion is not None:
-                nombres_externos_iteracion.discard(nodo.variable)
+                nombres_externos_iteracion[
+                    nodo.variable
+                ] = _PROCEDENCIA_LOCAL
         escrituras_antes = (
             escrituras_externas.copy()
             if escrituras_externas is not None
@@ -720,7 +842,10 @@ def _resolver_nodo(
             bindings_exteriores, (exteriores_antes, exteriores_iteracion)
         )
         if nombres_externos is not None:
-            nombres_externos.update(nombres_externos_iteracion or set())
+            _fusionar_procedencias(
+                nombres_externos,
+                (nombres_externos.copy(), nombres_externos_iteracion or {}),
+            )
         if escrituras_externas is not None:
             _fusionar_bindings(
                 escrituras_externas,

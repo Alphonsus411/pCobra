@@ -62,6 +62,42 @@ def test_del_global_invalida_clase_sin_reemplazarla_por_otro_binding():
     assert type(llamada) is NodoLlamadaFuncion
 
 
+def test_procedencia_mixta_con_clase_comun_reexpone_clase_tras_del():
+    ast = _parsear(
+        "clase C:\nfin\n"
+        "func f():\n"
+        "    si condicion:\n"
+        "        clase C:\n        fin\n"
+        "    sino:\n"
+        "        var marcador = 0\n"
+        "    fin\n"
+        "    var C = 0\n"
+        "    eliminar C\n"
+        "    C()\n"
+        "fin"
+    )
+
+    assert type(ast[1].cuerpo[-1]) is NodoInstancia
+
+
+def test_procedencia_mixta_con_estados_distintos_permanece_neutral_tras_del():
+    ast = _parsear(
+        "func C():\nfin\n"
+        "func f():\n"
+        "    si condicion:\n"
+        "        clase C:\n        fin\n"
+        "    sino:\n"
+        "        var marcador = 0\n"
+        "    fin\n"
+        "    var C = 0\n"
+        "    eliminar C\n"
+        "    C()\n"
+        "fin"
+    )
+
+    assert type(ast[1].cuerpo[-1]) is NodoLlamadaFuncion
+
+
 def test_del_condicional_en_una_o_ambas_ramas_es_conservador():
     _, una_rama = _ultima_llamada(
         "clase C:\nfin\nsi condicion:\n    eliminar C\nfin\nC()"
