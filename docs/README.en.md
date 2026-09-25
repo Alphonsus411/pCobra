@@ -66,9 +66,9 @@ Public wording rule: keep **official output targets** separate from **reverse tr
   - [Historical content index](historico/README.md)
 - [Cobra Manual in PDF](https://alphonsus411.github.io/pCobra/proyectocobra.pdf)
 - [Technical specification](especificacion_tecnica.md)
-- [Real use cases](casos_reales.md)
+- [Historical use cases — non-canonical](casos_reales.md)
 - [Node sandbox limitations](limitaciones_node_sandbox.md)
-- Example notebooks and real cases
+- Example notebooks and historical cases
 - Try Cobra online
 - [Changelog](../CHANGELOG.md)
 
@@ -80,7 +80,7 @@ Public wording rule: keep **official output targets** separate from **reverse tr
 
 ## Examples
 
-Demo projects are available in the [example repository](https://github.com/Alphonsus411/pCobra/tree/HEAD/examples). This repository includes basic examples in the `examples/` folder, for instance `examples/funciones_principales.cobra` which shows conditionals, loops and function definitions in Cobra. For interactive examples check the notebooks in `../notebooks/casos_reales/`.
+Demo projects are available in the [example repository](https://github.com/Alphonsus411/pCobra/tree/HEAD/examples). This repository includes basic examples in the `examples/` folder, for instance `examples/funciones_principales.cobra` which shows conditionals, loops and function definitions in Cobra. The notebooks in `../notebooks/casos_reales/` are historical material and require migration before reuse.
 
 ### Advanced examples
 
@@ -92,7 +92,7 @@ Inside [examples/avanzados/](../examples/avanzados/) you can find programs that 
 
 ## Example notebooks
 
-The `../notebooks/` folder includes `ejemplo_basico.ipynb` with a basic example of using Cobra. The notebooks in `../notebooks/casos_reales/` show how to run the advanced examples. To open it run:
+The `../notebooks/` folder includes `ejemplo_basico.ipynb` with a basic example of using Cobra. The notebooks in `../notebooks/casos_reales/` are retained for historical traceability and are not canonical executable examples. To open the basic notebook run:
 
 ```bash
 cobra jupyter --notebook ../notebooks/ejemplo_basico.ipynb
