@@ -175,12 +175,12 @@ def _fusionar_bindings_exteriores(
             cadenas = [estado.get(nombre, ()) for estado in estados]
             if cadenas and all(cadena == cadenas[0] for cadena in cadenas):
                 cadena = cadenas[0]
-                if cadena:
-                    estados[0][nombre] = (
-                        (cadena[0][0], _ALCANCE_AMBIGUO), *cadena[1:]
-                    )
-                    for indice in range(1, len(estados)):
-                        estados[indice][nombre] = estados[0][nombre]
+                # La head sólo alinea el binding visible entre caminos: no es
+                # una frontera léxica y, por tanto, no puede sobrevivir como
+                # ancestry recuperable mediante ``eliminar``.
+                cadena_lexica = cadena[1:]
+                for indice in range(len(estados)):
+                    estados[indice][nombre] = cadena_lexica
     nombres = set().union(
         bindings_exteriores, *(estado.keys() for estado in estados)
     )
