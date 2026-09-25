@@ -2447,3 +2447,107 @@ def test_global_no_anticipa_declaracion_raiz_futura():
     )
 
     assert type(ast[0].cuerpo[-1]) is NodoLlamadaFuncion
+
+
+def test_bucles_preservan_clase_recuperable_comun_tras_sombreado():
+    for bucle in ("mientras condicion:", "para elemento en valores:"):
+        ast = _parsear(
+            "clase C:\nfin\n"
+            "func f():\n"
+            f"    {bucle}\n"
+            "        clase C:\n        fin\n"
+            "    fin\n"
+            "    var C = 0\n"
+            "    eliminar C\n"
+            "    C()\n"
+            "fin"
+        )
+
+        assert type(ast[1].cuerpo[-1]) is NodoInstancia
+
+
+def test_bucles_preservan_funcion_recuperable_comun_tras_sombreado():
+    for bucle in ("mientras condicion:", "para elemento en valores:"):
+        ast = _parsear(
+            "func C():\nfin\n"
+            "func f():\n"
+            f"    {bucle}\n"
+            "        func C():\n        fin\n"
+            "    fin\n"
+            "    var C = 0\n"
+            "    eliminar C\n"
+            "    C()\n"
+            "fin"
+        )
+
+        assert type(ast[1].cuerpo[-1]) is NodoLlamadaFuncion
+
+
+def test_bucles_no_unifican_clase_y_funcion_recuperables():
+    for bucle in ("mientras condicion:", "para elemento en valores:"):
+        ast = _parsear(
+            "clase C:\nfin\n"
+            "func exterior():\n"
+            "    func C():\n    fin\n"
+            "    func interior():\n"
+            f"        {bucle}\n"
+            "            global C\n"
+            "        fin\n"
+            "        var C = 0\n"
+            "        eliminar C\n"
+            "        C()\n"
+            "    fin\n"
+            "fin"
+        )
+
+        assert type(ast[1].cuerpo[1].cuerpo[-1]) is NodoLlamadaFuncion
+
+
+def test_bucles_no_convierten_estado_diferido_en_ancestry_inmediata():
+    for bucle in ("mientras condicion:", "para elemento en valores:"):
+        sin_exterior = _parsear(
+            "func f():\n"
+            f"    {bucle}\n"
+            "        clase X:\n        fin\n"
+            "    fin\n"
+            "    var X = 0\n"
+            "    eliminar X\n"
+            "    X()\n"
+            "fin"
+        )
+        mismo_environment = _parsear(
+            "clase C:\nfin\n"
+            "func f():\n"
+            f"    {bucle}\n"
+            "        clase C:\n        fin\n"
+            "    fin\n"
+            "    eliminar C\n"
+            "    C()\n"
+            "fin"
+        )
+
+        assert type(sin_exterior[0].cuerpo[-1]) is NodoLlamadaFuncion
+        assert type(mismo_environment[1].cuerpo[-1]) is NodoLlamadaFuncion
+
+
+def test_bucles_preservan_frontera_real_de_con_sin_resucitar_tail():
+    for bucle in ("mientras condicion:", "para elemento en valores:"):
+        ast = _parsear(
+            "clase C:\nfin\n"
+            "func f():\n"
+            "    con recurso:\n"
+            f"        {bucle}\n"
+            "            clase C:\n            fin\n"
+            "        fin\n"
+            "        var C = 0\n"
+            "        eliminar C\n"
+            "        C()\n"
+            "        eliminar C\n"
+            "        C()\n"
+            "    fin\n"
+            "fin"
+        )
+        cuerpo = ast[1].cuerpo[0].cuerpo
+
+        assert type(cuerpo[-3]) is NodoInstancia
+        assert type(cuerpo[-1]) is NodoLlamadaFuncion
