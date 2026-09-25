@@ -119,6 +119,74 @@ def test_head_sintetica_de_merge_no_se_hereda_como_ancestry_lexica():
     assert type(llamada) is NodoLlamadaFuncion
 
 
+def test_head_sintetica_preserva_ambiguedad_posterior_a_del():
+    ast = _parsear(
+        "clase C:\nfin\n"
+        "func exterior():\n"
+        "    func C():\n    fin\n"
+        "    con recurso:\n"
+        "        si condicion:\n"
+        "            func C():\n            fin\n"
+        "        sino:\n"
+        "            var marcador = 0\n"
+        "        fin\n"
+        "        func interior():\n"
+        "            eliminar C\n"
+        "            C()\n"
+        "        fin\n"
+        "    fin\n"
+        "fin"
+    )
+
+    llamada = ast[1].cuerpo[1].cuerpo[1].cuerpo[-1]
+    assert type(llamada) is NodoLlamadaFuncion
+
+
+def test_fusion_mixta_con_post_del_comun_conserva_tail_real():
+    tail = (("clase", "local"),)
+    fusion = {}
+
+    resolucion_instancias._fusionar_bindings_exteriores(
+        fusion,
+        ({"C": tail}, {"C": tail}),
+        bindings_caminos=({"C": "otro"}, {"C": "otro"}),
+        alcances_caminos=({"C": "local_propio"}, {"C": "local"}),
+        procedencias_caminos=({"C": "local"}, {"C": "exterior"}),
+    )
+
+    assert fusion["C"] == tail
+
+
+def test_fusion_mixta_sin_tail_no_inventa_ancestry():
+    fusion = {}
+
+    resolucion_instancias._fusionar_bindings_exteriores(
+        fusion,
+        ({}, {}),
+        bindings_caminos=({"C": "otro"}, {"C": "otro"}),
+        alcances_caminos=({"C": "local_propio"}, {"C": "local"}),
+        procedencias_caminos=({"C": "local"}, {"C": "exterior"}),
+    )
+
+    assert "C" not in fusion
+
+
+def test_fusion_mixta_con_heads_alineadas_marca_post_del_ambiguo():
+    funcion = (("otro", "local"),)
+    clase = (("clase", "global"),)
+    fusion = {}
+
+    resolucion_instancias._fusionar_bindings_exteriores(
+        fusion,
+        ({"C": (*funcion, *clase)}, {"C": clase}),
+        bindings_caminos=({"C": "otro"}, {"C": "otro"}),
+        alcances_caminos=({"C": "local_propio"}, {"C": "local"}),
+        procedencias_caminos=({"C": "local"}, {"C": "exterior"}),
+    )
+
+    assert fusion["C"] == resolucion_instancias._CADENA_EXTERIOR_AMBIGUA
+
+
 def test_descendiente_recupera_ancestry_lexica_real_tras_del():
     ast = _parsear(
         "clase C:\nfin\n"

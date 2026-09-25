@@ -159,6 +159,12 @@ def _fusionar_bindings_exteriores(
             }
             if len(procedencias_nombre) == 1 or len(estados_visibles) != 1:
                 continue
+            cadenas_originales = [estado.get(nombre, ()) for estado in estados]
+            if all(cadena == cadenas_originales[0] for cadena in cadenas_originales):
+                # La certeza del binding visible y la del estado posterior a
+                # ``eliminar`` son independientes. Si ambos caminos ya
+                # recuperan la misma cadena léxica no hace falta alinearlos.
+                continue
             for indice, procedencias in enumerate(procedencias_por_camino):
                 if (
                     procedencias.get(nombre, _PROCEDENCIA_LOCAL)
@@ -174,13 +180,14 @@ def _fusionar_bindings_exteriores(
                     )
             cadenas = [estado.get(nombre, ()) for estado in estados]
             if cadenas and all(cadena == cadenas[0] for cadena in cadenas):
-                cadena = cadenas[0]
                 # La head sólo alinea el binding visible entre caminos: no es
                 # una frontera léxica y, por tanto, no puede sobrevivir como
-                # ancestry recuperable mediante ``eliminar``.
-                cadena_lexica = cadena[1:]
+                # ancestry recuperable mediante ``eliminar``. La coincidencia
+                # alineada tampoco hace iguales las cadenas originales: marca
+                # como ambigua la transición posterior al borrado sin
+                # materializar la head sintética.
                 for indice in range(len(estados)):
-                    estados[indice][nombre] = cadena_lexica
+                    estados[indice][nombre] = _CADENA_EXTERIOR_AMBIGUA
     nombres = set().union(
         bindings_exteriores, *(estado.keys() for estado in estados)
     )
