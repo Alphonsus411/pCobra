@@ -23,9 +23,15 @@ Dispones de varios cuadernos de ejemplo en la carpeta ``notebooks``:
 
 * `Ejemplo básico <../../notebooks/ejemplo_basico.ipynb>`_
 * `Benchmarks <../../notebooks/benchmarks_resultados.ipynb>`_
-* `Casos reales: Bioinformática <../../notebooks/casos_reales/bioinformatica.ipynb>`_
-* `Casos reales: IA <../../notebooks/casos_reales/inteligencia_artificial.ipynb>`_
-* `Casos reales: Análisis de datos <../../notebooks/casos_reales/analisis_datos.ipynb>`_
+* `Histórico: Bioinformática <../../notebooks/casos_reales/bioinformatica.ipynb>`_
+* `Histórico: IA <../../notebooks/casos_reales/inteligencia_artificial.ipynb>`_
+* `Histórico: Análisis de datos <../../notebooks/casos_reales/analisis_datos.ipynb>`_
+
+.. warning::
+
+   Los cuadernos de ``notebooks/casos_reales`` son material histórico. Pueden
+   usar imports externos o flujos retirados y deben migrarse antes de
+   reutilizarlos con el contrato público actual.
 
 .. note::
 
