@@ -39,6 +39,7 @@ BindingsExteriores = dict[str, CadenaExterior]
 Procedencias = dict[str, str]
 Memo = dict[int, Any]
 _CADENA_EXTERIOR_AMBIGUA: CadenaExterior = ((_AMBIGUO, _ALCANCE_AMBIGUO),)
+_MARCA_RECUPERABLE_TRAS_SOMBREADO = ("recuperable", "tras_sombreado")
 _PROCEDENCIA_LOCAL = "local"
 _PROCEDENCIA_EXTERIOR = "exterior"
 _PROCEDENCIA_MIXTA = "mixta"
@@ -66,6 +67,20 @@ def _es_binding_exterior_recuperable(
 
     procedencia = (procedencias or {}).get(nombre, _PROCEDENCIA_LOCAL)
     return procedencia == _PROCEDENCIA_EXTERIOR
+
+
+def _materializar_recuperable_tras_sombreado(
+    bindings_exteriores: BindingsExteriores | None, nombre: str
+) -> bool:
+    """Activa metadata de bucle al crear una capa local real posterior."""
+
+    if bindings_exteriores is None:
+        return False
+    cadena = bindings_exteriores.get(nombre, ())
+    if not cadena or cadena[0] != _MARCA_RECUPERABLE_TRAS_SOMBREADO:
+        return False
+    bindings_exteriores[nombre] = cadena[1:]
+    return True
 
 
 def _fusionar_procedencias(
@@ -156,6 +171,7 @@ def _fusionar_bindings_exteriores(
     bindings_caminos: Iterable[Bindings] | None = None,
     alcances_caminos: Iterable[Alcances] | None = None,
     procedencias_caminos: Iterable[Procedencias] | None = None,
+    preservar_recuperable_tras_sombreado: bool = False,
 ) -> None:
     """Conserva una cadena exterior sólo si coincide en todos los caminos."""
 
@@ -203,7 +219,11 @@ def _fusionar_bindings_exteriores(
                         *estados_alineados[indice].get(nombre, ()),
                     )
             cadenas = [estado.get(nombre, ()) for estado in estados_alineados]
-            if cadenas and all(cadena == cadenas[0] for cadena in cadenas):
+            cadena_alineada = _fusionar_cadenas_post_del(cadenas)
+            if cadena_alineada != _CADENA_EXTERIOR_AMBIGUA and (
+                preservar_recuperable_tras_sombreado
+                or (cadenas and all(cadena == cadenas[0] for cadena in cadenas))
+            ):
                 # La head sólo alinea el binding visible entre caminos: no es
                 # una frontera léxica y, por tanto, no puede sobrevivir como
                 # ancestry recuperable mediante ``eliminar``. La coincidencia
@@ -211,6 +231,18 @@ def _fusionar_bindings_exteriores(
                 # fusión posterior conserva sólo kinds coincidentes, sin
                 # materializar la head sintética ni inventar ownership.
                 cadena_post_del = _fusionar_cadenas_post_del(cadenas_originales)
+                if (
+                    preservar_recuperable_tras_sombreado
+                    and cadena_post_del == _CADENA_EXTERIOR_AMBIGUA
+                ):
+                    # En un bucle, la alineación representa el estado que
+                    # todos los caminos recuperarían sólo después de un
+                    # sombreado posterior. La marca no es ancestry léxica y
+                    # un ``eliminar`` inmediato no puede consumirla.
+                    cadena_post_del = (
+                        _MARCA_RECUPERABLE_TRAS_SOMBREADO,
+                        *cadena_alineada,
+                    )
                 for indice in range(len(estados)):
                     estados[indice][nombre] = cadena_post_del
     nombres = set().union(
@@ -234,6 +266,29 @@ def _fusionar_bindings_exteriores(
                 for estado in estados
             ]
             bindings_exteriores[nombre] = _fusionar_cadenas_post_del(cadenas)
+
+
+def _fusionar_caminos_bucle(
+    bindings_exteriores: BindingsExteriores | None,
+    exteriores_antes: BindingsExteriores,
+    exteriores_iteracion: BindingsExteriores,
+    bindings_antes: Bindings,
+    bindings_iteracion: Bindings,
+    globales_antes: Alcances,
+    globales_iteracion: Alcances,
+    nombres_antes: Procedencias,
+    nombres_iteracion: Procedencias,
+) -> None:
+    """Fusiona cero o más iteraciones sin confundir kind y procedencia."""
+
+    _fusionar_bindings_exteriores(
+        bindings_exteriores,
+        (exteriores_antes, exteriores_iteracion),
+        bindings_caminos=(bindings_antes, bindings_iteracion),
+        alcances_caminos=(globales_antes, globales_iteracion),
+        procedencias_caminos=(nombres_antes, nombres_iteracion),
+        preservar_recuperable_tras_sombreado=True,
+    )
 
 
 def resolver_instanciaciones(ast: list[NodoAST]) -> list[NodoAST]:
@@ -297,10 +352,14 @@ def _resolver_bloque(
                     bindings_globales=bindings_globales,
                     scope_global=False,
                 )
+            recuperable_diferido = _materializar_recuperable_tras_sombreado(
+                bindings_exteriores, nodo.nombre
+            )
             if (
                 not scope_global
                 and bindings_exteriores is not None
                 and nodo.nombre in bindings
+                and not recuperable_diferido
                 and _es_binding_exterior_recuperable(
                     nodo.nombre, nombres_externos
                 )
@@ -347,10 +406,16 @@ def _resolver_bloque(
                     nodo.declaracion or nodo.inferencia
                 )
                 if es_declaracion:
+                    recuperable_diferido = (
+                        _materializar_recuperable_tras_sombreado(
+                            bindings_exteriores, nombre
+                        )
+                    )
                     if (
                         not scope_global
                         and bindings_exteriores is not None
                         and nombre in bindings
+                        and not recuperable_diferido
                         and _es_binding_exterior_recuperable(
                             nombre, nombres_externos
                         )
@@ -574,6 +639,8 @@ def _resolver_nodo(
         )
         if procedencia == _PROCEDENCIA_MIXTA:
             cadena = (bindings_exteriores or {}).get(nombre, ())
+            if cadena and cadena[0] == _MARCA_RECUPERABLE_TRAS_SOMBREADO:
+                cadena = _CADENA_EXTERIOR_AMBIGUA
             if cadena and cadena != _CADENA_EXTERIOR_AMBIGUA:
                 bindings[nombre], globales[nombre] = cadena[0]
                 bindings_exteriores[nombre] = cadena[1:]
@@ -770,13 +837,16 @@ def _resolver_nodo(
             bindings_exteriores=bindings_exteriores,
         )
         bindings_iteracion = bindings.copy()
+        bindings_antes = bindings.copy()
         globales_iteracion = globales.copy()
+        globales_antes = globales.copy()
         bindings_globales_iteracion = bindings_globales.copy()
         exteriores_antes = dict(bindings_exteriores or {})
         exteriores_iteracion = dict(bindings_exteriores or {})
         nombres_externos_iteracion = (
             nombres_externos.copy() if nombres_externos is not None else None
         )
+        nombres_externos_antes = dict(nombres_externos or {})
         escrituras_antes = (
             escrituras_externas.copy()
             if escrituras_externas is not None
@@ -798,14 +868,22 @@ def _resolver_nodo(
             nombres_externos=nombres_externos_iteracion,
             bindings_exteriores=exteriores_iteracion,
         )
-        _fusionar_bindings(bindings, (bindings.copy(), bindings_iteracion))
-        _fusionar_alcances(globales, (globales.copy(), globales_iteracion))
+        _fusionar_bindings(bindings, (bindings_antes, bindings_iteracion))
+        _fusionar_alcances(globales, (globales_antes, globales_iteracion))
         _fusionar_bindings(
             bindings_globales,
             (bindings_globales.copy(), bindings_globales_iteracion),
         )
-        _fusionar_bindings_exteriores(
-            bindings_exteriores, (exteriores_antes, exteriores_iteracion)
+        _fusionar_caminos_bucle(
+            bindings_exteriores,
+            exteriores_antes,
+            exteriores_iteracion,
+            bindings_antes,
+            bindings_iteracion,
+            globales_antes,
+            globales_iteracion,
+            nombres_externos_antes,
+            nombres_externos_iteracion or {},
         )
         if nombres_externos is not None:
             _fusionar_procedencias(
@@ -834,13 +912,16 @@ def _resolver_nodo(
             bindings_exteriores=bindings_exteriores,
         )
         bindings_iteracion = bindings.copy()
+        bindings_antes = bindings.copy()
         globales_iteracion = globales.copy()
+        globales_antes = globales.copy()
         bindings_globales_iteracion = bindings_globales.copy()
         exteriores_antes = dict(bindings_exteriores or {})
         exteriores_iteracion = dict(bindings_exteriores or {})
         nombres_externos_iteracion = (
             nombres_externos.copy() if nombres_externos is not None else None
         )
+        nombres_externos_antes = dict(nombres_externos or {})
         if isinstance(nodo.variable, str):
             alcance_target = globales.get(nodo.variable, _LOCAL)
             crea_local = alcance_target == _LOCAL
@@ -881,14 +962,22 @@ def _resolver_nodo(
             nombres_externos=nombres_externos_iteracion,
             bindings_exteriores=exteriores_iteracion,
         )
-        _fusionar_bindings(bindings, (bindings.copy(), bindings_iteracion))
-        _fusionar_alcances(globales, (globales.copy(), globales_iteracion))
+        _fusionar_bindings(bindings, (bindings_antes, bindings_iteracion))
+        _fusionar_alcances(globales, (globales_antes, globales_iteracion))
         _fusionar_bindings(
             bindings_globales,
             (bindings_globales.copy(), bindings_globales_iteracion),
         )
-        _fusionar_bindings_exteriores(
-            bindings_exteriores, (exteriores_antes, exteriores_iteracion)
+        _fusionar_caminos_bucle(
+            bindings_exteriores,
+            exteriores_antes,
+            exteriores_iteracion,
+            bindings_antes,
+            bindings_iteracion,
+            globales_antes,
+            globales_iteracion,
+            nombres_externos_antes,
+            nombres_externos_iteracion or {},
         )
         if nombres_externos is not None:
             _fusionar_procedencias(
