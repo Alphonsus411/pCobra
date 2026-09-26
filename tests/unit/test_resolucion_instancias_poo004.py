@@ -2755,3 +2755,125 @@ def test_dos_del_sin_sombreado_no_convierten_marker_en_ancestry():
     )
 
     assert type(ast[1].cuerpo[-1]) is NodoLlamadaFuncion
+
+
+def _resolver_marker_tras_con(cuerpo_con):
+    ast = _parsear(
+        "clase C:\nfin\n"
+        "func f():\n"
+        "    mientras condicion:\n"
+        "        clase C:\n        fin\n"
+        "    fin\n"
+        "    con recurso:\n"
+        f"{cuerpo_con}"
+        "    fin\n"
+        "    var C = 0\n"
+        "    eliminar C\n"
+        "    C()\n"
+        "fin"
+    )
+    return ast[1].cuerpo[-1]
+
+
+def test_del_path_sensitive_en_si_de_con_invalida_marker():
+    casos = (
+        "        si condicion:\n            eliminar C\n        fin\n",
+        "        si condicion:\n            eliminar C\n"
+        "        sino:\n            var X = 0\n        fin\n",
+        "        si condicion:\n            eliminar C\n"
+        "        sino:\n            eliminar C\n        fin\n",
+    )
+
+    for cuerpo_con in casos:
+        assert type(_resolver_marker_tras_con(cuerpo_con)) is NodoLlamadaFuncion
+
+
+def test_ramas_de_con_sin_del_no_invalidan_marker():
+    casos = (
+        "        si condicion:\n            var X = 0\n"
+        "        sino:\n            var Y = 0\n        fin\n",
+        "        si condicion:\n            var C = 0\n        fin\n",
+        "        si condicion:\n            global C\n        fin\n",
+    )
+
+    for cuerpo_con in casos:
+        assert type(_resolver_marker_tras_con(cuerpo_con)) is NodoInstancia
+
+
+def test_del_path_sensitive_en_bucles_de_con_invalida_marker():
+    for bucle in ("mientras otra_condicion:", "para x en valores:"):
+        llamada = _resolver_marker_tras_con(
+            f"        {bucle}\n            eliminar C\n        fin\n"
+        )
+
+        assert type(llamada) is NodoLlamadaFuncion
+
+
+def test_bucles_de_con_sin_del_no_invalidan_marker():
+    for bucle in ("mientras otra_condicion:", "para x en valores:"):
+        llamada = _resolver_marker_tras_con(
+            f"        {bucle}\n            var X = 0\n        fin\n"
+        )
+
+        assert type(llamada) is NodoInstancia
+
+
+def test_del_ajeno_y_shadow_local_path_sensitive_no_invalidan_marker():
+    casos = (
+        "        si condicion:\n            eliminar X\n        fin\n",
+        "        si condicion:\n            var C = 0\n"
+        "        sino:\n            clase C:\n            fin\n        fin\n",
+    )
+
+    for cuerpo_con in casos:
+        assert type(_resolver_marker_tras_con(cuerpo_con)) is NodoInstancia
+
+
+def test_del_path_sensitive_en_con_anidado_y_hermano_invalida_marker():
+    anidado = _resolver_marker_tras_con(
+        "        con interior:\n"
+        "            si condicion:\n                eliminar C\n"
+        "            fin\n"
+        "        fin\n"
+    )
+    hermanos = _resolver_marker_tras_con(
+        "        si condicion:\n            eliminar C\n        fin\n"
+        "    fin\n"
+        "    con hermano:\n"
+        "        var X = 0\n"
+    )
+
+    assert type(anidado) is NodoLlamadaFuncion
+    assert type(hermanos) is NodoLlamadaFuncion
+
+
+def test_del_en_funcion_descendiente_de_con_no_invalida_marker_del_padre():
+    llamada = _resolver_marker_tras_con(
+        "        func descendiente():\n"
+        "            si condicion:\n                eliminar C\n"
+        "            fin\n"
+        "        fin\n"
+    )
+
+    assert type(llamada) is NodoInstancia
+
+
+def test_global_y_nolocal_con_del_condicional_invalidan_marker_afectado():
+    global_ast = _parsear(
+        "clase C:\nfin\nfunc f():\n"
+        "    mientras condicion:\n        clase C:\n        fin\n    fin\n"
+        "    con recurso:\n        global C\n"
+        "        si condicion:\n            eliminar C\n        fin\n    fin\n"
+        "    var C = 0\n    eliminar C\n    C()\nfin"
+    )
+    nolocal_ast = _parsear(
+        "clase C:\nfin\nfunc exterior():\n"
+        "    mientras condicion:\n        clase C:\n        fin\n    fin\n"
+        "    func interior():\n        con recurso:\n            nolocal C\n"
+        "            si condicion:\n                eliminar C\n            fin\n"
+        "        fin\n        var C = 0\n        eliminar C\n        C()\n"
+        "    fin\nfin"
+    )
+
+    assert type(global_ast[1].cuerpo[-1]) is NodoLlamadaFuncion
+    assert type(nolocal_ast[1].cuerpo[-1].cuerpo[-1]) is NodoLlamadaFuncion
