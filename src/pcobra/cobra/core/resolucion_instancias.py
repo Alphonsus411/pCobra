@@ -644,7 +644,12 @@ def _resolver_nodo(
         if marcador_diferido:
             # La marca conserva metadata para un sombreado futuro, pero no es
             # una capa lexica que ``eliminar`` pueda recuperar. Esto no cambia
-            # aunque un scope descendiente reconstruya otra procedencia.
+            # aunque un scope descendiente reconstruya otra procedencia. El
+            # binding visible que sustentaba esa metadata sí acaba de cambiar:
+            # se invalida la cadena completa para que un sombreado posterior no
+            # materialice como ancestry el estado ya obsoleto de los caminos.
+            if bindings_exteriores is not None:
+                bindings_exteriores.pop(nombre, None)
             cadena = ()
         if procedencia == _PROCEDENCIA_MIXTA:
             if cadena and cadena != _CADENA_EXTERIOR_AMBIGUA:
