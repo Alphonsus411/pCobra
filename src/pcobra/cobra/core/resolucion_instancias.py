@@ -580,9 +580,13 @@ def _resolver_bloque_con(
                 in (_PROCEDENCIA_EXTERIOR, _PROCEDENCIA_MIXTA)
             ):
                 escrituras_padre[nombre] = estado
-                if isinstance(escrituras_padre, _EscriturasExternas):
-                    if nombre in escrituras.eliminaciones_posibles:
-                        escrituras_padre.eliminaciones_posibles.add(nombre)
+    if isinstance(escrituras_padre, _EscriturasExternas):
+        for nombre in escrituras.eliminaciones_posibles:
+            if (nombres_externos_padre or {}).get(nombre) in (
+                _PROCEDENCIA_EXTERIOR,
+                _PROCEDENCIA_MIXTA,
+            ):
+                escrituras_padre.eliminaciones_posibles.add(nombre)
 
 
 def _resolver_nodo(

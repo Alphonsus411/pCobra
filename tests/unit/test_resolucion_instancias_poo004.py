@@ -2877,3 +2877,120 @@ def test_global_y_nolocal_con_del_condicional_invalidan_marker_afectado():
 
     assert type(global_ast[1].cuerpo[-1]) is NodoLlamadaFuncion
     assert type(nolocal_ast[1].cuerpo[-1].cuerpo[-1]) is NodoLlamadaFuncion
+
+
+def test_alias_de_con_propaga_del_path_sensitive_sin_propagar_su_binding():
+    cuerpos = (
+        "        con fuente como C:\n"
+        "            si condicion:\n                eliminar C\n"
+        "            fin\n"
+        "        fin\n",
+        "        con fuente como C:\n"
+        "            mientras condicion:\n                eliminar C\n"
+        "            fin\n"
+        "        fin\n",
+        "        con fuente como C:\n"
+        "            para x en valores:\n                eliminar C\n"
+        "            fin\n"
+        "        fin\n",
+    )
+
+    for cuerpo in cuerpos:
+        assert type(_resolver_marker_tras_con(cuerpo)) is NodoLlamadaFuncion
+
+
+def test_alias_de_con_propaga_del_determinista_y_a_traves_de_tres_capas():
+    casos = (
+        "        con fuente como C:\n            eliminar C\n        fin\n",
+        "        con uno:\n"
+        "            con dos como C:\n"
+        "                con tres:\n"
+        "                    si condicion:\n"
+        "                        eliminar C\n"
+        "                    fin\n"
+        "                fin\n"
+        "            fin\n"
+        "        fin\n",
+    )
+
+    for cuerpo in casos:
+        assert type(_resolver_marker_tras_con(cuerpo)) is NodoLlamadaFuncion
+
+
+def test_alias_de_con_no_inventa_eliminacion_exterior():
+    casos = (
+        "        con fuente como C:\n            var X = 0\n        fin\n",
+        "        con fuente como C:\n            var C = 0\n        fin\n",
+        "        con fuente como C:\n            eliminar X\n        fin\n",
+        "        con fuente como C:\n"
+        "            si condicion:\n                var C = 0\n"
+        "            fin\n"
+        "        fin\n",
+    )
+
+    for cuerpo in casos:
+        assert type(_resolver_marker_tras_con(cuerpo)) is NodoInstancia
+
+
+def test_alias_distinto_propaga_del_exterior_y_el_sibling_no_hereda_binding():
+    llamada = _resolver_marker_tras_con(
+        "        con fuente como X:\n"
+        "            si condicion:\n                eliminar C\n"
+        "            fin\n"
+        "        fin\n"
+        "    fin\n"
+        "    con hermano como C:\n"
+        "        var X = 0\n"
+    )
+
+    assert type(llamada) is NodoLlamadaFuncion
+
+
+def test_funcion_descendiente_de_alias_no_propaga_su_del_al_padre():
+    llamada = _resolver_marker_tras_con(
+        "        con fuente como C:\n"
+        "            func descendiente():\n"
+        "                si condicion:\n                    eliminar C\n"
+        "                fin\n"
+        "            fin\n"
+        "        fin\n"
+    )
+
+    assert type(llamada) is NodoInstancia
+
+
+def test_global_y_nolocal_con_alias_respetan_ownership_del_del():
+    global_ast = _parsear(
+        "clase C:\nfin\nfunc f():\n"
+        "    mientras condicion:\n        clase C:\n        fin\n    fin\n"
+        "    con recurso como C:\n        global C\n"
+        "        si condicion:\n            eliminar C\n        fin\n    fin\n"
+        "    var C = 0\n    eliminar C\n    C()\nfin"
+    )
+    nolocal_ast = _parsear(
+        "clase C:\nfin\nfunc exterior():\n"
+        "    mientras condicion:\n        clase C:\n        fin\n    fin\n"
+        "    func interior():\n        con recurso como C:\n            nolocal C\n"
+        "            si condicion:\n                eliminar C\n            fin\n"
+        "        fin\n        var C = 0\n        eliminar C\n        C()\n"
+        "    fin\nfin"
+    )
+
+    assert type(global_ast[1].cuerpo[-1]) is NodoLlamadaFuncion
+    assert type(nolocal_ast[1].cuerpo[-1].cuerpo[-1]) is NodoInstancia
+
+
+def test_marker_sin_del_sigue_legitima_y_tras_del_no_resucita():
+    legitima = _resolver_marker_tras_con(
+        "        con fuente como C:\n            var X = 0\n        fin\n"
+    )
+    invalidada = _resolver_marker_tras_con(
+        "        con fuente como C:\n"
+        "            si condicion:\n                eliminar C\n"
+        "            fin\n"
+        "            var C = 1\n"
+        "        fin\n"
+    )
+
+    assert type(legitima) is NodoInstancia
+    assert type(invalidada) is NodoLlamadaFuncion
