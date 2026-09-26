@@ -3028,3 +3028,33 @@ def test_marker_sin_del_sigue_legitima_y_tras_del_no_resucita():
 
     assert type(legitima) is NodoInstancia
     assert type(invalidada) is NodoLlamadaFuncion
+
+
+def test_binding_local_real_de_con_absorbe_possible_del_anidado():
+    controles = (
+        "si otra_condicion:\n                eliminar C\n            fin",
+        "mientras otra_condicion:\n                eliminar C\n            fin",
+        "para x en valores:\n                eliminar C\n            fin",
+        "eliminar C",
+    )
+
+    for control in controles:
+        ast = _parsear(
+            "clase C:\nfin\n"
+            "func f():\n"
+            "    mientras condicion:\n"
+            "        clase C:\n        fin\n"
+            "    fin\n"
+            "    con exterior:\n"
+            "        var C = 0\n"
+            "        con interior:\n"
+            f"            {control}\n"
+            "        fin\n"
+            "    fin\n"
+            "    var C = 0\n"
+            "    eliminar C\n"
+            "    C()\n"
+            "fin"
+        )
+
+        assert type(ast[1].cuerpo[-1]) is NodoInstancia
