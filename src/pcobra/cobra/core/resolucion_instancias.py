@@ -637,10 +637,16 @@ def _resolver_nodo(
         procedencia = (nombres_externos or {}).get(
             nombre, _PROCEDENCIA_LOCAL
         )
+        cadena = (bindings_exteriores or {}).get(nombre, ())
+        marcador_diferido = bool(
+            cadena and cadena[0] == _MARCA_RECUPERABLE_TRAS_SOMBREADO
+        )
+        if marcador_diferido:
+            # La marca conserva metadata para un sombreado futuro, pero no es
+            # una capa lexica que ``eliminar`` pueda recuperar. Esto no cambia
+            # aunque un scope descendiente reconstruya otra procedencia.
+            cadena = ()
         if procedencia == _PROCEDENCIA_MIXTA:
-            cadena = (bindings_exteriores or {}).get(nombre, ())
-            if cadena and cadena[0] == _MARCA_RECUPERABLE_TRAS_SOMBREADO:
-                cadena = _CADENA_EXTERIOR_AMBIGUA
             if cadena and cadena != _CADENA_EXTERIOR_AMBIGUA:
                 bindings[nombre], globales[nombre] = cadena[0]
                 bindings_exteriores[nombre] = cadena[1:]
@@ -655,7 +661,7 @@ def _resolver_nodo(
                 return nodo
             bindings[nombre] = _AMBIGUO
             globales[nombre] = _ALCANCE_AMBIGUO
-            if bindings_exteriores is not None:
+            if bindings_exteriores is not None and not marcador_diferido:
                 bindings_exteriores[nombre] = _CADENA_EXTERIOR_AMBIGUA
             if escrituras_externas is not None:
                 escrituras_externas[nombre] = _AMBIGUO
@@ -663,7 +669,6 @@ def _resolver_nodo(
 
         es_exterior = (nombres_externos or {}).get(nombre) == _PROCEDENCIA_EXTERIOR
         if not es_exterior:
-            cadena = (bindings_exteriores or {}).get(nombre, ())
             if cadena == _CADENA_EXTERIOR_AMBIGUA:
                 bindings[nombre] = _AMBIGUO
                 globales[nombre] = _ALCANCE_AMBIGUO
@@ -682,7 +687,6 @@ def _resolver_nodo(
             return nodo
 
         alcance_eliminado = globales.get(nombre, _LOCAL)
-        cadena = (bindings_exteriores or {}).get(nombre, ())
         if cadena == _CADENA_EXTERIOR_AMBIGUA:
             bindings[nombre] = _AMBIGUO
             globales[nombre] = _ALCANCE_AMBIGUO
