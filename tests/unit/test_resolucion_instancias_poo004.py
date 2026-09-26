@@ -2608,3 +2608,81 @@ def test_marker_de_bucle_sigue_siendo_metadata_en_segundo_scope_descendiente():
 
     llamada = ast[1].cuerpo[-1].cuerpo[-1].cuerpo[-1]
     assert type(llamada) is NodoLlamadaFuncion
+
+
+def test_del_invalida_marker_de_bucle_antes_de_sombreado_posterior():
+    for bucle in ("mientras condicion:", "para elemento en valores:"):
+        ast = _parsear(
+            "clase C:\nfin\n"
+            "func f():\n"
+            f"    {bucle}\n"
+            "        clase C:\n        fin\n"
+            "    fin\n"
+            "    eliminar C\n"
+            "    var C = 0\n"
+            "    eliminar C\n"
+            "    C()\n"
+            "fin"
+        )
+
+        assert type(ast[1].cuerpo[-1]) is NodoLlamadaFuncion
+
+
+def test_del_invalida_marker_antes_de_declaraciones_con_nombre_reutilizado():
+    declaraciones = (
+        "    func C():\n    fin\n",
+        "    clase C:\n    fin\n",
+    )
+    for declaracion in declaraciones:
+        ast = _parsear(
+            "clase C:\nfin\n"
+            "func f():\n"
+            "    mientras condicion:\n"
+            "        clase C:\n        fin\n"
+            "    fin\n"
+            "    eliminar C\n"
+            f"{declaracion}"
+            "    eliminar C\n"
+            "    C()\n"
+            "fin"
+        )
+
+        assert type(ast[1].cuerpo[-1]) is NodoLlamadaFuncion
+
+
+def test_marker_invalidada_no_se_hereda_a_scope_descendiente():
+    ast = _parsear(
+        "clase C:\nfin\n"
+        "func exterior():\n"
+        "    mientras condicion:\n"
+        "        clase C:\n        fin\n"
+        "    fin\n"
+        "    eliminar C\n"
+        "    func interior():\n"
+        "        var C = 0\n"
+        "        eliminar C\n"
+        "        C()\n"
+        "    fin\n"
+        "fin"
+    )
+
+    llamada = ast[1].cuerpo[-1].cuerpo[-1]
+    assert type(llamada) is NodoLlamadaFuncion
+
+
+def test_dos_del_sin_sombreado_no_convierten_marker_en_ancestry():
+    ast = _parsear(
+        "clase C:\nfin\n"
+        "func f():\n"
+        "    mientras condicion:\n"
+        "        clase C:\n        fin\n"
+        "    fin\n"
+        "    eliminar C\n"
+        "    eliminar C\n"
+        "    var C = 0\n"
+        "    eliminar C\n"
+        "    C()\n"
+        "fin"
+    )
+
+    assert type(ast[1].cuerpo[-1]) is NodoLlamadaFuncion
