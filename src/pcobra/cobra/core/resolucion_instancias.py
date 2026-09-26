@@ -581,12 +581,12 @@ def _resolver_bloque_con(
             ):
                 escrituras_padre[nombre] = estado
     if isinstance(escrituras_padre, _EscriturasExternas):
-        for nombre in escrituras.eliminaciones_posibles:
-            if (nombres_externos_padre or {}).get(nombre) in (
-                _PROCEDENCIA_EXTERIOR,
-                _PROCEDENCIA_MIXTA,
-            ):
-                escrituras_padre.eliminaciones_posibles.add(nombre)
+        # ``NodoDel`` ya limita esta señal a procedencia exterior o mixta.
+        # No se vuelve a filtrar con la visibilidad del padre: un alias/local
+        # puede aislar su binding sin borrar la invalidación semántica.
+        escrituras_padre.eliminaciones_posibles.update(
+            escrituras.eliminaciones_posibles
+        )
 
 
 def _resolver_nodo(
