@@ -196,7 +196,7 @@ cobra hub cache validar
 - [Manual de Cobra en PDF](https://alphonsus411.github.io/pCobra/proyectocobra.pdf)
 - [Especificación técnica](docs/especificacion_tecnica.md)
 - [Blog del minilenguaje](docs/blog_minilenguaje.md)
-- [Casos de uso reales](docs/casos_reales.md)
+- [Casos de uso históricos — no canónicos](docs/casos_reales.md)
 - [Limitaciones del sandbox de Node](docs/limitaciones_node_sandbox.md)
 - [Anexos legacy/internal](docs/anexos_legacy_internal/README.md)
 - Notebooks de ejemplo y casos reales
@@ -227,7 +227,8 @@ Proyectos de demostración disponibles en el [repositorio de ejemplos](https://g
 Este repositorio incluye ejemplos básicos en la carpeta `examples/`, por
 ejemplo `examples/funciones_principales.cobra` que muestra condicionales, bucles y
 definición de funciones en Cobra.
-Para ejemplos interactivos revisa los cuadernos en `notebooks/casos_reales/`.
+Los cuadernos de `notebooks/casos_reales/` son material histórico y requieren
+migración antes de reutilizarse con el contrato vigente.
 
 ### Ejemplos avanzados
 
@@ -241,7 +242,10 @@ de clases. Cada tema cuenta con su propia carpeta:
 
 ## Notebooks de ejemplo
 
-En la carpeta `notebooks/` se incluye el cuaderno `ejemplo_basico.ipynb` con un ejemplo básico de uso de Cobra. Además, los cuadernos de `notebooks/casos_reales/` muestran cómo ejecutar los ejemplos avanzados. Para abrirlo puedes usar Jupyter directamente:
+En la carpeta `notebooks/` se incluye el cuaderno `ejemplo_basico.ipynb`. Los
+cuadernos de `notebooks/casos_reales/` se conservan como material histórico y
+no constituyen ejemplos canónicos ejecutables. Para abrir el cuaderno básico
+puedes usar Jupyter directamente:
 
 ```bash
 jupyter notebook notebooks/ejemplo_basico.ipynb
