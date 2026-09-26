@@ -85,6 +85,21 @@ def _es_binding_exterior_recuperable(
     return procedencia == _PROCEDENCIA_EXTERIOR
 
 
+def _es_binding_local_runtime_real(
+    nombre: str,
+    aliases: set[str],
+    globales: Alcances,
+    nombres_externos: Procedencias | None,
+) -> bool:
+    """Distingue una declaración materializada del alias sintético de ``con``."""
+
+    return (
+        nombre not in aliases
+        and (nombres_externos or {}).get(nombre) == _PROCEDENCIA_LOCAL
+        and globales.get(nombre) != _LOCAL
+    )
+
+
 def _materializar_recuperable_tras_sombreado(
     bindings_exteriores: BindingsExteriores | None, nombre: str
 ) -> bool:
@@ -537,6 +552,12 @@ def _resolver_bloque_con(
             cadena_padre = bindings_exteriores_padre.get(nombre, ())
             if (
                 nombre in escrituras.eliminaciones_posibles
+                and not _es_binding_local_runtime_real(
+                    nombre,
+                    declarados_locales,
+                    globales_padre,
+                    nombres_externos_padre,
+                )
                 and cadena_padre
                 and cadena_padre[0] == _MARCA_RECUPERABLE_TRAS_SOMBREADO
             ):
@@ -546,6 +567,16 @@ def _resolver_bloque_con(
                 bindings_exteriores_padre.pop(nombre, None)
     for nombre, alcance in globales.items():
         alcance_padre = globales_padre.get(nombre, _LOCAL)
+        if (
+            nombre in escrituras.eliminaciones_posibles
+            and _es_binding_local_runtime_real(
+                nombre,
+                declarados_locales,
+                globales_padre,
+                nombres_externos_padre,
+            )
+        ):
+            continue
         if (
             alcance in (_GLOBAL, _NONLOCAL, _ALCANCE_AMBIGUO)
             and alcance != alcance_padre
@@ -581,12 +612,23 @@ def _resolver_bloque_con(
             ):
                 escrituras_padre[nombre] = estado
     if isinstance(escrituras_padre, _EscriturasExternas):
-        # ``NodoDel`` ya limita esta señal a procedencia exterior o mixta.
-        # No se vuelve a filtrar con la visibilidad del padre: un alias/local
-        # puede aislar su binding sin borrar la invalidación semántica.
-        escrituras_padre.eliminaciones_posibles.update(
-            escrituras.eliminaciones_posibles
-        )
+        for nombre in escrituras.eliminaciones_posibles:
+            # ``nombres_externos`` cambia a local cuando este Environment
+            # materializa una declaración. El alias administrativo también
+            # figura en ``declarados_locales``, pero no es un binding runtime.
+            if (
+                _es_binding_local_runtime_real(
+                    nombre, declarados_locales, globales, nombres_externos
+                )
+                or _es_binding_local_runtime_real(
+                    nombre,
+                    declarados_locales,
+                    globales_padre,
+                    nombres_externos_padre,
+                )
+            ):
+                continue
+            escrituras_padre.eliminaciones_posibles.add(nombre)
 
 
 def _resolver_nodo(
