@@ -2899,6 +2899,40 @@ def test_alias_de_con_propaga_del_path_sensitive_sin_propagar_su_binding():
         assert type(_resolver_marker_tras_con(cuerpo)) is NodoLlamadaFuncion
 
 
+def test_con_anidado_propaga_metadata_de_del_aunque_alias_sea_local():
+    for control in (
+        "si condicion:",
+        "mientras condicion:",
+        "para x en valores:",
+    ):
+        cuerpo = Parser(
+            Lexer(
+                f"{control}\n"
+                "    eliminar C\n"
+                "fin"
+            ).analizar_token()
+        ).parsear()
+        escrituras = resolucion_instancias._EscriturasExternas()
+
+        resolucion_instancias._resolver_bloque_con(
+            cuerpo,
+            {"C": resolucion_instancias._OTRO},
+            {"C": resolucion_instancias._CLASE},
+            {},
+            {"C"},
+            {"C": resolucion_instancias._LOCAL},
+            {},
+            {},
+            {"C": resolucion_instancias._LOCAL},
+            escrituras,
+            {"C": resolucion_instancias._PROCEDENCIA_LOCAL},
+            {},
+        )
+
+        assert "C" in escrituras.eliminaciones_posibles
+        assert "C" not in escrituras
+
+
 def test_alias_de_con_propaga_del_determinista_y_a_traves_de_tres_capas():
     casos = (
         "        con fuente como C:\n            eliminar C\n        fin\n",
