@@ -3058,3 +3058,26 @@ def test_binding_local_real_de_con_absorbe_possible_del_anidado():
         )
 
         assert type(ast[1].cuerpo[-1]) is NodoInstancia
+
+
+def test_del_sucesivo_supera_binding_local_real_de_con():
+    ast = _parsear(
+        "clase C:\nfin\n"
+        "func f():\n"
+        "    mientras condicion:\n"
+        "        clase C:\n        fin\n"
+        "    fin\n"
+        "    con exterior:\n"
+        "        var C = 0\n"
+        "        con interior:\n"
+        "            eliminar C\n"
+        "            eliminar C\n"
+        "        fin\n"
+        "    fin\n"
+        "    var C = 0\n"
+        "    eliminar C\n"
+        "    C()\n"
+        "fin"
+    )
+
+    assert type(ast[1].cuerpo[-1]) is NodoLlamadaFuncion
