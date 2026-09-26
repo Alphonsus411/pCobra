@@ -2628,6 +2628,75 @@ def test_del_invalida_marker_de_bucle_antes_de_sombreado_posterior():
         assert type(ast[1].cuerpo[-1]) is NodoLlamadaFuncion
 
 
+def test_del_en_con_propaga_invalidacion_de_marker_de_bucle_al_padre():
+    for bucle in ("mientras condicion:", "para elemento en valores:"):
+        ast = _parsear(
+            "clase C:\nfin\n"
+            "func f():\n"
+            f"    {bucle}\n"
+            "        clase C:\n        fin\n"
+            "    fin\n"
+            "    con recurso:\n"
+            "        eliminar C\n"
+            "    fin\n"
+            "    var C = 0\n"
+            "    eliminar C\n"
+            "    C()\n"
+            "fin"
+        )
+
+        assert type(ast[1].cuerpo[-1]) is NodoLlamadaFuncion
+
+
+def test_del_en_con_anidado_propaga_invalidacion_de_marker_al_padre():
+    ast = _parsear(
+        "clase C:\nfin\n"
+        "func f():\n"
+        "    mientras condicion:\n"
+        "        clase C:\n        fin\n"
+        "    fin\n"
+        "    con exterior:\n"
+        "        con interior:\n"
+        "            eliminar C\n"
+        "        fin\n"
+        "    fin\n"
+        "    func descendiente():\n"
+        "        var C = 0\n"
+        "        eliminar C\n"
+        "        C()\n"
+        "    fin\n"
+        "fin"
+    )
+
+    llamada = ast[1].cuerpo[-1].cuerpo[-1]
+    assert type(llamada) is NodoLlamadaFuncion
+
+
+def test_con_no_invalida_marker_por_operaciones_locales_o_ajenas():
+    cuerpos = (
+        "        var X = 0\n",
+        "        var C = 0\n",
+        "        eliminar X\n",
+    )
+    for cuerpo_con in cuerpos:
+        ast = _parsear(
+            "clase C:\nfin\n"
+            "func f():\n"
+            "    mientras condicion:\n"
+            "        clase C:\n        fin\n"
+            "    fin\n"
+            "    con recurso:\n"
+            f"{cuerpo_con}"
+            "    fin\n"
+            "    var C = 0\n"
+            "    eliminar C\n"
+            "    C()\n"
+            "fin"
+        )
+
+        assert type(ast[1].cuerpo[-1]) is NodoInstancia
+
+
 def test_del_invalida_marker_antes_de_declaraciones_con_nombre_reutilizado():
     declaraciones = (
         "    func C():\n    fin\n",
