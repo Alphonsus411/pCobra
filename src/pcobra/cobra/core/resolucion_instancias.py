@@ -538,6 +538,11 @@ def _resolver_bloque_con(
 ) -> None:
     """Resuelve ``con`` y compone escrituras a bindings léxicos exteriores."""
 
+    # ``declarados_locales`` pertenece exclusivamente al ``con`` hijo. Los
+    # aliases del Environment padre no se heredan aquí: su ownership ya está
+    # descrito por ``globales_padre`` y su procedencia por
+    # ``nombres_externos_padre``.
+    aliases_padre: set[str] = set()
     escrituras = _EscriturasExternas()
     nombres_externos = {
         nombre: _PROCEDENCIA_EXTERIOR for nombre in bindings_padre
@@ -570,7 +575,7 @@ def _resolver_bloque_con(
                 > int(
                     _es_binding_local_runtime_real(
                         nombre,
-                        declarados_locales,
+                        aliases_padre,
                         globales_padre,
                         nombres_externos_padre,
                     )
@@ -588,7 +593,7 @@ def _resolver_bloque_con(
             escrituras.eliminaciones_posibles.get(nombre, 0) == 1
             and _es_binding_local_runtime_real(
                 nombre,
-                declarados_locales,
+                aliases_padre,
                 globales_padre,
                 nombres_externos_padre,
             )
@@ -640,7 +645,7 @@ def _resolver_bloque_con(
             ) + int(
                 _es_binding_local_runtime_real(
                     nombre,
-                    declarados_locales,
+                    aliases_padre,
                     globales_padre,
                     nombres_externos_padre,
                 )
