@@ -2551,3 +2551,60 @@ def test_bucles_preservan_frontera_real_de_con_sin_resucitar_tail():
 
         assert type(cuerpo[-3]) is NodoInstancia
         assert type(cuerpo[-1]) is NodoLlamadaFuncion
+
+
+def test_marker_de_bucle_no_es_binding_exterior_consumible_por_doble_del():
+    for bucle in ("mientras condicion:", "para elemento en valores:"):
+        ast = _parsear(
+            "clase C:\nfin\n"
+            "func exterior():\n"
+            f"    {bucle}\n"
+            "        clase C:\n        fin\n"
+            "    fin\n"
+            "    func interior():\n"
+            "        eliminar C\n"
+            "        eliminar C\n"
+            "        C()\n"
+            "    fin\n"
+            "fin"
+        )
+
+        llamada = ast[1].cuerpo[-1].cuerpo[-1]
+        assert type(llamada) is NodoLlamadaFuncion
+
+
+def test_marker_de_bucle_con_procedencia_mixta_no_es_ancestry_inmediata():
+    ast = _parsear(
+        "clase C:\nfin\n"
+        "func f():\n"
+        "    mientras condicion:\n"
+        "        clase C:\n        fin\n"
+        "    fin\n"
+        "    eliminar C\n"
+        "    eliminar C\n"
+        "    C()\n"
+        "fin"
+    )
+
+    assert type(ast[1].cuerpo[-1]) is NodoLlamadaFuncion
+
+
+def test_marker_de_bucle_sigue_siendo_metadata_en_segundo_scope_descendiente():
+    ast = _parsear(
+        "clase C:\nfin\n"
+        "func exterior():\n"
+        "    mientras condicion:\n"
+        "        clase C:\n        fin\n"
+        "    fin\n"
+        "    func a():\n"
+        "        func b():\n"
+        "            eliminar C\n"
+        "            eliminar C\n"
+        "            C()\n"
+        "        fin\n"
+        "    fin\n"
+        "fin"
+    )
+
+    llamada = ast[1].cuerpo[-1].cuerpo[-1].cuerpo[-1]
+    assert type(llamada) is NodoLlamadaFuncion
