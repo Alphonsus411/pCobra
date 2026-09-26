@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Any, Iterable
+from collections.abc import Iterable, Mapping
+from typing import Any
 
 from pcobra.cobra.core.ast_nodes import (
     NodoAST,
@@ -51,14 +52,25 @@ class _EscriturasExternas(dict[str, str]):
     def __init__(
         self,
         *args: Any,
-        eliminaciones_posibles: Iterable[str] = (),
+        eliminaciones_posibles: Iterable[str] | Mapping[str, int] = (),
         **kwargs: Any,
     ) -> None:
         super().__init__(*args, **kwargs)
-        self.eliminaciones_posibles = set(eliminaciones_posibles)
+        self.eliminaciones_posibles = (
+            dict(eliminaciones_posibles)
+            if isinstance(eliminaciones_posibles, Mapping)
+            else {nombre: 1 for nombre in eliminaciones_posibles}
+        )
 
     def copy(self) -> _EscriturasExternas:
         return type(self)(self, eliminaciones_posibles=self.eliminaciones_posibles)
+
+    def registrar_eliminacion_posible(self, nombre: str) -> None:
+        """Cuenta cuantas fronteras puede atravesar una sucesion de ``del``."""
+
+        self.eliminaciones_posibles[nombre] = (
+            self.eliminaciones_posibles.get(nombre, 0) + 1
+        )
 
 
 def _anteponer_binding_exterior(
@@ -167,11 +179,14 @@ def _fusionar_escrituras(
 
     estados = list(caminos)
     _fusionar_bindings(escrituras, estados)
-    escrituras.eliminaciones_posibles.update(
-        nombre
-        for estado in estados
-        for nombre in getattr(estado, "eliminaciones_posibles", ())
-    )
+    for estado in estados:
+        for nombre, profundidad in getattr(
+            estado, "eliminaciones_posibles", {}
+        ).items():
+            escrituras.eliminaciones_posibles[nombre] = max(
+                profundidad,
+                escrituras.eliminaciones_posibles.get(nombre, 0),
+            )
 
 
 def _fusionar_alcances(alcances: Alcances, caminos: Iterable[Alcances]) -> None:
@@ -551,12 +566,14 @@ def _resolver_bloque_con(
         for nombre in markers_heredadas:
             cadena_padre = bindings_exteriores_padre.get(nombre, ())
             if (
-                nombre in escrituras.eliminaciones_posibles
-                and not _es_binding_local_runtime_real(
-                    nombre,
-                    declarados_locales,
-                    globales_padre,
-                    nombres_externos_padre,
+                escrituras.eliminaciones_posibles.get(nombre, 0)
+                > int(
+                    _es_binding_local_runtime_real(
+                        nombre,
+                        declarados_locales,
+                        globales_padre,
+                        nombres_externos_padre,
+                    )
                 )
                 and cadena_padre
                 and cadena_padre[0] == _MARCA_RECUPERABLE_TRAS_SOMBREADO
@@ -568,7 +585,7 @@ def _resolver_bloque_con(
     for nombre, alcance in globales.items():
         alcance_padre = globales_padre.get(nombre, _LOCAL)
         if (
-            nombre in escrituras.eliminaciones_posibles
+            escrituras.eliminaciones_posibles.get(nombre, 0) == 1
             and _es_binding_local_runtime_real(
                 nombre,
                 declarados_locales,
@@ -612,23 +629,29 @@ def _resolver_bloque_con(
             ):
                 escrituras_padre[nombre] = estado
     if isinstance(escrituras_padre, _EscriturasExternas):
-        for nombre in escrituras.eliminaciones_posibles:
+        for nombre, profundidad in escrituras.eliminaciones_posibles.items():
             # ``nombres_externos`` cambia a local cuando este Environment
             # materializa una declaración. El alias administrativo también
             # figura en ``declarados_locales``, pero no es un binding runtime.
-            if (
+            barreras = int(
                 _es_binding_local_runtime_real(
                     nombre, declarados_locales, globales, nombres_externos
                 )
-                or _es_binding_local_runtime_real(
+            ) + int(
+                _es_binding_local_runtime_real(
                     nombre,
                     declarados_locales,
                     globales_padre,
                     nombres_externos_padre,
                 )
-            ):
+            )
+            profundidad_restante = profundidad - barreras
+            if profundidad_restante <= 0:
                 continue
-            escrituras_padre.eliminaciones_posibles.add(nombre)
+            escrituras_padre.eliminaciones_posibles[nombre] = max(
+                profundidad_restante,
+                escrituras_padre.eliminaciones_posibles.get(nombre, 0),
+            )
 
 
 def _resolver_nodo(
@@ -742,7 +765,7 @@ def _resolver_nodo(
             _PROCEDENCIA_EXTERIOR,
             _PROCEDENCIA_MIXTA,
         ):
-            escrituras_externas.eliminaciones_posibles.add(nombre)
+            escrituras_externas.registrar_eliminacion_posible(nombre)
         if marcador_diferido:
             # La marca conserva metadata para un sombreado futuro, pero no es
             # una capa lexica que ``eliminar`` pueda recuperar. Esto no cambia
