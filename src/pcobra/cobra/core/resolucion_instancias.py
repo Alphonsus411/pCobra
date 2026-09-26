@@ -45,6 +45,22 @@ _PROCEDENCIA_EXTERIOR = "exterior"
 _PROCEDENCIA_MIXTA = "mixta"
 
 
+class _EscriturasExternas(dict[str, str]):
+    """Bindings escritos y nombres que pudieron atravesar un ``del``."""
+
+    def __init__(
+        self,
+        *args: Any,
+        eliminaciones_posibles: Iterable[str] = (),
+        **kwargs: Any,
+    ) -> None:
+        super().__init__(*args, **kwargs)
+        self.eliminaciones_posibles = set(eliminaciones_posibles)
+
+    def copy(self) -> _EscriturasExternas:
+        return type(self)(self, eliminaciones_posibles=self.eliminaciones_posibles)
+
+
 def _anteponer_binding_exterior(
     bindings_exteriores: BindingsExteriores,
     nombre: str,
@@ -126,6 +142,21 @@ def _fusionar_bindings(bindings: Bindings, caminos: Iterable[Bindings]) -> None:
                 bindings[nombre] = valor
         else:
             bindings[nombre] = _AMBIGUO
+
+
+def _fusionar_escrituras(
+    escrituras: _EscriturasExternas,
+    caminos: Iterable[Bindings],
+) -> None:
+    """Fusiona valores y conserva por OR la posibilidad independiente de ``del``."""
+
+    estados = list(caminos)
+    _fusionar_bindings(escrituras, estados)
+    escrituras.eliminaciones_posibles.update(
+        nombre
+        for estado in estados
+        for nombre in getattr(estado, "eliminaciones_posibles", ())
+    )
 
 
 def _fusionar_alcances(alcances: Alcances, caminos: Iterable[Alcances]) -> None:
@@ -477,7 +508,7 @@ def _resolver_bloque_con(
 ) -> None:
     """Resuelve ``con`` y compone escrituras a bindings léxicos exteriores."""
 
-    escrituras: Bindings = {}
+    escrituras = _EscriturasExternas()
     nombres_externos = {
         nombre: _PROCEDENCIA_EXTERIOR for nombre in bindings_padre
     }
@@ -505,7 +536,7 @@ def _resolver_bloque_con(
         for nombre in markers_heredadas:
             cadena_padre = bindings_exteriores_padre.get(nombre, ())
             if (
-                escrituras.get(nombre) == _ELIMINADO
+                nombre in escrituras.eliminaciones_posibles
                 and cadena_padre
                 and cadena_padre[0] == _MARCA_RECUPERABLE_TRAS_SOMBREADO
             ):
@@ -549,6 +580,9 @@ def _resolver_bloque_con(
                 in (_PROCEDENCIA_EXTERIOR, _PROCEDENCIA_MIXTA)
             ):
                 escrituras_padre[nombre] = estado
+                if isinstance(escrituras_padre, _EscriturasExternas):
+                    if nombre in escrituras.eliminaciones_posibles:
+                        escrituras_padre.eliminaciones_posibles.add(nombre)
 
 
 def _resolver_nodo(
@@ -658,6 +692,11 @@ def _resolver_nodo(
         marcador_diferido = bool(
             cadena and cadena[0] == _MARCA_RECUPERABLE_TRAS_SOMBREADO
         )
+        if isinstance(escrituras_externas, _EscriturasExternas) and procedencia in (
+            _PROCEDENCIA_EXTERIOR,
+            _PROCEDENCIA_MIXTA,
+        ):
+            escrituras_externas.eliminaciones_posibles.add(nombre)
         if marcador_diferido:
             # La marca conserva metadata para un sombreado futuro, pero no es
             # una capa lexica que ``eliminar`` pueda recuperar. Esto no cambia
@@ -843,7 +882,7 @@ def _resolver_nodo(
                 (nombres_externos_si or {}, nombres_externos_sino or {}),
             )
         if escrituras_externas is not None:
-            _fusionar_bindings(
+            _fusionar_escrituras(
                 escrituras_externas, (escrituras_si or {}, escrituras_sino or {})
             )
         return nodo
@@ -917,7 +956,7 @@ def _resolver_nodo(
                 (nombres_externos.copy(), nombres_externos_iteracion or {}),
             )
         if escrituras_externas is not None:
-            _fusionar_bindings(
+            _fusionar_escrituras(
                 escrituras_externas,
                 (escrituras_antes or {}, escrituras_iteracion or {}),
             )
@@ -1011,7 +1050,7 @@ def _resolver_nodo(
                 (nombres_externos.copy(), nombres_externos_iteracion or {}),
             )
         if escrituras_externas is not None:
-            _fusionar_bindings(
+            _fusionar_escrituras(
                 escrituras_externas,
                 (escrituras_antes or {}, escrituras_iteracion or {}),
             )
