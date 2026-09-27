@@ -61,7 +61,7 @@ El diff del HEAD remoto observado respecto de su primer padre no contiene
 archivos Lexer ni Parser. No se modificaron tokens, gramática ni sintaxis en
 esta auditoría. Estado: **INTACTOS**.
 
-## Push ordinario
+## Push ordinario intentado
 
 Se ejecutó, sin `--force`:
 
@@ -77,6 +77,25 @@ fatal: could not read Username for 'https://github.com': No such device or addre
 
 No se realizó force push. El resultado operativo es
 `PUBLICATION_BLOCKED_NO_CREDENTIALS`.
+
+Ese comando registra únicamente el intento fallido y **no debe reintentarse**
+desde el HEAD de este informe: dicho HEAD no contiene el `MERGE_SHA` certificado.
+Cuando haya credenciales y el objeto `f2b0a87a975019f7cf5810ad5ba799ccc162f8c6`
+esté disponible localmente, primero se debe integrarlo sobre la punta remota y
+publicar el commit resultante, sin `--force`:
+
+```console
+git fetch origin
+git switch --create publicar-fix origin/fix/contrato-extensiones-cobra
+git merge --no-ff f2b0a87a975019f7cf5810ad5ba799ccc162f8c6
+git merge-base --is-ancestor f2b0a87a975019f7cf5810ad5ba799ccc162f8c6 HEAD
+git push origin HEAD:refs/heads/fix/contrato-extensiones-cobra
+```
+
+Antes del push se deben repetir los gates sobre ese nuevo merge. La comprobación
+de ancestro debe terminar con código `0`; así, el objeto publicado contiene tanto
+la punta remota como el merge certificado, en vez de publicar solamente el HEAD
+documental de esta auditoría.
 
 ## CI del HEAD remoto definitivo observado
 
