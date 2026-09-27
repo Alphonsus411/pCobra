@@ -2,68 +2,87 @@
 
 ## Identidad
 
-- **Rama auditada:** `fix/contrato-extensiones-cobra`.
-- **Fecha UTC de inicio:** `2026-08-25T12:37:02Z`.
+- **Rama auditada:** `fix/contrato-extensiones-cobra` (checkout local `work`).
+- **Fecha UTC de inicio del informe original:** `2026-08-25T12:37:02Z`.
 - **SHA inicial:** `9d7f34f6447d23f114451564716ccf1ecb82ee41`.
-- **SHA de `origin/master` consultado:** `f684efc8a21d60eebcdce113cc8bfc21240ca37e`.
-- **SHA de `master` integrado:** no existe; la integración quedó bloqueada y el intento se abortó.
-- **SHA final del código auditado:** `9d7f34f6447d23f114451564716ccf1ecb82ee41`; el único commit posterior es este informe documental.
-- **Estado inicial:** árbol limpio; el checkout suministrado se llamaba `work`, sin remoto configurado. Se añadió `origin`, se actualizaron las refs y se creó la rama local solicitada en el mismo SHA.
+- **SHA de `master` auditado:** `f684efc8a21d60eebcdce113cc8bfc21240ca37e`.
+- **Ancestro común comprobado:** `8b1676cdf52f30147ce42584a98ca4c421756369`.
+- **Merge de auditoría:** `5bc39e855` integra `f684efc8` sobre el informe documental sin conflictos.
 
-## Sincronización y conflictos
+## Corrección de la sincronización
 
-`git merge --no-ff origin/master` fue rechazado porque Git considera que las ramas no tienen un ancestro común. Un intento diagnóstico con `--allow-unrelated-histories` produjo **770 conflictos `add/add`**. Los conflictos abarcan, entre otros, CodeQL, workflows, el libro normativo, matrices generadas, runtime, scripts contractuales y tests.
+La conclusión original de que los historiales no estaban relacionados era
+incorrecta. El checkout era superficial y su fichero `.git/shallow` ocultaba la
+ascendencia compartida. Después de configurar `origin` y ejecutar
+`git fetch --unshallow origin`, las comprobaciones sobre los mismos SHA dieron:
 
-Resolver esa cantidad de conflictos no constituye una corrección mínima ni focal, y no permite conservar con evidencia suficiente el comportamiento de la rama. Conforme a la regla de detener una línea fuera de alcance y a la prohibición de reescrituras generales, se ejecutó `git merge --abort`. No quedó commit de merge.
+```text
+$ git merge-base 9d7f34f6 f684efc8
+8b1676cdf52f30147ce42584a98ca4c421756369
+
+$ git merge-tree --write-tree --messages 9d7f34f6 f684efc8
+9d6ae7f5ce560d87fe8e1500ec6921dd482c320d
+```
+
+`git merge-tree` terminó con código 0 y sin mensajes de conflicto. A
+continuación, `git merge --no-ff f684efc8` también terminó con código 0 mediante
+la estrategia `ort`. El merge incorporó únicamente
+`auditoria_contrato_extensiones_codigo.txt`; los 770 conflictos `add/add`
+registrados antes fueron un artefacto del grafo local incompleto, no una
+propiedad de los historiales del repositorio.
 
 ## Archivos modificados y commits creados
 
-- Código, tests, Lexer, Parser y auditorías históricas: **sin modificaciones**.
-- Archivo nuevo: este `README.md` de cierre.
-- Commits de corrección funcional: **0**.
-- Commit documental: el commit que incorpora este informe.
+- El merge incorpora el archivo de evidencia
+  `auditoria_contrato_extensiones_codigo.txt` procedente de `f684efc8`.
+- Este seguimiento corrige únicamente el presente informe de auditoría.
+- Lexer y Parser no se modificaron.
 
-## Integridad de Lexer y Parser
+## Gates y pruebas posteriores al merge
 
-Hashes SHA-256 antes del intento, durante el conflicto y después de abortarlo (sin variación):
-
-| Archivo | SHA-256 |
-|---|---|
-| `src/pcobra/cobra/core/lexer.py` | `537554f0cab9fb4ca456b2b99a43fca7b275241dcddfa5bb0fc3dcad78534e70` |
-| `src/pcobra/cobra/core/parser.py` | `3017fa31e1707ca82358d548e71ba27d4b8e73342950ab6959b32c13dcc02505` |
-| `src/pcobra/core/lexer.py` | `fbd130d88ec6255c1e966752730a7cb2e2311c50125d85df487fc67d55aaf61e` |
-| `src/pcobra/core/parser.py` | `656d9c911ab0760435efc48502625b6016955f00d0429228a0ffced87e982a2b` |
-
-## Gates y pruebas
-
-La fase 2 es un prerrequisito de los gates posteriores. Como `origin/master` no pudo integrarse, ejecutar las fases 3–10 sobre el árbol anterior no demostraría seguridad pre-merge y podría producir una conclusión engañosa.
-
-| Gate | Estado | Motivo |
+| Gate | Estado | Evidencia |
 |---|---|---|
-| Integridad básica post-merge | NOT DEMONSTRATED | No existe árbol post-merge. |
-| Runtime Contract | NOT DEMONSTRATED | Sin integración verificable. |
-| Syntax report / libro | NOT DEMONSTRATED | Sin integración verificable. |
-| Contrato `usar` | NOT DEMONSTRATED | Sin integración verificable. |
-| Holobit | NOT DEMONSTRATED | Sin integración verificable. |
-| Runtime API | NOT DEMONSTRATED | Sin integración verificable. |
-| CodeQL pytest / CLI | NOT DEMONSTRATED | Sin integración verificable. |
-| Lint, typecheck y smoke | NOT DEMONSTRATED | Sin integración verificable. |
-| Suite global | NOT DEMONSTRATED | `passed`, `failed`, `skipped` y `errors`: no disponibles. |
+| Descubrimiento de historia | **PASS** | El repositorio dejó de ser superficial; `merge-base` devolvió `8b1676cd`. |
+| Integración | **PASS** | `merge-tree` y el merge real terminaron sin conflictos. |
+| Compilación de `src` | **PASS** | `python -m compileall -q src`, código 0. |
+| Runtime Contract | **PASS** | `python scripts/validate_runtime_contract.py`, código 0. |
+| Syntax report | **PASS** | `python scripts/ci/validate_syntax_report_contract.py`, código 0. |
+| Libro normativo | **PASS** | `python scripts/sync_libro_programacion.py --check`: `Sin drift documental.` |
+| Runtime API / CodeQL pytest | **PASS** | 18 pruebas pasaron en los archivos focales de runtime y configuración CodeQL. |
+| Contrato `usar` / Holobit | **FAIL** | 4 fallos y 85 pruebas pasadas; son discrepancias de mensajes de error en `usar`, no conflictos de integración. |
+| Suite global | **FAIL / INCOMPLETA** | Se interrumpió al 26 % tras demostrar 35 fallos: 1268 pasadas y 23 omitidas. |
 
-## Clasificación de fallos
+La suite dirigida que falla es:
 
-- `HISTORICOS_QUE_SIGUEN`: no demostrable en esta ronda.
-- `HISTORICOS_QUE_DESAPARECEN`: no demostrable en esta ronda.
-- `FALLOS_NUEVOS`: no demostrable; no puede afirmarse que sea cero.
-- Fallos históricos supervivientes exactos: **no demostrable**.
-- Fallos nuevos exactos: **no demostrable**.
+```text
+python -m pytest -q \
+  tests/integration/test_usar_public_contract_regression.py \
+  tests/integration/test_usar_core_contract_full.py \
+  tests/integration/test_holobit_tiers.py
 
-## CodeQL y riesgos residuales
+4 failed, 85 passed
+```
 
-CodeQL local y remoto no se evaluaron porque la integración previa quedó bloqueada. El riesgo residual principal es estructural: las refs conocidas representan historiales sin ancestro común y una unión forzada exige resolver 770 conflictos de alcance transversal. Cualquier evaluación contractual posterior sin corregir primero la procedencia del historial carecería de una base comparable fiable.
+Los cuatro fallos corresponden a expectativas sobre los diagnósticos
+`usar_error[conflicto_simbolo]` y
+`módulo externo no permitido en REPL estricto`. No se alteran en esta corrección
+porque constituyen hallazgos funcionales independientes y la política del
+repositorio exige tratarlos uno por uno.
 
-Se recomienda restaurar o publicar una ref de la rama que comparta el historial correcto con `master`, o proporcionar una estrategia de reconciliación explícita revisada por mantenedores. No debe intentarse resolver masivamente los conflictos bajo este encargo.
+## Clasificación corregida
+
+- La historia compartida y la posibilidad de integrar quedaron **demostradas**.
+- Los 770 conflictos `add/add` declarados en la versión anterior del informe no
+  son fallos del repositorio y se retiran de la clasificación.
+- La suite dirigida detectó cuatro fallos de diagnóstico de `usar`. La suite
+  global también mostró otros fallos preexistentes antes de interrumpirse; el
+  merge limpio de `f684efc8`, que sólo aporta evidencia documental, no los creó.
+- CodeQL completo no se ejecutó localmente; sólo pasó su suite pytest focal, por
+  lo que un análisis CodeQL integral queda **NOT DEMONSTRATED**.
 
 ## Recomendación final
 
-**NOT_READY_FOR_MERGE**
+La sincronización con `f684efc8` **no bloquea el merge**. La conclusión anterior
+`NOT_READY_FOR_MERGE` por “historias sin relación” queda revocada. La decisión
+global debe basarse en los gates funcionales pendientes descritos arriba, no en
+conflictos de Git inexistentes.
