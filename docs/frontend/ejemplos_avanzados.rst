@@ -76,12 +76,17 @@ Bibliotecas C con ctypes
    var triple = cargar_funcion('libtriple.so', 'triple')
    imprimir(triple(5))
 
-Casos de Uso Reales
-===================
+Casos de Uso Históricos
+=======================
 
-Los programas completos que muestran Cobra en escenarios reales se encuentran
-en el directorio ``examples/casos_reales/`` de este repositorio. A continuación se
-resume cada ejemplo y se incluye el código principal para referencia.
+Los programas archivados en ``examples/casos_reales/`` se conservan para
+trazabilidad. No representan el contrato público vigente y pueden contener
+imports externos o flujos retirados.
+
+.. warning::
+
+   No copies estos fragmentos como código Cobra actual. Migra cada ejemplo y
+   valida su sintaxis con el Lexer, el Parser y la CLI vigentes antes de usarlo.
 
 Bioinformática
 --------------

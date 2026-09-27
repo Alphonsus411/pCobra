@@ -1,120 +1,45 @@
 # Casos de uso reales
 
-Esta sección muestra ejemplos prácticos de cómo emplear la CLI de Cobra en distintos contextos.
+Esta sección reúne ejemplos pequeños que se ejecutan con el Lexer, el Parser y
+la CLI actuales. Los archivos fuente están en `examples/casos_reales/` y los cuadernos
+equivalentes en `notebooks/casos_reales/`.
 
-Los scripts completos de estos ejemplos se encuentran en la carpeta `examples/casos_reales/` del repositorio.
-Se incluyen cuadernos interactivos en `notebooks/casos_reales/` que muestran paso a paso la compilación y ejecución de cada ejemplo.
-## Bioinformática
-Un pequeño programa puede leer un archivo FASTA y contar el porcentaje de GC:
-
-```cobra
-archivo = leer("secuencia.fasta")
-conteo = contar_gc(archivo)
-imprimir "Porcentaje de GC:", conteo
-```
-
-Ejecuta el script con:
+Los cuadernos deben iniciarse desde la raíz del repositorio. Cada uno muestra el
+fuente correspondiente y lo ejecuta mediante la entrada pública actual:
 
 ```bash
-cobra run bioinfo.co
-```
-También puedes ejecutar el cuaderno `notebooks/casos_reales/bioinformatica.ipynb` para verlo paso a paso.
-
-
-Dependencia recomendada: `biopython`.
-
-## Inteligencia Artificial
-Cobra se integra con herramientas de IA. Por ejemplo, usando `scikit-learn` o el plugin `analizador_agix`:
-
-```cobra
-usar sklearn
-modelo = cargar_modelo("modelo.pkl")
-resultado = modelo.predecir([1.2, 3.4])
-imprimir resultado
+PYTHONPATH=src python -m pcobra.cli run examples/casos_reales/<ruta>.cobra
 ```
 
-Para ejecutar:
+## Alcance de los ejemplos
 
-```bash
-cobra run ia.co
-```
-También puedes ejecutar el cuaderno `notebooks/casos_reales/inteligencia_artificial.ipynb` para una versión interactiva.
+Las tres fuentes Cobra son autocontenidas:
 
+- `examples/casos_reales/bioinformatica/ejemplo_gc.cobra` calcula el porcentaje
+  de bases G y C de un texto.
+- `examples/casos_reales/inteligencia_artificial/modelo_ia.cobra` aplica una
+  combinación lineal sencilla a dos valores.
+- `examples/casos_reales/analisis_datos/estadisticas.cobra` calcula el promedio
+  de tres valores.
 
-Necesitarás `scikit-learn`. Las sugerencias de `analizador_agix` usan `agix`, dependencia oficial incluida en la instalación completa de pCobra. Si trabajas con una instalación parcial o un entorno headless donde no está disponible, instala `agix` explícitamente; los demás flujos de Cobra pueden seguir funcionando sin cargar el motor.
+Las celdas Python de preparación de los cuadernos ilustran el contexto del caso
+de uso, pero no convierten sus paquetes en módulos Cobra. En particular,
+`usar` no importa directamente paquetes Python como `sklearn`, `pandas`,
+`matplotlib`, `flask`, `pygame` o `biopython`.
 
-El plugin `analizador_agix` soporta modulación emocional mediante los
-parámetros `placer`, `activacion` y `dominancia`, cada uno en el rango
-de `-1` a `1`.
+## Contrato vigente
 
-```cobra
-usar analizador_agix
-codigo = "imprimir \"hola\""
-sugerencias = analizador_agix.generar_sugerencias(codigo, placer=0.5, activacion=0.3, dominancia=-0.2)
-imprimir sugerencias[0]
-```
+Para ampliar estos ejemplos, utiliza estas referencias:
 
-## Análisis de Datos
+1. [Libro de Programación Cobra](LIBRO_PROGRAMACION_COBRA.md), fuente normativa
+   de sintaxis y comportamiento.
+2. [Manual de Cobra](MANUAL_COBRA.md), referencia técnica canónica.
+3. [Especificación del lenguaje](SPEC_COBRA.md), gramática implementada.
+4. [Inventario público de módulos de `usar`](inventario_usar_modulos.md).
+5. [Manual de CobraHub](frontend/cobrahub.rst), para empaquetado y distribución
+   de artefactos `.co`.
 
-El módulo `pandas` de la biblioteca estándar facilita leer archivos CSV/JSON y obtener resúmenes estadísticos sin perder la sencillez de Cobra. El siguiente programa carga ventas, filtra los registros incompletos y agrupa por mes para graficar posteriormente con `matplotlib`:
-
-```cobra
-usar pandas, matplotlib
-
-ventas = pandas.leer_csv("ventas.csv")
-limpias = pandas.filtrar(ventas, lambda fila: fila['monto'] != None)
-mensuales = pandas.agrupar_y_resumir(
-    limpias,
-    por=['mes'],
-    agregaciones={'monto': 'sum'}
-)
-
-columnas = pandas.a_listas(mensuales)
-figura = matplotlib.linea(x=columnas['mes'], y=columnas['monto_sum'])
-matplotlib.guardar(figura, "salida.png")
-```
-
-Ejecuta el programa así:
-
-```bash
-cobra run analisis.co
-```
-Puedes revisar el cuaderno interactivo `notebooks/casos_reales/analisis_datos.ipynb` para seguirlo paso a paso.
-
-> **Requisitos:** instala `pandas` y `matplotlib`. Si transpiras a JavaScript, las funciones de lectura y estadística (`leer_csv`, `leer_json`, `describir`, `agrupar_y_resumir`) no estarán disponibles y deberás preparar los datos manualmente.
-
-## Aplicación web
-Un servicio mínimo con Flask puede generarse y ejecutarse con Cobra:
-
-```cobra
-usar flask
-app = Flask(__name__)
-@app.ruta('/')
-def hola():
-    regresar 'Hola desde Cobra'
-```
-
-Genera y lanza el servidor con flujo unificado:
-
-```bash
-cobra build app_web.co
-python build/app_web.py
-```
-
-> Para forzar backend/ruta de salida en pipelines legacy, consulta `docs/migracion_cli_unificada.md`.
-
-## Videojuego básico
-Un pequeño juego usando Pygame:
-
-```cobra
-usar pygame
-pantalla = pygame.nueva_pantalla(640, 480)
-# ... lógica del juego ...
-```
-
-Para ejecutarlo:
-
-```bash
-cobra build juego.co
-python juego.py
-```
+Instalar una dependencia externa no la convierte en un módulo Cobra. AGIX es el
+motor interno de sugerencias de la distribución Python, no un módulo público
+accesible mediante `usar "analizador_agix"`; del mismo modo, instalar un paquete
+desde CobraHub no amplía automáticamente el catálogo público de `usar`.
