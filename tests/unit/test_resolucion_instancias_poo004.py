@@ -3060,6 +3060,89 @@ def test_binding_local_real_de_con_absorbe_possible_del_anidado():
         assert type(ast[1].cuerpo[-1]) is NodoInstancia
 
 
+def test_alias_hijo_no_oculta_binding_runtime_real_del_con_padre():
+    declaraciones = (
+        "var C = 0",
+        "clase C:\n        fin",
+        "func C():\n        fin",
+    )
+    controles = (
+        "eliminar C",
+        "si otra_condicion:\n                eliminar C\n            fin",
+        "mientras otra_condicion:\n                eliminar C\n            fin",
+        "para x en valores:\n                eliminar C\n            fin",
+    )
+
+    for declaracion in declaraciones:
+        for control in controles:
+            ast = _parsear(
+                "clase C:\nfin\n"
+                "func f():\n"
+                "    mientras condicion:\n"
+                "        clase C:\n        fin\n"
+                "    fin\n"
+                "    con exterior:\n"
+                f"        {declaracion}\n"
+                "        con interior como C:\n"
+                f"            {control}\n"
+                "        fin\n"
+                "    fin\n"
+                "    var C = 0\n"
+                "    eliminar C\n"
+                "    C()\n"
+                "fin"
+            )
+
+            assert type(ast[1].cuerpo[-1]) is NodoInstancia
+
+
+def test_binding_real_homonimo_al_alias_del_mismo_con_absorbe_del_hijo():
+    llamada = _resolver_marker_tras_con(
+        "        con exterior como C:\n"
+        "            var C = 0\n"
+        "            con interior como C:\n"
+        "                si otra_condicion:\n"
+        "                    eliminar C\n"
+        "                fin\n"
+        "            fin\n"
+        "        fin\n"
+    )
+
+    assert type(llamada) is NodoInstancia
+
+
+def test_aliases_antes_y_despues_del_binding_real_mas_cercano_no_lo_ocultan():
+    llamada = _resolver_marker_tras_con(
+        "        con primero como C:\n"
+        "            con segundo como C:\n"
+        "                var C = 0\n"
+        "                con tercero como C:\n"
+        "                    mientras otra_condicion:\n"
+        "                        eliminar C\n"
+        "                    fin\n"
+        "                fin\n"
+        "            fin\n"
+        "        fin\n"
+    )
+
+    assert type(llamada) is NodoInstancia
+
+
+def test_binding_condicional_homonimo_al_alias_conserva_camino_exterior():
+    llamada = _resolver_marker_tras_con(
+        "        con exterior como C:\n"
+        "            si condicion:\n"
+        "                var C = 0\n"
+        "            fin\n"
+        "            con interior como C:\n"
+        "                eliminar C\n"
+        "            fin\n"
+        "        fin\n"
+    )
+
+    assert type(llamada) is NodoLlamadaFuncion
+
+
 def test_del_sucesivo_supera_binding_local_real_de_con():
     ast = _parsear(
         "clase C:\nfin\n"
