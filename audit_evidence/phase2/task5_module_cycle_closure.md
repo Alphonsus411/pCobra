@@ -215,20 +215,9 @@ hay en esta evidencia un defecto vigente conocido del contrato. En particular,
 los cuatro fallos históricos eran expectativas de tests obsoletas o
 insuficientemente precisas, no cuatro defectos actuales del runtime.
 
-### Defectos independientes de CI
-
-El fallo
-`tests/unit/test_parser_error_reporting.py::test_error_en_declaracion_para`, con
-`AttributeError: IN`, es independiente del contrato de módulos y queda fuera
-del alcance de Task 5. Un fallo global ajeno no invalida por sí solo la
-conclusión funcional aquí sustentada y debe investigarse sin mezclarlo con este
-cierre.
-
 ## Siguiente acción recomendada
 
-Cerrar Task 5 y abrir cualquier fallo independiente de CI como una tarea
-separada. En concreto, `AttributeError: IN` es candidato de investigación, pero
-no debe corregirse como parte de este cambio documental.
+Cerrar Task 5 sin cambios adicionales en el runtime.
 
 ## Alcance del cambio
 
