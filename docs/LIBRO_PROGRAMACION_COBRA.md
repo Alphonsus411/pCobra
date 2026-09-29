@@ -123,6 +123,7 @@ altura = 1.68
 - `desde`
 - `eliminar`
 - `elseif`
+- `en`
 - `enum`
 - `enumeracion`
 - `esperar`
@@ -138,7 +139,6 @@ altura = 1.68
 - `holobit`
 - `import`
 - `imprimir`
-- `en`
 - `intentar`
 - `lambda`
 - `lanzar`
