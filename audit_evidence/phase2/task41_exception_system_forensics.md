@@ -384,11 +384,11 @@ inconsistencias de finally, opcionalidad o lowering encontradas aquí.
   reemplazar imprimir por `lanzar "x"`).
 - **Actual:** parser crea catch/finally vacíos; runtime consume `ExcepcionCobra`; Python y
   JS pueden generar un try sintácticamente inválido.
-- **Esperado:** conforme a Libro/SPEC/EBNF, exigir catch con nombre; si se decide ampliar
-  el lenguaje, exigir al menos catch o finally y documentarlo.
+- **Esperado:** conforme al Libro, exigir `capturar IDENTIFICADOR`; un `try` sin
+  `capturar` no pertenece al contrato normativo.
 - **Causa probable:** listas vacías usadas como defaults sin validación estructural.
-- **Alcance mínimo:** parser (bloqueado por restricción de esta auditoría) y tests E2E;
-  revisar runtime/backends según contrato decidido.
+- **Alcance mínimo:** hacer que el Parser rechace la forma y añadir su prueba focal; el
+  cambio de Parser queda bloqueado hasta recibir autorización explícita.
 
 ### EXC-002 — catch sin nombre contradice la gramática
 
@@ -410,11 +410,11 @@ inconsistencias de finally, opcionalidad o lowering encontradas aquí.
 - **Archivo/símbolo:** `parser.py::declaracion_try_catch`.
 - **Entrada mínima:** `intentar:\n imprimir("x")\nfinalmente:\n imprimir("fin")\nfin`.
 - **Actual:** `ParserError: Token inesperado en término: TipoToken.FINALMENTE`.
-- **Esperado:** la estructura del método y AST sugieren finally opcional sin catch; si no
-  se desea soportar, rechazarlo de forma contractual y no insinuarlo como alternativa.
+- **Esperado:** rechazar esta forma: el Libro no define una producción *only-finally* y
+  no corresponde inferir sintaxis nueva a partir de la estructura interna del AST.
 - **Causa probable:** `FINALMENTE` falta entre terminadores de `bloque_try`.
-- **Alcance mínimo:** decisión normativa primero; después parser + test focal. Requiere
-  tocar parser, por lo que queda bloqueado en esta tarea.
+- **Alcance mínimo:** prueba negativa focal que preserve el rechazo; no añadir
+  `FINALMENTE` como delimitador del bloque try ni modificar el Parser.
 
 ### EXC-004 — backend Python descarta finally
 
@@ -513,20 +513,35 @@ aislados no elevan la clasificación.
 
 ## 25. Orden mínimo recomendado de microtareas posteriores
 
-1. **41A — fijar contrato estructural try/catch/finalmente:** decidir, desde el Libro,
-   obligatoriedad de catch/nombre y validez de only-finally; bloquear si exige parser.
-2. **41B — alinear parser con el contrato:** una reparación focal de opcionalidad,
-   identificador y delimitador `FINALMENTE`; no tocar lexer ni añadir aliases.
-3. **41C — preservar finally en runtime/backends:** Python, JS y Rust como hallazgos
-   independientes, con validación de ejecución/compilación.
-4. **41D — especificar la aproximación Rust:** tipos convertibles, contexto de función,
-   panic frente a `Err` y forma de finally.
-5. **41E — sanear identidad AST de la suite focal:** imports canónicos/compatibilidad,
-   separado del comportamiento de excepciones.
-6. **41F — matriz E2E:** español, inglés y mezclas ya admitidas; catch requerido/sin
-   nombre según contrato; finally; runtime; `compile`, `node --check` y `rustc`.
-7. **41G — sincronización documental/tooling:** sólo tras estabilizar conducta; SPEC,
-   EBNF y Libro. REPL/VS Code no necesitan cambio para las grafías actuales.
+El contrato no queda abierto a decisión: el Libro exige `capturar IDENTIFICADOR` y no
+define una producción *only-finally*. Por tanto, catch y nombre son obligatorios, y
+`intentar ... finalmente ... fin` sin `capturar` es sintaxis no soportada. La alineación
+del Parser necesaria para aplicar ese contrato queda **bloqueada hasta recibir
+autorización explícita**, de acuerdo con las reglas del repositorio.
+
+Cada elemento siguiente corresponde a un solo hallazgo y debe ejecutarse en un cambio
+independiente:
+
+1. **41A — EXC-001, rechazar `try` sin `capturar`:** alinear el Parser y añadir su prueba
+   focal. **Bloqueada: requiere autorización explícita para modificar el Parser.**
+2. **41B — EXC-002, exigir nombre en `capturar`:** alinear el Parser y añadir la prueba
+   fuente→JS. **Bloqueada: requiere autorización explícita para modificar el Parser.**
+3. **41C — EXC-003, registrar el rechazo de *only-finally*:** añadir una prueba negativa
+   del contrato; no cambiar el delimitador `FINALMENTE` ni inventar esa producción.
+4. **41D — EXC-004, preservar finally en Python:** corregir sólo el visitante Python y
+   validar compilación y ejecución.
+5. **41E — EXC-005, preservar finally en JavaScript:** corregir sólo el visitante JS y
+   validar con `node --check` y ejecución.
+6. **41F — EXC-006, preservar finally en Rust:** corregir sólo el visitante Rust y
+   validarlo con un harness `rustc` en el contexto soportado.
+7. **41G — EXC-006, especificar la aproximación Rust:** documentar, en un cambio aparte,
+   tipos convertibles, contexto de función y `panic` frente a `Err`.
+8. **41H — EXC-008, sanear identidad AST de la suite focal:** unificar imports
+   canónicos/compatibilidad sin modificar el comportamiento de excepciones.
+9. **41I — EXC-009, añadir matriz E2E:** cubrir en una tarea de pruebas independiente las
+   grafías ya admitidas y el contrato fijado, sin cambios de producción.
+10. **41J — EXC-007, sincronización documental/tooling:** abordar cada documento en
+    cambios separados sólo después de estabilizar la conducta; no ampliar la sintaxis.
 
 ## 26. Archivos modificados y controles finales
 
