@@ -90,6 +90,9 @@ _NODE_CLASSES: dict[str, type] | None = None
 _ENUM_CLASSES: dict[str, type] | None = None
 _ALIAS_CONFIGURED = False
 _NULL_JSON = json.dumps(None)
+# Incrementar cuando cambie el contrato del lexer o del parser para evitar
+# reutilizar tokens o AST persistidos con una semántica anterior.
+_CACHE_CONTRACT_VERSION = "2"
 _FULL_TOKENS_KEY = "full_tokens"
 _FRAGMENT_TOKENS_KEY = "fragment_tokens"
 _FRAGMENT_AST_KEY = "fragment_ast"
@@ -195,7 +198,8 @@ def _ensure_alias_configured() -> None:
 
 
 def _checksum(source: str) -> str:
-    return hashlib.sha256(source.encode("utf-8")).hexdigest()
+    cache_input = f"{_CACHE_CONTRACT_VERSION}\0{source}"
+    return hashlib.sha256(cache_input.encode("utf-8")).hexdigest()
 
 
 def _encode_payload(obj: Any) -> str:
