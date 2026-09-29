@@ -32,10 +32,12 @@ equivalencia semántica entre las formas española e inglesa.
 
 ## 4. Corrección aplicada
 
-Task 16 elimina exclusivamente las dos reglas inglesas del lexer, las dos
-expectativas asociadas y la prueba de equivalencia introducida por Task 15. No
-elimina la funcionalidad de context manager: `con recurso como r` continúa
-siendo la forma funcional soportada.
+Task 16 elimina exclusivamente las dos reglas inglesas del lexer y las dos
+expectativas positivas asociadas. La prueba de equivalencia introducida por
+Task 15 se sustituye por cobertura negativa que exige que `with` y `as` sean
+identificadores y que `with recurso as r` no se pueda interpretar como un
+context manager. No se elimina la funcionalidad de context manager: `con
+recurso como r` continúa siendo la forma funcional soportada.
 
 El estado final esperado es:
 
@@ -49,17 +51,25 @@ as   -> TipoToken.IDENTIFICADOR
 Por tanto, `with recurso as r` ya no activa el contrato de context manager de
 Cobra.
 
-## 5. Parser y enum
+## 5. Bloqueo detectado en el parser
 
-No se modifica el parser porque ya consume los tokens canónicos
-`TipoToken.CON` y `TipoToken.COMO`; la corrección pertenece únicamente a la
-clasificación léxica de las palabras inglesas. Tampoco se modifica el enum
-`TipoToken`: no hacen falta, ni deben crearse, `TipoToken.WITH` o
-`TipoToken.AS`.
+La corrección léxica deja al descubierto una advertencia obsoleta en
+`ClassicParser.declaracion_con`: la forma canónica `con recurso como r` entra
+en la condición de «mezcla de alias» y recomienda `with ... as`, aunque esa
+sintaxis inglesa ya no es válida. Por tanto, no se considera cerrado el ajuste
+del parser.
+
+Corregir esa condición exige modificar `src/pcobra/cobra/core/parser.py`. Las
+reglas obligatorias de este repositorio prohíben modificar Lexer o Parser sin
+autorización explícita y específica; la solicitud de revisión permite
+documentar este bloqueo, pero no concede esa autorización. Se detiene aquí ese
+hallazgo hasta recibirla. Tampoco se modifica el enum `TipoToken`: no hacen
+falta, ni deben crearse, `TipoToken.WITH` o `TipoToken.AS`.
 
 ## 6. Pendiente documental
 
 La presente tarea corrige el registro normativo de Task 14 y documenta el
-rollback de Task 15. Cualquier reconciliación futura de otras superficies
-documentales históricas queda fuera del alcance de Task 16 y deberá abordarse
-de forma independiente.
+rollback de Task 15. Queda pendiente, y explícitamente bloqueada por la regla
+anterior, la eliminación de la advertencia falsa del parser. Cualquier
+reconciliación futura de otras superficies documentales históricas queda fuera
+del alcance de Task 16 y deberá abordarse de forma independiente.

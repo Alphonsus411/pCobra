@@ -1,8 +1,10 @@
 import ast
 from pathlib import Path
 
+import pytest
+
 from pcobra.cobra.core.lexer import Lexer, TipoToken
-from pcobra.cobra.core.parser import ClassicParser
+from pcobra.cobra.core.parser import ClassicParser, ParserError
 
 ROOT = Path(__file__).resolve().parents[1]
 PARSER_PATH = ROOT / "src/pcobra/cobra/core/parser.py"
@@ -112,6 +114,22 @@ def test_lexer_palabras_reservadas_con_cobertura_esperada() -> None:
     for palabra, tipo in palabras_esperadas.items():
         tokens = Lexer(palabra).tokenizar()
         assert tokens[0].tipo == tipo, palabra
+
+
+def test_with_as_son_identificadores_y_no_sintaxis_de_contexto() -> None:
+    """Contrato negativo: los aliases ingleses no forman parte de Cobra."""
+    tokens = Lexer("with recurso as r: pasar fin").tokenizar()
+
+    assert [token.tipo for token in tokens[:4]] == [
+        TipoToken.IDENTIFICADOR,
+        TipoToken.IDENTIFICADOR,
+        TipoToken.IDENTIFICADOR,
+        TipoToken.IDENTIFICADOR,
+    ]
+    assert [token.valor for token in tokens[:4]] == ["with", "recurso", "as", "r"]
+
+    with pytest.raises(ParserError):
+        ClassicParser(tokens).parsear()
 
 
 def test_lexer_no_tiene_especificaciones_reservadas_exactas_duplicadas() -> None:
