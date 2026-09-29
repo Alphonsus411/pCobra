@@ -120,9 +120,11 @@ altura = 1.68
 - `como`
 - `con`
 - `continuar`
+- `definir`
 - `desde`
 - `eliminar`
 - `elseif`
+- `en`
 - `enum`
 - `enumeracion`
 - `esperar`
@@ -138,8 +140,8 @@ altura = 1.68
 - `holobit`
 - `import`
 - `imprimir`
-- `en`
 - `intentar`
+- `interface`
 - `lambda`
 - `lanzar`
 - `macro`
@@ -151,13 +153,15 @@ altura = 1.68
 - `para`
 - `pasar`
 - `proyectar`
+- `rasgo`
 - `registro`
 - `retorno`
 - `romper`
+- `segun`
 - `si`
 - `sino`
 - `sino si`
-- `segun` (forma canónica; `switch` se mantiene como alias de compatibilidad)
+- `switch`
 - `throw`
 - `transformar`
 - `try`
@@ -215,11 +219,13 @@ altura = 1.68
 - `hilo`
 - `importacion`
 - `impresion`
+- `interface`
 - `llamada`
 - `macro`
 - `option`
 - `retorno`
 - `switch`
+- `throw_stmt`
 - `try_catch`
 - `usar`
 - `with_stmt`
