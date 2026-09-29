@@ -29,6 +29,11 @@ STDLIB_DOC_MARKERS = (
     "<!-- END: AUTO-STDLIB-FUNCTIONS -->",
 )
 
+SYNTAX_CANONICAL_ALIASES = {
+    "caso": "case",
+    "segun": "switch",
+}
+
 
 @dataclass(frozen=True)
 class CliCommand:
@@ -157,6 +162,13 @@ def build_syntax_index() -> str:
 
     parts.append("\n#### Palabras reservadas (gramática + SPEC)\n")
     for tok in sorted(set(grammar_literals + spec_tokens)):
+        if tok in SYNTAX_CANONICAL_ALIASES.values():
+            continue
+        if alias := SYNTAX_CANONICAL_ALIASES.get(tok):
+            parts.append(
+                f"- `{tok}` (forma canónica; `{alias}` se mantiene como alias de compatibilidad)"
+            )
+            continue
         parts.append(f"- `{tok}`")
 
     parts.append("\n#### Estructuras\n")
