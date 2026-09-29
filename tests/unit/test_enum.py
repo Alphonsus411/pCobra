@@ -70,6 +70,20 @@ def test_transpilador_rust_enum_vacio():
     assert codigo.endswith("enum Vacia {\n}")
 
 
+def test_transpilador_rust_acceso_a_miembro_enum():
+    codigo = "enumeracion Color: ROJO, VERDE fin imprimir(Color.ROJO)"
+    ast = Parser(Lexer(codigo).analizar_token()).parsear()
+    resultado = TranspiladorRust().generate_code(ast)
+    assert 'println!("{}", Color::ROJO);' in resultado
+
+
+def test_transpilador_rust_conserva_acceso_a_atributo_normal():
+    codigo = "imprimir(objeto.valor)"
+    ast = Parser(Lexer(codigo).analizar_token()).parsear()
+    resultado = TranspiladorRust().generate_code(ast)
+    assert 'println!("{}", objeto.valor);' in resultado
+
+
 def test_transpilador_rust_enum_desde_fuente_canonica():
     codigo = "enumeracion Color: ROJO, VERDE fin"
     ast = Parser(Lexer(codigo).analizar_token()).parsear()
