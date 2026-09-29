@@ -14,20 +14,22 @@
 
 ## Conclusión ejecutiva
 
-**Clasificación: B — COMPLETO CON DEUDA NO BLOQUEANTE.**
+**Clasificación: G — IMPLEMENTACIÓN PARCIAL.**
 
-El contrato de `enum` / `enumeracion` está alineado y es funcionalmente
-coherente en todas las superficies auditadas. `enumeracion` es la forma
+El contrato de `enum` / `enumeracion` está alineado en las superficies de
+sintaxis auditadas. `enumeracion` es la forma
 canónica, `enum` es un alias de compatibilidad y ambas grafías se normalizan a
 `TipoToken.ENUMERACION`, recorren `declaracion_enum()` y producen el mismo
-`NodoEnum`. No se encontró una contradicción funcional reproducible.
+`NodoEnum`. Sin embargo, existe una contradicción funcional reproducible en el
+backend Rust: imprimir una variante genera un `println!("{}", ...)` que exige
+`Display`, pero el enum emitido no implementa ese trait.
 
-La clasificación no es A por deuda de automatización: no hay test comprometido
-para el enum JavaScript vacío ni validaciones con `node --check` o `rustc`; el
-Python normal no usa `compile(...)` en su test; y los filtros recomendados
-`-k enum` en los módulos generales de los backends seleccionan cero pruebas.
-Estas carencias no afectan al comportamiento observado, que sí fue validado
-manualmente durante esta auditoría.
+La clasificación es G porque el acceso Rust se transpila con la ruta correcta
+(`Color::ROJO`), pero su uso ordinario con `imprimir` no compila. Además quedan
+deudas de automatización: no hay test comprometido para el enum JavaScript vacío
+ni validaciones con `node --check` o `rustc`; el Python normal no usa
+`compile(...)` en su test; y los filtros recomendados `-k enum` en los módulos
+generales de los backends seleccionan cero pruebas.
 
 ## Contrato verificado
 
@@ -54,7 +56,7 @@ miembros sin coma con las dos grafías.
 | 4 | AST | Correcto | `src/pcobra/core/ast_nodes.py:279-284`; único `NodoEnum(nombre, miembros)`. | Sondas A/B producen campos idénticos. |
 | 5 | Python | Correcto | `src/pcobra/cobra/transpilers/transpiler/python_nodes/enum.py:4-13`; miembros numerados y `pass` para vacío. | `tests/unit/test_enum.py:38-50`; `compile(...)` E2E normal/vacío. |
 | 6 | JavaScript | Correcto | `src/pcobra/cobra/transpilers/transpiler/js_nodes/enum.py:1-4`; vacío genera `{}`. | `tests/unit/test_enum.py:53-57`; `node --check` E2E normal/vacío. |
-| 7 | Rust | Correcto | `rust_nodes/enum.py:1-7`; scopes y acceso en `to_rust.py:217-266,321-327`. | `tests/unit/test_enum.py:60-374`; cinco compilaciones mínimas con `rustc`. |
+| 7 | Rust | Defecto funcional | `rust_nodes/enum.py:1-7`; scopes y acceso en `to_rust.py:217-266,321-327`; `rust_nodes/imprimir.py:4-6` usa `Display`. | Las sondas aisladas compilan, pero `enumeracion Color: ROJO fin imprimir(Color.ROJO)` falla con E0277. |
 | 8 | REPL/Pygments | Correcto | `src/pcobra/cobra/cli/repl/cobra_lexer.py:27-75`; una regla para ambas grafías. | `tests/cli/test_repl_cobra_lexer_contract.py:52-63`. |
 | 9 | VS Code | Correcto | `extensions/vscode/syntaxes/cobra.tmLanguage.json:19-28`. | `tests/test_vscode_textmate_enum_contract.py:15-26`. |
 | 10 | SPEC | Correcto | `docs/SPEC_COBRA.md:32-35,74-82,147-152`. | Revisión estática y sincronización documental. |
@@ -191,7 +193,24 @@ exterior, combinación global/local, ausencia de fuga entre generaciones,
 
 Con rustc 1.87.0 compilaron fragmentos mínimos para enum normal, enum vacío,
 `Color::ROJO`, enum local dentro de función y enum local dentro de método. Los
-únicos mensajes fueron advertencias esperables por código no usado.
+únicos mensajes fueron advertencias esperables por código no usado. Esas
+sondas sólo comprobaron que una referencia aislada a la variante fuera válida y
+no ejercitaron su impresión.
+
+La entrada Cobra ordinaria
+`enumeracion Color: ROJO fin imprimir(Color.ROJO)` genera esencialmente:
+
+```rust
+enum Color {
+    ROJO,
+}
+println!("{}", Color::ROJO);
+```
+
+Al situar la sentencia emitida en un contexto Rust ejecutable, `rustc` informa
+E0277 porque `Color` no implementa `std::fmt::Display`. Por tanto, el lowering
+del acceso `Color::ROJO` es correcto, pero el programa E2E no es compilable y el
+backend no puede clasificarse como correcto para este caso.
 
 ## 8. REPL / Pygments
 
@@ -261,7 +280,8 @@ contradigan el contrato actual.
 | JavaScript vacío | Sonda E2E | No hay test comprometido. |
 | Rust normal | Directa textual | `tests/unit/test_enum.py:60-64,73-84`. |
 | Rust vacío | Directa textual | `tests/unit/test_enum.py:67-70,87-91`. |
-| Rust acceso `::` | Directa | `tests/unit/test_enum.py:94-107`. |
+| Rust acceso `::` | Directa textual; no demuestra compilación al imprimir | `tests/unit/test_enum.py:94-107`. |
+| Rust impresión de variante | Sonda E2E fallida con E0277 | No hay test comprometido. |
 | Rust atributo `.` | Directa | `tests/unit/test_enum.py:261-263`. |
 | Rust scopes | Directa amplia | `tests/unit/test_enum.py:110-374`. |
 | Tooling REPL | Directa | `tests/cli/test_repl_cobra_lexer_contract.py:52-63`. |
@@ -278,7 +298,7 @@ contradigan el contrato actual.
 | C. Vacío | `NodoEnum("Vacia", [])`; Python con `pass`, JS `{}`, Rust `enum Vacia {}`. |
 | D. Coma final | Mismo nombre y miembros que A. |
 | E. Sin coma | `ParserError` para canónico y alias. |
-| F. Variante Rust | La salida contiene `Color::ROJO`. |
+| F. Variante Rust | La salida contiene `Color::ROJO`, pero al imprimirla `rustc` falla con E0277 por falta de `Display`. |
 | G. Atributo ordinario | La salida contiene `objeto.campo`. |
 | H. Scope Rust | Pasan funciones/métodos hermanos, ramas, bloques y herencia exterior. |
 
@@ -311,8 +331,10 @@ contradigan el contrato actual.
 
 - Python: `compile(..., "<enum>", "exec")` pasó para normal y vacío.
 - JavaScript: `node --check` pasó para normal y vacío con Node v20.20.2.
-- Rust: `rustc --edition 2021` pasó para normal, vacío, acceso de variante,
-  enum local en función y enum local en método con rustc 1.87.0.
+- Rust: `rustc --edition 2021` pasó para fragmentos de declaración normal,
+  vacía, acceso aislado de variante, enum local en función y enum local en
+  método con rustc 1.87.0. La sonda E2E que imprime `Color::ROJO` falló con
+  E0277 porque el enum generado no implementa `Display`.
 - Los archivos de sonda se crearon bajo `/tmp` y se eliminaron.
 
 El primer intento del harness E2E se ejecutó sin `PYTHONPATH=src` y falló con
@@ -324,8 +346,19 @@ repositorio.
 
 ### Contradicciones funcionales
 
-Ninguna. No existe una entrada mínima que demuestre divergencia entre lexer,
-parser, AST, backends, tooling y documentación para el contrato auditado.
+#### Rust no puede imprimir una variante generada
+
+- Superficie: backend Rust.
+- Archivos relacionados: `rust_nodes/enum.py` y `rust_nodes/imprimir.py`.
+- Entrada mínima: `enumeracion Color: ROJO fin imprimir(Color.ROJO)`.
+- Resultado actual: genera acceso `Color::ROJO` dentro de
+  `println!("{}", ...)`; `rustc` devuelve E0277 porque `Color` no implementa
+  `Display`.
+- Resultado esperado: el programa Cobra válido debe producir Rust compilable y
+  poder representar la variante al imprimirla.
+- Gravedad: alta.
+- Microtarea: corregir el backend Rust y añadir una prueba de compilación E2E,
+  sin modificar Lexer, Parser ni la sintaxis Cobra.
 
 ### Deuda 1 — JavaScript vacío sin test directo
 
@@ -343,7 +376,8 @@ parser, AST, backends, tooling y documentación para el contrato auditado.
 - Superficie: tests Python normal y Rust.
 - Archivo: `tests/unit/test_enum.py`.
 - Entrada mínima: enum normal/vacío y `Color.ROJO`.
-- Resultado actual: comparación textual correcta; validación manual correcta.
+- Resultado actual: comparación textual; las sondas parciales compilan, pero la
+  impresión de una variante Rust falla con E0277.
 - Resultado esperado: smoke tests opcionales con `compile`, Node y rustc.
 - Gravedad: baja.
 - Microtarea: reforzar tests, sin tocar implementación.
@@ -374,8 +408,8 @@ tests, workflows ni dependencias.
 
 ## Recomendación
 
-No se requiere corregir la implementación. Para elevar la clasificación a A,
-realizar una microtarea exclusivamente de tests que añada cobertura directa de
-JavaScript vacío, `compile(...)` para Python normal, smoke checks opcionales de
-Node/rustc y una aserción dedicada a la producción EBNF. Mantener esa tarea
-separada de cualquier cambio de sintaxis o backend.
+Se requiere corregir la representación o impresión de variantes en el backend
+Rust y cubrir con `rustc` la entrada E2E que combina declaración, acceso e
+`imprimir`. La reparación debe mantenerse separada de las deudas menores de
+tests (JavaScript vacío, `compile(...)` para Python normal y la aserción EBNF)
+y no debe modificar Lexer, Parser ni la sintaxis Cobra.
