@@ -1,3 +1,4 @@
+import hashlib
 import importlib
 import sqlite3
 import sys
@@ -61,6 +62,31 @@ def test_tokens_persistidos(monkeypatch, base_datos_temporal):
     assert stored is not None
     assert "uno" in stored[0]
     assert tokens == ast_cache.obtener_tokens(codigo)
+
+
+def test_cambio_de_contrato_invalida_tokens_y_ast_persistidos(
+    monkeypatch, base_datos_temporal
+):
+    ast_cache = _reload_ast_cache(monkeypatch)
+    codigo = "with recurso as r:\n    pasar\nfin"
+    hash_anterior = hashlib.sha256(codigo.encode("utf-8")).hexdigest()
+
+    with sqlite3.connect(base_datos_temporal) as conn:
+        conn.execute(
+            "INSERT INTO ast_cache(hash, source, ast_json) VALUES (?, ?, ?)",
+            (hash_anterior, codigo, '["ast obsoleto"]'),
+        )
+        conn.execute(
+            "INSERT INTO ast_fragments(hash, fragment_name, content) "
+            "VALUES (?, ?, ?)",
+            (hash_anterior, "full_tokens", '["tokens obsoletos"]'),
+        )
+
+    monkeypatch.setattr(Lexer, "tokenizar", lambda self: ["tokens actuales"])
+    monkeypatch.setattr(Parser, "parsear", lambda self: ["ast actual"])
+
+    assert ast_cache.obtener_tokens(codigo) == ["tokens actuales"]
+    assert ast_cache.obtener_ast(codigo) == ["ast actual"]
 
 
 def test_fragmentos_limpiar(monkeypatch, base_datos_temporal):
