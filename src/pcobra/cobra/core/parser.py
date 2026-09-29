@@ -1057,7 +1057,7 @@ class ClassicParser:
         NodoTryCatch
             Nodo que representa la estructura de manejo de excepciones.
         """
-        if self.token_actual().tipo == TipoToken.INTENTAR:
+        if self.token_actual().tipo in (TipoToken.TRY, TipoToken.INTENTAR):
             self.avanzar()
         else:
             raise ParserError("Se esperaba 'try' o 'intentar'")
@@ -1065,6 +1065,7 @@ class ClassicParser:
 
         bloque_try = self._parse_bloque_condicional(
             [
+                TipoToken.CATCH,
                 TipoToken.CAPTURAR,
                 TipoToken.FIN,
                 TipoToken.EOF,
@@ -1076,7 +1077,7 @@ class ClassicParser:
 
         nombre_exc = None
         bloque_catch = []
-        if self.token_actual().tipo == TipoToken.CAPTURAR:
+        if self.token_actual().tipo in (TipoToken.CATCH, TipoToken.CAPTURAR):
             self.avanzar()
             if self.token_actual().tipo == TipoToken.IDENTIFICADOR:
                 nombre_exc = self.token_actual().valor
@@ -1131,7 +1132,7 @@ class ClassicParser:
 
     def declaracion_throw(self):
         """Parsea una declaración 'throw'."""
-        if self.token_actual().tipo == TipoToken.LANZAR:
+        if self.token_actual().tipo in (TipoToken.THROW, TipoToken.LANZAR):
             self.avanzar()
         else:
             raise ParserError("Se esperaba 'throw' o 'lanzar'")
