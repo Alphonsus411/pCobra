@@ -536,3 +536,11 @@ aislados no elevan la clasificación.
 - Se verificó por el diff preparado que `lexer.py` y `parser.py` permanecen intactos.
 - El SHA final y la referencia de PR se consignan en la entrega externa después del
   commit y creación de PR, no se anticipan dentro de la evidencia auditada.
+
+## 27. Seguimiento de EXC-001
+
+El intento de corregir EXC-001 en el PR #3629 se revirtió: exigir `capturar/catch`
+requiere modificar el parser canónico, algo prohibido por las reglas del repositorio sin
+autorización explícita y específica. El hallazgo permanece **bloqueado pendiente de esa
+autorización**; no se cambió el contrato normativo ni se ocultó el comportamiento actual
+mediante ejemplos o pruebas.
