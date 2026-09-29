@@ -1,5 +1,6 @@
 import pytest
 from pcobra.cobra.core.lexer import Lexer, TipoToken
+from pcobra.cobra.core.parser import ClassicParser, ParserError
 
 
 def test_lexer_palabras_nuevas():
@@ -32,12 +33,15 @@ def test_lexer_palabras_nuevas():
     assert TipoToken.LANZAR in tipos
 
 
-def test_lexer_palabras_nuevas_en():
-    codigo = "con recurso como r: pasar fin"
+def test_aliases_ingleses_de_context_manager_no_son_validos():
+    codigo = "with recurso as r: pasar fin"
     tokens = Lexer(codigo).analizar_token()
-    tipos = [t.tipo for t in tokens if t.tipo != TipoToken.EOF]
-    assert TipoToken.CON in tipos
-    assert TipoToken.COMO in tipos
+    tokens_por_valor = {token.valor: token.tipo for token in tokens}
+
+    assert tokens_por_valor["with"] == TipoToken.IDENTIFICADOR
+    assert tokens_por_valor["as"] == TipoToken.IDENTIFICADOR
+    with pytest.raises(ParserError):
+        ClassicParser(tokens).parsear()
 
 
 def test_lexer_token_defer_y_aplazar():
