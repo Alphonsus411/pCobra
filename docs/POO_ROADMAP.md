@@ -248,16 +248,19 @@ cuando su cierre individual es estructuralmente inequívoco, sin convertirla en
 un segundo contrato normativo.
 
 La auditoría posterior de 42C detectó que `func` y `asincronico func` locales se
-interpretaban erróneamente como el siguiente método de clase. Task 42C.1 corrigió
-esa regresión, pero una segunda auditoría descubrió la ambigüedad inversa: un
-`func` histórico al nivel de la clase podía quedar absorbido por el método
-normativo anterior. Task 42C.2 distingue ambos contextos mediante la columna
-estructural de la declaración: `func`/`asincronico func` al nivel del método se
-mantienen como funciones locales y al nivel de sus declaraciones hermanas se
-conservan como alias de método de clase. Las pruebas dirigidas verifican el
-número y tipo de métodos y el contenido exacto de sus cuerpos en ambas formas,
-incluidas las variantes asíncronas. Con la coexistencia comprobada de ambos
-contextos, POO-001 queda definitivamente resuelto.
+interpretaban erróneamente como el siguiente método de clase. Task 42C.1 corrige
+esa regresión: solo `metodo` y `asincronico metodo` delimitan el método anterior,
+mientras el alias histórico `func` en el nivel de clase continúa aceptándose
+cuando su `fin` individual evita la ambigüedad.
+
+**BLOQUEO 42C.2:** una segunda auditoría descubrió la ambigüedad inversa: tras
+un método normativo sin `fin` individual, un `func` histórico al nivel de la
+clase puede quedar absorbido como función local. Se retiró la propuesta de
+distinguir ambos casos mediante la columna de los tokens porque ese criterio no
+está definido en `docs/LIBRO_PROGRAMACION_COBRA.md` y requería modificar el
+Parser sin autorización explícita. Resolver esa coexistencia queda pendiente de
+una decisión normativa sobre la sintaxis y de autorización específica para el
+Parser; hasta entonces no se introduce una regla gramatical implícita.
 
 ## 8. Atributos
 
