@@ -11,15 +11,24 @@ from pcobra.cobra.core.ast_nodes import (
 )
 from pcobra.cobra.core.lexer import Lexer
 from pcobra.cobra.core.parser import Parser
+from pcobra.cobra.cli.execution_pipeline import prevalidar_y_parsear_codigo
 
 
 def _parsear(codigo: str):
-    return Parser(Lexer(codigo).analizar_token()).parsear()
+    return prevalidar_y_parsear_codigo(codigo)
 
 
 def _valor_asignado(nodo):
     assert type(nodo) is NodoAsignacion
     return nodo.expresion
+
+
+def test_parser_conserva_ast_neutral_antes_de_fase_semantica():
+    ast = Parser(
+        Lexer("clase Vacia:\nfin\nvar x = Vacia()").analizar_token()
+    ).parsear()
+
+    assert type(_valor_asignado(ast[1])) is NodoLlamadaFuncion
 
 
 def test_clase_sin_argumentos_produce_instancia():
