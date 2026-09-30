@@ -399,11 +399,12 @@ decisiones normativas del lenguaje, no nombres heredados de un backend.
 
 ```text
 clase := "clase" IDENTIFICADOR ":" bloque "fin"
-metodo := "metodo" IDENTIFICADOR "(" [params] ")" ":" bloque
+metodo := "metodo" IDENTIFICADOR "(" [params] ")" ":" bloque "fin"
 ```
 
-El cierre normativo del ejemplo es el único `fin` de la clase; los métodos se
-delimitan por el siguiente `metodo` o por ese cierre de clase.
+Cada método se cierra con `fin`; el `fin` final cierra la clase. La hoja de ruta
+registra cualquier diseño alternativo como trabajo futuro hasta que el Parser
+sea modificado de forma explícita.
 
 **Ejemplo POO normativo mínimo:**
 
@@ -411,9 +412,11 @@ delimitan por el siguiente `metodo` o por ese cierre de clase.
 clase Persona:
     metodo inicializar(este, nombre):
         atributo este nombre = nombre
+    fin
 
     metodo saludar(este):
-        imprimir "Hola", atributo este nombre
+        imprimir "Hola " + atributo este nombre
+    fin
 fin
 
 var persona = Persona("Adolfo")
