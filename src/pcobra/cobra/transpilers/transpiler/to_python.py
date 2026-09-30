@@ -158,6 +158,7 @@ from pcobra.cobra.transpilers.transpiler.python_nodes.throw import (
     visit_throw as _visit_throw,
 )
 from pcobra.cobra.transpilers.transpiler.python_nodes.importar import (
+    precargar_nombres_importados,
     visit_import as _visit_import,
 )
 from pcobra.cobra.transpilers.transpiler.python_nodes.usar import (
@@ -403,6 +404,7 @@ class TranspiladorPython(BaseTranspiler):
             nodos = inline_functions(nodos)
         nodos = remove_dead_code(nodos)
         self._nombres_identificadores = self._recopilar_nombres_identificadores(nodos)
+        precargar_nombres_importados(self, nodos)
         self._nombres_temporales_excepcion = set()
         usa_holobit = ast_requires_holobit_runtime(nodos)
         self.codigo = get_standard_imports("python")
