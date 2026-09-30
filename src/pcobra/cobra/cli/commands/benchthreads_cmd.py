@@ -23,7 +23,7 @@ else:
     psutil = None  # type: ignore
 
 from pcobra.cobra.core import Lexer
-from pcobra.cobra.core import Parser
+from pcobra.cobra.core.parsing import parsear_tokens_resuelto
 from pcobra.cobra.core.interpreter import InterpretadorCobra
 from pcobra.cobra.cli.execution_pipeline import construir_interprete_seguro_canonico
 
@@ -174,7 +174,7 @@ class BenchThreadsCommand(BaseCommand):
             extra_validators=None,
         )
         tokens = Lexer(SEQUENTIAL_CODE.read_text()).tokenizar()
-        ast = Parser(tokens).parsear()
+        ast = parsear_tokens_resuelto(tokens)
         interp.ejecutar_ast(ast)
 
     def run(self, args: Any) -> int:

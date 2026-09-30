@@ -10,7 +10,7 @@ from pcobra.cobra.build import backend_pipeline
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.execution_pipeline import construir_interprete_seguro_canonico
 from pcobra.cobra.cli.target_policies import VERIFICATION_EXECUTABLE_TARGETS
-from pcobra.cobra.core import Lexer, Parser
+from pcobra.cobra.core.parsing import parsear_codigo_resuelto
 from pcobra.cobra.core.interpreter import InterpretadorCobra
 from pcobra.cobra.core.sandbox import (
     ejecutar_en_contenedor,
@@ -99,8 +99,7 @@ def execute_runtime_verification(archivo: str, lenguajes: list[str]) -> int:
         )
 
     code = path.read_text(encoding="utf-8")
-    tokens = Lexer(code).tokenizar()
-    ast = Parser(tokens).parsear()
+    ast = parsear_codigo_resuelto(code)
 
     with patch("sys.stdout", new_callable=StringIO) as out:
         construir_interprete_seguro_canonico(
