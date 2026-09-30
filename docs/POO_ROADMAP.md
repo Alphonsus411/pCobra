@@ -419,14 +419,13 @@ passthroughs al optimizador.
 
 **Estabilización Task 42B.1.** El registro del nombre alternativo consulta la
 política existente mediante `_resolve_legacy_import_policy`: solo crea el alias
-cuando la fase y el opt-in vigentes permiten imports legacy. Además,
-`pcobra.core` enlaza explícitamente su atributo `ast_nodes` con el módulo
-canónico, incluso si un import legacy previo ya había precargado ese objeto en
-`sys.modules`. Las sondas en procesos limpios demuestran ambos órdenes con
-legacy permitido, el acceso por `pcobra.core.ast_nodes`, la identidad única y
-el caso funcional de `constant_folder`; otra sonda en fase 2 sin opt-in
-demuestra que importar el AST canónico no registra `core.ast_nodes`. Quedan así
-resueltos los dos riesgos P2 posteriores a 42B y POO-013 se considera cerrado.
+cuando la fase y el opt-in vigentes permiten imports legacy. Las sondas en
+procesos limpios demuestran ambos órdenes con legacy permitido, la identidad
+única y el caso funcional de `constant_folder`; otra sonda en fase 2 sin opt-in
+demuestra que importar el AST canónico no registra `core.ast_nodes`. Este
+cambio resuelve exclusivamente el riesgo de que el alias eluda la gobernanza
+de imports legacy; el enlace explícito del submódulo con su paquete padre queda
+separado para una corrección incremental independiente.
 
 ### POO-016 — reproducción y contrato de reparación
 
