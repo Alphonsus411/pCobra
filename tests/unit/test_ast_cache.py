@@ -166,7 +166,16 @@ def test_obtener_ast_resuelve_cache_sintactica_anterior_a_42e(
 ):
     ast_cache = _reload_ast_cache(monkeypatch)
     codigo = "clase Persona:\nfin\nvar persona = Persona()"
+    from pcobra.cobra.core import resolucion_instancias
+
+    resolver_real = resolucion_instancias.resolver_instanciaciones
+    monkeypatch.setattr(
+        resolucion_instancias, "resolver_instanciaciones", lambda ast: ast
+    )
     ast_sintactico = Parser(Lexer(codigo).tokenizar()).parsear()
+    monkeypatch.setattr(
+        resolucion_instancias, "resolver_instanciaciones", resolver_real
+    )
 
     assert type(_valor_asignado(ast_sintactico)) is NodoLlamadaFuncion
     ast_cache._store_ast(ast_cache._checksum(codigo), codigo, ast_sintactico)

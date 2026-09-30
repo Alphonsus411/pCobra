@@ -24,12 +24,12 @@ def _valor_asignado(nodo):
     return nodo.expresion
 
 
-def test_parser_puro_conserva_llamada_sintactica():
+def test_parser_directo_conserva_resolucion_de_instancias():
     ast = Parser(
         Lexer("clase Persona:\nfin\nvar persona = Persona()").analizar_token()
     ).parsear()
 
-    assert type(_valor_asignado(ast[1])) is NodoLlamadaFuncion
+    assert type(_valor_asignado(ast[1])) is NodoInstancia
 
 
 def test_clase_sin_argumentos_produce_instancia():

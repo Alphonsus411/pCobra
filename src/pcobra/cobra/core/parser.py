@@ -282,14 +282,14 @@ class ClassicParser:
     def parsear(self, *, incremental: bool = False, profile: bool = False):
         """Parsea tokens con soporte de caché incremental y perfilado."""
         if incremental:
-            from pcobra.cobra.core.ast_cache import _obtener_ast_sintactico_fragmento
+            from pcobra.cobra.core.ast_cache import obtener_ast_fragmento
 
             codigo = "\n".join(
                 token.valor if token.valor is not None else ""
                 for token in self.tokens
                 if token.tipo != TipoToken.EOF
             )
-            return _obtener_ast_sintactico_fragmento(codigo)
+            return obtener_ast_fragmento(codigo)
 
         if profile:
             import cProfile
@@ -308,7 +308,9 @@ class ClassicParser:
 
         if self.errores:
             raise ParserError("\n".join(self.errores))
-        return resultado
+        from pcobra.cobra.core.resolucion_instancias import resolver_instanciaciones
+
+        return resolver_instanciaciones(resultado)
 
     def declaracion(self):
         """Procesa una instrucción o expresión."""
