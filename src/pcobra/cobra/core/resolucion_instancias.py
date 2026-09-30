@@ -505,13 +505,14 @@ def _resolver_bloque_con(
         for nombre in markers_heredadas:
             cadena_padre = bindings_exteriores_padre.get(nombre, ())
             if (
-                escrituras.get(nombre) == _ELIMINADO
+                escrituras.get(nombre) in (_ELIMINADO, _AMBIGUO)
                 and cadena_padre
                 and cadena_padre[0] == _MARCA_RECUPERABLE_TRAS_SOMBREADO
             ):
                 # El estado léxico del ``con`` sigue aislado, pero un ``del``
-                # que atravesó la frontera destruyó la premisa resumida por
-                # esta metadata heredada también para la continuación padre.
+                # posible o seguro que atravesó la frontera destruyó la
+                # premisa resumida por esta metadata heredada también para la
+                # continuación padre.
                 bindings_exteriores_padre.pop(nombre, None)
     for nombre, alcance in globales.items():
         alcance_padre = globales_padre.get(nombre, _LOCAL)
