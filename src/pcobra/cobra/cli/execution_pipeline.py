@@ -15,6 +15,7 @@ from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.utils.unicode_sanitize import sanitize_source_for_tokenizer
 from pcobra.cobra.cli.utils.validators import normalizar_validadores_extra
 from pcobra.cobra.core.runtime import ValidadorBase, construir_cadena
+from pcobra.cobra.core.resolucion_instancias import resolver_instanciaciones
 from pcobra.cobra.usar_policy import REPL_COBRA_MODULE_MAP
 from pcobra.cobra.core.usar_symbol_policy import (
     normalizar_metadata_simbolo_usar,
@@ -116,7 +117,8 @@ def prevalidar_y_parsear_codigo(codigo: str) -> Any:
     #   sin alterar reglas de Lexer/Parser.
     codigo_saneado = sanitize_source_for_tokenizer(codigo)
     tokens = Lexer(codigo_saneado).tokenizar()
-    return Parser(tokens).parsear()
+    ast = Parser(tokens).parsear()
+    return resolver_instanciaciones(ast)
 
 
 def ejecutar_ast(ast: Any, interpreter: Any) -> Any:

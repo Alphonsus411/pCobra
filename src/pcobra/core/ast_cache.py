@@ -93,6 +93,9 @@ _NULL_JSON = json.dumps(None)
 _FULL_TOKENS_KEY = "full_tokens"
 _FRAGMENT_TOKENS_KEY = "fragment_tokens"
 _FRAGMENT_AST_KEY = "fragment_ast"
+# Forma parte de las claves persistidas: un cambio de semántica post-parseo no
+# debe reutilizar AST creados por una versión anterior del pipeline.
+_AST_CACHE_VERSION = "ast-v2-instancias"
 
 
 def _get_node_classes() -> dict[str, type]:
@@ -195,7 +198,8 @@ def _ensure_alias_configured() -> None:
 
 
 def _checksum(source: str) -> str:
-    return hashlib.sha256(source.encode("utf-8")).hexdigest()
+    contenido = f"{_AST_CACHE_VERSION}\0{source}"
+    return hashlib.sha256(contenido.encode("utf-8")).hexdigest()
 
 
 def _encode_payload(obj: Any) -> str:
@@ -339,6 +343,9 @@ def obtener_ast(codigo: str):
 
     parser_cls = getattr(import_module("pcobra.cobra.core.parser"), "Parser")
     ast = parser_cls(tokens).parsear()
+    from pcobra.cobra.core.resolucion_instancias import resolver_instanciaciones
+
+    ast = resolver_instanciaciones(ast)
     _store_ast(hash_key, codigo, ast)
     return ast
 
@@ -372,6 +379,9 @@ def obtener_ast_fragmento(codigo: str):
 
     parser_cls = getattr(import_module("pcobra.cobra.core.parser"), "Parser")
     ast = parser_cls(tokens).parsear()
+    from pcobra.cobra.core.resolucion_instancias import resolver_instanciaciones
+
+    ast = resolver_instanciaciones(ast)
     _store_fragment(hash_key, codigo, _FRAGMENT_AST_KEY, ast)
     return ast
 

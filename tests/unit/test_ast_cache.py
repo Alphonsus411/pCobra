@@ -1,9 +1,11 @@
+import hashlib
 import importlib
 import sqlite3
 import sys
 
 import pytest
 from pcobra.cobra.core import Lexer, Parser
+from pcobra.cobra.core.ast_nodes import NodoAsignacion, NodoInstancia
 
 
 def _reload_ast_cache(monkeypatch):
@@ -125,3 +127,27 @@ def test_cache_fragmentos(monkeypatch, base_datos_temporal):
     ast_cache.obtener_tokens_fragmento(codigo)
     assert llamadas["count"] == 1
     assert _count_rows(base_datos_temporal, "ast_fragments") >= 1
+
+
+def test_version_semantica_invalida_clave_heredada(monkeypatch, base_datos_temporal):
+    ast_cache = _reload_ast_cache(monkeypatch)
+    codigo = "clase C:\nfin\nvar x = C()"
+    clave_heredada = hashlib.sha256(codigo.encode("utf-8")).hexdigest()
+    ast_heredado = Parser(Lexer(codigo).tokenizar()).parsear()
+
+    with sqlite3.connect(base_datos_temporal) as conn:
+        conn.execute(
+            "INSERT INTO ast_cache(hash, source, ast_json) VALUES (?, ?, ?)",
+            (clave_heredada, codigo, ast_cache._encode_payload(ast_heredado)),
+        )
+        conn.commit()
+
+    assert ast_cache._checksum(codigo) != clave_heredada
+
+    ast = ast_cache.obtener_ast(codigo)
+    assert type(ast[1]) is NodoAsignacion
+    assert type(ast[1].expresion) is NodoInstancia
+
+    with sqlite3.connect(base_datos_temporal) as conn:
+        claves = {fila[0] for fila in conn.execute("SELECT hash FROM ast_cache")}
+    assert {clave_heredada, ast_cache._checksum(codigo)} <= claves
