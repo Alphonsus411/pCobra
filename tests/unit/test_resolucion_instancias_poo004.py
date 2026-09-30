@@ -2648,6 +2648,37 @@ def test_del_en_con_propaga_invalidacion_de_marker_de_bucle_al_padre():
         assert type(ast[1].cuerpo[-1]) is NodoLlamadaFuncion
 
 
+def test_del_condicional_en_con_invalida_marker_de_bucle_del_padre():
+    bloques = (
+        "        si condicion:\n"
+        "            eliminar C\n"
+        "        fin\n",
+        "        mientras condicion:\n"
+        "            eliminar C\n"
+        "        fin\n",
+        "        para elemento en valores:\n"
+        "            eliminar C\n"
+        "        fin\n",
+    )
+    for bloque in bloques:
+        ast = _parsear(
+            "clase C:\nfin\n"
+            "func f():\n"
+            "    mientras condicion:\n"
+            "        clase C:\n        fin\n"
+            "    fin\n"
+            "    con recurso:\n"
+            f"{bloque}"
+            "    fin\n"
+            "    var C = 0\n"
+            "    eliminar C\n"
+            "    C()\n"
+            "fin"
+        )
+
+        assert type(ast[1].cuerpo[-1]) is NodoLlamadaFuncion
+
+
 def test_del_en_con_anidado_propaga_invalidacion_de_marker_al_padre():
     ast = _parsear(
         "clase C:\nfin\n"
