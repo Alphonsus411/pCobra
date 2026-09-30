@@ -8,6 +8,7 @@ from pcobra.core.ast_nodes import (
     NodoFor,
     NodoFuncion,
     NodoIdentificador,
+    NodoImport,
     NodoImportDesde,
     NodoImprimir,
     NodoInstancia,
@@ -339,6 +340,65 @@ imprimir(__cobra_excepcion_temporal)
     espacio = {"__cobra_excepcion_temporal": "usuario"}
     assert _ejecutar_python_en_espacio(codigo, espacio) == (
         "fallo importado\nfallo importado\nusuario\n"
+    )
+
+
+def test_import_cobra_precarga_identificadores_de_import_posterior(tmp_path):
+    primero = tmp_path / "primero.cobra"
+    primero.write_text(
+        """
+intentar:
+    lanzar "fallo"
+capturar error:
+    imprimir(error)
+finalmente:
+    imprimir(error)
+fin
+""",
+        encoding="utf-8",
+    )
+    posterior = tmp_path / "posterior.cobra"
+    posterior.write_text("imprimir(__cobra_excepcion_temporal)\n", encoding="utf-8")
+    ast = [NodoImport(str(primero)), NodoImport(str(posterior))]
+    obtener_cache_ast_import_cobra().clear()
+
+    codigo = TranspiladorPython().generate_code(ast)
+
+    assert "except Exception as __cobra_excepcion_temporal_1:" in codigo
+    assert (
+        _ejecutar_python_en_espacio(codigo, {"__cobra_excepcion_temporal": "usuario"})
+        == "fallo\nfallo\nusuario\n"
+    )
+
+
+def test_import_cobra_precarga_identificadores_del_grafo_anidado(tmp_path):
+    interno = tmp_path / "interno.cobra"
+    interno.write_text("imprimir(__cobra_excepcion_temporal)\n", encoding="utf-8")
+    contenedor = tmp_path / "contenedor.cobra"
+    contenedor.write_text(f"import {str(interno)!r}\n", encoding="utf-8")
+    primero = tmp_path / "primero.cobra"
+    primero.write_text(
+        """
+intentar:
+    lanzar "fallo"
+capturar error:
+    imprimir(error)
+finalmente:
+    imprimir(error)
+fin
+""",
+        encoding="utf-8",
+    )
+    obtener_cache_ast_import_cobra().clear()
+
+    codigo = TranspiladorPython().generate_code(
+        [NodoImport(str(primero)), NodoImport(str(contenedor))]
+    )
+
+    assert "except Exception as __cobra_excepcion_temporal_1:" in codigo
+    assert (
+        _ejecutar_python_en_espacio(codigo, {"__cobra_excepcion_temporal": "usuario"})
+        == "fallo\nfallo\nusuario\n"
     )
 
 
