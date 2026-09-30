@@ -1,17 +1,22 @@
-# Contrato y hoja de ruta de POO de pCobra
+# Propuesta y hoja de ruta de POO de pCobra
 
-> **ADVERTENCIA CONTRACTUAL**
+> **ADVERTENCIA DE PRECEDENCIA NORMATIVA**
 >
-> Este documento define el contrato y la hoja de ruta de la POO de pCobra.
+> Este documento **no es normativo**. `docs/LIBRO_PROGRAMACION_COBRA.md` es la
+> fuente normativa de la sintaxis y el comportamiento de pCobra y prevalece
+> ante cualquier discrepancia con esta hoja de ruta.
 >
 > Cualquier agente automático, mantenedor o tarea futura que modifique Lexer,
 > Parser, AST, análisis semántico, runtime o backends relacionados con POO
-> **DEBE** leer este documento antes de realizar cambios.
+> debe leer primero el Libro y después puede consultar este documento como
+> inventario de hallazgos y propuesta de planificación.
 >
-> No se deben introducir decisiones sintácticas o semánticas incompatibles con
-> este contrato sin una tarea explícita que actualice primero esta hoja de ruta.
-> Este documento no es orientativo: es el contrato del proyecto para la
-> reconstrucción POO.
+> Las formas propuestas aquí —incluidos `inicializar`, `este`, el cierre único
+> de clase y el ejemplo objetivo— **no autorizan** cambios de Lexer, Parser,
+> runtime ni backends mientras contradigan o no estén recogidas en el Libro.
+> Primero debe existir una decisión explícita que actualice la fuente normativa;
+> hasta entonces se debe implementar y probar únicamente el contrato vigente
+> del Libro (que en §3.5 documenta `__init__` y `self`).
 
 ## 1. Trazabilidad y alcance
 
@@ -49,9 +54,9 @@ Una representación propia del destino solo puede aparecer **después** de la
 frontera neutral. Ningún detalle cómodo para un backend justifica contaminar el
 frontend o el AST/IR neutral.
 
-## 3. Contrato sintáctico objetivo
+## 3. Propuesta sintáctica no normativa
 
-La forma principal aprobada es:
+La forma propuesta para evaluación futura es:
 
 ```cobra
 clase Persona:
@@ -63,10 +68,10 @@ clase Persona:
 fin
 ```
 
-Este fragmento es el contrato deseado y **actualmente no funciona por completo**.
-No se modificará silenciosamente para acomodar las limitaciones del Parser.
+Este fragmento **no forma parte del contrato vigente** y actualmente no funciona
+por completo. No debe guiar cambios productivos hasta que el Libro lo adopte.
 
-El futuro smoke E2E contractual es:
+El smoke E2E propuesto para el caso de que el Libro adopte esta forma es:
 
 ```cobra
 clase Persona:
@@ -92,11 +97,11 @@ Cobra real**, atraviese la cadena declarada y produzca ese resultado en el
 runtime y en cada backend cuyo subconjunto POO se declare soportado. Una prueba
 con AST construido manualmente no satisface este criterio.
 
-# DECISIONES CERRADAS
+# PROPUESTAS PENDIENTES DE ADOPCIÓN NORMATIVA
 
 ## 4. Referencia propia: `este`
 
-La referencia propia Cobra aprobada es `este`:
+La referencia propia propuesta es `este`:
 
 ```cobra
 metodo saludar(este):
@@ -126,7 +131,7 @@ la necesidad y actualizar primero este contrato.
 
 ## 5. Constructor Cobra: `inicializar`
 
-La declaración pública aprobada es:
+La declaración pública propuesta es:
 
 ```cobra
 metodo inicializar(este, ...)
@@ -178,7 +183,7 @@ metodo ...
 fin
 ```
 
-además del `fin` de la clase. El contrato aprobado tiene un único `fin` de clase
+además del `fin` de la clase. La propuesta tiene un único `fin` de clase
 y delimita métodos como en §3. **No se introducirá `fin` obligatorio después de
 cada método solamente para conservar una limitación histórica del Parser.**
 
@@ -201,7 +206,7 @@ sea una clase. Hoy `Persona(...)` produce `NodoLlamadaFuncion`, nunca
 `NodoInstancia` (**POO-004 — P1**). Queda pendiente decidir en tarea propia si
 la resolución neutral ocurre en Parser o en una fase semántica.
 
-Las llamadas aprobadas son `persona.saludar()` y
+Las llamadas propuestas son `persona.saludar()` y
 `persona.cambiar_nombre("Ana")`. `NodoLlamadaMetodo` existe pero no se alcanza
 correctamente desde texto; el segundo ejemplo puede aceptarse accidentalmente
 como nodos separados (**POO-005 — P1**). La llamada completa debe tener una
@@ -374,17 +379,23 @@ La reparación debe aceptar o validar semánticamente `NodoAtributo` como destin
 según el contrato POO sin debilitar asignaciones ordinarias. Es dependencia de
 42F y debe estar corregido antes del smoke E2E; 42A solo lo documenta.
 
-## 15. Secuencia contractual de microtareas
+## 15. Secuencia propuesta de microtareas
+
+Esta secuencia no autoriza implementar la sintaxis propuesta. Las tareas que
+dependan de ella quedan bloqueadas hasta que el Libro la adopte explícitamente;
+si se ejecutan antes, deben derivar sus criterios del contrato vigente del
+Libro y no de este roadmap.
 
 La reproducción de POO-013 demuestra que puede contaminar pruebas posteriores,
 por lo que recibe una microtarea temprana y el resto se renumera:
 
-1. **42A — contrato + roadmap + corrección de auditoría.** Documento canónico,
+1. **42A — propuesta + roadmap + corrección de auditoría.** Documento de trabajo,
    reproducciones y trazabilidad; ningún cambio productivo.
 2. **42B — compatibilidad de identidad AST.** Normalizar `core.ast_nodes`,
    `pcobra.core.ast_nodes` y rutas relacionadas, con ambos órdenes de import.
 3. **42C — neutralidad de constructor/receptor en AST/frontend + cierre de
-   métodos.** Preservar identidad Cobra y hacer parseable el contrato aprobado.
+   métodos.** Tras su adopción en el Libro, preservar la identidad Cobra y hacer
+   parseable la propuesta adoptada; antes de ello, respetar la sintaxis vigente.
 4. **42D — llamada de método postfix desde texto.** Un nodo completo para 0/N
    argumentos, sin tokens residuales ni aceptación fragmentada.
 5. **42E — resolución neutral de instanciación.** Distinguir clase y función en
@@ -400,10 +411,11 @@ por lo que recibe una microtarea temprana y el resto se renumera:
     diagnóstico para lo no soportado.
 11. **42K — herencia y override.** Después de POO elemental; `super` permanece
     fuera del contrato.
-12. **42L — E2E contractual.** El programa de §3 produce exactamente
-    `Hola Adolfo` en los destinos declarados.
-13. **42M — documentación, SPEC, Libro y ejemplos.** Solo describe lo realmente
-    implementado y probado.
+12. **42L — E2E de la propuesta adoptada.** Solo después de su incorporación al
+    Libro, el programa de §3 produce exactamente `Hola Adolfo` en los destinos
+    declarados.
+13. **42M — documentación, SPEC y ejemplos.** Solo describe lo realmente
+    implementado y probado; el Libro no se subordina a esta secuencia.
 
 Cada tarea debe reproducir primero su defecto, autorizar expresamente cualquier
 capa sensible, añadir prueba focal y comparar nuevos fallos contra su SHA base.
@@ -433,14 +445,18 @@ La reconstrucción POO solo termina cuando hay evidencia focal y E2E de que:
 > describir comportamiento realmente implementado y probado.
 
 No se modificará documentación para aparentar que una característica funciona.
-Esta hoja puede registrar el contrato futuro porque está identificada de forma
-explícita como **ROADMAP contractual**.
+Esta hoja registra una propuesta futura de forma explícitamente no normativa.
+No puede usarse para anticipar ni sustituir una modificación autorizada del
+Libro.
 
-# INVARIANTES — NO ROMPER
+# CONDICIONES DE LA PROPUESTA — NO SON SINTAXIS NORMATIVA
+
+Los puntos sintácticos de esta lista solo serían invariantes después de su
+adopción explícita en el Libro. Hasta entonces prevalece el Libro.
 
 1. La sintaxis pública POO es española.
-2. `este` es la referencia propia aprobada.
-3. `inicializar` es el constructor aprobado.
+2. `este` es la referencia propia propuesta.
+3. `inicializar` es el constructor propuesto.
 4. `self` no es sintaxis pública nueva.
 5. `__init__` no pertenece al AST neutral objetivo.
 6. `this` no pertenece al AST neutral.
