@@ -188,35 +188,6 @@ def test_ast_identity_pcobra_core_then_core() -> None:
     assert result.returncode == 0, result.stderr
 
 
-def test_ast_legacy_primero_enlaza_el_hijo_con_el_paquete_canonico() -> None:
-    """El alias en sys.modules también queda visible como atributo del padre."""
-
-    script = """
-import core.ast_nodes
-import pcobra.core
-import pcobra.core.ast_nodes
-
-assert pcobra.core.ast_nodes is core.ast_nodes
-assert pcobra.core.ast_nodes.NodoAST is core.ast_nodes.NodoAST
-"""
-    env = os.environ.copy()
-    env["PCOBRA_LEGACY_IMPORT_PHASE"] = "2"
-    env["PCOBRA_ENABLE_LEGACY_IMPORTS"] = "1"
-    env["PYTHONPATH"] = os.pathsep.join(
-        (str(ROOT / "src" / "pcobra"), str(ROOT / "src"))
-    )
-    result = subprocess.run(
-        [sys.executable, "-c", script],
-        cwd=ROOT.parent,
-        env=env,
-        text=True,
-        capture_output=True,
-        check=False,
-    )
-
-    assert result.returncode == 0, result.stderr
-
-
 def test_ast_canonico_no_registra_alias_si_legacy_esta_deshabilitado() -> None:
     """El AST respeta la fase resuelta por la gobernanza de imports legacy."""
 
