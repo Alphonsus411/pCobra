@@ -93,6 +93,31 @@ def _resolver_bloque(nodos: Any, bindings: Bindings, memo: Memo) -> None:
                 bindings[nombre] = _OTRO
 
 
+def _resolver_bloque_aislado(
+    nodos: Any,
+    bindings: Bindings,
+    memo: Memo,
+    bindings_externos: Bindings,
+    nombres_locales: set[str],
+) -> None:
+    """Resuelve un bloque local conservando escrituras al ámbito padre."""
+
+    instrucciones = nodos.instrucciones if isinstance(nodos, NodoBloque) else nodos
+    for nodo in instrucciones:
+        _resolver_bloque([nodo], bindings, memo)
+
+        if isinstance(nodo, (NodoClase, NodoFuncion)):
+            nombres_locales.add(nodo.nombre)
+        elif isinstance(nodo, NodoAsignacion) and isinstance(nodo.variable, str):
+            if nodo.declaracion or nodo.inferencia:
+                nombres_locales.add(nodo.variable)
+            elif (
+                nodo.variable in bindings_externos
+                and nodo.variable not in nombres_locales
+            ):
+                bindings_externos[nodo.variable] = bindings[nodo.variable]
+
+
 def _resolver_nodo(
     nodo: Any,
     bindings: Bindings,
@@ -155,9 +180,17 @@ def _resolver_nodo(
         memo[identidad] = nodo
         nodo.contexto = _resolver_nodo(nodo.contexto, bindings, ambiguos, memo)
         bindings_locales = bindings.copy()
+        nombres_locales: set[str] = set()
         if isinstance(nodo.alias, str):
             bindings_locales[nodo.alias] = _OTRO
-        _resolver_bloque(nodo.cuerpo, bindings_locales, memo)
+            nombres_locales.add(nodo.alias)
+        _resolver_bloque_aislado(
+            nodo.cuerpo,
+            bindings_locales,
+            memo,
+            bindings,
+            nombres_locales,
+        )
         return nodo
 
     if isinstance(nodo, NodoBloque):
