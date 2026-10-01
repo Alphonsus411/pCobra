@@ -118,6 +118,23 @@ def test_del_en_una_rama_deja_ambigua_la_cadena_exterior():
     assert type(ast[1].cuerpo[1].cuerpo[-1]) is NodoLlamadaFuncion
 
 
+def test_cadena_exterior_vacia_equivale_a_ausente_al_fusionar():
+    ast = _parsear(
+        "clase C:\nfin\n"
+        "func f():\n"
+        "    si condicion:\n"
+        "        clase C:\n        fin\n"
+        "        eliminar C\n"
+        "    fin\n"
+        "    eliminar C\n"
+        "    global C\n"
+        "    C()\n"
+        "fin"
+    )
+
+    assert type(ast[1].cuerpo[-1]) is NodoLlamadaFuncion
+
+
 def test_del_a_distinta_profundidad_no_elige_una_cadena_exterior():
     ast = _parsear(
         "func C():\nfin\n"
