@@ -593,6 +593,21 @@ def test_shadowing_interno_de_con_no_escapa():
     assert type(_valor_asignado(ast[2])) is NodoInstancia
 
 
+def test_asignacion_simple_en_con_actualiza_binding_externo():
+    ast = _parsear(
+        "clase C:\nfin\n"
+        "func f():\n"
+        "    retornar 1\n"
+        "fin\n"
+        "con recurso:\n"
+        "    C = f\n"
+        "fin\n"
+        "var x = C()"
+    )
+
+    assert type(_valor_asignado(ast[3])) is NodoLlamadaFuncion
+
+
 def test_clase_local_de_con_no_escapa():
     ast = _parsear(
         "con recurso:\n"
