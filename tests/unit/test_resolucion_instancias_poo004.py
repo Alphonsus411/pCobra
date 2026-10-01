@@ -643,6 +643,24 @@ def test_con_deja_ambiguo_write_externo_de_una_sola_rama():
     assert type(_valor_asignado(ast[2])) is NodoLlamadaFuncion
 
 
+def test_conserva_write_externo_posible_tras_declaracion_condicional_en_con():
+    ast = _parsear(
+        "clase C:\nfin\n"
+        "func f():\n"
+        "    retornar 1\n"
+        "fin\n"
+        "con recurso:\n"
+        "    si condicion:\n"
+        "        var C = 0\n"
+        "    fin\n"
+        "    C = f\n"
+        "fin\n"
+        "var x = C()"
+    )
+
+    assert type(_valor_asignado(ast[3])) is NodoLlamadaFuncion
+
+
 def test_con_deja_ambiguo_write_externo_dentro_de_mientras():
     ast = _parsear(
         "clase C:\nfin\n"

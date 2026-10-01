@@ -53,7 +53,14 @@ def resolver_instanciaciones(ast: list[NodoAST]) -> list[NodoAST]:
     quien informa después de la colisión de declaraciones.
     """
 
-    _resolver_bloque(ast, {}, {}, globales=set(), scope_global=True)
+    _resolver_bloque(
+        ast,
+        {},
+        {},
+        globales=set(),
+        globales_posibles=set(),
+        scope_global=True,
+    )
     return ast
 
 
@@ -74,6 +81,7 @@ def _resolver_bloque(
     memo: Memo,
     *,
     globales: set[str],
+    globales_posibles: set[str],
     scope_global: bool = False,
     escrituras_externas: Bindings | None = None,
 ) -> None:
@@ -94,14 +102,17 @@ def _resolver_bloque(
                     ambiguos,
                     memo,
                     globales=globales,
+                    globales_posibles=globales_posibles,
                 )
             bindings[nodo.nombre] = (
                 _OTRO if nodo.nombre in ambiguos else _CLASE
             )
             if scope_global:
                 globales.add(nodo.nombre)
+                globales_posibles.add(nodo.nombre)
             else:
                 globales.discard(nodo.nombre)
+                globales_posibles.discard(nodo.nombre)
             continue
 
         instrucciones[indice] = _resolver_nodo(
@@ -110,6 +121,7 @@ def _resolver_bloque(
             ambiguos,
             memo,
             globales=globales,
+            globales_posibles=globales_posibles,
             escrituras_externas=escrituras_externas,
         )
         if isinstance(nodo, (NodoFuncion, NodoAsignacion)):
@@ -122,10 +134,15 @@ def _resolver_bloque(
                 if es_declaracion:
                     if scope_global:
                         globales.add(nombre)
+                        globales_posibles.add(nombre)
                     else:
                         globales.discard(nombre)
-                elif escrituras_externas is not None and nombre in globales:
-                    escrituras_externas[nombre] = _OTRO
+                        globales_posibles.discard(nombre)
+                elif escrituras_externas is not None:
+                    if nombre in globales:
+                        escrituras_externas[nombre] = _OTRO
+                    elif nombre in globales_posibles:
+                        escrituras_externas.setdefault(nombre, _AMBIGUO)
 
 
 def _resolver_bloque_con(
@@ -135,6 +152,7 @@ def _resolver_bloque_con(
     memo: Memo,
     declarados_locales: set[str],
     globales: set[str],
+    globales_posibles: set[str],
     escrituras_padre: Bindings | None,
 ) -> None:
     """Resuelve ``con`` y compone los efectos sobre bindings globales."""
@@ -145,6 +163,7 @@ def _resolver_bloque_con(
         bindings,
         memo,
         globales=globales,
+        globales_posibles=globales_posibles,
         escrituras_externas=escrituras,
     )
     for nombre, estado in escrituras.items():
@@ -161,6 +180,7 @@ def _resolver_nodo(
     memo: Memo,
     *,
     globales: set[str],
+    globales_posibles: set[str],
     escrituras_externas: Bindings | None = None,
 ) -> Any:
     identidad = id(nodo)
@@ -175,6 +195,7 @@ def _resolver_nodo(
                 ambiguos,
                 memo,
                 globales=globales,
+                globales_posibles=globales_posibles,
                 escrituras_externas=escrituras_externas,
             )
             for argumento in nodo.argumentos
@@ -192,12 +213,15 @@ def _resolver_nodo(
         bindings_locales = bindings.copy()
         bindings_locales.update((parametro, _OTRO) for parametro in nodo.parametros)
         globales_locales = globales.copy()
+        globales_posibles_locales = globales_posibles.copy()
         globales_locales.difference_update(nodo.parametros)
+        globales_posibles_locales.difference_update(nodo.parametros)
         _resolver_bloque(
             nodo.cuerpo,
             bindings_locales,
             memo,
             globales=globales_locales,
+            globales_posibles=globales_posibles_locales,
         )
         return nodo
 
@@ -209,10 +233,12 @@ def _resolver_nodo(
             ambiguos,
             memo,
             globales=globales,
+            globales_posibles=globales_posibles,
             escrituras_externas=escrituras_externas,
         )
         bindings_si = bindings.copy()
         globales_si = globales.copy()
+        globales_posibles_si = globales_posibles.copy()
         escrituras_si = (
             escrituras_externas.copy()
             if escrituras_externas is not None
@@ -223,10 +249,12 @@ def _resolver_nodo(
             bindings_si,
             memo,
             globales=globales_si,
+            globales_posibles=globales_posibles_si,
             escrituras_externas=escrituras_si,
         )
         bindings_sino = bindings.copy()
         globales_sino = globales.copy()
+        globales_posibles_sino = globales_posibles.copy()
         escrituras_sino = (
             escrituras_externas.copy()
             if escrituras_externas is not None
@@ -237,10 +265,13 @@ def _resolver_nodo(
             bindings_sino,
             memo,
             globales=globales_sino,
+            globales_posibles=globales_posibles_sino,
             escrituras_externas=escrituras_sino,
         )
         _fusionar_bindings(bindings, (bindings_si, bindings_sino))
         globales.intersection_update(globales_si, globales_sino)
+        globales_posibles.clear()
+        globales_posibles.update(globales_posibles_si, globales_posibles_sino)
         if escrituras_externas is not None:
             _fusionar_bindings(
                 escrituras_externas, (escrituras_si or {}, escrituras_sino or {})
@@ -255,10 +286,12 @@ def _resolver_nodo(
             ambiguos,
             memo,
             globales=globales,
+            globales_posibles=globales_posibles,
             escrituras_externas=escrituras_externas,
         )
         bindings_iteracion = bindings.copy()
         globales_iteracion = globales.copy()
+        globales_posibles_iteracion = globales_posibles.copy()
         escrituras_antes = (
             escrituras_externas.copy()
             if escrituras_externas is not None
@@ -274,10 +307,12 @@ def _resolver_nodo(
             bindings_iteracion,
             memo,
             globales=globales_iteracion,
+            globales_posibles=globales_posibles_iteracion,
             escrituras_externas=escrituras_iteracion,
         )
         _fusionar_bindings(bindings, (bindings.copy(), bindings_iteracion))
         globales.intersection_update(globales_iteracion)
+        globales_posibles.update(globales_posibles_iteracion)
         if escrituras_externas is not None:
             _fusionar_bindings(
                 escrituras_externas,
@@ -293,13 +328,16 @@ def _resolver_nodo(
             ambiguos,
             memo,
             globales=globales,
+            globales_posibles=globales_posibles,
             escrituras_externas=escrituras_externas,
         )
         bindings_iteracion = bindings.copy()
         globales_iteracion = globales.copy()
+        globales_posibles_iteracion = globales_posibles.copy()
         if isinstance(nodo.variable, str):
             bindings_iteracion[nodo.variable] = _OTRO
             globales_iteracion.discard(nodo.variable)
+            globales_posibles_iteracion.discard(nodo.variable)
         escrituras_antes = (
             escrituras_externas.copy()
             if escrituras_externas is not None
@@ -315,10 +353,12 @@ def _resolver_nodo(
             bindings_iteracion,
             memo,
             globales=globales_iteracion,
+            globales_posibles=globales_posibles_iteracion,
             escrituras_externas=escrituras_iteracion,
         )
         _fusionar_bindings(bindings, (bindings.copy(), bindings_iteracion))
         globales.intersection_update(globales_iteracion)
+        globales_posibles.update(globales_posibles_iteracion)
         if escrituras_externas is not None:
             _fusionar_bindings(
                 escrituras_externas,
@@ -334,14 +374,17 @@ def _resolver_nodo(
             ambiguos,
             memo,
             globales=globales,
+            globales_posibles=globales_posibles,
             escrituras_externas=escrituras_externas,
         )
         bindings_locales = bindings.copy()
         globales_locales = globales.copy()
+        globales_posibles_locales = globales_posibles.copy()
         declarados_locales: set[str] = set()
         if isinstance(nodo.alias, str):
             bindings_locales[nodo.alias] = _OTRO
             globales_locales.discard(nodo.alias)
+            globales_posibles_locales.discard(nodo.alias)
             declarados_locales.add(nodo.alias)
         _resolver_bloque_con(
             nodo.cuerpo,
@@ -350,6 +393,7 @@ def _resolver_nodo(
             memo,
             declarados_locales,
             globales_locales,
+            globales_posibles_locales,
             escrituras_externas,
         )
         return nodo
@@ -361,6 +405,7 @@ def _resolver_nodo(
             bindings,
             memo,
             globales=globales,
+            globales_posibles=globales_posibles,
             escrituras_externas=escrituras_externas,
         )
         return nodo
@@ -378,6 +423,7 @@ def _resolver_nodo(
                         ambiguos,
                         memo,
                         globales=globales,
+                        globales_posibles=globales_posibles,
                         escrituras_externas=escrituras_externas,
                     ),
                 )
@@ -390,6 +436,7 @@ def _resolver_nodo(
                             ambiguos,
                             memo,
                             globales=globales,
+                            globales_posibles=globales_posibles,
                             escrituras_externas=escrituras_externas,
                         )
         return nodo
