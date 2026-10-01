@@ -120,6 +120,7 @@ def _resolver_bloque_con(
             )
             continue
 
+        declarados_locales.update(_declaraciones_anidadas(nodo))
         instrucciones[indice] = _resolver_nodo(nodo, bindings, ambiguos, memo)
         if isinstance(nodo, NodoFuncion):
             if isinstance(nodo.nombre, str):
@@ -137,6 +138,42 @@ def _resolver_bloque_con(
             ):
                 bindings_padre[nombre] = _OTRO
             bindings[nombre] = _OTRO
+
+        # Los nodos de control resuelven sus caminos sobre ``bindings``. Sus
+        # efectos combinados también deben alcanzar el entorno exterior de
+        # ``con``, igual que una asignación situada directamente en el bloque.
+        if not isinstance(nodo, NodoAsignacion):
+            for nombre in bindings_padre.keys() - declarados_locales:
+                bindings_padre[nombre] = bindings[nombre]
+
+
+def _declaraciones_anidadas(nodo: Any) -> set[str]:
+    """Obtiene declaraciones de control que pertenecen al ámbito del ``con``."""
+
+    if isinstance(nodo, NodoAsignacion):
+        if (
+            isinstance(nodo.variable, str)
+            and (nodo.declaracion or nodo.inferencia)
+        ):
+            return {nodo.variable}
+        return set()
+    if isinstance(nodo, (NodoClase, NodoFuncion)):
+        return {nodo.nombre} if isinstance(nodo.nombre, str) else set()
+    if isinstance(nodo, NodoCondicional):
+        bloques = (nodo.bloque_si, nodo.bloque_sino)
+    elif isinstance(nodo, (NodoBucleMientras, NodoPara)):
+        bloques = (nodo.cuerpo,)
+    else:
+        # Funciones, clases y otros ``con`` abren su propio entorno y no se
+        # recorren aquí.
+        return set()
+
+    return {
+        nombre
+        for bloque in bloques
+        for instruccion in bloque
+        for nombre in _declaraciones_anidadas(instruccion)
+    }
 
 
 def _resolver_nodo(

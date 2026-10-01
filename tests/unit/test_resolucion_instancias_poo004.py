@@ -610,6 +610,78 @@ def test_asignacion_externa_en_con_persiste_fuera():
     assert type(_valor_asignado(ast[3])) is NodoLlamadaFuncion
 
 
+def test_asignacion_externa_en_condicional_de_con_persiste_fuera():
+    ast = _parsear(
+        "clase C:\nfin\n"
+        "con recurso:\n"
+        "    si condicion:\n"
+        "        C = 1\n"
+        "    sino:\n"
+        "        C = 2\n"
+        "    fin\n"
+        "fin\n"
+        "var x = C()"
+    )
+
+    assert type(_valor_asignado(ast[2])) is NodoLlamadaFuncion
+
+
+def test_declaracion_en_condicional_de_con_no_escapa():
+    ast = _parsear(
+        "clase C:\nfin\n"
+        "con recurso:\n"
+        "    si condicion:\n"
+        "        var C = 1\n"
+        "    fin\n"
+        "fin\n"
+        "var x = C()"
+    )
+
+    assert type(_valor_asignado(ast[2])) is NodoInstancia
+
+
+def test_asignacion_externa_en_mientras_de_con_se_fusiona_fuera():
+    ast = _parsear(
+        "clase C:\nfin\n"
+        "con recurso:\n"
+        "    mientras condicion:\n"
+        "        C = 1\n"
+        "    fin\n"
+        "fin\n"
+        "var x = C()"
+    )
+
+    assert type(_valor_asignado(ast[2])) is NodoLlamadaFuncion
+
+
+def test_asignacion_externa_en_para_de_con_se_fusiona_fuera():
+    ast = _parsear(
+        "clase C:\nfin\n"
+        "con recurso:\n"
+        "    para elemento en elementos:\n"
+        "        C = 1\n"
+        "    fin\n"
+        "fin\n"
+        "var x = C()"
+    )
+
+    assert type(_valor_asignado(ast[2])) is NodoLlamadaFuncion
+
+
+def test_asignacion_externa_en_con_anidado_persiste_fuera():
+    ast = _parsear(
+        "clase C:\nfin\n"
+        "con recurso:\n"
+        "    con otro:\n"
+        "        C = 1\n"
+        "    fin\n"
+        "fin\n"
+        "var x = C()"
+    )
+
+    assert type(_valor_asignado(ast[2])) is NodoLlamadaFuncion
+
+
 def test_asignacion_de_nombre_nuevo_en_con_no_escapa():
     ast = _parsear(
         "func f():\n"
