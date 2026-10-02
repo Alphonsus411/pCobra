@@ -178,7 +178,13 @@ def _fusionar_bindings_exteriores(
                 # La head sólo alinea el binding visible entre caminos: no es
                 # una frontera léxica y, por tanto, no puede sobrevivir como
                 # ancestry recuperable mediante ``eliminar``.
-                cadena_lexica = cadena[1:]
+                # Al descartar la head tampoco sabemos qué binding quedaría
+                # visible: un camino elimina la declaración local que la
+                # originó, mientras que otro elimina el binding exterior usado
+                # para alinearla. Sus colas son, por tanto, path-dependent.
+                cadena_lexica = (
+                    _CADENA_EXTERIOR_AMBIGUA if cadena[1:] else ()
+                )
                 for indice in range(len(estados)):
                     estados[indice][nombre] = cadena_lexica
     nombres = set().union(
