@@ -80,22 +80,34 @@ No se realizó force push. El resultado operativo es
 
 Ese comando registra únicamente el intento fallido y **no debe reintentarse**
 desde el HEAD de este informe: dicho HEAD no contiene el `MERGE_SHA` certificado.
-Cuando haya credenciales y el objeto `f2b0a87a975019f7cf5810ad5ba799ccc162f8c6`
-esté disponible localmente, primero se debe integrarlo sobre la punta remota y
-publicar el commit resultante, sin `--force`:
+Además, el objeto `f2b0a87a975019f7cf5810ad5ba799ccc162f8c6` no se
+publicó en ninguna referencia ni bundle recuperable. Por tanto, una clonación
+nueva no puede obtenerlo con `git fetch` y no debe intentar ejecutar un
+`git merge` con ese identificador.
+
+La recuperación reproducible consiste en crear y volver a certificar un merge
+de reemplazo. Se parte de la punta remota actual de la rama fix y se integra el
+`MASTER_SHA` que debía quedar contenido en el merge original:
 
 ```console
 git fetch origin
 git switch --create publicar-fix origin/fix/contrato-extensiones-cobra
-git merge --no-ff f2b0a87a975019f7cf5810ad5ba799ccc162f8c6
-git merge-base --is-ancestor f2b0a87a975019f7cf5810ad5ba799ccc162f8c6 HEAD
+git cat-file -e f684efc8a21d60eebcdce113cc8bfc21240ca37e^{commit}
+git merge --no-ff f684efc8a21d60eebcdce113cc8bfc21240ca37e
+REPLACEMENT_MERGE_SHA=$(git rev-parse HEAD)
+git merge-base --is-ancestor f684efc8a21d60eebcdce113cc8bfc21240ca37e HEAD
+git merge-base --is-ancestor origin/fix/contrato-extensiones-cobra HEAD
 git push origin HEAD:refs/heads/fix/contrato-extensiones-cobra
 ```
 
-Antes del push se deben repetir los gates sobre ese nuevo merge. La comprobación
-de ancestro debe terminar con código `0`; así, el objeto publicado contiene tanto
-la punta remota como el merge certificado, en vez de publicar solamente el HEAD
-documental de esta auditoría.
+Si `git cat-file` falla, se debe detener el procedimiento: el commit histórico
+de `master` tampoco está disponible y no es posible reconstruir el merge con la
+evidencia registrada. Antes del push se deben repetir **todos** los gates de la
+tabla anterior sobre `$REPLACEMENT_MERGE_SHA` y registrar sus resultados; la
+certificación del merge local perdido no se transfiere al reemplazo. Ambas
+comprobaciones de ancestro deben terminar con código `0`. Solo entonces se puede
+publicar el reemplazo sin `--force`, de modo que el objeto publicado contenga
+tanto la punta remota como el `MASTER_SHA` requerido.
 
 ## CI del HEAD remoto definitivo observado
 
