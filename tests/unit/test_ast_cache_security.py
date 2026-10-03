@@ -1,4 +1,3 @@
-import hashlib
 import importlib
 import json
 import sqlite3
@@ -54,7 +53,7 @@ def test_carga_ast_malicioso(monkeypatch, tmp_path):
     monkeypatch.setattr(Parser, "parsear", lambda self: [])
     ast_cache.obtener_ast(codigo)
 
-    hash_key = hashlib.sha256(codigo.encode("utf-8")).hexdigest()
+    hash_key = ast_cache._checksum(codigo)
     with sqlite3.connect(_db_path(cache_dir)) as conn:
         conn.execute(
             "UPDATE ast_cache SET ast_json = '{malformed json]' WHERE hash = ?",
@@ -75,7 +74,7 @@ def test_carga_tokens_maliciosos(monkeypatch, tmp_path):
     monkeypatch.setattr(Parser, "parsear", lambda self: [])
     ast_cache.obtener_tokens(codigo)
 
-    hash_key = hashlib.sha256(codigo.encode("utf-8")).hexdigest()
+    hash_key = ast_cache._checksum(codigo)
     with sqlite3.connect(_db_path(cache_dir)) as conn:
         conn.execute(
             """
