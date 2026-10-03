@@ -74,3 +74,27 @@ def test_macro_llaves_desbalanceadas():
     codigo = "macro m { var x = 1 }}"
     with pytest.raises(ParserError):
         parse(codigo).parsear()
+
+
+@pytest.mark.xfail(
+    strict=True,
+    reason="EXC-001 bloqueado: corregirlo requiere autorización para modificar el Parser",
+)
+@pytest.mark.parametrize(
+    "codigo",
+    [
+        """
+intentar:
+    imprimir("x")
+fin
+""",
+        """
+try:
+    throw "fallo"
+fin
+""",
+    ],
+)
+def test_try_sin_catch_lanza_parser_error(codigo):
+    with pytest.raises(ParserError):
+        parse(codigo).parsear()
