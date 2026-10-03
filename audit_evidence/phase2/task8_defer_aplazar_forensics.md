@@ -347,3 +347,23 @@ La reparación debería ir acompañada, en un cambio separado, por:
 
 Como la reparación requiere tocar Parser y un test, queda bloqueada por el alcance
 explícito de Task 8 y debe recibir autorización específica en Task 9.
+
+## 18. Bloqueo confirmado durante la revisión de PR #3749
+
+La revisión de `fix: restaurar el token APLAZAR para defer` confirmó que la
+reparación propuesta requiere modificar `ClassicParser`, concretamente el token
+consumido por `declaracion_defer()`. Esa modificación se revirtió porque las reglas
+vigentes del repositorio prohíben cambiar Lexer o Parser sin autorización explícita
+y específica, y el contexto de la revisión no contiene dicha autorización.
+
+Por tanto, el defecto descrito en las secciones anteriores permanece bloqueado:
+`defer` y `aplazar` llegan al Parser como `TipoToken.APLAZAR`, pero
+`declaracion_defer()` intenta acceder al miembro inexistente `TipoToken.DEFER`. No
+hay una corrección compatible fuera del Parser que preserve el contrato léxico, el
+dispatch y las interfaces públicas actuales. También se revirtieron los cambios de
+pruebas asociados para no introducir expectativas que la implementación bloqueada
+no puede satisfacer.
+
+Para desbloquear la reparación hace falta una autorización explícita y específica
+para modificar `src/pcobra/cobra/core/parser.py`. Hasta recibirla, no deben cambiarse
+Lexer, Parser, la sintaxis ni la documentación normativa para ocultar el fallo.
