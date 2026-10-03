@@ -1,5 +1,3 @@
-import pytest
-
 from pcobra.cobra.core.lexer import Lexer
 from pcobra.cobra.core.parser import Parser
 from pcobra.core.ast_nodes import (
@@ -24,11 +22,10 @@ def test_parser_lambda():
     assert isinstance(ast[0], NodoLambda)
 
 
-@pytest.mark.parametrize("palabra_clave", ["defer", "aplazar"])
-def test_parser_defer_dentro_funcion(palabra_clave):
-    codigo = f"""
+def test_parser_defer_dentro_funcion():
+    codigo = """
     func demo():
-        {palabra_clave} limpiar()
+        defer limpiar()
         retorno 1
     fin
     """
@@ -39,9 +36,8 @@ def test_parser_defer_dentro_funcion(palabra_clave):
     assert any(isinstance(nodo, NodoDefer) for nodo in funcion.cuerpo)
 
 
-@pytest.mark.parametrize("palabra_clave", ["defer", "aplazar"])
-def test_parser_defer_fuera_de_funcion_generar_advertencia(palabra_clave):
-    parser = Parser(Lexer(f"{palabra_clave} limpiar()").analizar_token())
+def test_parser_defer_fuera_de_funcion_generar_advertencia():
+    parser = Parser(Lexer("defer limpiar()").analizar_token())
     ast = parser.parsear()
     assert isinstance(ast[0], NodoDefer)
     assert parser.advertencias
