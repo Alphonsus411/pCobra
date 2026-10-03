@@ -33,3 +33,10 @@ def test_repl_lexer_follows_interface_keyword_contract(source, expected_token):
     tokens = [(token, value) for token, value in lex(source, CobraLexer()) if value.strip()]
 
     assert tokens == [(expected_token, source)]
+
+
+@pytest.mark.parametrize("source", ["guard", "garantia"])
+def test_repl_lexer_follows_garantia_keyword_contract(source):
+    tokens = [(token, value) for token, value in lex(source, CobraLexer()) if value.strip()]
+
+    assert tokens == [(Keyword, source)]

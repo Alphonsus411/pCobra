@@ -33,6 +33,7 @@ TOKEN_REGEX_MAP = [
     (TipoToken.ATRIBUTO, r"\batributo\b", Keyword),
     (TipoToken.SI, r"\bsi\b", Keyword),
     (TipoToken.SINO, r"\bsino\b", Keyword),
+    (TipoToken.GARANTIA, r"\b(guard|garantia)\b", Keyword),
     (TipoToken.MIENTRAS, r"\bmientras\b", Keyword),
     (TipoToken.PARA, r"\bpara\b", Keyword),
     (TipoToken.IMPORT, r"\bimport\b", Keyword),
