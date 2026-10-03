@@ -17,6 +17,14 @@ def test_parser_enumeracion_color():
     assert ast[0].miembros == ["ROJO", "VERDE"]
 
 
+def test_parser_enum_color():
+    codigo = "enum Color: ROJO, VERDE fin"
+    ast = Parser(Lexer(codigo).analizar_token()).parsear()
+    assert type(ast[0]).__name__ == "NodoEnum"
+    assert ast[0].nombre == "Color"
+    assert ast[0].miembros == ["ROJO", "VERDE"]
+
+
 def test_parser_enumeracion_estado():
     codigo = "enumeracion Estado: ACTIVO, INACTIVO fin"
     parser = Parser(Lexer(codigo).analizar_token())
