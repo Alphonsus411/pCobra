@@ -1139,7 +1139,7 @@ class ClassicParser:
 
     def declaracion_yield(self):
         """Parsea una expresión 'yield' dentro de una función generadora."""
-        self.comer(TipoToken.YIELD)
+        self.comer(TipoToken.GENERAR)
         return NodoYield(self.expresion())
 
     def declaracion_asincronico(self):
