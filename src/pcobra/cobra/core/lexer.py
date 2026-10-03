@@ -215,7 +215,7 @@ class Lexer:
             (TipoToken.CLASE, re.compile(r"\bclase\b")),
             (TipoToken.ESTRUCTURA, re.compile(r"\bestructura\b")),
             (TipoToken.REGISTRO, re.compile(r"\bregistro\b")),
-            (TipoToken.ENUMERACION, re.compile(r"\benumeracion\b")),
+            (TipoToken.ENUMERACION, re.compile(r"\b(enum|enumeracion)\b")),
             (TipoToken.INTERFACE, re.compile(r"\b(interface|rasgo)\b")),
             (TipoToken.EN, re.compile(r"\ben\b")),
             (TipoToken.HOLOBIT, re.compile(r"\bholobit\b")),

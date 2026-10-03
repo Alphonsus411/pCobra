@@ -75,6 +75,7 @@ def test_lexer_palabras_reservadas_con_cobertura_esperada() -> None:
         "clase": TipoToken.CLASE,
         "estructura": TipoToken.ESTRUCTURA,
         "registro": TipoToken.REGISTRO,
+        "enum": TipoToken.ENUMERACION,
         "enumeracion": TipoToken.ENUMERACION,
         "interface": TipoToken.INTERFACE,
         "rasgo": TipoToken.INTERFACE,
