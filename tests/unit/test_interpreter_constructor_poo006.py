@@ -1,0 +1,110 @@
+"""Contrato focal de ejecución de constructores propios desde fuente Cobra."""
+
+import pytest
+
+from pcobra.cobra.core.parsing import parsear_codigo_resuelto
+from pcobra.core.interpreter import InterpretadorCobra
+
+
+def _ejecutar(inter, fuente):
+    inter.ejecutar_ast(parsear_codigo_resuelto(fuente, usar_cache=False))
+
+
+@pytest.mark.parametrize(
+    ("nombre", "receptor"), [("inicializar", "este"), ("__init__", "self")]
+)
+def test_constructor_propio_inicializa_atributo(nombre, receptor):
+    inter = InterpretadorCobra()
+    _ejecutar(
+        inter,
+        "clase Persona:\n"
+        f"    metodo {nombre}({receptor}, valor):\n"
+        f"        atributo {receptor} numero = valor\n"
+        "fin\n"
+        "var persona = Persona(42)\n",
+    )
+    assert inter.obtener_variable("persona")["__atributos__"]["numero"] == 42
+
+
+def test_constructor_y_argumento_se_ejecutan_una_vez():
+    inter = InterpretadorCobra()
+    _ejecutar(
+        inter,
+        "var argumentos = 0\n"
+        "var construcciones = 0\n"
+        "func producir():\n"
+        "    global argumentos\n"
+        "    argumentos = argumentos + 1\n"
+        "    retorno 42\n"
+        "fin\n"
+        "clase Persona:\n"
+        "    metodo inicializar(este, valor):\n"
+        "        global construcciones\n"
+        "        construcciones = construcciones + 1\n"
+        "        atributo este numero = valor\n"
+        "fin\n"
+        "var persona = Persona(producir())\n",
+    )
+    assert inter.obtener_variable("argumentos") == 1
+    assert inter.obtener_variable("construcciones") == 1
+    assert inter.obtener_variable("persona")["__atributos__"]["numero"] == 42
+
+
+def test_error_en_constructor_se_propaga_y_restaura_ambitos():
+    inter = InterpretadorCobra()
+    _ejecutar(
+        inter,
+        "clase Persona:\n"
+        "    metodo inicializar(este):\n"
+        "        var local = 1\n"
+        "        imprimir inexistente\n"
+        "fin\n",
+    )
+    contextos = tuple(inter.contextos)
+    memoria = tuple(inter.mem_contextos)
+    profundidad = inter._call_depth
+    with pytest.raises(NameError, match=r"^Variable no declarada: inexistente$"):
+        _ejecutar(inter, "var persona = Persona()\n")
+    assert len(inter.contextos) == len(contextos)
+    assert all(a is b for a, b in zip(inter.contextos, contextos))
+    assert len(inter.mem_contextos) == len(memoria)
+    assert all(a is b for a, b in zip(inter.mem_contextos, memoria))
+    assert inter._call_depth == profundidad
+    with pytest.raises(NameError):
+        inter.obtener_variable("persona")
+
+
+@pytest.mark.parametrize("argumentos", ["", "1, 2"])
+def test_constructor_rechaza_numero_incorrecto_de_argumentos(argumentos):
+    inter = InterpretadorCobra()
+    _ejecutar(
+        inter,
+        "clase Persona:\n"
+        "    metodo inicializar(este, valor):\n"
+        "        atributo este numero = valor\n"
+        "fin\n",
+    )
+    with pytest.raises(TypeError):
+        _ejecutar(inter, f"var persona = Persona({argumentos})\n")
+
+
+def test_retorno_del_constructor_no_reemplaza_la_instancia():
+    inter = InterpretadorCobra()
+    _ejecutar(
+        inter,
+        "clase Persona:\n"
+        "    metodo inicializar(este):\n"
+        "        atributo este numero = 42\n"
+        "        retorno 7\n"
+        "fin\n"
+        "var persona = Persona()\n",
+    )
+    persona = inter.obtener_variable("persona")
+    assert persona["__clase__"]["nombre"] == "Persona"
+    assert persona["__atributos__"]["numero"] == 42
+
+
+def test_clase_sin_constructor_y_sin_argumentos_sigue_funcionando():
+    inter = InterpretadorCobra()
+    _ejecutar(inter, "clase Persona:\nfin\nvar persona = Persona()\n")
+    assert inter.obtener_variable("persona")["__atributos__"] == {}
