@@ -1564,7 +1564,7 @@ class ClassicParser:
                 )
                 raise ParserError(
                     "Solo se permiten métodos en el cuerpo de una clase; "
-                    f"se encontró '${lexema}'."
+                    f"se encontró '{lexema}'."
                 )
 
         if self.token_actual().tipo != TipoToken.FIN:
