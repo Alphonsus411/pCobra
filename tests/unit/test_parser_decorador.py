@@ -18,7 +18,7 @@ def test_parser_funcion_con_decorador():
 
 
 def test_parser_clase_con_decorador():
-    codigo = """@decor\nclase C:\n    pasar\nfin"""
+    codigo = """@decor\nclase C:\nfin"""
     tokens = Lexer(codigo).analizar_token()
     ast = Parser(tokens).parsear()
     assert len(ast) == 1
