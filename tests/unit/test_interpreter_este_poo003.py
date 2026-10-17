@@ -176,3 +176,20 @@ def test_argumento_de_metodo_se_evalua_una_vez_en_el_entorno_llamador():
     )
     assert inter.obtener_variable("resultado") == 42
     assert inter.obtener_variable("numero") == 42
+
+
+def test_metodo_sin_parametros_rechaza_la_ausencia_de_receptor():
+    inter = InterpretadorCobra()
+    _ejecutar(
+        inter,
+        "clase Persona:\n"
+        "    metodo identidad():\n"
+        "        retorno 42\n"
+        "fin\n"
+        "var persona = Persona()\n",
+    )
+    with pytest.raises(
+        TypeError,
+        match=r"^Método 'identidad' requiere un receptor 'este' o 'self'$",
+    ):
+        _ejecutar(inter, "persona.identidad()\n")
