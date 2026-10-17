@@ -534,7 +534,7 @@ sin prueba. Task 42A no resuelve ninguna reparación productiva.
 | POO-005 | P1 | llamada de método postfix inalcanzable/corrupta | RESUELTO | 42D |
 | POO-006 | P1 | constructor no se ejecuta en runtime | RESUELTO | 42G |
 | POO-007 | P2 | aridad y receptor runtime no se validan | EN PROGRESO | 42G |
-| POO-008 | P2 | backend Python genera clase vacía inválida | PENDIENTE | 42H |
+| POO-008 | P2 | backend Python genera clase vacía inválida | EN PROGRESO | 42H |
 | POO-009 | P2 | JS no adapta constructor/receptor/instancia | PENDIENTE | 42I |
 | POO-010 | P2 | representación POO Rust incompleta | PENDIENTE | 42J |
 | POO-011 | P2 | herencia divergente y E2E bloqueado | PENDIENTE | 42K |
