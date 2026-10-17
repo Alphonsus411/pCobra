@@ -554,11 +554,18 @@ en su rama separada pendiente de integración. El cierre de POO-006 se limita
 a constructores propios según §10 y también está pendiente de integración.
 POO-007 conserva su estado y requiere una tarea autorizada independiente.
 
-### POO-012 — tarea pendiente de cumplimentar
+### POO-012 — miembros de clase no método
 
-**PENDIENTE / 42F.** Se difiere su reparación por indicación del usuario; no
-se ha autorizado una política de miembros de clase ni un cambio de Parser para
-este hallazgo. No se cierra 42F al pasar al diagnóstico de 42G.
+**EN PROGRESO / 42F.** Decisión contractual autorizada: el cuerpo de una clase
+admite únicamente métodos; las asignaciones y `pasar` se rechazan de forma
+explícita. No se incorporan campos de clase, sintaxis nueva, cambios de Lexer ni
+cambios de AST en esta tarea.
+
+La reparación limita el Parser al contrato anterior y exige un diagnóstico
+determinista desde fuente Cobra para cada miembro no permitido. Las clases
+vacías y las clases que contienen métodos permanecen válidas. El estado solo
+pasará a `RESUELTO` tras las pruebas focales, suites relacionadas y CI sobre
+esta rama.
 
 Reproducción confirmada sobre la base local
 `bb8aca13526be2e9a67475ace52988ae27621f49`:
