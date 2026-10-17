@@ -288,7 +288,7 @@ class TranspiladorJavaScript(BaseTranspiler):
             args = ", ".join(self.obtener_valor(a) for a in nodo.argumentos)
             return f"new {nodo.nombre_clase}({args})"
         elif isinstance(nodo, NodoIdentificador):
-            return nodo.nombre
+            return "this" if nodo.nombre == "este" else nodo.nombre
         elif isinstance(nodo, NodoLlamadaFuncion):
             args = ", ".join(self.obtener_valor(a) for a in nodo.argumentos)
             return f"{nodo.nombre}({args})"
