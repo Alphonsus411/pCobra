@@ -327,12 +327,12 @@ def test_decoradores_en_clase_y_metodo_js():
 
 
 def test_clase_con_decorador_desde_parser_js():
-    codigo = """@dec\nclase C:\n    pasar\nfin"""
+    codigo = """@dec\nclase C:\nfin"""
     tokens = Lexer(codigo).analizar_token()
     ast = Parser(tokens).parsear()
     t = TranspiladorJavaScript()
     resultado = t.generate_code(ast)
-    esperado = IMPORTS + ("class C {\n" + ";\n" + "}\n" + "C = dec(C);")
+    esperado = IMPORTS + ("class C {\n" + "}\n" + "C = dec(C);")
     assert resultado == esperado
 
 
