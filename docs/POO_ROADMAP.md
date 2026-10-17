@@ -231,9 +231,9 @@ se cambia el tratamiento de funciones globales ni de otros aliases históricos.
 El cambio provisional de nombre emitido por JavaScript y Rust, de `__init__`
 a `inicializar`, se ha aceptado expresamente para esta microtarea. Las pruebas
 fijan únicamente esa emisión y la conservación del AST: no certifican ejecución
-de constructores en esos destinos. POO-009 y POO-010 permanecen pendientes, al
-igual que la ejecución del constructor en el intérprete (POO-006). El cierre
-local posterior del binding de `este` en métodos (POO-003) se detalla en §10.
+de constructores en esos destinos. POO-009 y POO-010 permanecen pendientes.
+El cierre local posterior del binding de `este` en métodos (POO-003) y de la
+ejecución de constructores propios (POO-006) se detalla en §10.
 Estos cierres locales no implican publicación ni CI remoto aprobado.
 
 ## 7. Cierre de métodos
@@ -413,10 +413,37 @@ de un `este` global y restauración de ámbitos tras retorno o error en el cuerp
 Las siete pruebas focales pasan. Las suites relacionadas obtienen 260 aprobadas
 y un fallo idéntico al de la base: `test_interpreter_atributo_lectura_escritura`
 imprime `"Ana"` con comillas donde se espera `Ana`; no se modificó esa prueba.
-La ejecución del constructor (POO-006), el descarte posicional y la política de
-aridad con `zip` (POO-007) siguen pendientes y no se reparan aquí. Tampoco se
+El descarte posicional y la política de aridad de métodos con `zip` (POO-007)
+siguen pendientes y no se reparan en POO-003. Tampoco se
 declara resuelta la adaptación del receptor en los backends ni el cierre global
 de 42G. Lexer, Parser, AST, backends y CI permanecen intactos en esta reparación.
+
+**Cierre local de POO-006 (pendiente de integración).** En la rama
+`codex/poo006-execute-initializer`, crear una instancia ejecuta su único
+constructor propio `inicializar` o la forma histórica `__init__`, con receptor
+`este` o `self`. Los argumentos se evalúan una vez en el entorno llamador y se
+ejecuta el cuerpo mediante el descriptor existente, restaurando ámbitos ante
+retorno o error. Un retorno del constructor no reemplaza la instancia.
+
+Decisiones de compatibilidad aprobadas expresamente para esta tarea:
+
+- se rechaza con `TypeError` más de una declaración de constructor propio;
+- se rechaza el constructor sin receptor o con receptor distinto de `este`/`self`;
+- se rechazan argumentos si no existe constructor propio, también en una clase
+  derivada sin constructor propio; una clase sin constructor y sin argumentos
+  continúa siendo instanciable;
+- la cantidad de argumentos se valida para el constructor, sin alterar la
+  política de llamadas a métodos de POO-007.
+
+No se busca ni ejecuta automáticamente un constructor heredado. Esa limitación
+permanece hasta la tarea de herencia; este cierre no declara soporte POO completo.
+POO-012 continúa pendiente según la decisión de aplazamiento ya registrada.
+
+Las 17 pruebas focales desde fuente pasan. Las suites relacionadas obtienen
+267 aprobadas y el mismo fallo de comillas en
+`test_interpreter_atributo_lectura_escritura` observado en la base
+`858763776e6f9fd0dced3cbf52623918df606566`. No se cambió esa prueba. Lexer,
+Parser, AST, backends y CI permanecen intactos respecto a esa base.
 
 ## 11. Contratos de backend
 
@@ -505,7 +532,7 @@ sin prueba. Task 42A no resuelve ninguna reparación productiva.
 | POO-003 | P1 | binding neutral de `este` ausente | RESUELTO | 42C/42G |
 | POO-004 | P1 | instanciación inalcanzable desde fuente | RESUELTO | 42E |
 | POO-005 | P1 | llamada de método postfix inalcanzable/corrupta | RESUELTO | 42D |
-| POO-006 | P1 | constructor no se ejecuta en runtime | PENDIENTE | 42G |
+| POO-006 | P1 | constructor no se ejecuta en runtime | RESUELTO | 42G |
 | POO-007 | P2 | aridad y receptor runtime no se validan | PENDIENTE | 42G |
 | POO-008 | P2 | backend Python genera clase vacía inválida | PENDIENTE | 42H |
 | POO-009 | P2 | JS no adapta constructor/receptor/instancia | PENDIENTE | 42I |
@@ -523,8 +550,9 @@ POO-016 queda resuelto localmente en `codex/poo016-attribute-target`, basada en
 el cierre local de POO-002 y también pendiente de integración. Esto no cierra
 42F: POO-012 sigue pendiente y no se inicia automáticamente.
 El cierre local de POO-003 está limitado al binding de métodos descrito en §10,
-en su rama separada pendiente de integración. POO-006 y POO-007 conservan su
-estado y requieren tareas autorizadas independientes.
+en su rama separada pendiente de integración. El cierre de POO-006 se limita
+a constructores propios según §10 y también está pendiente de integración.
+POO-007 conserva su estado y requiere una tarea autorizada independiente.
 
 ### POO-012 — tarea pendiente de cumplimentar
 

@@ -2621,9 +2621,42 @@ class InterpretadorCobra:
         clase = self.obtener_variable(nodo.nombre_clase)
         if not isinstance(clase, dict) or clase.get("tipo") != "clase":
             raise ValueError(f"Clase '{nodo.nombre_clase}' no definida")
+        constructores = [
+            metodo
+            for metodo in clase.get("metodos", [])
+            if metodo.get("nombre") in {"inicializar", "__init__"}
+        ]
+        if len(constructores) > 1:
+            raise TypeError(
+                f"Clase '{nodo.nombre_clase}' tiene varios constructores propios"
+            )
+        constructor = constructores[0] if constructores else None
+        argumentos = []
+        if constructor is None:
+            if nodo.argumentos:
+                raise TypeError(
+                    f"Clase '{nodo.nombre_clase}' sin constructor propio "
+                    "no acepta argumentos"
+                )
+        else:
+            parametros = constructor.get("parametros", [])
+            if not parametros or parametros[0] not in {"este", "self"}:
+                raise TypeError("El constructor requiere un receptor 'este' o 'self'")
+            esperados = len(parametros) - 1
+            if len(nodo.argumentos) != esperados:
+                raise TypeError(
+                    f"Constructor de '{nodo.nombre_clase}': "
+                    f"se esperaban {esperados} argumentos"
+                )
+            for argumento in nodo.argumentos:
+                valor = self.evaluar_expresion(argumento)
+                self._verificar_valor_contexto(valor)
+                argumentos.append(valor)
         bases = clase.get("bases", [])
         instancia = {"__clase__": clase, "__bases__": bases, "__atributos__": {}}
         self._verificar_valor_contexto(instancia)
+        if constructor is not None:
+            self._ejecutar_descriptor_funcion_cobra(constructor, [instancia, *argumentos])
         return instancia
 
     def ejecutar_llamada_metodo(self, nodo):
