@@ -2687,12 +2687,12 @@ class InterpretadorCobra:
         parametros = metodo.get("parametros", [])
         if not parametros or parametros[0] not in {"este", "self"}:
             raise TypeError(
-                f"Método '${nodo.nombre_metodo}' requiere un receptor 'este' o 'self'"
+                f"Método '{nodo.nombre_metodo}' requiere un receptor 'este' o 'self'"
             )
         esperados = len(parametros) - 1
         if len(nodo.argumentos) != esperados:
             raise TypeError(
-                f"Método '${nodo.nombre_metodo}': se esperaban ${esperados} argumentos"
+                f"Método '{nodo.nombre_metodo}': se esperaban {esperados} argumentos"
             )
         argumentos = []
         for argumento in nodo.argumentos:
