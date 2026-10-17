@@ -232,8 +232,9 @@ El cambio provisional de nombre emitido por JavaScript y Rust, de `__init__`
 a `inicializar`, se ha aceptado expresamente para esta microtarea. Las pruebas
 fijan únicamente esa emisión y la conservación del AST: no certifican ejecución
 de constructores en esos destinos. POO-009 y POO-010 permanecen pendientes, al
-igual que el receptor y la ejecución del constructor en el intérprete
-(POO-003/POO-006). Este cierre local no implica publicación ni CI remoto aprobado.
+igual que la ejecución del constructor en el intérprete (POO-006). El cierre
+local posterior del binding de `este` en métodos (POO-003) se detalla en §10.
+Estos cierres locales no implican publicación ni CI remoto aprobado.
 
 ## 7. Cierre de métodos
 
@@ -395,11 +396,27 @@ CAPACIDAD INTERNA
 CAPACIDAD ALCANZABLE DESDE FUENTE COBRA
 ```
 
-Actualmente el runtime define `self`, descarta por posición el primer parámetro
-y enlaza con `zip`, sin contrato neutral suficiente. El objetivo es que `este`
+En la base anterior a POO-003 el runtime solo define `self`, descarta por
+posición el primer parámetro y enlaza con `zip`. El objetivo es que `este`
 represente la instancia Cobra y que cada llamada/constructor valide de forma
 determinista receptor, argumentos faltantes y argumentos sobrantes. No se
 conservará un `zip(...)` que descarte argumentos silenciosamente.
+
+**Cierre local de POO-003 (pendiente de integración).** En la rama
+`codex/poo003-bind-este`, `ejecutar_llamada_metodo` liga `este` a la instancia
+cuando el método lo declara como primer parámetro y lo registra como nombre
+local de la llamada. La compatibilidad histórica de `self` se conserva; no se
+introducen otros nombres de receptor. Las pruebas desde fuente verifican
+identidad, escritura/lectura de atributos en instancias distintas, aislamiento
+de un `este` global y restauración de ámbitos tras retorno o error en el cuerpo.
+
+Las siete pruebas focales pasan. Las suites relacionadas obtienen 260 aprobadas
+y un fallo idéntico al de la base: `test_interpreter_atributo_lectura_escritura`
+imprime `"Ana"` con comillas donde se espera `Ana`; no se modificó esa prueba.
+La ejecución del constructor (POO-006), el descarte posicional y la política de
+aridad con `zip` (POO-007) siguen pendientes y no se reparan aquí. Tampoco se
+declara resuelta la adaptación del receptor en los backends ni el cierre global
+de 42G. Lexer, Parser, AST, backends y CI permanecen intactos en esta reparación.
 
 ## 11. Contratos de backend
 
@@ -485,7 +502,7 @@ sin prueba. Task 42A no resuelve ninguna reparación productiva.
 |---|---|---|---|---|
 | POO-001 | P1 | métodos delimitados por el siguiente `metodo` o el `fin` de clase, sin `fin` individual | RESUELTO | 42C |
 | POO-002 | P1 | `inicializar → __init__` ocurre en frontend/AST | RESUELTO | 42C |
-| POO-003 | P1 | binding neutral de `este` ausente | PENDIENTE | 42C/42G |
+| POO-003 | P1 | binding neutral de `este` ausente | RESUELTO | 42C/42G |
 | POO-004 | P1 | instanciación inalcanzable desde fuente | RESUELTO | 42E |
 | POO-005 | P1 | llamada de método postfix inalcanzable/corrupta | RESUELTO | 42D |
 | POO-006 | P1 | constructor no se ejecuta en runtime | PENDIENTE | 42G |
@@ -505,6 +522,9 @@ integración. No cambia el estado de las demás tareas ni autoriza iniciarlas.
 POO-016 queda resuelto localmente en `codex/poo016-attribute-target`, basada en
 el cierre local de POO-002 y también pendiente de integración. Esto no cierra
 42F: POO-012 sigue pendiente y no se inicia automáticamente.
+El cierre local de POO-003 está limitado al binding de métodos descrito en §10,
+en su rama separada pendiente de integración. POO-006 y POO-007 conservan su
+estado y requieren tareas autorizadas independientes.
 
 ### POO-012 — tarea pendiente de cumplimentar
 

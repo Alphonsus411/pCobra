@@ -2658,7 +2658,11 @@ class InterpretadorCobra:
         self.mem_contextos.append({})
         self.contextos[-1].define("self", objeto)
         self.contextos[-1].local_names.add("self")
-        for nombre_param, arg in zip(metodo.get("parametros", [])[1:], nodo.argumentos):
+        parametros = metodo.get("parametros", [])
+        if parametros and parametros[0] == "este":
+            self.contextos[-1].define("este", objeto)
+            self.contextos[-1].local_names.add("este")
+        for nombre_param, arg in zip(parametros[1:], nodo.argumentos):
             valor = self.evaluar_expresion(arg)
             self._verificar_valor_contexto(valor)
             self.contextos[-1].define(nombre_param, valor)
