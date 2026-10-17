@@ -14,7 +14,8 @@ jobs:
           python-version: "3.11"
       - name: Install dependencies
         uses: ./.github/actions/install
-      - run: black --check .
+      - name: Check tracked Python files with Black
+        run: git ls-files -z -- '*.py' | xargs -0r black --check
       - name: Detect legacy target aliases in public docs
         run: python scripts/lint_legacy_aliases.py
       - name: Validate public documentation targets policy
