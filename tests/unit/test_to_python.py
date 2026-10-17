@@ -583,3 +583,14 @@ imprimir(x)
     assert "x = resumen_numero(3)" in codigo
     assert "maximum recursion depth exceeded" not in codigo
     assert "contextlib.ExitStack" not in codigo
+
+
+def test_transpilador_python_clase_vacia_desde_fuente_es_sintacticamente_valida():
+    codigo_fuente = """clase Vacia:
+fin"""
+    ast = Parser(Lexer(codigo_fuente).analizar_token()).parsear()
+
+    codigo = TranspiladorPython().generate_code(ast)
+
+    assert codigo == IMPORTS + "class Vacia:\n    pass\n"
+    compile(codigo, "<cobra>", "exec")
