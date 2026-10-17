@@ -533,7 +533,7 @@ sin prueba. Task 42A no resuelve ninguna reparación productiva.
 | POO-004 | P1 | instanciación inalcanzable desde fuente | RESUELTO | 42E |
 | POO-005 | P1 | llamada de método postfix inalcanzable/corrupta | RESUELTO | 42D |
 | POO-006 | P1 | constructor no se ejecuta en runtime | RESUELTO | 42G |
-| POO-007 | P2 | aridad y receptor runtime no se validan | PENDIENTE | 42G |
+| POO-007 | P2 | aridad y receptor runtime no se validan | EN PROGRESO | 42G |
 | POO-008 | P2 | backend Python genera clase vacía inválida | PENDIENTE | 42H |
 | POO-009 | P2 | JS no adapta constructor/receptor/instancia | PENDIENTE | 42I |
 | POO-010 | P2 | representación POO Rust incompleta | PENDIENTE | 42J |
@@ -552,7 +552,14 @@ el cierre local de POO-002 y también pendiente de integración. Esto no cierra
 El cierre local de POO-003 está limitado al binding de métodos descrito en §10,
 en su rama separada pendiente de integración. El cierre de POO-006 se limita
 a constructores propios según §10 y también está pendiente de integración.
-POO-007 conserva su estado y requiere una tarea autorizada independiente.
+
+**POO-007 / 42G — EN PROGRESO.** La política autorizada exige que cada método
+declare como primer parámetro `este` o el alias histórico `self`; el runtime
+valida la aridad exacta excluyendo ese receptor. Los argumentos válidos se
+evalúan una vez en el entorno llamador antes de abrir el ámbito de la llamada.
+Los diagnósticos de receptor o aridad no deben filtrar ámbitos ni memoria. No se
+modifican Parser, Lexer, AST, backends ni herencia. El estado solo pasará a
+`RESUELTO` tras pruebas focales, suites relacionadas y CI.
 
 ### POO-012 — miembros de clase no método
 

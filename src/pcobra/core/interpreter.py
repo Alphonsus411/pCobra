@@ -2684,20 +2684,31 @@ class InterpretadorCobra:
         if metodo is None:
             raise ValueError(f"Método '{nodo.nombre_metodo}' no encontrado")
 
+        parametros = metodo.get("parametros", [])
+        if not parametros or parametros[0] not in {"este", "self"}:
+            raise TypeError(
+                f"Método '{nodo.nombre_metodo}' requiere un receptor 'este' o 'self'"
+            )
+        esperados = len(parametros) - 1
+        if len(nodo.argumentos) != esperados:
+            raise TypeError(
+                f"Método '{nodo.nombre_metodo}': se esperaban {esperados} argumentos"
+            )
+        argumentos = []
+        for argumento in nodo.argumentos:
+            valor = self.evaluar_expresion(argumento)
+            self._verificar_valor_contexto(valor)
+            argumentos.append(valor)
+
         entorno_capturado = metodo.get("entorno", self.contextos[-1])
         self.contextos.append(
             Environment(parent=entorno_capturado, is_function_scope=True)
         )
         self.mem_contextos.append({})
-        self.contextos[-1].define("self", objeto)
-        self.contextos[-1].local_names.add("self")
-        parametros = metodo.get("parametros", [])
-        if parametros and parametros[0] == "este":
-            self.contextos[-1].define("este", objeto)
-            self.contextos[-1].local_names.add("este")
-        for nombre_param, arg in zip(parametros[1:], nodo.argumentos):
-            valor = self.evaluar_expresion(arg)
-            self._verificar_valor_contexto(valor)
+        receptor = parametros[0]
+        self.contextos[-1].define(receptor, objeto)
+        self.contextos[-1].local_names.add(receptor)
+        for nombre_param, valor in zip(parametros[1:], argumentos):
             self.contextos[-1].define(nombre_param, valor)
             self.contextos[-1].local_names.add(nombre_param)
 

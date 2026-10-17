@@ -114,7 +114,10 @@ def test_no_se_inventa_un_receptor_alternativo():
         "fin\n"
         "var persona = Persona()\n",
     )
-    with pytest.raises(NameError, match=r"^Variable no declarada: otro$"):
+    with pytest.raises(
+        TypeError,
+        match=r"^Método 'identidad' requiere un receptor 'este' o 'self'$",
+    ):
         _ejecutar(inter, "persona.identidad()\n")
 
 
@@ -129,4 +132,64 @@ def test_ruta_self_no_introduce_este_implicito():
         "var persona = Persona()\n",
     )
     with pytest.raises(NameError, match=r"^Variable no declarada: este$"):
+        _ejecutar(inter, "persona.identidad()\n")
+
+
+@pytest.mark.parametrize(
+    ("argumentos", "esperados"),
+    [
+        ("", 1),
+        ("1, 2", 1),
+    ],
+)
+def test_metodo_rechaza_aridad_incorrecta_sin_filtrar_ambitos(argumentos, esperados):
+    inter = InterpretadorCobra()
+    _ejecutar(
+        inter,
+        "clase Persona:\n"
+        "    metodo guardar(este, valor):\n"
+        "        atributo este numero = valor\n"
+        "fin\n"
+        "var persona = Persona()\n",
+    )
+    anterior = _estado(inter)
+    with pytest.raises(
+        TypeError,
+        match=rf"^Método 'guardar': se esperaban {esperados} argumentos$",
+    ):
+        _ejecutar(inter, f"persona.guardar({argumentos})\n")
+    _comprobar_ambitos(inter, anterior)
+    assert inter.obtener_variable("persona")["__atributos__"] == {}
+
+
+def test_argumento_de_metodo_se_evalua_una_vez_en_el_entorno_llamador():
+    inter = InterpretadorCobra()
+    _ejecutar(
+        inter,
+        "var numero = 42\n"
+        "clase Persona:\n"
+        "    metodo devolver(este, numero):\n"
+        "        retorno numero\n"
+        "fin\n"
+        "var persona = Persona()\n"
+        "var resultado = persona.devolver(numero)\n",
+    )
+    assert inter.obtener_variable("resultado") == 42
+    assert inter.obtener_variable("numero") == 42
+
+
+def test_metodo_sin_parametros_rechaza_la_ausencia_de_receptor():
+    inter = InterpretadorCobra()
+    _ejecutar(
+        inter,
+        "clase Persona:\n"
+        "    metodo identidad():\n"
+        "        retorno 42\n"
+        "fin\n"
+        "var persona = Persona()\n",
+    )
+    with pytest.raises(
+        TypeError,
+        match=r"^Método 'identidad' requiere un receptor 'este' o 'self'$",
+    ):
         _ejecutar(inter, "persona.identidad()\n")
