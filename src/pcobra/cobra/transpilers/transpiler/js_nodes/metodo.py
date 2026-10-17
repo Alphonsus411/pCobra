@@ -1,12 +1,16 @@
 def visit_metodo(self, nodo):
     """Transpila un método de clase, permitiendo anidación."""
-    parametros = ", ".join(nodo.parametros)
+    parametros_nodo = list(nodo.parametros)
+    if parametros_nodo[:1] == ["este"]:
+        parametros_nodo = parametros_nodo[1:]
+    parametros = ", ".join(parametros_nodo)
     cuerpo = nodo.cuerpo
     if self.usa_indentacion is None:
         self.usa_indentacion = any(hasattr(ins, "variable") for ins in cuerpo)
     palabra = "async" if getattr(nodo, "asincronica", False) else ""
     espacio = " " if palabra else ""
-    self.agregar_linea(f"{palabra}{espacio}{nodo.nombre}({parametros}) {{")
+    nombre = "constructor" if nodo.nombre == "inicializar" else nodo.nombre
+    self.agregar_linea(f"{palabra}{espacio}{nombre}({parametros}) {{")
     if self.usa_indentacion:
         self.indentacion += 1
     nombre_pila = f"__cobra_defer_stack_{self._defer_counter}"
