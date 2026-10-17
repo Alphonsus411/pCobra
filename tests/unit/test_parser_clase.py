@@ -1,5 +1,6 @@
-from cobra.core import Lexer
-from cobra.core import Parser
+import pytest
+
+from cobra.core import Lexer, Parser, ParserError
 from pcobra.core.ast_nodes import NodoClase, NodoMetodo
 
 
@@ -25,7 +26,6 @@ def test_parser_declaracion_clase():
 def test_parser_declaracion_estructura():
     codigo = """
     estructura Registro:
-        pasar
     fin
     """
     tokens = Lexer(codigo).analizar_token()
@@ -39,7 +39,6 @@ def test_parser_declaracion_estructura():
 def test_parser_declaracion_registro():
     codigo = """
     registro Archivo:
-        pasar
     fin
     """
     tokens = Lexer(codigo).analizar_token()
@@ -53,11 +52,15 @@ def test_parser_declaracion_registro():
 def test_parser_advertencia_alias_clase():
     codigo = """
     clase Uno:
-        pasar
+        metodo primero(este):
+            pasar
+        fin
     fin
 
     estructura Dos:
-        pasar
+        metodo segundo(este):
+            pasar
+        fin
     fin
     """
     tokens = Lexer(codigo).analizar_token()
@@ -118,3 +121,32 @@ def test_parser_clase_alias_async_choque_nombres():
     mensaje = parser.advertencias[0]
     assert "Choque de nombres" in mensaje
     assert "entrar_async" in mensaje and "__aenter__" in mensaje
+
+
+@pytest.mark.parametrize(
+    ("codigo", "lexema"),
+    [
+        (
+            """
+clase C:
+    var campo = 1
+fin
+""",
+            "var",
+        ),
+        (
+            """
+clase C:
+    pasar
+fin
+""",
+            "pasar",
+        ),
+    ],
+)
+def test_parser_clase_rechaza_miembros_que_no_son_metodos(codigo, lexema):
+    with pytest.raises(
+        ParserError,
+        match=rf"^Solo se permiten métodos en el cuerpo de una clase; se encontró '{lexema}'\.$",
+    ):
+        Parser(Lexer(codigo).analizar_token()).parsear()

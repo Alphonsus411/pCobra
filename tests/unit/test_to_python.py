@@ -513,11 +513,11 @@ def test_decoradores_en_clase_y_metodo():
 
 
 def test_clase_con_decorador_desde_parser():
-    codigo_fuente = """@dec\nclase C:\n    pasar\nfin"""
+    codigo_fuente = """@dec\nclase C:\nfin"""
     tokens = Lexer(codigo_fuente).analizar_token()
     ast = Parser(tokens).parsear()
     codigo = TranspiladorPython().generate_code(ast)
-    esperado = IMPORTS + "@dec\nclass C:\n    pass\n"
+    esperado = IMPORTS + "@dec\nclass C:\n"
     assert codigo == esperado
 
 
