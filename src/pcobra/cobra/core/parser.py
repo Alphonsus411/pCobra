@@ -1333,7 +1333,10 @@ class ClassicParser:
         metodo: NodoMetodo,
         registro: dict[str, NodoMetodo],
     ) -> None:
-        existente = registro.get(metodo.nombre)
+        # El constructor histórico conserva su advertencia de colisión, sin
+        # convertir la identidad Cobra del constructor a un nombre Python.
+        clave = "inicializar" if metodo.nombre == "__init__" else metodo.nombre
+        existente = registro.get(clave)
         if existente is not None:
             nuevo = metodo.nombre_original or metodo.nombre
             previo = existente.nombre_original or existente.nombre
@@ -1343,7 +1346,7 @@ class ClassicParser:
             )
             self.registrar_advertencia(mensaje)
         else:
-            registro[metodo.nombre] = metodo
+            registro[clave] = metodo
 
     def _es_inicio_metodo(self) -> bool:
         """Indica si el cursor apunta a una declaración de método de clase."""
@@ -1399,7 +1402,11 @@ class ClassicParser:
             )
         self.comer(TipoToken.IDENTIFICADOR)
 
-        nombre = ALIAS_METODOS_ESPECIALES.get(nombre_original, nombre_original)
+        nombre = (
+            nombre_original
+            if nombre_original == "inicializar"
+            else ALIAS_METODOS_ESPECIALES.get(nombre_original, nombre_original)
+        )
 
         # Parámetros de tipo genéricos opcionales para el método
         type_params = self.lista_parametros_tipo()

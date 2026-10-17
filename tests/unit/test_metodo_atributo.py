@@ -41,7 +41,7 @@ def test_parser_metodo_alias_especial():
     ast = parser.parsear()
     clase = ast[0]
     metodo = clase.metodos[0]
-    assert metodo.nombre == "__init__"
+    assert metodo.nombre == "inicializar"
     assert metodo.nombre_original == "inicializar"
     assert parser.advertencias == []
 
@@ -131,7 +131,7 @@ def test_parser_metodo_alias_tabla(alias, nombre_dunder):
     clase = parser.parsear()[0]
     metodo = clase.metodos[0]
     assert isinstance(metodo, NodoMetodo)
-    assert metodo.nombre == nombre_dunder
+    assert metodo.nombre == ("inicializar" if alias == "inicializar" else nombre_dunder)
     assert metodo.nombre_original == alias
     if alias.endswith("_async"):
         assert metodo.asincronica is True

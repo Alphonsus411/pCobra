@@ -87,7 +87,7 @@ def test_parser_clase_alias_choque_nombres():
     assert isinstance(clase, NodoClase)
     assert len(clase.metodos) == 2
     nombres = [metodo.nombre for metodo in clase.metodos]
-    assert nombres == ["__init__", "__init__"]
+    assert nombres == ["inicializar", "__init__"]
     assert len(parser.advertencias) == 1
     mensaje = parser.advertencias[0]
     assert "Choque de nombres" in mensaje
