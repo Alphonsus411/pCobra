@@ -1556,10 +1556,16 @@ class ClassicParser:
                 self._verificar_choque_metodos(nombre, metodo, nombres_metodos)
                 metodos.append(metodo)
             else:
-                nodo = self.declaracion()
-                if isinstance(nodo, NodoMetodo):
-                    self._verificar_choque_metodos(nombre, nodo, nombres_metodos)
-                metodos.append(nodo)
+                token_no_permitido = self.token_actual()
+                lexema = (
+                    str(token_no_permitido.valor)
+                    if token_no_permitido.valor is not None
+                    else token_no_permitido.tipo.name.lower()
+                )
+                raise ParserError(
+                    "Solo se permiten métodos en el cuerpo de una clase; "
+                    f"se encontró '${lexema}'."
+                )
 
         if self.token_actual().tipo != TipoToken.FIN:
             raise ParserError("Se esperaba 'fin' para cerrar la clase")
