@@ -77,11 +77,11 @@ def test_constructor_historico_python_sigue_ejecutable():
 @pytest.mark.parametrize(
     ("adaptador", "cabecera"),
     [
-        (JavaScriptAdapter, "inicializar(este, nombre) {"),
+        (JavaScriptAdapter, "constructor(nombre) {"),
         (RustAdapter, "fn inicializar(este, nombre) {"),
     ],
 )
-def test_salida_provisional_aprobada_no_reintroduce_nombre_python(adaptador, cabecera):
+def test_salida_backend_no_reintroduce_nombre_python(adaptador, cabecera):
     nodos = _parsear(
         "clase Persona:\n"
         "    metodo inicializar(este, nombre):\n"
