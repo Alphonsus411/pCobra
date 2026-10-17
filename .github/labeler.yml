@@ -1,6 +1,10 @@
-feature/*: feature
-bugfix/*: bug
-doc/*: documentation
-perf/*:
-  - performance
-  - "priority: low"
+feature:
+  - head-branch: ['^feature/']
+bug:
+  - head-branch: ['^bugfix/']
+documentation:
+  - head-branch: ['^doc/']
+performance:
+  - head-branch: ['^perf/']
+"priority: low":
+  - head-branch: ['^perf/']
