@@ -147,6 +147,6 @@ fin
 def test_parser_clase_rechaza_miembros_que_no_son_metodos(codigo, lexema):
     with pytest.raises(
         ParserError,
-        match=rf"^Solo se permiten métodos en el cuerpo de una clase; se encontró '{lexema}'\\.$",
+        match=rf"^Solo se permiten métodos en el cuerpo de una clase; se encontró '{lexema}'\.$",
     ):
         Parser(Lexer(codigo).analizar_token()).parsear()
