@@ -506,6 +506,39 @@ POO-016 queda resuelto localmente en `codex/poo016-attribute-target`, basada en
 el cierre local de POO-002 y también pendiente de integración. Esto no cierra
 42F: POO-012 sigue pendiente y no se inicia automáticamente.
 
+### POO-012 — tarea pendiente de cumplimentar
+
+**PENDIENTE / 42F.** Se difiere su reparación por indicación del usuario; no
+se ha autorizado una política de miembros de clase ni un cambio de Parser para
+este hallazgo. No se cierra 42F al pasar al diagnóstico de 42G.
+
+Reproducción confirmada sobre la base local
+`bb8aca13526be2e9a67475ace52988ae27621f49`:
+
+- `clase C: var x = 1 fin` produce un `NodoAsignacion` en `NodoClase.metodos`;
+  el semántico lo acepta y runtime falla por ausencia de `parametros`.
+- `clase C: pasar fin` introduce `NodoPasar` en el mismo contenedor y runtime
+  falla por ausencia de `nombre`.
+- La declaración de una clase vacía o de una clase con métodos normales no
+  presenta esos errores. Esto no demuestra ejecución POO completa.
+
+Lista de cumplimiento de esta tarea:
+
+- [ ] Aprobar si los miembros no método se rechazan expresamente o requieren
+  un modelo neutral de campos; decidir la compatibilidad de `pasar` en clase.
+- [ ] Autorizar específicamente cualquier cambio necesario de Parser o AST;
+  no reutilizar la autorización de POO-002 ni inventar sintaxis.
+- [ ] Reparar el contenedor y el diagnóstico según la decisión aprobada,
+  conservando métodos normativos, compatibilidad acordada y clases vacías.
+- [ ] Añadir reproducciones desde fuente y regresiones; comparar contra base
+  sin eliminar pruebas ni debilitar aserciones.
+- [ ] Verificar consumidores afectados antes de marcar POO-012 resuelto.
+
+Las 57 pruebas de referencia de parser/clases y semántico pasaron durante el
+diagnóstico, pero no acreditan reparación de este hallazgo. El avance sobre un
+subconjunto de clases con solo métodos en 42G no puede ocultar esta limitación
+ni usarse como cierre E2E global.
+
 ### POO-013 — reproducción y causa demostrada
 
 Con `PYTHONPATH=src:src/pcobra`, la importación normal directa de
