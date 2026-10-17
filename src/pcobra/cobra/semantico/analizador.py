@@ -8,6 +8,7 @@ from typing import List, Optional, Any, Set
 from pcobra.cobra.core.ast_nodes import (
     NodoAST,
     NodoAsignacion,
+    NodoAtributo,
     NodoBloque,
     NodoClase,
     NodoFuncion,
@@ -176,10 +177,13 @@ class AnalizadorSemantico(NodeVisitor):
     def visit_asignacion(self, nodo: NodoAsignacion) -> None:
         """Visita un nodo de asignación."""
         nombre = nodo.variable
-        self._validar_nombre(nombre)
-
-        if not self.current_scope.resolver_local(nombre):
-            self.current_scope.declarar(nombre, "variable")
+        if isinstance(nombre, NodoAtributo):
+            self._validar_nombre(nombre.nombre)
+            nombre.objeto.aceptar(self)
+        else:
+            self._validar_nombre(nombre)
+            if not self.current_scope.resolver_local(nombre):
+                self.current_scope.declarar(nombre, "variable")
 
         if hasattr(nodo.expresion, "aceptar"):
             nodo.expresion.aceptar(self)

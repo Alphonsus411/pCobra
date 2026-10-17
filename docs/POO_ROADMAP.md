@@ -498,10 +498,13 @@ sin prueba. Task 42A no resuelve ninguna reparación productiva.
 | POO-013 | P2 | identidad AST depende de namespace/orden de importación | RESUELTO | 42B |
 | POO-014 | P3 | documentación y ejemplos contradicen frontend/objetivo | PENDIENTE | 42M |
 | POO-015 | P3 | operación `super` sin contrato aprobado | NO SOPORTADO POR CONTRATO | decisión futura independiente |
-| POO-016 | P2 | semántico rechaza `NodoAtributo` como destino | PENDIENTE | 42F |
+| POO-016 | P2 | semántico rechaza `NodoAtributo` como destino | RESUELTO | 42F |
 
 El cierre de POO-002 corresponde a la rama local indicada en §6, pendiente de
 integración. No cambia el estado de las demás tareas ni autoriza iniciarlas.
+POO-016 queda resuelto localmente en `codex/poo016-attribute-target`, basada en
+el cierre local de POO-002 y también pendiente de integración. Esto no cierra
+42F: POO-012 sigue pendiente y no se inicia automáticamente.
 
 ### POO-013 — reproducción y causa demostrada
 
@@ -586,7 +589,7 @@ tres fases, POO-013 vuelve a considerarse resuelto.
 
 ### POO-016 — reproducción y contrato de reparación
 
-Con los cierres que hoy requiere el Parser:
+Reproductor histórico de la auditoría, anterior al cierre local de POO-016:
 
 ```cobra
 clase C:
@@ -604,9 +607,25 @@ fuera un nombre simple y obtiene exactamente:
 TypeError: El nombre debe ser string, no <class 'pcobra.core.ast_nodes.NodoAtributo'>
 ```
 
-La reparación debe aceptar o validar semánticamente `NodoAtributo` como destino
+El contrato de reparación exige validar semánticamente `NodoAtributo` como destino
 según el contrato POO sin debilitar asignaciones ordinarias. Es dependencia de
 42F y debe estar corregido antes del smoke E2E; 42A solo lo documenta.
+
+**Cierre local de POO-016.** La validación de asignaciones distingue destinos
+atributo de nombres simples: valida el nombre del campo, visita el receptor y
+comprueba el valor asignado sin declarar el campo como variable local. La rama
+de asignaciones ordinarias conserva sus controles. El reproductor histórico
+anterior contiene además un `nombre` no declarado en el RHS: ese error debe
+seguir rechazándose; no se lo convierte en un ejemplo válido artificialmente.
+Las pruebas positivas actuales declaran tanto receptor como valor y parten de
+fuente Cobra con escritura y lectura canónicas.
+
+Pruebas focales: 8 aprobadas. Suites relacionadas: 266 aprobadas y un fallo
+preexistente, idéntico en la base `9215a8b4469d8aa629ace0be812bdd75f61774f4`:
+`test_interpreter_atributo_lectura_escritura` obtiene `"Ana"` con comillas donde
+espera `Ana`. No se modifican runtime ni esa prueba. Lexer y Parser permanecen
+intactos respecto a la base. No se afirma ejecución E2E de la POO completa ni
+se cierra POO-012 o alguna otra tarea.
 
 ## 15. Secuencia de microtareas
 
