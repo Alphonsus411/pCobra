@@ -195,7 +195,8 @@ Rust:       representación idiomática definida por su backend
 
 ## 6. Neutralidad del AST
 
-Defecto confirmado actual:
+Defecto histórico reproducido en la base de POO-002
+(`13996287cb8a40679642a9609060ecf07438be2e`):
 
 ```text
 inicializar
@@ -218,6 +219,21 @@ inicializar → representación Rust
 
 `__init__`, `self`, `this` y `constructor` pertenecen exclusivamente a las
 representaciones de destino indicadas, nunca al AST neutral objetivo.
+
+**Cierre local de POO-002 (pendiente de integración).** En la rama
+`codex/poo002-neutral-constructor`, el Parser conserva `inicializar` en
+`NodoMetodo.nombre`, tanto para `metodo` como para la ruta histórica de método
+con `func`. El backend Python realiza la conversión a `__init__` sin mutar el
+AST; las pruebas parten de fuente Cobra y ejecutan la clase Python generada.
+Se conserva el aviso de colisión con el constructor histórico `__init__` y no
+se cambia el tratamiento de funciones globales ni de otros aliases históricos.
+
+El cambio provisional de nombre emitido por JavaScript y Rust, de `__init__`
+a `inicializar`, se ha aceptado expresamente para esta microtarea. Las pruebas
+fijan únicamente esa emisión y la conservación del AST: no certifican ejecución
+de constructores en esos destinos. POO-009 y POO-010 permanecen pendientes, al
+igual que el receptor y la ejecución del constructor en el intérprete
+(POO-003/POO-006). Este cierre local no implica publicación ni CI remoto aprobado.
 
 ## 7. Cierre de métodos
 
@@ -468,7 +484,7 @@ sin prueba. Task 42A no resuelve ninguna reparación productiva.
 | ID | Severidad | Problema | Estado | Tarea |
 |---|---|---|---|---|
 | POO-001 | P1 | métodos delimitados por el siguiente `metodo` o el `fin` de clase, sin `fin` individual | RESUELTO | 42C |
-| POO-002 | P1 | `inicializar → __init__` ocurre en frontend/AST | PENDIENTE | 42C |
+| POO-002 | P1 | `inicializar → __init__` ocurre en frontend/AST | RESUELTO | 42C |
 | POO-003 | P1 | binding neutral de `este` ausente | PENDIENTE | 42C/42G |
 | POO-004 | P1 | instanciación inalcanzable desde fuente | RESUELTO | 42E |
 | POO-005 | P1 | llamada de método postfix inalcanzable/corrupta | RESUELTO | 42D |
@@ -483,6 +499,9 @@ sin prueba. Task 42A no resuelve ninguna reparación productiva.
 | POO-014 | P3 | documentación y ejemplos contradicen frontend/objetivo | PENDIENTE | 42M |
 | POO-015 | P3 | operación `super` sin contrato aprobado | NO SOPORTADO POR CONTRATO | decisión futura independiente |
 | POO-016 | P2 | semántico rechaza `NodoAtributo` como destino | PENDIENTE | 42F |
+
+El cierre de POO-002 corresponde a la rama local indicada en §6, pendiente de
+integración. No cambia el estado de las demás tareas ni autoriza iniciarlas.
 
 ### POO-013 — reproducción y causa demostrada
 
@@ -604,8 +623,8 @@ por lo que recibe una microtarea temprana y el resto se renumera:
 4. **42B — compatibilidad de identidad AST.** Normalizar `core.ast_nodes`,
    `pcobra.core.ast_nodes` y rutas relacionadas, con ambos órdenes de import.
 5. **42C — cierre de métodos (POO-001).** Hacer parseable el contrato aprobado
-   sin `fin` individual; no incluye la neutralidad pendiente de constructor o
-   receptor (POO-002/POO-003).
+   sin `fin` individual; no incluye la neutralidad de constructor o receptor,
+   tratadas por separado en POO-002/POO-003.
 6. **42D — llamada de método postfix desde texto.** Un nodo completo para 0/N
    argumentos, sin tokens residuales ni aceptación fragmentada.
 7. **42E — resolución neutral de instanciación.** Distinguir clase y función en

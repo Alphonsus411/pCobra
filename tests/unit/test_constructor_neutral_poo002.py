@@ -3,6 +3,8 @@
 import pytest
 
 from pcobra.cobra.backends.python_adapter import PythonAdapter
+from pcobra.cobra.backends.javascript_adapter import JavaScriptAdapter
+from pcobra.cobra.backends.rust_adapter import RustAdapter
 from pcobra.cobra.core import Lexer, Parser
 
 
@@ -70,3 +72,24 @@ def test_constructor_historico_python_sigue_ejecutable():
     entorno = {}
     exec(compile(PythonAdapter().compile(nodos), "<poo002-legacy>", "exec"), entorno)
     assert entorno["Persona"]("Adolfo").nombre == "Adolfo"
+
+
+@pytest.mark.parametrize(
+    ("adaptador", "cabecera"),
+    [
+        (JavaScriptAdapter, "inicializar(este, nombre) {"),
+        (RustAdapter, "fn inicializar(este, nombre) {"),
+    ],
+)
+def test_salida_provisional_aprobada_no_reintroduce_nombre_python(adaptador, cabecera):
+    nodos = _parsear(
+        "clase Persona:\n"
+        "    metodo inicializar(este, nombre):\n"
+        "        atributo este nombre = nombre\n"
+        "fin\n"
+    )
+    salida = adaptador().compile(nodos)
+    assert cabecera in salida
+    assert "__init__" not in salida
+    assert nodos[0].metodos[0].nombre == "inicializar"
+    assert nodos[0].metodos[0].parametros == ["este", "nombre"]
