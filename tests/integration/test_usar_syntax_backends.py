@@ -66,3 +66,20 @@ def test_usar_misma_fuente_transpila_por_adaptadores_oficiales(tmp_path):
             check=True,
             cwd=tmp_path,
         )
+
+
+@pytest.mark.parametrize(
+    ("escape", "marcador"),
+    [
+        (r"\n", r"// usar texto\nconsole.log('injected')"),
+        (r"\r", r"// usar texto\rconsole.log('injected')"),
+        (r"\u2028", r"// usar texto\u2028console.log('injected')"),
+        (r"\u2029", r"// usar texto\u2029console.log('injected')"),
+    ],
+)
+def test_usar_javascript_escapa_terminadores_de_linea(escape, marcador):
+    nodos = _parsear_fuente(f"usar \"texto{escape}console.log('injected')\"")
+
+    javascript = JavaScriptAdapter().compile(nodos)
+
+    assert javascript.endswith(marcador)
