@@ -1,6 +1,9 @@
-feature/*: feature
-bugfix/*: bug
-doc/*: documentation
+feature/*:
+  - feature
+bugfix/*:
+  - bug
+doc/*:
+  - documentation
 perf/*:
   - performance
   - "priority: low"
