@@ -44,6 +44,12 @@ def test_cli_qualia_mostrar(tmp_path, monkeypatch, base_datos_temporal):
 
 
 def test_cli_qualia_reiniciar(tmp_path, monkeypatch, base_datos_temporal):
+    from pcobra.cobra.cli.cli import AppConfig
+    from pcobra.cobra.cli.commands.qualia_cmd import QualiaCommand
+
+    monkeypatch.setenv("COBRA_CLI_COMMAND_PROFILE", "development")
+    monkeypatch.setenv("USERPROFILE", str(tmp_path))
+    monkeypatch.setattr(AppConfig, "BASE_COMMAND_CLASSES", [QualiaCommand])
     _ = base_datos_temporal
     state = tmp_path / ".cobra" / "state.json"
     monkeypatch.setenv("HOME", str(tmp_path))
@@ -53,7 +59,7 @@ def test_cli_qualia_reiniciar(tmp_path, monkeypatch, base_datos_temporal):
     importlib.reload(qualia_bridge)
     state.parent.mkdir(parents=True, exist_ok=True)
     state.write_text("{}")
-    from cobra.cli.cli import main
+    from pcobra.cobra.cli.cli import main
 
     with (
         patch(
@@ -61,9 +67,9 @@ def test_cli_qualia_reiniciar(tmp_path, monkeypatch, base_datos_temporal):
             return_value={"enabled": True, "reason_code": "ok", "reason": None},
         ),
         patch("sys.stdout", new_callable=StringIO) as out,
-        patch("cobra.cli.cli.setup_gettext", return_value=lambda s: s),
+        patch("pcobra.cobra.cli.cli.setup_gettext", return_value=lambda s: s),
     ):
-        main(["qualia", "reiniciar"])
+        assert main(["qualia", "reiniciar"]) == 0
     assert not state.exists()
     assert "Estado de Qualia eliminado" in out.getvalue()
 
