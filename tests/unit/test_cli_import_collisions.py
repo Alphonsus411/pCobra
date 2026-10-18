@@ -102,6 +102,7 @@ def test_python_m_cli_cli_no_colisiona(
     if cli_cli_mod is not None:
         assert cli_cli_mod.__name__ in {
             "cli.cli",
+            "pcobra.cli.cli",
             "pcobra.cobra.cli.cli",
         }
 
