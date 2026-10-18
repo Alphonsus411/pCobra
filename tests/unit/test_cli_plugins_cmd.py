@@ -80,11 +80,16 @@ def test_cli_plugin_ejemplo_hola(monkeypatch):
     assert "¡Hola desde un plugin!" in out.getvalue().strip()
 
 
-def test_cli_plugins_sin_plugins():
+def test_cli_plugins_sin_plugins(monkeypatch):
+    from pcobra.cobra.cli.cli import AppConfig
+    from pcobra.cobra.cli.commands.plugins_cmd import PluginsCommand
+
+    monkeypatch.setenv("COBRA_CLI_COMMAND_PROFILE", "development")
+    monkeypatch.setattr(AppConfig, "BASE_COMMAND_CLASSES", [PluginsCommand])
     limpiar_registro()
     with patch(
-        "cobra.cli.plugin.entry_points", return_value=importlib.metadata.EntryPoints(())
+        "pcobra.cobra.cli.plugin.entry_points", return_value=importlib.metadata.EntryPoints(())
     ):
         with patch("sys.stdout", new_callable=StringIO) as out:
-            main(["plugins"])
+            assert main(["plugins"]) == 0
     assert "No hay plugins instalados" in out.getvalue()
