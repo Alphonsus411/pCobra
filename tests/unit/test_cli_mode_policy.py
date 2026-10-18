@@ -7,7 +7,7 @@ import pytest
 
 compile_module = import_module("cobra.cli.commands.compile_cmd")
 execute_module = import_module("cobra.cli.commands.execute_cmd")
-cli_module = import_module("cobra.cli.cli")
+cli_module = import_module("pcobra.cobra.cli.cli")
 CompileCommand = compile_module.CompileCommand
 ExecuteCommand = execute_module.ExecuteCommand
 CliApplication = cli_module.CliApplication
@@ -47,20 +47,15 @@ def test_modo_cobra_permite_ejecutar():
     mode_policy_module.validar_politica_modo("ejecutar", args)
 
 
-def test_modo_cobra_bloquea_verificar(monkeypatch, tmp_path):
+def test_modo_cobra_bloquea_verificar(capsys, tmp_path):
     archivo = tmp_path / "demo.cobra"
     archivo.write_text("imprimir(1)", encoding="utf-8")
-    mensajes = []
-
-    monkeypatch.setattr(
-        verify_module, "mostrar_error", lambda msg: mensajes.append(msg)
-    )
-
     args = SimpleNamespace(archivo=str(archivo), lenguajes=["python"], modo="cobra")
     rc = VerifyCommand().run(args)
 
     assert rc == 1
-    assert any("no está permitido" in m and "--modo" in m for m in mensajes)
+    salida = capsys.readouterr().out
+    assert any("no está permitido" in m and "--modo" in m for m in salida.splitlines())
 
 
 def test_modo_cobra_bloquea_transpilar_inverso(monkeypatch, tmp_path):
