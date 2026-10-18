@@ -19,6 +19,11 @@ def test_cli_profile_creates_file(tmp_path, monkeypatch):
 
 
 def test_cli_profile_shows_stats(tmp_path, monkeypatch):
+    from pcobra.cobra.cli.cli import AppConfig
+    from pcobra.cobra.cli.commands.profile_cmd import ProfileCommand
+
+    monkeypatch.setenv("COBRA_CLI_COMMAND_PROFILE", "development")
+    monkeypatch.setattr(AppConfig, "BASE_COMMAND_CLASSES", [ProfileCommand])
     monkeypatch.setattr(module_map, "get_toml_map", lambda: {})
     monkeypatch.setattr(module_map, "_toml_cache", {}, raising=False)
     archivo = tmp_path / "prog2.co"
@@ -27,7 +32,7 @@ def test_cli_profile_shows_stats(tmp_path, monkeypatch):
         from unittest.mock import patch
 
         with patch("sys.stdout", buf):
-            main(["profile", str(archivo)])
+            assert main(["profile", str(archivo)]) == 0
         data = buf.getvalue()
     assert "ncalls" in data and "tottime" in data
 
