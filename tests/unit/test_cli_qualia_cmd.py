@@ -77,6 +77,11 @@ def test_cli_qualia_reiniciar(tmp_path, monkeypatch, base_datos_temporal):
 def test_cli_qualia_mostrar_informa_dependencia_opcional_faltante(
     tmp_path, monkeypatch, base_datos_temporal
 ):
+    from pcobra.cobra.cli.cli import AppConfig
+    from pcobra.cobra.cli.commands.qualia_cmd import QualiaCommand
+
+    monkeypatch.setenv("COBRA_CLI_COMMAND_PROFILE", "development")
+    monkeypatch.setattr(AppConfig, "BASE_COMMAND_CLASSES", [QualiaCommand])
     _ = base_datos_temporal
     state = tmp_path / ".cobra" / "state.json"
     monkeypatch.setenv("HOME", str(tmp_path))
@@ -84,7 +89,7 @@ def test_cli_qualia_mostrar_informa_dependencia_opcional_faltante(
     from core import qualia_bridge
 
     importlib.reload(qualia_bridge)
-    from cobra.cli.cli import main
+    from pcobra.cobra.cli.cli import main
 
     with (
         patch(
@@ -96,7 +101,7 @@ def test_cli_qualia_mostrar_informa_dependencia_opcional_faltante(
             },
         ),
         patch("sys.stdout", new_callable=StringIO) as out,
-        patch("cobra.cli.cli.setup_gettext", return_value=lambda s: s),
+        patch("pcobra.cobra.cli.cli.setup_gettext", return_value=lambda s: s),
     ):
         exit_code = main(["qualia", "mostrar"])
 
