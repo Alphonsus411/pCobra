@@ -5,10 +5,11 @@ import sys
 
 from cobra.cli.cli import main
 from cobra.cli.plugin import PluginCommand
+from pcobra.cobra.cli.plugin import PluginCommand as CanonicalPluginCommand
 from pcobra.cobra.cli.plugin_registry import limpiar_registro
 
 
-class DummyPlugin(PluginCommand):
+class DummyPlugin(CanonicalPluginCommand):
     name = "dummy"
     version = "10.0.12"
 
@@ -34,7 +35,12 @@ class HolaPlugin(PluginCommand):
 sys.modules.setdefault("tests.test_cli_plugins_cmd", sys.modules[__name__])
 
 
-def test_cli_plugins_muestra_registro():
+def test_cli_plugins_muestra_registro(monkeypatch):
+    from pcobra.cobra.cli.cli import AppConfig
+    from pcobra.cobra.cli.commands.plugins_cmd import PluginsCommand
+
+    monkeypatch.setenv("COBRA_CLI_COMMAND_PROFILE", "development")
+    monkeypatch.setattr(AppConfig, "BASE_COMMAND_CLASSES", [PluginsCommand])
     ep = importlib.metadata.EntryPoint(
         name="dummy",
         value="tests.test_cli_plugins_cmd:DummyPlugin",
@@ -42,17 +48,17 @@ def test_cli_plugins_muestra_registro():
     )
     limpiar_registro()
     with patch(
-        "cobra.cli.plugin.entry_points",
+        "pcobra.cobra.cli.plugin.entry_points",
         return_value=importlib.metadata.EntryPoints((ep,)),
     ):
         with patch("sys.stdout", new_callable=StringIO) as out:
-            main(
+            assert main(
                 [
                     "--plugins-allowlist",
                     "tests.test_cli_plugins_cmd:DummyPlugin",
                     "plugins",
                 ]
-            )
+            ) == 0
     assert "dummy 10.0.12" in out.getvalue().strip()
 
 
