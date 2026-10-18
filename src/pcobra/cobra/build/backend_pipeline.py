@@ -69,7 +69,9 @@ def _validate_public_route_startup_contract() -> None:
         for backend in backends:
             assert_backend_allowed_for_scope(backend=backend, scope="public")
             binding_route_for_public_backend(backend)
-        out_of_contract = tuple(backend for backend in backends if backend not in PUBLIC_BACKENDS)
+        out_of_contract = tuple(
+            backend for backend in backends if backend not in PUBLIC_BACKENDS
+        )
         if out_of_contract:
             raise RuntimeError(
                 "Ruta pública configurada con backend fuera de python/javascript/rust. "
@@ -86,7 +88,11 @@ def _validate_internal_entrypoint_contract() -> None:
         raise RuntimeError(
             "El entrypoint interno oficial debe ser pcobra.cobra.build.backend_pipeline."
         )
-    if INTERNAL_BACKEND_API_CONTRACT != ("resolve_backend_runtime", "build", "transpile"):
+    if INTERNAL_BACKEND_API_CONTRACT != (
+        "resolve_backend_runtime",
+        "build",
+        "transpile",
+    ):
         raise RuntimeError(
             "El contrato interno del backend pipeline debe ser "
             "resolve_backend_runtime/build/transpile."
@@ -99,13 +105,16 @@ def _validate_internal_entrypoint_contract() -> None:
         )
 
 
-
-def _resolve_backend(source: str, hints: dict[str, Any] | None = None) -> BackendResolution:
+def _resolve_backend(
+    source: str, hints: dict[str, Any] | None = None
+) -> BackendResolution:
     """Resuelve backend canónico internamente a partir de source/hints."""
     context = hints or {}
     preferred_backend = context.get("preferred_backend")
     required_capabilities = tuple(context.get("required_capabilities", ()))
-    route_scope = "internal_migration" if context.get("internal_migration", False) else "public"
+    route_scope = (
+        "internal_migration" if context.get("internal_migration", False) else "public"
+    )
     return ORCHESTRATOR.resolve_backend(
         source_file=source,
         preferred_backend=preferred_backend,
@@ -114,7 +123,9 @@ def _resolve_backend(source: str, hints: dict[str, Any] | None = None) -> Backen
     )
 
 
-def resolve_backend(source: str, hints: dict[str, Any] | None = None) -> BackendResolution:
+def resolve_backend(
+    source: str, hints: dict[str, Any] | None = None
+) -> BackendResolution:
     """Compat temporal: delega en la resolución interna del pipeline.
 
     Nota: la API estable para capas superiores es ``resolve_backend_runtime``.

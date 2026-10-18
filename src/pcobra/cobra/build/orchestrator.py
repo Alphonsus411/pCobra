@@ -43,7 +43,9 @@ class BuildOrchestrator:
     compatibilidad en ``cobra compilar --backend`` / ``--tipo``.
     """
 
-    _PROJECT_TYPE_PRIORITIES: dict[str, tuple[str, ...]] = dict(PROJECT_TYPE_PUBLIC_POLICY)
+    _PROJECT_TYPE_PRIORITIES: dict[str, tuple[str, ...]] = dict(
+        PROJECT_TYPE_PUBLIC_POLICY
+    )
 
     def __init__(self) -> None:
         self._validate_public_backend_routes_contract()
@@ -57,7 +59,9 @@ class BuildOrchestrator:
         route_scope: str = "public",
     ) -> BackendResolution:
         config = get_toml_map()
-        normalized_preferred = self._normalize_optional_target(preferred_backend, route_scope=route_scope)
+        normalized_preferred = self._normalize_optional_target(
+            preferred_backend, route_scope=route_scope
+        )
         project_type = self._project_type(config)
         module_meta = self._module_metadata(config, source_file)
 
@@ -90,10 +94,16 @@ class BuildOrchestrator:
             module_target=module_target,
         )
 
-        eligible = [backend for backend in ordered_candidates if self._supports_capabilities(backend, capabilities)]
+        eligible = [
+            backend
+            for backend in ordered_candidates
+            if self._supports_capabilities(backend, capabilities)
+        ]
         if not eligible:
             eligible = [
-                backend for backend in self._default_priority() if self._supports_capabilities(backend, capabilities)
+                backend
+                for backend in self._default_priority()
+                if self._supports_capabilities(backend, capabilities)
             ]
 
         if not eligible:
@@ -152,7 +162,9 @@ class BuildOrchestrator:
             return normalized
         return "application"
 
-    def _module_metadata(self, config: dict[str, Any], source_file: str) -> dict[str, Any]:
+    def _module_metadata(
+        self, config: dict[str, Any], source_file: str
+    ) -> dict[str, Any]:
         if not isinstance(config, dict):
             return {}
         modulos = config.get("modulos", {})
@@ -179,8 +191,16 @@ class BuildOrchestrator:
         requested: tuple[str, ...],
     ) -> tuple[str, ...]:
         project = config.get("project", {}) if isinstance(config, dict) else {}
-        project_caps = project.get("required_capabilities", []) if isinstance(project, dict) else []
-        module_caps = module_meta.get("required_capabilities", []) if isinstance(module_meta, dict) else []
+        project_caps = (
+            project.get("required_capabilities", [])
+            if isinstance(project, dict)
+            else []
+        )
+        module_caps = (
+            module_meta.get("required_capabilities", [])
+            if isinstance(module_meta, dict)
+            else []
+        )
 
         merged: list[str] = []
         for group in (project_caps, module_caps, list(requested)):
@@ -192,11 +212,15 @@ class BuildOrchestrator:
                             merged.append(cap)
         return tuple(merged)
 
-    def _ordered_candidates(self, *, project_type: str, module_target: str | None) -> list[str]:
+    def _ordered_candidates(
+        self, *, project_type: str, module_target: str | None
+    ) -> list[str]:
         ordered: list[str] = []
         if module_target is not None:
             ordered.append(module_target)
-        for backend in self._PROJECT_TYPE_PRIORITIES.get(project_type, self._default_priority()):
+        for backend in self._PROJECT_TYPE_PRIORITIES.get(
+            project_type, self._default_priority()
+        ):
             if backend not in ordered:
                 ordered.append(backend)
         for backend in self._default_priority():
@@ -207,17 +231,28 @@ class BuildOrchestrator:
     def _default_priority(self) -> tuple[str, ...]:
         return tuple(PUBLIC_FALLBACK_POLICY)
 
-    def _supports_capabilities(self, backend: str, capabilities: tuple[str, ...]) -> bool:
+    def _supports_capabilities(
+        self, backend: str, capabilities: tuple[str, ...]
+    ) -> bool:
         if not capabilities:
             return True
 
         metadata = target_metadata(backend)
         for capability in capabilities:
-            if capability in {"sdk", "sdk_full", "holobit_sdk"} and metadata["sdk_contract"] != "full":
+            if (
+                capability in {"sdk", "sdk_full", "holobit_sdk"}
+                and metadata["sdk_contract"] != "full"
+            ):
                 return False
-            if capability in {"holobit", "holobit_full"} and metadata["holobit_contract"] != "full":
+            if (
+                capability in {"holobit", "holobit_full"}
+                and metadata["holobit_contract"] != "full"
+            ):
                 return False
-            if capability in {"holobit_partial", "holobit_runtime"} and metadata["holobit_contract"] == "none":
+            if (
+                capability in {"holobit_partial", "holobit_runtime"}
+                and metadata["holobit_contract"] == "none"
+            ):
                 return False
         return True
 
