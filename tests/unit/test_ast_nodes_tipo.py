@@ -1,7 +1,7 @@
 """Pruebas para el nodo de tipos del AST de Cobra."""
 
 from core import ast_nodes
-from cobra.core.lexer import Token, TipoToken
+from pcobra.cobra.core.lexer import Token, TipoToken
 
 
 def test_nodo_tipo_normaliza_nombre_y_genericos():
