@@ -137,9 +137,7 @@ class ProfileCommand(BaseCommand):
 
         try:
             tokens = Lexer(codigo).tokenizar(profile=analysis)
-            ast = parsear_tokens_resuelto(
-                tokens, parsear_kwargs={"profile": analysis}
-            )
+            ast = parsear_tokens_resuelto(tokens, parsear_kwargs={"profile": analysis})
         except Exception as e:
             mostrar_error(f"Error en análisis sintáctico: {e}")
             return 1
