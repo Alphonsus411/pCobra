@@ -65,11 +65,12 @@ def test_cli_no_debug(caplog):
         ),
         patch("cobra.cli.cli.messages.mostrar_logo"),
     ):
+        nivel_previo = logging.getLogger().level
         with caplog.at_level(logging.DEBUG):
             ret = app.run([])
 
     assert ret == 0
-    assert logging.getLogger().getEffectiveLevel() == logging.WARNING
+    assert logging.getLogger().level == nivel_previo
     assert not any(rec.levelno == logging.DEBUG for rec in caplog.records)
 
 
