@@ -137,9 +137,7 @@ def _fusionar_procedencias(
     estados = list(caminos)
     nombres = set().union(procedencias, *(estado.keys() for estado in estados))
     for nombre in nombres:
-        valores = {
-            estado.get(nombre, _PROCEDENCIA_LOCAL) for estado in estados
-        }
+        valores = {estado.get(nombre, _PROCEDENCIA_LOCAL) for estado in estados}
         procedencias[nombre] = (
             valores.pop() if len(valores) == 1 else _PROCEDENCIA_MIXTA
         )
@@ -306,9 +304,7 @@ def _fusionar_bindings_exteriores(
                     )
                 for indice in range(len(estados)):
                     estados[indice][nombre] = cadena_post_del
-    nombres = set().union(
-        bindings_exteriores, *(estado.keys() for estado in estados)
-    )
+    nombres = set().union(bindings_exteriores, *(estado.keys() for estado in estados))
     ausente = object()
     for nombre in nombres:
         valores = set()
@@ -361,9 +357,7 @@ def resolver_instanciaciones(ast: list[NodoAST]) -> list[NodoAST]:
     quien informa después de la colisión de declaraciones.
     """
 
-    _resolver_bloque(
-        ast, {}, {}, globales={}, bindings_globales={}, scope_global=True
-    )
+    _resolver_bloque(ast, {}, {}, globales={}, bindings_globales={}, scope_global=True)
     return ast
 
 
@@ -400,9 +394,7 @@ def _resolver_bloque(
             if scope_global:
                 bindings_globales[nodo.nombre] = estado_clase
             bindings_de_metodos = bindings.copy()
-            bindings_de_metodos.update(
-                (nombre, _CLASE) for nombre in clase_actual
-            )
+            bindings_de_metodos.update((nombre, _CLASE) for nombre in clase_actual)
             for metodo in nodo.metodos:
                 _resolver_nodo(
                     metodo,
@@ -421,17 +413,14 @@ def _resolver_bloque(
                 and bindings_exteriores is not None
                 and nodo.nombre in bindings
                 and not recuperable_diferido
-                and _es_binding_exterior_recuperable(
-                    nodo.nombre, nombres_externos
-                )
+                and _es_binding_exterior_recuperable(nodo.nombre, nombres_externos)
             ):
                 # Un ``con`` hermano debe conservar la invalidación que recibió
                 # del padre; fuera de ese alias temporal, el binding visible sí
                 # es una capa léxica conocida que precede a la cola ambigua.
                 if (
                     escrituras_externas is None
-                    or bindings_exteriores.get(nodo.nombre)
-                    != _CADENA_EXTERIOR_AMBIGUA
+                    or bindings_exteriores.get(nodo.nombre) != _CADENA_EXTERIOR_AMBIGUA
                 ):
                     _anteponer_binding_exterior(
                         bindings_exteriores,
@@ -467,19 +456,15 @@ def _resolver_bloque(
                     nodo.declaracion or nodo.inferencia
                 )
                 if es_declaracion:
-                    recuperable_diferido = (
-                        _materializar_recuperable_tras_sombreado(
-                            bindings_exteriores, nombre
-                        )
+                    recuperable_diferido = _materializar_recuperable_tras_sombreado(
+                        bindings_exteriores, nombre
                     )
                     if (
                         not scope_global
                         and bindings_exteriores is not None
                         and nombre in bindings
                         and not recuperable_diferido
-                        and _es_binding_exterior_recuperable(
-                            nombre, nombres_externos
-                        )
+                        and _es_binding_exterior_recuperable(nombre, nombres_externos)
                     ):
                         # Dentro de ``con`` la cola puede proceder de otro alias
                         # hermano y no constituye una capa concreta recuperable.
@@ -544,9 +529,7 @@ def _resolver_bloque_con(
     # ``nombres_externos_padre``.
     aliases_padre: set[str] = set()
     escrituras = _EscriturasExternas()
-    nombres_externos = {
-        nombre: _PROCEDENCIA_EXTERIOR for nombre in bindings_padre
-    }
+    nombres_externos = {nombre: _PROCEDENCIA_EXTERIOR for nombre in bindings_padre}
     bindings_exteriores = {
         nombre: cadena
         for nombre, cadena in (bindings_exteriores_padre or {}).items()
@@ -589,14 +572,13 @@ def _resolver_bloque_con(
                 bindings_exteriores_padre.pop(nombre, None)
     for nombre, alcance in globales.items():
         alcance_padre = globales_padre.get(nombre, _LOCAL)
-        if (
-            escrituras.eliminaciones_posibles.get(nombre, 0) == 1
-            and _es_binding_local_runtime_real(
-                nombre,
-                aliases_padre,
-                globales_padre,
-                nombres_externos_padre,
-            )
+        if escrituras.eliminaciones_posibles.get(
+            nombre, 0
+        ) == 1 and _es_binding_local_runtime_real(
+            nombre,
+            aliases_padre,
+            globales_padre,
+            nombres_externos_padre,
         ):
             continue
         if (
@@ -627,11 +609,9 @@ def _resolver_bloque_con(
             bindings_padre[nombre] = estado
             if globales_padre.get(nombre) == _GLOBAL:
                 bindings_globales_padre[nombre] = estado
-            if (
-                escrituras_padre is not None
-                and (nombres_externos_padre or {}).get(nombre)
-                in (_PROCEDENCIA_EXTERIOR, _PROCEDENCIA_MIXTA)
-            ):
+            if escrituras_padre is not None and (nombres_externos_padre or {}).get(
+                nombre
+            ) in (_PROCEDENCIA_EXTERIOR, _PROCEDENCIA_MIXTA):
                 escrituras_padre[nombre] = estado
     if isinstance(escrituras_padre, _EscriturasExternas):
         for nombre, profundidad in escrituras.eliminaciones_posibles.items():
@@ -726,9 +706,7 @@ def _resolver_nodo(
                 exteriores_locales[parametro] = (
                     (
                         bindings[parametro],
-                        _alcance_desde_funcion_hija(
-                            globales.get(parametro, _LOCAL)
-                        ),
+                        _alcance_desde_funcion_hija(globales.get(parametro, _LOCAL)),
                     ),
                     *exteriores_locales.get(parametro, ()),
                 )
@@ -744,9 +722,7 @@ def _resolver_nodo(
                 for nombre in bindings
                 if nombre not in nodo.parametros
             }
-            | {
-                parametro: _PROCEDENCIA_LOCAL for parametro in nodo.parametros
-            },
+            | {parametro: _PROCEDENCIA_LOCAL for parametro in nodo.parametros},
             bindings_exteriores=exteriores_locales,
         )
         return nodo
@@ -759,9 +735,7 @@ def _resolver_nodo(
         if nombre not in bindings or bindings[nombre] == _ELIMINADO:
             return nodo
 
-        procedencia = (nombres_externos or {}).get(
-            nombre, _PROCEDENCIA_LOCAL
-        )
+        procedencia = (nombres_externos or {}).get(nombre, _PROCEDENCIA_LOCAL)
         cadena = (bindings_exteriores or {}).get(nombre, ())
         marcador_diferido = bool(
             cadena and cadena[0] == _MARCA_RECUPERABLE_TRAS_SOMBREADO
@@ -896,9 +870,7 @@ def _resolver_nodo(
             nombres_externos.copy() if nombres_externos is not None else None
         )
         escrituras_si = (
-            escrituras_externas.copy()
-            if escrituras_externas is not None
-            else None
+            escrituras_externas.copy() if escrituras_externas is not None else None
         )
         _resolver_bloque(
             nodo.bloque_si,
@@ -919,9 +891,7 @@ def _resolver_nodo(
             nombres_externos.copy() if nombres_externos is not None else None
         )
         escrituras_sino = (
-            escrituras_externas.copy()
-            if escrituras_externas is not None
-            else None
+            escrituras_externas.copy() if escrituras_externas is not None else None
         )
         _resolver_bloque(
             nodo.bloque_sino,
@@ -987,14 +957,10 @@ def _resolver_nodo(
         )
         nombres_externos_antes = dict(nombres_externos or {})
         escrituras_antes = (
-            escrituras_externas.copy()
-            if escrituras_externas is not None
-            else None
+            escrituras_externas.copy() if escrituras_externas is not None else None
         )
         escrituras_iteracion = (
-            escrituras_externas.copy()
-            if escrituras_externas is not None
-            else None
+            escrituras_externas.copy() if escrituras_externas is not None else None
         )
         _resolver_bloque(
             nodo.cuerpo,
@@ -1077,18 +1043,12 @@ def _resolver_nodo(
             if crea_local:
                 globales_iteracion[nodo.variable] = _LOCAL_PROPIO
             if crea_local and nombres_externos_iteracion is not None:
-                nombres_externos_iteracion[
-                    nodo.variable
-                ] = _PROCEDENCIA_LOCAL
+                nombres_externos_iteracion[nodo.variable] = _PROCEDENCIA_LOCAL
         escrituras_antes = (
-            escrituras_externas.copy()
-            if escrituras_externas is not None
-            else None
+            escrituras_externas.copy() if escrituras_externas is not None else None
         )
         escrituras_iteracion = (
-            escrituras_externas.copy()
-            if escrituras_externas is not None
-            else None
+            escrituras_externas.copy() if escrituras_externas is not None else None
         )
         _resolver_bloque(
             nodo.cuerpo,
