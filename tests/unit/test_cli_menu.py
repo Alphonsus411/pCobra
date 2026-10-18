@@ -64,7 +64,7 @@ _STUBS = {
 }
 
 
-def _stub_command(name: str, class_name: str) -> None:
+def _stub_command(name: str, class_name: str, monkeypatch) -> None:
     module = types.ModuleType(f"cobra.cli.commands.{name}")
 
     class Dummy(BaseCommand):
@@ -80,11 +80,9 @@ def _stub_command(name: str, class_name: str) -> None:
 
     Dummy.__name__ = class_name
     setattr(module, class_name, Dummy)
-    sys.modules[f"cobra.cli.commands.{name}"] = module
+    monkeypatch.setitem(sys.modules, f"cobra.cli.commands.{name}", module)
 
 
-for mod, cls in _STUBS.items():
-    _stub_command(mod, cls)
 
 from pcobra.cobra.cli.cli import main
 from pcobra.cobra.cli import cli as cli_module
@@ -95,6 +93,9 @@ from pcobra.cobra.cli.commands.transpilar_inverso_cmd import TranspilarInversoCo
 
 @pytest.fixture(autouse=True)
 def _development_command_profile(monkeypatch):
+    for mod, cls in _STUBS.items():
+        _stub_command(mod, cls, monkeypatch)
+
     monkeypatch.setattr(
         "pcobra.cobra.cli.cli.resolve_command_profile", lambda: "development"
     )
