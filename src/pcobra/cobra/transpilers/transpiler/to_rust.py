@@ -13,6 +13,7 @@ from pcobra.cobra.core.ast_nodes import (
     NodoOperacionUnaria,
     NodoIdentificador,
     NodoAtributo,
+    NodoLlamadaMetodo,
     NodoEnum,
     NodoInstancia,
     NodoThrow,
@@ -77,6 +78,9 @@ from pcobra.cobra.transpilers.transpiler.rust_nodes.holobit import (
 )
 from pcobra.cobra.transpilers.transpiler.rust_nodes.llamada_funcion import (
     visit_llamada_funcion as _visit_llamada_funcion,
+)
+from pcobra.cobra.transpilers.transpiler.rust_nodes.llamada_metodo import (
+    visit_llamada_metodo as _visit_llamada_metodo,
 )
 from pcobra.cobra.transpilers.transpiler.rust_nodes.metodo import (
     visit_metodo as _visit_metodo,
@@ -265,6 +269,11 @@ class TranspiladorRust(BaseTranspiler):
                 return f"{obj}::{nodo.nombre}"
             return f"{obj}.{nodo.nombre}"
         if isinstance(nodo, NodoInstancia):
+            if nodo.argumentos:
+                raise NotImplementedError(
+                    f"POO Rust no soporta argumentos al instanciar "
+                    f"'{nodo.nombre_clase}'; el subconjunto actual usa Clase::new()."
+                )
             args = ", ".join(self.obtener_valor(a) for a in nodo.argumentos)
             return f"{nodo.nombre_clase}::new({args})"
         if isinstance(nodo, NodoHolobit):
@@ -371,6 +380,7 @@ TranspiladorRust.visit_condicional = _visit_condicional
 TranspiladorRust.visit_bucle_mientras = _visit_bucle_mientras
 TranspiladorRust.visit_funcion = _visit_funcion
 TranspiladorRust.visit_llamada_funcion = _visit_llamada_funcion
+TranspiladorRust.visit_llamada_metodo = _visit_llamada_metodo
 TranspiladorRust.visit_holobit = _visit_holobit
 TranspiladorRust.visit_clase = _visit_clase
 TranspiladorRust.visit_metodo = _visit_metodo
