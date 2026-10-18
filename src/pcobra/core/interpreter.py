@@ -2656,7 +2656,9 @@ class InterpretadorCobra:
         instancia = {"__clase__": clase, "__bases__": bases, "__atributos__": {}}
         self._verificar_valor_contexto(instancia)
         if constructor is not None:
-            self._ejecutar_descriptor_funcion_cobra(constructor, [instancia, *argumentos])
+            self._ejecutar_descriptor_funcion_cobra(
+                constructor, [instancia, *argumentos]
+            )
         return instancia
 
     def ejecutar_llamada_metodo(self, nodo):

@@ -156,6 +156,12 @@ cobra = "pcobra.cli:main"
 [tool.black]
 line-length = 88
 target-version = ["py311"]
+# También se aplica cuando Black recibe rutas explícitas desde CI.
+force-exclude = '''(?x)(
+  (^|/)docs/(frontend|build)/
+  | (^|/)src/pcobra/cobra/core/(lexer|parser)\.py$
+  | (^|/)tests/data/expected_examples/[^/]+\.py$
+)'''
 extend-exclude = '''(?x)(
   ^docs/frontend/
   | ^docs/build/
