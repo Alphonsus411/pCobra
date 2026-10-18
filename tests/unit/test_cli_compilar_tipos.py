@@ -1,5 +1,4 @@
 from io import StringIO
-import importlib
 from unittest.mock import patch
 
 import pytest
@@ -42,13 +41,7 @@ def test_cli_compilar_con_tipos(tmp_path, monkeypatch):
     cache_dir = tmp_path / "cache"
     monkeypatch.setenv("COBRA_AST_CACHE", str(cache_dir))
 
-    class DummyNode:
-        def aceptar(self, _visitor):
-            return None
-
     monkeypatch.setattr(compile_module, "validate_file", lambda _path: True)
-    monkeypatch.setattr(compile_module, "obtener_ast", lambda _codigo: [DummyNode()])
-    monkeypatch.setattr(compile_module, "construir_cadena", lambda: lambda nodo: None)
     monkeypatch.setattr(compile_module, "validar_dependencias", lambda *a, **k: None)
 
     class FakePython:
@@ -77,7 +70,6 @@ def test_cli_compilar_con_tipos(tmp_path, monkeypatch):
         "cli_ensure_entrypoint_transpilers_loaded_once",
         lambda: None,
     )
-    compile_module = importlib.reload(compile_module)
 
     class DummyPool:
         def __init__(self, processes=None):
