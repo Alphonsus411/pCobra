@@ -543,7 +543,7 @@ sin prueba. Task 42A no resuelve ninguna reparación productiva.
 | POO-009 | P2 | JS no adapta constructor/receptor/instancia | PENDIENTE | 42I |
 | POO-010 | P2 | representación POO Rust incompleta | PENDIENTE | 42J |
 | POO-011 | P2 | herencia divergente y E2E bloqueado | PENDIENTE | 42K |
-| POO-012 | P2 | atributo de clase en contenedor incorrecto | PENDIENTE | 42F |
+| POO-012 | P2 | atributo de clase en contenedor incorrecto | VALIDADO LOCALMENTE; CI PENDIENTE | 42F |
 | POO-013 | P2 | identidad AST depende de namespace/orden de importación | RESUELTO | 42B |
 | POO-014 | P3 | documentación y ejemplos contradicen frontend/objetivo | PENDIENTE | 42M |
 | POO-015 | P3 | operación `super` sin contrato aprobado | NO SOPORTADO POR CONTRATO | decisión futura independiente |
@@ -552,8 +552,9 @@ sin prueba. Task 42A no resuelve ninguna reparación productiva.
 El cierre de POO-002 corresponde a la rama local indicada en §6, pendiente de
 integración. No cambia el estado de las demás tareas ni autoriza iniciarlas.
 POO-016 queda resuelto localmente en `codex/poo016-attribute-target`, basada en
-el cierre local de POO-002 y también pendiente de integración. Esto no cierra
-42F: POO-012 sigue pendiente y no se inicia automáticamente.
+el cierre local de POO-002 y también pendiente de integración. POO-012 dispone
+de una validación local específica; su cierre definitivo queda condicionado a
+la CI remota de la actualización documental correspondiente.
 El cierre local de POO-003 está limitado al binding de métodos descrito en §10,
 en su rama separada pendiente de integración. El cierre de POO-006 se limita
 a constructores propios según §10 y también está pendiente de integración.
@@ -568,7 +569,7 @@ modifican Parser, Lexer, AST, backends ni herencia. El estado solo pasará a
 
 ### POO-012 — miembros de clase no método
 
-**EN PROGRESO / 42F.** Decisión contractual autorizada: el cuerpo de una clase
+**VALIDADO LOCALMENTE; CI PENDIENTE / 42F.** Decisión contractual autorizada: el cuerpo de una clase
 admite únicamente métodos; las asignaciones y `pasar` se rechazan de forma
 explícita. No se incorporan campos de clase, sintaxis nueva, cambios de Lexer ni
 cambios de AST en esta tarea.
@@ -591,20 +592,21 @@ Reproducción confirmada sobre la base local
 
 Lista de cumplimiento de esta tarea:
 
-- [ ] Aprobar si los miembros no método se rechazan expresamente o requieren
-  un modelo neutral de campos; decidir la compatibilidad de `pasar` en clase.
-- [ ] Autorizar específicamente cualquier cambio necesario de Parser o AST;
-  no reutilizar la autorización de POO-002 ni inventar sintaxis.
-- [ ] Reparar el contenedor y el diagnóstico según la decisión aprobada,
-  conservando métodos normativos, compatibilidad acordada y clases vacías.
-- [ ] Añadir reproducciones desde fuente y regresiones; comparar contra base
-  sin eliminar pruebas ni debilitar aserciones.
-- [ ] Verificar consumidores afectados antes de marcar POO-012 resuelto.
+- [x] Aprobar el rechazo expreso de miembros no método y de `pasar` en clase;
+  no se incorpora un modelo neutral de campos en 42F.
+- [x] Autorizar específicamente el cambio mínimo de Parser; Lexer y AST no se
+  modifican y no se introduce sintaxis nueva.
+- [x] Reparar el contenedor y el diagnóstico, conservando métodos normativos y
+  clases vacías válidas.
+- [x] Añadir reproducciones desde fuente y regresiones sin eliminar pruebas ni
+  debilitar aserciones.
+- [x] Verificar consumidores afectados: la matriz focal de Parser, contratos,
+  runtime, resolución y semántico completa 269 pruebas correctas.
 
-Las 57 pruebas de referencia de parser/clases y semántico pasaron durante el
-diagnóstico, pero no acreditan reparación de este hallazgo. El avance sobre un
-subconjunto de clases con solo métodos en 42G no puede ocultar esta limitación
-ni usarse como cierre E2E global.
+El diagnóstico inicial contó 57 pruebas de referencia de parser/clases y
+semántico. La validación de cierre amplía la evidencia a 269 pruebas focales de
+Parser, contratos, runtime, resolución y semántico. Falta únicamente la CI
+remota de este cambio documental antes de marcar POO-012 como `RESUELTO`.
 
 ### POO-013 — reproducción y causa demostrada
 
