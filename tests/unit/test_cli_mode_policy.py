@@ -216,7 +216,7 @@ def test_flag_global_solo_cobra_equivale_a_modo_cobra():
     app = CliApplication()
     app.initialize()
 
-    args = app._parse_arguments(["--solo-cobra", "menu"])
+    args = app._parse_arguments(["--solo-cobra", "repl"])
 
     assert args.solo_cobra is True
     assert args.modo == "cobra"
