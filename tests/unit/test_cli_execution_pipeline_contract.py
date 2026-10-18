@@ -681,7 +681,7 @@ def test_contrato_repl_igual_script_estado_final_con_bucles_y_asignaciones(
 @pytest.mark.parametrize(
     ("caso", "codigo_erroneo"),
     [
-        ("semantico", "variable_inexistente = 99"),
+        ("semantico", "imprimir(variable_inexistente)"),
         ("runtime", "var z = 5 / 0"),
     ],
 )
