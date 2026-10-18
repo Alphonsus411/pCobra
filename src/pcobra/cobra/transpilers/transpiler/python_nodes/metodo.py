@@ -14,7 +14,9 @@ def visit_metodo(self, nodo):
         f"[{', '.join(nodo.type_params)}]" if getattr(nodo, "type_params", []) else ""
     )
     nombre = "__init__" if nodo.nombre == "inicializar" else nodo.nombre
-    self.codigo += f"{self.obtener_indentacion()}{prefijo} {nombre}{genericos}({parametros}):\n"
+    self.codigo += (
+        f"{self.obtener_indentacion()}{prefijo} {nombre}{genericos}({parametros}):\n"
+    )
     self.nivel_indentacion += 1
     nombre_pila = f"__cobra_defer_stack_{self._defer_counter}"
     self._defer_counter += 1
