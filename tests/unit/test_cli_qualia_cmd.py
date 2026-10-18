@@ -11,6 +11,11 @@ def _capture_json(output: str) -> dict:
 
 
 def test_cli_qualia_mostrar(tmp_path, monkeypatch, base_datos_temporal):
+    from pcobra.cobra.cli.cli import AppConfig
+    from pcobra.cobra.cli.commands.qualia_cmd import QualiaCommand
+
+    monkeypatch.setenv("COBRA_CLI_COMMAND_PROFILE", "development")
+    monkeypatch.setattr(AppConfig, "BASE_COMMAND_CLASSES", [QualiaCommand])
     _ = base_datos_temporal
     state = tmp_path / ".cobra" / "state.json"
     monkeypatch.setenv("HOME", str(tmp_path))
@@ -23,7 +28,7 @@ def test_cli_qualia_mostrar(tmp_path, monkeypatch, base_datos_temporal):
     spirit.history.append("imprimir(1)")
     spirit.knowledge.node_counts["NodoImprimir"] = 1
     qb.save_state(spirit)
-    from cobra.cli.cli import main
+    from pcobra.cobra.cli.cli import main
 
     with (
         patch(
@@ -31,9 +36,9 @@ def test_cli_qualia_mostrar(tmp_path, monkeypatch, base_datos_temporal):
             return_value={"enabled": True, "reason_code": "ok", "reason": None},
         ),
         patch("sys.stdout", new_callable=StringIO) as out,
-        patch("cobra.cli.cli.setup_gettext", return_value=lambda s: s),
+        patch("pcobra.cobra.cli.cli.setup_gettext", return_value=lambda s: s),
     ):
-        main(["qualia", "mostrar"])
+        assert main(["qualia", "mostrar"]) == 0
     data = _capture_json(out.getvalue())
     assert data["node_counts"].get("NodoImprimir")
 
