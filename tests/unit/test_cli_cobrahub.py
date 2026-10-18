@@ -14,7 +14,7 @@ dummy.get_parser = lambda *args, **kwargs: None
 sys.modules.setdefault("tree_sitter_languages", dummy)
 
 from cobra.cli.commands import modules_cmd  # noqa: E402
-from cobra.cli import cobrahub_client  # noqa: E402
+from pcobra.cobra.cli import cobrahub_client  # noqa: E402
 
 
 class _PatchedSession:
@@ -86,7 +86,7 @@ def test_cli_modulos_publicar(tmp_path):
     archivo.write_text("var x = 1")
     args = type("obj", (), {"accion": "publicar", "ruta": str(archivo)})
     with (
-        patch("cobra.cli.cobrahub_client.requests.post") as mock_post,
+        patch("pcobra.cobra.cli.cobrahub_client.requests.post") as mock_post,
         patch("sys.stdout", new_callable=StringIO) as out,
     ):
         mock_resp = MagicMock()
@@ -110,7 +110,7 @@ def test_cli_modulos_buscar(tmp_path, monkeypatch):
     monkeypatch.setattr(modules_cmd, "LOCK_FILE", mod_file)
     args = type("obj", (), {"accion": "buscar", "nombre": "remote.co"})
     with (
-        patch("cobra.cli.cobrahub_client.requests.get") as mock_get,
+        patch("pcobra.cobra.cli.cobrahub_client.requests.get") as mock_get,
         patch("sys.stdout", new_callable=StringIO) as out,
     ):
         response = MagicMock()
@@ -133,8 +133,8 @@ def test_publicar_modulo_url_insegura(tmp_path, monkeypatch):
     mod.write_text("var x = 1")
     monkeypatch.setattr(cobrahub_client, "COBRAHUB_URL", "http://inseguro/api")
     with (
-        patch("cobra.cli.cobrahub_client.mostrar_error") as err,
-        patch("cobra.cli.cobrahub_client.requests.post") as mock_post,
+        patch("pcobra.cobra.cli.cobrahub_client.mostrar_error") as err,
+        patch("pcobra.cobra.cli.cobrahub_client.requests.post") as mock_post,
     ):
         ok = cobrahub_client.publicar_modulo(str(mod))
     assert not ok
@@ -149,8 +149,8 @@ def test_descargar_modulo_url_insegura(tmp_path, monkeypatch):
     destino = "out.co"
     monkeypatch.setattr(cobrahub_client, "COBRAHUB_URL", "http://inseguro/api")
     with (
-        patch("cobra.cli.cobrahub_client.mostrar_error") as err,
-        patch("cobra.cli.cobrahub_client.requests.get") as mock_get,
+        patch("pcobra.cobra.cli.cobrahub_client.mostrar_error") as err,
+        patch("pcobra.cobra.cli.cobrahub_client.requests.get") as mock_get,
     ):
         ok = cobrahub_client.descargar_modulo("m.co", destino)
     assert not ok
@@ -163,8 +163,8 @@ def test_descargar_modulo_url_insegura(tmp_path, monkeypatch):
 def test_descargar_modulo_ruta_invalida_absoluta(tmp_path):
     destino = tmp_path / "m.co"
     with (
-        patch("cobra.cli.cobrahub_client.mostrar_error") as err,
-        patch("cobra.cli.cobrahub_client.requests.get") as mock_get,
+        patch("pcobra.cobra.cli.cobrahub_client.mostrar_error") as err,
+        patch("pcobra.cobra.cli.cobrahub_client.requests.get") as mock_get,
     ):
         ok = cobrahub_client.descargar_modulo("m.co", str(destino))
     assert not ok
@@ -177,8 +177,8 @@ def test_descargar_modulo_ruta_invalida_traversal(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     destino = "../salir.co"
     with (
-        patch("cobra.cli.cobrahub_client.mostrar_error") as err,
-        patch("cobra.cli.cobrahub_client.requests.get") as mock_get,
+        patch("pcobra.cobra.cli.cobrahub_client.mostrar_error") as err,
+        patch("pcobra.cobra.cli.cobrahub_client.requests.get") as mock_get,
     ):
         ok = cobrahub_client.descargar_modulo("m.co", destino)
     assert not ok
@@ -191,8 +191,8 @@ def test_descargar_modulo_ruta_invalida_parent(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     destino = "../"
     with (
-        patch("cobra.cli.cobrahub_client.mostrar_error") as err,
-        patch("cobra.cli.cobrahub_client.requests.get") as mock_get,
+        patch("pcobra.cobra.cli.cobrahub_client.mostrar_error") as err,
+        patch("pcobra.cobra.cli.cobrahub_client.requests.get") as mock_get,
     ):
         ok = cobrahub_client.descargar_modulo("m.co", destino)
     assert not ok
@@ -204,8 +204,8 @@ def test_descargar_modulo_ruta_invalida_parent(tmp_path, monkeypatch):
 def test_descargar_modulo_ruta_invalida_tmp_espacios():
     destino = "/tmp/proyecto falso"
     with (
-        patch("cobra.cli.cobrahub_client.mostrar_error") as err,
-        patch("cobra.cli.cobrahub_client.requests.get") as mock_get,
+        patch("pcobra.cobra.cli.cobrahub_client.mostrar_error") as err,
+        patch("pcobra.cobra.cli.cobrahub_client.requests.get") as mock_get,
     ):
         ok = cobrahub_client.descargar_modulo("m.co", destino)
     assert not ok
@@ -218,7 +218,7 @@ def test_descargar_modulo_ruta_valida(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     destino = "mods/m.co"
     (tmp_path / "mods").mkdir()
-    with patch("cobra.cli.cobrahub_client.requests.get") as mock_get:
+    with patch("pcobra.cobra.cli.cobrahub_client.requests.get") as mock_get:
         resp = MagicMock()
         resp.raise_for_status.return_value = None
         resp.content = b"x"
@@ -239,7 +239,7 @@ def test_descargar_modulo_ruta_absoluta_en_base(tmp_path, monkeypatch):
     base.mkdir()
     destino = base / "m.co"
 
-    with patch("cobra.cli.cobrahub_client.requests.get") as mock_get:
+    with patch("pcobra.cobra.cli.cobrahub_client.requests.get") as mock_get:
         resp = MagicMock()
         resp.raise_for_status.return_value = None
         resp.content = b"x"
@@ -264,8 +264,8 @@ def test_descargar_modulo_ruta_parent_fuera_base(tmp_path, monkeypatch):
     destino = base / ".." / "escape" / "m.co"
 
     with (
-        patch("cobra.cli.cobrahub_client.mostrar_error") as err,
-        patch("cobra.cli.cobrahub_client.requests.get") as mock_get,
+        patch("pcobra.cobra.cli.cobrahub_client.mostrar_error") as err,
+        patch("pcobra.cobra.cli.cobrahub_client.requests.get") as mock_get,
     ):
         ok = cobrahub_client.descargar_modulo(
             "m.co", str(destino), base_permitida=str(base)
@@ -289,8 +289,8 @@ def test_descargar_modulo_ruta_symlink_fuera_base(tmp_path, monkeypatch):
     os.symlink(destino_real, enlace)
 
     with (
-        patch("cobra.cli.cobrahub_client.mostrar_error") as err,
-        patch("cobra.cli.cobrahub_client.requests.get") as mock_get,
+        patch("pcobra.cobra.cli.cobrahub_client.mostrar_error") as err,
+        patch("pcobra.cobra.cli.cobrahub_client.requests.get") as mock_get,
     ):
         ok = cobrahub_client.descargar_modulo(
             "m.co", str(enlace), base_permitida=str(base)
@@ -383,7 +383,7 @@ def test_descargar_modulo_redireccion_host_no_autorizado(tmp_path, monkeypatch):
 
     client.session.get = MagicMock(return_value=response)
 
-    with patch("cobra.cli.cobrahub_client.mostrar_error") as err:
+    with patch("pcobra.cobra.cli.cobrahub_client.mostrar_error") as err:
         ok = client.descargar_modulo("m.co", destino)
 
     assert not ok
@@ -428,8 +428,8 @@ def test_publicar_modulo_permission_error(tmp_path):
     archivo = tmp_path / "m.co"
     archivo.write_text("var x = 1")
     with (
-        patch("cobra.cli.cobrahub_client.mostrar_error") as err,
-        patch("cobra.cli.cobrahub_client.requests.post") as mock_post,
+        patch("pcobra.cobra.cli.cobrahub_client.mostrar_error") as err,
+        patch("pcobra.cobra.cli.cobrahub_client.requests.post") as mock_post,
         patch("builtins.open", side_effect=PermissionError),
     ):
         ok = cobrahub_client.publicar_modulo(str(archivo))
@@ -451,7 +451,7 @@ def test_publicar_modulo_duplicado(tmp_path):
     http_error = requests.exceptions.HTTPError(response=error_resp)
     response.raise_for_status.side_effect = http_error
     client.session.post = MagicMock(return_value=response)
-    with patch("cobra.cli.cobrahub_client.mostrar_info") as info:
+    with patch("pcobra.cobra.cli.cobrahub_client.mostrar_info") as info:
         ok = client.publicar_modulo(str(archivo))
     assert ok
     info.assert_called_once()
@@ -463,8 +463,8 @@ def test_descargar_modulo_permission_error(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     destino = "out.co"
     with (
-        patch("cobra.cli.cobrahub_client.mostrar_error") as err,
-        patch("cobra.cli.cobrahub_client.requests.get") as mock_get,
+        patch("pcobra.cobra.cli.cobrahub_client.mostrar_error") as err,
+        patch("pcobra.cobra.cli.cobrahub_client.requests.get") as mock_get,
         patch("builtins.open", side_effect=PermissionError),
     ):
         resp = MagicMock()
@@ -486,8 +486,8 @@ def test_descargar_modulo_symlink(tmp_path, monkeypatch):
     enlace = tmp_path / "link.co"
     enlace.symlink_to(destino_real)
     with (
-        patch("cobra.cli.cobrahub_client.mostrar_error") as err,
-        patch("cobra.cli.cobrahub_client.requests.get") as mock_get,
+        patch("pcobra.cobra.cli.cobrahub_client.mostrar_error") as err,
+        patch("pcobra.cobra.cli.cobrahub_client.requests.get") as mock_get,
     ):
         ok = cobrahub_client.descargar_modulo("m.co", str(enlace))
     assert not ok
@@ -502,8 +502,8 @@ def test_publicar_modulo_host_no_permitido(tmp_path, monkeypatch):
     monkeypatch.setenv("COBRA_HOST_WHITELIST", "cobrahub.example.com")
     monkeypatch.setattr(cobrahub_client, "COBRAHUB_URL", "https://otro.com/api")
     with (
-        patch("cobra.cli.cobrahub_client.mostrar_error") as err,
-        patch("cobra.cli.cobrahub_client.requests.post") as mock_post,
+        patch("pcobra.cobra.cli.cobrahub_client.mostrar_error") as err,
+        patch("pcobra.cobra.cli.cobrahub_client.requests.post") as mock_post,
     ):
         ok = cobrahub_client.publicar_modulo(str(archivo))
     assert not ok
@@ -519,8 +519,8 @@ def test_descargar_modulo_host_no_permitido(tmp_path, monkeypatch):
     monkeypatch.setenv("COBRA_HOST_WHITELIST", "cobrahub.example.com")
     monkeypatch.setattr(cobrahub_client, "COBRAHUB_URL", "https://otro.com/api")
     with (
-        patch("cobra.cli.cobrahub_client.mostrar_error") as err,
-        patch("cobra.cli.cobrahub_client.requests.get") as mock_get,
+        patch("pcobra.cobra.cli.cobrahub_client.mostrar_error") as err,
+        patch("pcobra.cobra.cli.cobrahub_client.requests.get") as mock_get,
     ):
         ok = cobrahub_client.descargar_modulo("m.co", destino)
     assert not ok
@@ -553,8 +553,8 @@ def test_funciones_conveniencia_no_modifican_cobrahub_url_en_entorno(
     archivo.write_text("var x = 1")
 
     with (
-        patch("cobra.cli.cobrahub_client.requests.post") as mock_post,
-        patch("cobra.cli.cobrahub_client.requests.get") as mock_get,
+        patch("pcobra.cobra.cli.cobrahub_client.requests.post") as mock_post,
+        patch("pcobra.cobra.cli.cobrahub_client.requests.get") as mock_get,
     ):
         post_resp = MagicMock()
         post_resp.__enter__.return_value = post_resp
@@ -893,7 +893,7 @@ def test_instalar_paquete_descarga_demasiado_grande(tmp_path, monkeypatch):
 
     with (
         patch("pcobra.cobra.packaging.extraer_paquete") as extraer,
-        patch("cobra.cli.cobrahub_client.mostrar_error") as err,
+        patch("pcobra.cobra.cli.cobrahub_client.mostrar_error") as err,
     ):
         ok = client.instalar_paquete("demo")
 
@@ -914,7 +914,7 @@ def test_instalar_paquete_checksum_incorrecto(tmp_path, monkeypatch):
 
     with (
         patch("pcobra.cobra.packaging.extraer_paquete") as extraer,
-        patch("cobra.cli.cobrahub_client.mostrar_error") as err,
+        patch("pcobra.cobra.cli.cobrahub_client.mostrar_error") as err,
     ):
         ok = client.instalar_paquete("demo")
 
