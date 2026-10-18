@@ -37,7 +37,13 @@ def test_cli_profile_shows_stats(tmp_path, monkeypatch):
     assert "ncalls" in data and "tottime" in data
 
 
-def test_cli_profile_analysis_flag(tmp_path, monkeypatch):
+def test_cli_profile_analysis_flag(tmp_path, monkeypatch, caplog):
+    from pcobra.cobra.cli.cli import AppConfig
+    from pcobra.cobra.cli.commands.profile_cmd import ProfileCommand
+
+    monkeypatch.setenv("COBRA_CLI_COMMAND_PROFILE", "development")
+    monkeypatch.setattr(AppConfig, "BASE_COMMAND_CLASSES", [ProfileCommand])
+    caplog.set_level("INFO", logger="pcobra.cobra.core.lexer")
     monkeypatch.setattr(module_map, "get_toml_map", lambda: {})
     monkeypatch.setattr(module_map, "_toml_cache", {}, raising=False)
     archivo = tmp_path / "prog3.co"
@@ -46,9 +52,10 @@ def test_cli_profile_analysis_flag(tmp_path, monkeypatch):
         from unittest.mock import patch
 
         with patch("sys.stdout", buf):
-            main(["profile", str(archivo), "--analysis"])
+            assert main(["profile", str(archivo), "--analysis"]) == 0
         data = buf.getvalue()
-    assert "Lexer profile" in data and "Parser profile" in data
+    assert "Lexer profile" in caplog.text
+    assert "Parser profile" in data
 
 
 def test_cli_profile_invalid_ui(tmp_path, monkeypatch):
