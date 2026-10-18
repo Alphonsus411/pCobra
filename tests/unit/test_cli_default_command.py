@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 import pytest
 
-from cobra.cli.cli import CliApplication, InteractiveCommand, CustomArgumentParser, main
+from pcobra.cobra.cli.cli import CliApplication, InteractiveCommand, CustomArgumentParser, main
 from pcobra.cobra.cli.commands.base import BaseCommand
 
 
@@ -70,18 +70,37 @@ class _DummyModCommand(BaseCommand):
         return 0
 
 
+
+class _DummyGuiCommand(BaseCommand):
+    name = "gui"
+
+    def register_subparser(self, subparsers):
+        parser = subparsers.add_parser(self.name, help="Interfaz gráfica")
+        parser.set_defaults(cmd=self)
+        return parser
+
+    def run(self, _args):
+        return 0
+
+
 def _patch_cli_env(stack: ExitStack) -> None:
-    stack.enter_context(patch("cobra.cli.cli.setup_gettext"))
-    stack.enter_context(patch("cobra.cli.cli.InterpretadorCobra"))
-    stack.enter_context(
-        patch("cobra.cli.cli.autocomplete_available", return_value=False)
+    stack.enter_context(patch("pcobra.cobra.cli.cli.setup_gettext"))
+    mock_interpreter_cls = stack.enter_context(
+        patch("pcobra.cobra.cli.cli.InterpretadorCobra")
     )
-    stack.enter_context(patch("cobra.cli.cli.enable_autocomplete"))
-    stack.enter_context(patch("cobra.cli.cli.messages.disable_colors"))
-    stack.enter_context(patch("cobra.cli.cli.messages.mostrar_logo"))
-    stack.enter_context(patch("cobra.cli.cli.descubrir_plugins", return_value=[]))
+    mock_interpreter = mock_interpreter_cls.return_value
+    mock_interpreter._usar_symbol_metadata = {}
+    mock_interpreter._validador._metadata_simbolos_usar = {}
+
     stack.enter_context(
-        patch("cobra.cli.cli.resolve_command_profile", return_value="development")
+        patch("pcobra.cobra.cli.cli.autocomplete_available", return_value=False)
+    )
+    stack.enter_context(patch("pcobra.cobra.cli.cli.enable_autocomplete"))
+    stack.enter_context(patch("pcobra.cobra.cli.cli.messages.disable_colors"))
+    stack.enter_context(patch("pcobra.cobra.cli.cli.messages.mostrar_logo"))
+    stack.enter_context(patch("pcobra.cobra.cli.cli.descubrir_plugins", return_value=[]))
+    stack.enter_context(
+        patch("pcobra.cobra.cli.cli.resolve_command_profile", return_value="development")
     )
 
 
@@ -89,12 +108,12 @@ def test_no_command_prints_help_and_does_not_run_default():
     with ExitStack() as stack:
         _patch_cli_env(stack)
         stack.enter_context(
-            patch("cobra.cli.cli.AppConfig.BASE_COMMAND_CLASSES", [InteractiveCommand])
+            patch("pcobra.cobra.cli.cli.AppConfig.BASE_COMMAND_CLASSES", [InteractiveCommand])
         )
         mock_run = stack.enter_context(
-            patch("cobra.cli.cli.InteractiveCommand.run", return_value=0)
+            patch("pcobra.cobra.cli.cli.InteractiveCommand.run", return_value=0)
         )
-        mock_info = stack.enter_context(patch("cobra.cli.cli.messages.mostrar_info"))
+        mock_info = stack.enter_context(patch("pcobra.cobra.cli.cli.messages.mostrar_info"))
         app = CliApplication()
         result = app.run([])
     mock_run.assert_not_called()
@@ -108,13 +127,13 @@ def test_main_without_args_prints_help_and_returns_one():
     with ExitStack() as stack:
         _patch_cli_env(stack)
         stack.enter_context(
-            patch("cobra.cli.cli.AppConfig.BASE_COMMAND_CLASSES", [InteractiveCommand])
+            patch("pcobra.cobra.cli.cli.AppConfig.BASE_COMMAND_CLASSES", [InteractiveCommand])
         )
-        stack.enter_context(patch("cobra.cli.cli.configure_encoding"))
+        stack.enter_context(patch("pcobra.cobra.cli.cli.configure_encoding"))
         mock_run = stack.enter_context(
-            patch("cobra.cli.cli.InteractiveCommand.run", return_value=0)
+            patch("pcobra.cobra.cli.cli.InteractiveCommand.run", return_value=0)
         )
-        mock_info = stack.enter_context(patch("cobra.cli.cli.messages.mostrar_info"))
+        mock_info = stack.enter_context(patch("pcobra.cobra.cli.cli.messages.mostrar_info"))
 
         result = main([])
 
@@ -127,7 +146,7 @@ def test_unknown_command_shows_error_and_help():
     with ExitStack() as stack:
         _patch_cli_env(stack)
         stack.enter_context(
-            patch("cobra.cli.cli.AppConfig.BASE_COMMAND_CLASSES", [InteractiveCommand])
+            patch("pcobra.cobra.cli.cli.AppConfig.BASE_COMMAND_CLASSES", [InteractiveCommand])
         )
         mock_error = stack.enter_context(
             patch("cobra.cli.utils.argument_parser.messages.mostrar_error")
@@ -147,7 +166,7 @@ def test_parse_arguments_without_command_keeps_cmd_undefined():
     with ExitStack() as stack:
         _patch_cli_env(stack)
         stack.enter_context(
-            patch("cobra.cli.cli.AppConfig.BASE_COMMAND_CLASSES", [InteractiveCommand])
+            patch("pcobra.cobra.cli.cli.AppConfig.BASE_COMMAND_CLASSES", [InteractiveCommand])
         )
         first_app = CliApplication()
         first_app.initialize()
@@ -157,7 +176,7 @@ def test_parse_arguments_without_command_keeps_cmd_undefined():
     with ExitStack() as stack:
         _patch_cli_env(stack)
         stack.enter_context(
-            patch("cobra.cli.cli.AppConfig.BASE_COMMAND_CLASSES", [InteractiveCommand])
+            patch("pcobra.cobra.cli.cli.AppConfig.BASE_COMMAND_CLASSES", [InteractiveCommand])
         )
         second_app = CliApplication()
         second_app.initialize()
@@ -169,7 +188,7 @@ def test_parse_arguments_is_reentrant_on_same_instance():
     with ExitStack() as stack:
         _patch_cli_env(stack)
         stack.enter_context(
-            patch("cobra.cli.cli.AppConfig.BASE_COMMAND_CLASSES", [InteractiveCommand])
+            patch("pcobra.cobra.cli.cli.AppConfig.BASE_COMMAND_CLASSES", [InteractiveCommand])
         )
         app = CliApplication()
         app.initialize()
@@ -198,10 +217,10 @@ def test_run_is_reentrant_on_same_instance_without_command_conflict():
     with ExitStack() as stack:
         _patch_cli_env(stack)
         stack.enter_context(
-            patch("cobra.cli.cli.AppConfig.BASE_COMMAND_CLASSES", [InteractiveCommand])
+            patch("pcobra.cobra.cli.cli.AppConfig.BASE_COMMAND_CLASSES", [InteractiveCommand])
         )
         mock_run = stack.enter_context(
-            patch("cobra.cli.cli.InteractiveCommand.run", return_value=0)
+            patch("pcobra.cobra.cli.cli.InteractiveCommand.run", return_value=0)
         )
         app = CliApplication()
         app.initialize()
@@ -227,9 +246,9 @@ def test_execute_command_without_parser_returns_controlled_error():
     with ExitStack() as stack:
         _patch_cli_env(stack)
         stack.enter_context(
-            patch("cobra.cli.cli.AppConfig.BASE_COMMAND_CLASSES", [InteractiveCommand])
+            patch("pcobra.cobra.cli.cli.AppConfig.BASE_COMMAND_CLASSES", [InteractiveCommand])
         )
-        mock_error = stack.enter_context(patch("cobra.cli.cli.messages.mostrar_error"))
+        mock_error = stack.enter_context(patch("pcobra.cobra.cli.cli.messages.mostrar_error"))
         app = CliApplication()
         app.initialize()
         app.parser = None
@@ -246,12 +265,12 @@ def test_help_principal_lista_repl_como_comando_publico(capsys):
         _patch_cli_env(stack)
         stack.enter_context(
             patch(
-                "cobra.cli.cli.AppConfig.V2_COMMAND_CLASSES",
+                "pcobra.cobra.cli.cli.AppConfig.V2_COMMAND_CLASSES",
                 [_DummyRunCommand, _DummyReplCommand],
             )
         )
         stack.enter_context(
-            patch("cobra.cli.cli.resolve_command_profile", return_value="public")
+            patch("pcobra.cobra.cli.cli.resolve_command_profile", return_value="public")
         )
         app = CliApplication()
         with pytest.raises(SystemExit) as excinfo:
@@ -267,18 +286,19 @@ def test_help_sigue_ruta_de_ayuda_y_lista_comandos_publicos(capsys):
         _patch_cli_env(stack)
         stack.enter_context(
             patch(
-                "cobra.cli.cli.AppConfig.V2_COMMAND_CLASSES",
+                "pcobra.cobra.cli.cli.AppConfig.V2_COMMAND_CLASSES",
                 [
                     _DummyRunCommand,
                     _DummyBuildCommand,
                     _DummyTestCommand,
                     _DummyModCommand,
                     _DummyReplCommand,
+                    _DummyGuiCommand,
                 ],
             )
         )
         stack.enter_context(
-            patch("cobra.cli.cli.resolve_command_profile", return_value="public")
+            patch("pcobra.cobra.cli.cli.resolve_command_profile", return_value="public")
         )
         parse_known_spy = stack.enter_context(
             patch.object(
@@ -288,7 +308,7 @@ def test_help_sigue_ruta_de_ayuda_y_lista_comandos_publicos(capsys):
                 wraps=CliApplication._parse_arguments,
             )
         )
-        mock_logo = stack.enter_context(patch("cobra.cli.cli.messages.mostrar_logo"))
+        mock_logo = stack.enter_context(patch("pcobra.cobra.cli.cli.messages.mostrar_logo"))
         mock_execute = stack.enter_context(
             patch.object(CliApplication, "execute_command", autospec=True)
         )
@@ -311,12 +331,12 @@ def test_cli_sin_argumentos_no_imprime_ayuda_detallada_de_subcomandos(capsys):
         _patch_cli_env(stack)
         stack.enter_context(
             patch(
-                "cobra.cli.cli.AppConfig.V2_COMMAND_CLASSES",
+                "pcobra.cobra.cli.cli.AppConfig.V2_COMMAND_CLASSES",
                 [_DummyRunCommand, _DummyReplCommand],
             )
         )
         stack.enter_context(
-            patch("cobra.cli.cli.resolve_command_profile", return_value="public")
+            patch("pcobra.cobra.cli.cli.resolve_command_profile", return_value="public")
         )
         app = CliApplication()
         result = app.run([])
@@ -337,12 +357,12 @@ def test_cli_help_y_sin_argumentos_cubren_flujos_principales(capsys):
         _patch_cli_env(stack)
         stack.enter_context(
             patch(
-                "cobra.cli.cli.AppConfig.V2_COMMAND_CLASSES",
+                "pcobra.cobra.cli.cli.AppConfig.V2_COMMAND_CLASSES",
                 [_DummyRunCommand, _DummyReplCommand],
             )
         )
         stack.enter_context(
-            patch("cobra.cli.cli.resolve_command_profile", return_value="public")
+            patch("pcobra.cobra.cli.cli.resolve_command_profile", return_value="public")
         )
         app = CliApplication()
 
@@ -366,7 +386,7 @@ def test_cobra_sin_args_no_muestra_logo_ni_ejecuta_comandos():
         _patch_cli_env(stack)
         stack.enter_context(
             patch(
-                "cobra.cli.cli.AppConfig.V2_COMMAND_CLASSES",
+                "pcobra.cobra.cli.cli.AppConfig.V2_COMMAND_CLASSES",
                 [
                     _DummyRunCommand,
                     _DummyBuildCommand,
@@ -377,9 +397,9 @@ def test_cobra_sin_args_no_muestra_logo_ni_ejecuta_comandos():
             )
         )
         stack.enter_context(
-            patch("cobra.cli.cli.resolve_command_profile", return_value="public")
+            patch("pcobra.cobra.cli.cli.resolve_command_profile", return_value="public")
         )
-        mock_logo = stack.enter_context(patch("cobra.cli.cli.messages.mostrar_logo"))
+        mock_logo = stack.enter_context(patch("pcobra.cobra.cli.cli.messages.mostrar_logo"))
         mock_execute = stack.enter_context(
             patch.object(
                 CliApplication,
@@ -401,12 +421,12 @@ def test_public_help_no_expone_aliases_legacy_en_superficie_visible(capsys):
         _patch_cli_env(stack)
         stack.enter_context(
             patch(
-                "cobra.cli.cli.AppConfig.V2_COMMAND_CLASSES",
+                "pcobra.cobra.cli.cli.AppConfig.V2_COMMAND_CLASSES",
                 [_DummyRunCommand, _DummyReplCommand],
             )
         )
         stack.enter_context(
-            patch("cobra.cli.cli.resolve_command_profile", return_value="public")
+            patch("pcobra.cobra.cli.cli.resolve_command_profile", return_value="public")
         )
         app = CliApplication()
         with pytest.raises(SystemExit) as excinfo:
