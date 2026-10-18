@@ -4,7 +4,7 @@ from pathlib import Path
 from unittest.mock import patch
 import sys
 
-from cobra.cli.cli import main
+from pcobra.cobra.cli.cli import main
 from pcobra.cobra.cli.plugin_registry import limpiar_registro
 
 # Añadimos la carpeta de plugins de ejemplo al path para poder importar el plugin
@@ -14,7 +14,8 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(PLUGIN_DIR))
 
 
-def test_cli_saludo_plugin():
+def test_cli_saludo_plugin(monkeypatch):
+    monkeypatch.setenv("COBRA_CLI_COMMAND_PROFILE", "development")
     ep = importlib.metadata.EntryPoint(
         name="saludo",
         value="saludo_plugin:SaludoCommand",
@@ -22,9 +23,9 @@ def test_cli_saludo_plugin():
     )
     limpiar_registro()
     with patch(
-        "cobra.cli.plugin.entry_points",
+        "pcobra.cobra.cli.plugin.entry_points",
         return_value=importlib.metadata.EntryPoints((ep,)),
     ):
         with patch("sys.stdout", new_callable=StringIO) as out:
-            main(["--plugins-allowlist", "saludo_plugin:SaludoCommand", "saludo"])
+            assert main(["--plugins-allowlist", "saludo_plugin:SaludoCommand", "saludo"]) == 0
     assert "¡Hola desde el plugin de ejemplo!" in out.getvalue()

@@ -1,6 +1,6 @@
 from argparse import ArgumentParser
 from typing import Any
-from cobra.cli.plugin import PluginCommand
+from pcobra.cobra.cli.plugin import PluginCommand
 
 
 class SaludoCommand(PluginCommand):
