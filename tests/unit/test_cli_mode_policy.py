@@ -285,15 +285,10 @@ def test_help_global_refuerza_solo_programar_interpretar_sin_codegen():
     ],
 )
 def test_comandos_codegen_bloqueados_muestran_mensaje_homogeneo(
-    module, command, args, monkeypatch
+    module, command, args, capsys
 ):
-    mensajes = []
-    monkeypatch.setattr(module, "mostrar_error", lambda msg: mensajes.append(msg))
-
     rc = command.run(args)
 
     assert rc == 1
-    assert any(
-        "Acción sugerida: cambia a --modo mixto o --modo transpilar" in m
-        for m in mensajes
-    )
+    salida = capsys.readouterr().out
+    assert "Acción sugerida: cambia a --modo mixto o --modo transpilar" in salida
