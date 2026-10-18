@@ -1,7 +1,7 @@
 from argparse import Namespace
 from unittest.mock import patch
 
-from cobra.cli.commands.agix_cmd import AgixCommand
+from pcobra.cobra.cli.commands.agix_cmd import AgixCommand
 from pcobra.ia.analizador_agix import DependenciaAGIXNoDisponibleError
 
 
