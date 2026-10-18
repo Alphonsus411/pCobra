@@ -4,7 +4,6 @@ import pytest
 
 from pcobra.cobra.backends.python_adapter import PythonAdapter
 from pcobra.cobra.backends.javascript_adapter import JavaScriptAdapter
-from pcobra.cobra.backends.rust_adapter import RustAdapter
 from pcobra.cobra.core import Lexer, Parser
 
 
@@ -42,9 +41,7 @@ def test_constructor_conserva_identidad_y_python_ejecuta_su_cuerpo(declaracion):
 def test_colision_historica_se_detecta_en_ambos_ordenes(nombres):
     fuente = (
         "clase Persona:\n"
-        + "".join(
-            f"    metodo {nombre}(este):\n        pasar\n" for nombre in nombres
-        )
+        + "".join(f"    metodo {nombre}(este):\n        pasar\n" for nombre in nombres)
         + "fin\n"
     )
     parser = Parser(Lexer(fuente).tokenizar())
@@ -74,22 +71,15 @@ def test_constructor_historico_python_sigue_ejecutable():
     assert entorno["Persona"]("Adolfo").nombre == "Adolfo"
 
 
-@pytest.mark.parametrize(
-    ("adaptador", "cabecera"),
-    [
-        (JavaScriptAdapter, "constructor(nombre) {"),
-        (RustAdapter, "fn inicializar(este, nombre) {"),
-    ],
-)
-def test_salida_backend_no_reintroduce_nombre_python(adaptador, cabecera):
+def test_salida_javascript_no_reintroduce_nombre_python():
     nodos = _parsear(
         "clase Persona:\n"
         "    metodo inicializar(este, nombre):\n"
         "        atributo este nombre = nombre\n"
         "fin\n"
     )
-    salida = adaptador().compile(nodos)
-    assert cabecera in salida
+    salida = JavaScriptAdapter().compile(nodos)
+    assert "constructor(nombre) {" in salida
     assert "__init__" not in salida
     assert nodos[0].metodos[0].nombre == "inicializar"
     assert nodos[0].metodos[0].parametros == ["este", "nombre"]

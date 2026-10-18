@@ -473,10 +473,15 @@ cuando semánticamente se construye un objeto.
 
 ### Rust
 
-Rust no traducirá literalmente el modelo Python. Su tarea definirá el
-subconjunto soportado y una representación idiomática basada, cuando proceda,
-en `struct`, `impl`, `new`, campos y receptor. Toda capacidad no soportada debe
-producir un diagnóstico explícito, no código aparentemente válido pero erróneo.
+POO-010 fija inicialmente un subconjunto sin estado: una clase sin herencia ni
+genéricos puede declarar el constructor vacío `inicializar(este)` y métodos sin
+argumentos adicionales. El backend la representa mediante `struct`, `impl`,
+`new()` y receptor `&self`; la instancia se emite como `Clase::new()` y la
+llamada de método sin argumentos se conserva.
+
+Los atributos de instancia, argumentos de constructor o método, herencia y
+genéricos producen un diagnóstico explícito. No se infieren tipos ni se emite
+código aparentemente válido para capacidades que este subconjunto no cubre.
 
 ## 12. Herencia, override y `super`
 
