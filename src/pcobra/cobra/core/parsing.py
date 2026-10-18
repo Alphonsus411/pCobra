@@ -34,7 +34,7 @@ def parsear_codigo_resuelto(codigo: str, *, usar_cache: bool = True) -> list[Any
     sqlite_db_key = os.environ.get("SQLITE_DB_KEY")
     cache_configurada = bool(sqlite_db_key and sqlite_db_key.strip())
     if usar_cache and cache_configurada:
-        from pcobra.core.ast_cache import obtener_ast
+        from pcobra.cobra.core.ast_cache import obtener_ast
 
         return obtener_ast(codigo)
 

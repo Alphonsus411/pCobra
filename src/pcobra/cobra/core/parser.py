@@ -282,7 +282,7 @@ class ClassicParser:
     def parsear(self, *, incremental: bool = False, profile: bool = False):
         """Parsea tokens con soporte de caché incremental y perfilado."""
         if incremental:
-            from pcobra.core.ast_cache import _obtener_ast_sintactico_fragmento
+            from pcobra.cobra.core.ast_cache import _obtener_ast_sintactico_fragmento
 
             codigo = "\n".join(
                 str(token.valor) if token.valor is not None else ""
