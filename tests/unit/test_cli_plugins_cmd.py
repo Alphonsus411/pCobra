@@ -4,7 +4,6 @@ import importlib.metadata
 import sys
 
 from cobra.cli.cli import main
-from cobra.cli.plugin import PluginCommand
 from pcobra.cobra.cli.plugin import PluginCommand as CanonicalPluginCommand
 from pcobra.cobra.cli.plugin_registry import limpiar_registro
 
@@ -20,7 +19,7 @@ class DummyPlugin(CanonicalPluginCommand):
         pass
 
 
-class HolaPlugin(PluginCommand):
+class HolaPlugin(CanonicalPluginCommand):
     name = "hola"
     version = "1.0"
 
@@ -62,7 +61,8 @@ def test_cli_plugins_muestra_registro(monkeypatch):
     assert "dummy 10.0.12" in out.getvalue().strip()
 
 
-def test_cli_plugin_ejemplo_hola():
+def test_cli_plugin_ejemplo_hola(monkeypatch):
+    monkeypatch.setenv("COBRA_CLI_COMMAND_PROFILE", "development")
     ep = importlib.metadata.EntryPoint(
         name="hola",
         value="tests.test_cli_plugins_cmd:HolaPlugin",
@@ -70,13 +70,13 @@ def test_cli_plugin_ejemplo_hola():
     )
     limpiar_registro()
     with patch(
-        "cobra.cli.plugin.entry_points",
+        "pcobra.cobra.cli.plugin.entry_points",
         return_value=importlib.metadata.EntryPoints((ep,)),
     ):
         with patch("sys.stdout", new_callable=StringIO) as out:
-            main(
+            assert main(
                 ["--plugins-allowlist", "tests.test_cli_plugins_cmd:HolaPlugin", "hola"]
-            )
+            ) == 0
     assert "¡Hola desde un plugin!" in out.getvalue().strip()
 
 
