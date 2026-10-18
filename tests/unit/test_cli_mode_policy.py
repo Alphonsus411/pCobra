@@ -94,22 +94,17 @@ def test_modo_cobra_bloquea_compilar(monkeypatch, tmp_path):
     assert any("no está permitido" in m and "--modo" in m for m in mensajes)
 
 
-def test_modo_transpilar_bloquea_ejecutar(monkeypatch, tmp_path):
+def test_modo_transpilar_bloquea_ejecutar(capsys, tmp_path):
     archivo = tmp_path / "demo.cobra"
     archivo.write_text("imprimir(1)", encoding="utf-8")
-    mensajes = []
-
-    monkeypatch.setattr(
-        execute_module, "mostrar_error", lambda msg: mensajes.append(msg)
-    )
-
     args = SimpleNamespace(
         archivo=str(archivo), sandbox=False, contenedor=None, modo="transpilar"
     )
     rc = ExecuteCommand().run(args)
 
     assert rc == 1
-    assert any("no está permitido" in m and "--modo" in m for m in mensajes)
+    salida = capsys.readouterr().out
+    assert any("no está permitido" in m and "--modo" in m for m in salida.splitlines())
 
 
 def test_modo_mixto_permite_ejecutar_y_falla_por_archivo(monkeypatch, tmp_path):
