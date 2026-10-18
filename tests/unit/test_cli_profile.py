@@ -59,6 +59,11 @@ def test_cli_profile_analysis_flag(tmp_path, monkeypatch, caplog):
 
 
 def test_cli_profile_invalid_ui(tmp_path, monkeypatch):
+    from pcobra.cobra.cli.cli import AppConfig
+    from pcobra.cobra.cli.commands.profile_cmd import ProfileCommand
+
+    monkeypatch.setenv("COBRA_CLI_COMMAND_PROFILE", "development")
+    monkeypatch.setattr(AppConfig, "BASE_COMMAND_CLASSES", [ProfileCommand])
     monkeypatch.setattr(module_map, "get_toml_map", lambda: {})
     monkeypatch.setattr(module_map, "_toml_cache", {}, raising=False)
     archivo = tmp_path / "prog4.co"
@@ -67,6 +72,6 @@ def test_cli_profile_invalid_ui(tmp_path, monkeypatch):
         from unittest.mock import patch
 
         with patch("sys.stdout", buf):
-            main(["profile", str(archivo), "--ui", "fake_tool"])
+            assert main(["profile", str(archivo), "--ui", "fake_tool"]) == 1
         data = buf.getvalue()
     assert "fake_tool" in data and "no encontrada" in data
