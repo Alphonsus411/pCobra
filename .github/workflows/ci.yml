@@ -685,6 +685,7 @@ jobs:
         run: |
           python scripts/benchmarks/compare_releases.py \
             --output benchmarks_compare.json \
+            --baseline-ref v10.1.2 \
             --max-regression 10
       - name: Upload benchmark results
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
