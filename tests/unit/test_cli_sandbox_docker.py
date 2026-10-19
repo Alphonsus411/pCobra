@@ -1,6 +1,5 @@
 from io import StringIO
 from unittest.mock import patch
-import subprocess
 
 from cobra.cli.cli import main
 from cobra.transpilers import module_map
@@ -10,33 +9,14 @@ def test_cli_sandbox_docker_invoca_docker(monkeypatch):
     monkeypatch.setattr(module_map, "get_toml_map", lambda: {})
     with (
         patch("builtins.input", side_effect=["print(2+2)", "salir()"]),
-        patch("subprocess.run") as mock_run,
+        patch(
+            "pcobra.cobra.cli.commands.interactive_cmd.ejecutar_en_contenedor",
+            return_value="4\n",
+        ) as mock_ejecutar_en_contenedor,
     ):
-        mock_run.return_value = subprocess.CompletedProcess(
-            [], 0, stdout="4\n", stderr=""
-        )
-        main(["interactive", "--sandbox-docker", "python"])
-        mock_run.assert_called_once_with(
-            [
-                "docker",
-                "run",
-                "--rm",
-                "--network=none",
-                "--pids-limit=128",
-                "--memory=256m",
-                "--user",
-                "65534:65534",
-                "--read-only",
-                "--tmpfs",
-                "/tmp",
-                "--cap-drop=ALL",
-                "-i",
-                "cobra-python-sandbox",
-            ],
-            input="print(2+2)",
-            text=True,
-            capture_output=True,
-            check=True,
+        main(["repl", "--sandbox-docker", "python"])
+        mock_ejecutar_en_contenedor.assert_called_once_with(
+            "print(2+2)", "python"
         )
 
 
@@ -44,8 +24,16 @@ def test_cli_sandbox_docker_sin_docker(monkeypatch):
     monkeypatch.setattr(module_map, "get_toml_map", lambda: {})
     with (
         patch("builtins.input", side_effect=["print(1)", "salir()"]),
-        patch("subprocess.run", side_effect=FileNotFoundError),
+        patch(
+            "pcobra.cobra.cli.commands.interactive_cmd.ejecutar_en_contenedor",
+            side_effect=RuntimeError(
+                "Docker no está disponible: no se encontró el ejecutable en PATH"
+            ),
+        ),
         patch("sys.stdout", new_callable=StringIO) as out,
     ):
-        main(["interactive", "--sandbox-docker", "python"])
-    assert "Docker no está instalado" in out.getvalue()
+        main(["repl", "--sandbox-docker", "python"])
+    assert (
+        out.getvalue()
+        == "Error: Docker no está disponible: no se encontró el ejecutable en PATH\n"
+    )
