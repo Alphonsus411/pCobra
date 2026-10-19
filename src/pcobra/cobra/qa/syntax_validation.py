@@ -462,6 +462,7 @@ def execute_syntax_validation(
     targets_requested: list[str] = []
     summaries: dict[str, TargetSummary] = {}
     errors_by_target: dict[str, list[str]] = {}
+    events: list[dict[str, str]] = []
 
     if run_transpilers:
         targets_requested = _parse_targets_csv(targets_raw)
