@@ -98,6 +98,7 @@ class SyntaxValidationExecution:
     profile: str
     targets_requested: list[str]
     has_failures: bool
+    events: list[dict[str, str]] = field(default_factory=list)
 
 
 @dataclass
@@ -470,7 +471,7 @@ def execute_syntax_validation(
                 "No hay fixtures disponibles para validar transpiladores."
             )
 
-        transpilers_report, _, transpilers_failed = run_transpiler_syntax_validation(
+        transpilers_report, events, transpilers_failed = run_transpiler_syntax_validation(
             fixtures=fixtures,
             targets=targets_requested,
             transpilers=transpilers,
@@ -492,4 +493,5 @@ def execute_syntax_validation(
         profile=normalized_profile,
         targets_requested=targets_requested,
         has_failures=has_failures,
+        events=events,
     )
