@@ -15,9 +15,7 @@ def test_cli_sandbox_docker_invoca_docker(monkeypatch):
         ) as mock_ejecutar_en_contenedor,
     ):
         main(["repl", "--sandbox-docker", "python"])
-        mock_ejecutar_en_contenedor.assert_called_once_with(
-            "print(2+2)", "python"
-        )
+        mock_ejecutar_en_contenedor.assert_called_once_with("print(2+2)", "python")
 
 
 def test_cli_sandbox_docker_sin_docker(monkeypatch):
