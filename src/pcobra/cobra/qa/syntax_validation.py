@@ -472,11 +472,13 @@ def execute_syntax_validation(
                 "No hay fixtures disponibles para validar transpiladores."
             )
 
-        transpilers_report, events, transpilers_failed = run_transpiler_syntax_validation(
-            fixtures=fixtures,
-            targets=targets_requested,
-            transpilers=transpilers,
-            strict=strict,
+        transpilers_report, events, transpilers_failed = (
+            run_transpiler_syntax_validation(
+                fixtures=fixtures,
+                targets=targets_requested,
+                transpilers=transpilers,
+                strict=strict,
+            )
         )
         summaries = transpilers_report.targets
         errors_by_target = transpilers_report.errors_by_target
