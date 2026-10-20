@@ -585,6 +585,10 @@ class TranspiladorPython(BaseTranspiler):
         elif isinstance(nodo, NodoLlamadaFuncion):
             args = ", ".join(self.obtener_valor(a) for a in nodo.argumentos)
             return f"{nodo.nombre}({args})"
+        elif isinstance(nodo, NodoLlamadaMetodo):
+            obj = self.obtener_valor(nodo.objeto)
+            args = ", ".join(self.obtener_valor(a) for a in nodo.argumentos)
+            return f"{obj}.{nodo.nombre_metodo}({args})"
         elif isinstance(nodo, NodoHolobit):
             valores = ", ".join(self.obtener_valor(v) for v in nodo.valores)
             return f"cobra_holobit([{valores}])"
