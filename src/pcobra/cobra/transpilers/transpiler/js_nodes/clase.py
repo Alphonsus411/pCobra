@@ -4,13 +4,17 @@ def visit_clase(self, nodo):
     if self.usa_indentacion is None:
         self.usa_indentacion = any(hasattr(m, "variable") for m in metodos)
     bases = getattr(nodo, "bases", [])
+    if len(bases) > 1:
+        raise NotImplementedError(
+            "POO JavaScript no soporta herencia múltiple; "
+            "el contrato actual admite una sola clase base"
+        )
     base = f" extends {bases[0]}" if bases else ""
-    extra = f" /* bases: {', '.join(bases)} */" if len(bases) > 1 else ""
     if getattr(nodo, "type_params", []):
         self.agregar_linea(
             f"// Generics {', '.join(nodo.type_params)} no soportados en JavaScript"
         )
-    self.agregar_linea(f"class {nodo.nombre}{base} {{{extra}")
+    self.agregar_linea(f"class {nodo.nombre}{base} {{")
     if self.usa_indentacion:
         self.indentacion += 1
     for metodo in metodos:
