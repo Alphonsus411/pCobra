@@ -1,5 +1,4 @@
 import fs from 'fs';
-import fetch from 'node-fetch';
 
 export function leer_archivo(ruta) {
     return fs.readFileSync(ruta, 'utf-8');
