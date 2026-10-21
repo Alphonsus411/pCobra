@@ -3,8 +3,11 @@ from __future__ import annotations
 import py_compile
 from pathlib import Path
 
+import pytest
+
 from pcobra.cobra_installer import (
     BuildOptions,
+    CobraInstallerError,
     CobraProject,
     RuntimePreparationResult,
     prepare_runtime,
@@ -107,3 +110,13 @@ def test_prepare_runtime_acepta_dependencias_como_rutas_y_no_resuelve_si_se_omit
 
     assert (result.packages_dir / "manual.co").read_bytes() == b"manual"
     assert result.dependency_resolution is None
+
+
+def test_build_project_rechaza_build_options_ambiguos(tmp_path: Path) -> None:
+    from pcobra.cobra_installer import build_project
+
+    with pytest.raises(CobraInstallerError, match="No combines un objeto BuildOptions"):
+        build_project(
+            BuildOptions(project_root=tmp_path),
+            BuildOptions(project_root=tmp_path),
+        )
