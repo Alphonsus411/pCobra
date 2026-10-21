@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import argparse
 from typing import Any, cast
 
 from pcobra.cobra.cli.commands.base import BaseCommand
