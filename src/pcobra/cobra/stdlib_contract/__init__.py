@@ -40,7 +40,7 @@ def _parse_literal_tuple(node: ast.AST) -> tuple[str, ...]:
     return tuple(values)
 
 
-def _load_stdlib_blueprints() -> tuple[_Blueprint, ...]:
+def _load_stdlib_blueprints() -> list[_Blueprint]:
     module_path = (
         Path(__file__).resolve().parents[1] / "architecture" / "unified_ecosystem.py"
     )
