@@ -8,6 +8,11 @@ def visit_clase(self, nodo):
             self.codigo += f"{self.obtener_indentacion()}@{expr}\n"
     metodos = getattr(nodo, "metodos", getattr(nodo, "cuerpo", []))
     bases_lista = list(getattr(nodo, "bases", []))
+    if len(bases_lista) > 1:
+        raise NotImplementedError(
+            "POO Python no soporta herencia múltiple; "
+            "el contrato actual admite una sola clase base"
+        )
     if getattr(nodo, "type_params", []):
         self.usa_typing = True
         for tp in nodo.type_params:

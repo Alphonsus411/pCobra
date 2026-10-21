@@ -2606,6 +2606,11 @@ class InterpretadorCobra:
 
     def ejecutar_clase(self, nodo):
         """Registra una clase definida por el usuario."""
+        if len(nodo.bases) > 1:
+            raise NotImplementedError(
+                "La herencia múltiple no está soportada; "
+                "el contrato actual admite una sola clase base"
+            )
         bases_resueltas = []
         for base_nombre in nodo.bases:
             base = self.obtener_variable(base_nombre)
