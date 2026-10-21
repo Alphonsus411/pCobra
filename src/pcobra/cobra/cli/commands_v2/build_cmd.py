@@ -1,8 +1,8 @@
-import argparse
 from typing import Any, cast
 
 from pcobra.cobra.build import backend_pipeline
 from pcobra.cobra.cli.commands.base import BaseCommand
+from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 from pcobra.cobra.cli.services import build_service as build_service_module
 from pcobra.cobra.cli.services.build_service import BuildService
 from pcobra.cobra.cli.i18n import _
@@ -25,7 +25,7 @@ class BuildCommandV2(BaseCommand):
         self._service = BuildService()
         self._runtime_manager = self._service._runtime_manager
 
-    def register_subparser(self, subparsers: Any) -> argparse.ArgumentParser:
+    def register_subparser(self, subparsers: Any) -> CustomArgumentParser:
         parser = subparsers.add_parser(
             self.name, help=_("Build/transpile a Cobra file")
         )
@@ -45,7 +45,7 @@ class BuildCommandV2(BaseCommand):
             parser, include_project_path=False, hide_target_help=True
         )
         parser.set_defaults(cmd=self)
-        return cast(argparse.ArgumentParser, parser)
+        return cast(CustomArgumentParser, parser)
 
     def run(self, args: Any) -> int:
         if bool(getattr(args, "installer", False)):

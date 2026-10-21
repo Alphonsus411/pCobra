@@ -1,7 +1,7 @@
-import argparse
 from typing import Any, cast
 
 from pcobra.cobra.cli.commands.base import BaseCommand
+from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 from pcobra.cobra.cli.services.contracts import ModRequest
 from pcobra.cobra.cli.services.mod_service import ModService
 from pcobra.cobra.cli.i18n import _
@@ -16,7 +16,7 @@ class ModCommandV2(BaseCommand):
         super().__init__()
         self._service = ModService()
 
-    def register_subparser(self, subparsers: Any) -> argparse.ArgumentParser:
+    def register_subparser(self, subparsers: Any) -> CustomArgumentParser:
         parser = subparsers.add_parser(self.name, help=_("Manage Cobra modules"))
         mod_sub = parser.add_subparsers(dest="action")
 
@@ -35,7 +35,7 @@ class ModCommandV2(BaseCommand):
         search.add_argument("name", help=_("Module name"))
 
         parser.set_defaults(cmd=self)
-        return cast(argparse.ArgumentParser, parser)
+        return cast(CustomArgumentParser, parser)
 
     def run(self, args: Any) -> int:
         action_map = {
