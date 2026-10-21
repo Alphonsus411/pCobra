@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Mapping
+from typing import Any, Mapping, cast
 
 from pcobra.cobra.backends.base import BackendAdapter
 from pcobra.cobra.transpilers.transpiler.to_python import TranspiladorPython
@@ -14,8 +14,11 @@ class PythonAdapter(BackendAdapter):
     def compile(self, ast: Any, options: Mapping[str, Any] | None = None) -> str:
         opts = options or {}
         transpiler = TranspiladorPython()
-        return transpiler.generate_code(
-            ast,
-            source_file=opts.get("source_file"),
-            project_root=opts.get("project_root"),
+        return cast(
+            str,
+            transpiler.generate_code(
+                ast,
+                source_file=opts.get("source_file"),
+                project_root=opts.get("project_root"),
+            ),
         )

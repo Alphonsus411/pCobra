@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Mapping
+from typing import Any, Mapping, cast
 
 from pcobra.cobra.backends.base import BackendAdapter
 from pcobra.cobra.transpilers.transpiler.to_rust import TranspiladorRust
@@ -14,4 +14,4 @@ class RustAdapter(BackendAdapter):
     def compile(self, ast: Any, options: Mapping[str, Any] | None = None) -> str:
         _ = options or {}
         transpiler = TranspiladorRust()
-        return transpiler.generate_code(ast)
+        return cast(str, transpiler.generate_code(ast))
