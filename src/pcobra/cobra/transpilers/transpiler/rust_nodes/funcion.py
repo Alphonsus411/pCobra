@@ -33,9 +33,10 @@ def visit_funcion(self, nodo):
     self.current_function = nodo.nombre
     self.indent += 1
     try:
-        with self._enum_scope(nodo.cuerpo):
-            for instruccion in nodo.cuerpo:
-                instruccion.aceptar(self)
+        with self.rust_variable_scope():
+            with self._enum_scope(nodo.cuerpo):
+                for instruccion in nodo.cuerpo:
+                    instruccion.aceptar(self)
     finally:
         self.indent -= 1
         self.current_function = prev

@@ -2,6 +2,7 @@
 
 Los parámetros de tipo de Cobra se convierten en genéricos idiomáticos de Rust."""
 
+from collections.abc import Iterator
 from contextlib import contextmanager
 
 from pcobra.cobra.core import TipoToken
@@ -224,6 +225,7 @@ class TranspiladorRust(BaseTranspiler):
     def __init__(self):
         self.codigo = []
         self.indent = 0
+        self._rust_variable_scopes: list[set[str]] = [set()]
         self._defer_counter = 0
         self._enum_names = set()
         self.usa_defer_helpers = False
@@ -231,8 +233,24 @@ class TranspiladorRust(BaseTranspiler):
 
     def generate_code(self, ast):
         self.codigo = []
+        self._rust_variable_scopes = [set()]
         self.codigo = self.transpilar(ast)
         return self.codigo
+
+    @contextmanager
+    def rust_variable_scope(self) -> Iterator[None]:
+        """Aísla declaraciones locales, conservando las de ámbitos exteriores."""
+        self._rust_variable_scopes.append(set())
+        try:
+            yield
+        finally:
+            self._rust_variable_scopes.pop()
+
+    def variable_rust_declarada(self, nombre: str) -> bool:
+        return any(nombre in scope for scope in reversed(self._rust_variable_scopes))
+
+    def declarar_variable_rust(self, nombre: str) -> None:
+        self._rust_variable_scopes[-1].add(nombre)
 
     def agregar_linea(self, linea: str) -> None:
         self.codigo.append("    " * self.indent + linea)
