@@ -45,7 +45,10 @@ def package_current_project(
             progress_callback("Iniciando empaquetado del proyecto Cobra...")
         result = build_project(project_path, options)
         dist_dir = Path(
-            cast(Path | str, result.dist_dir or result.output_dir or result.artifact_path)
+            cast(
+                Path | str,
+                result.dist_dir or result.output_dir or result.artifact_path,
+            )
         )
         executable_path = _resolve_executable_path(result.executable_name, dist_dir)
         if progress_callback is not None:
