@@ -6,7 +6,7 @@ import ast
 import json
 import re
 from pathlib import Path
-from typing import Final
+from typing import Final, cast
 
 from pcobra.cobra.stdlib_contract import CONTRACTS, get_blueprint_contract_manifests
 from pcobra.cobra.stdlib_contract.base import ContractDescriptor, PublicApiExport
@@ -201,7 +201,7 @@ def _load_runtime_api_matrix() -> dict[str, object]:
         raise ContractValidationError(
             "runtime_api_matrix inválido: estructura raíz no es objeto"
         )
-    return payload
+    return cast(dict[str, object], payload)
 
 
 def validate_coverage_against_runtime_matrix(contract: ContractDescriptor) -> None:
@@ -226,7 +226,7 @@ def validate_coverage_against_runtime_matrix(contract: ContractDescriptor) -> No
                 raise ContractValidationError(
                     f"runtime_api_matrix inválido: `{backend}.global` no es lista"
                 )
-            is_available = symbol in set(global_api)
+            is_available = symbol in set(cast(list[str], global_api))
             if level == "full" and not is_available:
                 raise ContractValidationError(
                     f"{function_coverage.function}.{backend}: marcado full pero no aparece "
@@ -273,7 +273,9 @@ def validate_contracts_against_blueprints() -> None:
                 f"contract={contract.primary_backend} blueprint={primary_backend}"
             )
 
-        fallback_backends = tuple(blueprint.get("fallback_permitido", []))
+        fallback_backends: tuple[str, ...] = tuple(
+            cast(list[str], blueprint.get("fallback_permitido", []))
+        )
         if contract.allowed_fallback != fallback_backends:
             raise ContractValidationError(
                 f"{module}: fallbacks inconsistentes con STDLIB_BLUEPRINTS. "

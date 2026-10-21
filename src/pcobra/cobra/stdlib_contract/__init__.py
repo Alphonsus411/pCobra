@@ -2,6 +2,7 @@
 
 import ast
 from pathlib import Path
+from typing import TypedDict
 
 from pcobra.cobra.stdlib_contract.base import ContractDescriptor
 from pcobra.cobra.stdlib_contract.capability_matrix import MODULE_CAPABILITY_MATRIX
@@ -18,6 +19,14 @@ CONTRACTS: tuple[ContractDescriptor, ...] = (
 )
 
 
+class _Blueprint(TypedDict):
+    module: str
+    primary_backend: str
+    api_contract: tuple[str, ...]
+    fallback_backends: tuple[str, ...]
+    rationale: str
+
+
 def _parse_literal_tuple(node: ast.AST) -> tuple[str, ...]:
     if not isinstance(node, (ast.Tuple, ast.List)):
         raise RuntimeError(
@@ -31,13 +40,13 @@ def _parse_literal_tuple(node: ast.AST) -> tuple[str, ...]:
     return tuple(values)
 
 
-def _load_stdlib_blueprints() -> tuple[dict[str, object], ...]:
+def _load_stdlib_blueprints() -> tuple[_Blueprint, ...]:
     module_path = (
         Path(__file__).resolve().parents[1] / "architecture" / "unified_ecosystem.py"
     )
     source = module_path.read_text(encoding="utf-8")
     tree = ast.parse(source, filename=str(module_path))
-    blueprints: list[dict[str, object]] = []
+    blueprints: list[_Blueprint] = []
     for node in ast.walk(tree):
         value_node: ast.AST | None = None
         if isinstance(node, ast.Assign):
