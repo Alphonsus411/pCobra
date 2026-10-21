@@ -107,7 +107,7 @@ class BuilderConfig:
     ) -> "BuilderConfig":
         """Crea una configuración mínima desde un builder o cadena."""
 
-        if isinstance(value, cls):
+        if isinstance(value, BuilderConfig):
             return value
         return cls(builder=BuilderKind.from_value(value))
 

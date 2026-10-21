@@ -9,6 +9,7 @@ from pcobra.cobra.hub.lockfile import (
 )
 from pcobra.cobra.hub.models import CobraHubResolution, LockedDependency
 from pcobra.cobra.hub.errors import CobraHubError
+from pcobra.cobra.hub.installation import CobraHubResolver
 from pcobra.cobra_installer.project import CobraInstallerError
 
 from pcobra.cobra.hub.resolver import (
@@ -26,11 +27,20 @@ class CobraDependencyError(CobraInstallerError):
     """Excepción histórica de resolución expuesta por CobraInstaller."""
 
 
-def resolve_project_dependencies(*args, **kwargs):
+def resolve_project_dependencies(
+    project_root: str | Path,
+    *,
+    resolver: CobraHubResolver | None = None,
+    fail_on_unused_declared: bool = False,
+) -> DependencyResolutionResult:
     """Traduce los fallos de dominio para preservar la API del Installer."""
 
     try:
-        return _resolve_project_dependencies(*args, **kwargs)
+        return _resolve_project_dependencies(
+            project_root,
+            resolver=resolver,
+            fail_on_unused_declared=fail_on_unused_declared,
+        )
     except _HubDependencyError as exc:
         raise CobraDependencyError(str(exc)) from exc
     except CobraHubError as exc:
