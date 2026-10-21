@@ -55,3 +55,26 @@ def test_rust_pipeline_reasignacion_compila_con_rustc(tmp_path: Path):
         capture_output=True,
         text=True,
     )
+
+
+def test_rust_pipeline_reasigna_variable_dentro_de_mientras(tmp_path: Path):
+    source = tmp_path / "reasignacion_en_bucle.cobra"
+    source.write_text(
+        "var contador = 0\n"
+        "mientras contador < 2:\n"
+        "    contador = contador + 1\n"
+        "fin\n"
+        "imprimir(contador)\n",
+        encoding="utf-8",
+    )
+
+    result = backend_pipeline.build(
+        str(source),
+        {"preferred_backend": "rust", "source_file": str(source)},
+    )
+
+    assert result["backend"] == "rust"
+    assert "let mut contador = 0;" in result["code"]
+    assert "while contador < 2 {" in result["code"]
+    assert "contador = contador + 1;" in result["code"]
+    assert "let contador = contador + 1;" not in result["code"]
