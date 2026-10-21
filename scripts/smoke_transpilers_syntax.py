@@ -40,6 +40,9 @@ def main() -> int:
 
     if execution.has_failures:
         print("\n🚨 Smoke de transpiladores con fallos en targets oficiales.")
+        for target in ordered_targets:
+            for error in execution.report.errors_by_target.get(target, []):
+                print(f"   - {target}: {error}")
         return 1
 
     print("\n🎉 Smoke de transpiladores completado sin fallos obligatorios.")
