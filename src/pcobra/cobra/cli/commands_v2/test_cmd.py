@@ -1,5 +1,6 @@
+import argparse
 from argparse import SUPPRESS
-from typing import Any
+from typing import Any, cast
 
 from pcobra.cobra.build import backend_pipeline
 from pcobra.cobra.architecture.backend_policy import (
@@ -31,7 +32,7 @@ class TestCommandV2(BaseCommand):
         self._runtime_manager = RuntimeManager()
         self._default_langs = ",".join(VERIFICATION_EXECUTABLE_TARGETS)
 
-    def register_subparser(self, subparsers: Any):
+    def register_subparser(self, subparsers: Any) -> argparse.ArgumentParser:
         parser = subparsers.add_parser(
             self.name, help=_("Validate project output across runtimes")
         )
@@ -49,7 +50,7 @@ class TestCommandV2(BaseCommand):
             help=SUPPRESS,
         )
         parser.set_defaults(cmd=self)
-        return parser
+        return cast(argparse.ArgumentParser, parser)
 
     def run(self, args: Any) -> int:
         debug = bool(getattr(args, "debug", False))

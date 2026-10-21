@@ -1,4 +1,5 @@
-from typing import Any
+import argparse
+from typing import Any, cast
 
 from pcobra.cobra.architecture.backend_policy import (
     assert_public_command_uses_only_public_backends,
@@ -69,7 +70,7 @@ class ReplCommandV2(BaseCommand):
         self._reset_buffer_local(buffer)
         self._reset_estado_delegate()
 
-    def register_subparser(self, subparsers: Any):
+    def register_subparser(self, subparsers: Any) -> argparse.ArgumentParser:
         parser = subparsers.add_parser(self.name, help=_("Start Cobra REPL"))
         parser.add_argument(
             "--sandbox",

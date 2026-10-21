@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import argparse
-from typing import Any
+from typing import Any, cast
 
 from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.cli.services.installer_build_service import (
@@ -19,7 +19,7 @@ class InstallerCommandV2(BaseCommand):
     name = "installer"
     capability = "codegen"
 
-    def register_subparser(self, subparsers: Any):
+    def register_subparser(self, subparsers: Any) -> argparse.ArgumentParser:
         parser = subparsers.add_parser(
             self.name,
             help="Construye instaladores/autoejecutables de proyectos Cobra",
@@ -35,7 +35,7 @@ class InstallerCommandV2(BaseCommand):
         )
         register_installer_build_arguments(build_parser)
         build_parser.set_defaults(cmd=self)
-        return parser
+        return cast(argparse.ArgumentParser, parser)
 
     def run(self, args: Any) -> int:
         if getattr(args, "installer_action", None) != "build":
