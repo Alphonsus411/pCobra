@@ -1,9 +1,10 @@
-from typing import Any
+from typing import Any, cast
 
 from pcobra.cobra.architecture.backend_policy import (
     assert_public_command_uses_only_public_backends,
 )
 from pcobra.cobra.cli.commands.base import BaseCommand
+from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 from pcobra.cobra.cli.commands.interactive_cmd import (
     InteractiveCommand,
     SANDBOX_DOCKER_CHOICES,
@@ -69,7 +70,7 @@ class ReplCommandV2(BaseCommand):
         self._reset_buffer_local(buffer)
         self._reset_estado_delegate()
 
-    def register_subparser(self, subparsers: Any):
+    def register_subparser(self, subparsers: Any) -> CustomArgumentParser:
         parser = subparsers.add_parser(self.name, help=_("Start Cobra REPL"))
         parser.add_argument(
             "--sandbox",
@@ -99,7 +100,7 @@ class ReplCommandV2(BaseCommand):
             help=_("Continue even if memory limit cannot be applied"),
         )
         parser.set_defaults(cmd=self)
-        return parser
+        return cast(CustomArgumentParser, parser)
 
     def _sincronizar_estado_hacia_delegate(self) -> None:
         """Sincroniza estado persistente local hacia el comando delegado."""

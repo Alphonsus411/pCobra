@@ -1,5 +1,5 @@
 from argparse import SUPPRESS
-from typing import Any
+from typing import Any, cast
 
 from pcobra.cobra.build import backend_pipeline
 from pcobra.cobra.architecture.backend_policy import (
@@ -8,6 +8,7 @@ from pcobra.cobra.architecture.backend_policy import (
 )
 from pcobra.cobra.architecture.contracts import assert_backend_allowed_for_scope
 from pcobra.cobra.cli.commands.base import BaseCommand
+from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 from pcobra.cobra.bindings.runtime_manager import RuntimeManager
 from pcobra.cobra.cli.services.contracts import RunRequest
 from pcobra.cobra.cli.services.run_service import RunService
@@ -27,7 +28,7 @@ class RunCommandV2(BaseCommand):
         self._service = RunService()
         self._runtime_manager = RuntimeManager()
 
-    def register_subparser(self, subparsers: Any):
+    def register_subparser(self, subparsers: Any) -> CustomArgumentParser:
         parser = subparsers.add_parser(self.name, help=_("Run a Cobra file"))
         parser.add_argument("file", help=_("Path to Cobra file")).completer = (
             files_completer()
@@ -46,7 +47,7 @@ class RunCommandV2(BaseCommand):
             help=SUPPRESS,
         )
         parser.set_defaults(cmd=self)
-        return parser
+        return cast(CustomArgumentParser, parser)
 
     def run(self, args: Any) -> int:
         debug = bool(getattr(args, "debug", False))
