@@ -7,7 +7,6 @@ a través de ``scripts/benchmarks/targets_policy.py``.
 import argparse
 import json
 import os
-import re
 import shutil
 import subprocess
 import sys
@@ -25,6 +24,7 @@ from scripts.benchmarks.targets_policy import (
     validate_backend_metadata,
     validate_local_targets_policy,
 )
+from pcobra.cobra.build import backend_pipeline
 
 try:
     import resource
@@ -50,6 +50,53 @@ imprimir(x)
 
 # Metadata técnica común por backend (extensiones/comandos)
 BACKEND_METADATA = BENCHMARK_BACKEND_METADATA
+
+
+def normalize_rust_program(code: str) -> str:
+    """Envuelve un snippet Rust del transpilador para poder ejecutarlo.
+
+    El backend Rust produce cuerpos de programa y conserva sus imports de
+    ``crate::corelibs`` y ``crate::standard_library``. Para los benchmarks,
+    que compilan un archivo temporal autónomo, se declaran módulos vacíos y
+    se añade el punto de entrada sin alterar la salida del transpilador.
+    """
+
+    if "fn main(" in code:
+        return code
+
+    body = "\n".join(f"    {line}" if line else "" for line in code.splitlines())
+    return (
+        "mod corelibs {}\n"
+        "mod standard_library {}\n\n"
+        "fn main() {\n"
+        f"{body}\n"
+        "}\n"
+    )
+
+
+def transpilar_benchmark(co_file: Path, backend: str) -> str:
+    """Genera código con el pipeline interno canónico para ``backend``.
+
+    Los comandos públicos de la CLI no exponen selección de backend. Los
+    benchmarks necesitan esa selección de forma explícita, por lo que usan el
+    punto de entrada interno aprobado en lugar del comando histórico
+    ``compilar``.
+    """
+
+    resultado = backend_pipeline.build(
+        str(co_file),
+        {
+            "preferred_backend": backend,
+            "source_file": str(co_file),
+        },
+    )
+    backend_resuelto = str(resultado.get("backend", ""))
+    if backend_resuelto != backend:
+        raise RuntimeError(
+            "El pipeline de benchmarks resolvió un backend distinto: "
+            f"esperado={backend}; obtenido={backend_resuelto or '∅'}"
+        )
+    return str(resultado["code"])
 
 
 def run_and_measure(
@@ -155,28 +202,12 @@ def main() -> None:
             cfg = BACKEND_METADATA[backend]
             run_cmd = cfg["run"]
             src_file = Path(tmpdir) / f"program.{cfg['ext']}"
-            transp_cmd = [
-                sys.executable,
-                "-m",
-                "cobra.cli.cli",
-                "compilar",
-                str(co_file),
-                "--tipo",
-                backend,
-            ]
             try:
-                out = subprocess.check_output(transp_cmd, env=env, text=True)
-            except subprocess.CalledProcessError:
+                out = transpilar_benchmark(co_file, backend)
+            except Exception:
                 continue
-            out = re.sub(r"\x1b\[[0-9;]*m", "", out)
-            lines = [
-                l
-                for l in out.splitlines()
-                if not l.startswith("DEBUG:") and not l.startswith("INFO:")
-            ]
-            if lines and lines[0].startswith("Código generado"):
-                lines = lines[1:]
-            out = "\n".join(lines)
+            if backend == "rust":
+                out = normalize_rust_program(out)
             src_file.write_text(out)
             if "compile" in cfg:
                 compile_cmd = [
@@ -193,6 +224,14 @@ def main() -> None:
             results.append(
                 {"backend": backend, "time": round(elapsed, 4), "memory_kb": mem}
             )
+    measured_backends = {result["backend"] for result in results}
+    missing_backends = set(selected_backends) - measured_backends
+    if not results or missing_backends:
+        os.unlink(tmp_file.name)
+        raise RuntimeError(
+            "Los benchmarks no produjeron mediciones para todos los backends: "
+            f"{', '.join(sorted(missing_backends))}."
+        )
     print(json.dumps(results, indent=2))
     os.unlink(tmp_file.name)
 
