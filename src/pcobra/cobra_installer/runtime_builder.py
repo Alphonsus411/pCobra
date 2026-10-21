@@ -5,7 +5,7 @@ from __future__ import annotations
 import shutil
 from dataclasses import dataclass, field, replace
 from pathlib import Path
-from typing import Mapping, Sequence
+from typing import Callable, Mapping, Sequence, TypedDict, Unpack, cast
 
 import pcobra
 
@@ -24,6 +24,7 @@ from .project import (
 )
 from .pyinstaller_runner import run_pyinstaller
 from .spec_writer import SpecBuildContext, write_spec
+from .targets import BuildMode, Builder, BuilderConfig, TargetOS
 from .transpile import TranspileResult, transpile_project
 from .validator import validate_build_options, validate_project
 
@@ -53,6 +54,29 @@ class RuntimePreparationResult:
     copied_resources: Mapping[str, tuple[Path, ...]] = field(default_factory=dict)
     dependency_resolution: DependencyResolutionResult | None = None
     logs: tuple[str, ...] = ()
+
+
+class _BuildOptionsOverrides(TypedDict, total=False):
+    """Opciones de build admitidas como palabras clave de compatibilidad."""
+
+    entrypoint: Path | str | None
+    output_dir: Path | str | None
+    name: str | None
+    target: TargetOS | str
+    architecture: str
+    builder: Builder | str
+    builder_config: BuilderConfig | None
+    mode: BuildMode | str
+    temp_dir: Path | str | None
+    dist_dir: Path | str | None
+    icon: Path | str | None
+    assets: Sequence[Path | str]
+    config: Mapping[str, object]
+    clean: bool
+    include_dependencies: bool
+    extra_args: Sequence[str]
+    log_callback: Callable[[str], None] | None
+    install_pyinstaller: bool
 
 
 def prepare_runtime(
@@ -127,7 +151,11 @@ def prepare_runtime(
     entrypoint = target / "pyinstaller_entrypoint.py"
     source_entrypoint = normalized_project.entrypoint or normalized_options.entrypoint
     entrypoint.write_text(
-        _pyinstaller_entrypoint_code(source_entrypoint, target), encoding="utf-8"
+        _pyinstaller_entrypoint_code(
+            Path(source_entrypoint) if source_entrypoint is not None else None,
+            target,
+        ),
+        encoding="utf-8",
     )
 
     return RuntimePreparationResult(
@@ -166,7 +194,7 @@ def prepare_runtime(
 def build_project(
     project_path: Path | str | BuildOptions | None = None,
     options: BuildOptions | None = None,
-    **overrides: object,
+    **overrides: Unpack[_BuildOptionsOverrides],
 ) -> BuildResult:
     """Construye un proyecto Cobra completo y devuelve la ruta de ``dist``.
 
@@ -183,7 +211,13 @@ def build_project(
     ``build_project(project_path, options)``.
     """
 
-    if isinstance(project_path, BuildOptions) and options is None:
+    if isinstance(project_path, BuildOptions):
+        if options is not None:
+            raise CobraInstallerError(
+                "No combines un objeto BuildOptions como primer argumento con "
+                "el parámetro options. Usa build_project(options) o "
+                "build_project(project_path, options)."
+            )
         base = project_path
     else:
         base = options or BuildOptions(project_root=project_path or Path.cwd())
@@ -265,7 +299,8 @@ def build_project(
 
     output_dir = Path(normalized.output_dir or Path(normalized.project_root) / "dist")
     output_dir.mkdir(parents=True, exist_ok=True)
-    name = normalized.name or Path(project.entrypoint or transpiled.generated_code).stem
+    project_entrypoint = cast(Path | str, project.entrypoint)
+    name = normalized.name or Path(project_entrypoint or transpiled.generated_code).stem
 
     step("generacion_spec", "Generando especificación .spec de PyInstaller...", 7)
     spec_path = write_spec(
@@ -282,7 +317,7 @@ def build_project(
 
     step("escritura_manifiesto", "Escribiendo manifiesto de build...", 9)
     manifest_path = create_manifest(
-        normalized, Path(project.entrypoint), output_dir, name
+        normalized, Path(project_entrypoint), output_dir, name
     )
     logs.append(f"Manifiesto generado en {manifest_path}.")
     logger.info(
@@ -299,7 +334,7 @@ def build_project(
         architecture=normalized.architecture,
         builder=normalized.builder,
         builder_config=normalized.builder_config,
-        mode=normalized.mode,
+        mode=BuildMode.from_value(normalized.mode),
         executable_name=name,
         temp_dir=build_dir,
         dist_dir=output_dir,
@@ -317,7 +352,8 @@ def build_project(
 
 
 def package_current_project(
-    project_root: str | Path | None = None, **kwargs: object
+    project_root: str | Path | None = None,
+    **kwargs: Unpack[_BuildOptionsOverrides],
 ) -> BuildResult:
     """Empaqueta el proyecto actual; punto único que debe llamar el IDLE."""
 
