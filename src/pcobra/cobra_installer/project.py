@@ -305,7 +305,7 @@ def _read_cobra_toml(path: Path) -> dict[str, object]:
         )
     try:
         return tomllib.loads(path.read_text(encoding="utf-8"))
-    except tomllib.TOMLDecodeError as exc:  # type: ignore[union-attr]
+    except tomllib.TOMLDecodeError as exc:
         raise CobraInstallerError(f"cobra.toml no es válido: {exc}") from exc
 
 

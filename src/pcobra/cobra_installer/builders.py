@@ -28,7 +28,11 @@ _RESERVED_BUILDERS = {
 class BuildBackend(Protocol):
     """Contrato mínimo para ejecutar el paso backend de un build Cobra."""
 
-    kind: BuilderKind
+    @property
+    def kind(self) -> BuilderKind:
+        """Identifica el backend sin exigir que sea mutable."""
+
+        ...
 
     def run_pyinstaller(
         self, spec_path: Path, options: BuildOptions, logger: BuildLogger

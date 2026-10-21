@@ -18,7 +18,7 @@ class BuildMode(StrEnum):
     def from_value(cls, value: "BuildMode | str") -> "BuildMode":
         """Normaliza cadenas o instancias de enum al modo de build canónico."""
 
-        if isinstance(value, cls):
+        if isinstance(value, BuilderConfig):
             return value
         return cls(str(value))
 
