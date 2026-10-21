@@ -154,7 +154,7 @@ def validate_build_options(options: BuildOptions) -> BuildOptions:
         )
     if normalized.icon is not None:
         _validate_icon_path(
-            normalized.icon,
+            Path(normalized.icon),
             Path(normalized.project_root),
             extra_errors,
             field_name="icon",
@@ -197,6 +197,7 @@ def _validate_entrypoint(
             )
         )
         return
+    entrypoint = Path(entrypoint)
     if not entrypoint.is_file():
         errors.append(
             ValidationErrorDetail(
@@ -233,6 +234,7 @@ def _validate_cobra_toml(
     path = project.cobra_toml
     if path is None:
         return
+    path = Path(path)
     if path.name != "cobra.toml":
         errors.append(
             ValidationErrorDetail(
@@ -289,7 +291,10 @@ def _validate_cobra_lock(
     project: CobraProject, root: Path, errors: list[ValidationErrorDetail]
 ) -> None:
     path = project.cobra_lock
-    if path is None or not path.exists():
+    if path is None:
+        return
+    path = Path(path)
+    if not path.exists():
         return
     if path.name != "cobra.lock":
         errors.append(
@@ -465,6 +470,8 @@ def _validate_co_package_distinction(
     project: CobraProject, errors: list[ValidationErrorDetail]
 ) -> None:
     entrypoint = project.entrypoint
+    if entrypoint is not None:
+        entrypoint = Path(entrypoint)
     if (
         entrypoint is not None
         and entrypoint.suffix.lower() == ".co"
@@ -502,7 +509,7 @@ def _read_toml_mapping(
 ) -> dict[str, object] | None:
     try:
         data = tomllib.loads(path.read_text(encoding="utf-8"))
-    except tomllib.TOMLDecodeError as exc:  # type: ignore[union-attr]
+    except tomllib.TOMLDecodeError as exc:
         errors.append(
             ValidationErrorDetail(
                 f"{field_name}_syntax_invalid",
