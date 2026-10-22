@@ -8,6 +8,7 @@ import argparse
 import json
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 from typing import Any, cast
 from urllib.error import HTTPError
@@ -20,10 +21,10 @@ HISTORY_URL = (
 )
 
 
-def ejecutar_benchmarks() -> list[dict[str, Any]]:
+def ejecutar_benchmarks(repo_root: Path | None = None) -> list[dict[str, Any]]:
     """Ejecuta los benchmarks de la versión actual y devuelve la lista de resultados."""
-    root = Path(__file__).resolve().parents[2]
-    script = Path(__file__).resolve().parent / "run_benchmarks.py"
+    root = repo_root or Path(__file__).resolve().parents[2]
+    script = root / "scripts" / "benchmarks" / "run_benchmarks.py"
 
     try:
         cmd = [sys.executable, str(script)]
@@ -31,6 +32,49 @@ def ejecutar_benchmarks() -> list[dict[str, Any]]:
     except subprocess.CalledProcessError as err:
         raise RuntimeError("Fallo al ejecutar run_benchmarks.py") from err
     return cast(list[dict[str, Any]], json.loads(out))
+
+
+def ejecutar_benchmarks_en_ref(ref: str) -> list[dict[str, Any]]:
+    """Mide un ref de Git en un worktree temporal del mismo entorno de CI."""
+    root = Path(__file__).resolve().parents[2]
+    with tempfile.TemporaryDirectory(prefix="pcobra-benchmark-baseline-") as temp_dir:
+        baseline_root = Path(temp_dir) / "baseline"
+        try:
+            subprocess.run(
+                [
+                    "git",
+                    "-C",
+                    str(root),
+                    "worktree",
+                    "add",
+                    "--detach",
+                    str(baseline_root),
+                    ref,
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            return ejecutar_benchmarks(baseline_root)
+        except subprocess.CalledProcessError as err:
+            raise RuntimeError(
+                f"No se pudo preparar el baseline de benchmarks para {ref!r}"
+            ) from err
+        finally:
+            subprocess.run(
+                [
+                    "git",
+                    "-C",
+                    str(root),
+                    "worktree",
+                    "remove",
+                    "--force",
+                    str(baseline_root),
+                ],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
 
 
 def descargar_benchmarks(base: str | None = None) -> list[dict[str, Any]]:
@@ -98,15 +142,25 @@ def main() -> None:
         default=10.0,
         help="Porcentaje máximo permitido de regresión en tiempo o memoria",
     )
-    parser.add_argument(
+    baseline_group = parser.add_mutually_exclusive_group()
+    baseline_group.add_argument(
         "--base",
         type=str,
         help="Versión base a comparar desde benchmarks-history",
     )
+    baseline_group.add_argument(
+        "--baseline-ref",
+        type=str,
+        help="Ref de Git que se medirá en un worktree temporal como baseline",
+    )
     args = parser.parse_args()
 
     actuales = ejecutar_benchmarks()
-    previos = descargar_benchmarks(args.base)
+    previos = (
+        ejecutar_benchmarks_en_ref(args.baseline_ref)
+        if args.baseline_ref
+        else descargar_benchmarks(args.base)
+    )
     resumen = comparar(actuales, previos)
     args.output.write_text(json.dumps(resumen, indent=2))
 
