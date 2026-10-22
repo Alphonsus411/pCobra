@@ -568,7 +568,7 @@ modifican Parser, Lexer, AST, backends ni herencia. El estado solo pasará a
 
 ### POO-012 — miembros de clase no método
 
-**EN PROGRESO / 42F.** Decisión contractual autorizada: el cuerpo de una clase
+**RESUELTO / 42F (alcance POO-012).** Decisión contractual aplicada: el cuerpo de una clase
 admite únicamente métodos; las asignaciones y `pasar` se rechazan de forma
 explícita. No se incorporan campos de clase, sintaxis nueva, cambios de Lexer ni
 cambios de AST en esta tarea.
@@ -589,17 +589,24 @@ Reproducción confirmada sobre la base local
 - La declaración de una clase vacía o de una clase con métodos normales no
   presenta esos errores. Esto no demuestra ejecución POO completa.
 
+Evidencia de cierre: `Parser.declaracion_clase()` rechaza desde fuente Cobra
+`var campo = 1` y `pasar` con el diagnóstico determinista
+`Solo se permiten métodos en el cuerpo de una clase; se encontró '<lexema>'.`.
+Las clases vacías y las que contienen métodos continúan siendo válidas. Las
+pruebas focales están en `tests/unit/test_parser_clase.py` y la suite de parser
+relacionada confirma este contrato.
+
 Lista de cumplimiento de esta tarea:
 
-- [ ] Aprobar si los miembros no método se rechazan expresamente o requieren
-  un modelo neutral de campos; decidir la compatibilidad de `pasar` en clase.
-- [ ] Autorizar específicamente cualquier cambio necesario de Parser o AST;
-  no reutilizar la autorización de POO-002 ni inventar sintaxis.
-- [ ] Reparar el contenedor y el diagnóstico según la decisión aprobada,
-  conservando métodos normativos, compatibilidad acordada y clases vacías.
-- [ ] Añadir reproducciones desde fuente y regresiones; comparar contra base
-  sin eliminar pruebas ni debilitar aserciones.
-- [ ] Verificar consumidores afectados antes de marcar POO-012 resuelto.
+- [x] Se rechazan expresamente los miembros no método; `pasar` no es válido
+  dentro de una clase y no se incorpora un modelo de campos.
+- [x] El Parser aplica exclusivamente el contrato aprobado, sin cambios de AST
+  ni sintaxis nueva.
+- [x] El diagnóstico conserva métodos normativos y clases vacías.
+- [x] Las reproducciones y regresiones parten de fuente Cobra, sin eliminar ni
+  debilitar aserciones.
+- [x] Se verificó el parser de clases y métodos antes de declarar POO-012
+  resuelto.
 
 Las 57 pruebas de referencia de parser/clases y semántico pasaron durante el
 diagnóstico, pero no acreditan reparación de este hallazgo. El avance sobre un
