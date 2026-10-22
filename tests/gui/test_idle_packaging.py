@@ -20,6 +20,8 @@ class Control(SimpleNamespace):
 
 
 class FakeFlet:
+    _code_editor_factory = Control
+
     class Icons:
         INSERT_DRIVE_FILE = "file"
         FOLDER = "folder"
@@ -108,10 +110,9 @@ def test_boton_empaquetar_detecta_proyecto_pide_opciones_y_muestra_progreso(
         progress_callback("Progreso mock: generando ejecutable")
         dist_dir = Path(project_path) / "dist"
         artifact_path = dist_dir / "proyecto_activo"
-        return SimpleNamespace(
+        return idle_bridge.IdlePackageResult(
             dist_dir=dist_dir,
-            output_dir=None,
-            artifact_path=artifact_path,
+            executable_path=artifact_path,
         )
 
     monkeypatch.setattr(runtime, "require_flet", lambda: FakeFlet)
@@ -220,8 +221,9 @@ def test_idle_advierte_si_no_puede_abrir_dist(monkeypatch, tmp_path):
 
     def fake_package_current_project(project_path, ui_options, progress_callback=None):
         dist_dir = Path(project_path) / "dist"
-        return SimpleNamespace(
-            dist_dir=dist_dir, output_dir=None, artifact_path=dist_dir / "demo"
+        return idle_bridge.IdlePackageResult(
+            dist_dir=dist_dir,
+            executable_path=dist_dir / "demo",
         )
 
     def fake_abrir_carpeta_dist(_dist_dir):
@@ -274,7 +276,10 @@ def test_idle_pide_confirmacion_antes_de_instalar_pyinstaller(monkeypatch, tmp_p
     def fake_package_current_project(project_path, ui_options, progress_callback=None):
         package_calls.append((Path(project_path), dict(ui_options), progress_callback))
         dist_dir = Path(project_path) / "dist"
-        return SimpleNamespace(dist_dir=dist_dir, artifact_path=dist_dir / "demo")
+        return idle_bridge.IdlePackageResult(
+            dist_dir=dist_dir,
+            executable_path=dist_dir / "demo",
+        )
 
     monkeypatch.setattr(runtime, "require_flet", lambda: FakeFlet)
     monkeypatch.setattr(runtime, "resolver_workspace_root_idle", lambda: workspace)
