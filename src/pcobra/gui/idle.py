@@ -1020,10 +1020,8 @@ def main(page: "ft.Page"):
                     page.update()
                     return
 
-                dist_dir = Path(
-                    result.dist_dir or result.output_dir or proyecto_detectado / "dist"
-                )
-                artifact = result.artifact_path or dist_dir
+                dist_dir = result.dist_dir
+                artifact = result.executable_path or dist_dir
                 progreso.value = f"Empaquetado finalizado: {artifact}"
                 salida.value += f"\nEmpaquetado finalizado: {artifact}"
                 page.update()
