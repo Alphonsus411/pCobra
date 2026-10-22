@@ -40,6 +40,15 @@ def main() -> int:
 
     if execution.has_failures:
         print("\n🚨 Smoke de transpiladores con fallos en targets oficiales.")
+        for event in execution.events:
+            if event["status"] == "fail":
+                print(
+                    " - {target} | {fixture}: {message}".format(
+                        target=event["target"],
+                        fixture=event["fixture"],
+                        message=event["message"],
+                    )
+                )
         return 1
 
     print("\n🎉 Smoke de transpiladores completado sin fallos obligatorios.")
