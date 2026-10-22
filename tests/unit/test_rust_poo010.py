@@ -42,3 +42,47 @@ def test_backend_rust_diagnostica_atributos_no_soportados():
 
     with pytest.raises(NotImplementedError, match="atributos de instancia"):
         RustAdapter().compile(ast)
+
+
+@pytest.mark.parametrize(
+    ("fuente", "diagnostico"),
+    [
+        (
+            "clase Persona:\n"
+            "    metodo inicializar(este, nombre):\n"
+            "        pasar\n"
+            "fin\n",
+            "parámetros de constructor",
+        ),
+        (
+            "clase Persona:\n"
+            "    metodo saludar(este, nombre):\n"
+            "        imprimir nombre\n"
+            "fin\n",
+            "parámetros tipados",
+        ),
+        (
+            "clase Persona:\n"
+            "    metodo saludar(este):\n"
+            "        pasar\n"
+            "fin\n"
+            "var persona = Persona()\n"
+            'persona.saludar("Adolfo")\n',
+            "argumentos en la llamada al método",
+        ),
+        (
+            "clase Hija(Base):\n"
+            "    metodo saludar(este):\n"
+            "        pasar\n"
+            "fin\n",
+            "herencia",
+        ),
+    ],
+)
+def test_backend_rust_diagnostica_limites_del_subconjunto_desde_fuente(
+    fuente, diagnostico
+):
+    ast = parsear_codigo_resuelto(fuente, usar_cache=False)
+
+    with pytest.raises(NotImplementedError, match=diagnostico):
+        RustAdapter().compile(ast)
