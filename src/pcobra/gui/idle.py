@@ -6,7 +6,7 @@ import subprocess
 import sys
 import threading
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from pcobra.gui import runtime
 
@@ -96,7 +96,7 @@ def validar_project_root_eliminable_idle(
     return project_root_resuelto
 
 
-def main(page: "ft.Page"):
+def main(page: "ft.Page") -> None:
     """Interfaz principal del IDLE con archivos, árbol, ejecución, tokens, AST y sugerencias."""
     ft = runtime.require_flet()
 
@@ -172,13 +172,13 @@ def main(page: "ft.Page"):
         ):
             cancelar_confirmacion_carpeta_eliminacion_pendiente()
 
-    def ruta_visible_cambiada(_e=None) -> None:
+    def ruta_visible_cambiada(_e: Any = None) -> None:
         cancelar_confirmacion_si_cambia_ruta_pendiente()
         cancelar_confirmacion_carpeta_si_cambia_ruta_pendiente()
 
     ruta_input.on_change = ruta_visible_cambiada
 
-    def marcar_cambios(_e=None) -> None:
+    def marcar_cambios(_e: Any = None) -> None:
         runtime.marcar_cambios_editor(estado, entrada.obtener_contenido())
         actualizar_pagina()
 
@@ -302,7 +302,7 @@ def main(page: "ft.Page"):
         actualizar_pagina()
         return True
 
-    def cargar_archivo_desde_evento_arbol(e) -> None:
+    def cargar_archivo_desde_evento_arbol(e: Any) -> None:
         control = getattr(e, "control", None)
         ruta = getattr(control, "data", None)
         if ruta is None:
@@ -391,7 +391,7 @@ def main(page: "ft.Page"):
         if not readme.exists():
             readme.write_text(f"# {nombre}\n", encoding="utf-8")
 
-    def crear_proyecto_handler(_e):
+    def crear_proyecto_handler(_e: Any) -> None:
         nonlocal project_root, proyecto_cerrado
         try:
             nombre = nombre_proyecto_seguro(raiz_input.value or "")
@@ -409,7 +409,7 @@ def main(page: "ft.Page"):
         salida.value = f"Proyecto creado: {project_root}"
         actualizar_pagina()
 
-    def establecer_raiz_arbol_handler(_e):
+    def establecer_raiz_arbol_handler(_e: Any) -> None:
         nonlocal project_root, proyecto_cerrado
         try:
             nueva_raiz = resolver_directorio_proyecto(raiz_input.value or "")
@@ -435,7 +435,7 @@ def main(page: "ft.Page"):
         salida.value = f"Proyecto abierto: {project_root}"
         actualizar_pagina()
 
-    def cerrar_proyecto_handler(_e):
+    def cerrar_proyecto_handler(_e: Any) -> None:
         nonlocal project_root, proyecto_cerrado
         if project_root.resolve() == workspace_root.resolve():
             salida.value = "No hay proyecto activo para cerrar."
@@ -451,7 +451,7 @@ def main(page: "ft.Page"):
         salida.value = "Proyecto cerrado."
         actualizar_pagina()
 
-    def eliminar_proyecto_handler(_e):
+    def eliminar_proyecto_handler(_e: Any) -> None:
         nonlocal project_root, proyecto_cerrado
         workspace_root_resuelto = workspace_root.resolve()
 
@@ -495,10 +495,10 @@ def main(page: "ft.Page"):
             autofocus=True,
         )
 
-        def cerrar_dialogo(_ev=None) -> None:
+        def cerrar_dialogo(_ev: Any = None) -> None -> None:
             page.close(dialog)
 
-        def confirmar_eliminacion(_ev=None) -> None:
+        def confirmar_eliminacion(_ev: Any = None) -> None -> None:
             nonlocal project_root, proyecto_cerrado
 
             confirmacion = confirmacion_input.value or ""
@@ -572,7 +572,7 @@ def main(page: "ft.Page"):
         )
         page.open(dialog)
 
-    def nuevo_handler(_e):
+    def nuevo_handler(_e: Any) -> None:
         contenido, salida.value = runtime.crear_archivo_nuevo_en_editor(estado)
         if contenido:
             entrada.establecer_contenido(contenido)
@@ -580,7 +580,7 @@ def main(page: "ft.Page"):
             entrada.limpiar()
         actualizar_pagina()
 
-    def abrir_handler(_e):
+    def abrir_handler(_e: Any) -> None:
         if not requerir_proyecto_activo():
             return
 
@@ -590,7 +590,7 @@ def main(page: "ft.Page"):
 
         cargar_archivo(ruta)
 
-    def guardar_handler(_e):
+    def guardar_handler(_e: Any) -> None:
 
         if not requerir_proyecto_activo():
             return
@@ -619,7 +619,7 @@ def main(page: "ft.Page"):
         reconstruir_arbol()
         actualizar_pagina()
 
-    def guardar_como_handler(_e):
+    def guardar_como_handler(_e: Any) -> None:
         """Guarda usando el campo Ruta, flujo canónico del IDLE principal."""
         if not requerir_proyecto_activo():
             return
@@ -639,7 +639,7 @@ def main(page: "ft.Page"):
             ruta_input.value = str(ruta)
             page.update()
 
-    def recargar_handler(_e):
+    def recargar_handler(_e: Any) -> None:
 
         if not requerir_proyecto_activo():
             return
@@ -668,7 +668,7 @@ def main(page: "ft.Page"):
         reconstruir_arbol()
         actualizar_pagina()
 
-    def crear_carpeta_handler(_e):
+    def crear_carpeta_handler(_e: Any) -> None:
         if not requerir_proyecto_activo():
             return
 
@@ -698,7 +698,7 @@ def main(page: "ft.Page"):
         salida.value = f"Carpeta creada: {ruta_creada}"
         actualizar_pagina()
 
-    def eliminar_archivo_handler(_e):
+    def eliminar_archivo_handler(_e: Any) -> None:
         nonlocal confirmacion_eliminacion_archivo_pendiente
 
         cancelar_confirmacion_si_cambia_ruta_pendiente()
@@ -750,7 +750,7 @@ def main(page: "ft.Page"):
         salida.value = f"Archivo eliminado: {ruta_resuelta}"
         actualizar_pagina()
 
-    def eliminar_carpeta_handler(_e):
+    def eliminar_carpeta_handler(_e: Any) -> None:
         nonlocal confirmacion_eliminacion_carpeta_pendiente
 
         cancelar_confirmacion_carpeta_si_cambia_ruta_pendiente()
@@ -887,23 +887,23 @@ def main(page: "ft.Page"):
         leer_codigo=entrada.obtener_contenido, salida=salida, page=page
     )
 
-    def ejecutar_handler(e):
+    def ejecutar_handler(e: Any) -> None:
         if archivo_activo_permite_accion_cobra(runtime.ACCION_EJECUTAR):
             ejecutar_runtime_handler(e)
 
-    def tokens_handler(e):
+    def tokens_handler(e: Any) -> None:
         if archivo_activo_permite_accion_cobra(runtime.ACCION_TOKENS):
             tokens_runtime_handler(e)
 
-    def ast_handler(e):
+    def ast_handler(e: Any) -> None:
         if archivo_activo_permite_accion_cobra(runtime.ACCION_AST):
             ast_runtime_handler(e)
 
-    def sugerencias_handler(e):
+    def sugerencias_handler(e: Any) -> None:
         if archivo_activo_permite_accion_cobra(runtime.ACCION_SUGERENCIAS):
             sugerencias_runtime_handler(e)
 
-    def correccion_handler(e):
+    def correccion_handler(e: Any) -> None:
         if archivo_activo_permite_accion_cobra(runtime.ACCION_CORRECCION):
             correccion_runtime_handler(e)
 
@@ -929,7 +929,7 @@ def main(page: "ft.Page"):
         page.update()
         return None
 
-    def empaquetar_handler(_e):
+    def empaquetar_handler(_e: Any) -> None:
         """Abre el diálogo permanente de empaquetado para el proyecto actual."""
 
         proyecto_detectado = resolver_ruta_empaquetado_activa()
@@ -971,12 +971,12 @@ def main(page: "ft.Page"):
             ft, value=f"Proyecto detectado: {proyecto_detectado}"
         )
 
-        def cerrar_dialogo(_ev=None) -> None:
+        def cerrar_dialogo(_ev: Any = None) -> None -> None:
             dialog.open = False
             page.update()
 
         def ejecutar_empaquetado(
-            _ev=None, *, instalacion_confirmada: bool = False
+            _ev: Any = None, *, instalacion_confirmada: bool = False
         ) -> None:
             install_pyinstaller = bool(
                 getattr(instalar_pyinstaller_switch, "value", False)
@@ -1128,7 +1128,7 @@ def main(page: "ft.Page"):
         page.update()
         return False
 
-    def crear_paquete_handler(e):
+    def crear_paquete_handler(e: Any) -> None:
         if project_root is None:
             salida.value = "Abre o crea un proyecto antes de crear un paquete."
         else:
@@ -1137,7 +1137,7 @@ def main(page: "ft.Page"):
             reconstruir_arbol()
         actualizar_pagina()
 
-    def abrir_paquete_handler(e):
+    def abrir_paquete_handler(e: Any) -> None:
         if not archivo_visible_permite_accion_paquete(runtime.ACCION_ABRIR_PAQUETE):
             return
         try:
@@ -1153,7 +1153,7 @@ def main(page: "ft.Page"):
             salida.value = f"Error abriendo paquete: {exc}"
         actualizar_pagina()
 
-    def validar_paquete_handler(e):
+    def validar_paquete_handler(e: Any) -> None:
         if not archivo_visible_permite_accion_paquete(runtime.ACCION_VALIDAR_PAQUETE):
             return
         try:
@@ -1167,7 +1167,7 @@ def main(page: "ft.Page"):
             salida.value = f"Paquete inválido: {exc}"
         actualizar_pagina()
 
-    def construir_paquete_handler(e):
+    def construir_paquete_handler(e: Any) -> None:
         try:
             if project_root is None:
                 salida.value = "Abre o crea un proyecto antes de construir un paquete."
@@ -1188,7 +1188,7 @@ def main(page: "ft.Page"):
             salida.value = f"Error construyendo paquete: {exc}"
         actualizar_pagina()
 
-    def publicar_paquete_handler(e):
+    def publicar_paquete_handler(e: Any) -> None:
         if not archivo_visible_permite_accion_paquete(runtime.ACCION_PUBLICAR_PAQUETE):
             return
         try:
