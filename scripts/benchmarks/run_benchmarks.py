@@ -153,6 +153,15 @@ def run_and_measure(
     return elapsed, mem_kb
 
 
+def write_results(results: list[dict[str, object]], output: Path | None) -> str:
+    """Serializa mediciones y, si se solicita, conserva su JSON versionable."""
+
+    payload = json.dumps(results, indent=2)
+    if output is not None:
+        output.write_text(payload + "\n", encoding="utf-8")
+    return payload
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Ejecuta benchmarks por backend")
     parser.add_argument(
@@ -170,6 +179,11 @@ def main() -> None:
             "Permite intentar ejecutar targets solo de transpilación (wasm/asm). "
             "Úsalo solo en modo experimental explícito."
         ),
+    )
+    parser.add_argument(
+        "--output",
+        type=Path,
+        help="Guarda las mediciones JSON en esta ruta además de imprimirlas.",
     )
     args = parser.parse_args()
 
@@ -232,7 +246,7 @@ def main() -> None:
             "Los benchmarks no produjeron mediciones para todos los backends: "
             f"{', '.join(sorted(missing_backends))}."
         )
-    print(json.dumps(results, indent=2))
+    print(write_results(results, args.output))
     os.unlink(tmp_file.name)
 
 
