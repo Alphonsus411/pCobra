@@ -72,3 +72,16 @@ def test_main_rechaza_resultados_vacios(monkeypatch):
 
     with pytest.raises(RuntimeError, match="todos los backends"):
         runner.main()
+
+
+def test_write_results_guarda_json_reutilizable_para_baseline(tmp_path):
+    output = tmp_path / "benchmarks_current.json"
+    results = [{"backend": "python", "time": 0.125, "memory_kb": 42}]
+
+    payload = runner.write_results(results, output)
+
+    assert output.read_text(encoding="utf-8") == payload + "\n"
+    assert output.read_text(encoding="utf-8") == (
+        '[\\n  {\\n    "backend": "python",\\n'
+        '    "time": 0.125,\\n    "memory_kb": 42\\n  }\\n]\\n'
+    )
