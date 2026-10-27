@@ -54,3 +54,25 @@ Estado a 2026-10-27. No sustituye los roadmaps ni autoriza fusiones.
 
 Actualizar este documento con evidencia fechada, hashes y enlaces al cerrar
 cada tarea; no marcar como aprobada una comprobación omitida o pendiente.
+
+## Seguimiento de Windows para #3816 — 2026-10-27
+
+- [PR #3816](https://github.com/Alphonsus411/pCobra/pull/3816), SHA
+  `58b6ad41e28a15da63fc3c331dd84f81a459e324`, base #3810
+  `7e84531e8fbb3054299c99b5c1d24a24a4fadb48`: ajuste mecánico de
+  tres literales en pruebas; Black remoto y CodeQL correctos.
+- [Flujo tests 40481210924](https://github.com/Alphonsus411/pCobra/actions/runs/40481210924):
+  Ubuntu falló en MyPy con 1703 errores; sus 1703 diagnósticos se compararon
+  línea a línea con el job Ubuntu 121413345352 de #3810 y fueron idénticos.
+  Windows, job 122111709132, fue cancelado durante la instalación de Go.
+  El fail-fast predeterminado de la matriz es una explicación probable, no
+  una causa demostrada por el registro.
+- Se solicitó exclusivamente la reejecución del job Windows 122111709132 y
+  GitHub aceptó la petición. La consulta posterior del último intento muestra
+  el job Windows 122140393170 como cancelado, sin pasos; el acceso a su log
+  devolvió 404. La respuesta también incluye otros jobs del flujo y no permite
+  asegurar cuáles se ejecutaron de nuevo. Se comprobó otra vez tras 20 segundos
+  con el mismo resultado. No se acredita ejecución ni éxito en Windows.
+- El flujo sigue en estado fallido. No se ha fusionado #3816 ni alterado CI;
+  se requiere revisar el intento en GitHub y obtener evidencia Windows antes
+  de decidir la integración según el criterio establecido.
