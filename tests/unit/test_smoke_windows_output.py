@@ -22,9 +22,7 @@ runpy.run_path(sys.argv[1], run_name='__main__')
 """
 
 
-@pytest.mark.parametrize(
-    "script", ["smoke_syntax.py", "smoke_transpilers_syntax.py"]
-)
+@pytest.mark.parametrize("script", ["smoke_syntax.py", "smoke_transpilers_syntax.py"])
 def test_redirected_windows_cp1252_preserves_smoke_output(script):
     path = ROOT / "scripts" / script
     env = os.environ.copy()
