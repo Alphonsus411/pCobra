@@ -89,3 +89,5 @@ cada tarea; no marcar como aprobada una comprobación omitida o pendiente.
   previa para modificar CI. Este ajuste no omitiría pruebas ni fallos.
 
 - El usuario autorizó el ajuste separado en `test.yml`. Se abrió [PR #3818](https://github.com/Alphonsus411/pCobra/pull/3818), SHA `6822385a1e8c25699eceaa7ceb919411cdb4e172`, apilada sobre #3816, con una sola línea `fail-fast: false`. Validación local: 23 pruebas de workflows aprobadas y comparación semántica YAML correcta. [Flujo tests](https://github.com/Alphonsus411/pCobra/actions/runs/40490418613) pendiente; no hay resultado Windows acreditado todavía.
+
+- Validación conjunta solicitada: [PR #3819](https://github.com/Alphonsus411/pCobra/pull/3819), SHA `43fb1b30f896d9f7cf4c5eb6543aa8620e618e53`, apilada sobre #3818. Replica exactamente los tres archivos de #3815; 24 pruebas locales de smoke y workflow aprobadas. La rama incluye también #3810 y #3816 por su cadena de bases; sus resultados no equivalen al SHA aislado de #3815. CI remota pendiente al abrir la PR; Windows real no validado. Es una PR diagnóstica, no una autorización de fusión.
