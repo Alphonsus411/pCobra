@@ -54,3 +54,53 @@ Estado a 2026-10-27. No sustituye los roadmaps ni autoriza fusiones.
 
 Actualizar este documento con evidencia fechada, hashes y enlaces al cerrar
 cada tarea; no marcar como aprobada una comprobación omitida o pendiente.
+
+## Seguimiento de Windows para #3816 — 2026-10-27
+
+- [PR #3816](https://github.com/Alphonsus411/pCobra/pull/3816), SHA
+  `58b6ad41e28a15da63fc3c331dd84f81a459e324`, base #3810
+  `7e84531e8fbb3054299c99b5c1d24a24a4fadb48`: ajuste mecánico de
+  tres literales en pruebas; Black remoto y CodeQL correctos.
+- [Flujo tests 40481210924](https://github.com/Alphonsus411/pCobra/actions/runs/40481210924):
+  Ubuntu falló en MyPy con 1703 errores; sus 1703 diagnósticos se compararon
+  línea a línea con el job Ubuntu 121413345352 de #3810 y fueron idénticos.
+  Windows, job 122111709132, fue cancelado durante la instalación de Go.
+  El fail-fast predeterminado de la matriz es una explicación probable, no
+  una causa demostrada por el registro.
+- Se solicitó exclusivamente la reejecución del job Windows 122111709132 y
+  GitHub aceptó la petición. La consulta posterior del último intento muestra
+  el job Windows 122140393170 como cancelado, sin pasos; el acceso a su log
+  devolvió 404. La respuesta también incluye otros jobs del flujo y no permite
+  asegurar cuáles se ejecutaron de nuevo. Se comprobó otra vez tras 20 segundos
+  con el mismo resultado. No se acredita ejecución ni éxito en Windows.
+- El flujo sigue en estado fallido. No se ha fusionado #3816 ni alterado CI;
+  se requiere revisar el intento en GitHub y obtener evidencia Windows antes
+  de decidir la integración según el criterio establecido.
+
+- Comprobación posterior: se solicitó una segunda reejecución seleccionando
+  exclusivamente el job 122140393170. La API aceptó la solicitud y mostró
+  Windows 122141436927 como cancelado, sin pasos; la descarga de su registro
+  volvió a devolver 404. El log consultado para Ubuntu 122141507837 contenía
+  marcas temporales del intento original, por lo que estas respuestas no
+  permiten determinar con certeza si hubo ejecución nueva ni su causa.
+- La PR #3808 modifica la matriz de `.github/workflows/ci.yml`; el flujo aquí
+  examinado pertenece a `.github/workflows/test.yml`. Aplicar allí
+  `fail-fast: false` requiere una propuesta separada y autorización específica
+  previa para modificar CI. Este ajuste no omitiría pruebas ni fallos.
+
+- El usuario autorizó el ajuste separado en `test.yml`. Se abrió [PR #3818](https://github.com/Alphonsus411/pCobra/pull/3818), SHA `6822385a1e8c25699eceaa7ceb919411cdb4e172`, apilada sobre #3816, con una sola línea `fail-fast: false`. Validación local: 23 pruebas de workflows aprobadas y comparación semántica YAML correcta. [Flujo tests](https://github.com/Alphonsus411/pCobra/actions/runs/40490418613) pendiente; no hay resultado Windows acreditado todavía.
+
+- Validación conjunta solicitada: [PR #3819](https://github.com/Alphonsus411/pCobra/pull/3819), SHA `43fb1b30f896d9f7cf4c5eb6543aa8620e618e53`, apilada sobre #3818. Replica exactamente los tres archivos de #3815; 24 pruebas locales de smoke y workflow aprobadas. La rama incluye también #3810 y #3816 por su cadena de bases; sus resultados no equivalen al SHA aislado de #3815. CI remota pendiente al abrir la PR; Windows real no validado. Es una PR diagnóstica, no una autorización de fusión.
+
+## Diagnóstico del smoke Rust en Ubuntu — 2026-10-27
+
+- [PR #3818, job Ubuntu 122142667551](https://github.com/Alphonsus411/pCobra/actions/runs/40490418613/job/122142667551): Rust 2 correctos, 1 fallo, 0 omitidos. El smoke solo imprime agregados, sin fixture ni diagnóstico de `rustc`.
+- [PR #3819, job Ubuntu 122152537481](https://github.com/Alphonsus411/pCobra/actions/runs/40493359458/job/122152537481): Rust 3 correctos, 0 fallos, 0 omitidos; el job después falló en linters. En ambos logs se instaló el paquete rustc `1.75.0+dfsg0ubuntu1-0ubuntu7.4`.
+- #3819 parte de #3818 y añade los scripts del ajuste de salida Windows y su prueba; no cambia Lexer, Parser, el transpilador Rust, el validador ni los fixtures. La diferencia en resultados sugiere intermitencia o influencia del entorno, sin demostrar causa concreta. El validador usa timeout de 10 s; no hay evidencia que lo identifique como causa.
+- No existe `rustc` local en el entorno de diagnóstico. No se ha reproducido localmente ni se han modificado archivos productivos o fixtures. Antes de reparar, obtener el fixture y stderr/timeout mediante una ejecución diagnóstica y contrastar `master` en condiciones equivalentes.
+
+## Resultado de validación conjunta y revisión de diagnósticos
+
+- [PR #3819, Windows](https://github.com/Alphonsus411/pCobra/actions/runs/40493359458/job/122152537498): ambos smoke pasaron; Rust 3/3. Posteriormente falló `lint_public_no_direct_transpiler_imports.py` por UnicodeEncodeError CP1252 al imprimir U+2705. El ajuste de #3815 no pretende cubrir ese linter.
+- En Ubuntu, los tres smoke Rust pasaron; el job falló más tarde en linters (MyPy 1703 errores). El workflow tests terminó fallido. CodeQL pasó; Lint falló en Black. No se ha integrado la PR diagnóstica.
+- #3789 modifica la salida textual de error del smoke y añade `events` a `SyntaxValidationExecution`; sin revisión y autorización específica del contrato textual no se integra. La alternativa local existente muestra `errors_by_target` y conserva la API, pero no identifica necesariamente el fixture fallido; 23 pruebas locales en su worktree pasaron, sin rustc instalado. No se han modificado esos cambios locales.
