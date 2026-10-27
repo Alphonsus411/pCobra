@@ -98,3 +98,9 @@ cada tarea; no marcar como aprobada una comprobación omitida o pendiente.
 - [PR #3819, job Ubuntu 122152537481](https://github.com/Alphonsus411/pCobra/actions/runs/40493359458/job/122152537481): Rust 3 correctos, 0 fallos, 0 omitidos; el job después falló en linters. En ambos logs se instaló el paquete rustc `1.75.0+dfsg0ubuntu1-0ubuntu7.4`.
 - #3819 parte de #3818 y añade los scripts del ajuste de salida Windows y su prueba; no cambia Lexer, Parser, el transpilador Rust, el validador ni los fixtures. La diferencia en resultados sugiere intermitencia o influencia del entorno, sin demostrar causa concreta. El validador usa timeout de 10 s; no hay evidencia que lo identifique como causa.
 - No existe `rustc` local en el entorno de diagnóstico. No se ha reproducido localmente ni se han modificado archivos productivos o fixtures. Antes de reparar, obtener el fixture y stderr/timeout mediante una ejecución diagnóstica y contrastar `master` en condiciones equivalentes.
+
+## Resultado de validación conjunta y revisión de diagnósticos
+
+- [PR #3819, Windows](https://github.com/Alphonsus411/pCobra/actions/runs/40493359458/job/122152537498): ambos smoke pasaron; Rust 3/3. Posteriormente falló `lint_public_no_direct_transpiler_imports.py` por UnicodeEncodeError CP1252 al imprimir U+2705. El ajuste de #3815 no pretende cubrir ese linter.
+- En Ubuntu, los tres smoke Rust pasaron; el job falló más tarde en linters (MyPy 1703 errores). El workflow tests terminó fallido. CodeQL pasó; Lint falló en Black. No se ha integrado la PR diagnóstica.
+- #3789 modifica la salida textual de error del smoke y añade `events` a `SyntaxValidationExecution`; sin revisión y autorización específica del contrato textual no se integra. La alternativa local existente muestra `errors_by_target` y conserva la API, pero no identifica necesariamente el fixture fallido; 23 pruebas locales en su worktree pasaron, sin rustc instalado. No se han modificado esos cambios locales.
