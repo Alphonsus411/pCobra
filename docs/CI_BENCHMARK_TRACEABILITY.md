@@ -87,3 +87,5 @@ cada tarea; no marcar como aprobada una comprobación omitida o pendiente.
   examinado pertenece a `.github/workflows/test.yml`. Aplicar allí
   `fail-fast: false` requiere una propuesta separada y autorización específica
   previa para modificar CI. Este ajuste no omitiría pruebas ni fallos.
+
+- El usuario autorizó el ajuste separado en `test.yml`. Se abrió [PR #3818](https://github.com/Alphonsus411/pCobra/pull/3818), SHA `6822385a1e8c25699eceaa7ceb919411cdb4e172`, apilada sobre #3816, con una sola línea `fail-fast: false`. Validación local: 23 pruebas de workflows aprobadas y comparación semántica YAML correcta. [Flujo tests](https://github.com/Alphonsus411/pCobra/actions/runs/40490418613) pendiente; no hay resultado Windows acreditado todavía.
