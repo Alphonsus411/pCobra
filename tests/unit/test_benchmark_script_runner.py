@@ -1,10 +1,35 @@
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 
 import pytest
 
 from scripts.benchmarks import run_benchmarks as runner
+
+
+def test_javascript_runtime_falla_si_faltan_dependencias(tmp_path, monkeypatch):
+    monkeypatch.setattr(runner, "__file__", str(tmp_path / "runner.py"))
+    with pytest.raises(RuntimeError, match="Faltan dependencias JavaScript"):
+        runner.prepare_javascript_runtime(tmp_path)
+
+
+def test_javascript_runtime_importa_modulos_y_ejecuta_codigo(tmp_path, monkeypatch):
+    if not shutil.which("node"):
+        pytest.skip("Node.js no está disponible")
+    if not (Path(runner.__file__).parent / "node_modules").is_dir():
+        pytest.skip("Dependencias del benchmark no instaladas; ejecutar npm ci")
+    monkeypatch.setenv("COBRA_TOML", str(tmp_path / "config.toml"))
+    source = tmp_path / "program.co"
+    source.write_text("imprimir(42)\n", encoding="utf-8")
+    code = runner.transpilar_benchmark(source, "javascript")
+    runner.prepare_javascript_runtime(tmp_path)
+    script = tmp_path / "program.js"
+    script.write_text(code, encoding="utf-8")
+    result = subprocess.run(
+        ["node", str(script)], capture_output=True, text=True, timeout=15, check=True
+    )
+    assert result.stdout.strip() == "42"
 
 
 def test_transpilar_benchmark_usa_pipeline_con_backend_explicito(tmp_path, monkeypatch):

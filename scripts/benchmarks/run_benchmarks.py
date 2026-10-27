@@ -52,6 +52,22 @@ imprimir(x)
 BACKEND_METADATA = BENCHMARK_BACKEND_METADATA
 
 
+def prepare_javascript_runtime(destination: Path) -> None:
+    """Prepara imports reales de JavaScript en el directorio del benchmark."""
+    runtime = REPO_ROOT / "src" / "pcobra" / "core" / "nativos"
+    dependencies = Path(__file__).resolve().parent / "node_modules"
+    if not dependencies.is_dir():
+        raise RuntimeError(
+            "Faltan dependencias JavaScript: ejecuta npm ci en scripts/benchmarks"
+        )
+    target = destination / "nativos"
+    target.mkdir()
+    for source in runtime.glob("*.js"):
+        shutil.copy2(source, target / source.name)
+    shutil.copytree(dependencies, destination / "node_modules")
+    (destination / "package.json").write_text('{"type":"module"}\n', encoding="utf-8")
+
+
 def normalize_rust_program(code: str) -> str:
     """Envuelve un snippet Rust del transpilador para poder ejecutarlo.
 
@@ -199,6 +215,9 @@ def main() -> None:
             selected_backends.extend(
                 target for target in ("wasm", "asm") if target in BACKEND_METADATA
             )
+
+        if "javascript" in selected_backends:
+            prepare_javascript_runtime(Path(tmpdir))
 
         for backend in selected_backends:
             cfg = BACKEND_METADATA[backend]

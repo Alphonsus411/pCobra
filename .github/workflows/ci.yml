@@ -683,6 +683,8 @@ jobs:
           pyright --version
       - name: Compare benchmarks
         run: |
+          npm ci --prefix scripts/benchmarks --ignore-scripts --no-fund
+          python -m pytest -q tests/unit/test_benchmark_script_runner.py
           python scripts/benchmarks/compare_releases.py \
             --output benchmarks_compare.json \
             --max-regression 10
