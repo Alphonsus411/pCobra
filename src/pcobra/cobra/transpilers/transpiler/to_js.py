@@ -4,6 +4,7 @@ Los parámetros de tipo se omiten porque JavaScript no soporta genéricos de
 forma nativa, por lo que se recurre a tipos dinámicos."""
 
 from pcobra.cobra.core.ast_nodes import (
+    NodoAsignacion,
     NodoHolobit,
     NodoLista,
     NodoDiccionario,
@@ -384,6 +385,21 @@ class TranspiladorJavaScript(BaseTranspiler):
                     metodo(nodo)
                 else:
                     raise AttributeError(f"Nodo sin método aceptar: {nodo}")
+        # No cambiar los imports históricos cuando no hay colisión. El módulo
+        # numero no es usado por los auxiliares del preámbulo estándar.
+        if any(
+            isinstance(nodo, NodoAsignacion)
+            and getattr(nodo, "identificador", None) == "numero"
+            and not getattr(nodo, "inferencia", False)
+            for nodo in ast_raiz
+        ):
+            import_line = "import * as numero from './nativos/numero.js';"
+            codigo = "\n".join(self.codigo)
+            alias = "__pcobra_numero"
+            while alias in codigo:
+                alias += "_"
+            index = self.codigo.index(import_line)
+            self.codigo[index] = import_line.replace("as numero", f"as {alias}")
         return "\n".join(self.codigo)
 
 
