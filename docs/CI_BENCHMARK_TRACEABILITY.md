@@ -76,3 +76,14 @@ cada tarea; no marcar como aprobada una comprobación omitida o pendiente.
 - El flujo sigue en estado fallido. No se ha fusionado #3816 ni alterado CI;
   se requiere revisar el intento en GitHub y obtener evidencia Windows antes
   de decidir la integración según el criterio establecido.
+
+- Comprobación posterior: se solicitó una segunda reejecución seleccionando
+  exclusivamente el job 122140393170. La API aceptó la solicitud y mostró
+  Windows 122141436927 como cancelado, sin pasos; la descarga de su registro
+  volvió a devolver 404. El log consultado para Ubuntu 122141507837 contenía
+  marcas temporales del intento original, por lo que estas respuestas no
+  permiten determinar con certeza si hubo ejecución nueva ni su causa.
+- La PR #3808 modifica la matriz de `.github/workflows/ci.yml`; el flujo aquí
+  examinado pertenece a `.github/workflows/test.yml`. Aplicar allí
+  `fail-fast: false` requiere una propuesta separada y autorización específica
+  previa para modificar CI. Este ajuste no omitiría pruebas ni fallos.
