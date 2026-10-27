@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import ast
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -95,6 +96,8 @@ def find_violations(root: Path = ROOT) -> list[str]:
 
 
 def main() -> int:
+    if sys.platform == "win32" and hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
     if not LEGACY_ROOT.exists():
         print("✅ Lint legacy cobra shims: src/cobra/ no existe, se omite.")
         return 0
