@@ -1,4 +1,6 @@
 from pathlib import Path
+import subprocess
+import sys
 
 import pytest
 
@@ -72,3 +74,35 @@ def test_main_rechaza_resultados_vacios(monkeypatch):
 
     with pytest.raises(RuntimeError, match="todos los backends"):
         runner.main()
+
+
+@pytest.mark.parametrize("use_resource", [True, False])
+def test_run_and_measure_rechaza_codigo_de_salida_no_cero(monkeypatch, use_resource):
+    if not use_resource:
+        monkeypatch.setattr(runner, "resource", None)
+        monkeypatch.setattr(runner, "psutil", None)
+    elif runner.resource is None:
+        pytest.skip("resource no está disponible en esta plataforma")
+
+    with pytest.raises(subprocess.CalledProcessError) as error:
+        runner.run_and_measure([sys.executable, "-c", "raise SystemExit(7)"])
+    assert error.value.returncode == 7
+
+
+def test_run_and_measure_psutil_rechaza_codigo_de_salida_no_cero(monkeypatch):
+    class FakeProcess:
+        def __init__(self, pid):
+            pass
+
+        def memory_info(self):
+            return type("Memory", (), {"rss": 1024})()
+
+    class FakePsutil:
+        Process = FakeProcess
+        Error = RuntimeError
+
+    monkeypatch.setattr(runner, "resource", None)
+    monkeypatch.setattr(runner, "psutil", FakePsutil)
+    with pytest.raises(subprocess.CalledProcessError) as error:
+        runner.run_and_measure([sys.executable, "-c", "raise SystemExit(7)"])
+    assert error.value.returncode == 7
