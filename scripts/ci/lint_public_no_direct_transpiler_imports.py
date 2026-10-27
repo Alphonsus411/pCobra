@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import ast
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -54,6 +55,8 @@ def find_violations(root: Path = ROOT) -> list[str]:
 
 
 def main() -> int:
+    if sys.platform == "win32" and hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
     failures = find_violations(ROOT)
     if failures:
         print("❌ Lint imports directos a transpilers en superficies públicas: FALLÓ")
