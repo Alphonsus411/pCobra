@@ -27,6 +27,11 @@ Estado a 2026-10-27. No sustituye los roadmaps ni autoriza fusiones.
   `nativos/io.js`. Al copiar los módulos, también faltó `node-fetch`.
 - El bucle generado contiene `let x = x + 1` y Node reproduce un
   `ReferenceError`. Es una incidencia funcional separada; no se corrige aquí.
+- Validación local adicional 2026-10-27 (Node 24): `var numero = 6` seguido de
+  `imprimir(numero + 4)` falla en JavaScript por redeclaración del import
+  `numero`; Python imprime `10`. La generación de `master` limpio
+  `68e0465d3793078f2c7763f1e51f7748eb8e9f60` contiene el mismo conflicto.
+  La prueba de regresión permanece local y fallida, no se ha desactivado.
 - No hay baseline de release disponible: la última release y la rama
   `benchmarks-history` devolvieron 404 al diagnosticarlas.
 - CodeQL pasó en las ejecuciones observadas; MyPy y el smoke Windows presentan
