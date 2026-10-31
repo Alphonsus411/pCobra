@@ -39,6 +39,24 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y gcc g++ golang-go rustc default-jdk
+      - name: Diagnose preinstalled Windows toolchains
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $tools = @('python', 'node', 'java', 'go', 'rustc', 'cargo', 'gcc')
+          foreach ($tool in $tools) {
+            $command = Get-Command $tool -ErrorAction SilentlyContinue
+            if ($null -eq $command) {
+              Write-Host "${tool}: not found"
+              continue
+            }
+            Write-Host "${tool}: $($command.Source)"
+            try {
+              & $tool --version 2>&1 | Select-Object -First 1
+            } catch {
+              Write-Host "${tool}: version probe failed: $($_.Exception.Message)"
+            }
+          }
       - name: Install system packages (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
