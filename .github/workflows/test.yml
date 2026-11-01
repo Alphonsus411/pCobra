@@ -38,7 +38,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y gcc g++ golang-go rustc default-jdk
+          sudo apt-get install -y gcc g++ rustc
       - name: Validate preinstalled Windows toolchains
         if: runner.os == 'Windows'
         shell: pwsh
@@ -325,7 +325,7 @@ jobs:
         shell: bash
         run: |
           sudo apt-get update
-          sudo apt-get install -y gcc g++ golang-go rustc default-jdk
+          sudo apt-get install -y gcc g++ rustc
       - name: Install dependencies
         uses: ./.github/actions/install
       - name: Validate workflow target policy
@@ -358,7 +358,7 @@ jobs:
       - name: Install system packages
         run: |
           sudo apt-get update
-          sudo apt-get install -y gcc g++ golang-go rustc default-jdk
+          sudo apt-get install -y gcc g++ rustc
       - name: Install dependencies
         uses: ./.github/actions/install
       - name: Run contractual compatibility suites (blocking)
