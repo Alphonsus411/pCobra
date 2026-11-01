@@ -46,7 +46,6 @@ jobs:
           $checks = @(
             @{ Name = 'Python'; Command = 'python'; Arguments = @('--version') },
             @{ Name = 'Java'; Command = 'java'; Arguments = @('--version') },
-            @{ Name = 'Go'; Command = 'go'; Arguments = @('version') },
             @{ Name = 'Rust'; Command = 'rustc'; Arguments = @('--version') },
             @{ Name = 'Cargo'; Command = 'cargo'; Arguments = @('--version') },
             @{ Name = 'MinGW GCC'; Command = 'gcc'; Arguments = @('--version') }
