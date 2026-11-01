@@ -170,8 +170,9 @@ jobs:
               continue
             }
             Write-Host "$($check.Name): $($command.Source)"
-            & $check.Command @($check.Arguments) | Select-Object -First 1
-            if ($LASTEXITCODE -ne 0) {
+            & $check.Command @($check.Arguments)
+            $exitCode = $LASTEXITCODE
+            if ($exitCode -ne 0) {
               $failures += "$($check.Name) version probe failed"
             }
           }
