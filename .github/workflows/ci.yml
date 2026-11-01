@@ -151,12 +151,33 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            gcc g++ golang-go rustc default-jdk clang
-      - name: Install system packages (Windows)
+            gcc g++ rustc clang
+      - name: Validate preinstalled maintained Windows toolchains
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          choco install -y --no-progress mingw golang rust openjdk
+          $checks = @(
+            @{ Name = 'Python'; Command = 'python'; Arguments = @('--version') },
+            @{ Name = 'Node'; Command = 'node'; Arguments = @('--version') },
+            @{ Name = 'Rust'; Command = 'rustc'; Arguments = @('--version') },
+            @{ Name = 'Cargo'; Command = 'cargo'; Arguments = @('--version') }
+          )
+          $failures = @()
+          foreach ($check in $checks) {
+            $command = Get-Command $check.Command -ErrorAction SilentlyContinue
+            if ($null -eq $command) {
+              $failures += "$($check.Name) is not available"
+              continue
+            }
+            Write-Host "$($check.Name): $($command.Source)"
+            & $check.Command @($check.Arguments) | Select-Object -First 1
+            if ($LASTEXITCODE -ne 0) {
+              $failures += "$($check.Name) version probe failed"
+            }
+          }
+          if ($failures.Count -gt 0) {
+            throw "Required Windows toolchains unavailable: $($failures -join '; ')"
+          }
       - name: Install dependencies
         uses: ./.github/actions/install
         with:
@@ -589,7 +610,7 @@ jobs:
         shell: bash
         run: |
           sudo apt-get update
-          sudo apt-get install -y gcc g++ golang-go rustc default-jdk
+          sudo apt-get install -y gcc g++ rustc
       - name: Install dependencies
         uses: ./.github/actions/install
       - name: Validate workflow target policy
@@ -638,7 +659,7 @@ jobs:
       - name: Install system packages
         run: |
           sudo apt-get update
-          sudo apt-get install -y gcc g++ golang-go rustc default-jdk
+          sudo apt-get install -y gcc g++ rustc
       - name: Install dependencies
         uses: ./.github/actions/install
         with:
@@ -737,7 +758,7 @@ jobs:
         shell: bash
         run: |
           sudo apt-get update
-          sudo apt-get install -y gcc g++ golang-go rustc default-jdk
+          sudo apt-get install -y gcc g++ rustc
       - name: Install dependencies
         uses: ./.github/actions/install
       - name: Run contractual compatibility suites (blocking)
