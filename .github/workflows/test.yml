@@ -45,10 +45,9 @@ jobs:
         run: |
           $checks = @(
             @{ Name = 'Python'; Command = 'python'; Arguments = @('--version') },
-            @{ Name = 'Java'; Command = 'java'; Arguments = @('--version') },
+            @{ Name = 'Node'; Command = 'node'; Arguments = @('--version') },
             @{ Name = 'Rust'; Command = 'rustc'; Arguments = @('--version') },
-            @{ Name = 'Cargo'; Command = 'cargo'; Arguments = @('--version') },
-            @{ Name = 'MinGW GCC'; Command = 'gcc'; Arguments = @('--version') }
+            @{ Name = 'Cargo'; Command = 'cargo'; Arguments = @('--version') }
           )
           $failures = @()
           foreach ($check in $checks) {
