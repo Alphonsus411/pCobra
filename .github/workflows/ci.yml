@@ -249,7 +249,10 @@ jobs:
       - name: Run linters (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
-        run: ./make.bat lint
+        run: |
+          ruff check src/pcobra
+          mypy src/pcobra
+          bandit -r src/pcobra
       - name: Run type checks
         if: runner.os != 'Windows'
         shell: bash
