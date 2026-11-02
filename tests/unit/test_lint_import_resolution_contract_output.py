@@ -29,7 +29,9 @@ def test_redirected_windows_cp1252_preserves_import_resolution_linter_output():
     env["PYTHONIOENCODING"] = "cp1252"
     simulated = subprocess.run(
         [sys.executable, "-c", BOOTSTRAP, str(SCRIPT)],
-        cwd=ROOT, env=env, capture_output=True
+        cwd=ROOT,
+        env=env,
+        capture_output=True,
     )
 
     assert normal.returncode == 0, normal.stderr.decode("utf-8", errors="replace")
