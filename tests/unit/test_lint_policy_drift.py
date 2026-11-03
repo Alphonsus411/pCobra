@@ -18,6 +18,32 @@ def test_lint_policy_drift_script_passes_on_repo() -> None:
     assert result.returncode == 0, result.stdout + result.stderr
 
 
+def test_lint_policy_drift_preserva_salida_cp1252_en_windows_simulado() -> None:
+    repo_root = Path(__file__).resolve().parents[2]
+    bootstrap = """
+import runpy
+import sys
+
+sys.stdout.reconfigure(encoding="cp1252")
+sys.platform = "win32"
+runpy.run_path(sys.argv[1], run_name="__main__")
+"""
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            bootstrap,
+            str(repo_root / "scripts" / "lint_policy_drift.py"),
+        ],
+        cwd=repo_root,
+        capture_output=True,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stderr.decode("utf-8", errors="replace")
+    assert "✅ Policy drift:" in result.stdout.decode("utf-8")
+
+
 def test_no_confunde_identificador_node_con_target_prohibido(
     tmp_path, monkeypatch
 ) -> None:
