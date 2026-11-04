@@ -308,7 +308,7 @@ def _validate_rust(code: str) -> ValidationResult:
                     "-o",
                     str(output_file),
                 ],
-                timeout_seconds=SYNTAX_TOOL_TIMEOUT_SECONDS,
+                timeout_seconds=syntax_tool_timeout_seconds(),
             )
         except subprocess.TimeoutExpired:
             return ValidationResult(
