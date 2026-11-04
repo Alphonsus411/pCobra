@@ -283,17 +283,21 @@ def _validate_rust(code: str) -> ValidationResult:
     rustc = shutil.which("rustc")
     if not rustc:
         return ValidationResult("skipped", "rustc no está disponible")
-    normalized = "\n".join(
+    normalized = "
+".join(
         line
         for line in code.splitlines()
         if line.strip()
         not in {"use crate::corelibs::*;", "use crate::standard_library::*;"}
     )
     if "fn main(" not in normalized:
-        body = "\n".join(
+        body = "
+".join(
             f"    {line}" for line in normalized.splitlines() if line.strip()
         )
-        normalized = f"fn main() {{\n{body}\n}}"
+        normalized = f"fn main() {{
+{body}
+}}"
     with tempfile.TemporaryDirectory(prefix="pcobra_rust_") as tmp:
         file_path = Path(tmp) / "main.rs"
         output_file = Path(tmp) / "main.rmeta"
@@ -308,7 +312,7 @@ def _validate_rust(code: str) -> ValidationResult:
                     "-o",
                     str(output_file),
                 ],
-                timeout_seconds=SYNTAX_TOOL_TIMEOUT_SECONDS,
+                timeout_seconds=syntax_tool_timeout_seconds(),
             )
         except subprocess.TimeoutExpired:
             return ValidationResult(
@@ -329,7 +333,7 @@ VALIDATORS: dict[str, Callable[[str], ValidationResult]] = {
 }
 
 
-def legacy_internal_validators() -> dict[str, Callable[[str], ValidationResult]]:
+def legacy_internal_validators() -> dict[str, Callable[[str], ValidationResult]:
     """Devuelve validadores legacy solo para rutas internas/de migración documentadas."""
     from pcobra.cobra.qa.legacy_syntax_validation import LEGACY_INTERNAL_VALIDATORS
 
@@ -391,7 +395,8 @@ def run_transpiler_syntax_validation(
             try:
                 transpiler_cls = transpilers[target]
                 generated = transpiler_cls().generate_code(ast_nodes)
-                code = generated if isinstance(generated, str) else "\n".join(generated)
+                code = generated if isinstance(generated, str) else "
+".join(generated)
                 result = validator(code)
             except Exception as exc:  # noqa: BLE001
                 payload = {
