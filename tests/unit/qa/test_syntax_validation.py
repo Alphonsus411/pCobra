@@ -85,7 +85,11 @@ def test_validate_rust_usa_timeout_de_windows(monkeypatch):
     captured: dict[str, int] = {}
 
     monkeypatch.setattr(sv.platform, "system", lambda: "Windows")
-    monkeypatch.setattr(sv.shutil, "which", lambda command: "rustc" if command == "rustc" else None)
+    monkeypatch.setattr(
+        sv.shutil,
+        "which",
+        lambda command: "rustc" if command == "rustc" else None,
+    )
 
     def fake_run_external_command(_command, cwd=None, timeout_seconds=None):
         captured["timeout_seconds"] = timeout_seconds
@@ -93,8 +97,7 @@ def test_validate_rust_usa_timeout_de_windows(monkeypatch):
 
     monkeypatch.setattr(sv, "run_external_command", fake_run_external_command)
 
-    result = sv._validate_rust("fn main() {}
-")
+    result = sv._validate_rust("fn main() {}\n")
 
     assert result.status == "ok"
     assert captured["timeout_seconds"] == sv.WINDOWS_SYNTAX_TOOL_TIMEOUT_SECONDS
@@ -103,37 +106,30 @@ def test_validate_rust_usa_timeout_de_windows(monkeypatch):
 @pytest.mark.parametrize(
     ("validator", "tool_name", "code", "expected_target"),
     [
-        (sv._validate_javascript, "node", "console.log('ok')
-", "javascript"),
-        (sv._validate_rust, "rustc", "fn main() {}
-", "rust"),
+        (sv._validate_javascript, "node", "console.log('ok')\n", "javascript"),
+        (sv._validate_rust, "rustc", "fn main() {}\n", "rust"),
         (
             legacy_sv.LEGACY_INTERNAL_VALIDATORS["go"],
             "go",
-            "package main
-func main(){}
-",
+            "package main\nfunc main(){}\n",
             "go",
         ),
         (
             legacy_sv.LEGACY_INTERNAL_VALIDATORS["cpp"],
             "clang++",
-            "int main() { return 0; }
-",
+            "int main() { return 0; }\n",
             "cpp",
         ),
         (
             legacy_sv.LEGACY_INTERNAL_VALIDATORS["java"],
             "javac",
-            "class Main { public static void main(String[] args) {} }
-",
+            "class Main { public static void main(String[] args) {} }\n",
             "java",
         ),
         (
             legacy_sv.LEGACY_INTERNAL_VALIDATORS["wasm"],
             "wat2wasm",
-            "(module)
-",
+            "(module)\n",
             "wasm",
         ),
     ],
@@ -164,8 +160,7 @@ def test_validadores_externos_retornan_fail_en_timeout(
 
 
 def test_validator_asm_detecta_tokens_no_resueltos():
-    result = legacy_sv.LEGACY_INTERNAL_VALIDATORS["asm"]("<pendiente>
-MOV R1, 3")
+    result = legacy_sv.LEGACY_INTERNAL_VALIDATORS["asm"]("<pendiente>\nMOV R1, 3")
     assert result.status == "fail"
     assert "no resueltos" in result.message
 
@@ -186,9 +181,7 @@ def test_validate_go_falla_si_build_falla_aunque_gofmt_exista(monkeypatch):
     monkeypatch.setattr(legacy_sv, "run_external_command", fake_run_external_command)
 
     result = legacy_sv.LEGACY_INTERNAL_VALIDATORS["go"](
-        "package main
-func main(){ variableInexistente() }
-"
+        "package main\nfunc main(){ variableInexistente() }\n"
     )
     assert result.status == "fail"
     assert "undefined" in result.message
@@ -204,9 +197,7 @@ def test_validate_go_ok_con_build_y_gofmt_opcional(monkeypatch):
         lambda _command, cwd=None, timeout_seconds=None: (True, ""),
     )
 
-    result = legacy_sv.LEGACY_INTERNAL_VALIDATORS["go"]("package main
-func main(){}
-")
+    result = legacy_sv.LEGACY_INTERNAL_VALIDATORS["go"]("package main\nfunc main(){}\n")
     assert result.status == "ok"
     assert "go build correcto" in result.message
     assert "sin diagnóstico de gofmt" in result.message
@@ -226,17 +217,14 @@ def test_validate_go_ok_con_estilo_pendiente_en_gofmt(monkeypatch):
 
     class _CompletedProcess:
         returncode = 0
-        stdout = "main.go
-"
+        stdout = "main.go\n"
         stderr = ""
 
     monkeypatch.setattr(
         legacy_sv.subprocess, "run", lambda *args, **kwargs: _CompletedProcess()
     )
 
-    result = legacy_sv.LEGACY_INTERNAL_VALIDATORS["go"]("package main
-func main(){}
-")
+    result = legacy_sv.LEGACY_INTERNAL_VALIDATORS["go"]("package main\nfunc main(){}\n")
     assert result.status == "ok"
     assert "detectó diferencias de formato" in result.message
 
@@ -247,8 +235,7 @@ def test_validate_python_syntax_incluye_tests_cli_y_core(monkeypatch, tmp_path):
     core_file = tests_dir / "core" / "test_core_sample.py"
     for file_path in (cli_file, core_file):
         file_path.parent.mkdir(parents=True, exist_ok=True)
-        file_path.write_text("x = 1
-", encoding="utf-8")
+        file_path.write_text("x = 1\n", encoding="utf-8")
 
     compiled_files: list[Path] = []
 
@@ -275,8 +262,7 @@ def test_validate_python_syntax_excluye_dirs_no_deseados(monkeypatch, tmp_path):
     excluded_file = tests_dir / ".venv" / "lib" / "ignored.py"
     for file_path in (valid_file, excluded_file):
         file_path.parent.mkdir(parents=True, exist_ok=True)
-        file_path.write_text("x = 1
-", encoding="utf-8")
+        file_path.write_text("x = 1\n", encoding="utf-8")
 
     compiled_files: list[Path] = []
 
