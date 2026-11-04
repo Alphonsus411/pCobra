@@ -203,8 +203,15 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          ./make.bat lint
-          ./make.bat typecheck
+          ruff check src/pcobra
+          mypy src/pcobra
+          bandit -r src/pcobra
+          mypy src/pcobra
+          if (Get-Command pyright -ErrorAction SilentlyContinue) {
+            pyright
+          } else {
+            Write-Host "ℹ️ pyright no está instalado"
+          }
       - name: Run tests
         if: runner.os != 'Windows'
         shell: bash
