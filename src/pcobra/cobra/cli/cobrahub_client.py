@@ -97,9 +97,17 @@ class CobraHubClient:
                 )()
 
                 def get(self, *args, **kwargs):
+                    kwargs.setdefault(
+                        "timeout",
+                        (CobraHubClient.CONNECT_TIMEOUT, CobraHubClient.READ_TIMEOUT),
+                    )
                     return requests.get(*args, **kwargs)
 
                 def post(self, *args, **kwargs):
+                    kwargs.setdefault(
+                        "timeout",
+                        (CobraHubClient.CONNECT_TIMEOUT, CobraHubClient.READ_TIMEOUT),
+                    )
                     return requests.post(*args, **kwargs)
 
                 def close(self):
