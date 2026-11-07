@@ -81,6 +81,28 @@ def test_run_external_command_pasa_timeout_a_subprocess(monkeypatch):
     assert captured["kwargs"]["timeout"] == 7
 
 
+def test_validate_rust_usa_timeout_de_windows(monkeypatch):
+    captured: dict[str, int] = {}
+
+    monkeypatch.setattr(sv.platform, "system", lambda: "Windows")
+    monkeypatch.setattr(
+        sv.shutil,
+        "which",
+        lambda command: "rustc" if command == "rustc" else None,
+    )
+
+    def fake_run_external_command(_command, cwd=None, timeout_seconds=None):
+        captured["timeout_seconds"] = timeout_seconds
+        return True, ""
+
+    monkeypatch.setattr(sv, "run_external_command", fake_run_external_command)
+
+    result = sv._validate_rust("fn main() {}\n")
+
+    assert result.status == "ok"
+    assert captured["timeout_seconds"] == sv.WINDOWS_SYNTAX_TOOL_TIMEOUT_SECONDS
+
+
 @pytest.mark.parametrize(
     ("validator", "tool_name", "code", "expected_target"),
     [

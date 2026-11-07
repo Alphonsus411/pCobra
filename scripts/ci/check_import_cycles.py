@@ -6,6 +6,7 @@ from __future__ import annotations
 import ast
 from dataclasses import dataclass
 from pathlib import Path
+import sys
 
 ROOT = Path(__file__).resolve().parents[2]
 SRC_DIR = ROOT / "src"
@@ -360,4 +361,6 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    if sys.platform == "win32" and not sys.stdout.isatty():
+        sys.stdout.reconfigure(encoding="utf-8")
     raise SystemExit(main())

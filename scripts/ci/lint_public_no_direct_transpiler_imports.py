@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import ast
 from pathlib import Path
+import sys
 
 ROOT = Path(__file__).resolve().parents[2]
 PUBLIC_SCOPES = (
@@ -66,4 +67,6 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    if sys.platform == "win32" and not sys.stdout.isatty():
+        sys.stdout.reconfigure(encoding="utf-8")
     raise SystemExit(main())

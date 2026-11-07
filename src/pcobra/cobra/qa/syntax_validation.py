@@ -49,6 +49,14 @@ SYNTAX_REPORT_SCHEMA_VERSION = "1.0.0"
 # Tiempo máximo (en segundos) para herramientas externas de validación de sintaxis.
 # Ajustar este valor si el entorno de CI o la máquina local son más lentos.
 SYNTAX_TOOL_TIMEOUT_SECONDS = 10
+WINDOWS_SYNTAX_TOOL_TIMEOUT_SECONDS = 30
+
+
+def syntax_tool_timeout_seconds() -> int:
+    """Da margen a rustc/node en runners Windows sin desactivar el timeout."""
+    if platform.system() == "Windows":
+        return WINDOWS_SYNTAX_TOOL_TIMEOUT_SECONDS
+    return SYNTAX_TOOL_TIMEOUT_SECONDS
 
 
 def _resolve_project_root() -> Path | None:
@@ -257,12 +265,12 @@ def _validate_javascript(code: str) -> ValidationResult:
         try:
             ok, output = run_external_command(
                 [node, "--check", str(file_path)],
-                timeout_seconds=SYNTAX_TOOL_TIMEOUT_SECONDS,
+                timeout_seconds=syntax_tool_timeout_seconds(),
             )
         except subprocess.TimeoutExpired:
             return ValidationResult(
                 "fail",
-                f"node --check excedió el timeout de {SYNTAX_TOOL_TIMEOUT_SECONDS}s para target javascript",
+                f"node --check excedió el timeout de {syntax_tool_timeout_seconds()}s para target javascript",
             )
     return (
         ValidationResult("ok", "node --check correcto")
@@ -300,12 +308,12 @@ def _validate_rust(code: str) -> ValidationResult:
                     "-o",
                     str(output_file),
                 ],
-                timeout_seconds=SYNTAX_TOOL_TIMEOUT_SECONDS,
+                timeout_seconds=syntax_tool_timeout_seconds(),
             )
         except subprocess.TimeoutExpired:
             return ValidationResult(
                 "fail",
-                f"rustc excedió el timeout de {SYNTAX_TOOL_TIMEOUT_SECONDS}s para target rust",
+                f"rustc excedió el timeout de {syntax_tool_timeout_seconds()}s para target rust",
             )
     return (
         ValidationResult("ok", "rustc --emit=metadata correcto")
