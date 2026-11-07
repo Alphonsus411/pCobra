@@ -20,18 +20,16 @@ ast-serialize==0.5.0
     # via mypy
 asttokens==3.0.1
     # via stack-data
-bandit==1.9.4
-    # via pcobra (pyproject.toml)
 attrs==26.1.0
     # via
     #   jsonschema
     #   referencing
+bandit==1.9.4
+    # via pcobra (pyproject.toml)
 black==26.5.1
     # via python-lsp-server
 build==1.5.0
     # via pip-tools
-colorama==0.4.6 ; platform_system == "Windows"
-    # via bandit
 certifi==2026.5.20
     # via
     #   httpcore
@@ -255,7 +253,9 @@ python-lsp-server==1.14.0
 pytokens==0.4.1
     # via black
 pyyaml==6.0.3
-    # via pcobra (pyproject.toml)
+    # via
+    #   bandit
+    #   pcobra (pyproject.toml)
 pyzmq==27.1.0
     # via
     #   ipykernel
@@ -273,7 +273,9 @@ requests==2.34.2
 restrictedpython==8.2
     # via pcobra (pyproject.toml)
 rich==15.0.0
-    # via pcobra (pyproject.toml)
+    # via
+    #   bandit
+    #   pcobra (pyproject.toml)
 rpds-py==2026.5.1
     # via
     #   jsonschema
