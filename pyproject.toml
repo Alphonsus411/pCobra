@@ -82,6 +82,7 @@ docs = [
 ]
 dev = [
     "python-dotenv>=1.2.2,<2",
+    "bandit>=1.9.4,<2",
     "python-lsp-server>=1.14.0,<2",
     "hypothesis>=6.141,<7",
     "ipykernel>=7.2.0,<8",
