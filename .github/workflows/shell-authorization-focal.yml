@@ -4,6 +4,10 @@ on:
   push:
     branches:
       - test/process-shell-authorization-regression
+  pull_request:
+    paths:
+      - 'tests/unit/test_proceso_shell_authorization_regression.py'
+      - '.github/workflows/shell-authorization-focal.yml'
   workflow_dispatch:
 
 permissions:
@@ -18,8 +22,8 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: '3.11'
       - name: Install test runner
