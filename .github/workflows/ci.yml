@@ -242,7 +242,15 @@ jobs:
       - name: Run linters (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
-        run: ./make.bat lint
+        run: |
+          python -m pip install bandit
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          ruff check src/pcobra
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          mypy src/pcobra
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          bandit -r src/pcobra
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Run type checks
         if: runner.os != 'Windows'
         shell: bash
@@ -250,7 +258,11 @@ jobs:
       - name: Run type checks (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
-        run: ./make.bat typecheck  # Ejecuta mypy y pyright
+        run: |
+          mypy src/pcobra
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          pyright
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Validate changelog
         shell: bash
         run: python scripts/check_changelog.py
