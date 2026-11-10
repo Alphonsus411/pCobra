@@ -200,7 +200,7 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          python - <<'PY'
+          @'
           import importlib, sys
 
           required_modules = ["sphinx"]
@@ -213,7 +213,8 @@ jobs:
 
           if missing:
               sys.exit(f"Faltan módulos de Python: {', '.join(missing)}")
-          PY
+          '@ | python -
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           pyright --version
       - name: Seguridad de dependencias
         if: env.SAFETY_API_KEY != ''
