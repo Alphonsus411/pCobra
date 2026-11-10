@@ -34,7 +34,7 @@ jobs:
           script = pathlib.Path("scripts/smoke_transpilers_syntax.py")
           tree = ast.parse(script.read_text(encoding="utf-8"))
           banners = [
-              node.value.args[0].value
+              node.args[0].value
               for node in ast.walk(tree)
               if isinstance(node, ast.Call)
               and isinstance(node.func, ast.Name)
