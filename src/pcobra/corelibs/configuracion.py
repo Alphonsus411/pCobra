@@ -37,7 +37,8 @@ def leer_toml(ruta: PathLike) -> dict[str, Any]:
     tomllib = _cargar_tomllib()
 
     with ruta_configuracion.open("rb") as archivo:
-        return tomllib.load(archivo)
+        configuracion: dict[str, Any] = tomllib.load(archivo)
+        return configuracion
 
 
 def leer_ini(ruta: PathLike) -> dict[str, dict[str, str]]:
