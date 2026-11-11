@@ -1,0 +1,39 @@
+name: Mypy TOML typing focal
+
+on:
+  pull_request:
+    paths:
+      - 'src/pcobra/corelibs/configuracion.py'
+      - '.github/workflows/mypy-configuracion-focal.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  toml-mypy-regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Install project dependencies
+        uses: ./.github/actions/install
+      - name: Check TOML module diagnostics without masking global debt
+        shell: bash
+        run: |
+          set -uo pipefail
+          mypy src/pcobra > mypy-output.txt 2>&1
+          mypy_status=$?
+          cat mypy-output.txt
+          echo "Full Mypy exit status: ${mypy_status}"
+          if grep -E '^src/pcobra/corelibs/configuracion\.py:[0-9]+(:[0-9]+)?: error:' mypy-output.txt; then
+            echo "TOML module still has Mypy errors" >&2
+            exit 1
+          fi
+          if ! grep -Eq '^Found [0-9]+ errors? in [0-9]+ files?' mypy-output.txt && [ "$mypy_status" -ne 0 ]; then
+            echo "Mypy failed without a recognizable diagnostics summary" >&2
+            exit 1
+          fi
+          echo "TOML module has no Mypy diagnostics; unrelated global errors remain blocking in canonical CI."
