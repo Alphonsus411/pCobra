@@ -39,7 +39,7 @@ Estabilizar `cobra test` y alinear los ejemplos del libro oficial con el lenguaj
 - [ ] Guardar matriz de resultados: comando, entorno, esperado, observado, referencia y clasificación.
 
 **Aceptación:** evidencia repetible de ambos issues y triage sin modificaciones funcionales.  
-**Evidencia:** pendiente.
+**Evidencia:** inspección estática parcial (véase registro siguiente); reproducción de comandos aún pendiente.
 
 ### F2 — Estabilización de `cobra test` (#3873) (25 %)
 
@@ -86,11 +86,36 @@ Estabilizar `cobra test` y alinear los ejemplos del libro oficial con el lenguaj
 **Aceptación:** informe de validación verificable, con bloqueo explícito de cualquier PR sin evidencias suficientes.  
 **Evidencia:** pendiente.
 
+## Hallazgos de F1 — inspección estática (no equivalen a ejecución)
+
+**Referencia inspeccionada:** commit `68e0465d3793078f2c7763f1e51f7748eb8e9f60`. Los resultados de los issues son reportes del entorno Windows 11/Python 3.12.10 del autor y **no** han sido reproducidos por este seguimiento.
+
+| ID | Fuente de código fijada | Hecho verificado por lectura | Clasificación / límite |
+| --- | --- | --- | --- |
+| F1-S01 | [`commands_v2/test_cmd.py`](https://github.com/Alphonsus411/pCobra/blob/68e0465d3793078f2c7763f1e51f7748eb8e9f60/src/pcobra/cobra/cli/commands_v2/test_cmd.py) | `cobra test` usa `VERIFICATION_EXECUTABLE_TARGETS` como selección por defecto, valida runtime por backend y delega a `TestService`. `--langs` es opción interna oculta. | Arquitectura confirmada; no constituye prueba de ejecución |
+| F1-S02 | [`services/test_service.py`](https://github.com/Alphonsus411/pCobra/blob/68e0465d3793078f2c7763f1e51f7748eb8e9f60/src/pcobra/cobra/cli/services/test_service.py) | Obtiene la salida esperada ejecutando AST en intérprete; transpila y ejecuta cada backend en paralelo; compara salidas, registra errores en `diferencias` y retorna 1 ante diferencias o errores. | Un error de infraestructura puede aparecer en el grupo de diferencias; separar categorías es trabajo F2 |
+| F1-S03 | [`commands_v2/run_cmd.py`](https://github.com/Alphonsus411/pCobra/blob/68e0465d3793078f2c7763f1e51f7748eb8e9f60/src/pcobra/cobra/cli/commands_v2/run_cmd.py) y [`services/run_service.py`](https://github.com/Alphonsus411/pCobra/blob/68e0465d3793078f2c7763f1e51f7748eb8e9f60/src/pcobra/cobra/cli/services/run_service.py) | `cobra run` utiliza ruta propia y Python por defecto sin contenedor ni sandbox explícito. | La diferencia respecto a `test` es esperable; no demuestra que `run` pase el caso del issue en nuestro entorno |
+| F1-S04 | [`bindings/runtime_manager.py`](https://github.com/Alphonsus411/pCobra/blob/68e0465d3793078f2c7763f1e51f7748eb8e9f60/src/pcobra/cobra/bindings/runtime_manager.py) | Política `test`: Python requiere sandbox; JavaScript y Rust, contenedor. | Contrato de seguridad: no relajar |
+| F1-S05 | [`audit_reglas_libro_programacion.py`](https://github.com/Alphonsus411/pCobra/blob/68e0465d3793078f2c7763f1e51f7748eb8e9f60/scripts/ci/audit_reglas_libro_programacion.py) | Extrae reglas, comprueba secciones/IDs y valida fragmentos seleccionados con Lexer/Parser. No ejecuta la totalidad de bloques del libro ni comprueba resultados. | Cobertura insuficiente para cerrar #3874; la ejecución integral es trabajo F3 |
+| F1-S06 | [`LIBRO_PROGRAMACION_COBRA.md`](https://github.com/Alphonsus411/pCobra/blob/68e0465d3793078f2c7763f1e51f7748eb8e9f60/docs/LIBRO_PROGRAMACION_COBRA.md) | Se presenta como fuente normativa sintáctica y pedagógica. | Discrepancias concretas todavía basadas en #3874, sin reproducción independiente |
+
+**Matriz de reproducción pendiente (NO EJECUTADA):**
+
+| Caso | Entorno necesario | Comando / entrada | Resultado reportado | Estado |
+| --- | --- | --- | --- | --- |
+| R-01 | Windows 11, Python 3.12.10, instalación pCobra 10.1.2 fijada | `cobra run test_calculo.cobra` (fixture del issue por recuperar) | Funciona según #3873 | PENDIENTE de reproducir |
+| R-02 | Mismo entorno sin `vm2` y sin Docker | `cobra test test_calculo.cobra` | RestrictedPython/JS/Rust fallan según #3873 | PENDIENTE de reproducir |
+| R-03 | Entorno Python controlado | Fragmentos `funcion`/`retornar`, f-strings, valores por defecto y ausencia de `fin` de #3874 | Errores de parser según #3874 | PENDIENTE de reproducir |
+| R-04 | Mismo entorno | `python scripts/ci/audit_reglas_libro_programacion.py` | Sin resultado ejecutado | PENDIENTE |
+
+**Decisión:** F1 permanece en 0 % ponderado, porque faltan comandos ejecutados con códigos de salida y registros observados. No se han modificado runtime, gramática, tests ni gates.
+
 ## Registro cronológico de trazabilidad
 
 | Fecha (UTC) | Evento | Evidencia | Resultado |
 | --- | --- | --- | --- |
-| 2026-11-18 | Alta del roadmap para #3873 y #3874 | Issues enlazados arriba; baseline `68e0465` | Plan registrado; 0 % ejecutado |
+| 2026-11-18 | Alta del roadmap para #3873 y #3874 | Issues enlazados arriba; baseline `68e0465` | Plan registrado; 0 % completado |
+| 2026-11-18 | F1: análisis estático de rutas CLI, servicio de pruebas, políticas y auditor del libro | F1-S01…S06 (enlaces al commit fijado) | Hallazgos documentados; sin ejecución ni casillas completadas |
 
 ### Plantilla para próximos avances
 
