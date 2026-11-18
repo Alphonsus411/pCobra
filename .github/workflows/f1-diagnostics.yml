@@ -45,7 +45,10 @@ jobs:
         shell: bash
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -e ./_f1_baseline
+          # Install from a disposable copy; preserve the pinned Git checkout.
+          mkdir -p "$RUNNER_TEMP/pcobra-f1-install"
+          cp -a ./_f1_baseline/. "$RUNNER_TEMP/pcobra-f1-install/"
+          python -m pip install "$RUNNER_TEMP/pcobra-f1-install"
           python -m pip check
       - name: Run F1 probes and keep genuine exit codes
         id: probes
@@ -56,6 +59,12 @@ jobs:
             "$GITHUB_WORKSPACE/_f1_baseline" \
             "$RUNNER_TEMP/pcobra-f1-evidence"
           cat "$RUNNER_TEMP/pcobra-f1-evidence/RESULTS.txt"
+      - name: Verify baseline tracked files unchanged
+        if: always()
+        shell: bash
+        run: |
+          git -C _f1_baseline diff --exit-code
+          git -C _f1_baseline diff --cached --exit-code
       - name: Upload raw evidence (including failures)
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
