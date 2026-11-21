@@ -195,13 +195,17 @@ def main() -> None:
                     ) from err
             cmd = [arg.format(file=src_file, tmp=tmpdir) for arg in run_cmd]
             if not shutil.which(cmd[0]) and not os.path.exists(cmd[0]):
-                raise RuntimeError(f"Runtime no disponible para {backend}: {cmd[0]}")
+                raise RuntimeError(
+                    f"Runtime no disponible para {backend}: {cmd[0]}"
+                )
             elapsed, mem = run_and_measure(cmd, env)
             results.append(
                 {"backend": backend, "time": round(elapsed, 4), "memory_kb": mem}
             )
     if not results or len(results) != len(selected_backends):
-        raise RuntimeError("Benchmarks incompletos: no se admite una referencia parcial")
+        raise RuntimeError(
+            "Benchmarks incompletos: no se admite una referencia parcial"
+        )
     print(json.dumps(results, indent=2))
     os.unlink(tmp_file.name)
 
