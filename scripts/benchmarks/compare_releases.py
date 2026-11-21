@@ -49,7 +49,11 @@ def descargar_benchmarks(base: str | None = None) -> list[dict[str, Any]]:
             release = json.load(resp)
     except HTTPError as err:
         raise RuntimeError(
-            "No se pudo obtener la información de la última release"
+            f"No se pudo consultar {API_URL} (HTTP {err.code}); "
+            "falta una referencia de benchmarks accesible. "
+            "Publicar una release con benchmarks.json o proporcionar "
+            "--base VERSION con historial válido. "
+            "No se omite la comparación de regresiones."
         ) from err
     for asset in release.get("assets", []):
         if asset.get("name") == "benchmarks.json":
