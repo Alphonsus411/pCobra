@@ -67,7 +67,7 @@ def run_and_measure(
         subprocess.run(
             cmd,
             env=env,
-            check=False,
+            check=True,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.STDOUT,
         )
@@ -90,14 +90,15 @@ def run_and_measure(
                 break
             peak = max(peak, rss)
             time.sleep(0.01)
-        proc.wait()
+        if proc.wait() != 0:
+            raise subprocess.CalledProcessError(proc.returncode, cmd)
         elapsed = time.perf_counter() - start_time
         mem_kb = peak // 1024
     else:
         subprocess.run(
             cmd,
             env=env,
-            check=False,
+            check=True,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.STDOUT,
         )
@@ -135,10 +136,12 @@ def main() -> None:
     tmp_file = tempfile.NamedTemporaryFile(suffix=".toml", delete=False)
     tmp_file.close()
     env["COBRA_TOML"] = str(Path(tmp_file.name))
+    # El subcomando legacy `compilar` solo está registrado en desarrollo.
+    env["COBRA_CLI_COMMAND_PROFILE"] = "development"
 
     results = []
     with tempfile.TemporaryDirectory() as tmpdir:
-        co_file = Path(tmpdir) / "program.co"
+        co_file = Path(tmpdir) / "program.cobra"
         co_file.write_text(CODE)
         selected_backends = list(
             executable_benchmark_backends(
@@ -158,7 +161,7 @@ def main() -> None:
             transp_cmd = [
                 sys.executable,
                 "-m",
-                "cobra.cli.cli",
+                "pcobra.cobra.cli.cli",
                 "compilar",
                 str(co_file),
                 "--tipo",
@@ -166,8 +169,10 @@ def main() -> None:
             ]
             try:
                 out = subprocess.check_output(transp_cmd, env=env, text=True)
-            except subprocess.CalledProcessError:
-                continue
+            except subprocess.CalledProcessError as err:
+                raise RuntimeError(
+                    f"Falló la transpilación de benchmarks para {backend}"
+                ) from err
             out = re.sub(r"\x1b\[[0-9;]*m", "", out)
             lines = [
                 l
@@ -184,15 +189,19 @@ def main() -> None:
                 ]
                 try:
                     subprocess.check_call(compile_cmd)
-                except Exception:
-                    continue
+                except subprocess.CalledProcessError as err:
+                    raise RuntimeError(
+                        f"Falló la compilación de benchmarks para {backend}"
+                    ) from err
             cmd = [arg.format(file=src_file, tmp=tmpdir) for arg in run_cmd]
             if not shutil.which(cmd[0]) and not os.path.exists(cmd[0]):
-                continue
+                raise RuntimeError(f"Runtime no disponible para {backend}: {cmd[0]}")
             elapsed, mem = run_and_measure(cmd, env)
             results.append(
                 {"backend": backend, "time": round(elapsed, 4), "memory_kb": mem}
             )
+    if not results or len(results) != len(selected_backends):
+        raise RuntimeError("Benchmarks incompletos: no se admite una referencia parcial")
     print(json.dumps(results, indent=2))
     os.unlink(tmp_file.name)
 
