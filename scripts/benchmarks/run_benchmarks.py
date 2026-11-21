@@ -204,7 +204,11 @@ def main() -> None:
             except subprocess.CalledProcessError as err:
                 stderr = err.stderr
                 if stderr:
-                    detail = stderr.decode(errors="replace") if isinstance(stderr, bytes) else stderr
+                    detail = (
+                        stderr.decode(errors="replace")
+                        if isinstance(stderr, bytes)
+                        else stderr
+                    )
                     print(detail, file=sys.stderr)
                 raise RuntimeError(
                     f"Falló la ejecución de benchmarks para {backend}"
