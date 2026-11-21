@@ -136,8 +136,6 @@ def main() -> None:
     tmp_file = tempfile.NamedTemporaryFile(suffix=".toml", delete=False)
     tmp_file.close()
     env["COBRA_TOML"] = str(Path(tmp_file.name))
-    # El subcomando legacy `compilar` solo está registrado en desarrollo.
-    env["COBRA_CLI_COMMAND_PROFILE"] = "development"
 
     results = []
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -160,11 +158,14 @@ def main() -> None:
             src_file = Path(tmpdir) / f"program.{cfg['ext']}"
             transp_cmd = [
                 sys.executable,
-                "-m",
-                "pcobra.cobra.cli.cli",
-                "compilar",
+                "-c",
+                (
+                    "import sys; "
+                    "from pcobra.cobra.build import backend_pipeline; "
+                    "print(backend_pipeline.build(sys.argv[1], "
+                    "{\u0027preferred_backend\u0027: sys.argv[2]})[\u0027code\u0027])"
+                ),
                 str(co_file),
-                "--tipo",
                 backend,
             ]
             try:
