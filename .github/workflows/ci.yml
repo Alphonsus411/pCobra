@@ -172,6 +172,8 @@ jobs:
       - name: Run smoke syntax gates (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
+        env:
+          PYTHONIOENCODING: utf-8
         run: |
           python scripts/smoke_syntax.py
           python scripts/smoke_transpilers_syntax.py
