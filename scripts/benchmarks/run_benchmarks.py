@@ -69,7 +69,7 @@ def run_and_measure(
             env=env,
             check=True,
             stdout=subprocess.DEVNULL,
-            stderr=subprocess.STDOUT,
+            stderr=subprocess.PIPE,
         )
         elapsed = time.perf_counter() - start_time
         end_usage = resource.getrusage(resource.RUSAGE_CHILDREN)
@@ -199,7 +199,16 @@ def main() -> None:
                 raise RuntimeError(
                     f"Runtime no disponible para {backend}: {cmd[0]}"
                 )
-            elapsed, mem = run_and_measure(cmd, env)
+            try:
+                elapsed, mem = run_and_measure(cmd, env)
+            except subprocess.CalledProcessError as err:
+                stderr = err.stderr
+                if stderr:
+                    detail = stderr.decode(errors="replace") if isinstance(stderr, bytes) else stderr
+                    print(detail, file=sys.stderr)
+                raise RuntimeError(
+                    f"Falló la ejecución de benchmarks para {backend}"
+                ) from err
             results.append(
                 {"backend": backend, "time": round(elapsed, 4), "memory_kb": mem}
             )
