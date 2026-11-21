@@ -67,7 +67,7 @@ def run_and_measure(
         subprocess.run(
             cmd,
             env=env,
-            check=False,
+            check=True,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.STDOUT,
         )
@@ -90,14 +90,15 @@ def run_and_measure(
                 break
             peak = max(peak, rss)
             time.sleep(0.01)
-        proc.wait()
+        if proc.wait() != 0:
+            raise subprocess.CalledProcessError(proc.returncode, cmd)
         elapsed = time.perf_counter() - start_time
         mem_kb = peak // 1024
     else:
         subprocess.run(
             cmd,
             env=env,
-            check=False,
+            check=True,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.STDOUT,
         )
