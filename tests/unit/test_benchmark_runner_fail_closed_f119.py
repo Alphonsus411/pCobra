@@ -53,7 +53,7 @@ def test_runtime_no_cero_sin_medidor(monkeypatch):
         runner.run_and_measure([sys.executable, "--version"])
 
 
-def test_runner_usa_cli_desarrollo_y_no_omite_fallos(monkeypatch, tmp_path, capsys):
+def test_runner_usa_pipeline_oficial_y_no_omite_fallos(monkeypatch, tmp_path, capsys):
     """Un error de transpilación debe impedir publicar un JSON parcial."""
     monkeypatch.setattr(runner, "REPO_ROOT", tmp_path)
     monkeypatch.setattr(runner, "validate_backend_metadata", lambda *a, **k: None)
@@ -67,9 +67,10 @@ def test_runner_usa_cli_desarrollo_y_no_omite_fallos(monkeypatch, tmp_path, caps
     monkeypatch.setattr(sys, "argv", ["run_benchmarks.py"])
 
     def fail(cmd, **kwargs):
-        assert cmd[1:4] == ["-m", "pcobra.cobra.cli.cli", "compilar"]
-        assert cmd[4].endswith(".cobra")
-        assert kwargs["env"]["COBRA_CLI_COMMAND_PROFILE"] == "development"
+        assert cmd[1] == "-c"
+        assert "backend_pipeline.build" in cmd[2]
+        assert cmd[3].endswith(".cobra")
+        assert cmd[4] == "python"
         raise subprocess.CalledProcessError(2, cmd)
 
     monkeypatch.setattr(runner.subprocess, "check_output", fail)
