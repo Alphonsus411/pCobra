@@ -1,0 +1,62 @@
+name: Benchmark reference diagnostic
+
+on:
+  push:
+    branches:
+      - diagnostic/benchmarks-release-404-explicit
+    paths:
+      - .github/workflows/benchmark-reference-diagnostic.yml
+      - scripts/benchmarks/diagnostic/**
+
+permissions:
+  contents: read
+
+jobs:
+  measure:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Check out diagnostic workflow
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
+        with:
+          path: harness
+          persist-credentials: false
+      - name: Check out baseline
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
+        with:
+          ref: 08820d6c3426d71359911006c76a6a7fb260cfa0
+          path: baseline
+          persist-credentials: false
+      - name: Check out diagnostic commit
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
+        with:
+          ref: 56164e716a2d32b49b4bf18fc72068e49b2a614f
+          path: candidate
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12.3'
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22.23.0'
+      - name: Prepare isolated dependencies and measure
+        shell: bash
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+          RUSTUP_TOOLCHAIN: '1.87.0'
+        run: |
+          runtime="$(mktemp -d)"
+          cp harness/scripts/benchmarks/diagnostic/{package.json,package-lock.json} "$runtime/"
+          npm ci --prefix "$runtime" --ignore-scripts --no-audit --no-fund
+          python -m pip install -r candidate/requirements.txt
+          rustup toolchain install "$RUSTUP_TOOLCHAIN" --profile minimal
+          cc -O2 -Wall -Wextra -Werror harness/scripts/benchmarks/diagnostic/measure.c -o "$runtime/measure"
+          python harness/scripts/benchmarks/diagnostic/run.py \
+            --baseline baseline --candidate candidate --runtime "$runtime" \
+            --output benchmark-reference-diagnostic.json
+      - name: Upload diagnostic measurements
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: benchmark-reference-diagnostic
+          path: benchmark-reference-diagnostic.json
+          if-no-files-found: error
