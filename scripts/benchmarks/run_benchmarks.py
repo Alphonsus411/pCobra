@@ -184,6 +184,13 @@ def main() -> None:
                 lines = lines[1:]
             out = "\n".join(lines)
             src_file.write_text(out)
+            if backend == "javascript":
+                native_dir = repo_root / "src" / "pcobra" / "core" / "nativos"
+                if not native_dir.is_dir():
+                    raise RuntimeError(
+                        f"Runtime nativo JavaScript no disponible: {native_dir}"
+                    )
+                shutil.copytree(native_dir, Path(tmpdir) / "nativos")
             if "compile" in cfg:
                 compile_cmd = [
                     arg.format(file=src_file, tmp=tmpdir) for arg in cfg["compile"]
