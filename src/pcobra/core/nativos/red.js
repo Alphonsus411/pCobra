@@ -1,4 +1,3 @@
-import fetch from 'node-fetch';
 import * as querystring from 'querystring';
 import { promises as fs } from 'fs';
 import path from 'path';
@@ -97,6 +96,7 @@ async function realizarPeticion(metodo, urlInicial, opciones = {}) {
     const { datos = null, permitirRedirecciones = false, destino = null, crearPadres = true } = opciones;
     validarEsquema(urlInicial);
     const hosts = obtenerHostsPermitidos();
+    const { default: fetch } = await import('node-fetch');
     let urlActual = urlInicial;
     let restantes = MAX_REDIRECTS;
     while (true) {

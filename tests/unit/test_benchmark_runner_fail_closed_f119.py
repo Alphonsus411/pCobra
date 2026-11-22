@@ -1,5 +1,6 @@
 """Pruebas aisladas de fallo cerrado para el runner de benchmarks."""
 
+import os
 import subprocess
 import sys
 from unittest.mock import MagicMock
@@ -9,23 +10,44 @@ import pytest
 from scripts.benchmarks import run_benchmarks as runner
 
 
-def test_runtime_no_cero_resource(monkeypatch):
+@pytest.mark.skipif(
+    not (
+        runner.LINUX_TIME.is_file() if sys.platform == "linux" else hasattr(os, "wait4")
+    ),
+    reason="Requiere el medidor nativo",
+)
+def test_runtime_no_cero_resource():
     """No se debe aceptar una medición si el proceso termina con error."""
-    monkeypatch.setattr(runner, "resource", MagicMock())
-    monkeypatch.setattr(runner, "psutil", None)
+    cmd = [
+        sys.executable,
+        "-c",
+        "import sys; sys.stderr.write('fallo de prueba'); sys.exit(9)",
+    ]
+    with pytest.raises(subprocess.CalledProcessError) as error:
+        runner.run_and_measure(cmd)
+    assert error.value.returncode == 9
+    assert error.value.cmd == cmd
+    assert error.value.stderr == b"fallo de prueba"
 
-    def fail(*args, **kwargs):
-        assert kwargs["check"] is True
-        raise subprocess.CalledProcessError(9, args[0])
 
-    monkeypatch.setattr(runner.subprocess, "run", fail)
-    with pytest.raises(subprocess.CalledProcessError):
-        runner.run_and_measure([sys.executable, "--version"])
+@pytest.mark.skipif(
+    sys.platform != "linux" or not runner.LINUX_TIME.is_file(),
+    reason="Requiere GNU time en Linux",
+)
+def test_memoria_resource_se_mide_por_proceso():
+    cmd = [sys.executable, "-c", "data = bytearray(96 * 1024**2)"]
+    _, primer_pico = runner.run_and_measure(cmd)
+    _, segundo_pico = runner.run_and_measure(cmd)
+    _, pico_pequeno = runner.run_and_measure([sys.executable, "-c", "pass"])
+    assert primer_pico >= 96 * 1024
+    assert segundo_pico >= 96 * 1024
+    assert 0 < pico_pequeno < segundo_pico
 
 
 def test_runtime_no_cero_psutil(monkeypatch):
     """La ruta psutil también debe comprobar el código de salida."""
     monkeypatch.setattr(runner, "resource", None)
+    monkeypatch.setattr(runner, "LINUX_TIME", MagicMock(is_file=lambda: False))
     monkeypatch.setattr(runner, "psutil", MagicMock())
 
     proc = MagicMock()
@@ -42,6 +64,7 @@ def test_runtime_no_cero_psutil(monkeypatch):
 def test_runtime_no_cero_sin_medidor(monkeypatch):
     """Sin medidor de memoria, el fallo de ejecución sigue siendo fatal."""
     monkeypatch.setattr(runner, "resource", None)
+    monkeypatch.setattr(runner, "LINUX_TIME", MagicMock(is_file=lambda: False))
     monkeypatch.setattr(runner, "psutil", None)
 
     def fail(*args, **kwargs):

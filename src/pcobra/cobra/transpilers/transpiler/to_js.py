@@ -3,7 +3,11 @@
 Los parámetros de tipo se omiten porque JavaScript no soporta genéricos de
 forma nativa, por lo que se recurre a tipos dinámicos."""
 
+from collections.abc import Iterable, Iterator
+from contextlib import contextmanager
+
 from pcobra.cobra.core.ast_nodes import (
+    NodoAsignacion,
     NodoHolobit,
     NodoLista,
     NodoDiccionario,
@@ -255,13 +259,33 @@ def visit_diccionario_comprehension(self, nodo):
 
 
 class TranspiladorJavaScript(BaseTranspiler):
-    def __init__(self):
+    def __init__(self) -> None:
         # Incluir importaciones de modulos nativos
         self.codigo = []
         self.indentacion = 0
         self.usa_indentacion = None
         self._defer_stack: list[str] = []
         self._defer_counter = 0
+        self._variable_scopes: list[set[str]] = []
+
+    @contextmanager
+    def variable_scope(self, nodos: Iterable[object]) -> Iterator[None]:
+        declarations = {
+            nodo.variable
+            for nodo in nodos
+            if isinstance(nodo, NodoAsignacion)
+            and nodo.declaracion
+            and not nodo.inferencia
+            and isinstance(nodo.variable, str)
+        }
+        self._variable_scopes.append(declarations)
+        try:
+            yield
+        finally:
+            self._variable_scopes.pop()
+
+    def variable_declarada(self, nombre: str) -> bool:
+        return any(nombre in scope for scope in self._variable_scopes)
 
     def generate_code(self, ast):
         self.codigo = self.transpilar(ast)
@@ -372,18 +396,19 @@ class TranspiladorJavaScript(BaseTranspiler):
         self.codigo = list(get_standard_imports("javascript"))
         if usa_holobit:
             self.codigo.extend(get_runtime_hooks("javascript"))
-        for nodo in ast_raiz:
-            if hasattr(nodo, "aceptar"):
-                nodo.aceptar(self)
-            else:
-                nombre = nodo.__class__.__name__
-                if nombre.startswith("Nodo"):
-                    nombre = nombre[4:]
-                metodo = getattr(self, f"visit_{nombre.lower()}", None)
-                if metodo:
-                    metodo(nodo)
+        with self.variable_scope(ast_raiz):
+            for nodo in ast_raiz:
+                if hasattr(nodo, "aceptar"):
+                    nodo.aceptar(self)
                 else:
-                    raise AttributeError(f"Nodo sin método aceptar: {nodo}")
+                    nombre = nodo.__class__.__name__
+                    if nombre.startswith("Nodo"):
+                        nombre = nombre[4:]
+                    metodo = getattr(self, f"visit_{nombre.lower()}", None)
+                    if metodo:
+                        metodo(nodo)
+                    else:
+                        raise AttributeError(f"Nodo sin método aceptar: {nodo}")
         return "\n".join(self.codigo)
 
 
