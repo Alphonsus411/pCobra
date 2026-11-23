@@ -18,7 +18,7 @@ SPEC.loader.exec_module(compare)
 def test_latest_release_404_requires_real_baseline() -> None:
     error = HTTPError(compare.API_URL, 404, "Not Found", None, None)
     with patch.object(compare, "urlopen", side_effect=error):
-        with pytest.raises(RuntimeError, match=r"HTTP 404.*benchmarks\\.json"):
+        with pytest.raises(RuntimeError, match=r"HTTP 404.*benchmarks\.json"):
             compare.descargar_benchmarks()
 
 
@@ -36,5 +36,5 @@ def test_release_without_benchmark_asset_fails_closed() -> None:
 
     response = BytesIO(b'{"assets": [{"name": "other.txt"}]}')
     with patch.object(compare, "urlopen", return_value=response):
-        with pytest.raises(RuntimeError, match=r"No se encontr[oó] benchmarks\\.json"):
+        with pytest.raises(RuntimeError, match=r"No se encontr[oó] benchmarks\.json"):
             compare.descargar_benchmarks()
