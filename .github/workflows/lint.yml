@@ -43,7 +43,7 @@ jobs:
           fi
 
           printf 'Comprobando con Black:\n%s\n' "${changed_python[@]}"
-          black --check --diff "${changed_python[@]}"
+          black --check "${changed_python[@]}"
       - name: Detect legacy target aliases in public docs
         run: python scripts/lint_legacy_aliases.py
       - name: Validate public documentation targets policy
