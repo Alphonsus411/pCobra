@@ -7,7 +7,6 @@ from urllib.error import HTTPError
 
 import pytest
 
-
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts/benchmarks/compare_releases.py"
 SPEC = importlib.util.spec_from_file_location("benchmark_compare_fail_closed", SCRIPT)
