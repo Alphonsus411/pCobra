@@ -6,6 +6,7 @@ a través de ``scripts/benchmarks/targets_policy.py``.
 
 import argparse
 import json
+import math
 import subprocess
 import sys
 from pathlib import Path
@@ -49,7 +50,10 @@ def descargar_benchmarks(base: str | None = None) -> list[dict[str, Any]]:
             release = json.load(resp)
     except HTTPError as err:
         raise RuntimeError(
-            "No se pudo obtener la información de la última release"
+            "No se pudo obtener la información de la última release "
+            f"(HTTP {err.code}; URL: {API_URL}). "
+            "Se requiere una release publicada con benchmarks.json "
+            "o una referencia histórica válida mediante --base."
         ) from err
     for asset in release.get("assets", []):
         if asset.get("name") == "benchmarks.json":
@@ -107,6 +111,32 @@ def main() -> None:
 
     actuales = ejecutar_benchmarks()
     previos = descargar_benchmarks(args.base)
+    backends_actuales = {resultado["backend"] for resultado in actuales}
+    backends_previos = {resultado["backend"] for resultado in previos}
+    faltantes = backends_actuales - backends_previos
+    if faltantes:
+        raise SystemExit(
+            "Referencia de benchmarks incompleta. Faltan resultados para "
+            + ", ".join(sorted(faltantes))
+        )
+    for origen, resultados in (("actual", actuales), ("de referencia", previos)):
+        for resultado in resultados:
+            backend = resultado["backend"]
+            if backend not in backends_actuales:
+                continue
+            tiempo = resultado.get("time")
+            memoria = resultado.get("memory_kb")
+            if (
+                type(tiempo) not in (int, float)
+                or tiempo <= 0
+                or not math.isfinite(tiempo)
+                or type(memoria) is not int
+                or memoria <= 0
+            ):
+                raise SystemExit(
+                    f"Medición {origen} inválida para {backend}. "
+                    "Se requieren tiempo y memoria positivos."
+                )
     resumen = comparar(actuales, previos)
     args.output.write_text(json.dumps(resumen, indent=2))
 

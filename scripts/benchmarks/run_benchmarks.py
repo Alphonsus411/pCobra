@@ -12,10 +12,12 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import textwrap
 import time
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
+LINUX_TIME = Path("/usr/bin/time")
 sys.path.insert(0, str(REPO_ROOT))
 sys.path.insert(0, str(REPO_ROOT / "src"))
 
@@ -57,23 +59,43 @@ def run_and_measure(
 ) -> tuple[float, int]:
     """Ejecuta *cmd* y devuelve ``(tiempo_en_segundos, memoria_en_kb)``.
 
-    Si no se dispone de ``resource`` ni de ``psutil``, la memoria se reporta como
-    ``-1``.
+    Si no hay un medidor disponible, la memoria se reporta como ``-1``.
     """
 
     start_time = time.perf_counter()
-    if resource is not None:
-        start_usage = resource.getrusage(resource.RUSAGE_CHILDREN)
-        subprocess.run(
-            cmd,
-            env=env,
-            check=False,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.STDOUT,
-        )
-        elapsed = time.perf_counter() - start_time
-        end_usage = resource.getrusage(resource.RUSAGE_CHILDREN)
-        mem_kb = max(0, end_usage.ru_maxrss - start_usage.ru_maxrss)
+    if sys.platform == "linux" and LINUX_TIME.is_file():
+        # GNU time inicia el proceso desde un ejecutable con poco RSS.
+        with tempfile.TemporaryDirectory() as tmpdir:
+            metrics = Path(tmpdir) / "rss"
+            measured_cmd = [str(LINUX_TIME), "-q", "-f", "%M", "-o", str(metrics)]
+            result = subprocess.run(
+                [*measured_cmd, "--", *cmd],
+                env=env,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.PIPE,
+            )
+            elapsed = time.perf_counter() - start_time
+            if result.returncode:
+                raise subprocess.CalledProcessError(
+                    result.returncode, cmd, stderr=result.stderr
+                )
+            mem_kb = int(metrics.read_text(encoding="ascii").strip())
+    elif sys.platform != "linux" and resource is not None and hasattr(os, "wait4"):
+        with tempfile.TemporaryFile() as stderr:
+            with subprocess.Popen(
+                cmd, env=env, stdout=subprocess.DEVNULL, stderr=stderr
+            ) as proc:
+                _, status, usage = os.wait4(proc.pid, 0)
+                proc.returncode = os.waitstatus_to_exitcode(status)
+                elapsed = time.perf_counter() - start_time
+                if proc.returncode:
+                    stderr.seek(0)
+                    raise subprocess.CalledProcessError(
+                        proc.returncode, cmd, stderr=stderr.read()
+                    )
+        mem_kb = usage.ru_maxrss
+        if sys.platform == "darwin":
+            mem_kb //= 1024
     elif psutil is not None:
         proc = subprocess.Popen(
             cmd,
@@ -90,14 +112,15 @@ def run_and_measure(
                 break
             peak = max(peak, rss)
             time.sleep(0.01)
-        proc.wait()
+        if proc.wait() != 0:
+            raise subprocess.CalledProcessError(proc.returncode, cmd)
         elapsed = time.perf_counter() - start_time
         mem_kb = peak // 1024
     else:
         subprocess.run(
             cmd,
             env=env,
-            check=False,
+            check=True,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.STDOUT,
         )
@@ -138,7 +161,7 @@ def main() -> None:
 
     results = []
     with tempfile.TemporaryDirectory() as tmpdir:
-        co_file = Path(tmpdir) / "program.co"
+        co_file = Path(tmpdir) / "program.cobra"
         co_file.write_text(CODE)
         selected_backends = list(
             executable_benchmark_backends(
@@ -157,17 +180,22 @@ def main() -> None:
             src_file = Path(tmpdir) / f"program.{cfg['ext']}"
             transp_cmd = [
                 sys.executable,
-                "-m",
-                "cobra.cli.cli",
-                "compilar",
+                "-c",
+                (
+                    "import sys; "
+                    "from pcobra.cobra.build import backend_pipeline; "
+                    "print(backend_pipeline.build(sys.argv[1], "
+                    "{\u0027preferred_backend\u0027: sys.argv[2]})[\u0027code\u0027])"
+                ),
                 str(co_file),
-                "--tipo",
                 backend,
             ]
             try:
                 out = subprocess.check_output(transp_cmd, env=env, text=True)
-            except subprocess.CalledProcessError:
-                continue
+            except subprocess.CalledProcessError as err:
+                raise RuntimeError(
+                    f"Falló la transpilación de benchmarks para {backend}"
+                ) from err
             out = re.sub(r"\x1b\[[0-9;]*m", "", out)
             lines = [
                 l
@@ -177,22 +205,60 @@ def main() -> None:
             if lines and lines[0].startswith("Código generado"):
                 lines = lines[1:]
             out = "\n".join(lines)
+            if backend == "rust":
+                # El fragmento del benchmark no usa las bibliotecas de la crate.
+                body = "\n".join(
+                    line
+                    for line in out.splitlines()
+                    if line.strip()
+                    not in {
+                        "use crate::corelibs::*;",
+                        "use crate::standard_library::*;",
+                    }
+                )
+                out = f"fn main() {{\n{textwrap.indent(body, '    ')}\n}}\n"
             src_file.write_text(out)
+            if backend == "javascript":
+                native_dir = repo_root / "src" / "pcobra" / "core" / "nativos"
+                if not native_dir.is_dir():
+                    raise RuntimeError(
+                        f"Runtime nativo JavaScript no disponible: {native_dir}"
+                    )
+                shutil.copytree(native_dir, Path(tmpdir) / "nativos")
             if "compile" in cfg:
                 compile_cmd = [
                     arg.format(file=src_file, tmp=tmpdir) for arg in cfg["compile"]
                 ]
                 try:
                     subprocess.check_call(compile_cmd)
-                except Exception:
-                    continue
+                except subprocess.CalledProcessError as err:
+                    raise RuntimeError(
+                        f"Falló la compilación de benchmarks para {backend}"
+                    ) from err
             cmd = [arg.format(file=src_file, tmp=tmpdir) for arg in run_cmd]
             if not shutil.which(cmd[0]) and not os.path.exists(cmd[0]):
-                continue
-            elapsed, mem = run_and_measure(cmd, env)
+                raise RuntimeError(f"Runtime no disponible para {backend}: {cmd[0]}")
+            try:
+                elapsed, mem = run_and_measure(cmd, env)
+            except subprocess.CalledProcessError as err:
+                stderr = err.stderr
+                if stderr:
+                    detail = (
+                        stderr.decode(errors="replace")
+                        if isinstance(stderr, bytes)
+                        else stderr
+                    )
+                    print(detail, file=sys.stderr)
+                raise RuntimeError(
+                    f"Falló la ejecución de benchmarks para {backend}"
+                ) from err
             results.append(
                 {"backend": backend, "time": round(elapsed, 4), "memory_kb": mem}
             )
+    if not results or len(results) != len(selected_backends):
+        raise RuntimeError(
+            "Benchmarks incompletos: no se admite una referencia parcial"
+        )
     print(json.dumps(results, indent=2))
     os.unlink(tmp_file.name)
 

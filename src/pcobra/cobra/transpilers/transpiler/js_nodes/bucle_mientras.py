@@ -8,5 +8,6 @@ def visit_bucle_mientras(self, nodo):
         self.usa_indentacion = any(hasattr(ins, "variable") for ins in cuerpo)
     condicion = self.obtener_valor(nodo.condicion)
     self.agregar_linea(f"while ({condicion}) {{")
-    procesar_bloque(self, cuerpo)
+    with self.variable_scope(cuerpo):
+        procesar_bloque(self, cuerpo)
     self.agregar_linea("}")
