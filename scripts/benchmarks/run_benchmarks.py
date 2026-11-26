@@ -202,9 +202,7 @@ def main() -> None:
                     subprocess.CalledProcessError,
                     subprocess.TimeoutExpired,
                 ) as err:
-                    raise RuntimeError(
-                        f"Falló la compilación para {backend}"
-                    ) from err
+                    raise RuntimeError(f"Falló la compilación para {backend}") from err
             cmd = [arg.format(file=src_file, tmp=tmpdir) for arg in run_cmd]
             if not shutil.which(cmd[0]) and not os.path.exists(cmd[0]):
                 raise RuntimeError(f"Runtime no disponible para {backend}: {cmd[0]}")
