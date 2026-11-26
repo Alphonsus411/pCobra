@@ -6,11 +6,14 @@ a través de ``scripts/benchmarks/targets_policy.py``.
 
 import argparse
 import json
+import math
 import os
 import shutil
+import signal
 import subprocess
 import sys
 import tempfile
+import textwrap
 import time
 from pathlib import Path
 
@@ -24,19 +27,6 @@ from scripts.benchmarks.targets_policy import (
     validate_backend_metadata,
     validate_local_targets_policy,
 )
-
-try:
-    import resource
-
-    psutil = None
-except ImportError:
-    resource = None
-    try:
-        import psutil  # manejar ResourceUsage con psutil
-    except ImportError:  # pragma: no cover - psutil no está disponible
-        psutil = None
-
-# Si no hay 'resource' ni 'psutil', la memoria se informará como -1
 
 # Código Cobra para las pruebas de rendimiento
 CODE = """
@@ -54,54 +44,44 @@ BACKEND_METADATA = BENCHMARK_BACKEND_METADATA
 def run_and_measure(
     cmd: list[str], env: dict[str, str] | None = None
 ) -> tuple[float, int]:
-    """Ejecuta *cmd* y devuelve ``(tiempo_en_segundos, memoria_en_kb)``.
-
-    Si no se dispone de ``resource`` ni de ``psutil``, la memoria se reporta como
-    ``-1``.
-    """
-
-    start_time = time.perf_counter()
-    if resource is not None:
-        start_usage = resource.getrusage(resource.RUSAGE_CHILDREN)
-        subprocess.run(
-            cmd,
+    """Mide tiempo y RSS individual en Linux y valida la salida funcional."""
+    linux_time = Path("/usr/bin/time")
+    if sys.platform != "linux" or not linux_time.is_file():
+        raise RuntimeError("Benchmarks requieren Linux con GNU time")
+    with tempfile.TemporaryDirectory() as tmpdir:
+        metrics = Path(tmpdir) / "rss"
+        measured_cmd = [
+            str(linux_time), "-q", "-f", "%M", "-o", str(metrics), "--", *cmd
+        ]
+        start = time.perf_counter()
+        with subprocess.Popen(
+            measured_cmd,
             env=env,
-            check=False,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.STDOUT,
-        )
-        elapsed = time.perf_counter() - start_time
-        end_usage = resource.getrusage(resource.RUSAGE_CHILDREN)
-        mem_kb = max(0, end_usage.ru_maxrss - start_usage.ru_maxrss)
-    elif psutil is not None:
-        proc = subprocess.Popen(
-            cmd,
-            env=env,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.STDOUT,
-        )
-        ps_proc = psutil.Process(proc.pid)
-        peak = 0
-        while proc.poll() is None:
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            encoding="utf-8",
+            start_new_session=True,
+        ) as proc:
             try:
-                rss = ps_proc.memory_info().rss
-            except psutil.Error:
-                break
-            peak = max(peak, rss)
-            time.sleep(0.01)
-        proc.wait()
-        elapsed = time.perf_counter() - start_time
-        mem_kb = peak // 1024
-    else:
-        subprocess.run(
-            cmd,
-            env=env,
-            check=False,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.STDOUT,
-        )
-        elapsed = time.perf_counter() - start_time
-        mem_kb = -1
+                stdout, stderr = proc.communicate(timeout=120)
+            except subprocess.TimeoutExpired:
+                try:
+                    os.killpg(proc.pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+                proc.communicate()
+                raise
+            elapsed = time.perf_counter() - start
+            if proc.returncode:
+                raise subprocess.CalledProcessError(
+                    proc.returncode, cmd, output=stdout, stderr=stderr
+                )
+        if stdout.strip() != "1001":
+            raise RuntimeError(f"Salida funcional inesperada: {stdout!r}")
+        mem_kb = int(metrics.read_text(encoding="ascii").strip())
+        if not math.isfinite(elapsed) or elapsed <= 0 or mem_kb <= 0:
+            raise RuntimeError("Medición de tiempo o memoria inválida")
     return elapsed, mem_kb
 
 
@@ -131,12 +111,11 @@ def main() -> None:
 
     env = os.environ.copy()
     env["PYTHONPATH"] = str(repo_root / "src")
-    tmp_file = tempfile.NamedTemporaryFile(suffix=".toml", delete=False)
-    tmp_file.close()
-    env["COBRA_TOML"] = str(Path(tmp_file.name))
-
     results = []
     with tempfile.TemporaryDirectory() as tmpdir:
+        config = Path(tmpdir) / "cobra.toml"
+        config.touch()
+        env["COBRA_TOML"] = str(config)
         co_file = Path(tmpdir) / "program.cobra"
         co_file.write_text(CODE, encoding="utf-8")
         selected_backends = list(
@@ -171,8 +150,12 @@ def main() -> None:
             ]
             try:
                 subprocess.run(
-                    transp_cmd, env=env, check=True, capture_output=True,
-                    text=True, timeout=120,
+                    transp_cmd,
+                    env=env,
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                    timeout=120,
                 )
             except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as err:
                 raise RuntimeError(
@@ -180,23 +163,43 @@ def main() -> None:
                 ) from err
             if not src_file.is_file() or not src_file.read_text(encoding="utf-8").strip():
                 raise RuntimeError(f"Código generado vacío para {backend}")
+            if backend == "rust":
+                body = "\n".join(
+                    line
+                    for line in src_file.read_text(encoding="utf-8").splitlines()
+                    if line.strip()
+                    not in {
+                        "use crate::corelibs::*;",
+                        "use crate::standard_library::*;",
+                    }
+                )
+                src_file.write_text(
+                    f"fn main() {{\n{textwrap.indent(body, '    ')}\n}}\n",
+                    encoding="utf-8",
+                )
+            if backend == "javascript":
+                native_dir = repo_root / "src" / "pcobra" / "core" / "nativos"
+                if not native_dir.is_dir():
+                    raise RuntimeError(f"Runtime JavaScript ausente: {native_dir}")
+                shutil.copytree(native_dir, Path(tmpdir) / "nativos")
             if "compile" in cfg:
                 compile_cmd = [
                     arg.format(file=src_file, tmp=tmpdir) for arg in cfg["compile"]
                 ]
                 try:
-                    subprocess.check_call(compile_cmd)
-                except Exception:
-                    continue
+                    subprocess.run(compile_cmd, env=env, check=True, timeout=120)
+                except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as err:
+                    raise RuntimeError(f"Falló la compilación para {backend}") from err
             cmd = [arg.format(file=src_file, tmp=tmpdir) for arg in run_cmd]
             if not shutil.which(cmd[0]) and not os.path.exists(cmd[0]):
-                continue
+                raise RuntimeError(f"Runtime no disponible para {backend}: {cmd[0]}")
             elapsed, mem = run_and_measure(cmd, env)
             results.append(
-                {"backend": backend, "time": round(elapsed, 4), "memory_kb": mem}
+                {"backend": backend, "time": elapsed, "memory_kb": mem}
             )
-    print(json.dumps(results, indent=2))
-    os.unlink(tmp_file.name)
+    if not results or len(results) != len(selected_backends):
+        raise RuntimeError("Benchmarks incompletos")
+    print(json.dumps(results, indent=2, allow_nan=False))
 
 
 if __name__ == "__main__":
