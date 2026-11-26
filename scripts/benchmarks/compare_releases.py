@@ -6,12 +6,18 @@ a través de ``scripts/benchmarks/targets_policy.py``.
 
 import argparse
 import json
+import math
 import subprocess
 import sys
 from pathlib import Path
 from typing import Any, cast
 from urllib.error import HTTPError
 from urllib.request import urlopen
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(REPO_ROOT / "src"))
+
+from pcobra.cobra.architecture.backend_policy import PUBLIC_BACKENDS
 
 API_URL = "https://api.github.com/repos/Alphonsus411/pCobra/releases/latest"
 HISTORY_URL = (
@@ -38,18 +44,21 @@ def descargar_benchmarks(base: str | None = None) -> list[dict[str, Any]]:
     if base:
         url = HISTORY_URL.format(version=base)
         try:
-            with urlopen(url) as resp:
+            with urlopen(url, timeout=30) as resp:
                 return cast(list[dict[str, Any]], json.load(resp))
         except HTTPError as err:
             raise RuntimeError(
                 f"No se pudo obtener benchmarks de la versión {base}"
             ) from err
     try:
-        with urlopen(API_URL) as resp:
+        with urlopen(API_URL, timeout=30) as resp:
             release = json.load(resp)
     except HTTPError as err:
         raise RuntimeError(
-            "No se pudo obtener la información de la última release"
+            "No se pudo obtener la información de la última release "
+            f"(HTTP {err.code}; URL: {API_URL}). "
+            "Se requiere una release publicada con benchmarks.json "
+            "o una referencia histórica válida mediante --base."
         ) from err
     for asset in release.get("assets", []):
         if asset.get("name") == "benchmarks.json":
@@ -59,25 +68,62 @@ def descargar_benchmarks(base: str | None = None) -> list[dict[str, Any]]:
     raise RuntimeError("No se encontró benchmarks.json en la última release")
 
 
+def validar_mediciones(
+    resultados: object, origen: str
+) -> dict[str, dict[str, Any]]:
+    """Exige una medición válida por backend de la política pública canónica."""
+    if not isinstance(resultados, list) or not resultados:
+        raise ValueError(f"Benchmarks {origen}: se requiere una lista no vacía")
+    indexed: dict[str, dict[str, Any]] = {}
+    for resultado in resultados:
+        if not isinstance(resultado, dict):
+            raise ValueError(f"Medición {origen} inválida: se requiere un objeto")
+        backend = resultado.get("backend")
+        if not isinstance(backend, str) or backend not in PUBLIC_BACKENDS:
+            raise ValueError(f"Backend {origen} no oficial: {backend!r}")
+        if backend in indexed:
+            raise ValueError(f"Backend {origen} duplicado: {backend}")
+        tiempo = resultado.get("time")
+        memoria = resultado.get("memory_kb")
+        if (
+            type(tiempo) not in (int, float)
+            or not 0 < tiempo <= sys.float_info.max
+            or type(memoria) is not int
+            or memoria <= 0
+        ):
+            raise ValueError(
+                f"Medición {origen} inválida para {backend}. "
+                "Se requieren tiempo finito y memoria entera positivos."
+            )
+        indexed[backend] = resultado
+    faltantes = set(PUBLIC_BACKENDS) - indexed.keys()
+    if faltantes:
+        raise ValueError(
+            f"Referencia de benchmarks incompleta ({origen}). "
+            "Faltan resultados para " + ", ".join(sorted(faltantes))
+        )
+    return indexed
+
+
 def comparar(actuales: list[dict], previos: list[dict]) -> list[dict]:
-    """Compara los resultados actuales con los de la release anterior."""
-    backends = {d["backend"] for d in actuales} | {d["backend"] for d in previos}
+    """Compara exclusivamente conjuntos completos y válidos de mediciones."""
+    actual = validar_mediciones(actuales, "actual")
+    previo = validar_mediciones(previos, "de referencia")
     resumen: list[dict] = []
-    for backend in sorted(backends):
-        cur = next((d for d in actuales if d["backend"] == backend), None)
-        prev = next((d for d in previos if d["backend"] == backend), None)
-        entry = {
-            "backend": backend,
-            "current_time": cur["time"] if cur else None,
-            "previous_time": prev["time"] if prev else None,
-            "diff_time": (cur["time"] - prev["time"]) if cur and prev else None,
-            "current_memory_kb": cur["memory_kb"] if cur else None,
-            "previous_memory_kb": prev["memory_kb"] if prev else None,
-            "diff_memory_kb": (
-                (cur["memory_kb"] - prev["memory_kb"]) if cur and prev else None
-            ),
-        }
-        resumen.append(entry)
+    for backend in sorted(PUBLIC_BACKENDS):
+        cur = actual[backend]
+        prev = previo[backend]
+        resumen.append(
+            {
+                "backend": backend,
+                "current_time": cur["time"],
+                "previous_time": prev["time"],
+                "diff_time": cur["time"] - prev["time"],
+                "current_memory_kb": cur["memory_kb"],
+                "previous_memory_kb": prev["memory_kb"],
+                "diff_memory_kb": cur["memory_kb"] - prev["memory_kb"],
+            }
+        )
     return resumen
 
 
@@ -105,10 +151,17 @@ def main() -> None:
     )
     args = parser.parse_args()
 
+    if not math.isfinite(args.max_regression) or not 0 <= args.max_regression <= 10:
+        parser.error("--max-regression debe estar entre 0 y 10")
     actuales = ejecutar_benchmarks()
     previos = descargar_benchmarks(args.base)
-    resumen = comparar(actuales, previos)
-    args.output.write_text(json.dumps(resumen, indent=2))
+    try:
+        resumen = comparar(actuales, previos)
+    except ValueError as err:
+        raise SystemExit(str(err)) from err
+    args.output.write_text(
+        json.dumps(resumen, indent=2, allow_nan=False), encoding="utf-8"
+    )
 
     exceeded = False
     for r in resumen:
