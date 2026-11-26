@@ -7,7 +7,6 @@ a través de ``scripts/benchmarks/targets_policy.py``.
 import argparse
 import json
 import os
-import re
 import shutil
 import subprocess
 import sys
@@ -138,8 +137,8 @@ def main() -> None:
 
     results = []
     with tempfile.TemporaryDirectory() as tmpdir:
-        co_file = Path(tmpdir) / "program.co"
-        co_file.write_text(CODE)
+        co_file = Path(tmpdir) / "program.cobra"
+        co_file.write_text(CODE, encoding="utf-8")
         selected_backends = list(
             executable_benchmark_backends(
                 BACKEND_METADATA,
@@ -157,27 +156,30 @@ def main() -> None:
             src_file = Path(tmpdir) / f"program.{cfg['ext']}"
             transp_cmd = [
                 sys.executable,
-                "-m",
-                "cobra.cli.cli",
-                "compilar",
+                "-c",
+                (
+                    "import sys; from pathlib import Path; "
+                    "from pcobra.cobra.build import backend_pipeline; "
+                    "result = backend_pipeline.build(sys.argv[1], "
+                    "{'preferred_backend': sys.argv[2]}); "
+                    "assert result['backend'] == sys.argv[2], 'Backend inesperado'; "
+                    "Path(sys.argv[3]).write_text(result['code'], encoding='utf-8')"
+                ),
                 str(co_file),
-                "--tipo",
                 backend,
+                str(src_file),
             ]
             try:
-                out = subprocess.check_output(transp_cmd, env=env, text=True)
-            except subprocess.CalledProcessError:
-                continue
-            out = re.sub(r"\x1b\[[0-9;]*m", "", out)
-            lines = [
-                l
-                for l in out.splitlines()
-                if not l.startswith("DEBUG:") and not l.startswith("INFO:")
-            ]
-            if lines and lines[0].startswith("Código generado"):
-                lines = lines[1:]
-            out = "\n".join(lines)
-            src_file.write_text(out)
+                subprocess.run(
+                    transp_cmd, env=env, check=True, capture_output=True,
+                    text=True, timeout=120,
+                )
+            except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as err:
+                raise RuntimeError(
+                    f"Falló la transpilación de benchmarks para {backend}"
+                ) from err
+            if not src_file.is_file() or not src_file.read_text(encoding="utf-8").strip():
+                raise RuntimeError(f"Código generado vacío para {backend}")
             if "compile" in cfg:
                 compile_cmd = [
                     arg.format(file=src_file, tmp=tmpdir) for arg in cfg["compile"]
