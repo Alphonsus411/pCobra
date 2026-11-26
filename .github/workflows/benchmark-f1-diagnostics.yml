@@ -1,0 +1,69 @@
+name: F1 benchmark diagnostics
+
+on:
+  push:
+    branches:
+      - fix/f1-benchmark-stabilization
+    paths:
+      - '.github/workflows/benchmark-f1-diagnostics.yml'
+      - 'scripts/benchmarks/**'
+      - 'tests/unit/test_benchmark_*_f1.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  focal:
+    name: F1 focal diagnostics (not CI certification)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '20'
+      - name: Verify required tools
+        run: |
+          python --version
+          node --version
+          rustc --version
+          /usr/bin/time --version
+      - name: Install repository dependencies
+        uses: ./.github/actions/install
+      - name: Record Black diff
+        run: |
+          mkdir -p f1-evidence
+          black --version
+          black --diff scripts/benchmarks/run_benchmarks.py scripts/benchmarks/compare_releases.py tests/unit/test_benchmark_release_comparison_f1.py tests/unit/test_benchmark_runner_f1.py | tee f1-evidence/black.diff
+      - name: Run focal tests
+        run: |
+          python -m pytest -q tests/unit/test_benchmark_release_comparison_f1.py tests/unit/test_benchmark_runner_f1.py --junitxml=f1-evidence/pytest.xml
+      - name: Verify full focal coverage
+        run: |
+          python - <<'PY'
+          import xml.etree.ElementTree as ET
+          suites = ET.parse("f1-evidence/pytest.xml").getroot()
+          cases = list(suites.iter("testcase"))
+          if len(cases) != 61 or any(
+              case.find(tag) is not None
+              for case in cases
+              for tag in ("failure", "error", "skipped")
+          ):
+              raise SystemExit("Expected 61 successful focal tests without skips")
+          PY
+      - name: Check benchmark Python formatting
+        run: |
+          black --check scripts/benchmarks/run_benchmarks.py scripts/benchmarks/compare_releases.py tests/unit/test_benchmark_release_comparison_f1.py tests/unit/test_benchmark_runner_f1.py
+      - name: Upload diagnostic evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: f1-focal-diagnostics
+          path: f1-evidence/
+          if-no-files-found: error
