@@ -51,7 +51,14 @@ def run_and_measure(
     with tempfile.TemporaryDirectory() as tmpdir:
         metrics = Path(tmpdir) / "rss"
         measured_cmd = [
-            str(linux_time), "-q", "-f", "%M", "-o", str(metrics), "--", *cmd
+            str(linux_time),
+            "-q",
+            "-f",
+            "%M",
+            "-o",
+            str(metrics),
+            "--",
+            *cmd,
         ]
         start = time.perf_counter()
         with subprocess.Popen(
@@ -161,7 +168,10 @@ def main() -> None:
                 raise RuntimeError(
                     f"Falló la transpilación de benchmarks para {backend}"
                 ) from err
-            if not src_file.is_file() or not src_file.read_text(encoding="utf-8").strip():
+            if (
+                not src_file.is_file()
+                or not src_file.read_text(encoding="utf-8").strip()
+            ):
                 raise RuntimeError(f"Código generado vacío para {backend}")
             if backend == "rust":
                 body = "\n".join(
@@ -188,15 +198,18 @@ def main() -> None:
                 ]
                 try:
                     subprocess.run(compile_cmd, env=env, check=True, timeout=120)
-                except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as err:
-                    raise RuntimeError(f"Falló la compilación para {backend}") from err
+                except (
+                    subprocess.CalledProcessError,
+                    subprocess.TimeoutExpired,
+                ) as err:
+                    raise RuntimeError(
+                        f"Falló la compilación para {backend}"
+                    ) from err
             cmd = [arg.format(file=src_file, tmp=tmpdir) for arg in run_cmd]
             if not shutil.which(cmd[0]) and not os.path.exists(cmd[0]):
                 raise RuntimeError(f"Runtime no disponible para {backend}: {cmd[0]}")
             elapsed, mem = run_and_measure(cmd, env)
-            results.append(
-                {"backend": backend, "time": elapsed, "memory_kb": mem}
-            )
+            results.append({"backend": backend, "time": elapsed, "memory_kb": mem})
     if not results or len(results) != len(selected_backends):
         raise RuntimeError("Benchmarks incompletos")
     print(json.dumps(results, indent=2, allow_nan=False))
