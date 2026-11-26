@@ -63,14 +63,12 @@ def descargar_benchmarks(base: str | None = None) -> list[dict[str, Any]]:
     for asset in release.get("assets", []):
         if asset.get("name") == "benchmarks.json":
             url = asset.get("browser_download_url")
-            with urlopen(url) as resp:
+            with urlopen(url, timeout=30) as resp:
                 return cast(list[dict[str, Any]], json.load(resp))
     raise RuntimeError("No se encontró benchmarks.json en la última release")
 
 
-def validar_mediciones(
-    resultados: object, origen: str
-) -> dict[str, dict[str, Any]]:
+def validar_mediciones(resultados: object, origen: str) -> dict[str, dict[str, Any]]:
     """Exige una medición válida por backend de la política pública canónica."""
     if not isinstance(resultados, list) or not resultados:
         raise ValueError(f"Benchmarks {origen}: se requiere una lista no vacía")
